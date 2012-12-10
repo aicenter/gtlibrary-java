@@ -31,6 +31,8 @@ public abstract class IIGameState implements GameState {
 		if (isPlayerToMoveNature() || checkConsistency((IIAction) action)) {
 			addActionToHistory(action, getPlayerToMove());
 			action.perform(this);
+		} else {
+			throw new IllegalStateException("Inconsistent move.");
 		}
 	}
 
