@@ -92,7 +92,7 @@ public class SequenceImpl implements Sequence {
 		return result;
 	}
 
-	public Sequence[] getAllPrefixesActionoArray() {
+	public Sequence[] getAllPrefixesArray() {
 		Sequence[] result = new Sequence[size() + 1];
 		Sequence tmpSeq = new SequenceImpl(player);
 
@@ -106,7 +106,7 @@ public class SequenceImpl implements Sequence {
 		return result;
 	}
 
-	public boolean isPrefix(Sequence longerSeq) {
+	public boolean isPrefixOf(Sequence longerSeq) {
 		if (this.size() > longerSeq.size())
 			return false;
 
