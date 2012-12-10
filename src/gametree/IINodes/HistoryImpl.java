@@ -6,13 +6,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import gametree.interfaces.Action;
 import gametree.interfaces.History;
 import gametree.interfaces.Player;
 import gametree.interfaces.Sequence;
 
 public class HistoryImpl implements History {
-	
+
 	private Map<Player, Sequence> sequencesOfPlayers;
 
 	public HistoryImpl(Player[] players) {
@@ -26,7 +28,7 @@ public class HistoryImpl implements History {
 		this.sequencesOfPlayers = new HashMap<Player, Sequence>();
 		for (Entry<Player, Sequence> entry : sequencesOfPlayers.entrySet()) {
 			this.sequencesOfPlayers.put(entry.getKey(), new SequenceImpl(entry.getValue()));
-		}		
+		}
 	}
 
 	public Sequence getSequenceOf(Player player) {
@@ -56,5 +58,33 @@ public class HistoryImpl implements History {
 	@Override
 	public Set<Player> keySet() {
 		return sequencesOfPlayers.keySet();
+	}
+	
+	@Override
+	public int hashCode() {
+		HashCodeBuilder hcb = new HashCodeBuilder(17,31); 
+		
+		hcb.append(sequencesOfPlayers);
+		return hcb.toHashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this.getClass() != obj.getClass())
+			return false;
+		if (this.hashCode() != obj.hashCode())
+			return false;
+		History other = (History) obj;
+
+		for (Player player : sequencesOfPlayers.keySet()) {
+			if (!sequencesOfPlayers.get(player).equals(other.getSequenceOf(player)))
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return sequencesOfPlayers.toString();
 	}
 }

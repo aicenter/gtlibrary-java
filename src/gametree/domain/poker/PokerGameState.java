@@ -39,7 +39,7 @@ public abstract class PokerGameState extends IIGameState {
 	@SuppressWarnings("unchecked")
 	public PokerGameState(PokerGameState gameState) {
 		super();
-		this.history = history.copy();
+		this.history = gameState.getHistory().copy();
 		this.sequenceForAllPlayers = (LinkedList<PokerAction>) gameState.sequenceForAllPlayers.clone();
 		this.playerCards = gameState.playerCards.clone();
 		this.players = gameState.players.clone();
