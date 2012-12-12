@@ -5,15 +5,16 @@ import static org.junit.Assert.*;
 import java.util.LinkedList;
 import java.util.List;
 
-import gametree.domain.poker.kuhn.KPGameInfo;
-import gametree.domain.poker.kuhn.KuhnPokerAction;
-import gametree.domain.poker.kuhn.KuhnPokerExpander;
-import gametree.domain.poker.kuhn.KuhnPokerGameState;
-import gametree.interfaces.Action;
-import gametree.interfaces.Expander;
-import gametree.interfaces.GameState;
 
 import org.junit.Test;
+
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerAction;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameState;
 
 public class KPExpanderTest {
 

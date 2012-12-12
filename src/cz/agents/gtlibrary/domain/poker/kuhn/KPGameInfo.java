@@ -1,8 +1,8 @@
-package gametree.domain.poker.kuhn;
+package cz.agents.gtlibrary.domain.poker.kuhn;
 
-import gametree.IINodes.PlayerImpl;
-import gametree.interfaces.GameInfo;
-import gametree.interfaces.Player;
+import cz.agents.gtlibrary.iinodes.PlayerImpl;
+import cz.agents.gtlibrary.interfaces.GameInfo;
+import cz.agents.gtlibrary.interfaces.Player;
 
 public class KPGameInfo implements GameInfo {
 	public static final Player FIRST_PLAYER = new PlayerImpl(0);

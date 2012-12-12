@@ -1,12 +1,13 @@
-package gametree.IINodes;
+package cz.agents.gtlibrary.iinodes;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import gametree.interfaces.Action;
-import gametree.interfaces.Player;
-import gametree.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
+
 
 public class SequenceImpl implements Sequence {
 

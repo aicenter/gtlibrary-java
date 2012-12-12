@@ -1,16 +1,17 @@
 package iigamestate;
 
 import static org.junit.Assert.*;
-import gametree.IINodes.HistoryImpl;
-import gametree.domain.poker.kuhn.KPGameInfo;
-import gametree.domain.poker.kuhn.KuhnPokerAction;
-import gametree.domain.poker.kuhn.KuhnPokerGameState;
-import gametree.interfaces.Action;
-import gametree.interfaces.GameState;
-import gametree.interfaces.History;
-import gametree.interfaces.Player;
 
 import org.junit.Test;
+
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerAction;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.iinodes.HistoryImpl;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.History;
+import cz.agents.gtlibrary.interfaces.Player;
 
 public class IIGameStateTest {
 

@@ -1,4 +1,4 @@
-package gametree.domain.poker;
+package cz.agents.gtlibrary.domain.poker;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -6,9 +6,10 @@ import java.util.LinkedList;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import gametree.IINodes.HistoryImpl;
-import gametree.IINodes.IIGameState;
-import gametree.interfaces.Player;
+import cz.agents.gtlibrary.iinodes.HistoryImpl;
+import cz.agents.gtlibrary.iinodes.IIGameState;
+import cz.agents.gtlibrary.interfaces.Player;
+
 
 public abstract class PokerGameState extends IIGameState {
 
@@ -244,6 +245,20 @@ public abstract class PokerGameState extends IIGameState {
 		int moveNum = 0;
 
 		hcb.append(playerCards[player.getId()]);
+		while (iterator.hasNext()) {
+			hcb.append(iterator.next().observableISHash());
+			hcb.append(moveNum++);
+		}
+		return hcb.toHashCode();
+	}
+	
+	@Override
+	public long getISEquivalenceForPlayerToMove() {
+		HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
+		Iterator<PokerAction> iterator = sequenceForAllPlayers.iterator();
+		int moveNum = 0;
+
+		hcb.append(playerCards[getPlayerToMove().getId()]);
 		while (iterator.hasNext()) {
 			hcb.append(iterator.next().observableISHash());
 			hcb.append(moveNum++);

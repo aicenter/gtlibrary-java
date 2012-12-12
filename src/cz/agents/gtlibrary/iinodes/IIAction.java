@@ -1,7 +1,7 @@
-package gametree.IINodes;
+package cz.agents.gtlibrary.iinodes;
 
-import gametree.interfaces.Action;
-import gametree.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.GameState;
 
 public abstract class IIAction implements Action {
 	protected long isHash;

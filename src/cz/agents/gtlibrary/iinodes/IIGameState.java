@@ -1,9 +1,10 @@
-package gametree.IINodes;
+package cz.agents.gtlibrary.iinodes;
 
-import gametree.interfaces.Action;
-import gametree.interfaces.GameState;
-import gametree.interfaces.History;
-import gametree.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.History;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 
 public abstract class IIGameState implements GameState {
 
@@ -49,6 +50,16 @@ public abstract class IIGameState implements GameState {
 	@Override
 	public History getHistory() {
 		return history;
+	}
+	
+	@Override
+	public Sequence getSequenceFor(Player player) {
+		return history.getSequenceOf(player);
+	}
+	
+	@Override
+	public Sequence getSequenceForPlayerToMove() {
+		return history.getSequenceOf(getPlayerToMove());
 	}
 
 	@Override

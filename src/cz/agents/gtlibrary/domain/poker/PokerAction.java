@@ -1,10 +1,11 @@
-package gametree.domain.poker;
+package cz.agents.gtlibrary.domain.poker;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import gametree.IINodes.IIAction;
-import gametree.interfaces.GameState;
-import gametree.interfaces.Player;
+import cz.agents.gtlibrary.iinodes.IIAction;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
+
 
 public class PokerAction extends IIAction {
 	

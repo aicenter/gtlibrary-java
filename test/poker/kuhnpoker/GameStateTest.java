@@ -2,15 +2,16 @@ package poker.kuhnpoker;
 
 import static org.junit.Assert.*;
 
-import gametree.domain.poker.PokerAction;
-import gametree.domain.poker.kuhn.KPGameInfo;
-import gametree.domain.poker.kuhn.KuhnPokerAction;
-import gametree.domain.poker.kuhn.KuhnPokerGameState;
-import gametree.interfaces.Action;
 
 import java.util.LinkedList;
 
 import org.junit.Test;
+
+import cz.agents.gtlibrary.domain.poker.PokerAction;
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerAction;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.interfaces.Action;
 
 public class GameStateTest {
 	

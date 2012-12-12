@@ -1,4 +1,4 @@
-package gametree.interfaces;
+package cz.agents.gtlibrary.interfaces;
 
 import java.util.HashSet;
 
