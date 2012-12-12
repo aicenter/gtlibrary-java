@@ -4,14 +4,15 @@ import static org.junit.Assert.*;
 
 import java.util.HashSet;
 
-import gametree.IINodes.PlayerImpl;
-import gametree.IINodes.SequenceImpl;
-import gametree.domain.poker.kuhn.KuhnPokerAction;
-import gametree.interfaces.Action;
-import gametree.interfaces.Player;
-import gametree.interfaces.Sequence;
 
 import org.junit.Test;
+
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerAction;
+import cz.agents.gtlibrary.iinodes.PlayerImpl;
+import cz.agents.gtlibrary.iinodes.SequenceImpl;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class SequenceTest {
 

@@ -1,4 +1,4 @@
-package gametree.interfaces;
+package cz.agents.gtlibrary.interfaces;
 
 public interface GameInfo {
 	public double getMaxUtility();

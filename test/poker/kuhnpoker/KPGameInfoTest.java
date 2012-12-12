@@ -1,10 +1,11 @@
 package poker.kuhnpoker;
 
 import static org.junit.Assert.*;
-import gametree.IINodes.PlayerImpl;
-import gametree.domain.poker.kuhn.KPGameInfo;
 
 import org.junit.Test;
+
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
+import cz.agents.gtlibrary.iinodes.PlayerImpl;
 
 public class KPGameInfoTest {
 

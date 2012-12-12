@@ -1,14 +1,14 @@
-package gametree.domain.poker.kuhn;
+package cz.agents.gtlibrary.domain.poker.kuhn;
 
-import gametree.domain.poker.PokerAction;
-import gametree.domain.poker.PokerGameState;
-import gametree.interfaces.GameState;
-import gametree.interfaces.Player;
+import cz.agents.gtlibrary.domain.poker.PokerAction;
+import cz.agents.gtlibrary.domain.poker.PokerGameState;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
 
-public class KuhnPokerGameState extends PokerGameState{
-	
+public class KuhnPokerGameState extends PokerGameState {
+
 	public KuhnPokerGameState() {
-		super(new Player[]{KPGameInfo.FIRST_PLAYER, KPGameInfo.SECOND_PLAYER, KPGameInfo.NATURE}, KPGameInfo.ANTE);
+		super(new Player[] { KPGameInfo.FIRST_PLAYER, KPGameInfo.SECOND_PLAYER, KPGameInfo.NATURE }, KPGameInfo.ANTE);
 	}
 
 	public KuhnPokerGameState(KuhnPokerGameState gameState) {
@@ -45,6 +45,17 @@ public class KuhnPokerGameState extends PokerGameState{
 	@Override
 	protected int getTerminalRound() {
 		return 2;
+	}
+
+	@Override
+	public double[] getDistributionOfNature() {
+		if (!isPlayerToMoveNature()) {
+			return new double[] { 0 };
+		}
+		if (playerCards[0] != null) {
+			return new double[] { 0.5, 0.5 };
+		}
+		return new double[] { 1. / 3, 1. / 3, 1. / 3 };
 	}
 
 }

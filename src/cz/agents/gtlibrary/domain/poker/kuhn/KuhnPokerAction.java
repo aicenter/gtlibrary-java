@@ -1,7 +1,7 @@
-package gametree.domain.poker.kuhn;
+package cz.agents.gtlibrary.domain.poker.kuhn;
 
-import gametree.domain.poker.PokerAction;
-import gametree.interfaces.Player;
+import cz.agents.gtlibrary.domain.poker.PokerAction;
+import cz.agents.gtlibrary.interfaces.Player;
 
 public class KuhnPokerAction extends PokerAction {
 

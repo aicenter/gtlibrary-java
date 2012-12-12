@@ -1,31 +1,30 @@
-package gametree.IINodes;
+package cz.agents.gtlibrary.iinodes;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.History;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.FixedSizeMap;
 
-import gametree.interfaces.Action;
-import gametree.interfaces.History;
-import gametree.interfaces.Player;
-import gametree.interfaces.Sequence;
 
 public class HistoryImpl implements History {
 
-	private Map<Player, Sequence> sequencesOfPlayers;
+	private FixedSizeMap<Player, Sequence> sequencesOfPlayers;
 
 	public HistoryImpl(Player[] players) {
-		sequencesOfPlayers = new HashMap<Player, Sequence>();
+		sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(players.length);
 		for (Player player : players) {
 			sequencesOfPlayers.put(player, new SequenceImpl(player));
 		}
 	}
 
 	public HistoryImpl(Map<Player, Sequence> sequencesOfPlayers) {
-		this.sequencesOfPlayers = new HashMap<Player, Sequence>();
+		this.sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(sequencesOfPlayers.size());
 		for (Entry<Player, Sequence> entry : sequencesOfPlayers.entrySet()) {
 			this.sequencesOfPlayers.put(entry.getKey(), new SequenceImpl(entry.getValue()));
 		}
@@ -44,6 +43,11 @@ public class HistoryImpl implements History {
 	public void addActionOf(Action action, Player player) {
 		sequencesOfPlayers.get(player).addLast(action);
 	}
+	
+	@Override
+	public Map<Player, Sequence> getSequencesOfPlayers() {
+		return sequencesOfPlayers;
+	}
 
 	@Override
 	public Set<Entry<Player, Sequence>> entrySet() {
@@ -59,13 +63,15 @@ public class HistoryImpl implements History {
 	public Set<Player> keySet() {
 		return sequencesOfPlayers.keySet();
 	}
-	
+
 	@Override
 	public int hashCode() {
-		HashCodeBuilder hcb = new HashCodeBuilder(17,31); 
+		int sum = 0;
 		
-		hcb.append(sequencesOfPlayers);
-		return hcb.toHashCode();
+		for (Entry<Player, Sequence> entry : entrySet()) {
+			sum += (entry.getKey()==null   ? 0 : entry.getKey().hashCode()) ^ (entry.getValue()==null ? 0 : entry.getValue().hashCode());
+		}
+		return sum;
 	}
 
 	@Override
@@ -76,15 +82,13 @@ public class HistoryImpl implements History {
 			return false;
 		History other = (History) obj;
 
-		for (Player player : sequencesOfPlayers.keySet()) {
-			if (!sequencesOfPlayers.get(player).equals(other.getSequenceOf(player)))
-				return false;
-		}
-		return true;
+		return sequencesOfPlayers.equals(other.getSequencesOfPlayers());
 	}
 
 	@Override
 	public String toString() {
 		return sequencesOfPlayers.toString();
 	}
+
+
 }

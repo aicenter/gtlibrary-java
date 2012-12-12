@@ -1,6 +1,6 @@
-package gametree.IINodes;
+package cz.agents.gtlibrary.iinodes;
 
-import gametree.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Player;
 
 public class PlayerImpl implements Player {
 	

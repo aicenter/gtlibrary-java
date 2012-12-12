@@ -1,13 +1,14 @@
-package gametree.domain.poker.kuhn;
+package cz.agents.gtlibrary.domain.poker.kuhn;
 
 import java.util.LinkedList;
 import java.util.List;
 
-import gametree.domain.poker.PokerAction;
-import gametree.interfaces.Action;
-import gametree.interfaces.Expander;
-import gametree.interfaces.GameState;
-import gametree.interfaces.InformationSet;
+import cz.agents.gtlibrary.domain.poker.PokerAction;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.InformationSet;
+
 
 public class KuhnPokerExpander implements Expander {
 

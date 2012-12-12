@@ -1,15 +1,16 @@
 package history;
 
 import static org.junit.Assert.*;
-import gametree.IINodes.HistoryImpl;
-import gametree.IINodes.PlayerImpl;
-import gametree.IINodes.SequenceImpl;
-import gametree.domain.poker.kuhn.KuhnPokerAction;
-import gametree.interfaces.History;
-import gametree.interfaces.Player;
-import gametree.interfaces.Sequence;
 
 import org.junit.Test;
+
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerAction;
+import cz.agents.gtlibrary.iinodes.HistoryImpl;
+import cz.agents.gtlibrary.iinodes.PlayerImpl;
+import cz.agents.gtlibrary.iinodes.SequenceImpl;
+import cz.agents.gtlibrary.interfaces.History;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class HistoryTest {
 
