@@ -19,14 +19,14 @@ public class HistoryImpl implements History {
 	public HistoryImpl(Player[] players) {
 		sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(players.length);
 		for (Player player : players) {
-			sequencesOfPlayers.put(player, new SequenceImpl(player));
+			sequencesOfPlayers.put(player, new LinkedListSequenceImpl(player));
 		}
 	}
 
 	public HistoryImpl(Map<Player, Sequence> sequencesOfPlayers) {
 		this.sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(sequencesOfPlayers.size());
 		for (Entry<Player, Sequence> entry : sequencesOfPlayers.entrySet()) {
-			this.sequencesOfPlayers.put(entry.getKey(), new SequenceImpl(entry.getValue()));
+			this.sequencesOfPlayers.put(entry.getKey(), new LinkedListSequenceImpl(entry.getValue()));
 		}
 	}
 
@@ -76,6 +76,8 @@ public class HistoryImpl implements History {
 
 	@Override
 	public boolean equals(Object obj) {
+		if(obj == null)
+			return false;
 		if (this.getClass() != obj.getClass())
 			return false;
 		if (this.hashCode() != obj.hashCode())
