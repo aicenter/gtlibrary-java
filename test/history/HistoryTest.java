@@ -7,7 +7,7 @@ import org.junit.Test;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerAction;
 import cz.agents.gtlibrary.iinodes.HistoryImpl;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
-import cz.agents.gtlibrary.iinodes.SequenceImpl;
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -29,8 +29,8 @@ public class HistoryTest {
 		Player player1 = new PlayerImpl(0);
 		Player player2 = new PlayerImpl(1);
 		History history = new HistoryImpl(new Player[]{player1, player2});
-		Sequence sequence1 = new SequenceImpl(player1);
-		Sequence sequence2 = new SequenceImpl(player2);
+		Sequence sequence1 = new LinkedListSequenceImpl(player1);
+		Sequence sequence2 = new LinkedListSequenceImpl(player2);
 		
 		sequence1.addLast(new KuhnPokerAction("b", 1, player1));
 		sequence2.addLast(new KuhnPokerAction("ch", 1, player2));
@@ -46,8 +46,8 @@ public class HistoryTest {
 		Player player1 = new PlayerImpl(0);
 		Player player2 = new PlayerImpl(1);
 		History history = new HistoryImpl(new Player[]{player1, player2});
-		Sequence sequence1 = new SequenceImpl(player1);
-		Sequence sequence2 = new SequenceImpl(player2);
+		Sequence sequence1 = new LinkedListSequenceImpl(player1);
+		Sequence sequence2 = new LinkedListSequenceImpl(player2);
 		
 		sequence1.addLast(new KuhnPokerAction("b", 1, player1));
 		sequence2.addLast(new KuhnPokerAction("ch", 1, player2));

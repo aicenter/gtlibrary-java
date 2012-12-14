@@ -28,6 +28,7 @@ public abstract class IIConfig<I extends InformationSet> implements AlgorithmCon
 		if (sequenceMap == null) {
 			sequenceMap = new HashMap<Sequence, I>();
 			sequenceMap.put(sequence, informationSet);
+			allInformationSets.put(isHash, sequenceMap);
 			return;
 		}
 		addISToSequenceMap(sequence, informationSet, sequenceMap);
@@ -37,7 +38,7 @@ public abstract class IIConfig<I extends InformationSet> implements AlgorithmCon
 		InformationSet isFromMap = sequenceMap.get(sequence);
 
 		if (isFromMap == null) {
-			sequenceMap.put(new SequenceImpl(sequence), informationSet);
+			sequenceMap.put(new LinkedListSequenceImpl(sequence), informationSet);
 		}
 	}
 

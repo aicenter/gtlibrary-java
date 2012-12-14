@@ -61,19 +61,14 @@ public abstract class PokerGameState extends IIGameState {
 			return utilities;
 		}
 		if (isGameEnd()) {
-			switch (hasPlayerOneWon()) {
-			case 1:
+			int result = hasPlayerOneWon();
+			
+			if(result > 0)
 				utilities = new double[] { gainForFirstPlayer, -gainForFirstPlayer, 0 };
-				break;
-			case 0:
+			else if(result == 0)
 				utilities = new double[] { 0, 0, 0 };
-				break;
-			case -1:
+			else
 				utilities = new double[] { gainForFirstPlayer - pot, pot - gainForFirstPlayer, 0 };
-				break;
-			default:
-				break;
-			}
 			return utilities;
 		}
 		return new double[] { 0 };
@@ -254,6 +249,9 @@ public abstract class PokerGameState extends IIGameState {
 	
 	@Override
 	public long getISEquivalenceForPlayerToMove() {
+		if(isPlayerToMoveNature())
+			return 0;
+		
 		HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
 		Iterator<PokerAction> iterator = sequenceForAllPlayers.iterator();
 		int moveNum = 0;
