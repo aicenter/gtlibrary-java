@@ -5,9 +5,11 @@ import cz.agents.gtlibrary.interfaces.Player;
 public class PlayerImpl implements Player {
 	
 	private int id;
+	private int hashCode;
 	
 	public PlayerImpl(int id) {
 		this.id = id;
+		hashCode = computeHashCode();
 	}
 
 	@Override
@@ -15,12 +17,17 @@ public class PlayerImpl implements Player {
 		return id;
 	}	
 	
-	@Override
-	public int hashCode() {
+	public int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
+		
 		result = prime * result + id;
 		return result;
+	}
+	
+	@Override
+	public int hashCode() {
+		return hashCode;
 	}
 
 	@Override

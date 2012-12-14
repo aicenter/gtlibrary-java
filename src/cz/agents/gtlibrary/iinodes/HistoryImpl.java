@@ -15,6 +15,7 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 public class HistoryImpl implements History {
 
 	private FixedSizeMap<Player, Sequence> sequencesOfPlayers;
+	private int hashCode = -1;
 
 	public HistoryImpl(Player[] players) {
 		sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(players.length);
@@ -42,6 +43,7 @@ public class HistoryImpl implements History {
 	@Override
 	public void addActionOf(Action action, Player player) {
 		sequencesOfPlayers.get(player).addLast(action);
+		hashCode = -1;
 	}
 	
 	@Override
@@ -66,12 +68,14 @@ public class HistoryImpl implements History {
 
 	@Override
 	public int hashCode() {
-		int sum = 0;
+		if(hashCode != -1)
+			return hashCode;
+		hashCode = 0;
 		
 		for (Entry<Player, Sequence> entry : entrySet()) {
-			sum += (entry.getKey()==null   ? 0 : entry.getKey().hashCode()) ^ (entry.getValue()==null ? 0 : entry.getValue().hashCode());
+			hashCode += (entry.getKey()==null   ? 0 : entry.getKey().hashCode()) ^ (entry.getValue()==null ? 0 : entry.getValue().hashCode());
 		}
-		return sum;
+		return hashCode;
 	}
 
 	@Override
