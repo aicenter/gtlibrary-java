@@ -8,6 +8,7 @@ import org.apache.wicket.util.collections.MiniMap;
 public class FixedSizeMap<K, V> extends MiniMap<K, V> {
 
 	private static final long serialVersionUID = 2308220975214930664L;
+	private int hashCode = -1;
 
 	public FixedSizeMap(int maxEntries) {
 		super(maxEntries);
@@ -18,15 +19,35 @@ public class FixedSizeMap<K, V> extends MiniMap<K, V> {
 	}
 
 	@Override
+	public V put(K arg0, V arg1) {
+		hashCode = -1;
+		return super.put(arg0, arg1);
+	}
+
+	@Override
+	public void putAll(Map<? extends K, ? extends V> arg0) {
+		hashCode = -1;
+		super.putAll(arg0);
+	}
+
+	@Override
+	public V remove(Object arg0) {
+		hashCode = -1;
+		return super.remove(arg0);
+	}
+
+	@Override
 	public int hashCode() {
-		int sum = 0;
+		if (hashCode != -1)
+			return hashCode;
+		hashCode = 0;
 
 		for (K key : keySet()) {
 			V value = get(key);
 
-			sum += (key == null ? 0 : key.hashCode()) ^ (value == null ? 0 : value.hashCode());
+			hashCode += (key == null ? 0 : key.hashCode()) ^ (value == null ? 0 : value.hashCode());
 		}
-		return sum;
+		return hashCode;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -55,10 +76,10 @@ public class FixedSizeMap<K, V> extends MiniMap<K, V> {
 		StringBuilder builder = new StringBuilder();
 		Iterator<K> iterator = keySet().iterator();
 		builder.append("{");
-		while(iterator.hasNext()) {
+		while (iterator.hasNext()) {
 			K next = iterator.next();
 			builder.append("[" + next + " = " + get(next) + "]");
-			if(iterator.hasNext()) {
+			if (iterator.hasNext()) {
 				builder.append(", ");
 			}
 		}

@@ -1,13 +1,11 @@
 package cz.agents.gtlibrary.domain.poker;
 
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import cz.agents.gtlibrary.iinodes.IIAction;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 
 
-public class PokerAction extends IIAction {
+public abstract class PokerAction extends IIAction {
 	
 	protected final String action;
 	protected final Player player;
@@ -19,9 +17,14 @@ public class PokerAction extends IIAction {
 		super(isHash);
 		this.action = action;
 		this.player = player;
-		cachedHash = new HashCodeBuilder(17,37).append(action).append(player).append(isHash).toHashCode();
-		cachedHashWithoutIS = new HashCodeBuilder(17,37).append(action).append(player).toHashCode();
+		cachedHash = computeHashCode();
+		cachedHashWithoutIS = computeHashCodeWithoutIS();
 	}
+	
+	public abstract int computeHashCode();
+	
+	public abstract int computeHashCodeWithoutIS();
+
 
 	@Override
 	public void perform(GameState gameState) {

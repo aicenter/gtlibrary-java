@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.cfr;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
@@ -17,22 +18,21 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Triplet;
 
-public class VanillaCFR extends CFR<VanillaInformationSet> {//udìlat probabilityUpdater, valuesUpdater, strategy updater protože tohle je bordel
+public class VanillaCFR extends CFR<VanillaInformationSet> {
 	
 	public static void main(String[] args) {
+		new Scanner(System.in).next();
 		GameState rootState = new KuhnPokerGameState();
 		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new KuhnPokerGameState());
 		VanillaCFR cfr = new VanillaCFR(config);
 		
 		cfr.buildGameTree(rootState, new KuhnPokerExpander());
-		cfr.updateTree(10000);
-		System.out.println(config.getInformationSetFor(rootState));
+		cfr.updateTree(100000);
+//		System.out.println(config.getInformationSetFor(rootState));
 		GameState newState = rootState.performAction(new KuhnPokerAction("0", 0, KPGameInfo.NATURE));
 		newState.performActionModifyingThisState(new KuhnPokerAction("1", 0, KPGameInfo.NATURE));
-		System.out.println();
-		System.out.println(config.getInformationSetFor(newState));
-//		System.out.println(config.getInformationSetFor(rootState).getStrategy());
-//		System.out.println(config.getInformationSetFor(rootState).getAverageStrategy());
+//		System.out.println();
+//		System.out.println(config.getInformationSetFor(newState));
 	}
 
 	public VanillaCFR(CFRConfig<VanillaInformationSet> config) {
@@ -112,13 +112,15 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {//udìlat probability
 
 		for (Triplet<Long, History, Player> succTriplet : valuesOfChildren.keySet()) {
 			Action action = getLastAction(succTriplet, triplet);
+			float[] valueOfChild = valuesOfChildren.get(succTriplet);
+			float[] averageValueOfChild = averageValuesOfChildren.get(succTriplet);
 			
 			for (int j = 0; j < valuesOfHistory.length; j++) {
-				valuesOfHistory[j] += set.getStrategyFor(action) * valuesOfChildren.get(succTriplet)[j];
-				avgValuesOfHistory[j] += set.getAverageStrategyFor(action) * averageValuesOfChildren.get(succTriplet)[j];
+				valuesOfHistory[j] += set.getStrategyFor(action) * valueOfChild[j];
+				avgValuesOfHistory[j] += set.getAverageStrategyFor(action) * averageValueOfChild[j];
 			}
-			valuesOfActionsForHistory.put(action, valuesOfChildren.get(succTriplet)[indexOfPlayer]);
-			avgValuesOfActionsForHistory.put(action, averageValuesOfChildren.get(succTriplet)[indexOfPlayer]);
+			valuesOfActionsForHistory.put(action, valueOfChild[indexOfPlayer]);
+			avgValuesOfActionsForHistory.put(action, averageValueOfChild[indexOfPlayer]);
 		}
 		set.setValuesForHistory(triplet.getSecond(), valuesOfHistory);
 		set.setValuesOfActionsForHistory(triplet.getSecond(), valuesOfActionsForHistory);
