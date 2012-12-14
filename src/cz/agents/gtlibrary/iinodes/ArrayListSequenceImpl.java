@@ -130,7 +130,9 @@ public class ArrayListSequenceImpl implements Sequence {
 		assert (this.actions.size() >= size);
 		Sequence result = new ArrayListSequenceImpl(player);
 
-		result.addAllAsLast(this.actions.subList(0, size));
+		for (int i = 0; i < size; i++) {
+			result.addLast(actions.get(i));
+		}
 		return result;
 	}
 
@@ -138,7 +140,9 @@ public class ArrayListSequenceImpl implements Sequence {
 		assert (this.actions.size() - from >= size);
 		Sequence result = new ArrayListSequenceImpl(player);
 
-		result.addAllAsLast(this.actions.subList(from, from + size));
+		for (int i = from; i < from + size; i++) {
+			result.addLast(actions.get(i));
+		}
 		return result;
 	}
 

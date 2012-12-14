@@ -130,8 +130,15 @@ public class LinkedListSequenceImpl implements Sequence {
 	public Sequence getSubSequence(int size) {
 		assert (this.actions.size() >= size);
 		Sequence result = new LinkedListSequenceImpl(player);
-
-		result.addAllAsLast(this.actions.subList(0, size));
+		int index = 0;
+		
+		for (Action action : actions) {
+			if(index >= size) {
+				break;
+			}
+			result.addLast(action);
+			index++;
+		}
 		return result;
 	}
 
