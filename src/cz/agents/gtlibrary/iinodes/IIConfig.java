@@ -1,60 +1,31 @@
 package cz.agents.gtlibrary.iinodes;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.Pair;
 
+public abstract class IIConfig<I extends InformationSetImpl> implements AlgorithmConfig<I> {
 
-public abstract class IIConfig<I extends InformationSet> implements AlgorithmConfig<I> {
-
-	private Map<Long, Map<Sequence, I>> allInformationSets;
+	private HashMap<Pair<Integer, Sequence>, I> allInformationSets;
 
 	public IIConfig() {
-		allInformationSets = new HashMap<Long, Map<Sequence, I>>();
+		allInformationSets = new HashMap<Pair<Integer, Sequence>, I>();
 	}
 
 	@Override
 	public void addInformationSetFor(GameState gameState, I informationSet) {
-		addInformationSetFor(gameState.getISEquivalenceForPlayerToMove(), gameState.getSequenceForPlayerToMove(), informationSet);
-	}
-	
-	public void addInformationSetFor(long isHash, Sequence sequence, I informationSet) {
-		Map<Sequence, I> sequenceMap = allInformationSets.get(isHash);
-
-		if (sequenceMap == null) {
-			sequenceMap = new HashMap<Sequence, I>();
-			sequenceMap.put(sequence, informationSet);
-			allInformationSets.put(isHash, sequenceMap);
-			return;
-		}
-		addISToSequenceMap(sequence, informationSet, sequenceMap);
-	}
-
-	private void addISToSequenceMap(Sequence sequence, I informationSet, Map<Sequence, I> sequenceMap) {
-		InformationSet isFromMap = sequenceMap.get(sequence);
-
-		if (isFromMap == null) {
-			sequenceMap.put(new LinkedListSequenceImpl(sequence), informationSet);
-		}
+		allInformationSets.put(gameState.getISKeyForPlayerToMove(), informationSet);
+		informationSet.addStateToIS(gameState);
 	}
 
 	public I getInformationSetFor(GameState gameState) {
-		return getInformationSetFor(gameState.getISEquivalenceForPlayerToMove(), gameState.getSequenceForPlayerToMove());
+		return allInformationSets.get(gameState.getISKeyForPlayerToMove());
 	}
 	
-	public I getInformationSetFor(long isHash, Sequence sequence) {
-		Map<Sequence, I> sequenceMap = allInformationSets.get(isHash);
-		
-		if (sequenceMap == null)
-			return null;
-		return sequenceMap.get(sequence);
-	}
-	
-	public Map<Long, Map<Sequence, I>> getAllInformationSets() {
+	public HashMap<Pair<Integer, Sequence>, I> getAllInformationSets() {
 		return allInformationSets;
 	}
 }

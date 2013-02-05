@@ -9,7 +9,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import cz.agents.gtlibrary.iinodes.HistoryImpl;
 import cz.agents.gtlibrary.iinodes.IIGameState;
 import cz.agents.gtlibrary.interfaces.Player;
-
+import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.Pair;
 
 public abstract class PokerGameState extends IIGameState {
 
@@ -22,6 +23,7 @@ public abstract class PokerGameState extends IIGameState {
 	protected int pot;
 	protected int currentPlayerIndex;
 	protected int gainForFirstPlayer;
+	protected int hash = -1;
 
 	private double[] utilities;
 
@@ -50,7 +52,6 @@ public abstract class PokerGameState extends IIGameState {
 		this.gainForFirstPlayer = gameState.gainForFirstPlayer;
 	}
 
-	@Override
 	public Player[] getAllPlayers() {
 		return players;
 	}
@@ -62,10 +63,10 @@ public abstract class PokerGameState extends IIGameState {
 		}
 		if (isGameEnd()) {
 			int result = hasPlayerOneWon();
-			
-			if(result > 0)
+
+			if (result > 0)
 				utilities = new double[] { gainForFirstPlayer, -gainForFirstPlayer, 0 };
-			else if(result == 0)
+			else if (result == 0)
 				utilities = new double[] { 0, 0, 0 };
 			else
 				utilities = new double[] { gainForFirstPlayer - pot, pot - gainForFirstPlayer, 0 };
@@ -105,11 +106,11 @@ public abstract class PokerGameState extends IIGameState {
 	public PokerAction[] getPlayerCards() {
 		return playerCards;
 	}
-	
+
 	public int getPot() {
 		return pot;
 	}
-	
+
 	public int getGainForFirstPlayer() {
 		return gainForFirstPlayer;
 	}
@@ -139,16 +140,16 @@ public abstract class PokerGameState extends IIGameState {
 		sequenceForAllPlayers.add(action);
 	}
 
-	public boolean attendCard(PokerAction action) {
+	public void attendCard(PokerAction action) {
 		if (round == 0) {
+			hash = -1;
 			dealCardToPlayer(action);
-			return true;
 		}
-		return false;
 	}
 
 	public void check(PokerAction action) {
 		if (isCheckValid()) {
+			hash = -1;
 			if (isLastMoveCheck()) {
 				increaseRound();
 			}
@@ -167,6 +168,7 @@ public abstract class PokerGameState extends IIGameState {
 
 	public void bet(PokerAction action) {
 		if (isBetOrCheckValid()) {
+			hash = -1;
 			addToPot(getValueOfBet(action));
 			addActionToSequence(action);
 			switchPlayers();
@@ -201,17 +203,19 @@ public abstract class PokerGameState extends IIGameState {
 
 	public void call(PokerAction action) {
 		if (isCallValid()) {
+			hash = -1;
 			addToPot(getValueOfCall(action));
 			addActionToSequence(action);
 			increaseRound();
 			switchPlayers();
 		}
 	}
-	
+
 	@Override
 	public boolean isGameEnd() {
 		return round == getTerminalRound();
 	}
+
 	protected void addToPot(int bet) {
 		pot += bet;
 		if (currentPlayerIndex == 1) {
@@ -221,37 +225,20 @@ public abstract class PokerGameState extends IIGameState {
 
 	protected abstract int getValueOfCall(PokerAction action);
 
-	public boolean fold(PokerAction action) {
+	public void fold(PokerAction action) {
 		if (isFoldValid()) {
+			hash = -1;
 			round = getTerminalRound();
 			addActionToSequence(action);
 			switchPlayers();
-			return true;
 		}
-		return false;
 	}
 
-	protected abstract int getTerminalRound();
-
 	@Override
-	public long getISEquivalenceFor(Player player) {
-		HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
-		Iterator<PokerAction> iterator = sequenceForAllPlayers.iterator();
-		int moveNum = 0;
+	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+		if (isPlayerToMoveNature())
+			return new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
 
-		hcb.append(playerCards[player.getId()]);
-		while (iterator.hasNext()) {
-			hcb.append(iterator.next().observableISHash());
-			hcb.append(moveNum++);
-		}
-		return hcb.toHashCode();
-	}
-	
-	@Override
-	public long getISEquivalenceForPlayerToMove() {
-		if(isPlayerToMoveNature())
-			return 0;
-		
 		HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
 		Iterator<PokerAction> iterator = sequenceForAllPlayers.iterator();
 		int moveNum = 0;
@@ -261,12 +248,22 @@ public abstract class PokerGameState extends IIGameState {
 			hcb.append(iterator.next().observableISHash());
 			hcb.append(moveNum++);
 		}
-		return hcb.toHashCode();
+		return new Pair<Integer, Sequence>(hcb.toHashCode(), history.getSequenceOf(getPlayerToMove()));
 	}
+
+	protected abstract int getTerminalRound();
+
+	/**
+	 * 
+	 * @return 1 if players[0] won, -1 if players[1] won, 0 if tie
+	 */
+	protected abstract int hasPlayerOneWon();
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(17, 31).append(history).toHashCode();
+		if (hash == -1)
+			hash = new HashCodeBuilder(17, 31).append(history).toHashCode();
+		return hash;
 	}
 
 	@Override
@@ -300,10 +297,9 @@ public abstract class PokerGameState extends IIGameState {
 		return true;
 	}
 
-	/**
-	 * 
-	 * @return 1 if players[0] won, -1 if players[1] won, 0 if tie
-	 */
-	protected abstract int hasPlayerOneWon();
+	@Override
+	public String toString() {
+		return history.toString();
+	}
 
 }

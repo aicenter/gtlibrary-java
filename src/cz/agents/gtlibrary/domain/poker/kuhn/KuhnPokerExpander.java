@@ -4,13 +4,18 @@ import java.util.LinkedList;
 import java.util.List;
 
 import cz.agents.gtlibrary.domain.poker.PokerAction;
+import cz.agents.gtlibrary.iinodes.ExpanderImpl;
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
 
-public class KuhnPokerExpander implements Expander {
+public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>{
+
+	public KuhnPokerExpander(AlgorithmConfig<I> algConfig) {
+		super(algConfig);
+	}
 
 	@Override
 	public List<Action> getActions(GameState gameState) {
@@ -27,8 +32,7 @@ public class KuhnPokerExpander implements Expander {
 
 	@Override
 	public List<Action> getActions(InformationSet informationSet) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 	
 	private void addActionsOfRegularPlayer(KuhnPokerGameState kpState, List<Action> actions) {
@@ -58,16 +62,17 @@ public class KuhnPokerExpander implements Expander {
 	}
 
 	private void addActionsOfNature(KuhnPokerGameState kpState, List<Action> actions) {
+		I infoSet = getAlgorithmConfig().getInformationSetFor(kpState);
 		if (isCardAvailableInState("0", kpState))
-			actions.add(new KuhnPokerAction("0", 0, kpState.getPlayerToMove()));
+			actions.add(new KuhnPokerAction("0", infoSet, kpState.getPlayerToMove()));
 		if (isCardAvailableInState("1", kpState))
-			actions.add(new KuhnPokerAction("1", 0, kpState.getPlayerToMove()));
+			actions.add(new KuhnPokerAction("1", infoSet, kpState.getPlayerToMove()));
 		if (isCardAvailableInState("2", kpState))
-			actions.add(new KuhnPokerAction("2", 0, kpState.getPlayerToMove()));
+			actions.add(new KuhnPokerAction("2", infoSet, kpState.getPlayerToMove()));
 	}
 
 	private PokerAction createAction(KuhnPokerGameState state, String action) {
-		return new KuhnPokerAction(action, state.getISEquivalenceFor(state.getPlayerToMove()), state.getPlayerToMove());
+		return new KuhnPokerAction(action, getAlgorithmConfig().getInformationSetFor(state), state.getPlayerToMove());
 	}
 
 	private boolean isCardAvailableInState(String card, KuhnPokerGameState state) {

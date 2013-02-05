@@ -2,7 +2,9 @@ package cz.agents.gtlibrary.interfaces;
 
 import java.util.List;
 
-public interface Expander {
+public interface Expander<I extends InformationSet> {
+	
+	public AlgorithmConfig<I> getAlgorithmConfig();
 	
 	/**
 	 * 

@@ -1,7 +1,8 @@
-package cz.agents.gtlibrary.cfr;
+package cz.agents.gtlibrary.cfr.os;
 
 import java.util.List;
 
+import cz.agents.gtlibrary.cfr.CFRInformationSet;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 

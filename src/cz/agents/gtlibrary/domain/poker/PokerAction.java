@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.domain.poker;
 
 import cz.agents.gtlibrary.iinodes.IIAction;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 
 
@@ -13,8 +14,8 @@ public abstract class PokerAction extends IIAction {
 	protected int cachedHash = 0;
 	protected int cachedHashWithoutIS;
 	
-	public PokerAction(String action, long isHash, Player player) {
-		super(isHash);
+	public PokerAction(String action, InformationSet i, Player player) {
+		super(i);
 		this.action = action;
 		this.player = player;
 		cachedHash = computeHashCode();
@@ -79,7 +80,7 @@ public abstract class PokerAction extends IIAction {
 				return false;
 		} else if (!action.equals(other.action))
 			return false;
-		if (isHash != other.isHash)
+		if (!informationSet.equals(other.getInformationSet()))
 			return false;
 		if (player == null) {
 			if (other.player != null)

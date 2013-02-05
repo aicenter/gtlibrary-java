@@ -75,11 +75,9 @@ public class FixedSizeMap<K, V> extends MiniMap<K, V> {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		Iterator<K> iterator = keySet().iterator();
-		
 		builder.append("{");
 		while (iterator.hasNext()) {
 			K next = iterator.next();
-			
 			builder.append("[" + next + " = " + get(next) + "]");
 			if (iterator.hasNext()) {
 				builder.append(", ");

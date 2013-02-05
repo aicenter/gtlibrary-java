@@ -9,9 +9,7 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 public abstract class IIGameState implements GameState {
 
 	protected History history;
-	
-	@Override
-	public abstract Player[] getAllPlayers();
+	protected double natureProbability = 1;
 
 	@Override
 	public abstract Player getPlayerToMove();
@@ -42,9 +40,9 @@ public abstract class IIGameState implements GameState {
 	}
 
 	public boolean checkConsistency(IIAction action) {
-		if (action == null)
+		if (action == null || action.getInformationSet() == null)
 			return false;
-		return action.getISHash() == getISEquivalenceFor(getPlayerToMove());
+		return action.getInformationSet().getAllStates().contains(this);
 	}
 
 	@Override
@@ -60,6 +58,11 @@ public abstract class IIGameState implements GameState {
 	@Override
 	public Sequence getSequenceForPlayerToMove() {
 		return history.getSequenceOf(getPlayerToMove());
+	}
+	
+	@Override
+	public double getNatureProbability() {	
+		return natureProbability;
 	}
 
 	@Override
@@ -80,12 +83,8 @@ public abstract class IIGameState implements GameState {
 	}
 
 	@Override
-	public abstract long getISEquivalenceFor(Player player);
-	
-	@Override
 	public abstract int hashCode();
 
 	@Override
-	public abstract boolean equals(Object object);
-
+	public abstract boolean equals(Object object);	
 }

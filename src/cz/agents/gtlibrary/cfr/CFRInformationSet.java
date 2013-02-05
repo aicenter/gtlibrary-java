@@ -10,15 +10,11 @@ import java.util.Set;
 import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.History;
-import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
-import cz.agents.gtlibrary.utils.Triplet;
-
 
 public abstract class CFRInformationSet extends InformationSetImpl {
 
-	protected Map<History, Set<Triplet<Long, History, Player>>> successorLinks;
+	protected Map<GameState, Set<GameState>> successorLinks;
 	protected Map<Action, Float> strategy;
 	protected Map<Action, Float> averageStrategy;
 	protected Map<Action, Float> regret;
@@ -29,7 +25,7 @@ public abstract class CFRInformationSet extends InformationSetImpl {
 	public CFRInformationSet(GameState state, List<Action> actions) {
 		super(state);
 		this.actions = actions;
-		successorLinks = new HashMap<History, Set<Triplet<Long, History, Player>>>();
+		successorLinks = new HashMap<GameState, Set<GameState>>();
 		regret = new FixedSizeMap<Action, Float>(actions.size());
 		initializeRegret(actions);
 		initializeStrategies(state, actions);
@@ -71,23 +67,19 @@ public abstract class CFRInformationSet extends InformationSetImpl {
 	}
 
 	public void addSuccessor(GameState parent, GameState child) {
-		Set<Triplet<Long, History, Player>> successors = successorLinks.get(parent.getHistory());
+		Set<GameState> successors = successorLinks.get(parent);
 
 		if (successors == null) {
-			successors = new LinkedHashSet<Triplet<Long, History, Player>>();
-			successors.add(createTriplet(child));
-			successorLinks.put(parent.getHistory(), successors);
+			successors = new LinkedHashSet<GameState>();
+			successors.add(child);
+			successorLinks.put(parent, successors);
 			return;
 		}
-		successors.add(createTriplet(child));
+		successors.add(child);
 	}
 
-	private Triplet<Long, History, Player> createTriplet(GameState child) {
-		return new Triplet<Long, History, Player>(child.getISEquivalenceForPlayerToMove(), child.getHistory(), child.getPlayerToMove());
-	}
-
-	public Set<Triplet<Long, History, Player>> getSuccessorsFor(History history) {
-		return successorLinks.get(history);
+	public Set<GameState> getSuccessorsFor(GameState gameState) {
+		return successorLinks.get(gameState);
 	}
 	
 	public Map<Action, Float> getStrategy() {
@@ -126,7 +118,7 @@ public abstract class CFRInformationSet extends InformationSetImpl {
 		return getPlayer().getId() == 2;
 	}
 	
-	public Collection<History> getHistories() {
+	public Collection<GameState> getStates() {
 		return successorLinks.keySet();
 	}
 	
@@ -142,7 +134,7 @@ public abstract class CFRInformationSet extends InformationSetImpl {
 		this.regret.put(action, this.regret.get(action) + regret);
 	}
 	
-	public Map<History, Set<Triplet<Long, History, Player>>> getSuccessors() {
+	public Map<GameState, Set<GameState>> getSuccessors() {
 		return successorLinks;
 	}
 }
