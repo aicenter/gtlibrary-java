@@ -72,7 +72,7 @@ public class HistoryImpl implements History {
 			return hashCode;
 		hashCode = 0;
 		
-		for (Entry<Player, Sequence> entry : entrySet()) {
+		for (Entry<Player, Sequence> entry : entrySet()) { 
 			hashCode += (entry.getKey()==null   ? 0 : entry.getKey().hashCode()) ^ (entry.getValue()==null ? 0 : entry.getValue().hashCode());
 		}
 		return hashCode;

@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
@@ -130,9 +131,7 @@ public class ArrayListSequenceImpl implements Sequence {
 		assert (this.actions.size() >= size);
 		Sequence result = new ArrayListSequenceImpl(player);
 
-		for (int i = 0; i < size; i++) {
-			result.addLast(actions.get(i));
-		}
+		result.addAllAsLast(this.actions.subList(0, size));
 		return result;
 	}
 
@@ -140,9 +139,7 @@ public class ArrayListSequenceImpl implements Sequence {
 		assert (this.actions.size() - from >= size);
 		Sequence result = new ArrayListSequenceImpl(player);
 
-		for (int i = from; i < from + size; i++) {
-			result.addLast(actions.get(i));
-		}
+		result.addAllAsLast(this.actions.subList(from, from + size));
 		return result;
 	}
 
@@ -158,12 +155,12 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	@Override
 	public int hashCode() {
-		if(hashCode != -1)
+		if (hashCode != -1)
 			return hashCode;
-		
+
 		final int prime = 31;
 		hashCode = 1;
-		
+
 		hashCode = prime * hashCode + ((actions == null) ? 0 : actions.hashCode());
 		hashCode = prime * hashCode + ((player == null) ? 0 : player.hashCode());
 		return hashCode;
@@ -196,4 +193,10 @@ public class ArrayListSequenceImpl implements Sequence {
 		return actions.toString();
 	}
 
+	@Override
+	public InformationSet getLastInformationSet() {
+		if (size() == 0)
+			return null;
+		return getLast().getInformationSet();
+	}
 }

@@ -6,4 +6,5 @@ public interface GameInfo {
 	public Player getOpponent(Player player);
 	public String getInfo();
 	public int getMaxDepth();
+	public Player[] getAllPlayers();
 }

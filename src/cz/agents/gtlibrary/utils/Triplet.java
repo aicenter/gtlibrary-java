@@ -5,14 +5,12 @@ public class Triplet<T, U, V> {
 	private T first;
 	private U second;
 	private V third;
-	private int hashCode;
 	
 	public Triplet(T first, U second, V third) {
 		super();
 		this.first = first;
 		this.second = second;
 		this.third = third;
-		this.hashCode = computeHashCode();
 	}
 	
 	public T getFirst() {
@@ -27,19 +25,14 @@ public class Triplet<T, U, V> {
 		return third;
 	}
 
-	public int computeHashCode() {
+	@Override
+	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		
 		result = prime * result + ((first == null) ? 0 : first.hashCode());
 		result = prime * result + ((second == null) ? 0 : second.hashCode());
 		result = prime * result + ((third == null) ? 0 : third.hashCode());
 		return result;
-	}
-	
-	@Override
-	public int hashCode() {
-		return hashCode;
 	}
 
 	@SuppressWarnings("unchecked")

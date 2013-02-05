@@ -14,7 +14,7 @@ public abstract class CFR<I extends CFRInformationSet> {
 		this.config = config;
 	}
 
-	public void buildGameTree(GameState rootState, Expander expander) {
+	public void buildGameTree(GameState rootState, Expander<I> expander) {
 		LinkedList<GameState> queue = new LinkedList<GameState>();
 
 		queue.add(rootState);
@@ -31,9 +31,14 @@ public abstract class CFR<I extends CFRInformationSet> {
 			I set = config.getInformationSetFor(state);
 			List<Action> actions = expander.getActions(state);
 
-			if (set == null)
+			if (set == null) {
 				set = createAndAddSet(state, actions);
-			
+				for (Action action : actions) {
+					action.setInformationSet(set);
+				}
+			} else {
+				set.addStateToIS(state);
+			}
 			for (Action action : expander.getActions(state)) {
 				GameState newState = state.performAction(action);
 

@@ -5,9 +5,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
-
 
 public class LinkedListSequenceImpl implements Sequence {
 
@@ -130,15 +130,8 @@ public class LinkedListSequenceImpl implements Sequence {
 	public Sequence getSubSequence(int size) {
 		assert (this.actions.size() >= size);
 		Sequence result = new LinkedListSequenceImpl(player);
-		int index = 0;
-		
-		for (Action action : actions) {
-			if(index >= size) {
-				break;
-			}
-			result.addLast(action);
-			index++;
-		}
+
+		result.addAllAsLast(this.actions.subList(0, size));
 		return result;
 	}
 
@@ -159,15 +152,15 @@ public class LinkedListSequenceImpl implements Sequence {
 	public Action get(int index) {
 		return actions.get(index);
 	}
-	
+
 	@Override
 	public int hashCode() {
-		if(hashCode != -1)
+		if (hashCode != -1)
 			return hashCode;
-		
+
 		final int prime = 31;
 		hashCode = 1;
-		
+
 		hashCode = prime * hashCode + ((actions == null) ? 0 : actions.hashCode());
 		hashCode = prime * hashCode + ((player == null) ? 0 : player.hashCode());
 		return hashCode;
@@ -182,7 +175,7 @@ public class LinkedListSequenceImpl implements Sequence {
 		if (getClass() != obj.getClass())
 			return false;
 		LinkedListSequenceImpl other = (LinkedListSequenceImpl) obj;
-		
+
 		if (!actions.equals(other.actions))
 			return false;
 		if (!player.equals(other.player))
@@ -195,4 +188,10 @@ public class LinkedListSequenceImpl implements Sequence {
 		return actions.toString();
 	}
 
+	@Override
+	public InformationSet getLastInformationSet() {
+		if (size() == 0)
+			return null;
+		return getLast().getInformationSet();
+	}
 }

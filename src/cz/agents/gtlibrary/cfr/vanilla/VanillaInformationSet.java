@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.cfr;
+package cz.agents.gtlibrary.cfr.vanilla;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -6,17 +6,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import cz.agents.gtlibrary.cfr.CFRInformationSet;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class VanillaInformationSet extends CFRInformationSet {
 
-	private Map<History, float[]> valuesForHistories;
-	private Map<History, Map<Action, Float>> valuesOfActionsForHistories;
-	private Map<History, float[]> averageValuesForHistories;
-	private Map<History, Map<Action, Float>> averageValuesOfActionsForHistories;
+	private Map<GameState, float[]> valuesForStates;
+	private Map<GameState, Map<Action, Float>> valuesOfActionsForStates;
+	private Map<GameState, float[]> averageValuesForStates;
+	private Map<GameState, Map<Action, Float>> averageValuesOfActionsForStates;
 
 	private Map<Action, Float> values;
 	private Map<Action, Float> averageValues;
@@ -28,10 +28,10 @@ public class VanillaInformationSet extends CFRInformationSet {
 
 	public VanillaInformationSet(GameState state, List<Action> actions) {
 		super(state, actions);
-		valuesForHistories = new HashMap<History, float[]>();
-		valuesOfActionsForHistories = new HashMap<History, Map<Action, Float>>();
-		averageValuesForHistories = new HashMap<History, float[]>();
-		averageValuesOfActionsForHistories = new HashMap<History, Map<Action, Float>>();
+		valuesForStates = new HashMap<GameState, float[]>();
+		valuesOfActionsForStates = new HashMap<GameState, Map<Action, Float>>();
+		averageValuesForStates = new HashMap<GameState, float[]>();
+		averageValuesOfActionsForStates = new HashMap<GameState, Map<Action, Float>>();
 		values = new FixedSizeMap<Action, Float>(actions.size());
 		averageValues = new FixedSizeMap<Action, Float>(actions.size());
 		numerators = new FixedSizeMap<Action, Float>(actions.size());
@@ -49,44 +49,44 @@ public class VanillaInformationSet extends CFRInformationSet {
 		return probabilityOfOccurenceGivenStrategyOfOthers;
 	}
 
-	public float[] getValuesForHistory(History history) {
-		return valuesForHistories.get(history);
+	public float[] getValuesForState(GameState gameState) {
+		return valuesForStates.get(gameState);
 	}
 
-	public void setValuesForHistory(History history, float[] values) {
-		valuesForHistories.put(history, values.clone());
+	public void setValuesForState(GameState gameState, float[] values) {
+		valuesForStates.put(gameState, values.clone());
 	}
 
 	public void setProbabilityOfOccurenceGivenStrategyOfOthers(float probabilityOfOccurenceGivenStrategyOfOthers) {
 		this.probabilityOfOccurenceGivenStrategyOfOthers = probabilityOfOccurenceGivenStrategyOfOthers;
 	}
 
-	public float[] getAverageValuesForHistory(History history) {
-		return averageValuesForHistories.get(history);
+	public float[] getAverageValuesForState(GameState gameState) {
+		return averageValuesForStates.get(gameState);
 	}
 
-	public Map<History, float[]> getAverageValuesForHistorys() {
-		return averageValuesForHistories;
+	public Map<GameState, float[]> getAverageValuesForStates() {
+		return averageValuesForStates;
 	}
 
-	public void setAverageValuesForHistory(History history, float[] values) {
-		averageValuesForHistories.put(history, values.clone());
+	public void setAverageValuesForHistory(GameState gameState, float[] values) {
+		averageValuesForStates.put(gameState, values.clone());
 	}
 
-	public Map<Action, Float> getValuesOfActionsForHistory(History history) {
-		return valuesOfActionsForHistories.get(history);
+	public Map<Action, Float> getValuesOfActionsForState(GameState gameState) {
+		return valuesOfActionsForStates.get(gameState);
 	}
 
-	public void setValuesOfActionsForHistory(History history, Map<Action, Float> values) {
-		valuesOfActionsForHistories.put(history, values);
+	public void setValuesOfActionsForState(GameState gameState, Map<Action, Float> values) {
+		valuesOfActionsForStates.put(gameState, values);
 	}
 
-	public Map<Action, Float> getAverageValuesOfActionsForHistory(History history) {
-		return averageValuesOfActionsForHistories.get(history);
+	public Map<Action, Float> getAverageValuesOfActionsForState(GameState gameState) {
+		return averageValuesOfActionsForStates.get(gameState);
 	}
 
-	public void setAverageValuesOfActionsForHistory(History history, Map<Action, Float> values) {
-		averageValuesOfActionsForHistories.put(history, values);
+	public void setAverageValuesOfActionsForState(GameState gameState, Map<Action, Float> values) {
+		averageValuesOfActionsForStates.put(gameState, values);
 	}
 
 	public float getValueFor(Action action) {
@@ -124,17 +124,6 @@ public class VanillaInformationSet extends CFRInformationSet {
 			averageValues.put(action, oldValue + value);
 		}
 	}
-	
-
-//	public void addToAverageValuesFor(Action action, float value) {
-//		Float oldValue = averageValues.get(action);
-//
-//		if (oldValue == null) {
-//			averageValues.put(action, value);
-//		} else {
-//			averageValues.put(action, oldValue + value);
-//		}
-//	}
 
 	public Map<Action, Float> getAverageValues() {
 		return averageValues;
@@ -182,20 +171,20 @@ public class VanillaInformationSet extends CFRInformationSet {
 		builder.append(regret);
 		builder.append("\n");
 		builder.append("Values for histories: ");
-		for (Entry<History, float[]> entry : valuesForHistories.entrySet()) {
+		for (Entry<GameState, float[]> entry : valuesForStates.entrySet()) {
 			builder.append("[" + entry.getKey() + " = " + Arrays.toString(entry.getValue()) + "]");
 		}
 		builder.append("\n");
 		builder.append("Average values for histories: ");
-		for (Entry<History, float[]> entry : averageValuesForHistories.entrySet()) {
+		for (Entry<GameState, float[]> entry : averageValuesForStates.entrySet()) {
 			builder.append("[" + entry.getKey() + " = " + Arrays.toString(entry.getValue()) + "]");
 		}
 		builder.append("\n");
 		builder.append("Values for actions in histories: ");
-		builder.append(valuesOfActionsForHistories);
+		builder.append(valuesOfActionsForStates);
 		builder.append("\n");
 		builder.append("Average values for actions in  histories: ");
-		builder.append(averageValuesOfActionsForHistories);
+		builder.append(averageValuesOfActionsForStates);
 		builder.append("\n");
 		builder.append("Probability of occurence given my strategy: ");
 		builder.append(probabilityOfOccurenceGivenMyStrategy);

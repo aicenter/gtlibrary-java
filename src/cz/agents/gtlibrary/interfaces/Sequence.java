@@ -19,4 +19,5 @@ public interface Sequence extends Iterable<Action> {
 	public HashSet<Sequence> getAllPrefixes();
 	public Sequence[] getAllPrefixesArray();
 	public int size();
+	public InformationSet getLastInformationSet();
 }

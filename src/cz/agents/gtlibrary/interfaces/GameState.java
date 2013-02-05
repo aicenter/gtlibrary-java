@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.interfaces;
 
+import cz.agents.gtlibrary.utils.Pair;
+
 public interface GameState {
 	public Player[] getAllPlayers();
 	public Player getPlayerToMove();
@@ -12,8 +14,8 @@ public interface GameState {
 	public double[] getDistributionOfNature();
 	public boolean isGameEnd();
 	public boolean isPlayerToMoveNature();
+	public double getNatureProbability();
 	public void performActionModifyingThisState(Action action);
 	public void reverseAction();
-	public long getISEquivalenceFor(Player player);
-	public long getISEquivalenceForPlayerToMove();
+	public Pair<Integer, Sequence> getISKeyForPlayerToMove();
 }
