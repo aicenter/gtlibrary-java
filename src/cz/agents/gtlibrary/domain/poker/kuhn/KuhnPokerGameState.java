@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.domain.poker.kuhn;
 
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.PokerGameState;
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 
@@ -48,14 +49,14 @@ public class KuhnPokerGameState extends PokerGameState {
 	}
 
 	@Override
-	public double[] getDistributionOfNature() {
+	public double getProbabilityOfNatureFor(Action action) {
 		if (!isPlayerToMoveNature()) {
-			return new double[] { 0 };
+			return 0;
 		}
 		if (playerCards[0] != null) {
-			return new double[] { 0.5, 0.5 };
+			return 0.5;
 		}
-		return new double[] { 1. / 3, 1. / 3, 1. / 3 };
+		return 1./3;
 	}
 
 }

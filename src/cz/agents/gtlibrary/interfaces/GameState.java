@@ -11,7 +11,7 @@ public interface GameState {
 	public Sequence getSequenceForPlayerToMove();
 	public GameState copy();
 	public double[] getUtilities();
-	public double[] getDistributionOfNature();
+	public double getProbabilityOfNatureFor(Action action);
 	public boolean isGameEnd();
 	public boolean isPlayerToMoveNature();
 	public double getNatureProbability();
