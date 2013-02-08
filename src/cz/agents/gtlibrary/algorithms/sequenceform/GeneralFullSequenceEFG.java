@@ -48,14 +48,16 @@ public class GeneralFullSequenceEFG {
 		long overallCPLEX = 0;
 		Map<Player, Map<Sequence, Double>> realizationPlans = new HashMap<Player, Map<Sequence, Double>>();
 		long startGeneration = System.currentTimeMillis();
-		
+
 		generateCompleteGame();
 		overallSequenceGeneration = System.currentTimeMillis() - startGeneration;
 
 		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
 		long startCPLEX = System.currentTimeMillis();
 		GeneralSequenceFormLP sequenceFormLP = new GeneralSequenceFormLP(actingPlayers);
+
 		sequenceFormLP.calculateBothPlStrategy(rootState, algConfig);
+
 		long thisCPLEX = System.currentTimeMillis() - startCPLEX;
 
 		overallCPLEX += thisCPLEX;
@@ -77,11 +79,7 @@ public class GeneralFullSequenceEFG {
 			}
 		}
 
-		try {
-			Runtime.getRuntime().gc();
-			Thread.currentThread().sleep(500l);
-		} catch (InterruptedException e) {
-		}
+		//		Runtime.getRuntime().gc();
 
 		//		for (BasicPlayerID playerID : rootState.getAllPlayers()) {
 		//			System.out.println("final result for " + playerID + ": " + GeneralSequenceFormLP.resultValues.get(playerID) /*+ ", " + tree.getIS(InformationSet.calculateISEquivalenceForPlayerToMove(rootState)).getValueOfGameForPlayer(playerID)*/);
@@ -110,8 +108,6 @@ public class GeneralFullSequenceEFG {
 			for (Action action : expander.getActions(currentState)) {
 				GameState newState = currentState.performAction(action);
 
-				if(!currentState.isPlayerToMoveNature())
-					algConfig.addOutgoingSequenceFor(newState, currentState.getPlayerToMove());
 				queue.add(newState);
 				currentState.performAction(action);
 			}

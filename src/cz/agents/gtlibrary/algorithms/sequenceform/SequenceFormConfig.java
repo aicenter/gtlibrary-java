@@ -20,9 +20,9 @@ public class SequenceFormConfig extends IIConfig<SequenceInformationSet> {
 	private Map<Player, Set<Sequence>> playerSequences = new HashMap<Player, Set<Sequence>>();
 
 	public void addStateToSequenceForm(GameState state) {
-//		setOutgoingSequences(state);
 		if (state.isPlayerToMoveNature())
 			return;
+		setOutgoingSequences(state);
 		createInformationSet(state);
 		setReachableSetBySequence(state);
 		addCompatibleSequence(state);
@@ -50,12 +50,12 @@ public class SequenceFormConfig extends IIConfig<SequenceInformationSet> {
 		return compatibleSequences.get(sequence);
 	}
 
-//	private void setOutgoingSequences(GameState state) {
-//		addOutgoingSequenceFor(state, state.getAllPlayers()[0]);
-//		addOutgoingSequenceFor(state, state.getAllPlayers()[1]);
-//	}
+	private void setOutgoingSequences(GameState state) {
+		addOutgoingSequenceFor(state, state.getAllPlayers()[0]);
+		addOutgoingSequenceFor(state, state.getAllPlayers()[1]);
+	}
 
-	public void addOutgoingSequenceFor(GameState state, Player player) {
+	private void addOutgoingSequenceFor(GameState state, Player player) {
 		Sequence sequence = state.getSequenceFor(player);
 
 		if (sequence != null && sequence.size() > 0) {
