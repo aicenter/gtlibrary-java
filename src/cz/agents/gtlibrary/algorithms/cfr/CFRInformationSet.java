@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.cfr;
+package cz.agents.gtlibrary.algorithms.cfr;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,19 +43,16 @@ public abstract class CFRInformationSet extends InformationSetImpl {
 		averageStrategy = new FixedSizeMap<Action, Float>(actions.size());
 
 		if (state.isPlayerToMoveNature()) {
-			fillStrategies(state.getDistributionOfNature(), actions);
+			fillStrategies(state, actions);
 		} else {
 			fillStrategies(1. / actions.size(), actions);
 		}
 	}
 
-	private void fillStrategies(double[] values, List<Action> actions) {
-		int index = 0;
-
+	private void fillStrategies(GameState state, List<Action> actions) {
 		for (Action action : actions) {
-			strategy.put(action, (float) values[index]);
-			averageStrategy.put(action, (float) values[index]);
-			index++;
+			strategy.put(action, (float) state.getProbabilityOfNatureFor(action));
+			averageStrategy.put(action, (float) state.getProbabilityOfNatureFor(action));
 		}
 	}
 

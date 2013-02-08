@@ -1,12 +1,12 @@
-package cz.agents.gtlibrary.cfr.vanilla;
+package cz.agents.gtlibrary.algorithms.cfr.vanilla;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import cz.agents.gtlibrary.cfr.CFR;
-import cz.agents.gtlibrary.cfr.CFRConfig;
+import cz.agents.gtlibrary.algorithms.cfr.CFR;
+import cz.agents.gtlibrary.algorithms.cfr.CFRConfig;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -82,7 +82,6 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 	}
 
 	private void updateState(Map<GameState, float[]> valuesOfChildren, Map<GameState, float[]> averageValuesOfChildren, GameState gameState) {
-
 		VanillaInformationSet set = config.getInformationSetFor(gameState);
 		Map<Action, Float> valuesOfActionsForState = new FixedSizeMap<Action, Float>(set.getActions().size());
 		Map<Action, Float> avgValuesOfActionsForState = new FixedSizeMap<Action, Float>(set.getActions().size());

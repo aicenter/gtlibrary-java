@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.cfr;
+package cz.agents.gtlibrary.algorithms.cfr;
 
 import java.util.HashMap;
 import java.util.Map;

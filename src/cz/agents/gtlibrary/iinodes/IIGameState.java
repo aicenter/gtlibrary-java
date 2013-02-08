@@ -9,7 +9,17 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 public abstract class IIGameState implements GameState {
 
 	protected History history;
-	protected double natureProbability = 1;
+	protected double natureProbability;
+	
+	public IIGameState(Player[] players) {
+		this.history = new HistoryImpl(players);
+		this.natureProbability = 1;
+	}
+	
+	public IIGameState(History history, double natureProbability) {
+		this.history = history.copy();
+		this.natureProbability = natureProbability;
+	}
 
 	@Override
 	public abstract Player getPlayerToMove();
@@ -28,6 +38,7 @@ public abstract class IIGameState implements GameState {
 	@Override
 	public void performActionModifyingThisState(Action action) {
 		if (isPlayerToMoveNature() || checkConsistency((IIAction) action)) {
+			updateNatureProbabilityFor(action);
 			addActionToHistory(action, getPlayerToMove());
 			action.perform(this);
 		} else {
@@ -35,8 +46,13 @@ public abstract class IIGameState implements GameState {
 		}
 	}
 
+	private void updateNatureProbabilityFor(Action action) {
+		if (isPlayerToMoveNature())
+			natureProbability *= getProbabilityOfNatureFor(action);
+	}
+
 	private void addActionToHistory(Action action, Player playerToMove) {
-		history.addActionOf(action, playerToMove);	
+		history.addActionOf(action, playerToMove);
 	}
 
 	public boolean checkConsistency(IIAction action) {
@@ -49,19 +65,19 @@ public abstract class IIGameState implements GameState {
 	public History getHistory() {
 		return history;
 	}
-	
+
 	@Override
 	public Sequence getSequenceFor(Player player) {
 		return history.getSequenceOf(player);
 	}
-	
+
 	@Override
 	public Sequence getSequenceForPlayerToMove() {
 		return history.getSequenceOf(getPlayerToMove());
 	}
-	
+
 	@Override
-	public double getNatureProbability() {	
+	public double getNatureProbability() {
 		return natureProbability;
 	}
 
@@ -86,5 +102,5 @@ public abstract class IIGameState implements GameState {
 	public abstract int hashCode();
 
 	@Override
-	public abstract boolean equals(Object object);	
+	public abstract boolean equals(Object object);
 }

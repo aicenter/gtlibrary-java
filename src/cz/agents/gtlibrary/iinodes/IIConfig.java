@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.iinodes;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -12,7 +13,7 @@ public abstract class IIConfig<I extends InformationSetImpl> implements Algorith
 	private HashMap<Pair<Integer, Sequence>, I> allInformationSets;
 
 	public IIConfig() {
-		allInformationSets = new HashMap<Pair<Integer, Sequence>, I>();
+		allInformationSets = new LinkedHashMap<Pair<Integer, Sequence>, I>();
 	}
 
 	@Override

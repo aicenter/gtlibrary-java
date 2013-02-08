@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.cfr.vanilla;
+package cz.agents.gtlibrary.algorithms.cfr.vanilla;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import cz.agents.gtlibrary.cfr.CFRInformationSet;
+import cz.agents.gtlibrary.algorithms.cfr.CFRInformationSet;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.utils.FixedSizeMap;

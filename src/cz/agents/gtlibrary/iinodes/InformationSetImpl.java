@@ -9,7 +9,6 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
 public abstract class InformationSetImpl implements InformationSet {
-	
 	private Sequence playerHistory;
 	private Player player;
 	private LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<GameState>();
@@ -55,4 +54,8 @@ public abstract class InformationSetImpl implements InformationSet {
 		return statesInInformationSet;
 	}
 
+	@Override
+	public String toString() {
+		return "IS:("+player+"):"+playerHistory;
+	}
 }

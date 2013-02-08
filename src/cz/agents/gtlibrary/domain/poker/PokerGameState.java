@@ -18,17 +18,18 @@ public abstract class PokerGameState extends IIGameState {
 
 	protected Player[] players;
 	protected PokerAction[] playerCards;
+	protected Pair<Integer, Sequence> cachedISKey = null;
 
 	protected int round;
 	protected int pot;
 	protected int currentPlayerIndex;
 	protected int gainForFirstPlayer;
 	protected int hash = -1;
-
+	
 	private double[] utilities;
 
 	public PokerGameState(Player[] players, int ante) {
-		super();
+		super(players);
 		this.players = players;
 		this.playerCards = new PokerAction[2];
 		this.sequenceForAllPlayers = new LinkedList<PokerAction>();
@@ -41,7 +42,7 @@ public abstract class PokerGameState extends IIGameState {
 
 	@SuppressWarnings("unchecked")
 	public PokerGameState(PokerGameState gameState) {
-		super();
+		super(gameState.getHistory(), gameState.getNatureProbability());
 		this.history = gameState.getHistory().copy();
 		this.sequenceForAllPlayers = (LinkedList<PokerAction>) gameState.sequenceForAllPlayers.clone();
 		this.playerCards = gameState.playerCards.clone();
@@ -142,14 +143,19 @@ public abstract class PokerGameState extends IIGameState {
 
 	public void attendCard(PokerAction action) {
 		if (round == 0) {
-			hash = -1;
+			clearCachedValues();
 			dealCardToPlayer(action);
 		}
 	}
 
+	private void clearCachedValues() {
+		hash = -1;
+		cachedISKey = null;
+	}
+
 	public void check(PokerAction action) {
 		if (isCheckValid()) {
-			hash = -1;
+			clearCachedValues();
 			if (isLastMoveCheck()) {
 				increaseRound();
 			}
@@ -168,7 +174,7 @@ public abstract class PokerGameState extends IIGameState {
 
 	public void bet(PokerAction action) {
 		if (isBetOrCheckValid()) {
-			hash = -1;
+			clearCachedValues();
 			addToPot(getValueOfBet(action));
 			addActionToSequence(action);
 			switchPlayers();
@@ -203,7 +209,7 @@ public abstract class PokerGameState extends IIGameState {
 
 	public void call(PokerAction action) {
 		if (isCallValid()) {
-			hash = -1;
+			clearCachedValues();
 			addToPot(getValueOfCall(action));
 			addActionToSequence(action);
 			increaseRound();
@@ -227,7 +233,7 @@ public abstract class PokerGameState extends IIGameState {
 
 	public void fold(PokerAction action) {
 		if (isFoldValid()) {
-			hash = -1;
+			clearCachedValues();
 			round = getTerminalRound();
 			addActionToSequence(action);
 			switchPlayers();
@@ -236,8 +242,12 @@ public abstract class PokerGameState extends IIGameState {
 
 	@Override
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-		if (isPlayerToMoveNature())
-			return new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+		if(cachedISKey != null) 
+			return cachedISKey;
+		if (isPlayerToMoveNature()) {
+			cachedISKey = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+			return cachedISKey;
+		}
 
 		HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
 		Iterator<PokerAction> iterator = sequenceForAllPlayers.iterator();
@@ -248,7 +258,8 @@ public abstract class PokerGameState extends IIGameState {
 			hcb.append(iterator.next().observableISHash());
 			hcb.append(moveNum++);
 		}
-		return new Pair<Integer, Sequence>(hcb.toHashCode(), history.getSequenceOf(getPlayerToMove()));
+		cachedISKey = new Pair<Integer, Sequence>(hcb.toHashCode(), history.getSequenceOf(getPlayerToMove()));
+		return cachedISKey;
 	}
 
 	protected abstract int getTerminalRound();
