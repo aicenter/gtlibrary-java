@@ -174,6 +174,8 @@ public class LinkedListSequenceImpl implements Sequence {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
+		if (hashCode() != obj.hashCode())
+			return false;
 		LinkedListSequenceImpl other = (LinkedListSequenceImpl) obj;
 
 		if (!actions.equals(other.actions))
