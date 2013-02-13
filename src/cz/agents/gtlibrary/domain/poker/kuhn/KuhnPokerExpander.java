@@ -39,13 +39,13 @@ public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>
 		LinkedList<PokerAction> history = kpState.getSequenceForAllPlayers();
 
 		if (!kpState.isGameEnd()) {
-			if (history.isEmpty() || history.getLast().getAction().equals("ch")) {
+			if (history.isEmpty() || history.getLast().getActionType().equals("ch")) {
 				addActionsAfterPasiveAction(kpState, actions);
-			} else if (history.getLast().getAction().equals("b")) {
+			} else if (history.getLast().getActionType().equals("b")) {
 				addActionsAfterAggressiveAction(kpState, actions);
-			} else if (history.getLast().getAction().equals("c")) {
+			} else if (history.getLast().getActionType().equals("c")) {
 				addActionsAfterPasiveAction(kpState, actions);
-			} else if (!history.getLast().getAction().equals("f")) {
+			} else if (!history.getLast().getActionType().equals("f")) {
 				addActionsAfterPasiveAction(kpState, actions);
 			}
 		}
@@ -76,6 +76,6 @@ public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>
 	}
 
 	private boolean isCardAvailableInState(String card, KuhnPokerGameState state) {
-		return state.getPlayerCards()[0] == null || !card.equals(state.getPlayerCards()[0].getAction());
+		return state.getPlayerCards()[0] == null || !card.equals(state.getPlayerCards()[0].getActionType());
 	}
 }

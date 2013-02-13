@@ -96,32 +96,15 @@ public class GeneralSequenceFormLP {
 			createConsraintsForSets(secondPlayer, cplex, newInformationSets.get(secondPlayer));
 			System.out.println("phase 2 done");
 			cplex.exportModel("aamas-test-" + firstPlayer + ".lp");
-
 			System.out.println("Solving");
 			cplex.solve();
 			System.out.println("Status: " + cplex.getStatus());
+			
 			if (cplex.getCplexStatus() != CplexStatus.Optimal) {
 				return null;
 			}
 
-			Map<Sequence, Double> solution = new HashMap<Sequence, Double>();
-
-			for (Sequence sequence : algConfig.getSequencesFor(secondPlayer)) {
-				try {
-					double relPl = cplex.getValue(variables.get(sequence));
-
-					if (sequence.size() == 0)
-						relPl = 1;
-					solution.put(sequence, relPl);
-				} catch (UnknownObjectException e) {
-					if (sequence.size() == 0)
-						solution.put(sequence, 1d);
-					else
-						solution.put(sequence, 0d);
-				}
-			}
-
-			resultStrategies.put(secondPlayer, solution);
+			resultStrategies.put(secondPlayer, createSolution(algConfig, secondPlayer, cplex));
 			resultValues.put(firstPlayer, cplex.getValue(v0));
 
 			return cplex.getValue(v0);
@@ -129,6 +112,26 @@ public class GeneralSequenceFormLP {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	private Map<Sequence, Double> createSolution(SequenceFormConfig algConfig, Player secondPlayer, IloCplex cplex) throws IloException {
+		Map<Sequence, Double> solution = new HashMap<Sequence, Double>();
+
+		for (Sequence sequence : algConfig.getSequencesFor(secondPlayer)) {
+			try {
+				double relPl = cplex.getValue(variables.get(sequence));
+
+				if (sequence.size() == 0)
+					relPl = 1;
+				solution.put(sequence, relPl);
+			} catch (UnknownObjectException e) {
+				if (sequence.size() == 0)
+					solution.put(sequence, 1d);
+				else
+					solution.put(sequence, 0d);
+			}
+		}
+		return solution;
 	}
 
 	private void createConsraintsForSets(Player secondPlayer, IloCplex cplex, Set<SequenceInformationSet> RConstraints) throws IloException {
@@ -236,6 +239,12 @@ public class GeneralSequenceFormLP {
 			}
 		}
 
+		IloNumExpr sumGR = computeSumGR(cplex, firstPlayerSequence, algConfig, firstPlayer);
+		IloRange con = cplex.addGe(cplex.diff(cplex.diff(VI, sumV), sumGR), 0, "CON:" + firstPlayerSequence.toString());
+		constraints.put(firstPlayerSequence, con);
+	}
+
+	private IloNumExpr computeSumGR(IloCplex cplex, Sequence firstPlayerSequence, SequenceFormConfig algConfig, Player firstPlayer) throws IloException {
 		IloNumExpr sumGR = cplex.constant(0);
 		HashSet<Sequence> secondPlayerSequences = new HashSet<Sequence>();
 
@@ -253,9 +262,7 @@ public class GeneralSequenceFormLP {
 			utility = utility * ((firstPlayer.getId() == 1) ? -1 : 1);
 			sumGR = cplex.sum(sumGR, cplex.prod(utility, prob));
 		}
-
-		IloRange con = cplex.addGe(cplex.diff(cplex.diff(VI, sumV), sumGR), 0, "CON:" + firstPlayerSequence.toString());
-		constraints.put(firstPlayerSequence, con);
+		return sumGR;
 	}
 
 }
