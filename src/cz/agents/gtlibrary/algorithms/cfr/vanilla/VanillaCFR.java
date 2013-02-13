@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.algorithms.cfr.vanilla;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +8,10 @@ import java.util.Set;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFR;
 import cz.agents.gtlibrary.algorithms.cfr.CFRConfig;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerAction;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -19,11 +24,18 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 public class VanillaCFR extends CFR<VanillaInformationSet> {
 
 	public static void main(String[] args) {
-		GameState rootState = new KuhnPokerGameState();
-		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new KuhnPokerGameState());
+//		GameState rootState = new KuhnPokerGameState();
+//		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new KuhnPokerGameState());
+//		VanillaCFR cfr = new VanillaCFR(config);
+//
+//		cfr.buildGameTree(rootState, new KuhnPokerExpander<VanillaInformationSet>(config));
+//		cfr.updateTree(200000);
+		
+		GameState rootState = new GenericPokerGameState();
+		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new GenericPokerGameState());
 		VanillaCFR cfr = new VanillaCFR(config);
 
-		cfr.buildGameTree(rootState, new KuhnPokerExpander<VanillaInformationSet>(config));
+		cfr.buildGameTree(rootState, new GenericPokerExpander<VanillaInformationSet>(config));
 		cfr.updateTree(200000);
 	}
 

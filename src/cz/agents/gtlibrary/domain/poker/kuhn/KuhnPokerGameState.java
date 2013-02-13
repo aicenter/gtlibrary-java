@@ -18,14 +18,14 @@ public class KuhnPokerGameState extends PokerGameState {
 
 	@Override
 	protected int hasPlayerOneWon() {
-		if (sequenceForAllPlayers.getLast().getAction().equals("f")) {
+		if (sequenceForAllPlayers.getLast().getActionType().equals("f")) {
 			return currentPlayerIndex == 1 ? -1 : 1;
 		}
 		return compareCards(playerCards[0], playerCards[1]);
 	}
 
 	private int compareCards(PokerAction fpCard, PokerAction spCard) {
-		return Integer.parseInt(fpCard.getAction()) - Integer.parseInt(spCard.getAction());
+		return Integer.parseInt(fpCard.getActionType()) - Integer.parseInt(spCard.getActionType());
 	}
 
 	@Override
@@ -34,12 +34,12 @@ public class KuhnPokerGameState extends PokerGameState {
 	}
 
 	@Override
-	protected int getValueOfBet(PokerAction action) {
+	protected int getValueOfAggressive(PokerAction action) {
 		return KPGameInfo.BET;
 	}
 
 	@Override
-	protected int getValueOfCall(PokerAction action) {
+	protected int getValueOfCall() {
 		return KPGameInfo.BET;
 	}
 
@@ -57,6 +57,19 @@ public class KuhnPokerGameState extends PokerGameState {
 			return 0.5;
 		}
 		return 1./3;
+	}
+	
+	@Override
+	public void raise(PokerAction action) {
+		throw new UnsupportedOperationException("Raise is not defined in Kuhn-Poker");
+	}
+
+	@Override
+	public void attendCard(PokerAction action) {
+		if (round == 0) {
+			clearCachedValues();
+			dealCardToPlayer(action);
+		}
 	}
 
 }

@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
@@ -25,9 +28,13 @@ public class GeneralFullSequenceEFG {
 	private PrintStream debugOutput = System.out;
 
 	public static void main(String[] args) {
-		GameState rootState = new KuhnPokerGameState();
+//		GameState rootState = new KuhnPokerGameState();
+//		SequenceFormConfig algConfig = new SequenceFormConfig();
+//		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KPGameInfo(), algConfig);
+
+		GameState rootState = new GenericPokerGameState();
 		SequenceFormConfig algConfig = new SequenceFormConfig();
-		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KPGameInfo(), algConfig);
+		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), new GPGameInfo(), algConfig);
 
 		efg.generate();
 	}
@@ -50,6 +57,7 @@ public class GeneralFullSequenceEFG {
 		long startGeneration = System.currentTimeMillis();
 
 		generateCompleteGame();
+		System.out.println("Game tree built...");
 		overallSequenceGeneration = System.currentTimeMillis() - startGeneration;
 
 		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };

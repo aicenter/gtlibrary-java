@@ -25,7 +25,7 @@ public abstract class PokerGameState extends IIGameState {
 	protected int currentPlayerIndex;
 	protected int gainForFirstPlayer;
 	protected int hash = -1;
-	
+
 	private double[] utilities;
 
 	public PokerGameState(Player[] players, int ante) {
@@ -52,7 +52,22 @@ public abstract class PokerGameState extends IIGameState {
 		this.currentPlayerIndex = gameState.currentPlayerIndex;
 		this.gainForFirstPlayer = gameState.gainForFirstPlayer;
 	}
+	
 
+	protected abstract int getTerminalRound();
+
+	/**
+	 * 
+	 * @return 1 if players[0] won, -1 if players[1] won, 0 if tie
+	 */
+	protected abstract int hasPlayerOneWon();
+
+	protected abstract int getValueOfAggressive(PokerAction action);
+	
+	protected abstract int getValueOfCall();
+	
+	public abstract void attendCard(PokerAction action);
+	
 	public Player[] getAllPlayers() {
 		return players;
 	}
@@ -129,7 +144,7 @@ public abstract class PokerGameState extends IIGameState {
 	}
 
 	protected boolean isLastMoveAggressive() {
-		return sequenceForAllPlayers.getLast().getAction().equals("b") || sequenceForAllPlayers.getLast().getAction().equals("r");
+		return sequenceForAllPlayers.getLast().getActionType().equals("b") || sequenceForAllPlayers.getLast().getActionType().equals("r");
 	}
 
 	protected boolean isFirstPlayerAfterNature() {
@@ -141,14 +156,7 @@ public abstract class PokerGameState extends IIGameState {
 		sequenceForAllPlayers.add(action);
 	}
 
-	public void attendCard(PokerAction action) {
-		if (round == 0) {
-			clearCachedValues();
-			dealCardToPlayer(action);
-		}
-	}
-
-	private void clearCachedValues() {
+	protected void clearCachedValues() {
 		hash = -1;
 		cachedISKey = null;
 	}
@@ -165,7 +173,7 @@ public abstract class PokerGameState extends IIGameState {
 	}
 
 	private boolean isLastMoveCheck() {
-		return sequenceForAllPlayers.size() > 0 && sequenceForAllPlayers.getLast().getAction().equals("ch");
+		return sequenceForAllPlayers.size() > 0 && sequenceForAllPlayers.getLast().getActionType().equals("ch");
 	}
 
 	private boolean isCheckValid() {
@@ -175,13 +183,11 @@ public abstract class PokerGameState extends IIGameState {
 	public void bet(PokerAction action) {
 		if (isBetOrCheckValid()) {
 			clearCachedValues();
-			addToPot(getValueOfBet(action));
+			addToPot(getValueOfAggressive(action));
 			addActionToSequence(action);
 			switchPlayers();
 		}
 	}
-
-	protected abstract int getValueOfBet(PokerAction action);
 
 	private boolean isBetOrCheckValid() {
 		return (isFirstMoveInRound() || isLastMoveCheck()) && isRoundForRegularPlayers();
@@ -191,7 +197,7 @@ public abstract class PokerGameState extends IIGameState {
 		return round % 2 == 1;
 	}
 
-	private boolean isCallValid() {
+	protected boolean isCallValid() {
 		return isRoundForRegularPlayers() && isLastMoveAggressive();
 	}
 
@@ -199,7 +205,15 @@ public abstract class PokerGameState extends IIGameState {
 		return isRoundForRegularPlayers() && !sequenceForAllPlayers.isEmpty() && isLastMoveAggressive();
 	}
 
-	private void switchPlayers() {
+	protected boolean isRaiseValid() {
+		return isRoundForRegularPlayers() && !sequenceForAllPlayers.isEmpty() && isLastMoveAggressive();
+	}
+
+	protected void switchPlayers() {
+		if (round % 2 == 0 && round != getTerminalRound()) {
+			currentPlayerIndex = 2;
+			return;
+		}
 		if (isFirstPlayerAfterNature()) {
 			currentPlayerIndex = 0;
 			return;
@@ -210,11 +224,26 @@ public abstract class PokerGameState extends IIGameState {
 	public void call(PokerAction action) {
 		if (isCallValid()) {
 			clearCachedValues();
-			addToPot(getValueOfCall(action));
+			addToPot(getValueOfCall());
 			addActionToSequence(action);
 			increaseRound();
 			switchPlayers();
 		}
+	}
+
+	public void raise(PokerAction action) {
+		if (isRaiseValid()) {
+			clearCachedValues();
+			addToPot(getValueOfCall() + getValueOfAggressive(action));
+			addActionToSequence(action);
+			switchPlayers();
+		}
+	}
+
+	public PokerAction getCardForActingPlayer() {
+		if (isPlayerToMoveNature())
+			throw new UnsupportedOperationException("Nature doesn't hold any cards...");
+		return playerCards[currentPlayerIndex];
 	}
 
 	@Override
@@ -229,8 +258,6 @@ public abstract class PokerGameState extends IIGameState {
 		}
 	}
 
-	protected abstract int getValueOfCall(PokerAction action);
-
 	public void fold(PokerAction action) {
 		if (isFoldValid()) {
 			clearCachedValues();
@@ -242,7 +269,7 @@ public abstract class PokerGameState extends IIGameState {
 
 	@Override
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-		if(cachedISKey != null) 
+		if (cachedISKey != null)
 			return cachedISKey;
 		if (isPlayerToMoveNature()) {
 			cachedISKey = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
@@ -262,13 +289,6 @@ public abstract class PokerGameState extends IIGameState {
 		return cachedISKey;
 	}
 
-	protected abstract int getTerminalRound();
-
-	/**
-	 * 
-	 * @return 1 if players[0] won, -1 if players[1] won, 0 if tie
-	 */
-	protected abstract int hasPlayerOneWon();
 
 	@Override
 	public int hashCode() {
