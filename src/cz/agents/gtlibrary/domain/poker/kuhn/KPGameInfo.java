@@ -9,7 +9,7 @@ public class KPGameInfo implements GameInfo {
 	public static final Player SECOND_PLAYER = new PlayerImpl(1);
 	public static final Player NATURE = new PlayerImpl(2);
 
-	public static final Player[] allPlayers = new Player[] {FIRST_PLAYER, SECOND_PLAYER, NATURE};
+	public static final Player[] ALL_PLAYERS = new Player[] {FIRST_PLAYER, SECOND_PLAYER, NATURE};
 	
 	public static int ANTE = 1;
 	public static int BET = 1;
@@ -43,6 +43,6 @@ public class KPGameInfo implements GameInfo {
 	
 	@Override
 	public Player[] getAllPlayers() {		
-		return allPlayers;
+		return ALL_PLAYERS;
 	}
 }

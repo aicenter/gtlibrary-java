@@ -9,13 +9,9 @@ public class Pair<L,R> implements Serializable {
 	private final L left;
 	private final R right;
 	
+	private int hashCode = -1;
+	
 	public Pair(L left, R right) {
-		if(left==null){
-			throw new IllegalArgumentException("Left value is not effective.");
-		}
-		if(right==null){
-			throw new IllegalArgumentException("Right value is not effective.");
-		}
 		this.left =left;
 		this.right = right;
 	}
@@ -30,11 +26,14 @@ public class Pair<L,R> implements Serializable {
 
 	@Override
 	public int hashCode() {
+		if(hashCode != -1) 
+			return hashCode;
 		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((left == null) ? 0 : left.hashCode());
-		result = prime * result + ((right == null) ? 0 : right.hashCode());
-		return result;
+		
+		hashCode = 1;
+		hashCode = prime * hashCode + ((left == null) ? 0 : left.hashCode());
+		hashCode = prime * hashCode + ((right == null) ? 0 : right.hashCode());
+		return hashCode;
 	}
 
 	@SuppressWarnings("unchecked")

@@ -16,7 +16,6 @@ public abstract class PokerGameState extends IIGameState {
 
 	protected LinkedList<PokerAction> sequenceForAllPlayers;
 
-	protected Player[] players;
 	protected PokerAction[] playerCards;
 	protected Pair<Integer, Sequence> cachedISKey = null;
 
@@ -30,7 +29,6 @@ public abstract class PokerGameState extends IIGameState {
 
 	public PokerGameState(Player[] players, int ante) {
 		super(players);
-		this.players = players;
 		this.playerCards = new PokerAction[2];
 		this.sequenceForAllPlayers = new LinkedList<PokerAction>();
 		this.history = new HistoryImpl(players);
@@ -42,11 +40,9 @@ public abstract class PokerGameState extends IIGameState {
 
 	@SuppressWarnings("unchecked")
 	public PokerGameState(PokerGameState gameState) {
-		super(gameState.getHistory(), gameState.getNatureProbability());
-		this.history = gameState.getHistory().copy();
+		super(gameState);
 		this.sequenceForAllPlayers = (LinkedList<PokerAction>) gameState.sequenceForAllPlayers.clone();
 		this.playerCards = gameState.playerCards.clone();
-		this.players = gameState.players.clone();
 		this.pot = gameState.pot;
 		this.round = gameState.round;
 		this.currentPlayerIndex = gameState.currentPlayerIndex;
@@ -67,10 +63,6 @@ public abstract class PokerGameState extends IIGameState {
 	protected abstract int getValueOfCall();
 	
 	public abstract void attendCard(PokerAction action);
-	
-	public Player[] getAllPlayers() {
-		return players;
-	}
 
 	@Override
 	public double[] getUtilities() {
