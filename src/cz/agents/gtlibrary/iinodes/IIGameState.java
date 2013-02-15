@@ -8,17 +8,20 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 
 public abstract class IIGameState implements GameState {
 
+	protected Player[] players;
 	protected History history;
 	protected double natureProbability;
-	
+
 	public IIGameState(Player[] players) {
 		this.history = new HistoryImpl(players);
 		this.natureProbability = 1;
+		this.players = players;
 	}
-	
-	public IIGameState(History history, double natureProbability) {
-		this.history = history.copy();
-		this.natureProbability = natureProbability;
+
+	public IIGameState(IIGameState gameState) {
+		this.history = gameState.getHistory().copy();
+		this.natureProbability = gameState.getNatureProbability();
+		this.players = gameState.getAllPlayers();
 	}
 
 	@Override
@@ -27,12 +30,9 @@ public abstract class IIGameState implements GameState {
 	@Override
 	public GameState performAction(Action action) {
 		IIGameState state = (IIGameState) this.copy();
-
-		if (isPlayerToMoveNature() || state.checkConsistency((IIAction) action)) {
-			state.performActionModifyingThisState(action);
-			return state;
-		}
-		return null;
+		
+		state.performActionModifyingThisState(action);
+		return state;
 	}
 
 	@Override
@@ -64,6 +64,10 @@ public abstract class IIGameState implements GameState {
 	@Override
 	public History getHistory() {
 		return history;
+	}
+
+	public Player[] getAllPlayers() {
+		return players;
 	}
 
 	@Override
