@@ -80,7 +80,10 @@ public abstract class PokerAction extends IIAction {
 				return false;
 		} else if (!action.equals(other.action))
 			return false;
-		if (informationSet != null && !informationSet.equals(other.getInformationSet()))
+		if (informationSet != null) {
+			if (other.getInformationSet() == null || !informationSet.equals(other.getInformationSet()))
+				return false;
+		} else if (other.getInformationSet() != null)
 			return false;
 		if (player == null) {
 			if (other.player != null)
