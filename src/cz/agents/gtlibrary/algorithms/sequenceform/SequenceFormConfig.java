@@ -110,7 +110,7 @@ public class SequenceFormConfig extends IIConfig<SequenceInformationSet> {
 	}
 
 	public void setUtility(GameState leaf) {
-		double utility = leaf.getUtilities()[0];
+		double utility = leaf.getUtilities()[0] * leaf.getNatureProbability();
 
 		if (actualNonZeroUtilityValuesInLeafs.containsKey(leaf)) {
 			assert (actualNonZeroUtilityValuesInLeafs.get(leaf) == utility);
@@ -118,9 +118,11 @@ public class SequenceFormConfig extends IIConfig<SequenceInformationSet> {
 		}
 
 		FixedSizeMap<Player, Sequence> activePlayerMap = createActivePlayerMap(leaf);
+		double existingUtility = utility;
+		if (utilityForSequenceCombination.containsKey(activePlayerMap)) existingUtility += utilityForSequenceCombination.get(activePlayerMap);
 
 		actualNonZeroUtilityValuesInLeafs.put(leaf, utility);
-		utilityForSequenceCombination.put(activePlayerMap, utility * leaf.getNatureProbability());
+		utilityForSequenceCombination.put(activePlayerMap, existingUtility);
 	}
 
 	private FixedSizeMap<Player, Sequence> createActivePlayerMap(GameState leaf) {

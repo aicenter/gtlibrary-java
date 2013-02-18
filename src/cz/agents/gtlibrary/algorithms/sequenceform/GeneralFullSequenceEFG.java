@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GTBestResponseAlgorithm;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -100,6 +101,10 @@ public class GeneralFullSequenceEFG {
 		//		for (BasicPlayerID playerID : rootState.getAllPlayers()) {
 		//			System.out.println("final result for " + playerID + ": " + GeneralSequenceFormLP.resultValues.get(playerID) /*+ ", " + tree.getIS(InformationSet.calculateISEquivalenceForPlayerToMove(rootState)).getValueOfGameForPlayer(playerID)*/);
 		//		}
+		
+		GTBestResponseAlgorithm oracle = new GTBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+		System.out.println("BR: " + oracle.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+		
 		System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
 		System.out.println("final result:" + sequenceFormLP.resultValues.get(actingPlayers[0]));
 		System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
