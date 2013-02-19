@@ -36,13 +36,13 @@ public class GeneralFullSequenceEFG {
 //		SequenceFormConfig algConfig = new SequenceFormConfig();
 //		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KPGameInfo(), algConfig);
 
-//		GameState rootState = new GenericPokerGameState();
-//		SequenceFormConfig algConfig = new SequenceFormConfig();
-//		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), new GPGameInfo(), algConfig);
-
-		GameState rootState = new BPGGameState();
+		GameState rootState = new GenericPokerGameState();
 		SequenceFormConfig algConfig = new SequenceFormConfig();
-		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new BPGExpander<SequenceInformationSet>(algConfig), new BPGGameInfo(), algConfig);
+		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), new GPGameInfo(), algConfig);
+
+//		GameState rootState = new BPGGameState();
+//		SequenceFormConfig algConfig = new SequenceFormConfig();
+//		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new BPGExpander<SequenceInformationSet>(algConfig), new BPGGameInfo(), algConfig);
 		
 		efg.generate();
 	}

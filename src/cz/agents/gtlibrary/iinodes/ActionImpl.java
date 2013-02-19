@@ -4,10 +4,10 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
-public abstract class IIAction implements Action {
+public abstract class ActionImpl implements Action {
 	protected InformationSet informationSet;
 
-	public IIAction(InformationSet informationSet) {
+	public ActionImpl(InformationSet informationSet) {
 		this.informationSet = informationSet;
 	}
 

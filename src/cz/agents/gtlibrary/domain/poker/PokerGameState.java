@@ -7,12 +7,12 @@ import java.util.LinkedList;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.HistoryImpl;
-import cz.agents.gtlibrary.iinodes.IIGameState;
+import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
-public abstract class PokerGameState extends IIGameState {
+public abstract class PokerGameState extends GameStateImpl {
 
 	protected LinkedList<PokerAction> sequenceForAllPlayers;
 

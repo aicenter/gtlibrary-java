@@ -24,28 +24,28 @@ public class BPGExpander<I extends InformationSet> extends ExpanderImpl<I> {
 		BPGGameState gameState = (BPGGameState) state;
 
 		if (gameState.getPlayerToMove().equals(BPGGameInfo.ATTACKER)) {
-			return getActionsOfAttacker(gameState);
+			return getActionsOfAttacker(gameState, getAlgorithmConfig().getInformationSetFor(gameState));
 		}
-		return getActionsForPatroller(gameState);
+		return getActionsForPatroller(gameState, getAlgorithmConfig().getInformationSetFor(gameState));
 	}
 
-	private List<Action> getActionsOfAttacker(BPGGameState gameState) {
+	private List<Action> getActionsOfAttacker(BPGGameState gameState, I informationSet) {
 		List<Action> result = new ArrayList<Action>();
 		Node attackerPosition = gameState.getAttackerPosition();
 
 		if (gameState.isSlowAttackerMovement()) {
-			result.add(new AttackerAction(attackerPosition, attackerPosition, getAlgorithmConfig().getInformationSetFor(gameState), AttackerMovementType.WAIT));
+			result.add(new AttackerAction(attackerPosition, attackerPosition, informationSet, AttackerMovementType.WAIT));
 		} else {
 			for (Edge edge : gameState.getGraph().getGraph().outgoingEdgesOf(attackerPosition)) {
 				if (edge.getSource().equals(edge.getTarget()) && !edge.getSource().equals(gameState.getGraph().getOrigin()))
 					continue;
 				int idOfTarget = edge.getTarget().getIntID();
-				AttackerAction quickAttackerAction = new AttackerAction(attackerPosition, edge.getTarget(), getAlgorithmConfig().getInformationSetFor(gameState), AttackerMovementType.QUICK);
+				AttackerAction quickAttackerAction = new AttackerAction(attackerPosition, edge.getTarget(), informationSet, AttackerMovementType.QUICK);
 
 				result.add(quickAttackerAction);
 				if (BPGGameInfo.SLOW_MOVES) {
 					if (idOfTarget >= 2 && idOfTarget <= 6) {
-						AttackerAction slowAttackerAction = new AttackerAction(attackerPosition, edge.getTarget(), getAlgorithmConfig().getInformationSetFor(gameState), AttackerMovementType.SLOW);
+						AttackerAction slowAttackerAction = new AttackerAction(attackerPosition, edge.getTarget(), informationSet, AttackerMovementType.SLOW);
 						result.add(slowAttackerAction);
 					}
 				}
@@ -55,15 +55,14 @@ public class BPGExpander<I extends InformationSet> extends ExpanderImpl<I> {
 		return result;
 	}
 
-	private List<Action> getActionsForPatroller(BPGGameState gameState) {
+	private List<Action> getActionsForPatroller(BPGGameState gameState, I informationSet) {
 		List<Action> result = new LinkedList<Action>();
 		Node p1Position = gameState.getP1Position();
 		Node p2Position = gameState.getP2Position();
 
 		for (Node p1Target : getTargetsForP1(p1Position, gameState.getGraph())) {
 			for (Node p2Target : getTargetsForP2(p2Position, gameState.getGraph())) {
-				result.add(new PatrollerAction(p1Position, p2Position, p1Target, p2Target,
-						getAlgorithmConfig().getInformationSetFor(gameState), gameState.getFlaggedNodes()));
+				result.add(new PatrollerAction(p1Position, p2Position, p1Target, p2Target, informationSet, gameState.getFlaggedNodes()));
 			}
 		}
 		return result;
@@ -94,9 +93,13 @@ public class BPGExpander<I extends InformationSet> extends ExpanderImpl<I> {
 	}
 
 	@Override
-	public List<Action> getActions(InformationSet informationSet) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<Action> getActions(I informationSet) {
+		BPGGameState gameState = (BPGGameState) informationSet.getAllStates().iterator().next();
+
+		if (gameState.getPlayerToMove().equals(BPGGameInfo.ATTACKER)) {
+			return getActionsOfAttacker(gameState, informationSet);
+		}
+		return getActionsForPatroller(gameState, informationSet);
 	}
 
 }

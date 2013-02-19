@@ -3,11 +3,11 @@ package cz.agents.gtlibrary.domain.bpg;
 import java.util.Set;
 
 import cz.agents.gtlibrary.domain.bpg.data.Node;
-import cz.agents.gtlibrary.iinodes.IIAction;
+import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
-public class PatrollerAction extends IIAction {
+public class PatrollerAction extends ActionImpl {
 
 	private Set<Node> flaggedNodes;
 	private Node fromNodeP1;

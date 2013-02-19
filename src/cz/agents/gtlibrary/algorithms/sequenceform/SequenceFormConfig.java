@@ -6,13 +6,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import cz.agents.gtlibrary.iinodes.IIConfig;
+import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
-public class SequenceFormConfig extends IIConfig<SequenceInformationSet> {
+public class SequenceFormConfig extends ConfigImpl<SequenceInformationSet> {
 	private Map<GameState, Double> actualNonZeroUtilityValuesInLeafs = new HashMap<GameState, Double>();
 	private Map<Sequence, Set<SequenceInformationSet>> reachableSetsBySequence = new HashMap<Sequence, Set<SequenceInformationSet>>();
 	private Map<Map<Player, Sequence>, Double> utilityForSequenceCombination = new HashMap<Map<Player, Sequence>, Double>();
