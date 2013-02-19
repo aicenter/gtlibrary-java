@@ -6,19 +6,19 @@ import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
-public abstract class IIGameState implements GameState {
+public abstract class GameStateImpl implements GameState {
 
 	protected Player[] players;
 	protected History history;
 	protected double natureProbability;
 
-	public IIGameState(Player[] players) {
+	public GameStateImpl(Player[] players) {
 		this.history = new HistoryImpl(players);
 		this.natureProbability = 1;
 		this.players = players;
 	}
 
-	public IIGameState(IIGameState gameState) {
+	public GameStateImpl(GameStateImpl gameState) {
 		this.history = gameState.getHistory().copy();
 		this.natureProbability = gameState.getNatureProbability();
 		this.players = gameState.getAllPlayers();
@@ -29,7 +29,7 @@ public abstract class IIGameState implements GameState {
 
 	@Override
 	public GameState performAction(Action action) {
-		IIGameState state = (IIGameState) this.copy();
+		GameStateImpl state = (GameStateImpl) this.copy();
 		
 		state.performActionModifyingThisState(action);
 		return state;
@@ -37,7 +37,7 @@ public abstract class IIGameState implements GameState {
 
 	@Override
 	public void performActionModifyingThisState(Action action) {
-		if (isPlayerToMoveNature() || checkConsistency((IIAction) action)) {
+		if (isPlayerToMoveNature() || checkConsistency((ActionImpl) action)) {
 			updateNatureProbabilityFor(action);
 			addActionToHistory(action, getPlayerToMove());
 			action.perform(this);
@@ -55,7 +55,7 @@ public abstract class IIGameState implements GameState {
 		history.addActionOf(action, playerToMove);
 	}
 
-	public boolean checkConsistency(IIAction action) {
+	public boolean checkConsistency(ActionImpl action) {
 		if (action == null || action.getInformationSet() == null)
 			return false;
 		return action.getInformationSet().getAllStates().contains(this);

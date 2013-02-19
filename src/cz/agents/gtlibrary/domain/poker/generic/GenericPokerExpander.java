@@ -22,45 +22,45 @@ public class GenericPokerExpander<I extends InformationSet> extends ExpanderImpl
 		List<Action> actions = new LinkedList<Action>();
 
 		if (gpState.isPlayerToMoveNature()) {
-			addActionsOfNature(gameState, gpState, actions);
+			addActionsOfNature(gpState, actions, getAlgorithmConfig().getInformationSetFor(gameState));
 			return actions;
 		}
-		addActionsOfRegularPlayer(gpState, actions);
+		addActionsOfRegularPlayer(gpState, actions, getAlgorithmConfig().getInformationSetFor(gameState));
 		return actions;
 	}
 
-	protected void addActionsOfRegularPlayer(GenericPokerGameState gpState, List<Action> actions) {
+	protected void addActionsOfRegularPlayer(GenericPokerGameState gpState, List<Action> actions, I informationSet) {
 		LinkedList<PokerAction> history = gpState.getSequenceForAllPlayers();
 
 		if (!gpState.isGameEnd()) {
 			if (history.isEmpty() || history.getLast().getActionType().equals("ch")) {
-				addActionsAfterPasiveAction(gpState, actions);
+				addActionsAfterPasiveAction(gpState, actions, informationSet);
 			} else if (history.getLast().getActionType().equals("b")) {
-				addActionsAfterAggressiveActions(gpState, actions, history);
+				addActionsAfterAggressiveActions(gpState, actions, history, informationSet);
 			} else if (history.getLast().getActionType().equals("r")) {
-				addActionsAfterAggressiveActions(gpState, actions, history);
+				addActionsAfterAggressiveActions(gpState, actions, history, informationSet);
 			} else if (history.getLast().getActionType().equals("c")) {
-				addActionsAfterPasiveAction(gpState, actions);
+				addActionsAfterPasiveAction(gpState, actions, informationSet);
 			} else if (!history.getLast().getActionType().equals("f")) {
-				addActionsAfterPasiveAction(gpState, actions);
+				addActionsAfterPasiveAction(gpState, actions, informationSet);
 			}
 		}
 	}
 
-	protected void addActionsAfterPasiveAction(GenericPokerGameState gpState, List<Action> actions) {
-		addBets(actions, gpState);
-		actions.add(createAction(gpState, 0, "ch"));
+	protected void addActionsAfterPasiveAction(GenericPokerGameState gpState, List<Action> actions, I informationSet) {
+		addBets(actions, gpState, informationSet);
+		actions.add(createAction(gpState, 0, "ch", informationSet));
 	}
 
-	protected void addActionsAfterAggressiveActions(GenericPokerGameState gpState, List<Action> actions, LinkedList<PokerAction> history) {
-		addCall(actions, gpState, history);
+	protected void addActionsAfterAggressiveActions(GenericPokerGameState gpState, List<Action> actions, LinkedList<PokerAction> history, I informationSet) {
+		addCall(actions, gpState, history, informationSet);
 		if (gpState.getContinuousRaiseCount() < GPGameInfo.MAX_RAISES_IN_ROW)
-			addRaises(actions, gpState);
-		actions.add(createAction(gpState, 0, "f"));
+			addRaises(actions, gpState, informationSet);
+		actions.add(createAction(gpState, 0, "f", informationSet));
 	}
 
-	protected void addCall(List<Action> actions, GenericPokerGameState gpState, LinkedList<PokerAction> history) {
-		actions.add(createAction(gpState, getValueOfCall(gpState), "c"));
+	protected void addCall(List<Action> actions, GenericPokerGameState gpState, LinkedList<PokerAction> history, I informationSet) {
+		actions.add(createAction(gpState, getValueOfCall(gpState), "c", informationSet));
 	}
 
 	protected int getValueOfCall(GenericPokerGameState state) {
@@ -69,60 +69,60 @@ public class GenericPokerExpander<I extends InformationSet> extends ExpanderImpl
 		return 2 * (state.getPot() - state.getGainForFirstPlayer()) - state.getPot();
 	}
 
-	protected void addRaises(List<Action> actions, GenericPokerGameState gpState) {
+	protected void addRaises(List<Action> actions, GenericPokerGameState gpState, I informationSet) {
 		if (gpState.getRound() == 1) {
-			addFirstRoundRaises(actions, gpState);
+			addFirstRoundRaises(actions, gpState, informationSet);
 			return;
 		}
 		if (gpState.getRound() == 3) {
-			addSecondRoundRaises(actions, gpState);
+			addSecondRoundRaises(actions, gpState, informationSet);
 		}
 	}
 
-	protected void addSecondRoundRaises(List<Action> actions, GenericPokerGameState gpState) {
+	protected void addSecondRoundRaises(List<Action> actions, GenericPokerGameState gpState, I informationSet) {
 		for (int raiseValue : GPGameInfo.RAISES_SECOND_ROUND) {
-			actions.add(createAction(gpState, raiseValue, "r"));
+			actions.add(createAction(gpState, raiseValue, "r", informationSet));
 		}
 	}
 
-	protected void addFirstRoundRaises(List<Action> actions, GenericPokerGameState gpState) {
+	protected void addFirstRoundRaises(List<Action> actions, GenericPokerGameState gpState, I informationSet) {
 		for (int raiseValue : GPGameInfo.RAISES_FIRST_ROUND) {
-			actions.add(createAction(gpState, raiseValue, "r"));
+			actions.add(createAction(gpState, raiseValue, "r", informationSet));
 		}
 	}
 
-	protected void addBets(List<Action> actions, GenericPokerGameState gpState) {
+	protected void addBets(List<Action> actions, GenericPokerGameState gpState, I informationSet) {
 		if (gpState.getRound() == 1) {
-			addFirstRoundBets(actions, gpState);
+			addFirstRoundBets(actions, gpState, informationSet);
 			return;
 		}
 		if (gpState.getRound() == 3) {
-			addSecondRoundBets(actions, gpState);
+			addSecondRoundBets(actions, gpState, informationSet);
 		}
 	}
 
-	protected void addSecondRoundBets(List<Action> actions, GenericPokerGameState gpState) {
+	protected void addSecondRoundBets(List<Action> actions, GenericPokerGameState gpState, I informationSet) {
 		for (int betValue : GPGameInfo.BETS_SECOND_ROUND) {
-			actions.add(createAction(gpState, betValue, "b"));
+			actions.add(createAction(gpState, betValue, "b", informationSet));
 		}
 	}
 
-	protected void addFirstRoundBets(List<Action> actions, GenericPokerGameState gpState) {
+	protected void addFirstRoundBets(List<Action> actions, GenericPokerGameState gpState, I informationSet) {
 		for (int betValue : GPGameInfo.BETS_FIRST_ROUND) {
-			actions.add(createAction(gpState, betValue, "b"));
+			actions.add(createAction(gpState, betValue, "b", informationSet));
 		}
 	}
 
-	protected void addActionsOfNature(GameState gameState, GenericPokerGameState gpState, List<Action> actions) {
+	protected void addActionsOfNature(GenericPokerGameState gpState, List<Action> actions, I informationSet) {
 		for (int cardValue : GPGameInfo.CARD_TYPES) {
-			if (isCardAvailableInState(cardValue, (GenericPokerGameState) gameState)) {
-				actions.add(createAction(gpState, cardValue, String.valueOf(cardValue)));
+			if (isCardAvailableInState(cardValue, gpState)) {
+				actions.add(createAction(gpState, cardValue, String.valueOf(cardValue), informationSet));
 			}
 		}
 	}
 
-	protected PokerAction createAction(GenericPokerGameState state, int action, String actionString) {
-		return new GenericPokerAction(actionString, getAlgorithmConfig().getInformationSetFor(state), state.getPlayerToMove(), action);
+	protected PokerAction createAction(GenericPokerGameState state, int action, String actionString, I informationSet) {
+		return new GenericPokerAction(actionString, informationSet, state.getPlayerToMove(), action);
 	}
 
 	protected boolean isCardAvailableInState(int cardValue, GenericPokerGameState state) {
@@ -147,8 +147,16 @@ public class GenericPokerExpander<I extends InformationSet> extends ExpanderImpl
 	}
 
 	@Override
-	public List<Action> getActions(InformationSet informationSet) {
-		throw new UnsupportedOperationException("Not implemented yet.");
+	public List<Action> getActions(I informationSet) {
+		GenericPokerGameState gpState = (GenericPokerGameState) informationSet.getAllStates().iterator().next();
+		List<Action> actions = new LinkedList<Action>();
+
+		if (gpState.isPlayerToMoveNature()) {
+			addActionsOfNature(gpState, actions, informationSet);
+			return actions;
+		}
+		addActionsOfRegularPlayer(gpState, actions, informationSet);
+		return actions;
 	}
 
 }

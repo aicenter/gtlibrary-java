@@ -9,14 +9,14 @@ public interface Expander<I extends InformationSet> {
 	/**
 	 * 
 	 * @param gameState
-	 * @return list of actions available in given game state for player to move, actions must include isHash (0 if nature action)
+	 * @return list of actions available in given game state for player to move, actions must include information set
 	 */
 	List<Action> getActions(GameState gameState);
 	
 	/**
 	 * 
 	 * @param gameState
-	 * @return list of actions available in given information set, actions must include isHash (0 if nature action)
+	 * @return list of actions available in given information set, actions must include information set
 	 */
-	List<Action> getActions(InformationSet informationSet);
+	List<Action> getActions(I informationSet);
 }

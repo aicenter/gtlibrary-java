@@ -1,13 +1,10 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +12,7 @@ import java.util.Set;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.iinodes.IIAction;
+import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
@@ -150,7 +147,7 @@ public class GTBestResponseAlgorithm {
 				//TODO add pruning with lower bound
 			}				
 
-			IIAction resultAction = sel.getResult().getLeft(); //selected action for the searching player
+			ActionImpl resultAction = sel.getResult().getLeft(); //selected action for the searching player
 				
 			for (GameState currentNode : alternativeNodes) { // storing the results based on the action
 				if (sel.actionRealValues.get(currentNode) == null) {
@@ -195,7 +192,7 @@ public class GTBestResponseAlgorithm {
 		List<Action> actionsToExplore = expander.getActions(state);
 		
 		for (Action act : actionsToExplore) {
-			IIAction action = (IIAction)act;
+			ActionImpl action = (ActionImpl)act;
 		
 			GameState newState = (GameState)state.performAction(action);
 			
@@ -217,14 +214,14 @@ public class GTBestResponseAlgorithm {
 	
 	public abstract class BRActionSelection {
 		protected double lowerBound;
-		public abstract void addValue(IIAction action, double value, double natureProb, double orpProb);
-		public abstract Pair<IIAction, Double> getResult();		
+		public abstract void addValue(ActionImpl action, double value, double natureProb, double orpProb);
+		public abstract Pair<ActionImpl, Double> getResult();		
 		
 		public BRActionSelection(double lowerBound) {
 			this.lowerBound = lowerBound;
 		}
 		
-		public abstract double calculateNewBoundForAction(IIAction action, double natureProb, double orpProb);
+		public abstract double calculateNewBoundForAction(ActionImpl action, double natureProb, double orpProb);
 	}
 	
 	public class BROppSelection extends BRActionSelection {
@@ -242,7 +239,7 @@ public class GTBestResponseAlgorithm {
 		}
 		
 		@Override
-		public void addValue(IIAction action,	double value, double natureProb, double orpProb) {
+		public void addValue(ActionImpl action,	double value, double natureProb, double orpProb) {
 			double probability = natureProb;
 			if (nonZeroORP) {
 				probability *= orpProb;
@@ -253,12 +250,12 @@ public class GTBestResponseAlgorithm {
 		}
 	
 		@Override
-		public Pair<IIAction, Double> getResult() {
-			return new Pair<IIAction, Double>(null, value);
+		public Pair<ActionImpl, Double> getResult() {
+			return new Pair<ActionImpl, Double>(null, value);
 		}
 		
 		@Override
-		public double calculateNewBoundForAction(IIAction action, double natureProb, double orpProb) {
+		public double calculateNewBoundForAction(ActionImpl action, double natureProb, double orpProb) {
 			double probability = natureProb;
 			if (nonZeroORP) {
 				probability *= orpProb;
@@ -275,11 +272,11 @@ public class GTBestResponseAlgorithm {
 		
 		protected double allNodesProbability;
 		
-		protected HashMap<IIAction, Double> actionExpectedValues = new HashMap<IIAction, Double>();
-		protected HashMap<GameState, HashMap<IIAction, Double>> actionRealValues = new HashMap<GameState, HashMap<IIAction,Double>>();
+		protected HashMap<ActionImpl, Double> actionExpectedValues = new HashMap<ActionImpl, Double>();
+		protected HashMap<GameState, HashMap<ActionImpl, Double>> actionRealValues = new HashMap<GameState, HashMap<ActionImpl,Double>>();
 		protected double maxValue = Double.NEGATIVE_INFINITY;
-		protected IIAction maxAction = null;
-		protected IIAction maxActionCurrentRun = null;
+		protected ActionImpl maxAction = null;
+		protected ActionImpl maxActionCurrentRun = null;
 		protected GameState currentNode = null;	
 		protected HashMap<GameState,Double> alternativeNodesProbs = null;
 		protected boolean nonZeroORP;
@@ -295,7 +292,7 @@ public class GTBestResponseAlgorithm {
 		public void setCurrentNode(GameState currentNode) {
 //			allNodesProbability -= nodeProbability;
 			this.currentNode = currentNode;
-			actionRealValues.put(currentNode, new HashMap<IIAction, Double>());
+			actionRealValues.put(currentNode, new HashMap<ActionImpl, Double>());
 			maxValue = Double.NEGATIVE_INFINITY;
 		}
 
@@ -306,10 +303,10 @@ public class GTBestResponseAlgorithm {
 		}
 
 		@Override
-		public void addValue(IIAction action,	double value, double natureProb, double orpProb) {
+		public void addValue(ActionImpl action,	double value, double natureProb, double orpProb) {
 			assert (currentNode != null);
 			
-			HashMap<IIAction, Double> currentNodeActionValues = actionRealValues.get(currentNode);
+			HashMap<ActionImpl, Double> currentNodeActionValues = actionRealValues.get(currentNode);
 			assert (currentNodeActionValues != null);
 			assert (!currentNodeActionValues.containsKey(action));			
 			currentNodeActionValues.put(action, value);
@@ -328,12 +325,12 @@ public class GTBestResponseAlgorithm {
 		}
 	
 		@Override
-		public Pair<IIAction, Double> getResult() {
-			return new Pair<IIAction, Double>(maxAction, actionExpectedValues.get(maxAction));
+		public Pair<ActionImpl, Double> getResult() {
+			return new Pair<ActionImpl, Double>(maxAction, actionExpectedValues.get(maxAction));
 		}
 		
 		@Override
-		public double calculateNewBoundForAction(IIAction action, double natureProb, double orpProb) {
+		public double calculateNewBoundForAction(ActionImpl action, double natureProb, double orpProb) {
 			if (nonZeroORP && orpProb <= 0) return MAX_UTILITY_VALUE+EPS_CONSTANT;
 			if (maxAction == null) {
 				if (maxActionCurrentRun == null) return -MAX_UTILITY_VALUE;

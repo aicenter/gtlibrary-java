@@ -1,11 +1,11 @@
 package cz.agents.gtlibrary.domain.bpg;
 
 import cz.agents.gtlibrary.domain.bpg.data.Node;
-import cz.agents.gtlibrary.iinodes.IIAction;
+import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
-public class AttackerAction extends IIAction {
+public class AttackerAction extends ActionImpl {
 
 	final private Node fromNode;
 	final private Node toNode;

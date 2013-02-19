@@ -1,11 +1,11 @@
 package cz.agents.gtlibrary.domain.poker;
 
-import cz.agents.gtlibrary.iinodes.IIAction;
+import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 
-public abstract class PokerAction extends IIAction {
+public abstract class PokerAction extends ActionImpl {
 
 	protected final String action;
 	protected final Player player;
@@ -80,10 +80,7 @@ public abstract class PokerAction extends IIAction {
 				return false;
 		} else if (!action.equals(other.action))
 			return false;
-		if (informationSet != null) {
-			if (other.getInformationSet() == null || !informationSet.equals(other.getInformationSet()))
-				return false;
-		} else if (other.getInformationSet() != null)
+		if (informationSet != null && !informationSet.equals(other.getInformationSet()))
 			return false;
 		if (player == null) {
 			if (other.player != null)

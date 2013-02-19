@@ -8,11 +8,11 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
-public abstract class IIConfig<I extends InformationSetImpl> implements AlgorithmConfig<I> {
+public abstract class ConfigImpl<I extends InformationSetImpl> implements AlgorithmConfig<I> {
 
 	private HashMap<Pair<Integer, Sequence>, I> allInformationSets;
 
-	public IIConfig() {
+	public ConfigImpl() {
 		allInformationSets = new LinkedHashMap<Pair<Integer, Sequence>, I>();
 	}
 

@@ -32,19 +32,19 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 //		cfr.buildGameTree(rootState, new KuhnPokerExpander<VanillaInformationSet>(config));
 //		cfr.updateTree(200000);
 		
-//		GameState rootState = new GenericPokerGameState();
-//		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new GenericPokerGameState());
-//		VanillaCFR cfr = new VanillaCFR(config);
-//
-//		cfr.buildGameTree(rootState, new GenericPokerExpander<VanillaInformationSet>(config));
-//		cfr.updateTree(200000);
-		
-		GameState rootState = new BPGGameState();
-		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new BPGGameState());
+		GameState rootState = new GenericPokerGameState();
+		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new GenericPokerGameState());
 		VanillaCFR cfr = new VanillaCFR(config);
 
-		cfr.buildGameTree(rootState, new BPGExpander<VanillaInformationSet>(config));
+		cfr.buildGameTree(rootState, new GenericPokerExpander<VanillaInformationSet>(config));
 		cfr.updateTree(200000);
+		
+//		GameState rootState = new BPGGameState();
+//		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new BPGGameState());
+//		VanillaCFR cfr = new VanillaCFR(config);
+//
+//		cfr.buildGameTree(rootState, new BPGExpander<VanillaInformationSet>(config));
+//		cfr.updateTree(200000);
 	}
 
 	public VanillaCFR(CFRConfig<VanillaInformationSet> config) {
