@@ -55,7 +55,7 @@ public abstract class GameStateImpl implements GameState {
 		history.addActionOf(action, playerToMove);
 	}
 
-	public boolean checkConsistency(ActionImpl action) {
+	public boolean checkConsistency(Action action) {
 		if (action == null || action.getInformationSet() == null)
 			return false;
 		return action.getInformationSet().getAllStates().contains(this);

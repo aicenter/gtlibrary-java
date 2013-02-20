@@ -18,4 +18,5 @@ public interface GameState {
 	public void performActionModifyingThisState(Action action);
 	public void reverseAction();
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove();
+	public boolean checkConsistency(Action action);
 }
