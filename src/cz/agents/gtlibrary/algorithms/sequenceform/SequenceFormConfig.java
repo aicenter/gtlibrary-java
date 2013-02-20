@@ -7,14 +7,15 @@ import java.util.Map;
 import java.util.Set;
 
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
-public class SequenceFormConfig extends ConfigImpl<SequenceInformationSet> {
+public class SequenceFormConfig<I extends SequenceInformationSet> extends ConfigImpl<I> {
 	private Map<GameState, Double> actualNonZeroUtilityValuesInLeafs = new HashMap<GameState, Double>();
-	private Map<Sequence, Set<SequenceInformationSet>> reachableSetsBySequence = new HashMap<Sequence, Set<SequenceInformationSet>>();
+	private Map<Sequence, Set<I>> reachableSetsBySequence = new HashMap<Sequence, Set<I>>();
 	private Map<Map<Player, Sequence>, Double> utilityForSequenceCombination = new HashMap<Map<Player, Sequence>, Double>();
 	private Map<Sequence, Set<Sequence>> compatibleSequences = new HashMap<Sequence, Set<Sequence>>();
 	private Map<Player, Set<Sequence>> playerSequences = new HashMap<Player, Set<Sequence>>();
@@ -59,7 +60,7 @@ public class SequenceFormConfig extends ConfigImpl<SequenceInformationSet> {
 		Sequence sequence = state.getSequenceFor(player);
 
 		if (sequence != null && sequence.size() > 0) {
-			SequenceInformationSet prevIS = (SequenceInformationSet) sequence.getLastInformationSet();
+			I prevIS = (I) sequence.getLastInformationSet();
 
 			prevIS.addOutgoingSequences(sequence);
 		}
@@ -74,11 +75,11 @@ public class SequenceFormConfig extends ConfigImpl<SequenceInformationSet> {
 		}
 	}
 
-	private void addSetFor(SequenceInformationSet set, Sequence sequence) {
-		Set<SequenceInformationSet> reachableSets = reachableSetsBySequence.get(sequence);
+	private void addSetFor(I set, Sequence sequence) {
+		Set<I> reachableSets = reachableSetsBySequence.get(sequence);
 
 		if (reachableSets == null) {
-			reachableSets = new HashSet<SequenceInformationSet>();
+			reachableSets = new HashSet<I>();
 			reachableSetsBySequence.put(sequence, reachableSets);
 		}
 		reachableSets.add(set);
@@ -99,11 +100,11 @@ public class SequenceFormConfig extends ConfigImpl<SequenceInformationSet> {
 		sequencesForPlayer.add(sequence);
 	}
 
-	private SequenceInformationSet createInformationSet(GameState state) {
-		SequenceInformationSet infoSet = getInformationSetFor(state);
+	private I createInformationSet(GameState state) {
+		I infoSet = getInformationSetFor(state);
 
 		if (infoSet == null) {
-			infoSet = new SequenceInformationSet(state);
+			infoSet = (I)new SequenceInformationSet(state); // TODO FIX ME !!!!
 		}
 		addInformationSetFor(state, infoSet);
 		return infoSet;
@@ -111,6 +112,11 @@ public class SequenceFormConfig extends ConfigImpl<SequenceInformationSet> {
 
 	public void setUtility(GameState leaf) {
 		double utility = leaf.getUtilities()[0] * leaf.getNatureProbability();
+		setUtility(leaf, utility);
+	}
+
+	public void setUtility(GameState leaf, double utility) {
+		
 
 		if (actualNonZeroUtilityValuesInLeafs.containsKey(leaf)) {
 			assert (actualNonZeroUtilityValuesInLeafs.get(leaf) == utility);
@@ -124,6 +130,24 @@ public class SequenceFormConfig extends ConfigImpl<SequenceInformationSet> {
 		actualNonZeroUtilityValuesInLeafs.put(leaf, utility);
 		utilityForSequenceCombination.put(activePlayerMap, existingUtility);
 	}
+
+	public void removeUtility(GameState oldLeaf) {
+		
+		Double utility = getActualNonzeroUtilityValues(oldLeaf);
+		if (utility == null) {
+			return; // leaf not stored
+		}
+
+		FixedSizeMap<Player, Sequence> activePlayerMap = createActivePlayerMap(oldLeaf);
+		if (!utilityForSequenceCombination.containsKey(activePlayerMap)) {
+			assert false;
+			return;
+		}
+		double 	existingUtility = utilityForSequenceCombination.get(activePlayerMap) - utility;
+		utilityForSequenceCombination.put(activePlayerMap, existingUtility);
+		actualNonZeroUtilityValuesInLeafs.remove(oldLeaf);		
+	}
+	
 
 	private FixedSizeMap<Player, Sequence> createActivePlayerMap(GameState leaf) {
 		FixedSizeMap<Player, Sequence> activePlayerMap = new FixedSizeMap<Player, Sequence>(2);
@@ -148,7 +172,7 @@ public class SequenceFormConfig extends ConfigImpl<SequenceInformationSet> {
 		return reachableSetsBySequence.keySet();
 	}
 
-	public Set<SequenceInformationSet> getReachableSets(Sequence sequence) {
+	public Set<I> getReachableSets(Sequence sequence) {
 		return reachableSetsBySequence.get(sequence);
 	}
 
@@ -160,7 +184,7 @@ public class SequenceFormConfig extends ConfigImpl<SequenceInformationSet> {
 		return compatibleSequences;
 	}
 
-	public Map<Sequence, Set<SequenceInformationSet>> getReachableSets() {
+	public Map<Sequence, Set<I>> getReachableSets() {
 		return reachableSetsBySequence;
 	}
 

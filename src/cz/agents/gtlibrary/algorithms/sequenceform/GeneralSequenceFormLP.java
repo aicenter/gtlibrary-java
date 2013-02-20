@@ -48,7 +48,7 @@ public class GeneralSequenceFormLP {
 		}
 	}
 
-	public Double calculateBothPlStrategy(GameState root, SequenceFormConfig algConfig) {
+	public Double calculateBothPlStrategy(GameState root, SequenceFormConfig<SequenceInformationSet> algConfig) {
 		try {
 			createVariables(algConfig, root.getAllPlayers());
 			calculateOnePlStrategy(algConfig, root, root.getAllPlayers()[1], root.getAllPlayers()[0]);
@@ -68,7 +68,7 @@ public class GeneralSequenceFormLP {
 		objectiveForPlayers.put(player, v0);
 	}
 
-	private void createVariables(SequenceFormConfig algConfig, Player[] players) throws IloException {
+	private void createVariables(SequenceFormConfig<SequenceInformationSet> algConfig, Player[] players) throws IloException {
 		for (Sequence sequence : algConfig.getAllSequences()) {
 			if (!variables.containsKey(sequence)) {
 				createVariableForSequence(modelsForPlayers.get(players[0]), sequence);
@@ -86,7 +86,7 @@ public class GeneralSequenceFormLP {
 		System.out.println("variables created");
 	}
 
-	public Double calculateOnePlStrategy(SequenceFormConfig algConfig, GameState root, Player firstPlayer, Player secondPlayer) {
+	public Double calculateOnePlStrategy(SequenceFormConfig<SequenceInformationSet> algConfig, GameState root, Player firstPlayer, Player secondPlayer) {
 		try {
 			IloCplex cplex = modelsForPlayers.get(firstPlayer);
 			IloNumVar v0 = objectiveForPlayers.get(firstPlayer);
@@ -114,7 +114,7 @@ public class GeneralSequenceFormLP {
 		}
 	}
 
-	private Map<Sequence, Double> createSolution(SequenceFormConfig algConfig, Player secondPlayer, IloCplex cplex) throws IloException {
+	private Map<Sequence, Double> createSolution(SequenceFormConfig<SequenceInformationSet> algConfig, Player secondPlayer, IloCplex cplex) throws IloException {
 		Map<Sequence, Double> solution = new HashMap<Sequence, Double>();
 
 		for (Sequence sequence : algConfig.getSequencesFor(secondPlayer)) {
@@ -145,7 +145,7 @@ public class GeneralSequenceFormLP {
 		}
 	}
 
-	private void createConststraintsForSequences(SequenceFormConfig algConfig, IloCplex cplex, Set<Sequence> VConstraints) throws IloException {
+	private void createConststraintsForSequences(SequenceFormConfig<SequenceInformationSet> algConfig, IloCplex cplex, Set<Sequence> VConstraints) throws IloException {
 		for (Sequence firstPlayerSequence : VConstraints) {
 			if (constraints.containsKey(firstPlayerSequence)) {
 				cplex.delete(constraints.get(firstPlayerSequence));
@@ -155,7 +155,7 @@ public class GeneralSequenceFormLP {
 		}
 	}
 
-	private static double getUtility(SequenceFormConfig algConfig, Map<Player, Sequence> sequenceCombination) {
+	private static double getUtility(SequenceFormConfig<SequenceInformationSet> algConfig, Map<Player, Sequence> sequenceCombination) {
 		Double utility = algConfig.getUtilityForSequenceCombination(sequenceCombination);
 
 		if (utility == null) {
@@ -213,7 +213,7 @@ public class GeneralSequenceFormLP {
 		return contsrain;
 	}
 
-	private void createConstraintForSequence(IloCplex cplex, Sequence firstPlayerSequence, SequenceFormConfig algConfig) throws IloException {
+	private void createConstraintForSequence(IloCplex cplex, Sequence firstPlayerSequence, SequenceFormConfig<SequenceInformationSet> algConfig) throws IloException {
 		Player firstPlayer = firstPlayerSequence.getPlayer();
 		InformationSet informationSet = firstPlayerSequence.getLastInformationSet();
 		IloNumExpr VI = null;
@@ -244,7 +244,7 @@ public class GeneralSequenceFormLP {
 		constraints.put(firstPlayerSequence, con);
 	}
 
-	private IloNumExpr computeSumGR(IloCplex cplex, Sequence firstPlayerSequence, SequenceFormConfig algConfig, Player firstPlayer) throws IloException {
+	private IloNumExpr computeSumGR(IloCplex cplex, Sequence firstPlayerSequence, SequenceFormConfig<SequenceInformationSet> algConfig, Player firstPlayer) throws IloException {
 		IloNumExpr sumGR = cplex.constant(0);
 		HashSet<Sequence> secondPlayerSequences = new HashSet<Sequence>();
 

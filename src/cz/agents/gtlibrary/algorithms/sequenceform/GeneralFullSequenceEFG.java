@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GTBestResponseAlgorithm;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleBestResponse;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -27,27 +27,27 @@ public class GeneralFullSequenceEFG {
 	private GameState rootState;
 	private Expander<SequenceInformationSet> expander;
 	private GameInfo gameConfig;
-	private SequenceFormConfig algConfig;
+	private SequenceFormConfig<SequenceInformationSet> algConfig;
 
 	private PrintStream debugOutput = System.out;
 
 	public static void main(String[] args) {
 //		GameState rootState = new KuhnPokerGameState();
-//		SequenceFormConfig algConfig = new SequenceFormConfig();
+//		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 //		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KPGameInfo(), algConfig);
 
 		GameState rootState = new GenericPokerGameState();
-		SequenceFormConfig algConfig = new SequenceFormConfig();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), new GPGameInfo(), algConfig);
 
 //		GameState rootState = new BPGGameState();
-//		SequenceFormConfig algConfig = new SequenceFormConfig();
+//		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 //		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new BPGExpander<SequenceInformationSet>(algConfig), new BPGGameInfo(), algConfig);
 		
 		efg.generate();
 	}
 
-	public GeneralFullSequenceEFG(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo config, SequenceFormConfig algConfig) {
+	public GeneralFullSequenceEFG(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo config, SequenceFormConfig<SequenceInformationSet> algConfig) {
 		this.rootState = rootState;
 		this.expander = expander;
 		this.gameConfig = config;
@@ -102,15 +102,18 @@ public class GeneralFullSequenceEFG {
 		//			System.out.println("final result for " + playerID + ": " + GeneralSequenceFormLP.resultValues.get(playerID) /*+ ", " + tree.getIS(InformationSet.calculateISEquivalenceForPlayerToMove(rootState)).getValueOfGameForPlayer(playerID)*/);
 		//		}
 		
-		GTBestResponseAlgorithm oracle = new GTBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + oracle.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
-		
 		System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
 		System.out.println("final result:" + sequenceFormLP.resultValues.get(actingPlayers[0]));
 		System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
 
 		System.out.println("final CPLEX time: " + overallCPLEX);
 		System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
+		
+		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+
 	}
 
 	public void generateCompleteGame() {
