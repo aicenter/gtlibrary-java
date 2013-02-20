@@ -171,6 +171,10 @@ public class BPGGameState extends GameStateImpl {
 	public Set<Node> getFlaggedNodes() {
 		return flaggedNodes;
 	}
+	
+	public Set<Node> getFlaggedNodesObservedByPatroller() {
+		return flaggedNodesObservedByPatroller;
+	}
 
 	@Override
 	public String toString() {

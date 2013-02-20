@@ -62,7 +62,7 @@ public class BPGExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
 		for (Node p1Target : getTargetsForP1(p1Position, gameState.getGraph())) {
 			for (Node p2Target : getTargetsForP2(p2Position, gameState.getGraph())) {
-				result.add(new PatrollerAction(p1Position, p2Position, p1Target, p2Target, informationSet, gameState.getFlaggedNodes()));
+				result.add(new PatrollerAction(p1Position, p2Position, p1Target, p2Target, informationSet, gameState.getFlaggedNodesObservedByPatroller()));
 			}
 		}
 		return result;
