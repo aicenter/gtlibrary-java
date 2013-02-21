@@ -32,13 +32,13 @@ public class GeneralFullSequenceEFG {
 	private PrintStream debugOutput = System.out;
 
 	public static void main(String[] args) {
-		GameState rootState = new KuhnPokerGameState();
-		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KPGameInfo(), algConfig);
-
-//		GameState rootState = new GenericPokerGameState();
+//		GameState rootState = new KuhnPokerGameState();
 //		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-//		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), new GPGameInfo(), algConfig);
+//		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KPGameInfo(), algConfig);
+
+		GameState rootState = new GenericPokerGameState();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), new GPGameInfo(), algConfig);
 
 //		GameState rootState = new BPGGameState();
 //		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
