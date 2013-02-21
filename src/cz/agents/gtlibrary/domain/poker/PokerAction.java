@@ -68,19 +68,13 @@ public abstract class PokerAction extends ActionImpl {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
+		if (!super.equals(obj))
 			return false;
 		PokerAction other = (PokerAction) obj;
 		if (action == null) {
 			if (other.action != null)
 				return false;
 		} else if (!action.equals(other.action))
-			return false;
-		if (informationSet != null && !informationSet.equals(other.getInformationSet()))
 			return false;
 		if (player == null) {
 			if (other.player != null)
