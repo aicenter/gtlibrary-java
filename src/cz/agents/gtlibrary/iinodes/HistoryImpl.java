@@ -73,13 +73,14 @@ public class HistoryImpl implements History {
 	public int hashCode() {
 		if(hashCode != -1)
 			return hashCode;
-		hashCode = 0;
-		final int prime = 31;
-		
-		for (Player p : players) { 
-			hashCode = hashCode * prime + p.hashCode();
-			hashCode = hashCode * prime + sequencesOfPlayers.get(p).hashCode();
-		}
+//		hashCode = 0;
+//		final int prime = 31;
+//		
+//		for (Player p : players) { 
+//			hashCode = hashCode * prime + p.hashCode();
+//			hashCode = hashCode * prime + sequencesOfPlayers.get(p).hashCode();
+//		}
+		hashCode = sequencesOfPlayers.hashCode();
 		return hashCode;
 	}
 

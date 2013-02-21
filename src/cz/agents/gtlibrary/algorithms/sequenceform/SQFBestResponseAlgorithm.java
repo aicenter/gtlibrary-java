@@ -103,7 +103,8 @@ public class SQFBestResponseAlgorithm {
 		
 		if (gameState.isGameEnd()){ // we are in a leaf
 			double utRes = 0;
-			if (algConfig.getActualNonzeroUtilityValues(gameState) != null) utRes = algConfig.getActualNonzeroUtilityValues(gameState);
+			if (algConfig.getActualNonzeroUtilityValues(gameState) != null) 
+				utRes = algConfig.getActualNonzeroUtilityValues(gameState);
 			else {
 				utRes = gameState.getUtilities()[0] * gameState.getNatureProbability();
 				if (utRes != 0) algConfig.setUtility(gameState, utRes);
