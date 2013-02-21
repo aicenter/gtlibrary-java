@@ -12,6 +12,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
@@ -23,7 +27,9 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.ValueComparator;
 
 /**
  * 
@@ -239,6 +245,8 @@ public class SQFBestResponseAlgorithm {
 			this.lowerBound = lowerBound;
 		}
 		
+		public abstract List<Action> sortActions(GameState state, List<Action> actions);
+		
 		public abstract double calculateNewBoundForAction(Action action, double natureProb, double orpProb);
 	}
 	
@@ -264,7 +272,7 @@ public class SQFBestResponseAlgorithm {
 				probability *= orpProb;
 				if (orpProb == 0) {
 					if (tempValue == null) tempValue = value;
-					value = 0;					
+					return;				
 				}
 				else nonZeroContinuation = true;
 			} else {
@@ -293,6 +301,39 @@ public class SQFBestResponseAlgorithm {
 				else return Double.POSITIVE_INFINITY;
 			}
 			return Math.max(probability * (-MAX_UTILITY_VALUE), lowerBound - (value + (nodeProbability - probability)*MAX_UTILITY_VALUE));
+		}
+
+		@Override
+		public List<Action> sortActions(GameState state, List<Action> actions) {
+			List<Action> result = new ArrayList<Action>();
+			if (state.isPlayerToMoveNature()) {
+				// sort according to the nature probability
+				Map<Action, Double> actionMap = new FixedSizeMap<Action, Double>(actions.size());
+				for (Action a : actions) {
+					actionMap.put(a, -state.getProbabilityOfNatureFor(a)); // the standard way is to sort ascending; hence, we store negative probability
+				}
+				ValueComparator<Action> comp = new ValueComparator<Action>(actionMap);
+		        TreeMap<Action,Double> sortedMap = new TreeMap<Action,Double>(comp);
+		        sortedMap.putAll(actionMap);
+				result.addAll(sortedMap.keySet());
+			} else {
+				// sort according to the opponent realizaiton plan
+				Sequence currentSequence = state.getSequenceFor(players[opponentPlayerIndex]);
+				Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
+				for (Action a : actions) {
+					Sequence newSeq = new LinkedListSequenceImpl(currentSequence);
+					newSeq.addLast(a);
+					Double prob = opponentRealizationPlan.get(newSeq);
+					if (prob == null) prob = 0d;
+					
+					sequenceMap.put(a, -prob); // the standard way is to sort ascending; hence, we store negative probability
+				}
+				ValueComparator<Action> comp = new ValueComparator<Action>(sequenceMap);
+		        TreeMap<Action,Double> sortedMap = new TreeMap<Action,Double>(comp);
+		        sortedMap.putAll(sequenceMap);
+				result.addAll(sortedMap.keySet());
+			}
+			return result;
 		}
 	}
 
@@ -370,6 +411,12 @@ public class SQFBestResponseAlgorithm {
 				} else	return (actionExpectedValues.get(maxAction) + this.allNodesProbability * (-MAX_UTILITY_VALUE)) -
 							(actionExpectedValues.get(action) + ( this.allNodesProbability - alternativeNodesProbs.get(currentNode) ) * MAX_UTILITY_VALUE);
 			}
+		}
+
+		@Override
+		public List<Action> sortActions(GameState state, List<Action> actions) {
+			// TODO implement actions sorting for the searching player 
+			return actions;
 		}
 	}
 	
