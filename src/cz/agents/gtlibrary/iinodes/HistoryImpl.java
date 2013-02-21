@@ -80,6 +80,7 @@ public class HistoryImpl implements History {
 			hashCode = hashCode * prime + p.hashCode();
 			hashCode = hashCode * prime + sequencesOfPlayers.get(p).hashCode();
 		}
+//		hashCode = sequencesOfPlayers.hashCode();
 		return hashCode;
 	}
 
