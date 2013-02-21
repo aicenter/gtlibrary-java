@@ -55,14 +55,14 @@ public class SQFBestResponseAlgorithm {
 	final protected GameInfo gameInfo;
 	
 	protected double MAX_UTILITY_VALUE;
-	final protected double EPS_CONSTANT = 0.00001; // zero for numerical-stability reasons 
+	final protected double EPS_CONSTANT = 0.000000001; // zero for numerical-stability reasons 
 
 	protected ORComparator comparator;
 	
 	
 	protected GameState gameTreeRoot = null;
 
-	public SQFBestResponseAlgorithm(Expander<SequenceInformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, SequenceFormConfig algConfig, GameInfo gameInfo) {
+	public SQFBestResponseAlgorithm(Expander<SequenceInformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, SequenceFormConfig<SequenceInformationSet> algConfig, GameInfo gameInfo) {
 		this.searchingPlayerIndex = searchingPlayerIndex;
 		this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
 		this.players = actingPlayers;	
@@ -193,6 +193,9 @@ public class SQFBestResponseAlgorithm {
 			BROppSelection sel = new BROppSelection(lowerBound, nodeProbability, nonZeroORP);
 			selectAction(gameState, sel, lowerBound);
 			returnValue = sel.getResult().getRight();
+			if (nonZeroORP && !sel.nonZeroContinuation) {
+				returnValue *= currentOppRealizationPlan;
+			}
 		} 
 			
 		assert (returnValue != null);
@@ -242,7 +245,8 @@ public class SQFBestResponseAlgorithm {
 		protected double nodeProbability;		
 		protected double value = 0;		
 		protected boolean nonZeroORP;
-		
+		protected boolean nonZeroContinuation = false;
+		protected Double tempValue = null; 
 		
 		
 		public BROppSelection(double lowerBound, double nodeProbability, boolean nonZeroORP) {
@@ -256,7 +260,11 @@ public class SQFBestResponseAlgorithm {
 			double probability = natureProb;
 			if (nonZeroORP) {
 				probability *= orpProb;
-				if (orpProb == 0) value = 0;
+				if (orpProb == 0) {
+					if (tempValue == null) tempValue = value;
+					value = 0;					
+				}
+				else nonZeroContinuation = true;
 			}
 			this.nodeProbability -= probability;
 			this.value += value;
@@ -264,7 +272,10 @@ public class SQFBestResponseAlgorithm {
 	
 		@Override
 		public Pair<Action, Double> getResult() {
-			return new Pair<Action, Double>(null, value);
+			if (nonZeroORP && !nonZeroContinuation) 
+				return new Pair<Action, Double>(null, tempValue);
+			else 
+				return new Pair<Action, Double>(null, value);
 		}
 		
 		@Override
@@ -274,7 +285,7 @@ public class SQFBestResponseAlgorithm {
 				probability *= orpProb;
 			}
 			if (nodeProbability < EPS_CONSTANT) {
-				if (action == null) return -MAX_UTILITY_VALUE; 
+				if (tempValue == null) return -MAX_UTILITY_VALUE; 
 				else return Double.POSITIVE_INFINITY;
 			}
 			return Math.max(probability * (-MAX_UTILITY_VALUE), lowerBound - (value + (nodeProbability - probability)*MAX_UTILITY_VALUE));

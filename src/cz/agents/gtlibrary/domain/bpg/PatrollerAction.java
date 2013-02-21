@@ -71,22 +71,16 @@ public class PatrollerAction extends ActionImpl {
 		hashCode = prime * hashCode + ((fromNodeP2 == null) ? 0 : fromNodeP2.hashCode());
 		hashCode = prime * hashCode + ((toNodeP1 == null) ? 0 : toNodeP1.hashCode());
 		hashCode = prime * hashCode + ((toNodeP2 == null) ? 0 : toNodeP2.hashCode());
+		hashCode = prime * hashCode + (informationSet.hashCode());
 
 		return hashCode;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
+		if (!super.equals(obj))
 			return false;
 		PatrollerAction other = (PatrollerAction) obj;
-
-		if (informationSet != null && !informationSet.equals(other.informationSet))
-			return false;
 		if (!fromNodeP1.equals(other.fromNodeP1))
 			return false;
 		if (!fromNodeP2.equals(other.fromNodeP2))

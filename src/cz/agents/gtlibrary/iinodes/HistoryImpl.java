@@ -16,16 +16,19 @@ public class HistoryImpl implements History {
 
 	private FixedSizeMap<Player, Sequence> sequencesOfPlayers;
 	private int hashCode = -1;
+	final private Player[] players;
 
 	public HistoryImpl(Player[] players) {
+		this.players = players;
 		sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(players.length);
 		for (Player player : players) {
 			sequencesOfPlayers.put(player, new LinkedListSequenceImpl(player));
 		}
 	}
 
-	public HistoryImpl(Map<Player, Sequence> sequencesOfPlayers) {
+	public HistoryImpl(Map<Player, Sequence> sequencesOfPlayers, Player[] players) {
 		this.sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(sequencesOfPlayers.size());
+		this.players = players;
 		for (Entry<Player, Sequence> entry : sequencesOfPlayers.entrySet()) {
 			this.sequencesOfPlayers.put(entry.getKey(), new LinkedListSequenceImpl(entry.getValue()));
 		}
@@ -37,7 +40,7 @@ public class HistoryImpl implements History {
 
 	@Override
 	public History copy() {
-		return new HistoryImpl(sequencesOfPlayers);
+		return new HistoryImpl(sequencesOfPlayers, players);
 	}
 
 	@Override
@@ -71,9 +74,11 @@ public class HistoryImpl implements History {
 		if(hashCode != -1)
 			return hashCode;
 		hashCode = 0;
+		final int prime = 31;
 		
-		for (Entry<Player, Sequence> entry : entrySet()) { 
-			hashCode += (entry.getKey()==null   ? 0 : entry.getKey().hashCode()) ^ (entry.getValue()==null ? 0 : entry.getValue().hashCode());
+		for (Player p : players) { 
+			hashCode = hashCode * prime + p.hashCode();
+			hashCode = hashCode * prime + sequencesOfPlayers.get(p).hashCode();
 		}
 		return hashCode;
 	}

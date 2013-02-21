@@ -42,7 +42,7 @@ public class AttackerAction extends ActionImpl {
 
 	@Override
 	public String toString() {
-		return "AA:[" + fromNode + " -> " + toNode + "]";
+		return "AA:" + type + " [" + fromNode + " -> " + toNode + "]";
 	}
 
 	@Override
@@ -55,16 +55,13 @@ public class AttackerAction extends ActionImpl {
 		hashCode = prime * hashCode + ((fromNode == null) ? 0 : fromNode.hashCode());
 		hashCode = prime * hashCode + ((toNode == null) ? 0 : toNode.hashCode());
 		hashCode = prime * hashCode + ((type == null) ? 0 : type.hashCode());
+		hashCode = prime * hashCode + (informationSet.hashCode());
 		return hashCode;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
+		if (!super.equals(obj))
 			return false;
 		AttackerAction other = (AttackerAction) obj;
 		if (fromNode == null) {
