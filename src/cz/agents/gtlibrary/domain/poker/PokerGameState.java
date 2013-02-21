@@ -6,7 +6,6 @@ import java.util.LinkedList;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import cz.agents.gtlibrary.iinodes.HistoryImpl;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -31,7 +30,6 @@ public abstract class PokerGameState extends GameStateImpl {
 		super(players);
 		this.playerCards = new PokerAction[2];
 		this.sequenceForAllPlayers = new LinkedList<PokerAction>();
-		this.history = new HistoryImpl(players);
 		this.pot = 2 * ante;
 		this.round = 0;
 		this.gainForFirstPlayer = ante;
@@ -314,8 +312,6 @@ public abstract class PokerGameState extends GameStateImpl {
 			if (other.sequenceForAllPlayers != null)
 				return false;
 		} else if (!sequenceForAllPlayers.equals(other.sequenceForAllPlayers))
-			return false;
-		if (!Arrays.equals(utilities, other.utilities))
 			return false;
 		return true;
 	}
