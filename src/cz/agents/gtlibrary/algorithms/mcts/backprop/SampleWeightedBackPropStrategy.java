@@ -37,25 +37,25 @@ public class SampleWeightedBackPropStrategy implements BackPropagationStrategy{
 		return stats.getNbSamples();
 	}
 
-	@Override
-	public double getStdDev() {
-		return stats.getStdDev();
-	}
-	
-	@Override
-	public double getEVStdDev() {
-		return stats.getEVStdDev();
-	}
-	
-	@Override
-	public double getEVVar() {
-		return stats.getEVVar();
-	}
-	
-	@Override
-	public double getVariance() {
-		return stats.getVariance();
-	}
+//	@Override
+//	public double getStdDev() {
+//		return stats.getStdDev();
+//	}
+//	
+//	@Override
+//	public double getEVStdDev() {
+//		return stats.getEVStdDev();
+//	}
+//	
+//	@Override
+//	public double getEVVar() {
+//		return stats.getEVVar();
+//	}
+//	
+//	@Override
+//	public double getVariance() {
+//		return stats.getVariance();
+//	}
 	
 	@Override
 	public int getNbSamplesInMean() {

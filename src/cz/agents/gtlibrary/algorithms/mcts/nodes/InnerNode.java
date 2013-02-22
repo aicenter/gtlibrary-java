@@ -33,7 +33,7 @@ public class InnerNode extends NodeImpl {
 		attendInformationSet();
 		initNodeStats(gameState);
 	}
-	
+
 	public InnerNode(Expander<MCTSInformationSet> expander, MCTSConfig config, GameState gameState) {
 		super(config, gameState);
 		currentPlayer = gameState.getPlayerToMove();
@@ -50,7 +50,7 @@ public class InnerNode extends NodeImpl {
 			nodeStats[i] = new RunningStats();
 		}
 	}
-	
+
 	private void attendInformationSet() {
 		MCTSInformationSet newIS = algConfig.getInformationSetFor(gameState);
 
@@ -104,8 +104,7 @@ public class InnerNode extends NodeImpl {
 				continue;
 			BackPropagationStrategy strategy = innerNode.actionStats.get(action);
 
-			if (strategy != null)
-				strategy.onBackPropagate(values[currentPlayer.getId()]);
+			strategy.onBackPropagate(values[currentPlayer.getId()]);
 		}
 	}
 

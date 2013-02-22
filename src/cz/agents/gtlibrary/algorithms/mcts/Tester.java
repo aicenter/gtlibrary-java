@@ -4,6 +4,8 @@ import cz.agents.gtlibrary.algorithms.mcts.backprop.SampleWeightedBackPropStrate
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 
 public class Tester {
 
@@ -12,7 +14,7 @@ public class Tester {
 	 */
 	public static void main(String[] args) {
 		MCTSConfig algConfig = new MCTSConfig(new Simulator(2), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1));
-		MCTSRunner runner = new MCTSRunner(algConfig, new BPGGameState(), new BPGExpander<MCTSInformationSet>(algConfig));
+		MCTSRunner runner = new MCTSRunner(algConfig, new GenericPokerGameState(), new GenericPokerExpander<MCTSInformationSet>(algConfig));
 		
 		for (int i = 0; i < 200; i++) {
 			System.out.println(runner.runMcts(10000));

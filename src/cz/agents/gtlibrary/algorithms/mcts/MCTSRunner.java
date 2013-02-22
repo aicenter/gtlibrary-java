@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.algorithms.mcts;
 
+import java.util.Arrays;
+
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
@@ -10,17 +12,25 @@ import cz.agents.gtlibrary.interfaces.History;
 public class MCTSRunner {
 
 	private InnerNode rootNode;
+	private MCTSConfig algConfig;
+	private GameState gameState;
+	private Expander<MCTSInformationSet> expander;
 
 	public MCTSRunner(MCTSConfig algConfig, GameState gameState, Expander<MCTSInformationSet> expander) {
-		rootNode = createRootNode(gameState, expander, algConfig);
+		this.algConfig = algConfig;
+		this.gameState = gameState;
+		this.expander = expander;
 	}
 
 	/**
 	 * Runs given number of iterations of MCTS on tree held in this class
+	 * 
 	 * @param iterations
 	 * @return History of GameState associated with Node reached
 	 */
 	public History runMcts(int iterations) {
+		if(rootNode == null)
+			rootNode = createRootNode(gameState, expander, algConfig);
 		Node selectedLeaf = rootNode;
 
 		for (int i = 0; i < iterations; i++) {
@@ -28,11 +38,15 @@ public class MCTSRunner {
 			selectedLeaf.expand();
 			selectedLeaf.backPropagate(selectedLeaf.simulate());
 		}
+		System.out.println("Expected value: " + Arrays.toString(rootNode.getEV()));
 		return selectedLeaf.getGameState().getHistory().copy();
 	}
 
-	@Deprecated()//nodes are locked during first call and never unlocked again
+	@Deprecated()
+	//nodes are locked during first call and never unlocked again
 	public History runMctsWithIncreasingFixedDepth(int iterations) {
+		if(rootNode == null)
+			rootNode = createRootNode(gameState, expander, algConfig);
 		Node selectedLeaf = rootNode;
 		int depth = 0;
 		int iterationsLeft = iterations;

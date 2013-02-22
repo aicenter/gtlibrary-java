@@ -25,15 +25,15 @@ public interface BackPropagationStrategy {
 	
 	double getEV();
 	
-	double getStdDev();
-	
-	double getVariance();
+//	double getStdDev();
+//	
+//	double getVariance();
 	
 	int getNbSamples();
 
-	double getEVStdDev();
-	
-	double getEVVar();
+//	double getEVStdDev();
+//	
+//	double getEVVar();
 
 	int getNbSamplesInMean();
 	

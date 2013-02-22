@@ -27,10 +27,10 @@ public abstract class MaxFunctionSelector implements SelectionStrategy {
 			currentIndex++;
 		}
 
-		if (maxIndex == -1) {
-			//fall back on max value selector which can't fail;
-			return (new MaxValueSelector()).select(nodeStats, actionStats);
-		}
+//		if (maxIndex == -1) {
+//			//fall back on max value selector which can't fail;
+//			return (new MaxValueSelector()).select(nodeStats, actionStats);
+//		}
 		return maxIndex;
 	}
 

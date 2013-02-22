@@ -38,8 +38,6 @@ public abstract class InformationSetImpl implements InformationSet {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!this.getClass().equals(obj.getClass()))
-			return false;
 		if (this.hashCode != obj.hashCode())
 			return false;
 		InformationSet other = (InformationSet) obj;
