@@ -23,14 +23,14 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class GeneralSequenceFormLP {
 
-	public Map<Player, Double> resultValues = new FixedSizeMap<Player, Double>(2);
-	public Map<Player, Map<Sequence, Double>> resultStrategies = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
-	public Map<Object, IloRange> constraints = new HashMap<Object, IloRange>();
-	public Map<Object, IloNumVar> variables = new HashMap<Object, IloNumVar>();
-	public Map<Player, IloCplex> modelsForPlayers = new FixedSizeMap<Player, IloCplex>(2);
-	public Map<Player, IloNumVar> objectiveForPlayers = new FixedSizeMap<Player, IloNumVar>(2);
-	public Map<Player, Set<Sequence>> newSequences = new FixedSizeMap<Player, Set<Sequence>>(2);
-	public Map<Player, Set<SequenceInformationSet>> newInformationSets = new FixedSizeMap<Player, Set<SequenceInformationSet>>(2);
+	protected Map<Player, Double> resultValues = new FixedSizeMap<Player, Double>(2);
+	protected Map<Player, Map<Sequence, Double>> resultStrategies = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
+	protected Map<Object, IloRange> constraints = new HashMap<Object, IloRange>();
+	protected Map<Object, IloNumVar> variables = new HashMap<Object, IloNumVar>();
+	protected Map<Player, IloCplex> modelsForPlayers = new FixedSizeMap<Player, IloCplex>(2);
+	protected Map<Player, IloNumVar> objectiveForPlayers = new FixedSizeMap<Player, IloNumVar>(2);
+	protected Map<Player, Set<Sequence>> newSequences = new FixedSizeMap<Player, Set<Sequence>>(2);
+	protected Map<Player, Set<SequenceInformationSet>> newInformationSets = new FixedSizeMap<Player, Set<SequenceInformationSet>>(2);
 
 	public GeneralSequenceFormLP(Player[] players) {
 		for (Player player : players) {
@@ -95,7 +95,7 @@ public class GeneralSequenceFormLP {
 			System.out.println("phase 1 done");
 			createConsraintsForSets(secondPlayer, cplex, newInformationSets.get(secondPlayer));
 			System.out.println("phase 2 done");
-			cplex.exportModel("aamas-test-" + firstPlayer + ".lp");
+//			cplex.exportModel("gt-lib-sqf-" + firstPlayer + ".lp"); // uncomment for model export
 			System.out.println("Solving");
 			cplex.solve();
 			System.out.println("Status: " + cplex.getStatus());
@@ -263,6 +263,14 @@ public class GeneralSequenceFormLP {
 			sumGR = cplex.sum(sumGR, cplex.prod(utility, prob));
 		}
 		return sumGR;
+	}
+
+	public Double getResultForPlayer(Player p) {
+		return resultValues.get(p);
+	}
+	
+	public Map<Sequence, Double> getResultStrategiesForPlayer(Player p) {
+		return resultStrategies.get(p);
 	}
 
 }

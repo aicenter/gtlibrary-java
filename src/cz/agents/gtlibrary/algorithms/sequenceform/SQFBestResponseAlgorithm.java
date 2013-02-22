@@ -163,7 +163,9 @@ public class SQFBestResponseAlgorithm {
 				selectAction(currentNode, sel, lowerBound);
 				sel.abandonCurrentNode();
 				if (sel.allNodesProbability < EPS_CONSTANT) break;
-				//TODO add pruning with lower bound
+				if ((sel.getResult().getRight() + sel.allNodesProbability*MAX_UTILITY_VALUE) < lowerBound) { // 
+					
+				}
 			}				
 
 			Action resultAction = sel.getResult().getLeft(); //selected action for the searching player

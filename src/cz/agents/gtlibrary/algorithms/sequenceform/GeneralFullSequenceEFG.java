@@ -80,7 +80,7 @@ public class GeneralFullSequenceEFG {
 		overallCPLEX += thisCPLEX;
 
 		for (Player player : rootState.getAllPlayers()) {
-			realizationPlans.put(player, sequenceFormLP.resultStrategies.get(player));
+			realizationPlans.put(player, sequenceFormLP.getResultStrategiesForPlayer(player));
 		}
 
 		System.out.println("done.");
@@ -103,7 +103,7 @@ public class GeneralFullSequenceEFG {
 		//		}
 		
 		System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
-		System.out.println("final result:" + sequenceFormLP.resultValues.get(actingPlayers[0]));
+		System.out.println("final result:" + sequenceFormLP.getResultForPlayer(actingPlayers[0]));
 		System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
 
 		System.out.println("final CPLEX time: " + overallCPLEX);
