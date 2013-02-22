@@ -38,7 +38,7 @@ public class GTBestResponseAlgorithm {
 	final protected int searchingPlayerIndex;
 	final protected int opponentPlayerIndex;
 	final protected Player[] players;
-	final protected SequenceFormConfig algConfig;
+	final protected SequenceFormConfig<DoubleOracleInformationSet> algConfig;
 	final protected GameInfo gameInfo;
 	
 	private double MAX_UTILITY_VALUE;
@@ -49,7 +49,7 @@ public class GTBestResponseAlgorithm {
 	
 	protected GameState gameTreeRoot = null;
 
-	public GTBestResponseAlgorithm(Expander<SequenceInformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, SequenceFormConfig algConfig, GameInfo gameInfo) {
+	public GTBestResponseAlgorithm(Expander<SequenceInformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, SequenceFormConfig<DoubleOracleInformationSet> algConfig, GameInfo gameInfo) {
 		this.searchingPlayerIndex = searchingPlayerIndex;
 		this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
 		this.players = actingPlayers;	
