@@ -109,10 +109,8 @@ public class SQFBestResponseAlgorithm {
 		
 		if (gameState.isGameEnd()){ // we are in a leaf
 			double utRes = 0;
-			if (algConfig.getActualNonzeroUtilityValues(gameState) != null) 
-				utRes = algConfig.getActualNonzeroUtilityValues(gameState);
+			if (algConfig.getActualNonzeroUtilityValues(gameState) != null) utRes = algConfig.getActualNonzeroUtilityValues(gameState);
 			else {
-//				System.out.println(gameState + " : " + gameState.hashCode());
 				utRes = gameState.getUtilities()[0] * gameState.getNatureProbability();
 				if (utRes != 0) algConfig.setUtility(gameState, utRes);
 			}			  			
@@ -124,7 +122,7 @@ public class SQFBestResponseAlgorithm {
 
 		Double tmpVal = cachedValuesForNodes.get(gameState);
 		if (tmpVal != null) { // we have already solved this node as a part of an evaluated information set
-			//TODO maybe we could remove the cached value at this point?
+			//TODO maybe we could remove the cached value at this point? No in double-oracle -> we are using it in restricted game 
 			return tmpVal;
 		} 
 
@@ -175,6 +173,15 @@ public class SQFBestResponseAlgorithm {
 					continue;
 				}
 				double v = sel.actionRealValues.get(currentNode).get(resultAction);
+				
+				// DEBUG -> remove
+//				if (cachedValuesForNodes.get(currentNode) != null) { 
+//					if (Math.abs(cachedValuesForNodes.get(currentNode)-v) > EPS_CONSTANT) {
+////						v = cachedValuesForNodes.get(currentNode);
+//						v = v;
+//					}
+//				}
+				
 				cachedValuesForNodes.put(currentNode, v);
 				if (currentNode.equals(gameState)) returnValue = v;
 			}
@@ -214,13 +221,13 @@ public class SQFBestResponseAlgorithm {
 	public void selectAction(GameState state, BRActionSelection selection, double lowerBound) {
 		boolean changed = false;
 		List<Action> actionsToExplore = expander.getActions(state);
-		
+		actionsToExplore = selection.sortActions(state, actionsToExplore);
 		for (Action act : actionsToExplore) {
 			Action action = act;
 		
 			GameState newState = (GameState)state.performAction(action);
 			
-			double natureProb = newState.getNatureProbability();
+			double natureProb = newState.getNatureProbability(); // TODO extract these probabilities from selection Map
 			Double oppRP = opponentRealizationPlan.get(newState.getHistory().getSequenceOf(players[opponentPlayerIndex]));
 			if (oppRP == null) oppRP = 0d;
 			 
@@ -229,10 +236,12 @@ public class SQFBestResponseAlgorithm {
 				double value = bestResponse(newState, newLowerBound);
 				selection.addValue(action, value, natureProb, oppRP);
 				changed = true;
+			} else {
+				assert true; // DEBUG -> remove
 			}
 		}
 		if (!changed) {
-			assert false;
+			assert false; // DEBUG -> remove
 		}
 	}
 	
@@ -268,16 +277,14 @@ public class SQFBestResponseAlgorithm {
 		@Override
 		public void addValue(Action action, double value, double natureProb, double orpProb) {
 			double probability = natureProb;
-			if (nonZeroORP) {
-				probability *= orpProb;
-				if (orpProb == 0) {
-					if (tempValue == null) tempValue = value;
+			if (tempValue == null) tempValue = value;
+			if (nonZeroORP) {				
+				if (orpProb == 0) {					
 					return;				
 				}
-				else nonZeroContinuation = true;
-			} else {
-				tempValue = value;
-			}
+//				nonZeroContinuation = true;
+				probability *= orpProb;
+			} 
 			this.nodeProbability -= probability;
 			this.value += value;
 		}
@@ -295,22 +302,27 @@ public class SQFBestResponseAlgorithm {
 			double probability = natureProb;
 			if (nonZeroORP) {
 				probability *= orpProb;
+				if (orpProb == 0) {
+					if (tempValue == null) return -MAX_UTILITY_VALUE; 
+					else return Double.POSITIVE_INFINITY;
+				}
 			}
 			if (nodeProbability < EPS_CONSTANT) {
 				if (tempValue == null) return -MAX_UTILITY_VALUE; 
 				else return Double.POSITIVE_INFINITY;
 			}
-			return Math.max(probability * (-MAX_UTILITY_VALUE), lowerBound - (value + (nodeProbability - probability)*MAX_UTILITY_VALUE));
+			return (lowerBound - (value + (nodeProbability - probability)*MAX_UTILITY_VALUE));
 		}
 
 		@Override
 		public List<Action> sortActions(GameState state, List<Action> actions) {
 			List<Action> result = new ArrayList<Action>();
 			if (state.isPlayerToMoveNature()) {
+				nonZeroContinuation = nonZeroORP;
 				// sort according to the nature probability
 				Map<Action, Double> actionMap = new FixedSizeMap<Action, Double>(actions.size());
 				for (Action a : actions) {
-					actionMap.put(a, -state.getProbabilityOfNatureFor(a)); // the standard way is to sort ascending; hence, we store negative probability
+					actionMap.put(a, state.getProbabilityOfNatureFor(a)); // the standard way is to sort ascending; hence, we store negative probability
 				}
 				ValueComparator<Action> comp = new ValueComparator<Action>(actionMap);
 		        TreeMap<Action,Double> sortedMap = new TreeMap<Action,Double>(comp);
@@ -325,8 +337,8 @@ public class SQFBestResponseAlgorithm {
 					newSeq.addLast(a);
 					Double prob = opponentRealizationPlan.get(newSeq);
 					if (prob == null) prob = 0d;
-					
-					sequenceMap.put(a, -prob); // the standard way is to sort ascending; hence, we store negative probability
+					if (prob > 0) nonZeroContinuation = true;
+					sequenceMap.put(a, prob); // the standard way is to sort ascending; hence, we store negative probability
 				}
 				ValueComparator<Action> comp = new ValueComparator<Action>(sequenceMap);
 		        TreeMap<Action,Double> sortedMap = new TreeMap<Action,Double>(comp);
@@ -344,8 +356,8 @@ public class SQFBestResponseAlgorithm {
 		protected HashMap<Action, Double> actionExpectedValues = new HashMap<Action, Double>();
 		protected HashMap<GameState, HashMap<Action, Double>> actionRealValues = new HashMap<GameState, HashMap<Action,Double>>();
 		protected double maxValue = Double.NEGATIVE_INFINITY;
+		protected double previousMaxValue = Double.NEGATIVE_INFINITY;
 		protected Action maxAction = null;
-		protected Action maxActionCurrentRun = null;
 		protected GameState currentNode = null;	
 		protected HashMap<GameState,Double> alternativeNodesProbs = null;
 		protected boolean nonZeroORP;
@@ -368,7 +380,7 @@ public class SQFBestResponseAlgorithm {
 		public void abandonCurrentNode() {
 			allNodesProbability -= alternativeNodesProbs.get(currentNode);
 			this.currentNode = null;
-			this.maxAction = maxActionCurrentRun;
+			previousMaxValue = actionExpectedValues.get(maxAction);
 		}
 
 		@Override
@@ -388,7 +400,7 @@ public class SQFBestResponseAlgorithm {
 				
 				if (currValue > maxValue) {
 					maxValue = currValue;
-					maxActionCurrentRun = action;
+					maxAction = action;
 				}
 			}
 		}
@@ -400,16 +412,18 @@ public class SQFBestResponseAlgorithm {
 		
 		@Override
 		public double calculateNewBoundForAction(Action action, double natureProb, double orpProb) {
-			if (nonZeroORP && orpProb <= 0) return MAX_UTILITY_VALUE+EPS_CONSTANT;
-			if (maxAction == null) {
-				if (maxActionCurrentRun == null) return -MAX_UTILITY_VALUE;
-				else return actionExpectedValues.get(maxActionCurrentRun);
+			if (nonZeroORP && orpProb <= 0) return Double.POSITIVE_INFINITY;
+			if (previousMaxValue == Double.NEGATIVE_INFINITY) {
+				return Double.NEGATIVE_INFINITY;
 			} else {
 				if (this.allNodesProbability < EPS_CONSTANT) {
-					if (action.equals(maxAction)) return -MAX_UTILITY_VALUE;
-					else return MAX_UTILITY_VALUE+EPS_CONSTANT;
-				} else	return (actionExpectedValues.get(maxAction) + this.allNodesProbability * (-MAX_UTILITY_VALUE)) -
-							(actionExpectedValues.get(action) + ( this.allNodesProbability - alternativeNodesProbs.get(currentNode) ) * MAX_UTILITY_VALUE);
+					return Double.POSITIVE_INFINITY;
+				} else	{
+//					double probability = natureProb;
+//					if (nonZeroORP) probability *= orpProb;
+					return ((previousMaxValue + this.allNodesProbability * (-MAX_UTILITY_VALUE)) -
+								(actionExpectedValues.get(action) + ( this.allNodesProbability - alternativeNodesProbs.get(currentNode) ) * MAX_UTILITY_VALUE));
+				}
 			}
 		}
 
