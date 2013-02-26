@@ -29,7 +29,7 @@ public class BRInnerNode extends InnerNode {
 		this.opponentRealizationPlan = parent.opponentRealizationPlan;
 		this.seed = parent.seed;
 		this.opponent = parent.opponent;
-		brRandom = new Random(seed);
+		brRandom = parent.brRandom;
 	}
 
 	public BRInnerNode(GameState gameState, Expander<MCTSInformationSet> expander, MCTSConfig config, 

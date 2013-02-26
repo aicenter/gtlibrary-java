@@ -11,9 +11,8 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.Simulator;
 import cz.agents.gtlibrary.algorithms.mcts.backprop.SampleWeightedBackPropStrategy;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleBestResponse;
-import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
@@ -127,13 +126,14 @@ public class GeneralFullSequenceEFG {
 		for (int i = 0; i < 2000; i++) {
 			mctsRunner.runMcts(5000);
 		}
+		
 		System.out.println("*********************");
 		algConfig = new MCTSConfig(new Simulator(2), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1));
 		mctsRunner = new BestResponseMCTSRunner(algConfig, rootState, new BPGExpander<MCTSInformationSet>(algConfig), realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
 		for (int i = 0; i < 2000; i++) {
 			mctsRunner.runMcts(5000);
 		}
-
+		System.out.println("***********");
 	}
 
 	public void generateCompleteGame() {

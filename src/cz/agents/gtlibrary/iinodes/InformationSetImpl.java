@@ -9,9 +9,9 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
 public abstract class InformationSetImpl implements InformationSet {
-	private Sequence playerHistory;
-	private Player player;
-	private LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<GameState>();
+	protected Sequence playerHistory;
+	protected Player player;
+	protected LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<GameState>();
 	private final int hashCode;
 
 	public InformationSetImpl(GameState state) {

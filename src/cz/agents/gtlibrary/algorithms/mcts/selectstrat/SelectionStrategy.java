@@ -15,7 +15,7 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 import cz.agents.gtlibrary.algorithms.mcts.backprop.BackPropagationStrategy;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -26,6 +26,6 @@ public interface SelectionStrategy {
     /**
      * Returns the index of the selected action in the linked map.
      */
-	public int select(RunningStats nodeStats, LinkedHashMap<Action, BackPropagationStrategy> actionStats);
+	public int select(RunningStats nodeStats, Map<Action, BackPropagationStrategy> actionStats);
 
 }

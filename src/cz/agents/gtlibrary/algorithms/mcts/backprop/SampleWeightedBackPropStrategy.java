@@ -72,8 +72,6 @@ public class SampleWeightedBackPropStrategy implements BackPropagationStrategy{
         return "S_BP:" + getNbSamples()  +":"+ getEV();
     }
 
-
-
 	public static class Factory implements BackPropagationStrategy.Factory{
 
 		@Override
@@ -85,6 +83,11 @@ public class SampleWeightedBackPropStrategy implements BackPropagationStrategy{
         public BackPropagationStrategy createForAction(Node node, Action a, Player player) {
             return new SampleWeightedBackPropStrategy();
         }
+
+		@Override
+		public BackPropagationStrategy create() {
+			return new SampleWeightedBackPropStrategy();
+		}
         
         
 	}

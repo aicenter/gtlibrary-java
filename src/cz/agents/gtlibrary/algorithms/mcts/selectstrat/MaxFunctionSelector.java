@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
-import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import cz.agents.gtlibrary.algorithms.mcts.backprop.BackPropagationStrategy;
@@ -10,7 +10,7 @@ import cz.agents.gtlibrary.utils.RunningStats;
 public abstract class MaxFunctionSelector implements SelectionStrategy {
 
 	@Override
-	public int select(RunningStats nodeStats, LinkedHashMap<Action, BackPropagationStrategy> actionStats) {
+	public int select(RunningStats nodeStats, Map<Action, BackPropagationStrategy> actionStats) {
 		assert actionStats.size() > 0;
 
 		int maxIndex = -1;

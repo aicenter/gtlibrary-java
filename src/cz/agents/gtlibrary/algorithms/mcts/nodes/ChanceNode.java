@@ -9,13 +9,16 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 
 public class ChanceNode extends InnerNode {
+	private Random random;
 
 	public ChanceNode(InnerNode parent, GameState gameState, Action lastAction) {
 		super(parent, gameState, lastAction);
+		random = new Random();
 	}
 	
 	public ChanceNode(Expander<MCTSInformationSet> expander, MCTSConfig config, GameState gameState) {
 		super(expander, config, gameState);
+		random = new Random();
 	}
 
 	@Override
@@ -32,7 +35,6 @@ public class ChanceNode extends InnerNode {
 	}
 
 	private int getRandomIndex() {
-		Random random = new Random();
 		double move = random.nextDouble();
 		int index = 0;	
 		

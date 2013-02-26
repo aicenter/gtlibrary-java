@@ -14,13 +14,17 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class BRChanceNode extends BRInnerNode {
 	
+//	private Random random;
+	
 	public BRChanceNode(BRInnerNode parent, GameState gameState, Action lastAction) {
 		super(parent, gameState, lastAction);
+//		random = parent.brRandom;
 	}
 	
 	public BRChanceNode(GameState gameState, Expander<MCTSInformationSet> expander, MCTSConfig config, 
 			Map<Sequence, Double> opponentRealizationPlan, Player opponent, long seed) {
 		super(gameState, expander, config, opponentRealizationPlan, opponent, seed);
+//		random = brRandom;
 	}
 	
 	@Override
@@ -37,8 +41,7 @@ public class BRChanceNode extends BRInnerNode {
 	}
 
 	private int getRandomIndex() {
-		Random random = new Random();
-		double move = random.nextDouble();
+		double move = brRandom.nextDouble();
 		int index = 0;
 		
 		for (Action action : actions) {

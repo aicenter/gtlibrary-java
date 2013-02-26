@@ -38,6 +38,7 @@ public interface BackPropagationStrategy {
 	int getNbSamplesInMean();
 	
 	public static interface Factory{
+		BackPropagationStrategy create();
 		BackPropagationStrategy createForNode(Node node, Player player);
         BackPropagationStrategy createForAction(Node node, Action action, Player player);
 	}
