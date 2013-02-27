@@ -29,7 +29,7 @@ public class BRInnerNode extends InnerNode {
 		this.opponentRealizationPlan = parent.opponentRealizationPlan;
 		this.seed = parent.seed;
 		this.opponent = parent.opponent;
-		brRandom = new Random(seed);
+		brRandom = parent.brRandom;
 	}
 
 	public BRInnerNode(GameState gameState, Expander<MCTSInformationSet> expander, MCTSConfig config, 
@@ -43,7 +43,7 @@ public class BRInnerNode extends InnerNode {
 
 	@Override
 	public double[] simulate() {
-		return algConfig.getSimulator().simulateForRealPlan(gameState, opponentRealizationPlan, gameState.getAllPlayers()[opponent.getId()], expander);
+		return algConfig.getSimulator().simulateForRealPlan(gameState, opponentRealizationPlan, opponent, expander);
 	}
 
 	@Override
@@ -52,14 +52,14 @@ public class BRInnerNode extends InnerNode {
 	}
 
 	private int getIndex() {
-		if (currentPlayer.equals(gameState.getAllPlayers()[opponent.getId()])) {
+		if (currentPlayer.equals(opponent)) {
 			return getIndexForOpponent();
 		}
 		return getIndexFromDecisionStrategy(currentPlayer.getId());
 	}
 
 	private int getIndexForOpponent() {
-		Double oppRealValOfThisNode = opponentRealizationPlan.get(gameState.getHistory().getSequenceOf(opponent));
+		Double oppRealValOfThisNode = opponentRealizationPlan.get(gameState.getSequenceFor(opponent));
 		Map<Action, Double> contInRealPlan = new HashMap<Action, Double>();
 
 		if (oppRealValOfThisNode != null && oppRealValOfThisNode > 0) {
@@ -104,7 +104,7 @@ public class BRInnerNode extends InnerNode {
 	}
 
 	private Double getContValue(Player opponent, Action action) {
-		Sequence nextSequence = new LinkedListSequenceImpl(gameState.getHistory().getSequenceOf(opponent));
+		Sequence nextSequence = new LinkedListSequenceImpl(gameState.getSequenceFor(opponent));
 
 		nextSequence.addLast(action);
 		return opponentRealizationPlan.get(nextSequence);

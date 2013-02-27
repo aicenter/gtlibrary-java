@@ -37,25 +37,25 @@ public class SampleWeightedBackPropStrategy implements BackPropagationStrategy{
 		return stats.getNbSamples();
 	}
 
-	@Override
-	public double getStdDev() {
-		return stats.getStdDev();
-	}
-	
-	@Override
-	public double getEVStdDev() {
-		return stats.getEVStdDev();
-	}
-	
-	@Override
-	public double getEVVar() {
-		return stats.getEVVar();
-	}
-	
-	@Override
-	public double getVariance() {
-		return stats.getVariance();
-	}
+//	@Override
+//	public double getStdDev() {
+//		return stats.getStdDev();
+//	}
+//	
+//	@Override
+//	public double getEVStdDev() {
+//		return stats.getEVStdDev();
+//	}
+//	
+//	@Override
+//	public double getEVVar() {
+//		return stats.getEVVar();
+//	}
+//	
+//	@Override
+//	public double getVariance() {
+//		return stats.getVariance();
+//	}
 	
 	@Override
 	public int getNbSamplesInMean() {
@@ -72,8 +72,6 @@ public class SampleWeightedBackPropStrategy implements BackPropagationStrategy{
         return "S_BP:" + getNbSamples()  +":"+ getEV();
     }
 
-
-
 	public static class Factory implements BackPropagationStrategy.Factory{
 
 		@Override
@@ -85,6 +83,11 @@ public class SampleWeightedBackPropStrategy implements BackPropagationStrategy{
         public BackPropagationStrategy createForAction(Node node, Action a, Player player) {
             return new SampleWeightedBackPropStrategy();
         }
+
+		@Override
+		public BackPropagationStrategy create() {
+			return new SampleWeightedBackPropStrategy();
+		}
         
         
 	}
