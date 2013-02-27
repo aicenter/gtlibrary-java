@@ -25,19 +25,20 @@ public interface BackPropagationStrategy {
 	
 	double getEV();
 	
-	double getStdDev();
-	
-	double getVariance();
+//	double getStdDev();
+//	
+//	double getVariance();
 	
 	int getNbSamples();
 
-	double getEVStdDev();
-	
-	double getEVVar();
+//	double getEVStdDev();
+//	
+//	double getEVVar();
 
 	int getNbSamplesInMean();
 	
 	public static interface Factory{
+		BackPropagationStrategy create();
 		BackPropagationStrategy createForNode(Node node, Player player);
         BackPropagationStrategy createForAction(Node node, Action action, Player player);
 	}

@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
-import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;

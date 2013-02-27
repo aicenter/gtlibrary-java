@@ -9,9 +9,9 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
 public abstract class InformationSetImpl implements InformationSet {
-	private Sequence playerHistory;
-	private Player player;
-	private LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<GameState>();
+	protected Sequence playerHistory;
+	protected Player player;
+	protected LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<GameState>();
 	private final int hashCode;
 
 	public InformationSetImpl(GameState state) {
@@ -38,8 +38,6 @@ public abstract class InformationSetImpl implements InformationSet {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!this.getClass().equals(obj.getClass()))
-			return false;
 		if (this.hashCode != obj.hashCode())
 			return false;
 		InformationSet other = (InformationSet) obj;

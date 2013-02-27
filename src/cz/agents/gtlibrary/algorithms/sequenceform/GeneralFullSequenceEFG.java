@@ -5,9 +5,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleBestResponse;
-import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.algorithms.mcts.BestResponseMCTSRunner;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.Simulator;
+import cz.agents.gtlibrary.algorithms.mcts.backprop.SampleWeightedBackPropStrategy;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
@@ -36,13 +41,13 @@ public class GeneralFullSequenceEFG {
 //		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 //		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KPGameInfo(), algConfig);
 
-		GameState rootState = new GenericPokerGameState();
-		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), new GPGameInfo(), algConfig);
-
-//		GameState rootState = new BPGGameState();
+//		GameState rootState = new GenericPokerGameState();
 //		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-//		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new BPGExpander<SequenceInformationSet>(algConfig), new BPGGameInfo(), algConfig);
+//		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), new GPGameInfo(), algConfig);
+
+		GameState rootState = new BPGGameState();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new BPGExpander<SequenceInformationSet>(algConfig), new BPGGameInfo(), algConfig);
 		
 		efg.generate();
 	}
@@ -113,7 +118,22 @@ public class GeneralFullSequenceEFG {
 		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
 		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
 		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+		
+		MCTSConfig algConfig = new MCTSConfig(new Simulator(2), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1));
 
+		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(algConfig, rootState, new BPGExpander<MCTSInformationSet>(algConfig), realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
+		System.out.println("*********************");
+		for (int i = 0; i < 2000; i++) {
+			mctsRunner.runMcts(5000);
+		}
+		
+		System.out.println("*********************");
+		algConfig = new MCTSConfig(new Simulator(2), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1));
+		mctsRunner = new BestResponseMCTSRunner(algConfig, rootState, new BPGExpander<MCTSInformationSet>(algConfig), realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
+		for (int i = 0; i < 2000; i++) {
+			mctsRunner.runMcts(5000);
+		}
+		System.out.println("***********");
 	}
 
 	public void generateCompleteGame() {

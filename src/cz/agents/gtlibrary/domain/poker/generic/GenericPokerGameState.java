@@ -60,12 +60,12 @@ public class GenericPokerGameState extends PokerGameState {
 
 	@Override
 	public double getProbabilityOfNatureFor(Action action) {
-		return (double)(GPGameInfo.MAX_CARD_OF_EACH_TYPE - getOccurrenceCountOf(action))/(GPGameInfo.DECK.length - getDealtCardCount());
+		return (double) (GPGameInfo.MAX_CARD_OF_EACH_TYPE - getOccurrenceCountOf(action)) / (GPGameInfo.DECK.length - getDealtCardCount());
 	}
 
 	private int getDealtCardCount() {
 		int cardCount = 0;
-		
+
 		if (playerCards[0] != null)
 			cardCount++;
 		if (playerCards[1] != null)
@@ -78,13 +78,17 @@ public class GenericPokerGameState extends PokerGameState {
 	private int getOccurrenceCountOf(Action action) {
 		int occurrenceCount = 0;
 
-		if (action.equals(playerCards[0]))
+		if (areSame(playerCards[0], (PokerAction) action))
 			occurrenceCount++;
-		if (action.equals(playerCards[1]))
+		if (areSame(playerCards[1], (PokerAction) action))
 			occurrenceCount++;
-		if (action.equals(table))
+		if (areSame(table, (PokerAction) action))
 			occurrenceCount++;
 		return occurrenceCount;
+	}
+
+	private boolean areSame(PokerAction card1, PokerAction card2) {
+		return card1 != null && card2 != null && card1.getActionType().equals(card2.getActionType());
 	}
 
 	@Override
@@ -128,12 +132,12 @@ public class GenericPokerGameState extends PokerGameState {
 			switchPlayers();
 		}
 	}
-	
+
 	public void attendCard(PokerAction action) {
 		if (round == 0) {
 			clearCachedValues();
 			dealCardToPlayer(action);
-		} else if(round == 2) {
+		} else if (round == 2) {
 			clearCachedValues();
 			dealTableCard(action);
 		}
