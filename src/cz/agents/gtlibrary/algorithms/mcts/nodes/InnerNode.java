@@ -1,13 +1,18 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.backprop.BackPropagationStrategy;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class InnerNode extends NodeImpl {
 
@@ -16,6 +21,7 @@ public class InnerNode extends NodeImpl {
 	protected Player currentPlayer;
 	protected Expander<MCTSInformationSet> expander;
 	protected MCTSInformationSet informationSet;
+	private Map<Action, BackPropagationStrategy> actionStats;
 
 	protected boolean isLocked;
 
@@ -26,6 +32,7 @@ public class InnerNode extends NodeImpl {
 		this.expander = parent.expander;
 
 		attendInformationSet();
+		actions = expander.getActions(gameState);
 	}
 
 	public InnerNode(Expander<MCTSInformationSet> expander, MCTSConfig config, GameState gameState) {
@@ -35,6 +42,7 @@ public class InnerNode extends NodeImpl {
 		this.expander = expander;
 
 		attendInformationSet();
+		actions = expander.getActions(gameState);
 	}
 
 	private void attendInformationSet() {
@@ -79,6 +87,7 @@ public class InnerNode extends NodeImpl {
 	}
 
 	public void backPropagateInActions(Action action, double[] values) {
+		actionStats.get(action).onBackPropagate(values[currentPlayer.getId()]);
 		informationSet.updateActionStatsFor(action, values);
 	}
 
@@ -140,8 +149,11 @@ public class InnerNode extends NodeImpl {
 		if (children != null) {
 			return;
 		}
-		actions = expander.getActions(gameState);
-		informationSet.initActionStats(actions, algConfig.getBackPropagationStrategyFactory());;
+		actionStats = new HashMap<Action, BackPropagationStrategy>();
+		for (Action action : actions) {
+			actionStats.put(action, algConfig.getBackPropagationStrategyFor(this, currentPlayer));
+		}
+		informationSet.initActionStats(actions, algConfig.getBackPropagationStrategyFactory());
 		children = new Node[actions.size()];
 	}
 
@@ -157,6 +169,36 @@ public class InnerNode extends NodeImpl {
 	@Override
 	public int getNbSamples() {
 		return informationSet.getStatsFor(0).getNbSamples();
+	}
+	
+	protected int getIndexOfAction(Action randomAction) {
+		int index = 0;
+
+		for (Action action : actions) {
+			if (action.equals(randomAction))
+				return index;
+			index++;
+		}
+		return -1;
+	}
+
+	
+	protected int getMostPlayedActionIndex(int playerIndex) {
+		int max = Integer.MIN_VALUE;
+		Action action = null;
+		
+		for (Entry<Action, BackPropagationStrategy> entry : informationSet.getActionStats().entrySet()) {
+			if(entry.getValue().getNbSamples() > max) {
+				max = entry.getValue().getNbSamples();
+				action = entry.getKey();
+			}
+		}
+		return getIndexOfAction(action);
+	}
+
+	@Override
+	public Map<Sequence, Double> getPureStrategyFor(Player player) {
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 
 }

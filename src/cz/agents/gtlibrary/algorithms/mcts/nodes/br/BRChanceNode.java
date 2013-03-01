@@ -1,7 +1,7 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes.br;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
@@ -13,20 +13,15 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class BRChanceNode extends BRInnerNode {
-	
-//	private Random random;
-	
+
 	public BRChanceNode(BRInnerNode parent, GameState gameState, Action lastAction) {
 		super(parent, gameState, lastAction);
-//		random = parent.brRandom;
 	}
-	
-	public BRChanceNode(GameState gameState, Expander<MCTSInformationSet> expander, MCTSConfig config, 
-			Map<Sequence, Double> opponentRealizationPlan, Player opponent, long seed) {
+
+	public BRChanceNode(GameState gameState, Expander<MCTSInformationSet> expander, MCTSConfig config, Map<Sequence, Double> opponentRealizationPlan, Player opponent, long seed) {
 		super(gameState, expander, config, opponentRealizationPlan, opponent, seed);
-//		random = brRandom;
 	}
-	
+
 	@Override
 	public Node selectChild() {
 		Node selected = null;
@@ -41,9 +36,9 @@ public class BRChanceNode extends BRInnerNode {
 	}
 
 	private int getRandomIndex() {
-		double move = brRandom.nextDouble();
+		double move = random.nextDouble();
 		int index = 0;
-		
+
 		for (Action action : actions) {
 			move -= gameState.getProbabilityOfNatureFor(action);
 			if (move < 0) {
@@ -52,5 +47,15 @@ public class BRChanceNode extends BRInnerNode {
 			index++;
 		}
 		return index;
+	}
+
+	@Override
+	public Map<Sequence, Double> getPureStrategyFor(Player player) {
+		Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
+
+		for (Node child : children) {
+			pureStrategy.putAll(getPureStrategyFor(child, player));
+		}
+		return pureStrategy;
 	}
 }
