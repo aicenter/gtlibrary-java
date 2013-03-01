@@ -58,7 +58,7 @@ public abstract class PokerAction extends ActionImpl {
 
 	@Override
 	public String toString() {
-		return "[" + action + ", " + player + "]";
+		return "[" + action + ", " + player + ", " + ((informationSet != null && player.getId() != 2)?((PokerGameState)informationSet.getAllStates().iterator().next()).getCardForActingPlayer():"") + "]";
 	}
 
 	@Override

@@ -37,7 +37,7 @@ public abstract class GameStateImpl implements GameState {
 
 	@Override
 	public void performActionModifyingThisState(Action action) {
-		if (isPlayerToMoveNature() || checkConsistency((ActionImpl) action)) {
+		if (isPlayerToMoveNature() || checkConsistency(action)) {
 			updateNatureProbabilityFor(action);
 			addActionToHistory(action, getPlayerToMove());
 			action.perform(this);
