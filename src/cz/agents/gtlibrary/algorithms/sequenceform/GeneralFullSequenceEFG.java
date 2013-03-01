@@ -47,7 +47,7 @@ public class GeneralFullSequenceEFG {
 //		runBPG();
 	}
 
-	private static void runKuhnPoker() {
+	public static void runKuhnPoker() {
 		GameState rootState = new KuhnPokerGameState();
 		KPGameInfo gameInfo = new KPGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
@@ -60,7 +60,7 @@ public class GeneralFullSequenceEFG {
 		efg.generate();
 	}
 
-	private static void runGenericPoker() {
+	public static void runGenericPoker() {
 		GameState rootState = new GenericPokerGameState();
 		GPGameInfo gameInfo = new GPGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
@@ -73,7 +73,7 @@ public class GeneralFullSequenceEFG {
 		efg.generate();
 	}
 
-	private static void runBPG() {
+	public static void runBPG() {
 		GameState rootState = new BPGGameState();
 		BPGGameInfo gameInfo = new BPGGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();

@@ -76,6 +76,7 @@ public class UtilityCalculator {
 
 	private double computeUtilityForNature(GameState state, Map<Sequence, Double> strategy1, Map<Sequence, Double> strategy2) {
 		double utility = 0;
+		
 		for (Action action : expander.getActions(state)) {
 			utility += state.getProbabilityOfNatureFor(action) * computeUtility(state.performAction(action), strategy1, strategy2);
 		}
