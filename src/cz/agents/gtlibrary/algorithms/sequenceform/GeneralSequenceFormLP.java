@@ -62,13 +62,13 @@ public class GeneralSequenceFormLP {
 	private void createModelFor(Player player) throws IloException {
 		IloCplex cplex = new IloCplex();
 		IloNumVar v0 = cplex.numVar(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, IloNumVarType.Float, "v0");
-
+		cplex.setOut(null);
 		cplex.addMinimize(v0);
 		modelsForPlayers.put(player, cplex);
 		objectiveForPlayers.put(player, v0);
 	}
 
-	private void createVariables(SequenceFormConfig<SequenceInformationSet> algConfig, Player[] players) throws IloException {
+	protected void createVariables(SequenceFormConfig<SequenceInformationSet> algConfig, Player[] players) throws IloException {
 		for (Sequence sequence : algConfig.getAllSequences()) {
 			if (!variables.containsKey(sequence)) {
 				createVariableForSequence(modelsForPlayers.get(players[0]), sequence);
@@ -86,7 +86,7 @@ public class GeneralSequenceFormLP {
 		System.out.println("variables created");
 	}
 
-	public Double calculateOnePlStrategy(SequenceFormConfig<SequenceInformationSet> algConfig, GameState root, Player firstPlayer, Player secondPlayer) {
+	protected Double calculateOnePlStrategy(SequenceFormConfig<SequenceInformationSet> algConfig, GameState root, Player firstPlayer, Player secondPlayer) {
 		try {
 			IloCplex cplex = modelsForPlayers.get(firstPlayer);
 			IloNumVar v0 = objectiveForPlayers.get(firstPlayer);
@@ -95,7 +95,7 @@ public class GeneralSequenceFormLP {
 			System.out.println("phase 1 done");
 			createConsraintsForSets(secondPlayer, cplex, newInformationSets.get(secondPlayer));
 			System.out.println("phase 2 done");
-//			cplex.exportModel("gt-lib-sqf-" + firstPlayer + ".lp"); // uncomment for model export
+			cplex.exportModel("gt-lib-sqf-" + firstPlayer + ".lp"); // uncomment for model export
 			System.out.println("Solving");
 			cplex.solve();
 			System.out.println("Status: " + cplex.getStatus());
@@ -225,10 +225,14 @@ public class GeneralSequenceFormLP {
 				IloNumVar tmp = variables.get(reachableSet);
 
 				assert (tmp != null);
-				sumV = cplex.sum(sumV, tmp);
+				
+				if (reachableSet.getOutgoingSequences() != null && reachableSet.getOutgoingSequences().size() > 0) {
+					sumV = cplex.sum(sumV, tmp);
+				}
 			}
 		} else {
 			VI = variables.get(informationSet);
+			if (algConfig.getReachableSets(firstPlayerSequence) != null)
 			for (SequenceInformationSet reachableSet : algConfig.getReachableSets(firstPlayerSequence)) {
 				IloNumVar tmp = variables.get(reachableSet);
 

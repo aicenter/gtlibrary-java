@@ -5,15 +5,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.GeneralFullSequenceEFG;
-import cz.agents.gtlibrary.algorithms.sequenceform.GeneralSequenceFormLP;
-import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
-import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -29,7 +27,7 @@ public class GeneralDoubleOracle {
 
 	private PrintStream debugOutput = System.out;
 	
-	final private double EPS = 0.000000001; 
+	final private double EPS = 0.000001;
 
 	public static void main(String[] args) {
 //		GameState rootState = new KuhnPokerGameState();
@@ -37,8 +35,10 @@ public class GeneralDoubleOracle {
 //		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KPGameInfo(), algConfig);
 
 //		GameState rootState = new GenericPokerGameState();
-//		SequenceFormConfig algConfig = new SequenceFormConfig();
-//		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), new GPGameInfo(), algConfig);
+//        GameInfo gameInfo = new GPGameInfo();
+//		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+//        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpander<DoubleOracleInformationSet>(algConfig);
+//		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
 
 		GameState rootState = new BPGGameState();
 		GameInfo gameInfo = new BPGGameInfo();
@@ -85,49 +85,82 @@ public class GeneralDoubleOracle {
 		realizationPlans.get(actingPlayers[0]).put(rootState.getSequenceFor(actingPlayers[0]), 1d);
 		realizationPlans.get(actingPlayers[1]).put(rootState.getSequenceFor(actingPlayers[1]), 1d);
 		
+		algConfig.addFullBRSequences(actingPlayers[0], realizationPlans.get(actingPlayers[0]).keySet());
+		algConfig.addFullBRSequences(actingPlayers[1], realizationPlans.get(actingPlayers[1]).keySet());
+		
 		int currentPlayerIndex = 0;
-		GeneralSequenceFormLP sequenceFormLP = new GeneralSequenceFormLP(actingPlayers);
+		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
 		
-		double ubUtility = gameConfig.getMaxUtility();
-		double lbUtility = -gameConfig.getMaxUtility();
+		double p1BoundUtility = gameConfig.getMaxUtility();
+		double p2BoundUtility = gameConfig.getMaxUtility();
 		
-		while ((Math.abs(ubUtility) - Math.abs(lbUtility)) < EPS) {
+		int[] oldSize = new int[] {-1,-1};
+		
+		while ((p1BoundUtility + p2BoundUtility) > EPS) {
 			
 			iterations++;
+//			if (algConfig.getNodesInRestrictedGame() - oldRG == 0) {
+//				break;
+//			} else {
+				System.out.println("Last difference: " + (algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex]));
+				System.out.println("Current Size: " + algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]));
+//			}
+				oldSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]);
 			
 			int opponentPlayerIndex = ( currentPlayerIndex + 1 ) % 2;
 			
 			long startFullBR = System.currentTimeMillis();
 			long thisBR = 0;
 			double currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]));
-
 			thisBR = System.currentTimeMillis() - startFullBR;
+			
+			System.out.println("BR Value " + actingPlayers[currentPlayerIndex] + " : " + currentBRVal); 
 			System.out.println("Iteration " + iterations + " : full BR time : " + thisBR);
 			overallBRCalculation += thisBR;
 
+			
 			HashSet<Sequence> currentFullBRSequences = brAlgorithms[currentPlayerIndex].getFullBRSequences();
-			algConfig.createValidRestrictedGame(actingPlayers[currentPlayerIndex], currentFullBRSequences, brAlgorithms[currentPlayerIndex], expander);
+			HashSet<Sequence> newFullBRSequences = new HashSet<Sequence>();
+			for (Sequence s : currentFullBRSequences) {
+				if (!algConfig.getSequencesFor(actingPlayers[currentPlayerIndex]).contains(s)) {
+					newFullBRSequences.add(s);
+				}
+			}
+            if (newFullBRSequences.size() > 0) {
+//                System.out.println("New Full BR Sequences: " + newFullBRSequences);
+                algConfig.createValidRestrictedGame(actingPlayers[currentPlayerIndex], newFullBRSequences, brAlgorithms, expander);
+                algConfig.addFullBRSequences(actingPlayers[currentPlayerIndex], newFullBRSequences);
+            }
+			
 			if (currentPlayerIndex == 0) {
-				ubUtility = Math.min(ubUtility, currentBRVal);
+				p1BoundUtility = Math.min(p1BoundUtility, currentBRVal);
 			} else {
-				lbUtility = Math.max(lbUtility, currentBRVal);
+				p2BoundUtility = Math.min(p2BoundUtility, currentBRVal);
 			}
 			
-//			long startCPLEX = System.currentTimeMillis();
-//			sequenceFormLP.calculateBothPlStrategy(rootState, algConfig);
-//			long thisCPLEX = System.currentTimeMillis() - startCPLEX;
-//
-//			System.out.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
-//			overallCPLEX += thisCPLEX;
-//			System.out.println(sequenceFormLP.resultValues);
-//
-//			for (Player player : rootState.getAllPlayers()) {
-//				realizationPlans.put(player, sequenceFormLP.resultStrategies.get(player));
+			long startCPLEX = System.currentTimeMillis();
+			doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, (SequenceFormConfig)algConfig);
+			long thisCPLEX = System.currentTimeMillis() - startCPLEX;
+
+			System.out.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
+			overallCPLEX += thisCPLEX;
+			
+			System.out.println("LP Value " + actingPlayers[opponentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]));
+
+			realizationPlans.put(actingPlayers[currentPlayerIndex], doRestrictedGameSolver.getResultStrategiesForPlayer(actingPlayers[currentPlayerIndex]));
+			
+			currentPlayerIndex = opponentPlayerIndex;
+			
+//			for (Player player : actingPlayers) {
+//				for (Sequence sequence : realizationPlans.get(player).keySet()) {
+//					if (realizationPlans.get(player).get(sequence) > 0) {
+//						System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+//					}
+//				}
 //			}
 
-			break;
-			
-			
+//			assert ((1 - 1 + currentPlayerIndex) == currentPlayerIndex);
+//            algConfig.validateRestrictedGameStructure(expander, brAlgorithms);
 		}
 		
 		System.out.println("done.");
@@ -152,7 +185,7 @@ public class GeneralDoubleOracle {
 
 		
 		System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
-		System.out.println("final result:" + sequenceFormLP.getResultForPlayer(actingPlayers[0]));
+		System.out.println("final result:" + doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]));
 		System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
 
 		System.out.println("final CPLEX time: " + overallCPLEX);

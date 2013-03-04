@@ -1,24 +1,16 @@
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
@@ -49,7 +41,7 @@ public class SQFBestResponseAlgorithm {
 	protected Expander<SequenceInformationSet> expander;
 	
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<GameState, Double>();
-	protected Map<Sequence, Double> opponentRealizationPlan = new HashMap<Sequence, Double>();
+	private Map<Sequence, Double> opponentRealizationPlan = new HashMap<Sequence, Double>();
 
 	protected HashMap<Sequence, HashSet<Sequence>> BRresult = new HashMap<Sequence, HashSet<Sequence>>();
 	protected HashSet<Sequence> bestResponseSequences = new HashSet<Sequence>();
@@ -115,7 +107,7 @@ public class SQFBestResponseAlgorithm {
 				if (utRes != 0) algConfig.setUtility(gameState, utRes);
 			}			  			
 			if (searchingPlayerIndex == 1) utRes *= -1; // a zero sum game
-			Double weight = opponentRealizationPlan.get(currentHistory.get(players[opponentPlayerIndex]));
+			Double weight = getOpponentRealizationPlan().get(currentHistory.get(players[opponentPlayerIndex]));
 			if (weight == null || weight == 0) weight = 1d;			
 			return utRes * weight; // weighting with opponent's realization plan
 		}
@@ -132,11 +124,14 @@ public class SQFBestResponseAlgorithm {
 		if (currentPlayer.equals(players[searchingPlayerIndex])) { // searching player to move
 			List<GameState> alternativeNodes = new ArrayList<GameState>();
 			
-			boolean nonZeroOppRP = (opponentRealizationPlan.get(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex])) != null && opponentRealizationPlan.get(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex])) > 0); 
+			boolean nonZeroOppRP = (getOpponentRealizationPlan().get(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex])) != null && getOpponentRealizationPlan().get(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex])) > 0);
 
 			InformationSet currentIS = algConfig.getInformationSetFor(gameState); 				
 			if (currentIS != null) {
 				alternativeNodes.addAll(currentIS.getAllStates());
+                if (!alternativeNodes.contains(gameState)) {
+                    alternativeNodes.add(gameState);
+                }
 			} // if we do not have alternative nodes stored in the currentIS, there is no RP leading to these nodes --> we do not need to consider them
 			else {
 				alternativeNodes.add(gameState);
@@ -148,8 +143,10 @@ public class SQFBestResponseAlgorithm {
 			double ISProbability = 0;
 			for (GameState currentNode : alternativeNodes) {
 				double currentNodeProb = currentNode.getNatureProbability();
-				if (nonZeroOppRP && opponentRealizationPlan.containsKey(currentNode.getHistory().getSequenceOf(players[opponentPlayerIndex]))) { 
-					currentNodeProb *= opponentRealizationPlan.get(currentNode.getHistory().getSequenceOf(players[opponentPlayerIndex]));					
+				if (nonZeroOppRP) {
+					if (getOpponentRealizationPlan().containsKey(currentNode.getHistory().getSequenceOf(players[opponentPlayerIndex]))) {
+						currentNodeProb *= getOpponentRealizationPlan().get(currentNode.getHistory().getSequenceOf(players[opponentPlayerIndex]));
+					} else currentNodeProb = 0;
 				}
 				ISProbability += currentNodeProb;
 				alternativeNodesProbs.put(currentNode, currentNodeProb);
@@ -202,7 +199,7 @@ public class SQFBestResponseAlgorithm {
 		} else { // nature player or the opponent is to move
 			double nodeProbability = gameState.getNatureProbability();
 			boolean nonZeroORP = false;
-			Double currentOppRealizationPlan = opponentRealizationPlan.get(currentHistory.get(players[opponentPlayerIndex]));
+			Double currentOppRealizationPlan = getOpponentRealizationPlan().get(currentHistory.get(players[opponentPlayerIndex]));
 			if (currentOppRealizationPlan != null && currentOppRealizationPlan > 0) {
 				nodeProbability *= currentOppRealizationPlan;
 				nonZeroORP = true;
@@ -230,7 +227,7 @@ public class SQFBestResponseAlgorithm {
 			GameState newState = (GameState)state.performAction(action);
 			
 			double natureProb = newState.getNatureProbability(); // TODO extract these probabilities from selection Map
-			Double oppRP = opponentRealizationPlan.get(newState.getHistory().getSequenceOf(players[opponentPlayerIndex]));
+			Double oppRP = getOpponentRealizationPlan().get(newState.getHistory().getSequenceOf(players[opponentPlayerIndex]));
 			if (oppRP == null) oppRP = 0d;
 			 
 			double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
@@ -246,8 +243,12 @@ public class SQFBestResponseAlgorithm {
 			assert false; // DEBUG -> remove
 		}
 	}
-	
-	public abstract class BRActionSelection {
+
+    public Map<Sequence, Double> getOpponentRealizationPlan() {
+        return opponentRealizationPlan;
+    }
+
+    public abstract class BRActionSelection {
 		protected double lowerBound;
 		public abstract void addValue(Action action, double value, double natureProb, double orpProb);
 		public abstract Pair<Action, Double> getResult();		
@@ -337,7 +338,7 @@ public class SQFBestResponseAlgorithm {
 				for (Action a : actions) {
 					Sequence newSeq = new LinkedListSequenceImpl(currentSequence);
 					newSeq.addLast(a);
-					Double prob = opponentRealizationPlan.get(newSeq);
+					Double prob = getOpponentRealizationPlan().get(newSeq);
 					if (prob == null) prob = 0d;
 					if (prob > 0) nonZeroContinuation = true;
 					sequenceMap.put(a, prob); // the standard way is to sort ascending; hence, we store negative probability
@@ -501,4 +502,6 @@ public class SQFBestResponseAlgorithm {
 	public Double getCachedValueForState(GameState state) {
 		return cachedValuesForNodes.get(state);
 	}
+
+
 }

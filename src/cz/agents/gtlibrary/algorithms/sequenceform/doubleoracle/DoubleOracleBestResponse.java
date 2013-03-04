@@ -30,12 +30,9 @@ import cz.agents.gtlibrary.utils.Pair;
 
 public class DoubleOracleBestResponse extends SQFBestResponseAlgorithm {
 	
-	protected Expander<DoubleOracleInformationSet> expander;
 	
 	public DoubleOracleBestResponse(Expander<DoubleOracleInformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, DoubleOracleConfig algConfig, GameInfo gameInfo) {
-		super(null, searchingPlayerIndex, actingPlayers, algConfig, gameInfo);
-
-		this.expander = expander;
+		super((Expander)expander, searchingPlayerIndex, actingPlayers, algConfig, gameInfo);
 	}
 
 }
