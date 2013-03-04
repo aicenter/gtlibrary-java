@@ -42,4 +42,7 @@ public abstract class ActionImpl implements Action {
 			return false;
 		return true;
 	}
+
+    @Override
+    abstract public int hashCode();
 }
