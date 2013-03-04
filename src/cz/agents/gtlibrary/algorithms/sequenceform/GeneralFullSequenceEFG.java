@@ -119,21 +119,21 @@ public class GeneralFullSequenceEFG {
 		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
 		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
 		
-		MCTSConfig algConfig = new MCTSConfig(new Simulator(2), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1));
-
-		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(algConfig, rootState, new BPGExpander<MCTSInformationSet>(algConfig), realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
-		System.out.println("*********************");
-		for (int i = 0; i < 2000; i++) {
-			mctsRunner.runMcts(5000);
-		}
-		
-		System.out.println("*********************");
-		algConfig = new MCTSConfig(new Simulator(2), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1));
-		mctsRunner = new BestResponseMCTSRunner(algConfig, rootState, new BPGExpander<MCTSInformationSet>(algConfig), realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
-		for (int i = 0; i < 2000; i++) {
-			mctsRunner.runMcts(5000);
-		}
-		System.out.println("***********");
+//		MCTSConfig algConfig = new MCTSConfig(new Simulator(2), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1));
+//
+//		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(algConfig, rootState, new BPGExpander<MCTSInformationSet>(algConfig), realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
+//		System.out.println("*********************");
+//		for (int i = 0; i < 2000; i++) {
+//			mctsRunner.runMcts(5000);
+//		}
+//		
+//		System.out.println("*********************");
+//		algConfig = new MCTSConfig(new Simulator(2), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1));
+//		mctsRunner = new BestResponseMCTSRunner(algConfig, rootState, new BPGExpander<MCTSInformationSet>(algConfig), realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
+//		for (int i = 0; i < 2000; i++) {
+//			mctsRunner.runMcts(5000);
+//		}
+//		System.out.println("***********");
 	}
 
 	public void generateCompleteGame() {

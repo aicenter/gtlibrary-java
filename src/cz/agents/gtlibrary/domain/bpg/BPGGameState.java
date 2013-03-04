@@ -196,9 +196,9 @@ public class BPGGameState extends GameStateImpl {
 		if (key != null)
 			return key;
 		if (playerToMove.equals(BPGGameInfo.ATTACKER)) {
-			key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).toHashCode(), history.getSequenceOf(playerToMove));
+			key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).toHashCode(), history.getSequenceOf(playerToMove));
 		} else {
-			key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).append(flaggedNodesObservedByPatroller).toHashCode(), history.getSequenceOf(playerToMove));
+			key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).append(flaggedNodesObservedByPatroller).toHashCode(), history.getSequenceOf(playerToMove));
 		}
 		return key;
 	}

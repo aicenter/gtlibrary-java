@@ -5,12 +5,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.prefs.Preferences;
 
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.Pair;
 
 public class SequenceFormConfig<I extends SequenceInformationSet> extends ConfigImpl<I> {
 	private Map<GameState, Double> actualNonZeroUtilityValuesInLeafs = new HashMap<GameState, Double>();
@@ -22,12 +24,27 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	public void addStateToSequenceForm(GameState state) {
 		if (state.isPlayerToMoveNature())
 			return;
+        fixTheInformationSetInSequences(state);
 		setOutgoingSequences(state);
 		createInformationSet(state);
 		setReachableSetBySequence(state);
 		addCompatibleSequence(state);
 		addPlayerSequences(state);
 	}
+
+    public void fixTheInformationSetInSequences(GameState state) {
+        for (Player p : state.getAllPlayers()) {
+            if (p.getId() == 2) continue; // no fix necessary for nature
+            Sequence s = state.getSequenceFor(p);
+            if (s.size() == 0) continue;
+            I i = getAllInformationSets().get(new Pair<Integer, Sequence>(s.getLast().getInformationSet().hashCode(), s.getLast().getInformationSet().getPlayersHistory()));
+            if (i != null) {
+                s.getLast().setInformationSet(i);
+            } else {
+                System.out.print("");
+            }
+        }
+    }
 
 	public void addCompatibleSequence(GameState state) {
 		Sequence sequenceOfPlrToMove = state.getSequenceForPlayerToMove();
@@ -99,11 +116,11 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 		sequencesForPlayer.add(sequence);
 	}
 
-	private I createInformationSet(GameState state) {
+	protected I createInformationSet(GameState state) {
 		I infoSet = getInformationSetFor(state);
 
 		if (infoSet == null) {
-			infoSet = (I)new SequenceInformationSet(state); // TODO FIX ME !!!!
+			infoSet = (I)new SequenceInformationSet(state); 
 		}
 		addInformationSetFor(state, infoSet);
 		return infoSet;
@@ -168,7 +185,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	}
 
 	public Collection<Sequence> getAllSequences() {
-		return reachableSetsBySequence.keySet();
+		return compatibleSequences.keySet();
 	}
 
 	public Set<I> getReachableSets(Sequence sequence) {
@@ -187,4 +204,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 		return reachableSetsBySequence;
 	}
 
+	public int getSizeForPlayer(Player player) {
+		return getSequencesFor(player).size();
+	}
 }

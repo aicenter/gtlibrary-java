@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.Pair;
 
 public abstract class GameStateImpl implements GameState {
 
@@ -58,7 +59,8 @@ public abstract class GameStateImpl implements GameState {
 	public boolean checkConsistency(Action action) {
 		if (action == null || action.getInformationSet() == null)
 			return false;
-		return action.getInformationSet().getAllStates().contains(this);
+		return this.getISKeyForPlayerToMove().equals(new Pair<Integer, Sequence>(action.getInformationSet().hashCode(), action.getInformationSet().getPlayersHistory()));
+//		return action.getInformationSet().getAllStates().contains(this);
 	}
 
 	@Override
