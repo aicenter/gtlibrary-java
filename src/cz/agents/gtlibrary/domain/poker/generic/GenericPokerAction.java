@@ -13,7 +13,9 @@ public class GenericPokerAction extends PokerAction {
 	public GenericPokerAction(String action, InformationSet i, Player player, int value) {
 		super(action, i, player);
 		this.value = value;
-	}
+        cachedHash = computeHashCode();
+        cachedHashWithoutIS = computeHashCodeWithoutIS();
+    }
 	
 	public int getValue() {
 		return value;
