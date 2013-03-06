@@ -101,7 +101,7 @@ public class GeneralFullSequenceEFG {
 		this.secondMCTSConfig = secondMCTSConfig;
 	}
 
-	public void generate() {
+	public Map<Player, Map<Sequence, Double>> generate() {
 		debugOutput.println("Full Sequence");
 		debugOutput.println(gameConfig.getInfo());
 
@@ -170,6 +170,7 @@ public class GeneralFullSequenceEFG {
 		mctsRunner = new BestResponseMCTSRunner(secondMCTSConfig, rootState, secondMCTSExpander, realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
 
 		System.out.println("MCTS response: " + utility.computeUtility(realizationPlans.get(actingPlayers[0]), mctsRunner.runMCTS(actingPlayers[1])));
+                return realizationPlans;
 	}
 
 	public void generateCompleteGame() {
