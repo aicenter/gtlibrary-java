@@ -6,10 +6,16 @@ public class PlayerImpl implements Player {
 	
 	private int id;
 	private int hashCode;
+        private String name;
 	
 	public PlayerImpl(int id) {
 		this.id = id;
 		hashCode = computeHashCode();
+	}
+        
+        public PlayerImpl(int id, String name) {
+                this(id);
+		this.name = name;
 	}
 
 	@Override
@@ -46,6 +52,6 @@ public class PlayerImpl implements Player {
 
 	@Override
 	public String toString() {
-		return "Pl" + id;
+		return name == null ? "Pl" + id : name;
 	}
 }
