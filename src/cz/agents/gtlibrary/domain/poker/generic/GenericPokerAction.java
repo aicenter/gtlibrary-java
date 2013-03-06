@@ -43,4 +43,24 @@ public class GenericPokerAction extends PokerAction {
 	public int computeHashCodeWithoutIS() {
 		return new HashCodeBuilder(17,31).append(action).append(player).append(value).toHashCode();
 	}
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj))
+            return false;
+        GenericPokerAction other = (GenericPokerAction)obj;
+        if (this.value != other.value)
+            return false;
+        return true;
+    }
+
+    @Override
+    public boolean observableEquals(PokerAction obj) {
+        if (!super.equals(obj))
+            return false;
+        GenericPokerAction other = (GenericPokerAction)obj;
+        if (this.value != other.value)
+            return false;
+        return true;
+    }
 }
