@@ -281,37 +281,37 @@ public class SQFBestResponseAlgorithm {
 		public void addValue(Action action, double value, double natureProb, double orpProb) {
 			double probability = natureProb;
 			if (tempValue == null) tempValue = value;
-			if (nonZeroORP) {				
-				if (orpProb == 0) {					
-					return;				
+			if (nonZeroORP) {
+				if (orpProb == 0) {
+					return;
 				}
 //				nonZeroContinuation = true;
 				probability *= orpProb;
-			} 
+			}
 			this.nodeProbability -= probability;
 			this.value += value;
 		}
-	
+
 		@Override
 		public Pair<Action, Double> getResult() {
-			if (nonZeroORP && !nonZeroContinuation) 
+			if (nonZeroORP && !nonZeroContinuation)
 				return new Pair<Action, Double>(null, tempValue);
-			else 
+			else
 				return new Pair<Action, Double>(null, value);
 		}
-		
+
 		@Override
 		public double calculateNewBoundForAction(Action action, double natureProb, double orpProb) {
 			double probability = natureProb;
 			if (nonZeroORP) {
 				probability *= orpProb;
 				if (orpProb == 0) {
-					if (tempValue == null) return -MAX_UTILITY_VALUE; 
+					if (tempValue == null) return -MAX_UTILITY_VALUE;
 					else return Double.POSITIVE_INFINITY;
 				}
 			}
 			if (nodeProbability < EPS_CONSTANT) {
-				if (tempValue == null) return -MAX_UTILITY_VALUE; 
+				if (tempValue == null) return -MAX_UTILITY_VALUE;
 				else return Double.POSITIVE_INFINITY;
 			}
 			return (lowerBound - (value + (nodeProbability - probability)*MAX_UTILITY_VALUE));
@@ -502,6 +502,4 @@ public class SQFBestResponseAlgorithm {
 	public Double getCachedValueForState(GameState state) {
 		return cachedValuesForNodes.get(state);
 	}
-
-
 }

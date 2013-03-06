@@ -12,11 +12,10 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameInfo;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class GeneralDoubleOracle {
@@ -31,20 +30,22 @@ public class GeneralDoubleOracle {
 
 	public static void main(String[] args) {
 //		GameState rootState = new KuhnPokerGameState();
-//		SequenceFormConfig algConfig = new SequenceFormConfig();
-//		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KPGameInfo(), algConfig);
-
-//		GameState rootState = new GenericPokerGameState();
-//        GameInfo gameInfo = new GPGameInfo();
+//        GameInfo gameInfo = new KPGameInfo();
 //		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
-//        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpander<DoubleOracleInformationSet>(algConfig);
-//		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+//        Expander<DoubleOracleInformationSet> expander = new KuhnPokerExpander<DoubleOracleInformationSet>(algConfig);
+//		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
 
-		GameState rootState = new BPGGameState();
-		GameInfo gameInfo = new BPGGameInfo();
+		GameState rootState = new GenericPokerGameState();
+        GameInfo gameInfo = new GPGameInfo();
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
-		Expander<DoubleOracleInformationSet> expander = new BPGExpander<DoubleOracleInformationSet>(algConfig);
+        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpander<DoubleOracleInformationSet>(algConfig);
 		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+
+//		GameState rootState = new BPGGameState();
+//		GameInfo gameInfo = new BPGGameInfo();
+//		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+//		Expander<DoubleOracleInformationSet> expander = new BPGExpander<DoubleOracleInformationSet>(algConfig);
+//		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
 		
 		doefg.generate();
 	}
@@ -70,9 +71,11 @@ public class GeneralDoubleOracle {
 		int firstPlayerSequencesBRAdded = 0;
 		int secondPlayerSequencesBRAdded = 0;
 
+        GameState firstState = findFirstNonNatureState(rootState, expander);
+
 		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
 		
-		algConfig.addStateToSequenceForm(rootState);
+		algConfig.addStateToSequenceForm(firstState);
 		
 		DoubleOracleBestResponse[] brAlgorithms = new DoubleOracleBestResponse[] { 
 					new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameConfig),
@@ -82,8 +85,8 @@ public class GeneralDoubleOracle {
 		Map<Player, Map<Sequence, Double>> realizationPlans = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
 		realizationPlans.put(actingPlayers[0], new HashMap<Sequence, Double>());
 		realizationPlans.put(actingPlayers[1], new HashMap<Sequence, Double>());
-		realizationPlans.get(actingPlayers[0]).put(rootState.getSequenceFor(actingPlayers[0]), 1d);
-		realizationPlans.get(actingPlayers[1]).put(rootState.getSequenceFor(actingPlayers[1]), 1d);
+		realizationPlans.get(actingPlayers[0]).put(firstState.getSequenceFor(actingPlayers[0]), 1d);
+		realizationPlans.get(actingPlayers[1]).put(firstState.getSequenceFor(actingPlayers[1]), 1d);
 		
 		algConfig.addFullBRSequences(actingPlayers[0], realizationPlans.get(actingPlayers[0]).keySet());
 		algConfig.addFullBRSequences(actingPlayers[1], realizationPlans.get(actingPlayers[1]).keySet());
@@ -151,16 +154,16 @@ public class GeneralDoubleOracle {
 			
 			currentPlayerIndex = opponentPlayerIndex;
 			
-//			for (Player player : actingPlayers) {
-//				for (Sequence sequence : realizationPlans.get(player).keySet()) {
-//					if (realizationPlans.get(player).get(sequence) > 0) {
+			for (Player player : actingPlayers) {
+				for (Sequence sequence : realizationPlans.get(player).keySet()) {
+					if (realizationPlans.get(player).get(sequence) > 0) {
 //						System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
-//					}
-//				}
-//			}
+					}
+				}
+			}
 
-//			assert ((1 - 1 + currentPlayerIndex) == currentPlayerIndex);
-//            algConfig.validateRestrictedGameStructure(expander, brAlgorithms);
+			assert ((1 - 1 + currentPlayerIndex) == currentPlayerIndex);
+            algConfig.validateRestrictedGameStructure(expander, brAlgorithms);
 		}
 		
 		System.out.println("done.");
@@ -191,4 +194,15 @@ public class GeneralDoubleOracle {
 		System.out.println("final CPLEX time: " + overallCPLEX);
 		System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
 	}
+
+    public GameState findFirstNonNatureState(GameState rootState, Expander<DoubleOracleInformationSet> expander) {
+        GameState tmpState = rootState.copy();
+
+        while (tmpState.isPlayerToMoveNature()) {
+            Action action = expander.getActions(tmpState).get(0);
+            tmpState = tmpState.performAction(action);
+        }
+
+        return tmpState;
+    }
 }
