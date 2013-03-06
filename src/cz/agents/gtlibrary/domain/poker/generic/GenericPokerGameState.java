@@ -60,6 +60,8 @@ public class GenericPokerGameState extends PokerGameState {
 
 	@Override
 	public double getProbabilityOfNatureFor(Action action) {
+        // does not currently work for different sizes of card-types (e.g., {0,0,1,2}); returns incorrect nature-probability
+        // TODO fix above
 		return (double) (GPGameInfo.MAX_CARD_OF_EACH_TYPE - getOccurrenceCountOf(action)) / (GPGameInfo.DECK.length - getDealtCardCount());
 	}
 

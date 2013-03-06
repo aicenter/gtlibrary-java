@@ -38,7 +38,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
             Sequence s = state.getSequenceFor(p);
             if (s.size() == 0) continue;
             I i = getAllInformationSets().get(new Pair<Integer, Sequence>(s.getLast().getInformationSet().hashCode(), s.getLast().getInformationSet().getPlayersHistory()));
-            if (i != null) {
+            if (i != null) {         // if there is a particular IS in the algConfig for the previous state, we set it to be the IS in the stored sequences
                 s.getLast().setInformationSet(i);
             } else {
                 System.out.print("");

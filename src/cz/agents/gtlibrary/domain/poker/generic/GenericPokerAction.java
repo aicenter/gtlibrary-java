@@ -8,7 +8,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 public class GenericPokerAction extends PokerAction {
 
-	private int value;
+	final private int value;
 
 	public GenericPokerAction(String action, InformationSet i, Player player, int value) {
 		super(action, i, player);

@@ -99,8 +99,8 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 					isSomeUncheckedSequenceForThisState = true;
 					break;
 				}
-			}			
-			if (!isSomeUncheckedSequenceForThisState) {				
+			}
+			if (!isSomeUncheckedSequenceForThisState) {
 				continue;
 			}
 			// TODO 	
@@ -149,6 +149,8 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 						tmpNewStatesMap.put(newState, tmpNewUsefulSequences);
 
 						removeUtility(currentState);
+                        if (!getAllInformationSets().containsKey(currentState.getISKeyForPlayerToMove()))
+                            addStateToSequenceForm(currentState);
 						addStateToSequenceForm(newState);
 
 					} // if the sequence is not consistent, we simply do not continue ...
@@ -167,6 +169,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 							(getInformationSetFor(currentState) != null && getInformationSetFor(currentState).getOutgoingSequences() != null && !getInformationSetFor(currentState).getOutgoingSequences().isEmpty())){ // it is a inner node in RG 
 						// do nothing -- the node is already included in the restricted game
 					} else { // otherwise create a new temporary leaf
+                        addStateToSequenceForm(currentState);
                         int brPlayerIdx = gameInfo.getOpponent(currentState.getPlayerToMove()).getId();
 						Double exactValue = bestResponseAlgorithms[brPlayerIdx].getCachedValueForState(currentState);
 						if (exactValue == null) {
@@ -264,7 +267,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
                         assert (getAllSequences().contains(currentState.getSequenceFor(movingPlayer)));
                         assert (getAllSequences().contains(currentState.getSequenceFor(otherPlayer)));
                         assert (getAllInformationSets().containsKey(currentState.getISKeyForPlayerToMove()));
-
+                        assert (getInformationSetFor(currentState).getOutgoingSequences().size() > 0);
 
                     } // if the sequence is not consistent, we simply do not continue ...
                     else {
@@ -282,7 +285,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
                     Double oppRP = bestResponseAlgorithms[gameInfo.getOpponent(currentState.getPlayerToMove()).getId()].getOpponentRealizationPlan().get(currentState.getHistory().getSequenceOf(currentState.getPlayerToMove()));
                     if (oppRP != null && oppRP > 0) exactValue = exactValue / oppRP;
                     if (gameInfo.getOpponent(currentState.getPlayerToMove()).getId() != 0) exactValue *= -1; // we are storing the utility value for the first player
-                    assert (getActualNonzeroUtilityValues(currentState) == exactValue);
+                    assert (Math.abs(getActualNonzeroUtilityValues(currentState) - exactValue) < 0.00001);
                     assert (getInformationSetFor(currentState).getOutgoingSequences().size() == 0);
                 }
             }

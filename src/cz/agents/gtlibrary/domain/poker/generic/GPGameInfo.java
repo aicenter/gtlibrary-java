@@ -51,7 +51,7 @@ public class GPGameInfo implements GameInfo {
 	}
 
 	public static int MAX_CARD_OF_EACH_TYPE = 2;
-	public static int[] DECK;
+	public static int[] DECK; // does not currently work for different sizes of card-types (e.g., {0,0,1,2}); returns incorrect nature-probability
 
 	static {
 		DECK = new int[MAX_CARD_OF_EACH_TYPE * MAX_CARD_TYPES];
