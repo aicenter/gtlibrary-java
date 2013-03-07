@@ -163,6 +163,8 @@ public class GeneralFullSequenceEFG {
 		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
 		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
 
+        algConfig.validateGameStructure(rootState, expander);
+
 //		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
 //		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
 //

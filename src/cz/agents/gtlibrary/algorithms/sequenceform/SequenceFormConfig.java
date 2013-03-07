@@ -1,16 +1,11 @@
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.prefs.Preferences;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
 
@@ -213,4 +208,64 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	public int getSizeForPlayer(Player player) {
 		return getSequencesFor(player).size();
 	}
+
+    public void validateGameStructure(GameState rootState, Expander<SequenceInformationSet> expander) {
+        Player player1 = rootState.getAllPlayers()[0];
+        Player player2 = rootState.getAllPlayers()[1];
+
+        HashSet<GameState> visitedStates = new HashSet<GameState>();
+        HashSet<SequenceInformationSet> visitedISs = new HashSet<SequenceInformationSet>();
+
+        LinkedList<GameState> queue = new LinkedList<GameState>();
+        queue.add(rootState);
+
+        while (!queue.isEmpty()) {
+            GameState currentState = queue.poll();
+
+            if (!currentState.isPlayerToMoveNature()) {
+                visitedStates.add(currentState);
+                assert (getAllInformationSets().containsKey(currentState.getISKeyForPlayerToMove()));
+                visitedISs.add(getAllInformationSets().get(currentState.getISKeyForPlayerToMove()));
+            }
+
+            if (currentState.isGameEnd()) {
+                assert (getInformationSetFor(currentState).getOutgoingSequences().size() == 0);
+                Double utRes = getActualNonzeroUtilityValues(currentState);
+                if (utRes == null) {
+                    assert ((currentState.getNatureProbability() * currentState.getUtilities()[0]) == 0);
+                } else assert (utRes == currentState.getNatureProbability() * currentState.getUtilities()[0]);
+                continue;
+            }
+
+            if (currentState.isPlayerToMoveNature()) { // nature moving
+            } else {
+                assert (getActualNonzeroUtilityValues(currentState) == null);
+                assert (getAllSequences().contains(currentState.getSequenceFor(player1)));
+                assert (getAllSequences().contains(currentState.getSequenceFor(player2)));
+                assert (getAllInformationSets().containsKey(currentState.getISKeyForPlayerToMove()));
+                assert (getAllInformationSets().get(currentState.getISKeyForPlayerToMove()).getAllStates().contains(currentState));
+                assert (getAllInformationSets().get(currentState.getISKeyForPlayerToMove()).getOutgoingSequences().size() > 0);
+            }
+
+            List<Action> moves = expander.getActions(currentState);
+            assert (moves.size() > 0); // there must be moves
+            for (Action action : moves) {
+                GameState newState = currentState.performAction(action);
+                assert (newState != null);
+                queue.add(newState);
+            }
+
+
+
+        }
+        assert (visitedISs.size() == getAllInformationSets().values().size());
+
+        HashSet<Sequence> rqSequences = new HashSet<Sequence>();
+        for (GameState state : visitedStates) {
+            rqSequences.add(state.getSequenceFor(player1));
+            rqSequences.add(state.getSequenceFor(player2));
+        }
+        assert (getAllSequences().size() == rqSequences.size());
+
+    }
 }
