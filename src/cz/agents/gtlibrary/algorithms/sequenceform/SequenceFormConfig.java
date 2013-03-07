@@ -39,6 +39,8 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
             if (s.size() == 0) continue;
             I i = getAllInformationSets().get(new Pair<Integer, Sequence>(s.getLast().getInformationSet().hashCode(), s.getLast().getInformationSet().getPlayersHistory()));
             if (i != null) {         // if there is a particular IS in the algConfig for the previous state, we set it to be the IS in the stored sequences
+                Set<GameState> oldStates = s.getLast().getInformationSet().getAllStates();
+                i.addAllStateToIS(oldStates);
                 s.getLast().setInformationSet(i);
             } else {
                 System.out.print("");
@@ -160,7 +162,11 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 			return;
 		}
 		double 	existingUtility = utilityForSequenceCombination.get(activePlayerMap) - utility;
-		utilityForSequenceCombination.put(activePlayerMap, existingUtility);
+		if (Math.abs(existingUtility) < 0.0000001) {
+            utilityForSequenceCombination.put(activePlayerMap, 0d);
+        } else {
+            utilityForSequenceCombination.put(activePlayerMap, existingUtility);
+        }
 		actualNonZeroUtilityValuesInLeafs.remove(oldLeaf);		
 	}
 	
