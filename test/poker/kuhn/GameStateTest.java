@@ -1,4 +1,4 @@
-package poker.kuhnpoker;
+package poker.kuhn;
 
 import static org.junit.Assert.*;
 
@@ -7,6 +7,7 @@ import java.util.LinkedList;
 
 import org.junit.Test;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerAction;
@@ -19,12 +20,14 @@ public class GameStateTest {
 	public void testAfterDifferentCardsAndBet() {
 		KuhnPokerGameState state = new KuhnPokerGameState();
 		LinkedList<Action> sequence = new LinkedList<Action>();
-		Action natAction1 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action natAction2 = new KuhnPokerAction("1", 0, KPGameInfo.NATURE);
-		Action fpAction = new KuhnPokerAction("b", 0, KPGameInfo.FIRST_PLAYER);
+		Action natAction1 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
+		Action natAction2 = new KuhnPokerAction("1", null, KPGameInfo.NATURE);
+		
 
 		natAction1.perform(state);
 		natAction2.perform(state);
+		
+		Action fpAction = new KuhnPokerAction("b", new MCTSInformationSet(state), KPGameInfo.FIRST_PLAYER);
 		fpAction.perform(state);
 
 		sequence.add(fpAction);
@@ -44,12 +47,14 @@ public class GameStateTest {
 	public void testAfterDifferentCardsAndCheck() {
 		KuhnPokerGameState state = new KuhnPokerGameState();
 		LinkedList<Action> sequence = new LinkedList<Action>();
-		Action natAction1 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action natAction2 = new KuhnPokerAction("1", 0, KPGameInfo.NATURE);
-		Action fpAction = new KuhnPokerAction("ch", 0, KPGameInfo.FIRST_PLAYER);
-
+		Action natAction1 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
+		Action natAction2 = new KuhnPokerAction("1", null, KPGameInfo.NATURE);
+		
 		natAction1.perform(state);
 		natAction2.perform(state);
+		
+		Action fpAction = new KuhnPokerAction("ch", new MCTSInformationSet(state), KPGameInfo.FIRST_PLAYER);
+
 		fpAction.perform(state);
 
 		sequence.add(fpAction);
@@ -69,14 +74,18 @@ public class GameStateTest {
 	public void testAfterDifferentCardsAndCheckCheck() {
 		KuhnPokerGameState state = new KuhnPokerGameState();
 		LinkedList<Action> sequence = new LinkedList<Action>();
-		Action natAction1 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action natAction2 = new KuhnPokerAction("1", 0, KPGameInfo.NATURE);
-		Action fpAction = new KuhnPokerAction("ch", 0, KPGameInfo.FIRST_PLAYER);
-		Action spAction = new KuhnPokerAction("ch", 0, KPGameInfo.SECOND_PLAYER);
+		Action natAction1 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
+		Action natAction2 = new KuhnPokerAction("1", null, KPGameInfo.NATURE);
 
 		natAction1.perform(state);
 		natAction2.perform(state);
+		
+		Action fpAction = new KuhnPokerAction("ch", new MCTSInformationSet(state), KPGameInfo.FIRST_PLAYER);
+
 		fpAction.perform(state);
+		
+		Action spAction = new KuhnPokerAction("ch", new MCTSInformationSet(state), KPGameInfo.SECOND_PLAYER);
+		
 		spAction.perform(state);
 
 		sequence.add(fpAction);
@@ -97,14 +106,18 @@ public class GameStateTest {
 	public void testAfterDifferentCardsAndBetCall() {
 		KuhnPokerGameState state = new KuhnPokerGameState();
 		LinkedList<Action> sequence = new LinkedList<Action>();
-		Action natAction1 = new KuhnPokerAction("1", 0, KPGameInfo.NATURE);
-		Action natAction2 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action fpAction = new KuhnPokerAction("b", 0, KPGameInfo.FIRST_PLAYER);
-		Action spAction = new KuhnPokerAction("c", 0, KPGameInfo.SECOND_PLAYER);
+		Action natAction1 = new KuhnPokerAction("1", null, KPGameInfo.NATURE);
+		Action natAction2 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
 
 		natAction1.perform(state);
 		natAction2.perform(state);
+		
+		Action fpAction = new KuhnPokerAction("b", new MCTSInformationSet(state), KPGameInfo.FIRST_PLAYER);
+		
 		fpAction.perform(state);
+		
+		Action spAction = new KuhnPokerAction("c", new MCTSInformationSet(state), KPGameInfo.SECOND_PLAYER);
+		
 		spAction.perform(state);
 
 		sequence.add(fpAction);
@@ -125,14 +138,18 @@ public class GameStateTest {
 	public void testAfterSameCardsAndCheckCheck() {
 		KuhnPokerGameState state = new KuhnPokerGameState();
 		LinkedList<Action> sequence = new LinkedList<Action>();
-		Action natAction1 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action natAction2 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action fpAction = new KuhnPokerAction("ch", 0, KPGameInfo.FIRST_PLAYER);
-		Action spAction = new KuhnPokerAction("ch", 0, KPGameInfo.SECOND_PLAYER);
+		Action natAction1 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
+		Action natAction2 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
 
 		natAction1.perform(state);
 		natAction2.perform(state);
+		
+		Action fpAction = new KuhnPokerAction("ch", new MCTSInformationSet(state), KPGameInfo.FIRST_PLAYER);
+		
 		fpAction.perform(state);
+		
+		Action spAction = new KuhnPokerAction("ch", new MCTSInformationSet(state), KPGameInfo.SECOND_PLAYER);
+		
 		spAction.perform(state);
 
 		sequence.add(fpAction);
@@ -153,14 +170,18 @@ public class GameStateTest {
 	public void testAfterSameCardsAndBetCall() {
 		KuhnPokerGameState state = new KuhnPokerGameState();
 		LinkedList<Action> sequence = new LinkedList<Action>();
-		Action natAction1 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action natAction2 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action fpAction = new KuhnPokerAction("b", 0, KPGameInfo.FIRST_PLAYER);
-		Action spAction = new KuhnPokerAction("c", 0, KPGameInfo.SECOND_PLAYER);
+		Action natAction1 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
+		Action natAction2 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
 
 		natAction1.perform(state);
 		natAction2.perform(state);
+		
+		Action fpAction = new KuhnPokerAction("b", new MCTSInformationSet(state), KPGameInfo.FIRST_PLAYER);
+		
 		fpAction.perform(state);
+		
+		Action spAction = new KuhnPokerAction("c", new MCTSInformationSet(state), KPGameInfo.SECOND_PLAYER);
+		
 		spAction.perform(state);
 
 		sequence.add(fpAction);
@@ -181,14 +202,18 @@ public class GameStateTest {
 	public void testAfterSameCardsAndBetFold() {
 		KuhnPokerGameState state = new KuhnPokerGameState();
 		LinkedList<Action> sequence = new LinkedList<Action>();
-		Action natAction1 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action natAction2 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action fpAction = new KuhnPokerAction("b", 0, KPGameInfo.FIRST_PLAYER);
-		Action spAction = new KuhnPokerAction("f", 0, KPGameInfo.SECOND_PLAYER);
+		Action natAction1 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
+		Action natAction2 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
 
 		natAction1.perform(state);
 		natAction2.perform(state);
+		
+		Action fpAction = new KuhnPokerAction("b", new MCTSInformationSet(state), KPGameInfo.FIRST_PLAYER);
+		
 		fpAction.perform(state);
+		
+		Action spAction = new KuhnPokerAction("f", new MCTSInformationSet(state), KPGameInfo.SECOND_PLAYER);
+		
 		spAction.perform(state);
 
 		sequence.add(fpAction);
@@ -209,16 +234,22 @@ public class GameStateTest {
 	public void testAfterSameCardsAndCheckBetFold() {
 		KuhnPokerGameState state = new KuhnPokerGameState();
 		LinkedList<Action> sequence = new LinkedList<Action>();
-		Action natAction1 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action natAction2 = new KuhnPokerAction("0", 0, KPGameInfo.NATURE);
-		Action fpAction = new KuhnPokerAction("ch", 0, KPGameInfo.FIRST_PLAYER);
-		Action spAction = new KuhnPokerAction("b", 0, KPGameInfo.SECOND_PLAYER);
-		Action fp1Action = new KuhnPokerAction("f", 0, KPGameInfo.FIRST_PLAYER);
+		Action natAction1 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
+		Action natAction2 = new KuhnPokerAction("0", null, KPGameInfo.NATURE);
 
 		natAction1.perform(state);
 		natAction2.perform(state);
+		
+		Action fpAction = new KuhnPokerAction("ch", new MCTSInformationSet(state), KPGameInfo.FIRST_PLAYER);
+		
 		fpAction.perform(state);
+		
+		Action spAction = new KuhnPokerAction("b", new MCTSInformationSet(state), KPGameInfo.SECOND_PLAYER);
+		
 		spAction.perform(state);
+		
+		Action fp1Action = new KuhnPokerAction("f", new MCTSInformationSet(state), KPGameInfo.FIRST_PLAYER);
+		
 		fp1Action.perform(state);
 
 		sequence.add(fpAction);

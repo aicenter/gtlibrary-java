@@ -1,7 +1,10 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes.br;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
@@ -19,9 +22,10 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 public class BRInnerNode extends InnerNode {
 
 	protected Map<Sequence, Double> opponentRealizationPlan;
-	protected Random brRandom;
+	protected Map<Action, Double> continuationInRP;
+	protected Random random;
 	protected Player opponent;
-	
+
 	protected long seed;
 
 	public BRInnerNode(BRInnerNode parent, GameState gameState, Action lastAction) {
@@ -29,16 +33,17 @@ public class BRInnerNode extends InnerNode {
 		this.opponentRealizationPlan = parent.opponentRealizationPlan;
 		this.seed = parent.seed;
 		this.opponent = parent.opponent;
-		brRandom = parent.brRandom;
+		random = parent.random;
+		continuationInRP = getContinuationInRP();
 	}
 
-	public BRInnerNode(GameState gameState, Expander<MCTSInformationSet> expander, MCTSConfig config, 
-			Map<Sequence, Double> opponentRealizationPlan, Player opponent, long seed) {
+	public BRInnerNode(GameState gameState, Expander<MCTSInformationSet> expander, MCTSConfig config, Map<Sequence, Double> opponentRealizationPlan, Player opponent, long seed) {
 		super(expander, config, gameState);
 		this.opponentRealizationPlan = opponentRealizationPlan;
 		this.seed = seed;
 		this.opponent = opponent;
-		brRandom = new Random(seed);
+		random = new Random(seed);
+		continuationInRP = getContinuationInRP();
 	}
 
 	@Override
@@ -60,47 +65,37 @@ public class BRInnerNode extends InnerNode {
 
 	private int getIndexForOpponent() {
 		Double oppRealValOfThisNode = opponentRealizationPlan.get(gameState.getSequenceFor(opponent));
-		Map<Action, Double> contInRealPlan = new HashMap<Action, Double>();
 
 		if (oppRealValOfThisNode != null && oppRealValOfThisNode > 0) {
-			addValOfActionsToContOfRP(opponent, contInRealPlan);
-			if (contInRealPlan.size() != 0) {
-				return getIndexOfAction(getRandomAction(oppRealValOfThisNode, contInRealPlan));
+			if (continuationInRP.size() != 0) {
+				return getIndexOfAction(getRandomAction(oppRealValOfThisNode));
 			}
 		}
 		return getIndexFromDecisionStrategy(opponent.getId());
 	}
 
-	private int getIndexOfAction(Action randomAction) {
-		int index = 0;
+	private Map<Action, Double> getContinuationInRP() {
+		Map<Action, Double> contInRealPlan = new HashMap<Action, Double>();
 
-		for (Action action : actions) {
-			if (action.equals(randomAction))
-				return index;
-			index++;
-		}
-		return -1;
-	}
-
-	private Action getRandomAction(Double oppRealValOfThisNode, Map<Action, Double> contInRealPlan) {
-		double rndVal = brRandom.nextDouble() * oppRealValOfThisNode;
-
-		for (Action action : contInRealPlan.keySet()) {
-			if (rndVal < contInRealPlan.get(action)) {
-				return action;
-			}
-			rndVal = rndVal - contInRealPlan.get(action);
-		}
-		return null;
-	}
-
-	private void addValOfActionsToContOfRP(Player opponent, Map<Action, Double> contInRealPlan) {
 		for (Action action : actions) {
 			Double contNodeOppRealValue = getContValue(opponent, action);
 
 			if (contNodeOppRealValue != null && contNodeOppRealValue > 0)
 				contInRealPlan.put(action, contNodeOppRealValue);
 		}
+		return contInRealPlan;
+	}
+
+	private Action getRandomAction(Double oppRealValOfThisNode) {
+		double rndVal = random.nextDouble() * oppRealValOfThisNode;
+
+		for (Action action : continuationInRP.keySet()) {
+			if (rndVal < continuationInRP.get(action)) {
+				return action;
+			}
+			rndVal = rndVal - continuationInRP.get(action);
+		}
+		return null;
 	}
 
 	private Double getContValue(Player opponent, Action action) {
@@ -121,5 +116,59 @@ public class BRInnerNode extends InnerNode {
 			return new BRChanceNode(this, nextState, action);
 		}
 		return new BRInnerNode(this, nextState, action);
+	}
+
+	@Override
+	public Map<Sequence, Double> getPureStrategyFor(Player player) {
+		if (currentPlayer.equals(opponent))
+			return getPureStrategyForOpponent(player);
+		return getPureStrategy(player);
+	}
+
+	private Map<Sequence, Double> getPureStrategy(Player player) {
+		if (children == null)
+			return null;
+		Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
+		int mostPlayedActionIndex = getMostPlayedActionIndex(currentPlayer.getId());
+
+		pureStrategy.put(createSequenceForPureStrategy(actions.get(mostPlayedActionIndex)), 1d);
+		pureStrategy.putAll(getPureStrategyFor(children[mostPlayedActionIndex], player));
+		return pureStrategy;
+	}
+
+	private Sequence createSequenceForPureStrategy(Action action) {
+		Sequence currentSequence = new LinkedListSequenceImpl(gameState.getSequenceFor(currentPlayer));
+
+		currentSequence.addLast(action);
+		return currentSequence;
+	}
+
+	private Map<Sequence, Double> getPureStrategyForOpponent(Player player) {
+		Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
+
+		for (Node node : getNodesWithNonZeroRPContinuation()) {
+			pureStrategy.putAll(getPureStrategyFor(node, player));
+		}
+		return pureStrategy;
+	}
+
+	protected Map<Sequence, Double> getPureStrategyFor(Node node, Player player) {
+		if (node == null) {
+			Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
+			
+			pureStrategy.put(null, 1d);
+			return pureStrategy;
+		}
+		return node.getPureStrategyFor(player);
+	}
+
+	private List<Node> getNodesWithNonZeroRPContinuation() {
+		List<Node> nodes = new LinkedList<Node>();
+
+		for (Entry<Action, Double> entry : continuationInRP.entrySet()) {
+			if (entry.getValue() > 1e-8)
+				nodes.add(children[getIndexOfAction(entry.getKey())]);
+		}
+		return nodes;
 	}
 }

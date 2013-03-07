@@ -20,8 +20,8 @@ public class LinkedListSequenceTest {
 	public void addGetTest() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
 		
 		sequence.addLast(action1);
 		sequence.addLast(action2);
@@ -36,8 +36,8 @@ public class LinkedListSequenceTest {
 	public void removeTest() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
 		
 		sequence.addLast(action1);
 		sequence.addLast(action2);
@@ -51,8 +51,8 @@ public class LinkedListSequenceTest {
 	public void iteratorTest() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
 		
 		sequence.addLast(action1);
 		sequence.addLast(action2);
@@ -71,8 +71,8 @@ public class LinkedListSequenceTest {
 	public void reversedIteratorTest() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
 		
 		sequence.addFirst(action1);
 		sequence.addFirst(action2);
@@ -91,9 +91,9 @@ public class LinkedListSequenceTest {
 	public void getAllPrefixesTest() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
-		Action action3 = new KuhnPokerAction("a", 3, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
+		Action action3 = new KuhnPokerAction("a", null, player);
 		HashSet<Sequence> expectedPrefixes = new HashSet<Sequence>();
 		Sequence prefix0 = new LinkedListSequenceImpl(player);
 		Sequence prefix1 = new LinkedListSequenceImpl(player);
@@ -122,9 +122,9 @@ public class LinkedListSequenceTest {
 	public void isPrefixTest() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
-		Action action3 = new KuhnPokerAction("a", 3, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
+		Action action3 = new KuhnPokerAction("a", null, player);
 		Sequence prefix0 = new LinkedListSequenceImpl(player);
 		Sequence prefix1 = new LinkedListSequenceImpl(player);
 		Sequence notPrefix = new LinkedListSequenceImpl(player);
@@ -147,9 +147,9 @@ public class LinkedListSequenceTest {
 	public void getSubsequenceFromSizeTest() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
-		Action action3 = new KuhnPokerAction("a", 3, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
+		Action action3 = new KuhnPokerAction("a", null, player);
 		Sequence expectedSubsequence = new LinkedListSequenceImpl(player);
 		
 		sequence.addLast(action1);
@@ -167,10 +167,10 @@ public class LinkedListSequenceTest {
 	public void getSubsequenceFromToTest() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
-		Action action3 = new KuhnPokerAction("a", 3, player);
-		Action action4 = new KuhnPokerAction("k", 3, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
+		Action action3 = new KuhnPokerAction("a", null, player);
+		Action action4 = new KuhnPokerAction("k", null, player);
 		Sequence expectedSubsequence = new LinkedListSequenceImpl(player);
 		
 		sequence.addLast(action1);
@@ -189,10 +189,10 @@ public class LinkedListSequenceTest {
 	public void equalsWithSameSequencesTest() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
-		Action action3 = new KuhnPokerAction("b", 1, player);
-		Action action4 = new KuhnPokerAction("c", 2, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
+		Action action3 = new KuhnPokerAction("b", null, player);
+		Action action4 = new KuhnPokerAction("c", null, player);
 		Sequence sequence1 = new LinkedListSequenceImpl(player);
 		
 		sequence.addLast(action1);
@@ -207,10 +207,10 @@ public class LinkedListSequenceTest {
 	public void equalsWithDifferentSequencesTest() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
-		Action action3 = new KuhnPokerAction("b", 1, player);
-		Action action4 = new KuhnPokerAction("c", 2, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
+		Action action3 = new KuhnPokerAction("b", null, player);
+		Action action4 = new KuhnPokerAction("c", null, player);
 		Sequence sequence1 = new LinkedListSequenceImpl(new PlayerImpl(1));
 		
 		sequence.addLast(action1);
@@ -225,10 +225,10 @@ public class LinkedListSequenceTest {
 	public void equalsWithDifferentSequencesTest1() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
-		Action action3 = new KuhnPokerAction("b", 1, player);
-		Action action4 = new KuhnPokerAction("c", 2, new PlayerImpl(1));
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
+		Action action3 = new KuhnPokerAction("b", null, player);
+		Action action4 = new KuhnPokerAction("c", null, new PlayerImpl(1));
 		Sequence sequence1 = new LinkedListSequenceImpl(player);
 		
 		sequence.addLast(action1);
@@ -243,10 +243,10 @@ public class LinkedListSequenceTest {
 	public void equalsWithDifferentSequencesTest2() {
 		Player player = new PlayerImpl(0);
 		Sequence sequence = new LinkedListSequenceImpl(player);
-		Action action1 = new KuhnPokerAction("b", 1, player);
-		Action action2 = new KuhnPokerAction("c", 2, player);
-		Action action3 = new KuhnPokerAction("ch", 1, player);
-		Action action4 = new KuhnPokerAction("c", 2, player);
+		Action action1 = new KuhnPokerAction("b", null, player);
+		Action action2 = new KuhnPokerAction("c", null, player);
+		Action action3 = new KuhnPokerAction("ch", null, player);
+		Action action4 = new KuhnPokerAction("c", null, player);
 		Sequence sequence1 = new LinkedListSequenceImpl(player);
 		
 		sequence.addLast(action1);

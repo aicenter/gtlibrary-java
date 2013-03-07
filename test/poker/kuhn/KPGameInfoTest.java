@@ -1,4 +1,4 @@
-package poker.kuhnpoker;
+package poker.kuhn;
 
 import static org.junit.Assert.*;
 
