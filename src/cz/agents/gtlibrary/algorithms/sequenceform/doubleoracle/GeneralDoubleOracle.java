@@ -129,8 +129,9 @@ public class GeneralDoubleOracle {
 					newFullBRSequences.add(s);
 				}
 			}
+//            System.out.println("All BR Sequences: " + currentFullBRSequences);
             if (newFullBRSequences.size() > 0) {
-//                System.out.println("New Full BR Sequences: " + newFullBRSequences);
+                System.out.println("New Full BR Sequences: " + newFullBRSequences);
                 algConfig.createValidRestrictedGame(actingPlayers[currentPlayerIndex], newFullBRSequences, brAlgorithms, expander);
                 algConfig.addFullBRSequences(actingPlayers[currentPlayerIndex], newFullBRSequences);
             }
@@ -162,8 +163,8 @@ public class GeneralDoubleOracle {
 				}
 			}
 
-			assert ((1 - 1 + currentPlayerIndex) == currentPlayerIndex);
-            algConfig.validateRestrictedGameStructure(expander, brAlgorithms);
+//			assert ((1 - 1 + currentPlayerIndex) == currentPlayerIndex);
+//            algConfig.validateRestrictedGameStructure(expander, brAlgorithms);
 		}
 		
 		System.out.println("done.");

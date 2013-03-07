@@ -149,8 +149,8 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 						tmpNewStatesMap.put(newState, tmpNewUsefulSequences);
 
 						removeUtility(currentState);
-                        if (!getAllInformationSets().containsKey(currentState.getISKeyForPlayerToMove()))
-                            addStateToSequenceForm(currentState);
+//                        if (!getAllInformationSets().containsKey(currentState.getISKeyForPlayerToMove()))
+                        addStateToSequenceForm(currentState);
 						addStateToSequenceForm(newState);
 
 					} // if the sequence is not consistent, we simply do not continue ...
@@ -179,7 +179,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
                         Double oppRP = bestResponseAlgorithms[brPlayerIdx].getOpponentRealizationPlan().get(currentState.getHistory().getSequenceOf(currentState.getPlayerToMove()));
                         if (oppRP != null && oppRP > 0) exactValue = exactValue / oppRP;
                         temporaryLeafs.add(currentState);
-						setUtility(currentState, exactValue);
+						if (exactValue != 0) setUtility(currentState, exactValue);
 					}
 				}
 
@@ -198,6 +198,9 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
         Player player1 = rootState.getAllPlayers()[0];
         Player player2 = rootState.getAllPlayers()[1];
 
+        HashSet<GameState> visitedStates = new HashSet<GameState>();
+        HashSet<DoubleOracleInformationSet> visitedISs = new HashSet<DoubleOracleInformationSet>();
+
         LinkedList<Pair<GameState, Map<Player, Set<Sequence>>>> queue = new LinkedList<Pair<GameState,Map<Player,Set<Sequence>>>>();
         Map<Player, Set<Sequence>> tmpMap = new HashMap<Player, Set<Sequence>>();
         tmpMap.put(player1, fullBRSequences.get(player1));
@@ -208,8 +211,16 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
             Pair<GameState, Map<Player, Set<Sequence>>> currentTuple = queue.pollFirst();
             GameState currentState = currentTuple.getLeft();
 
+            if (!currentState.isPlayerToMoveNature()) {
+                visitedStates.add(currentState);
+                assert (getAllInformationSets().containsKey(currentState.getISKeyForPlayerToMove()));
+                visitedISs.add(getAllInformationSets().get(currentState.getISKeyForPlayerToMove()));
+            }
+
+
             // terminal state
             if (currentState.isGameEnd()) {
+                assert (getInformationSetFor(currentState).getOutgoingSequences().size() == 0);
                 Double utRes = getActualNonzeroUtilityValues(currentState);
                 if (utRes == null) {
                     assert ((currentState.getNatureProbability() * currentState.getUtilities()[0]) == 0);
@@ -221,6 +232,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
             Map<Player, Set<Sequence>> currentSequences = currentTuple.getRight();
 
             if (currentState.isPlayerToMoveNature()) { // nature moving
+                assert (!temporaryLeafs.contains(currentState));
                 List<Action> natureMoves = expander.getActions(currentState);
                 for (Action action : natureMoves) {
                     GameState natureTempState = currentState.performAction(action);
@@ -262,11 +274,12 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
                         tmpNewUsefulSequences.put(otherPlayer, newSequencesForOpponentPlayer);
 
                         tmpNewStatesMap.put(newState, tmpNewUsefulSequences);
-
+                        assert (!temporaryLeafs.contains(currentState));
                         assert (getActualNonzeroUtilityValues(currentState) == null);
                         assert (getAllSequences().contains(currentState.getSequenceFor(movingPlayer)));
                         assert (getAllSequences().contains(currentState.getSequenceFor(otherPlayer)));
                         assert (getAllInformationSets().containsKey(currentState.getISKeyForPlayerToMove()));
+                        assert (getAllInformationSets().get(currentState.getISKeyForPlayerToMove()).getAllStates().contains(currentState));
                         assert (getInformationSetFor(currentState).getOutgoingSequences().size() > 0);
 
                     } // if the sequence is not consistent, we simply do not continue ...
@@ -285,10 +298,28 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
                     Double oppRP = bestResponseAlgorithms[gameInfo.getOpponent(currentState.getPlayerToMove()).getId()].getOpponentRealizationPlan().get(currentState.getHistory().getSequenceOf(currentState.getPlayerToMove()));
                     if (oppRP != null && oppRP > 0) exactValue = exactValue / oppRP;
                     if (gameInfo.getOpponent(currentState.getPlayerToMove()).getId() != 0) exactValue *= -1; // we are storing the utility value for the first player
-                    assert (Math.abs(getActualNonzeroUtilityValues(currentState) - exactValue) < 0.00001);
+                    if (exactValue == 0) {
+                        assert (getActualNonzeroUtilityValues(currentState) == null);
+                    } else
+                        assert (Math.abs(getActualNonzeroUtilityValues(currentState) - exactValue) < 0.00001);
                     assert (getInformationSetFor(currentState).getOutgoingSequences().size() == 0);
                 }
             }
         }
+        assert (visitedISs.size() == getAllInformationSets().values().size());
+
+        HashSet<Sequence> rqSequneces = new HashSet<Sequence>();
+        for (GameState state : visitedStates) {
+            rqSequneces.add(state.getSequenceFor(player1));
+            rqSequneces.add(state.getSequenceFor(player2));
+        }
+        assert (getAllSequences().size() == rqSequneces.size());
+
+    }
+
+    @Override
+    public void removeUtility(GameState oldLeaf) {
+        super.removeUtility(oldLeaf);
+        temporaryLeafs.remove(oldLeaf);
     }
 }

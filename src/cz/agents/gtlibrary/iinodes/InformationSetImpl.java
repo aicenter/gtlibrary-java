@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.iinodes;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -53,7 +54,11 @@ public abstract class InformationSetImpl implements InformationSet {
 		statesInInformationSet.add(state);
 	}
 
-	@Override
+    public void addAllStateToIS(Collection<GameState> states) {
+        statesInInformationSet.addAll(states);
+    }
+
+    @Override
 	public Set<GameState> getAllStates() {
 		return statesInInformationSet;
 	}
