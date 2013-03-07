@@ -29,8 +29,8 @@ public class GeneralSequenceFormLP {
 	protected Map<Object, IloNumVar> variables = new HashMap<Object, IloNumVar>();
 	protected Map<Player, IloCplex> modelsForPlayers = new FixedSizeMap<Player, IloCplex>(2);
 	protected Map<Player, IloNumVar> objectiveForPlayers = new FixedSizeMap<Player, IloNumVar>(2);
-	protected Map<Player, Set<Sequence>> newSequences = new FixedSizeMap<Player, Set<Sequence>>(2);
-	protected Map<Player, Set<SequenceInformationSet>> newInformationSets = new FixedSizeMap<Player, Set<SequenceInformationSet>>(2);
+	protected Map<Player, Set<Sequence>> sequences = new FixedSizeMap<Player, Set<Sequence>>(2);
+	protected Map<Player, Set<SequenceInformationSet>> informationSets = new FixedSizeMap<Player, Set<SequenceInformationSet>>(2);
 
 	public GeneralSequenceFormLP(Player[] players) {
 		for (Player player : players) {
@@ -43,8 +43,8 @@ public class GeneralSequenceFormLP {
 					e.printStackTrace();
 				}
 			}
-			newSequences.put(player, new HashSet<Sequence>());
-			newInformationSets.put(player, new HashSet<SequenceInformationSet>());
+			sequences.put(player, new HashSet<Sequence>());
+			informationSets.put(player, new HashSet<SequenceInformationSet>());
 		}
 	}
 
@@ -73,14 +73,14 @@ public class GeneralSequenceFormLP {
 			if (!variables.containsKey(sequence)) {
 				createVariableForSequence(modelsForPlayers.get(players[0]), sequence);
 				createVariableForSequence(modelsForPlayers.get(players[1]), sequence);
-				newSequences.get(sequence.getPlayer()).add(sequence);
+				sequences.get(sequence.getPlayer()).add(sequence);
 			}
 		}
 		for (SequenceInformationSet informationSet : algConfig.getAllInformationSets().values()) {
 			if (!variables.containsKey(informationSet)) {
 				createVariableForIS(modelsForPlayers.get(players[0]), informationSet);
 				createVariableForIS(modelsForPlayers.get(players[1]), informationSet);
-				newInformationSets.get(informationSet.getPlayer()).add(informationSet);
+				informationSets.get(informationSet.getPlayer()).add(informationSet);
 			}
 		}
 		System.out.println("variables created");
@@ -91,9 +91,9 @@ public class GeneralSequenceFormLP {
 			IloCplex cplex = modelsForPlayers.get(firstPlayer);
 			IloNumVar v0 = objectiveForPlayers.get(firstPlayer);
 
-			createConststraintsForSequences(algConfig, cplex, newSequences.get(firstPlayer));
+			createConstraintsForSequences(algConfig, cplex, sequences.get(firstPlayer));
 			System.out.println("phase 1 done");
-			createConsraintsForSets(secondPlayer, cplex, newInformationSets.get(secondPlayer));
+			createConstraintsForSets(secondPlayer, cplex, informationSets.get(secondPlayer));
 			System.out.println("phase 2 done");
 			cplex.exportModel("gt-lib-sqf-" + firstPlayer + ".lp"); // uncomment for model export
 			System.out.println("Solving");
@@ -114,7 +114,7 @@ public class GeneralSequenceFormLP {
 		}
 	}
 
-	private Map<Sequence, Double> createSolution(SequenceFormConfig<SequenceInformationSet> algConfig, Player secondPlayer, IloCplex cplex) throws IloException {
+	protected Map<Sequence, Double> createSolution(SequenceFormConfig<SequenceInformationSet> algConfig, Player secondPlayer, IloCplex cplex) throws IloException {
 		Map<Sequence, Double> solution = new HashMap<Sequence, Double>();
 
 		for (Sequence sequence : algConfig.getSequencesFor(secondPlayer)) {
@@ -134,7 +134,7 @@ public class GeneralSequenceFormLP {
 		return solution;
 	}
 
-	private void createConsraintsForSets(Player secondPlayer, IloCplex cplex, Set<SequenceInformationSet> RConstraints) throws IloException {
+	protected void createConstraintsForSets(Player secondPlayer, IloCplex cplex, Set<SequenceInformationSet> RConstraints) throws IloException {
 		for (SequenceInformationSet secondPlayerIS : RConstraints) {
 			assert (secondPlayerIS.getPlayer().equals(secondPlayer));
 			if (constraints.containsKey(secondPlayerIS)) {
@@ -145,7 +145,7 @@ public class GeneralSequenceFormLP {
 		}
 	}
 
-	private void createConststraintsForSequences(SequenceFormConfig<SequenceInformationSet> algConfig, IloCplex cplex, Set<Sequence> VConstraints) throws IloException {
+	protected void createConstraintsForSequences(SequenceFormConfig<SequenceInformationSet> algConfig, IloCplex cplex, Set<Sequence> VConstraints) throws IloException {
 		for (Sequence firstPlayerSequence : VConstraints) {
 			if (constraints.containsKey(firstPlayerSequence)) {
 				cplex.delete(constraints.get(firstPlayerSequence));
@@ -189,7 +189,7 @@ public class GeneralSequenceFormLP {
 		return r;
 	}
 
-	private IloRange createConstraintForIS(IloCplex cplex, SequenceInformationSet informationSet) throws IloException {
+	protected IloRange createConstraintForIS(IloCplex cplex, SequenceInformationSet informationSet) throws IloException {
 		IloNumExpr sumL = cplex.constant(0);
 
 		if (informationSet.getOutgoingSequences().isEmpty()) {
@@ -207,13 +207,13 @@ public class GeneralSequenceFormLP {
 		if (sumR == null)
 			return null;
 
-		IloRange contsrain = cplex.addEq(cplex.diff(sumL, sumR), 0, "CON:" + informationSet.toString());
+		IloRange constrain = cplex.addEq(cplex.diff(sumL, sumR), 0, "CON:" + informationSet.toString());
 
-		constraints.put(informationSet, contsrain);
-		return contsrain;
+		constraints.put(informationSet, constrain);
+		return constrain;
 	}
 
-	private void createConstraintForSequence(IloCplex cplex, Sequence firstPlayerSequence, SequenceFormConfig<SequenceInformationSet> algConfig) throws IloException {
+	protected void createConstraintForSequence(IloCplex cplex, Sequence firstPlayerSequence, SequenceFormConfig<SequenceInformationSet> algConfig) throws IloException {
 		Player firstPlayer = firstPlayerSequence.getPlayer();
 		InformationSet informationSet = firstPlayerSequence.getLastInformationSet();
 		IloNumExpr VI = null;

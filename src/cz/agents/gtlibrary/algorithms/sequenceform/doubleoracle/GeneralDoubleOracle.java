@@ -143,7 +143,7 @@ public class GeneralDoubleOracle {
 			}
 			
 			long startCPLEX = System.currentTimeMillis();
-			doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, (SequenceFormConfig)algConfig);
+			doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig);
 			long thisCPLEX = System.currentTimeMillis() - startCPLEX;
 
 			System.out.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
