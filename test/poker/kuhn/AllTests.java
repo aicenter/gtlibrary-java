@@ -1,4 +1,4 @@
-package poker.kuhnpoker;
+package poker.kuhn;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

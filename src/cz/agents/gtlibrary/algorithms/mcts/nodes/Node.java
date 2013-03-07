@@ -1,7 +1,11 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
+import java.util.Map;
+
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 
 public interface Node {
 
@@ -26,5 +30,7 @@ public interface Node {
 	public int getNbSamples();
     
 	public int getDepth();
+	
+	public Map<Sequence, Double> getPureStrategyFor(Player player);
 
 }

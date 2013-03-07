@@ -32,10 +32,10 @@ public class HistoryTest {
 		Sequence sequence1 = new LinkedListSequenceImpl(player1);
 		Sequence sequence2 = new LinkedListSequenceImpl(player2);
 		
-		sequence1.addLast(new KuhnPokerAction("b", 1, player1));
-		sequence2.addLast(new KuhnPokerAction("ch", 1, player2));
-		history.addActionOf(new KuhnPokerAction("b", 1, player1), player1);
-		history.addActionOf(new KuhnPokerAction("ch", 1, player2), player2);
+		sequence1.addLast(new KuhnPokerAction("b", null, player1));
+		sequence2.addLast(new KuhnPokerAction("ch", null, player2));
+		history.addActionOf(new KuhnPokerAction("b", null, player1), player1);
+		history.addActionOf(new KuhnPokerAction("ch", null, player2), player2);
 		
 		assertEquals(history.getSequenceOf(player1), sequence1);
 		assertEquals(history.getSequenceOf(player2), sequence2);
@@ -49,10 +49,10 @@ public class HistoryTest {
 		Sequence sequence1 = new LinkedListSequenceImpl(player1);
 		Sequence sequence2 = new LinkedListSequenceImpl(player2);
 		
-		sequence1.addLast(new KuhnPokerAction("b", 1, player1));
-		sequence2.addLast(new KuhnPokerAction("ch", 1, player2));
-		history.addActionOf(new KuhnPokerAction("b", 1, player1), player1);
-		history.addActionOf(new KuhnPokerAction("ch", 1, player2), player2);
+		sequence1.addLast(new KuhnPokerAction("b", null, player1));
+		sequence2.addLast(new KuhnPokerAction("ch", null, player2));
+		history.addActionOf(new KuhnPokerAction("b", null, player1), player1);
+		history.addActionOf(new KuhnPokerAction("ch", null, player2), player2);
 		
 		assertEquals(true, history.values().contains(sequence1));
 		assertEquals(true, history.values().contains(sequence2));
@@ -65,10 +65,10 @@ public class HistoryTest {
 		History history = new HistoryImpl(new Player[]{player1, player2});
 		History history1 = new HistoryImpl(new Player[]{player1, player2}); 
 		
-		history1.addActionOf(new KuhnPokerAction("b", 1, player1), player1);
-		history1.addActionOf(new KuhnPokerAction("ch", 1, player2), player2);
-		history.addActionOf(new KuhnPokerAction("b", 1, player1), player1);
-		history.addActionOf(new KuhnPokerAction("ch", 1, player2), player2);
+		history1.addActionOf(new KuhnPokerAction("b", null, player1), player1);
+		history1.addActionOf(new KuhnPokerAction("ch", null, player2), player2);
+		history.addActionOf(new KuhnPokerAction("b", null, player1), player1);
+		history.addActionOf(new KuhnPokerAction("ch", null, player2), player2);
 		
 		assertEquals(true, history.equals(history1));
 	}
@@ -80,9 +80,9 @@ public class HistoryTest {
 		History history = new HistoryImpl(new Player[]{player1, player2});
 		History history1 = new HistoryImpl(new Player[]{player1, player2}); 
 		
-		history1.addActionOf(new KuhnPokerAction("ch", 1, player2), player2);
-		history.addActionOf(new KuhnPokerAction("b", 1, player1), player1);
-		history.addActionOf(new KuhnPokerAction("ch", 1, player2), player2);
+		history1.addActionOf(new KuhnPokerAction("ch", null, player2), player2);
+		history.addActionOf(new KuhnPokerAction("b", null, player1), player1);
+		history.addActionOf(new KuhnPokerAction("ch", null, player2), player2);
 		
 		assertEquals(false, history.equals(history1));
 	}
