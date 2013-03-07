@@ -219,10 +219,17 @@ public class TTTState extends GameStateImpl {
                double prob = realizationPlans.get(TTTInfo.XPlayer).get(sequence);
                if (prob > 0) {
                    out.print("[");
+                   TTTAction prevA = null;
                    for (Action a : sequence){
-                       TTTState state = (TTTState) a.getInformationSet().getAllStates().iterator().next();
-                       out.print(a.toString() + ", ");
+                       if (prevA != null){
+                           TTTState state = (TTTState) a.getInformationSet().getAllStates().iterator().next();
+                           if (state.getSymbol(prevA.fieldID) != 'x') out.print('f');
+                           out.print(",");
+                       }
+                       out.print(a);
+                       prevA = (TTTAction) a;
                    }
+                   out.println("] " + prob);
                }
                              
             }
