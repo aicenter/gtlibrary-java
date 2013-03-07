@@ -25,13 +25,9 @@ import cz.agents.gtlibrary.utils.ValueComparator;
 
 /**
  * 
- * Standard best-response algorithm. It calculates best-response value for a game 
- * described by the root state and the expander. It assumes a well-formed opponent
- * realization plan (i.e., the opponent realization plan has to satisfy the 'network-flow'-like 
- * conditions). 
+ * Best-response algorithm with pruning. It calculates best-response value for a game
+ * described by the root state and the expander.
  * 
- * @author bosansky
- *
  */
 
 public class SQFBestResponseAlgorithm {
@@ -114,7 +110,7 @@ public class SQFBestResponseAlgorithm {
 
 		Double tmpVal = cachedValuesForNodes.get(gameState);
 		if (tmpVal != null) { // we have already solved this node as a part of an evaluated information set
-			//TODO maybe we could remove the cached value at this point? No in double-oracle -> we are using it in restricted game 
+			//maybe we could remove the cached value at this point? No in double-oracle -> we are using it in restricted game
 			return tmpVal;
 		} 
 
@@ -172,15 +168,7 @@ public class SQFBestResponseAlgorithm {
 					continue;
 				}
 				double v = sel.actionRealValues.get(currentNode).get(resultAction);
-				
-				// DEBUG -> remove
-//				if (cachedValuesForNodes.get(currentNode) != null) { 
-//					if (Math.abs(cachedValuesForNodes.get(currentNode)-v) > EPS_CONSTANT) {
-////						v = cachedValuesForNodes.get(currentNode);
-//						v = v;
-//					}
-//				}
-				
+
 				cachedValuesForNodes.put(currentNode, v);
 				if (currentNode.equals(gameState)) returnValue = v;
 			}
@@ -235,8 +223,6 @@ public class SQFBestResponseAlgorithm {
 				double value = bestResponse(newState, newLowerBound);
 				selection.addValue(action, value, natureProb, oppRP);
 				changed = true;
-			} else {
-				assert true; // DEBUG -> remove
 			}
 		}
 		if (!changed) {
