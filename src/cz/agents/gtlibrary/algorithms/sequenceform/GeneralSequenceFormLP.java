@@ -23,14 +23,14 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class GeneralSequenceFormLP {
 
-	public Map<Player, Double> resultValues = new FixedSizeMap<Player, Double>(2);
-	public Map<Player, Map<Sequence, Double>> resultStrategies = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
-	public Map<Object, IloRange> constraints = new HashMap<Object, IloRange>();
-	public Map<Object, IloNumVar> variables = new HashMap<Object, IloNumVar>();
-	public Map<Player, IloCplex> modelsForPlayers = new FixedSizeMap<Player, IloCplex>(2);
-	public Map<Player, IloNumVar> objectiveForPlayers = new FixedSizeMap<Player, IloNumVar>(2);
-	public Map<Player, Set<Sequence>> newSequences = new FixedSizeMap<Player, Set<Sequence>>(2);
-	public Map<Player, Set<SequenceInformationSet>> newInformationSets = new FixedSizeMap<Player, Set<SequenceInformationSet>>(2);
+	protected Map<Player, Double> resultValues = new FixedSizeMap<Player, Double>(2);
+	protected Map<Player, Map<Sequence, Double>> resultStrategies = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
+	protected Map<Object, IloRange> constraints = new HashMap<Object, IloRange>();
+	protected Map<Object, IloNumVar> variables = new HashMap<Object, IloNumVar>();
+	protected Map<Player, IloCplex> modelsForPlayers = new FixedSizeMap<Player, IloCplex>(2);
+	protected Map<Player, IloNumVar> objectiveForPlayers = new FixedSizeMap<Player, IloNumVar>(2);
+	protected Map<Player, Set<Sequence>> newSequences = new FixedSizeMap<Player, Set<Sequence>>(2);
+	protected Map<Player, Set<SequenceInformationSet>> newInformationSets = new FixedSizeMap<Player, Set<SequenceInformationSet>>(2);
 
 	public GeneralSequenceFormLP(Player[] players) {
 		for (Player player : players) {
@@ -62,13 +62,13 @@ public class GeneralSequenceFormLP {
 	private void createModelFor(Player player) throws IloException {
 		IloCplex cplex = new IloCplex();
 		IloNumVar v0 = cplex.numVar(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, IloNumVarType.Float, "v0");
-
+		cplex.setOut(null);
 		cplex.addMinimize(v0);
 		modelsForPlayers.put(player, cplex);
 		objectiveForPlayers.put(player, v0);
 	}
 
-	private void createVariables(SequenceFormConfig<SequenceInformationSet> algConfig, Player[] players) throws IloException {
+	protected void createVariables(SequenceFormConfig<SequenceInformationSet> algConfig, Player[] players) throws IloException {
 		for (Sequence sequence : algConfig.getAllSequences()) {
 			if (!variables.containsKey(sequence)) {
 				createVariableForSequence(modelsForPlayers.get(players[0]), sequence);
@@ -86,7 +86,7 @@ public class GeneralSequenceFormLP {
 		System.out.println("variables created");
 	}
 
-	public Double calculateOnePlStrategy(SequenceFormConfig<SequenceInformationSet> algConfig, GameState root, Player firstPlayer, Player secondPlayer) {
+	protected Double calculateOnePlStrategy(SequenceFormConfig<SequenceInformationSet> algConfig, GameState root, Player firstPlayer, Player secondPlayer) {
 		try {
 			IloCplex cplex = modelsForPlayers.get(firstPlayer);
 			IloNumVar v0 = objectiveForPlayers.get(firstPlayer);
@@ -95,7 +95,7 @@ public class GeneralSequenceFormLP {
 			System.out.println("phase 1 done");
 			createConsraintsForSets(secondPlayer, cplex, newInformationSets.get(secondPlayer));
 			System.out.println("phase 2 done");
-			cplex.exportModel("aamas-test-" + firstPlayer + ".lp");
+			cplex.exportModel("gt-lib-sqf-" + firstPlayer + ".lp"); // uncomment for model export
 			System.out.println("Solving");
 			cplex.solve();
 			System.out.println("Status: " + cplex.getStatus());
@@ -225,10 +225,14 @@ public class GeneralSequenceFormLP {
 				IloNumVar tmp = variables.get(reachableSet);
 
 				assert (tmp != null);
-				sumV = cplex.sum(sumV, tmp);
+				
+				if (reachableSet.getOutgoingSequences() != null && reachableSet.getOutgoingSequences().size() > 0) {
+					sumV = cplex.sum(sumV, tmp);
+				}
 			}
 		} else {
 			VI = variables.get(informationSet);
+			if (algConfig.getReachableSets(firstPlayerSequence) != null)
 			for (SequenceInformationSet reachableSet : algConfig.getReachableSets(firstPlayerSequence)) {
 				IloNumVar tmp = variables.get(reachableSet);
 
@@ -263,6 +267,14 @@ public class GeneralSequenceFormLP {
 			sumGR = cplex.sum(sumGR, cplex.prod(utility, prob));
 		}
 		return sumGR;
+	}
+
+	public Double getResultForPlayer(Player p) {
+		return resultValues.get(p);
+	}
+	
+	public Map<Sequence, Double> getResultStrategiesForPlayer(Player p) {
+		return resultStrategies.get(p);
 	}
 
 }

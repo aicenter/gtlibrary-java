@@ -11,8 +11,8 @@ public class BPGGameInfo implements GameInfo {
 
 	public static Player[] ALL_PLAYERS = { ATTACKER, DEFENDER };
 
-	public static int DEPTH = 5;
-	public static boolean SLOW_MOVES = true;
+	public static int DEPTH = 6;
+	public static boolean SLOW_MOVES = false;
 	public static String graphFile = "GridW3-almost-connected.txt";
 
 	@Override
@@ -27,7 +27,7 @@ public class BPGGameInfo implements GameInfo {
 
 	@Override
 	public Player getOpponent(Player player) {
-		return player.equals(ATTACKER) ? ATTACKER : DEFENDER;
+		return player.equals(ATTACKER) ? DEFENDER : ATTACKER;
 	}
 
 	@Override

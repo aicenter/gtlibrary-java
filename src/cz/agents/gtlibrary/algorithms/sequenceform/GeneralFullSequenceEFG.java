@@ -42,9 +42,9 @@ public class GeneralFullSequenceEFG {
 	private PrintStream debugOutput = System.out;
 
 	public static void main(String[] args) {
-		runKuhnPoker();
+//		runKuhnPoker();
 //		runGenericPoker();
-//		runBPG();
+		runBPG();
 	}
 
 	public static void runKuhnPoker() {
@@ -127,7 +127,7 @@ public class GeneralFullSequenceEFG {
 		overallCPLEX += thisCPLEX;
 
 		for (Player player : rootState.getAllPlayers()) {
-			realizationPlans.put(player, sequenceFormLP.resultStrategies.get(player));
+			realizationPlans.put(player, sequenceFormLP.getResultStrategiesForPlayer(player));
 		}
 
 		System.out.println("done.");
@@ -150,27 +150,30 @@ public class GeneralFullSequenceEFG {
 		//		}
 
 		System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
-		System.out.println("final result:" + sequenceFormLP.resultValues.get(actingPlayers[0]));
+		System.out.println("final result:" + sequenceFormLP.getResultForPlayer(actingPlayers[0]));
 		System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
 
 		System.out.println("final CPLEX time: " + overallCPLEX);
 		System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
 
-		//		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
-		//		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
-		//		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
-		//		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+        // sanity check -> calculation of Full BR on the solution of SQF LP
+		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
 
-		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
-		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
-		
-		System.out.println("MCTS response: " + utility.computeUtility(mctsRunner.runMCTS(actingPlayers[0]), realizationPlans.get(actingPlayers[1])));
+		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
 
-		utility = new UtilityCalculator(rootState, secondMCTSExpander);
-		mctsRunner = new BestResponseMCTSRunner(secondMCTSConfig, rootState, secondMCTSExpander, realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
+//		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
+//		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
+//
+//		System.out.println("MCTS response: " + utility.computeUtility(mctsRunner.runMCTS(actingPlayers[0]), realizationPlans.get(actingPlayers[1])));
+//
+//		utility = new UtilityCalculator(rootState, secondMCTSExpander);
+//		mctsRunner = new BestResponseMCTSRunner(secondMCTSConfig, rootState, secondMCTSExpander, realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
+//
+//		System.out.println("MCTS response: " + utility.computeUtility(realizationPlans.get(actingPlayers[0]), mctsRunner.runMCTS(actingPlayers[1])));
 
-		System.out.println("MCTS response: " + utility.computeUtility(realizationPlans.get(actingPlayers[0]), mctsRunner.runMCTS(actingPlayers[1])));
-                return realizationPlans;
+        return realizationPlans;
 	}
 
 	public void generateCompleteGame() {

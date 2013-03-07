@@ -8,12 +8,14 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 public class GenericPokerAction extends PokerAction {
 
-	private int value;
+	final private int value;
 
 	public GenericPokerAction(String action, InformationSet i, Player player, int value) {
 		super(action, i, player);
 		this.value = value;
-	}
+        cachedHash = computeHashCode();
+        cachedHashWithoutIS = computeHashCodeWithoutIS();
+    }
 	
 	public int getValue() {
 		return value;
@@ -43,4 +45,24 @@ public class GenericPokerAction extends PokerAction {
 	public int computeHashCodeWithoutIS() {
 		return new HashCodeBuilder(17,31).append(action).append(player).append(value).toHashCode();
 	}
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj))
+            return false;
+        GenericPokerAction other = (GenericPokerAction)obj;
+        if (this.value != other.value)
+            return false;
+        return true;
+    }
+
+    @Override
+    public boolean observableEquals(PokerAction obj) {
+        if (!super.equals(obj))
+            return false;
+        GenericPokerAction other = (GenericPokerAction)obj;
+        if (this.value != other.value)
+            return false;
+        return true;
+    }
 }
