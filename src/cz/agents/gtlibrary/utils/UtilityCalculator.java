@@ -46,6 +46,8 @@ public class UtilityCalculator {
 		double utility = 0;
 		double sum = getProbabilitySumOf(contOfPureStrat, strategy1);
 
+		if (contOfPureStrat.isEmpty())
+			throw new UnsupportedOperationException("Missing sequences");
 		for (Sequence sequence : contOfPureStrat) {
 			if (strategy1.get(sequence) > 1e-8)
 				utility += computeUtility(state.performAction(sequence.getLast()), strategy1, strategy2) * strategy1.get(sequence) / sum;
@@ -58,6 +60,8 @@ public class UtilityCalculator {
 		double utility = 0;
 		double sum = getProbabilitySumOf(contOfPureStrat, strategy2);
 
+		if (contOfPureStrat.isEmpty())
+			throw new UnsupportedOperationException("Missing sequences");
 		for (Sequence sequence : contOfPureStrat) {
 			if (strategy2.get(sequence) > 1e-8)
 				utility += computeUtility(state.performAction(sequence.getLast()), strategy1, strategy2) * strategy2.get(sequence) / sum;
@@ -76,7 +80,7 @@ public class UtilityCalculator {
 
 	private double computeUtilityForNature(GameState state, Map<Sequence, Double> strategy1, Map<Sequence, Double> strategy2) {
 		double utility = 0;
-		
+
 		for (Action action : expander.getActions(state)) {
 			utility += state.getProbabilityOfNatureFor(action) * computeUtility(state.performAction(action), strategy1, strategy2);
 		}
