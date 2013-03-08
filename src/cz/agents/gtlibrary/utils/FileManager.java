@@ -27,11 +27,9 @@ public class FileManager<T extends Serializable> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public T loadGameTree(String fileName) throws IOException {
+	public T loadObject(String fileName) throws IOException {
 		T object = null;
-		ObjectInputStream s = null;
-
-		s = new ObjectInputStream(new BufferedInputStream(new FileInputStream(new File(fileName))));
+		ObjectInputStream s = new ObjectInputStream(new BufferedInputStream(new FileInputStream(new File(fileName))));
 
 		try {
 			object = (T) s.readObject();
@@ -41,7 +39,6 @@ public class FileManager<T extends Serializable> {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} 
-
 		return object;
 	}
 }
