@@ -13,10 +13,11 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class InnerNode extends NodeImpl {
 
-	protected Node[] children;
+	protected Map<Action, Node> children;
 	protected List<Action> actions;
 	protected Player currentPlayer;
 	protected Expander<MCTSInformationSet> expander;
@@ -61,7 +62,7 @@ public class InnerNode extends NodeImpl {
 	}
 
 	public Node selectChild() {
-		return getChildFor(getIndexFromDecisionStrategy(currentPlayer.getId()));
+		return getChildFor(getActionFromDecisionStrategy(currentPlayer.getId()));
 	}
 
 	public Node getNewChildAfter(Action action) {
@@ -91,23 +92,23 @@ public class InnerNode extends NodeImpl {
 		informationSet.updateActionStatsFor(action, values);
 	}
 
-	protected Node getChildFor(int index) {
-		Node selected = children[index];
+	protected Node getChildFor(Action action) {
+		Node selected = children.get(action);
 
 		if (selected == null) {
-			selected = createChild(index);
+			selected = createChild(action);
 		}
 		return selected;
 	}
 
-	protected Node createChild(int index) {
-		Node child = getNewChildAfter(this.actions.get(index));
+	protected Node createChild(Action action) {
+		Node child = getNewChildAfter(action);
 
-		children[index] = child;
+		children.put(action, child);
 		return child;
 	}
 
-	protected int getIndexFromDecisionStrategy(int playerIndex) {
+	protected Action getActionFromDecisionStrategy(int playerIndex) {
 		return algConfig.getSelectionStrategy().select(informationSet.getStatsFor(playerIndex), informationSet.getActionStats());
 	}
 
@@ -154,7 +155,7 @@ public class InnerNode extends NodeImpl {
 			actionStats.put(action, algConfig.getBackPropagationStrategyFor(this, currentPlayer));
 		}
 		informationSet.initActionStats(actions, algConfig.getBackPropagationStrategyFactory());
-		children = new Node[actions.size()];
+		children = new FixedSizeMap<Action, Node>(actions.size());
 	}
 
 	@Override
@@ -183,7 +184,7 @@ public class InnerNode extends NodeImpl {
 	}
 
 	
-	protected int getMostPlayedActionIndex(int playerIndex) {
+	protected Action getMostPlayedAction(int playerIndex) {
 		int max = Integer.MIN_VALUE;
 		Action action = null;
 		
@@ -193,7 +194,7 @@ public class InnerNode extends NodeImpl {
 				action = entry.getKey();
 			}
 		}
-		return getIndexOfAction(action);
+		return action;
 	}
 
 	@Override

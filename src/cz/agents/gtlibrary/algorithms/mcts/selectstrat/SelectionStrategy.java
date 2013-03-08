@@ -24,8 +24,8 @@ import cz.agents.gtlibrary.utils.RunningStats;
 public interface SelectionStrategy {
 
     /**
-     * Returns the index of the selected action in the linked map.
+     * Returns selected action.
      */
-	public int select(RunningStats nodeStats, Map<Action, BackPropagationStrategy> actionStats);
+	public Action select(RunningStats nodeStats, Map<Action, BackPropagationStrategy> actionStats);
 
 }

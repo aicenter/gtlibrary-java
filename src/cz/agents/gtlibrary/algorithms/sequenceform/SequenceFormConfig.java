@@ -1,9 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
 import java.util.*;
-import java.util.prefs.Preferences;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;

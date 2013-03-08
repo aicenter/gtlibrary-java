@@ -25,35 +25,33 @@ public class BRChanceNode extends BRInnerNode {
 	@Override
 	public Node selectChild() {
 		Node selected = null;
-		int index = getRandomIndex();
+		Action action = getRandomAction();
 
-		selected = children[index];
+		selected = children.get(action);
 		if (selected == null) {
-			selected = getNewChildAfter(this.actions.get(index));
-			children[index] = selected;
+			selected = getNewChildAfter(action);
+			children.put(action, selected);
 		}
 		return selected;
 	}
 
-	private int getRandomIndex() {
+	private Action getRandomAction() {
 		double move = random.nextDouble();
-		int index = 0;
 
 		for (Action action : actions) {
 			move -= gameState.getProbabilityOfNatureFor(action);
 			if (move < 0) {
-				return index;
+				return action;
 			}
-			index++;
 		}
-		return index;
+		return actions.get(actions.size() - 1);
 	}
 
 	@Override
 	public Map<Sequence, Double> getPureStrategyFor(Player player) {
 		Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
 
-		for (Node child : children) {
+		for (Node child : children.values()) {
 			pureStrategy.putAll(getPureStrategyFor(child, player));
 		}
 		return pureStrategy;
