@@ -10,11 +10,10 @@ import cz.agents.gtlibrary.utils.RunningStats;
 public abstract class MaxFunctionSelector implements SelectionStrategy {
 
 	@Override
-	public int select(RunningStats nodeStats, Map<Action, BackPropagationStrategy> actionStats) {
+	public Action select(RunningStats nodeStats, Map<Action, BackPropagationStrategy> actionStats) {
 		assert actionStats.size() > 0;
 
-		int maxIndex = -1;
-		int currentIndex = 0;
+		Action bestAction = null;
 		double maxValue = Double.NEGATIVE_INFINITY;
 
 		for (Entry<Action, BackPropagationStrategy> entry : actionStats.entrySet()) {
@@ -22,16 +21,10 @@ public abstract class MaxFunctionSelector implements SelectionStrategy {
 
 			if (value > maxValue) {
 				maxValue = value;
-				maxIndex = currentIndex;
+				bestAction = entry.getKey();
 			}
-			currentIndex++;
 		}
-
-//		if (maxIndex == -1) {
-//			//fall back on max value selector which can't fail;
-//			return (new MaxValueSelector()).select(nodeStats, actionStats);
-//		}
-		return maxIndex;
+		return bestAction;
 	}
 
 	protected abstract double evaluate(RunningStats nodeStats, BackPropagationStrategy actionStats);

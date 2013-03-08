@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Scanner;
 
 import cz.agents.gtlibrary.algorithms.mcts.BestResponseMCTSRunner;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
@@ -56,7 +57,7 @@ public class GeneralFullSequenceEFG {
 		Expander<MCTSInformationSet> firstMCTSExpander = new KuhnPokerExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new KuhnPokerExpander<MCTSInformationSet>(secondMCTSConfig);
 		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
-		
+
 		efg.generate();
 	}
 
@@ -69,7 +70,7 @@ public class GeneralFullSequenceEFG {
 		Expander<MCTSInformationSet> firstMCTSExpander = new GenericPokerExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new GenericPokerExpander<MCTSInformationSet>(secondMCTSConfig);
 		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
-		
+
 		efg.generate();
 	}
 
@@ -156,26 +157,27 @@ public class GeneralFullSequenceEFG {
 		System.out.println("final CPLEX time: " + overallCPLEX);
 		System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
 
-        // sanity check -> calculation of Full BR on the solution of SQF LP
+		// sanity check -> calculation of Full BR on the solution of SQF LP
 		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
 		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
 
 		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
 		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
 
-        algConfig.validateGameStructure(rootState, expander);
+		algConfig.validateGameStructure(rootState, expander);
+		System.out.println("MCTS ready");
+		new Scanner(System.in).next();
+		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
+		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
 
-//		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
-//		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
-//
-//		System.out.println("MCTS response: " + utility.computeUtility(mctsRunner.runMCTS(actingPlayers[0]), realizationPlans.get(actingPlayers[1])));
-//
-//		utility = new UtilityCalculator(rootState, secondMCTSExpander);
-//		mctsRunner = new BestResponseMCTSRunner(secondMCTSConfig, rootState, secondMCTSExpander, realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
-//
-//		System.out.println("MCTS response: " + utility.computeUtility(realizationPlans.get(actingPlayers[0]), mctsRunner.runMCTS(actingPlayers[1])));
+		System.out.println("MCTS response: " + utility.computeUtility(mctsRunner.runMCTS(actingPlayers[0]), realizationPlans.get(actingPlayers[1])));
 
-        return realizationPlans;
+		utility = new UtilityCalculator(rootState, secondMCTSExpander);
+		mctsRunner = new BestResponseMCTSRunner(secondMCTSConfig, rootState, secondMCTSExpander, realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
+
+		System.out.println("MCTS response: " + -utility.computeUtility(realizationPlans.get(actingPlayers[0]), mctsRunner.runMCTS(actingPlayers[1])));
+
+		return realizationPlans;
 	}
 
 	public void generateCompleteGame() {
