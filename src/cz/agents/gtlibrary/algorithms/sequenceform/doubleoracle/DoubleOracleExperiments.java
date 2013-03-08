@@ -1,0 +1,64 @@
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
+
+import cz.agents.gtlibrary.algorithms.sequenceform.GeneralFullSequenceEFG;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.interfaces.Expander;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: bosansky
+ * Date: 3/8/13
+ * Time: 10:09 AM
+ * To change this template use File | Settings | File Templates.
+ */
+public class DoubleOracleExperiments {
+
+
+
+    public static void main(String[] args) {
+        if (args.length < 2) {
+            System.err.println("Missing Arguments: DoubleOracleExperiments {DO|LP} {BP|GP} [algorithm/domain parameters].");
+            System.exit(-1);
+        }
+        String alg = args[0];
+        DoubleOracleExperiments exp = new DoubleOracleExperiments();
+        exp.handleDomain(args);
+        exp.runAlgorithm(alg, args[1]);
+    }
+
+
+    public void handleDomain(String[] args) {
+        if (args[1].equalsIgnoreCase("BP")) {
+            if (args.length != 5) {
+                throw new IllegalArgumentException("Illegal domain arguments count. 3 are required {DEPTH} {GRAPH} {SLOW_MOVES}");
+            }
+            int depth = new Integer(args[2]);
+            BPGGameInfo.graphFile = args[3];
+            BPGGameInfo.SLOW_MOVES = new Boolean(args[4]);
+            BPGGameInfo.DEPTH = depth;
+        } else if (args[1].equalsIgnoreCase("GP")) {
+            if (args.length != 6) {
+                throw new IllegalArgumentException("Illegal poker domain arguments count. 4 are required {MAX_RISES} {MAX_BETS} {MAX_CARD_TYPES} {MAX_CARD_OF_EACH_TYPE}");
+            }
+            GPGameInfo.MAX_RAISES_IN_ROW = new Integer(args[2]);
+            GPGameInfo.MAX_BETS_R1 = new Integer(args[3]);
+            GPGameInfo.MAX_CARD_TYPES = new Integer(args[4]);
+            GPGameInfo.MAX_CARD_OF_EACH_TYPE = new Integer(args[5]);
+        } else throw new IllegalArgumentException("Illegal domain: " + args[1]);
+    }
+
+    public void runAlgorithm(String alg, String domain) {
+        if (alg.equalsIgnoreCase("DO")) {
+            if (domain.equalsIgnoreCase("BP"))
+                GeneralDoubleOracle.runBP();
+            else if (domain.equalsIgnoreCase("GP"))
+                GeneralDoubleOracle.runGenericPoker();
+        } else if (alg.equalsIgnoreCase("LP")) {
+            if (domain.equalsIgnoreCase("BP"))
+                GeneralFullSequenceEFG.runBPG();
+            else if (domain.equalsIgnoreCase("GP"))
+                GeneralFullSequenceEFG.runGenericPoker();
+        } else throw new IllegalArgumentException("Illegal algorithm: " + alg);
+    }
+}
