@@ -131,7 +131,7 @@ public class GeneralFullSequenceEFG {
 		}
 
 		System.out.println("done.");
-		System.out.println("Time elapsed: " + (System.currentTimeMillis() - start));
+        long finishTime = System.currentTimeMillis() - start;
 
 		int[] support_size = new int[] { 0, 0 };
 		for (Player player : actingPlayers) {
@@ -143,27 +143,34 @@ public class GeneralFullSequenceEFG {
 			}
 		}
 
-		//		Runtime.getRuntime().gc();
+        try {
+            Runtime.getRuntime().gc();
+            Thread.currentThread().sleep(500l);
+        } catch (InterruptedException e) {
+        }
 
 		//		for (BasicPlayerID playerID : rootState.getAllPlayers()) {
 		//			System.out.println("final result for " + playerID + ": " + GeneralSequenceFormLP.resultValues.get(playerID) /*+ ", " + tree.getIS(InformationSet.calculateISEquivalenceForPlayerToMove(rootState)).getValueOfGameForPlayer(playerID)*/);
 		//		}
 
-		System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
-		System.out.println("final result:" + sequenceFormLP.getResultForPlayer(actingPlayers[0]));
+        System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
+        System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
+        System.out.println("final result:" + sequenceFormLP.getResultForPlayer(actingPlayers[0]));
 		System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
-
-		System.out.println("final CPLEX time: " + overallCPLEX);
-		System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
+        System.out.println("final time: " + finishTime);
+        System.out.println("final CPLEX time: " + overallCPLEX);
+        System.out.println("final BR time: " + 0);
+        System.out.println("final RGB time: " + 0);
+        System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
 
         // sanity check -> calculation of Full BR on the solution of SQF LP
-		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
-
-		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
-
-        algConfig.validateGameStructure(rootState, expander);
+//		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+//		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+//
+//		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+//		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+//
+//        algConfig.validateGameStructure(rootState, expander);
 
 //		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
 //		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
