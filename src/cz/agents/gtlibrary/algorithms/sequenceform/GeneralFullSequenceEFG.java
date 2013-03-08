@@ -4,7 +4,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Scanner;
 
 import cz.agents.gtlibrary.algorithms.mcts.BestResponseMCTSRunner;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
