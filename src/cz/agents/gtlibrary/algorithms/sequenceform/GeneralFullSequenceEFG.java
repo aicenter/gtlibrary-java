@@ -165,8 +165,7 @@ public class GeneralFullSequenceEFG {
 		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
 
 		algConfig.validateGameStructure(rootState, expander);
-		System.out.println("MCTS ready");
-		new Scanner(System.in).next();
+		
 		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
 		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
 
