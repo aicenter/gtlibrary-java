@@ -171,7 +171,7 @@ public class BPGGameState extends GameStateImpl {
 	public Set<Node> getFlaggedNodes() {
 		return flaggedNodes;
 	}
-	
+
 	public Set<Node> getFlaggedNodesObservedByPatroller() {
 		return flaggedNodesObservedByPatroller;
 	}
@@ -205,12 +205,12 @@ public class BPGGameState extends GameStateImpl {
 
 	@Override
 	public int hashCode() {
-		if (hashCode != -1)
-			return hashCode;
-		final int prime = 31;
-		hashCode = 1;
-
-		hashCode = prime * hashCode + ((history == null) ? 0 : history.hashCode());
+		if (hashCode == -1) {
+			final int prime = 31;
+			
+			hashCode = 1;
+			hashCode = prime * hashCode + ((history == null) ? 0 : history.hashCode());
+		}
 		return hashCode;
 	}
 
