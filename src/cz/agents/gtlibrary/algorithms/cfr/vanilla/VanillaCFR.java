@@ -1,7 +1,6 @@
 package cz.agents.gtlibrary.algorithms.cfr.vanilla;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -60,8 +59,8 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 	}
 
 	@Override
-	public VanillaInformationSet createInformationSet(GameState state, List<Action> actions) {
-		return new VanillaInformationSet(state, actions);
+	public VanillaInformationSet createInformationSet(GameState state) {
+		return new VanillaInformationSet(state);
 	}
 
 	@Override

@@ -1,8 +1,8 @@
 package cz.agents.gtlibrary.algorithms.cfr.vanilla;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -26,12 +26,17 @@ public class VanillaInformationSet extends CFRInformationSet {
 	private float probabilityOfOccurenceGivenMyStrategy;
 	private float probabilitySum;
 
-	public VanillaInformationSet(GameState state, List<Action> actions) {
-		super(state, actions);
+	public VanillaInformationSet(GameState state) {
+		super(state);
 		valuesForStates = new HashMap<GameState, float[]>();
 		valuesOfActionsForStates = new HashMap<GameState, Map<Action, Float>>();
 		averageValuesForStates = new HashMap<GameState, float[]>();
 		averageValuesOfActionsForStates = new HashMap<GameState, Map<Action, Float>>();
+	}
+	
+	@Override
+	public void initializeFor(Collection<Action> actions, GameState state) {
+		super.initializeFor(actions, state);
 		values = new FixedSizeMap<Action, Float>(actions.size());
 		averageValues = new FixedSizeMap<Action, Float>(actions.size());
 		numerators = new FixedSizeMap<Action, Float>(actions.size());

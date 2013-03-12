@@ -29,16 +29,14 @@ public abstract class CFR<I extends CFRInformationSet> {
 			}
 
 			I set = config.getInformationSetFor(state);
-			List<Action> actions = expander.getActions(state);
 
 			if (set == null) {
-				set = createAndAddSet(state, actions);
-				for (Action action : actions) {
-					action.setInformationSet(set);
-				}
-			} else {
-				set.addStateToIS(state);
+				set = createAndAddSet(state);
 			}
+			List<Action> actions = expander.getActions(set);
+
+			set.initializeFor(actions, state);
+			set.addStateToIS(state);
 			for (Action action : expander.getActions(state)) {
 				GameState newState = state.performAction(action);
 
@@ -48,8 +46,8 @@ public abstract class CFR<I extends CFRInformationSet> {
 		}
 	}
 
-	private I createAndAddSet(GameState state, List<Action> actions) {
-		I set = createInformationSet(state, actions);
+	private I createAndAddSet(GameState state) {
+		I set = createInformationSet(state);
 
 		config.addInformationSetFor(state, set);
 		return set;
@@ -57,7 +55,7 @@ public abstract class CFR<I extends CFRInformationSet> {
 
 	public void updateTree(int iterations) {
 		for (int i = 0; i < iterations; i++) {
-			if (i % 10000 == 0)
+			if (i % 1000 == 0)
 				System.out.println(config.getInformationSetFor(config.getRootState()).getValueOfGame());
 			updateTree();
 		}
@@ -65,6 +63,6 @@ public abstract class CFR<I extends CFRInformationSet> {
 
 	public abstract void updateTree();
 
-	public abstract I createInformationSet(GameState state, List<Action> actions);
+	public abstract I createInformationSet(GameState state);
 
 }
