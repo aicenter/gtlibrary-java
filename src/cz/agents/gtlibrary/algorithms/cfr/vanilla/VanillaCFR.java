@@ -8,6 +8,8 @@ import cz.agents.gtlibrary.algorithms.cfr.CFR;
 import cz.agents.gtlibrary.algorithms.cfr.CFRConfig;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
@@ -24,7 +26,8 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 	public static void main(String[] args) {
 //		runKuhnPoker();
 //		runGenericPoker();
-		runBPG();
+//		runBPG();
+		runGoofSpiel();
 	}
 
 	public static void runKuhnPoker() {
@@ -33,6 +36,15 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 		VanillaCFR cfr = new VanillaCFR(config);
 
 		cfr.buildGameTree(rootState, new KuhnPokerExpander<VanillaInformationSet>(config));
+		cfr.updateTree(200000);
+	}
+	
+	public static void runGoofSpiel() {
+		GameState rootState = new GoofSpielGameState();
+		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new GoofSpielGameState());
+		VanillaCFR cfr = new VanillaCFR(config);
+
+		cfr.buildGameTree(rootState, new GoofSpielExpander<VanillaInformationSet>(config));
 		cfr.updateTree(200000);
 	}
 

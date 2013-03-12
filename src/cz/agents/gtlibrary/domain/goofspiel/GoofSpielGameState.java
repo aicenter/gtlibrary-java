@@ -30,6 +30,9 @@ public class GoofSpielGameState extends GameStateImpl {
 	private int round;
 	private int currentPlayerIndex;
 
+	private Pair<Integer, Sequence> key;
+	private int hashCode = -1;
+
 	public GoofSpielGameState() {
 		super(GSGameInfo.ALL_PLAYERS);
 		sequenceForAllPlayers = new LinkedList<Action>();
@@ -71,6 +74,7 @@ public class GoofSpielGameState extends GameStateImpl {
 			playerCards.put(player, cardsForPlayer);
 		}
 	}
+
 //
 //	@SuppressWarnings("unchecked")
 //	private void computeISKnowledge() {
@@ -100,22 +104,30 @@ public class GoofSpielGameState extends GameStateImpl {
 	private void addActionToSequenceForAllPlayers(GoofSpielAction action) {
 		sequenceForAllPlayers.add(action);
 	}
-	
+
 	public void performFirstPlayerAction(GoofSpielAction action) {
+		cleanCache();
 		evaluate(action, getLastActionOf(GSGameInfo.SECOND_PLAYER));
 		playerCards.get(GSGameInfo.FIRST_PLAYER).remove(action.getValue());
 	}
 
 	public void performSecondPlayerAction(GoofSpielAction action) {
+		cleanCache();
 		evaluate(getLastActionOf(GSGameInfo.FIRST_PLAYER), action);
 		playerCards.get(GSGameInfo.SECOND_PLAYER).remove(action.getValue());
 	}
-	
+
 	public void performNatureAction(GoofSpielAction action) {
+		cleanCache();
 		playerCards.get(GSGameInfo.NATURE).remove(action.getValue());
 		addActionToSequenceForAllPlayers(action);
 		faceUpCard = action;
 		currentPlayerIndex = 0;
+	}
+
+	private void cleanCache() {
+		key = null;
+		hashCode = -1;
 	}
 
 	private void evaluateRound(GoofSpielAction firstPlayerCard, GoofSpielAction secondPlayerCard) {
@@ -209,14 +221,16 @@ public class GoofSpielGameState extends GameStateImpl {
 	public double getProbabilityOfNatureFor(Action action) {
 		Set<Integer> natureActions = playerCards.get(GSGameInfo.NATURE);
 
-		if(natureActions.contains(((GoofSpielAction)action).getValue()))
-			return 1d/natureActions.size();
+		if (natureActions.contains(((GoofSpielAction) action).getValue()))
+			return 1d / natureActions.size();
 		return 0;
 	}
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(17, 31).append(history).toHashCode();
+		if (hashCode == -1)
+			hashCode = new HashCodeBuilder(17, 31).append(history).toHashCode();
+		return hashCode;
 	}
 
 	@Override
@@ -256,10 +270,13 @@ public class GoofSpielGameState extends GameStateImpl {
 
 	@Override
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-		if (isPlayerToMoveNature()) {
-			return new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+		if (key == null) {
+			if (isPlayerToMoveNature())
+				key = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+			else
+				key = new Pair<Integer, Sequence>(sequenceForAllPlayers.hashCode(), getSequenceForPlayerToMove());
 		}
-		return new Pair<Integer, Sequence>(sequenceForAllPlayers.hashCode(), getSequenceForPlayerToMove());
+		return key;
 	}
 
 	public Collection<Integer> getCardsForPlayerToMove() {
