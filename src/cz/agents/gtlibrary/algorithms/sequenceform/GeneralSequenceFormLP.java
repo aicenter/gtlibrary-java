@@ -23,6 +23,9 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class GeneralSequenceFormLP {
 
+    private long overallConstraintGenerationTime = 0;
+    private long overallConstraintLPSolvingTime = 0;
+
 	protected Map<Player, Double> resultValues = new FixedSizeMap<Player, Double>(2);
 	protected Map<Player, Map<Sequence, Double>> resultStrategies = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
 	protected Map<Object, IloRange> constraints = new HashMap<Object, IloRange>();
@@ -90,14 +93,18 @@ public class GeneralSequenceFormLP {
 		try {
 			IloCplex cplex = modelsForPlayers.get(firstPlayer);
 			IloNumVar v0 = objectiveForPlayers.get(firstPlayer);
-
+            long startTime = System.currentTimeMillis();
 			createConstraintsForSequences(algConfig, cplex, sequences.get(firstPlayer));
 			System.out.println("phase 1 done");
 			createConstraintsForSets(secondPlayer, cplex, informationSets.get(secondPlayer));
 			System.out.println("phase 2 done");
+            overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
+
 			cplex.exportModel("gt-lib-sqf-" + firstPlayer + ".lp"); // uncomment for model export
+            startTime = System.currentTimeMillis();
 			System.out.println("Solving");
 			cplex.solve();
+            overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
 			System.out.println("Status: " + cplex.getStatus());
 			
 			if (cplex.getCplexStatus() != CplexStatus.Optimal) {
@@ -277,4 +284,11 @@ public class GeneralSequenceFormLP {
 		return resultStrategies.get(p);
 	}
 
+    public long getOverallConstraintLPSolvingTime() {
+        return overallConstraintLPSolvingTime;
+    }
+
+    public long getOverallConstraintGenerationTime() {
+        return overallConstraintGenerationTime;
+    }
 }

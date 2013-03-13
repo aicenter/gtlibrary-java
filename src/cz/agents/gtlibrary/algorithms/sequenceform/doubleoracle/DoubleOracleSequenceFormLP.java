@@ -20,6 +20,8 @@ public class DoubleOracleSequenceFormLP extends GeneralSequenceFormLP {
 
     private Map<Player, Set<Sequence>> newSequencesSinceLastLPCalculation = new FixedSizeMap<Player, Set<Sequence>>(2);
     private Player[] players;
+    private long overallGenerationTime = 0;
+    private long overallComputationTime = 0;
 
 	public DoubleOracleSequenceFormLP(Player[] players) {
 		super(players);
@@ -37,9 +39,12 @@ public class DoubleOracleSequenceFormLP extends GeneralSequenceFormLP {
             for (Player p : players) {
                     newSequencesSinceLastLPCalculation.get(p).addAll(algConfig.getNewSequences());
             }
-
+            long currentTime = System.currentTimeMillis();
             setSequencesAndISForGeneratingConstraints(algConfig,players[firstPlayerIndex], players[secondPlayerIndex]);
+            overallGenerationTime += (System.currentTimeMillis()) - currentTime;
+            currentTime = System.currentTimeMillis();
 			double v = calculateOnePlStrategy(algConfig, root, players[firstPlayerIndex], players[secondPlayerIndex]);
+            overallComputationTime += (System.currentTimeMillis()) - currentTime;
             newSequencesSinceLastLPCalculation.get(players[secondPlayerIndex]).clear();
             return v;
 		} catch (IloException e) {
@@ -69,5 +74,13 @@ public class DoubleOracleSequenceFormLP extends GeneralSequenceFormLP {
                 }
             } else assert false;
         }
+    }
+
+    public long getOverallGenerationTime() {
+        return overallGenerationTime;
+    }
+
+    public long getOverallComputationTime() {
+        return overallComputationTime;
     }
 }

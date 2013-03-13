@@ -19,41 +19,41 @@ public class GPGameInfo implements GameInfo {
 	public static final int ANTE = 1;
 	public static int MAX_RAISES_IN_ROW = 1;
 
-	public static int MAX_BETS_R1 = 1;
+	public static int MAX_BETS = 1;
 	public static int[] BETS_FIRST_ROUND;
 
-	static {
-		BETS_FIRST_ROUND = new int[MAX_BETS_R1];
-		for (int i = 0; i < MAX_BETS_R1; i++)
+	{
+		BETS_FIRST_ROUND = new int[MAX_BETS];
+		for (int i = 0; i < MAX_BETS; i++)
 			BETS_FIRST_ROUND[i] = (i + 1) * 2;
 	}
 
 
-	public static int MAX_RAISES_R1 = 1;
+
 	/**
 	 * represents value which will be added to previous aggressive action
 	 */
 	public static int[] RAISES_FIRST_ROUND;
 
-	static {
-		RAISES_FIRST_ROUND = new int[MAX_RAISES_R1];
-		for (int i = 0; i < MAX_RAISES_R1; i++)
+	{
+		RAISES_FIRST_ROUND = new int[MAX_RAISES_IN_ROW];
+		for (int i = 0; i < MAX_RAISES_IN_ROW; i++)
 			RAISES_FIRST_ROUND[i] = (i + 1) * 2;
 	}
 
-	public static int MAX_CARD_TYPES = 4;
+	public static int MAX_CARD_TYPES = 3;
 	public static int[] CARD_TYPES;
 
-	static {
+	{
 		CARD_TYPES = new int[MAX_CARD_TYPES];
 		for (int i = 0; i < MAX_CARD_TYPES; i++)
 			CARD_TYPES[i] = i;
 	}
 
-	public static int MAX_CARD_OF_EACH_TYPE = 3;
+	public static int MAX_CARD_OF_EACH_TYPE = 2;
 	public static int[] DECK; // does not currently work for different sizes of card-types (e.g., {0,0,1,2}); returns incorrect nature-probability
 
-	static {
+	{
 		DECK = new int[MAX_CARD_OF_EACH_TYPE * MAX_CARD_TYPES];
 		for (int i = 0; i < MAX_CARD_TYPES; i++)
 			for (int j = 0; j < MAX_CARD_OF_EACH_TYPE; j++) {
@@ -64,7 +64,7 @@ public class GPGameInfo implements GameInfo {
 	public static int[] BETS_SECOND_ROUND;
 	public static int[] RAISES_SECOND_ROUND;
 
-	static {
+	{
 		BETS_SECOND_ROUND = new int[BETS_FIRST_ROUND.length];
 		for (int i = 0; i < BETS_FIRST_ROUND.length; i++) {
 			BETS_SECOND_ROUND[i] = 2 * BETS_FIRST_ROUND[i];
