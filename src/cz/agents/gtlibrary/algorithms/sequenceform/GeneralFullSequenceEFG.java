@@ -159,9 +159,11 @@ public class GeneralFullSequenceEFG {
         // sanity check -> calculation of Full BR on the solution of SQF LP
 		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
 		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+                
+                brAlg = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
 
-		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+        algConfig.validateGameStructure(rootState, expander);
 
 //		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
 //		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);

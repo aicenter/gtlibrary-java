@@ -12,6 +12,12 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.algorithms.sequenceform.GeneralFullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.io.GambitEFG;
@@ -94,8 +100,8 @@ public class TTTState extends GameStateImpl {
         return false;
     }
 
-    private static double[] xWin = new double[]{1.0,0.0};
-    private static double[] oWin = new double[]{0.0,1.0};
+    private static double[] xWin = new double[]{1.0,-1.0};
+    private static double[] oWin = new double[]{-1.0,1.0};
     
     @Override
     public double[] getUtilities() {
@@ -119,14 +125,14 @@ public class TTTState extends GameStateImpl {
             if (getSymbol(2) == 'x') return xWin;
             if (getSymbol(2) == 'o') return oWin;
         }
-        return new double[] {0.5,0.5};
+        return new double[] {0.0,0.0};
     }
 
     @Override
     public boolean isGameEnd() {
         double[] u = getUtilities();
         //is finished already
-        if (u[0] != 0.5) return true;
+        if (u[0] != 0.0) return true;
         //has an empty field
         for (int i=0; i<9; i++) if(getSymbol(i) == ' ') return false;
         return true;
@@ -187,30 +193,58 @@ public class TTTState extends GameStateImpl {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-        int hash = 1;//creates a bitmap of successful actions
-        for (Action a : history.getSequenceOf(getPlayerToMove())){
-            hash <<= 1;
-            hash |= getSymbol(((TTTAction)a).fieldID) == toMove ? 1 : 0;
+    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {        
+        int hash;
+        if (isGameEnd()){
+            hash = 0;
+        } else {
+            hash = 1;//creates a bitmap of successful actions
+            for (Action a : history.getSequenceOf(getPlayerToMove())){
+                hash <<= 1;
+                hash |= getSymbol(((TTTAction)a).fieldID) == toMove ? 1 : 0;
+            }
         }
         return new Pair<Integer, Sequence>(hash, history.getSequenceOf(getPlayerToMove()));
     }
     
     
-     
-    public static void main(String[] args) {
+    
+    public static Map<Player, Map<Sequence, Double>>  runDO (){
+        GameState rootState = new TTTState();
+        GameInfo gameInfo = new TTTInfo();
+	DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new TTTExpander<DoubleOracleInformationSet>(algConfig);
+	GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        
+        return doefg.generate();
+    }
+    
+    
+    public static Map<Player, Map<Sequence, Double>>  runSF (){
         GameState rootState = new TTTState();
 	GameInfo gameInfo = new TTTInfo();
 	SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
         algConfig.addStateToSequenceForm(rootState);
-        //GambitEFG.write("ttt.efg", rootState, new TTTExpander<SequenceInformationSet>(algConfig));
 	MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1.2));
 	MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1.2));
 	Expander<MCTSInformationSet> firstMCTSExpander = new TTTExpander <MCTSInformationSet>(firstMCTSConfig);
 	Expander<MCTSInformationSet> secondMCTSExpander = new TTTExpander<MCTSInformationSet>(secondMCTSConfig);
 	GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new TTTExpander(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
         
-	Map<Player, Map<Sequence, Double>>  realizationPlans = efg.generate();
+	return efg.generate();
+    }
+    
+    public static void saveGame(){
+        GameState rootState = new TTTState();
+	SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        algConfig.addStateToSequenceForm(rootState);
+        GambitEFG.write("ttt.efg", rootState, new TTTExpander<SequenceInformationSet>(algConfig));
+    }
+    
+    
+     
+    public static void main(String[] args) {
+	Map<Player, Map<Sequence, Double>>  realizationPlans = runSF();
          
         PrintStream out;
         try {
@@ -231,12 +265,30 @@ public class TTTState extends GameStateImpl {
                    }
                    out.println("] " + prob);
                }
-                             
+            }
+            out.close();
+            
+            out = new PrintStream("o.txt");
+            for (Sequence sequence : realizationPlans.get(TTTInfo.OPlayer).keySet()) {
+               double prob = realizationPlans.get(TTTInfo.OPlayer).get(sequence);
+               if (prob > 0) {
+                   out.print("[");
+                   TTTAction prevA = null;
+                   for (Action a : sequence){
+                       if (prevA != null){
+                           TTTState state = (TTTState) a.getInformationSet().getAllStates().iterator().next();
+                           if (state.getSymbol(prevA.fieldID) != 'o') out.print('f');
+                           out.print(",");
+                       }
+                       out.print(a);
+                       prevA = (TTTAction) a;
+                   }
+                   out.println("] " + prob);
+               }
             }
             out.close();
         } catch (Exception ex) {
             ex.printStackTrace();
         } 
     }
-    
 }

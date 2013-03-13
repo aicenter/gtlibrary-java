@@ -57,7 +57,7 @@ public class GeneralDoubleOracle {
 		this.algConfig = algConfig;
 	}
 
-	public void generate() {
+	public Map<Player, Map<Sequence, Double>> generate() {
 		debugOutput.println("Double Oracle");
 		debugOutput.println(gameConfig.getInfo());
 		
@@ -143,7 +143,7 @@ public class GeneralDoubleOracle {
 			}
 			
 			long startCPLEX = System.currentTimeMillis();
-			doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, (SequenceFormConfig)algConfig);
+			doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig);
 			long thisCPLEX = System.currentTimeMillis() - startCPLEX;
 
 			System.out.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
@@ -194,6 +194,7 @@ public class GeneralDoubleOracle {
 
 		System.out.println("final CPLEX time: " + overallCPLEX);
 		System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
+                return realizationPlans;
 	}
 
     public GameState findFirstNonNatureState(GameState rootState, Expander<DoubleOracleInformationSet> expander) {
