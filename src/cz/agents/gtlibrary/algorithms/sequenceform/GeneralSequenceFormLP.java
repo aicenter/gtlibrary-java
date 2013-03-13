@@ -100,7 +100,7 @@ public class GeneralSequenceFormLP {
 			System.out.println("phase 2 done");
             overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
 
-			cplex.exportModel("gt-lib-sqf-" + firstPlayer + ".lp"); // uncomment for model export
+			cplex.exportModel("gt-lib-sqf-rnd-" + firstPlayer + ".lp"); // uncomment for model export
             startTime = System.currentTimeMillis();
 			System.out.println("Solving");
 			cplex.solve();

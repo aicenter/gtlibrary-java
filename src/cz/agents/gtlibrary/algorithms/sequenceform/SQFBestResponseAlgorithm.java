@@ -430,13 +430,16 @@ public class SQFBestResponseAlgorithm {
             // sort according to my old realizaiton plan
             Sequence currentSequence = state.getSequenceFor(players[searchingPlayerIndex]);
             Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
+            boolean hasPositiveProb = false;
             for (Action a : actions) {
                 Sequence newSeq = new LinkedListSequenceImpl(currentSequence);
                 newSeq.addLast(a);
                 Double prob = myRealizationPlan.get(newSeq);
                 if (prob == null) prob = 0d;
+                if (prob > 0) hasPositiveProb = true;
                 sequenceMap.put(a, prob); // the standard way is to sort ascending; hence, we store negative probability
             }
+            if (!hasPositiveProb) return actions; // if
             ValueComparator<Action> comp = new ValueComparator<Action>(sequenceMap);
             TreeMap<Action,Double> sortedMap = new TreeMap<Action,Double>(comp);
             sortedMap.putAll(sequenceMap);

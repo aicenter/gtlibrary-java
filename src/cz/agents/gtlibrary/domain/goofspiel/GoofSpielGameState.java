@@ -1,18 +1,13 @@
 package cz.agents.gtlibrary.domain.goofspiel;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -24,6 +19,7 @@ public class GoofSpielGameState extends GameStateImpl {
 	private Map<Player, HashSet<Integer>> playerCards;
 	private LinkedList<Action> sequenceForAllPlayers;
 	private GoofSpielAction faceUpCard;
+	private Sequence natureSequence;
 
 	private int[] playerScore;
 
@@ -40,8 +36,38 @@ public class GoofSpielGameState extends GameStateImpl {
 		playerScore = new int[2];
 		round = 0;
 		currentPlayerIndex = 2;
+		natureSequence = createRandomSequence();
 
 		createPlayerCards();
+	}
+	
+	public GoofSpielGameState(Sequence natureSequence) {
+		super(GSGameInfo.ALL_PLAYERS);
+		sequenceForAllPlayers = new LinkedList<Action>();
+		playerCards = new FixedSizeMap<Player, HashSet<Integer>>(3);
+		playerScore = new int[2];
+		round = 0;
+		currentPlayerIndex = 2;
+		this.natureSequence = natureSequence;
+
+		createPlayerCards();
+	}
+	
+	private Sequence createRandomSequence() {
+		List<Integer> indices = new LinkedList<Integer>();
+		Sequence natureSequence = new LinkedListSequenceImpl(GSGameInfo.NATURE);
+
+		for (int i = 0; i < GSGameInfo.CARDS_FOR_PLAYER.length; i++) {
+			indices.add(i);
+		}
+		Random random = new Random(GSGameInfo.seed);
+
+		while (!indices.isEmpty()) {
+			int randomIndex = indices.remove(random.nextInt(indices.size()));
+
+			natureSequence.addLast(new GoofSpielAction(GSGameInfo.CARDS_FOR_PLAYER[randomIndex], GSGameInfo.NATURE, null));
+		}
+		return natureSequence;
 	}
 
 	public GoofSpielGameState(GoofSpielGameState gameState) {
@@ -53,6 +79,11 @@ public class GoofSpielGameState extends GameStateImpl {
 		if (faceUpCard != null)
 			this.faceUpCard = gameState.faceUpCard;
 		this.sequenceForAllPlayers = new LinkedList<Action>(gameState.sequenceForAllPlayers);
+		this.natureSequence = new LinkedListSequenceImpl(gameState.natureSequence);
+	}
+	
+	public Sequence getNatureSequence() {
+		return natureSequence;
 	}
 
 	private Map<Player, HashSet<Integer>> getDeepCopyOfPlayerCards(Map<Player, HashSet<Integer>> playerCards) {
@@ -74,27 +105,6 @@ public class GoofSpielGameState extends GameStateImpl {
 			playerCards.put(player, cardsForPlayer);
 		}
 	}
-
-//
-//	@SuppressWarnings("unchecked")
-//	private void computeISKnowledge() {
-//
-//		if (knowledgeForPlayers == null) {
-//			knowledgeForPlayers = new HashMap<Player, InformationSetKnowledge>();
-//		} else {
-//			knowledgeForPlayers.clear();
-//		}
-//
-//		LinkedList<Action> sequenceForAllPlayersCopy = (LinkedList<Action>) sequenceForAllPlayers.clone();
-//		HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
-//
-//		hcb.append(sequenceForAllPlayers);
-//		int hashCode = hcb.toHashCode();
-//
-//		knowledgeForPlayers.put(players[0], new GoofSpielInformationSetKnowledge(sequenceForAllPlayersCopy, hashCode));
-//		knowledgeForPlayers.put(players[1], new GoofSpielInformationSetKnowledge(sequenceForAllPlayersCopy, hashCode));
-//		knowledgeForPlayers.put(players[2], new NatureInformationSetKnowledge());
-//	}
 
 	@Override
 	public Player getPlayerToMove() {
@@ -121,6 +131,7 @@ public class GoofSpielGameState extends GameStateImpl {
 		cleanCache();
 		playerCards.get(GSGameInfo.NATURE).remove(action.getValue());
 		addActionToSequenceForAllPlayers(action);
+		natureSequence.removeFirst();
 		faceUpCard = action;
 		currentPlayerIndex = 0;
 	}
@@ -219,11 +230,7 @@ public class GoofSpielGameState extends GameStateImpl {
 
 	@Override
 	public double getProbabilityOfNatureFor(Action action) {
-		Set<Integer> natureActions = playerCards.get(GSGameInfo.NATURE);
-
-		if (natureActions.contains(((GoofSpielAction) action).getValue()))
-			return 1d / natureActions.size();
-		return 0;
+		return 1;
 	}
 
 	@Override
