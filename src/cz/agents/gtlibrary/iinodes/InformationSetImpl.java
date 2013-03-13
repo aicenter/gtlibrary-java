@@ -1,13 +1,12 @@
 package cz.agents.gtlibrary.iinodes;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public abstract class InformationSetImpl implements InformationSet {
 	protected Sequence playerHistory;

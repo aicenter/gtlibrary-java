@@ -26,18 +26,18 @@ public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet
 		ArrayList<TTTAction> actions = new ArrayList<TTTAction>();
 
                 byte[] allowed;
-                if (s.moveNum == 0) allowed = new byte[]{4};//x
-                else if (s.moveNum == 1) allowed = new byte[]{4};//o
-                else if (s.moveNum == 2) allowed = new byte[]{0};//o
-                else if (s.moveNum == 3) allowed = new byte[]{0};//x
-                else if (s.moveNum == 4) allowed = new byte[]{8};//x
-                else if (s.moveNum == 5) allowed = new byte[]{8};//o
-                else if (s.moveNum == 6) allowed = new byte[]{6,1};//o
-                else if (s.moveNum == 7) allowed = new byte[]{6,1};//x
+//                if (s.moveNum == 0) allowed = new byte[]{4};//x
+//                else if (s.moveNum == 1) allowed = new byte[]{4};//o
+//                else if (s.moveNum == 2) allowed = new byte[]{0};//o
+//                else if (s.moveNum == 3) allowed = new byte[]{0};//x
+//                else if (s.moveNum == 4) allowed = new byte[]{8};//x
+//                else if (s.moveNum == 5) allowed = new byte[]{8};//o
+//                else if (s.moveNum == 6) allowed = new byte[]{6,1};//o
+//                else if (s.moveNum == 7) allowed = new byte[]{6,1};//x
 //                else if (s.moveNum == 8) allowed = new byte[]{3};//x
 //                else if (s.moveNum == 9) allowed = new byte[]{3};//o
 //                else if (s.moveNum == 10) allowed = new byte[]{5,1};//o
-                else
+//                else
                     allowed = new byte[]{4,0,8,6,2,1,3,7,5};
                 for(byte i : allowed){
                     if (!s.getTried(s.toMove, i)) {

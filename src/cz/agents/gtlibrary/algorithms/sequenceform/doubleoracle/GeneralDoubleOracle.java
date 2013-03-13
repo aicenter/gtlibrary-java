@@ -85,7 +85,7 @@ public class GeneralDoubleOracle {
 		this.algConfig = algConfig;
 	}
 
-	public void generate() {
+	public Map<Player, Map<Sequence, Double>> generate() {
 		debugOutput.println("Double Oracle");
 		debugOutput.println(gameConfig.getInfo());
 		
@@ -135,8 +135,8 @@ public class GeneralDoubleOracle {
 			int opponentPlayerIndex = ( currentPlayerIndex + 1 ) % 2;
 			
 			long startFullBR = System.currentTimeMillis();
-//			double currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]), realizationPlans.get(actingPlayers[currentPlayerIndex]));
-            double currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]));
+			double currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]), realizationPlans.get(actingPlayers[currentPlayerIndex]));
+//            double currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]));
             long thisBR = System.currentTimeMillis() - startFullBR;
 
             debugOutput.println("BR Value " + actingPlayers[currentPlayerIndex] + " : " + currentBRVal);
@@ -227,6 +227,8 @@ public class GeneralDoubleOracle {
         debugOutput.println("LP GenerationTime:" + doRestrictedGameSolver.getOverallGenerationTime());
         debugOutput.println("LP Constraint GenerationTime:" + doRestrictedGameSolver.getOverallConstraintGenerationTime());
         debugOutput.println("LP ComputationTime:" + doRestrictedGameSolver.getOverallConstraintLPSolvingTime());
+        
+        return realizationPlans;
 	}
 
     public GameState findFirstNonNatureState(GameState rootState, Expander<DoubleOracleInformationSet> expander) {
