@@ -53,25 +53,25 @@ public class BRInnerNode extends InnerNode {
 
 	@Override
 	public Node selectChild() {
-		return getChildFor(getIndex());
+		return getChildFor(getAction());
 	}
 
-	private int getIndex() {
+	private Action getAction() {
 		if (currentPlayer.equals(opponent)) {
-			return getIndexForOpponent();
+			return getActionForOpponent();
 		}
-		return getIndexFromDecisionStrategy(currentPlayer.getId());
+		return getActionFromDecisionStrategy(currentPlayer.getId());
 	}
 
-	private int getIndexForOpponent() {
+	private Action getActionForOpponent() {
 		Double oppRealValOfThisNode = opponentRealizationPlan.get(gameState.getSequenceFor(opponent));
 
 		if (oppRealValOfThisNode != null && oppRealValOfThisNode > 0) {
 			if (continuationInRP.size() != 0) {
-				return getIndexOfAction(getRandomAction(oppRealValOfThisNode));
+				return getRandomAction(oppRealValOfThisNode);
 			}
 		}
-		return getIndexFromDecisionStrategy(opponent.getId());
+		return getActionFromDecisionStrategy(opponent.getId());
 	}
 
 	private Map<Action, Double> getContinuationInRP() {
@@ -129,10 +129,10 @@ public class BRInnerNode extends InnerNode {
 		if (children == null)
 			return null;
 		Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
-		int mostPlayedActionIndex = getMostPlayedActionIndex(currentPlayer.getId());
+		Action mostPlayedAction = getMostPlayedAction(currentPlayer.getId());
 
-		pureStrategy.put(createSequenceForPureStrategy(actions.get(mostPlayedActionIndex)), 1d);
-		pureStrategy.putAll(getPureStrategyFor(children[mostPlayedActionIndex], player));
+		pureStrategy.put(createSequenceForPureStrategy(mostPlayedAction), 1d);
+		pureStrategy.putAll(getPureStrategyFor(children.get(mostPlayedAction), player));
 		return pureStrategy;
 	}
 
@@ -167,7 +167,7 @@ public class BRInnerNode extends InnerNode {
 
 		for (Entry<Action, Double> entry : continuationInRP.entrySet()) {
 			if (entry.getValue() > 1e-8)
-				nodes.add(children[getIndexOfAction(entry.getKey())]);
+				nodes.add(children.get(entry.getKey()));
 		}
 		return nodes;
 	}

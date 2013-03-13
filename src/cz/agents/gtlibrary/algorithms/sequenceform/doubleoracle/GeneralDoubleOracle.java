@@ -9,6 +9,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpanderDomain;
@@ -32,8 +35,9 @@ public class GeneralDoubleOracle {
 
 	public static void main(String[] args) {
 //        runBP();
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
+        runGoofSpiel();
 	}
 
     public static void runKuhnPoker() {
@@ -64,7 +68,17 @@ public class GeneralDoubleOracle {
         doefg.generate();
     }
 
-	public GeneralDoubleOracle (GameState rootState, Expander<DoubleOracleInformationSet> expander, GameInfo config, DoubleOracleConfig<DoubleOracleInformationSet> algConfig) {
+    public static void runGoofSpiel() {
+        GameState rootState = new GoofSpielGameState();
+        GSGameInfo gameInfo = new GSGameInfo();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new GoofSpielExpander<DoubleOracleInformationSet>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        doefg.generate();
+    }
+
+
+    public GeneralDoubleOracle (GameState rootState, Expander<DoubleOracleInformationSet> expander, GameInfo config, DoubleOracleConfig<DoubleOracleInformationSet> algConfig) {
 		this.rootState = rootState;
 		this.expander = expander;
 		this.gameConfig = config;
