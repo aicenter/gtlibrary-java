@@ -24,27 +24,25 @@ public class ChanceNode extends InnerNode {
 	@Override
 	public Node selectChild() {
 		Node selected = null;
-		int index = getRandomIndex();
+		Action action = getRandomAction();
 
-		selected = children[index];
+		selected = children.get(action);
 		if (selected == null) {
-			selected = getNewChildAfter(this.actions.get(index));
-			children[index] = selected;
+			selected = getNewChildAfter(action);
+			children.put(action, selected);
 		}
 		return selected;
 	}
 
-	private int getRandomIndex() {
+	private Action getRandomAction() {
 		double move = random.nextDouble();
-		int index = 0;	
 		
 		for (Action action : actions) {
 			move -= gameState.getProbabilityOfNatureFor(action);
 			if (move < 0) {
-				return index;
+				return action;
 			}
-			index++;
 		}
-		return index;
+		return actions.get(actions.size() - 1);
 	}
 }

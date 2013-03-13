@@ -3,7 +3,6 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 import cz.agents.gtlibrary.algorithms.sequenceform.GeneralFullSequenceEFG;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
-import cz.agents.gtlibrary.interfaces.Expander;
 
 /**
  * Created with IntelliJ IDEA.
@@ -42,7 +41,7 @@ public class DoubleOracleExperiments {
                 throw new IllegalArgumentException("Illegal poker domain arguments count. 4 are required {MAX_RISES} {MAX_BETS} {MAX_CARD_TYPES} {MAX_CARD_OF_EACH_TYPE}");
             }
             GPGameInfo.MAX_RAISES_IN_ROW = new Integer(args[2]);
-            GPGameInfo.MAX_BETS_R1 = new Integer(args[3]);
+            GPGameInfo.MAX_BETS = new Integer(args[3]);
             GPGameInfo.MAX_CARD_TYPES = new Integer(args[4]);
             GPGameInfo.MAX_CARD_OF_EACH_TYPE = new Integer(args[5]);
         } else throw new IllegalArgumentException("Illegal domain: " + args[1]);
