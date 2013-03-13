@@ -17,7 +17,7 @@ public class GPGameInfo implements GameInfo {
 	 * value of ante for one player
 	 */
 	public static final int ANTE = 1;
-	public static int MAX_RAISES_IN_ROW = 1;
+	public static int MAX_RAISES_IN_ROW = 2;
 
 	public static int MAX_BETS_R1 = 1;
 	public static int[] BETS_FIRST_ROUND;
@@ -29,19 +29,19 @@ public class GPGameInfo implements GameInfo {
 	}
 
 
-	public static int MAX_RAISES_R1 = MAX_RAISES_IN_ROW;
+
 	/**
 	 * represents value which will be added to previous aggressive action
 	 */
 	public static int[] RAISES_FIRST_ROUND;
 
 	{
-		RAISES_FIRST_ROUND = new int[MAX_RAISES_R1];
-		for (int i = 0; i < MAX_RAISES_R1; i++)
+		RAISES_FIRST_ROUND = new int[MAX_RAISES_IN_ROW];
+		for (int i = 0; i < MAX_RAISES_IN_ROW; i++)
 			RAISES_FIRST_ROUND[i] = (i + 1) * 2;
 	}
 
-	public static int MAX_CARD_TYPES = 4;
+	public static int MAX_CARD_TYPES = 2;
 	public static int[] CARD_TYPES;
 
 	{
@@ -50,7 +50,7 @@ public class GPGameInfo implements GameInfo {
 			CARD_TYPES[i] = i;
 	}
 
-	public static int MAX_CARD_OF_EACH_TYPE = 3;
+	public static int MAX_CARD_OF_EACH_TYPE = 2;
 	public static int[] DECK; // does not currently work for different sizes of card-types (e.g., {0,0,1,2}); returns incorrect nature-probability
 
 	{

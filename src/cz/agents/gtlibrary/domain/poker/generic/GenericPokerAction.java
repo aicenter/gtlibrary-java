@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.poker.generic;
 
+import cz.agents.gtlibrary.domain.poker.PokerGameState;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.poker.PokerAction;
@@ -28,6 +29,8 @@ public class GenericPokerAction extends PokerAction {
 		builder.append("[");
 		builder.append(player);
 		builder.append(", ");
+        builder.append(getPlayersCard());
+        builder.append(", ");
 		builder.append(action);
 		builder.append(", ");
 		builder.append("value: ");

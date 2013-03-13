@@ -43,8 +43,8 @@ public class GeneralFullSequenceEFG {
 
 	public static void main(String[] args) {
 //		runKuhnPoker();
-//		runGenericPoker();
-		runBPG();
+		runGenericPoker();
+//		runBPG();
 	}
 
 	public static void runKuhnPoker() {

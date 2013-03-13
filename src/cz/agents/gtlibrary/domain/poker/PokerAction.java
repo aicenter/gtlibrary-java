@@ -58,7 +58,7 @@ public abstract class PokerAction extends ActionImpl {
 
 	@Override
 	public String toString() {
-		return "[" + action + ", " + player + ", " + ((informationSet != null && player.getId() != 2)?((PokerGameState)informationSet.getAllStates().iterator().next()).getCardForActingPlayer():"") + "]";
+		return "[" + action + ", " + player + ", " + getPlayersCard() + "]";
 	}
 
 	@Override
@@ -107,5 +107,12 @@ public abstract class PokerAction extends ActionImpl {
 	public int observableISHash() {
 		return cachedHashWithoutIS;
 	}
+
+    public String getPlayersCard() {
+        if (informationSet != null && player.getId() != 2 && !informationSet.getAllStates().isEmpty()) {
+            return ((PokerGameState)informationSet.getAllStates().iterator().next()).getCardForActingPlayer().getActionType();
+        } else
+            return "none";
+    }
 
 }
