@@ -308,12 +308,12 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
         }
         assert (visitedISs.size() == getAllInformationSets().values().size());
 
-        HashSet<Sequence> rqSequneces = new HashSet<Sequence>();
+        HashSet<Sequence> rqSequences = new HashSet<Sequence>();
         for (GameState state : visitedStates) {
-            rqSequneces.add(state.getSequenceFor(player1));
-            rqSequneces.add(state.getSequenceFor(player2));
+            rqSequences.add(state.getSequenceFor(player1));
+            rqSequences.add(state.getSequenceFor(player2));
         }
-        assert (getAllSequences().size() == rqSequneces.size());
+        assert (getAllSequences().size() == rqSequences.size());
 
     }
 

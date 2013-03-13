@@ -41,6 +41,7 @@ public abstract class InformationSetImpl implements InformationSet {
 	public boolean equals(Object obj) {
 		if (this.hashCode != obj.hashCode())
 			return false;
+                if (!(obj instanceof InformationSet)) return false;
 		InformationSet other = (InformationSet) obj;
 		
 		if (!this.player.equals(other.getPlayer()))
