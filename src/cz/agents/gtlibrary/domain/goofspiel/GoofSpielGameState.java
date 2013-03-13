@@ -2,7 +2,6 @@ package cz.agents.gtlibrary.domain.goofspiel;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -10,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import cz.agents.gtlibrary.utils.FixedSizeMap;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
@@ -36,7 +36,7 @@ public class GoofSpielGameState extends GameStateImpl {
 	public GoofSpielGameState() {
 		super(GSGameInfo.ALL_PLAYERS);
 		sequenceForAllPlayers = new LinkedList<Action>();
-		playerCards = new HashMap<Player, HashSet<Integer>>();
+		playerCards = new FixedSizeMap<Player, HashSet<Integer>>(3);
 		playerScore = new int[2];
 		round = 0;
 		currentPlayerIndex = 2;
@@ -56,7 +56,7 @@ public class GoofSpielGameState extends GameStateImpl {
 	}
 
 	private Map<Player, HashSet<Integer>> getDeepCopyOfPlayerCards(Map<Player, HashSet<Integer>> playerCards) {
-		Map<Player, HashSet<Integer>> playerCardsCopy = new HashMap<Player, HashSet<Integer>>();
+		Map<Player, HashSet<Integer>> playerCardsCopy = new FixedSizeMap<Player, HashSet<Integer>>(3);
 
 		for (Entry<Player, HashSet<Integer>> entry : playerCards.entrySet()) {
 			playerCardsCopy.put(entry.getKey(), new HashSet<Integer>(entry.getValue()));
