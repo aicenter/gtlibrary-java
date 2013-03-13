@@ -25,13 +25,9 @@ import cz.agents.gtlibrary.utils.ValueComparator;
 
 /**
  * 
- * Standard best-response algorithm. It calculates best-response value for a game 
- * described by the root state and the expander. It assumes a well-formed opponent
- * realization plan (i.e., the opponent realization plan has to satisfy the 'network-flow'-like 
- * conditions). 
+ * Best-response algorithm with pruning. It calculates best-response value for a game
+ * described by the root state and the expander.
  * 
- * @author bosansky
- *
  */
 
 public class SQFBestResponseAlgorithm {
@@ -42,6 +38,7 @@ public class SQFBestResponseAlgorithm {
 	
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<GameState, Double>();
 	private Map<Sequence, Double> opponentRealizationPlan = new HashMap<Sequence, Double>();
+    private Map<Sequence, Double> myRealizationPlan = new HashMap<Sequence, Double>();
 
 	protected HashMap<Sequence, HashSet<Sequence>> BRresult = new HashMap<Sequence, HashSet<Sequence>>();
 	protected HashSet<Sequence> bestResponseSequences = new HashSet<Sequence>();
@@ -70,12 +67,17 @@ public class SQFBestResponseAlgorithm {
 		this.gameInfo = gameInfo;
 		this.MAX_UTILITY_VALUE = gameInfo.getMaxUtility();
 	}
-	
-	public Double calculateBR(GameState root, Map<Sequence, Double> opponentRealizationPlan) {
+
+    public Double calculateBR(GameState root, Map<Sequence, Double> opponentRealizationPlan) {
+        return calculateBR(root, opponentRealizationPlan, new HashMap<Sequence, Double>());
+    }
+
+    public Double calculateBR(GameState root, Map<Sequence, Double> opponentRealizationPlan, Map<Sequence, Double> myRP) {
 		
 		nodes = 0;
 
 		this.opponentRealizationPlan = opponentRealizationPlan;
+        this.myRealizationPlan = myRP;
 		this.BRresult.clear();
 		this.bestResponseSequences.clear();
 		this.cachedValuesForNodes.clear();
@@ -114,7 +116,7 @@ public class SQFBestResponseAlgorithm {
 
 		Double tmpVal = cachedValuesForNodes.get(gameState);
 		if (tmpVal != null) { // we have already solved this node as a part of an evaluated information set
-			//TODO maybe we could remove the cached value at this point? No in double-oracle -> we are using it in restricted game 
+			//maybe we could remove the cached value at this point? No in double-oracle -> we are using it in restricted game
 			return tmpVal;
 		} 
 
@@ -172,15 +174,7 @@ public class SQFBestResponseAlgorithm {
 					continue;
 				}
 				double v = sel.actionRealValues.get(currentNode).get(resultAction);
-				
-				// DEBUG -> remove
-//				if (cachedValuesForNodes.get(currentNode) != null) { 
-//					if (Math.abs(cachedValuesForNodes.get(currentNode)-v) > EPS_CONSTANT) {
-////						v = cachedValuesForNodes.get(currentNode);
-//						v = v;
-//					}
-//				}
-				
+
 				cachedValuesForNodes.put(currentNode, v);
 				if (currentNode.equals(gameState)) returnValue = v;
 			}
@@ -235,8 +229,6 @@ public class SQFBestResponseAlgorithm {
 				double value = bestResponse(newState, newLowerBound);
 				selection.addValue(action, value, natureProb, oppRP);
 				changed = true;
-			} else {
-				assert true; // DEBUG -> remove
 			}
 		}
 		if (!changed) {
@@ -432,9 +424,27 @@ public class SQFBestResponseAlgorithm {
 
 		@Override
 		public List<Action> sortActions(GameState state, List<Action> actions) {
-			// TODO implement actions sorting for the searching player 
-			return actions;
-		}
+			if (myRealizationPlan.size() == 0) return actions;
+
+            List<Action> result = new ArrayList<Action>();
+            // sort according to my old realizaiton plan
+            Sequence currentSequence = state.getSequenceFor(players[searchingPlayerIndex]);
+            Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
+            for (Action a : actions) {
+                Sequence newSeq = new LinkedListSequenceImpl(currentSequence);
+                newSeq.addLast(a);
+                Double prob = myRealizationPlan.get(newSeq);
+                if (prob == null) prob = 0d;
+                sequenceMap.put(a, prob); // the standard way is to sort ascending; hence, we store negative probability
+            }
+            ValueComparator<Action> comp = new ValueComparator<Action>(sequenceMap);
+            TreeMap<Action,Double> sortedMap = new TreeMap<Action,Double>(comp);
+            sortedMap.putAll(sequenceMap);
+            result.addAll(sortedMap.keySet());
+            return result;
+        }
+
+
 	}
 	
 
@@ -502,4 +512,6 @@ public class SQFBestResponseAlgorithm {
 	public Double getCachedValueForState(GameState state) {
 		return cachedValuesForNodes.get(state);
 	}
+
+
 }

@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cz.agents.gtlibrary.io;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -20,12 +16,11 @@ import java.util.List;
 public class GambitEFG {
     private static boolean wActionLabels = false;
     
-    
     public static void write(String filename, GameState root, Expander<SequenceInformationSet> expander) {
         write(filename, root, expander, Integer.MAX_VALUE);
     }
     
-    public static void write(String filename, GameState root, Expander expander, int cut_off_depth) {
+    public static void write(String filename, GameState root, Expander<SequenceInformationSet> expander, int cut_off_depth) {
         try {
             PrintStream out = new PrintStream(filename);
 
@@ -45,7 +40,7 @@ public class GambitEFG {
     
     static int nextOutcome = 1;
     
-    private static void writeRec(PrintStream out, GameState node, Expander expander, int cut_off_depth){
+    private static void writeRec(PrintStream out, GameState node, Expander<SequenceInformationSet> expander, int cut_off_depth){
         if (node.isGameEnd() || cut_off_depth == 0){
             out.print("t \"" + node.toString() + "\" " + nextOutcome++ + " \"\" { ");
             double[] u = node.getUtilities();

@@ -71,7 +71,7 @@ public class PatrollerAction extends ActionImpl {
 		hashCode = prime * hashCode + ((fromNodeP2 == null) ? 0 : fromNodeP2.hashCode());
 		hashCode = prime * hashCode + ((toNodeP1 == null) ? 0 : toNodeP1.hashCode());
 		hashCode = prime * hashCode + ((toNodeP2 == null) ? 0 : toNodeP2.hashCode());
-		hashCode = prime * hashCode + (informationSet.hashCode());
+		hashCode = prime * hashCode + ((informationSet == null) ? 0 : informationSet.hashCode());
 
 		return hashCode;
 	}

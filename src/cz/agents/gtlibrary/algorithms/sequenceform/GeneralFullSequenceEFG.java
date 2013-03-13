@@ -14,6 +14,9 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -44,7 +47,8 @@ public class GeneralFullSequenceEFG {
 	public static void main(String[] args) {
 //		runKuhnPoker();
 //		runGenericPoker();
-		runBPG();
+//		runBPG();
+		runGoofSpiel();
 	}
 
 	public static void runKuhnPoker() {
@@ -56,7 +60,20 @@ public class GeneralFullSequenceEFG {
 		Expander<MCTSInformationSet> firstMCTSExpander = new KuhnPokerExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new KuhnPokerExpander<MCTSInformationSet>(secondMCTSConfig);
 		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
-		
+
+		efg.generate();
+	}
+	
+	public static void runGoofSpiel() {
+		GameState rootState = new GoofSpielGameState();
+		GSGameInfo gameInfo = new GSGameInfo();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
+		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
+		Expander<MCTSInformationSet> firstMCTSExpander = new GoofSpielExpander<MCTSInformationSet>(firstMCTSConfig);
+		Expander<MCTSInformationSet> secondMCTSExpander = new GoofSpielExpander<MCTSInformationSet>(secondMCTSConfig);
+		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GoofSpielExpander<SequenceInformationSet>(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
+
 		efg.generate();
 	}
 
@@ -69,7 +86,7 @@ public class GeneralFullSequenceEFG {
 		Expander<MCTSInformationSet> firstMCTSExpander = new GenericPokerExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new GenericPokerExpander<MCTSInformationSet>(secondMCTSConfig);
 		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
-		
+
 		efg.generate();
 	}
 
@@ -131,7 +148,7 @@ public class GeneralFullSequenceEFG {
 		}
 
 		System.out.println("done.");
-		System.out.println("Time elapsed: " + (System.currentTimeMillis() - start));
+        long finishTime = System.currentTimeMillis() - start;
 
 		int[] support_size = new int[] { 0, 0 };
 		for (Player player : actingPlayers) {
@@ -143,27 +160,34 @@ public class GeneralFullSequenceEFG {
 			}
 		}
 
-		//		Runtime.getRuntime().gc();
+        try {
+            Runtime.getRuntime().gc();
+            Thread.currentThread().sleep(500l);
+        } catch (InterruptedException e) {
+        }
 
 		//		for (BasicPlayerID playerID : rootState.getAllPlayers()) {
 		//			System.out.println("final result for " + playerID + ": " + GeneralSequenceFormLP.resultValues.get(playerID) /*+ ", " + tree.getIS(InformationSet.calculateISEquivalenceForPlayerToMove(rootState)).getValueOfGameForPlayer(playerID)*/);
 		//		}
 
-		System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
-		System.out.println("final result:" + sequenceFormLP.getResultForPlayer(actingPlayers[0]));
+        System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
+        System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
+        System.out.println("final result:" + sequenceFormLP.getResultForPlayer(actingPlayers[0]));
 		System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
+        System.out.println("final time: " + finishTime);
+        System.out.println("final CPLEX time: " + overallCPLEX);
+        System.out.println("final BR time: " + 0);
+        System.out.println("final RGB time: " + 0);
+        System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
 
-		System.out.println("final CPLEX time: " + overallCPLEX);
-		System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
-
-        // sanity check -> calculation of Full BR on the solution of SQF LP
-		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
-                
-                brAlg = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
-
-        algConfig.validateGameStructure(rootState, expander);
+		// sanity check -> calculation of Full BR on the solution of SQF LP
+//		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+//		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+//
+//		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+//		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+//
+//        algConfig.validateGameStructure(rootState, expander);
 
 //		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
 //		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
@@ -175,7 +199,7 @@ public class GeneralFullSequenceEFG {
 //
 //		System.out.println("MCTS response: " + utility.computeUtility(realizationPlans.get(actingPlayers[0]), mctsRunner.runMCTS(actingPlayers[1])));
 
-        return realizationPlans;
+		return realizationPlans;
 	}
 
 	public void generateCompleteGame() {

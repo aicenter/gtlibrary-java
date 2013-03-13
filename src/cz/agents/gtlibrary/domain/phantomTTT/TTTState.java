@@ -244,7 +244,7 @@ public class TTTState extends GameStateImpl {
     
      
     public static void main(String[] args) {
-	Map<Player, Map<Sequence, Double>>  realizationPlans = runSF();
+	Map<Player, Map<Sequence, Double>>  realizationPlans = runDO();
          
         PrintStream out;
         try {

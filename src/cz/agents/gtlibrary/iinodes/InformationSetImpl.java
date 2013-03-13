@@ -1,13 +1,12 @@
 package cz.agents.gtlibrary.iinodes;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public abstract class InformationSetImpl implements InformationSet {
 	protected Sequence playerHistory;
@@ -41,7 +40,8 @@ public abstract class InformationSetImpl implements InformationSet {
 	public boolean equals(Object obj) {
 		if (this.hashCode != obj.hashCode())
 			return false;
-                if (!(obj instanceof InformationSet)) return false;
+        if (!(obj instanceof InformationSet))
+            return false;
 		InformationSet other = (InformationSet) obj;
 		
 		if (!this.player.equals(other.getPlayer()))

@@ -33,8 +33,10 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 
 	private Map<Player, Set<Sequence>> fullBRSequences = new HashMap<Player, Set<Sequence>>();
 	private Set<GameState> temporaryLeafs = new HashSet<GameState>();
-	
-	public DoubleOracleConfig(GameState rootState, GameInfo gameInfo) {
+
+    private Set<Sequence> newSequences = new HashSet<Sequence>();
+
+    public DoubleOracleConfig(GameState rootState, GameInfo gameInfo) {
 		this.rootState = rootState;
 		this.gameInfo = gameInfo;
 	}
@@ -48,13 +50,9 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 		return infoSet;
 	}
 
-//	@Override
-//	protected I createInformationSet(GameState state) {
-//		I infoSet = getInformationSetFor(state);
-//		assert (infoSet != null);
-//		addInformationSetFor(state, infoSet);
-//		return infoSet;
-//	}
+    public void clearNewSequences() {
+        newSequences.clear();
+    }
 
 	
 	public void addFullBRSequences(Player player, Set<Sequence> newBRSequences) {
@@ -149,7 +147,11 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 						tmpNewStatesMap.put(newState, tmpNewUsefulSequences);
 
 						removeUtility(currentState);
-//                        if (!getAllInformationSets().containsKey(currentState.getISKeyForPlayerToMove()))
+
+                        if (!getAllSequences().contains(newState.getSequenceFor(movingPlayer))) {
+                            newSequences.add(newState.getSequenceFor(movingPlayer));
+                        }
+
                         addStateToSequenceForm(currentState);
 						addStateToSequenceForm(newState);
 
@@ -321,5 +323,9 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
     public void removeUtility(GameState oldLeaf) {
         super.removeUtility(oldLeaf);
         temporaryLeafs.remove(oldLeaf);
+    }
+
+    public Set<Sequence> getNewSequences() {
+        return newSequences;
     }
 }
