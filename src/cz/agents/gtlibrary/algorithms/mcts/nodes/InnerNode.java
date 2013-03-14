@@ -8,6 +8,8 @@ import java.util.Map.Entry;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.backprop.BackPropagationStrategy;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -171,7 +173,7 @@ public class InnerNode extends NodeImpl {
 	public int getNbSamples() {
 		return informationSet.getStatsFor(0).getNbSamples();
 	}
-	
+
 	protected int getIndexOfAction(Action randomAction) {
 		int index = 0;
 
@@ -183,23 +185,62 @@ public class InnerNode extends NodeImpl {
 		return -1;
 	}
 
-	
-	protected Action getMostPlayedAction(int playerIndex) {
-		int max = Integer.MIN_VALUE;
-		Action action = null;
-		
-		for (Entry<Action, BackPropagationStrategy> entry : informationSet.getActionStats().entrySet()) {
-			if(entry.getValue().getNbSamples() > max) {
-				max = entry.getValue().getNbSamples();
-				action = entry.getKey();
-			}
+//	protected Action getMostPlayedAction(int playerIndex) {
+//		int max = Integer.MIN_VALUE;
+//		Action action = null;
+//
+//		for (Entry<Action, BackPropagationStrategy> entry : informationSet.getActionStats().entrySet()) {
+//			if (entry.getValue().getNbSamples() > max) {
+//				max = entry.getValue().getNbSamples();
+//				action = entry.getKey();
+//			}
+//		}
+//		return action;
+//	}
+
+	protected Map<Sequence, Double> getStrategyFor(Node node, Player player, Distribution distribution) {
+		if (node == null) {
+			Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
+
+			pureStrategy.put(null, 1d);
+			return pureStrategy;
 		}
-		return action;
+		return node.getStrategyFor(player, distribution);
+	}
+
+	protected Sequence createSequenceForStrategy() {
+		return new LinkedListSequenceImpl(gameState.getSequenceForPlayerToMove());
 	}
 
 	@Override
-	public Map<Sequence, Double> getPureStrategyFor(Player player) {
-		throw new UnsupportedOperationException("Not yet implemented");
+	public Map<Sequence, Double> getStrategyFor(Player player, Distribution distribution) {
+		if (children == null)
+			return null;
+		Map<Sequence, Double> strategy = new HashMap<Sequence, Double>();
+		Map<Action, Double> actionDistribution = distribution.getDistributionFor(informationSet.getActionStats(), actionStats);
+
+		if (player.equals(currentPlayer)) {
+			updateStrategy(strategy, actionDistribution);
+		}
+
+		for (Entry<Action, Double> entry : actionDistribution.entrySet()) {
+			if (entry.getValue() > 0)
+				strategy.putAll(getStrategyFor(children.get(entry.getKey()), player, distribution));
+		}
+		return strategy;
+	}
+
+	public void updateStrategy(Map<Sequence, Double> strategy, Map<Action, Double> actionDistribution) {
+		Sequence currentSequence = createSequenceForStrategy();
+
+		for (Entry<Action, Double> entry : actionDistribution.entrySet()) {
+			if (entry.getValue() > 0) {
+				Sequence sequence = new LinkedListSequenceImpl(currentSequence);
+
+				sequence.addLast(entry.getKey());
+				strategy.put(sequence, entry.getValue());// not rp, needs to be multiplied by previous value
+			}
+		}
 	}
 
 }

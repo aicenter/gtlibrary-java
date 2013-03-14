@@ -5,6 +5,7 @@ import java.util.Map;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
@@ -48,11 +49,11 @@ public class BRChanceNode extends BRInnerNode {
 	}
 
 	@Override
-	public Map<Sequence, Double> getPureStrategyFor(Player player) {
+	public Map<Sequence, Double> getStrategyFor(Player player, Distribution distribution) {
 		Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
 
 		for (Node child : children.values()) {
-			pureStrategy.putAll(getPureStrategyFor(child, player));
+			pureStrategy.putAll(getStrategyFor(child, player, distribution));
 		}
 		return pureStrategy;
 	}
