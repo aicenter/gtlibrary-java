@@ -99,7 +99,7 @@ public class GeneralDoubleOracle {
 		this.algConfig = algConfig;
 	}
 
-	public void generate() {
+	public Map<Player, Map<Sequence, Double>> generate() {
 		debugOutput.println("Double Oracle");
 		debugOutput.println(gameConfig.getInfo());
 		
@@ -245,6 +245,8 @@ public class GeneralDoubleOracle {
         debugOutput.println("LP GenerationTime:" + doRestrictedGameSolver.getOverallGenerationTime());
         debugOutput.println("LP Constraint GenerationTime:" + doRestrictedGameSolver.getOverallConstraintGenerationTime());
         debugOutput.println("LP ComputationTime:" + doRestrictedGameSolver.getOverallConstraintLPSolvingTime());
+        
+        return realizationPlans;
 	}
 
     public GameState findFirstNonNatureState(GameState rootState, Expander<DoubleOracleInformationSet> expander) {

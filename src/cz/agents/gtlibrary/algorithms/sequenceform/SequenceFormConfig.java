@@ -122,7 +122,9 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	}
 
 	public void setUtility(GameState leaf) {
-		double utility = leaf.getUtilities()[0] * leaf.getNatureProbability();
+                final double[] utilities = leaf.getUtilities();
+                assert utilities[0] == -utilities[1] : "not a zero-sum game";
+		double utility = utilities[0] * leaf.getNatureProbability();
 		setUtility(leaf, utility);
 	}
 
