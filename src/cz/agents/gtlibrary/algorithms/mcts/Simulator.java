@@ -62,13 +62,19 @@ public class Simulator {
 
 	private Action getActionForOpponent(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent, Expander<MCTSInformationSet> expander) {
 		List<Action> possibleActions = expander.getActions(new MCTSInformationSet(state));
-		Double oppValueOfThisState = opponentRealizationPlan.get(state.getHistory().getSequenceOf(opponent));
+		Double oppValueOfThisState = getValueOfThisState(state.getSequenceFor(opponent), opponentRealizationPlan);
 		Map<Action, Double> contInRealPlan = getContinuationOfRP(state, possibleActions, opponentRealizationPlan, opponent);
 
 		if (contInRealPlan.size() == 0) {
 			return possibleActions.get(rnd.nextInt(possibleActions.size()));
 		}
 		return getRandActionFromContInRealPlan(possibleActions, oppValueOfThisState, contInRealPlan);
+	}
+
+	public Double getValueOfThisState(Sequence sequence, Map<Sequence, Double> opponentRealizationPlan) {
+		if(sequence.size() == 0) 
+			return 1d;
+		return opponentRealizationPlan.get(sequence);
 	}
 
 	private Action getRandActionFromContInRealPlan(List<Action> possibleActions, Double oppValueOfThisState, Map<Action, Double> contInRealPlan) {
@@ -80,7 +86,6 @@ public class Simulator {
 			}
 			rndVal = rndVal - contInRealPlan.get(action);
 		}
-
 		return possibleActions.get(possibleActions.size() - 1);
 	}
 
