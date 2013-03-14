@@ -10,6 +10,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.Simulator;
 import cz.agents.gtlibrary.algorithms.mcts.backprop.SampleWeightedBackPropStrategy;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.MostFrequentAction;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
@@ -180,7 +181,7 @@ public class GeneralFullSequenceEFG {
 
         try {
             Runtime.getRuntime().gc();
-            Thread.currentThread().sleep(500l);
+            Thread.sleep(500l);
         } catch (InterruptedException e) {
         }
 
@@ -207,15 +208,15 @@ public class GeneralFullSequenceEFG {
 
         algConfig.validateGameStructure(rootState, expander);
 
-//		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
-//		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
-//
-//		System.out.println("MCTS response: " + utility.computeUtility(mctsRunner.runMCTS(actingPlayers[0]), realizationPlans.get(actingPlayers[1])));
-//
-//		utility = new UtilityCalculator(rootState, secondMCTSExpander);
-//		mctsRunner = new BestResponseMCTSRunner(secondMCTSConfig, rootState, secondMCTSExpander, realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
-//
-//		System.out.println("MCTS response: " + utility.computeUtility(realizationPlans.get(actingPlayers[0]), mctsRunner.runMCTS(actingPlayers[1])));
+		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
+		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
+
+		System.out.println("MCTS response: " + utility.computeUtility(mctsRunner.runMCTS(actingPlayers[0], new MostFrequentAction()), realizationPlans.get(actingPlayers[1])));
+
+		utility = new UtilityCalculator(rootState, secondMCTSExpander);
+		mctsRunner = new BestResponseMCTSRunner(secondMCTSConfig, rootState, secondMCTSExpander, realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
+
+		System.out.println("MCTS response: " + utility.computeUtility(realizationPlans.get(actingPlayers[0]), mctsRunner.runMCTS(actingPlayers[1], new MostFrequentAction())));
 
 		return realizationPlans;
 	}
