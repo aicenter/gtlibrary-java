@@ -78,7 +78,7 @@ public class RandomGameState extends GameStateImpl {
             }
         } else {
             if (RandomGameInfo.BINARY_UTILITY) {
-                rndValue = new Random(ID).nextInt(2)*RandomGameInfo.MAX_UTILITY; // totally random binary
+                rndValue = new Random(ID).nextInt(RandomGameInfo.MAX_UTILITY+1); // totally random binary
             } else {
                 rndValue = new Random(ID).nextDouble()*RandomGameInfo.MAX_UTILITY; // totally random
             }

@@ -19,6 +19,9 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
@@ -32,12 +35,14 @@ public class GeneralDoubleOracle {
 	
 	final private double EPS = 0.000001;
     final private static boolean DEBUG = false;
+    final private static boolean MY_RP_BR_ORDERING = false;
 
 	public static void main(String[] args) {
 //        runBP();
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
-        runGoofSpiel();
+//        runGoofSpiel();
+//        runRandomGame();
 	}
 
     public static void runKuhnPoker() {
@@ -46,6 +51,15 @@ public class GeneralDoubleOracle {
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new KuhnPokerExpander<DoubleOracleInformationSet>(algConfig);
 		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+        doefg.generate();
+    }
+
+    public static void runRandomGame() {
+        GameState rootState = new RandomGameState();
+        GameInfo gameInfo = new RandomGameInfo();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
         doefg.generate();
     }
 
@@ -135,8 +149,11 @@ public class GeneralDoubleOracle {
 			int opponentPlayerIndex = ( currentPlayerIndex + 1 ) % 2;
 			
 			long startFullBR = System.currentTimeMillis();
-//			double currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]), realizationPlans.get(actingPlayers[currentPlayerIndex]));
-            double currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]));
+            double currentBRVal;
+            if (MY_RP_BR_ORDERING)
+			    currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]), realizationPlans.get(actingPlayers[currentPlayerIndex]));
+            else
+                currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]));
             long thisBR = System.currentTimeMillis() - startFullBR;
 
             debugOutput.println("BR Value " + actingPlayers[currentPlayerIndex] + " : " + currentBRVal);
@@ -192,7 +209,8 @@ public class GeneralDoubleOracle {
 				}
 			}
 
-            if (DEBUG) algConfig.validateRestrictedGameStructure(expander, brAlgorithms);
+            if (DEBUG)
+                algConfig.validateRestrictedGameStructure(expander, brAlgorithms);
 
 		}
 

@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 import cz.agents.gtlibrary.algorithms.sequenceform.GeneralFullSequenceEFG;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,7 +18,7 @@ public class DoubleOracleExperiments {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: DoubleOracleExperiments {DO|LP} {BP|GP} [algorithm/domain parameters].");
+            System.err.println("Missing Arguments: DoubleOracleExperiments {DO|LP} {BP|GP|RG} [algorithm/domain parameters].");
             System.exit(-1);
         }
         String alg = args[0];
@@ -28,7 +29,7 @@ public class DoubleOracleExperiments {
 
 
     public void handleDomain(String[] args) {
-        if (args[1].equalsIgnoreCase("BP")) {
+        if (args[1].equalsIgnoreCase("BP")) {  // Border Patrolling
             if (args.length != 5) {
                 throw new IllegalArgumentException("Illegal domain arguments count. 3 are required {DEPTH} {GRAPH} {SLOW_MOVES}");
             }
@@ -36,7 +37,7 @@ public class DoubleOracleExperiments {
             BPGGameInfo.graphFile = args[3];
             BPGGameInfo.SLOW_MOVES = new Boolean(args[4]);
             BPGGameInfo.DEPTH = depth;
-        } else if (args[1].equalsIgnoreCase("GP")) {
+        } else if (args[1].equalsIgnoreCase("GP")) { // Generic Poker
             if (args.length != 6) {
                 throw new IllegalArgumentException("Illegal poker domain arguments count. 4 are required {MAX_RISES} {MAX_BETS} {MAX_CARD_TYPES} {MAX_CARD_OF_EACH_TYPE}");
             }
@@ -44,6 +45,16 @@ public class DoubleOracleExperiments {
             GPGameInfo.MAX_BETS = new Integer(args[3]);
             GPGameInfo.MAX_CARD_TYPES = new Integer(args[4]);
             GPGameInfo.MAX_CARD_OF_EACH_TYPE = new Integer(args[5]);
+        } else if (args[1].equalsIgnoreCase("RG")) { // Random Games
+            if (args.length != 8) {
+                throw new IllegalArgumentException("Illegal random game domain arguments count. 6 are required {DEPTH} {BF} {OBSERVATION} {UTILITY} {BIN} {CORR}");
+            }
+            RandomGameInfo.MAX_DEPTH = new Integer(args[2]);
+            RandomGameInfo.MAX_BF = new Integer(args[3]);
+            RandomGameInfo.MAX_OBSERVATION = new Integer(args[4]);
+            RandomGameInfo.MAX_UTILITY = new Integer(args[5]);
+            RandomGameInfo.BINARY_UTILITY = new Boolean(args[6]);
+            RandomGameInfo.UTILITY_CORRELATION = new Boolean(args[7]);
         } else throw new IllegalArgumentException("Illegal domain: " + args[1]);
     }
 
@@ -53,11 +64,15 @@ public class DoubleOracleExperiments {
                 GeneralDoubleOracle.runBP();
             else if (domain.equalsIgnoreCase("GP"))
                 GeneralDoubleOracle.runGenericPoker();
+            else if (domain.equalsIgnoreCase("RG"))
+                GeneralDoubleOracle.runRandomGame();
         } else if (alg.equalsIgnoreCase("LP")) {
             if (domain.equalsIgnoreCase("BP"))
                 GeneralFullSequenceEFG.runBPG();
             else if (domain.equalsIgnoreCase("GP"))
                 GeneralFullSequenceEFG.runGenericPoker();
+            else if (domain.equalsIgnoreCase("RG"))
+                GeneralFullSequenceEFG.runRandomGame();
         } else throw new IllegalArgumentException("Illegal algorithm: " + alg);
     }
 }
