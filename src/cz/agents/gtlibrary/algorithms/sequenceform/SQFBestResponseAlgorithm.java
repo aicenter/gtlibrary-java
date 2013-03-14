@@ -163,17 +163,22 @@ public class SQFBestResponseAlgorithm {
 				sel.abandonCurrentNode();
 				if (sel.allNodesProbability < EPS_CONSTANT) break;
 				if ((sel.getResult().getRight() + sel.allNodesProbability*MAX_UTILITY_VALUE) < lowerBound) { // 
-					
+					continue;
 				}
 			}				
 
 			Action resultAction = sel.getResult().getLeft(); //selected action for the searching player
-				
+
 			for (GameState currentNode : alternativeNodes) { // storing the results based on the action
 				if (sel.actionRealValues.get(currentNode) == null) {
 					continue;
 				}
-				double v = sel.actionRealValues.get(currentNode).get(resultAction);
+                double v;
+                if (resultAction == null) {
+                    v = -MAX_UTILITY_VALUE;
+                } else {
+                    v = sel.actionRealValues.get(currentNode).get(resultAction);
+                }
 
 				cachedValuesForNodes.put(currentNode, v);
 				if (currentNode.equals(gameState)) returnValue = v;
