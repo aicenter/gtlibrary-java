@@ -1,9 +1,7 @@
 package cz.agents.gtlibrary.domain.goofspiel;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
 import cz.agents.gtlibrary.interfaces.Action;
