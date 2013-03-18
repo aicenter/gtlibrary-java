@@ -176,8 +176,8 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 						Double exactValue = bestResponseAlgorithms[brPlayerIdx].getCachedValueForState(currentState);
 						if (exactValue == null) {
 						  exactValue = bestResponseAlgorithms[brPlayerIdx].calculateBRNoClear(currentState);
-						  if (brPlayerIdx != 0) exactValue *= -1; // we are storing the utility value for the first player
 						}
+                        if (brPlayerIdx != 0) exactValue *= -1; // we are storing the utility value for the first player
                         Double oppRP = bestResponseAlgorithms[brPlayerIdx].getOpponentRealizationPlan().get(currentState.getHistory().getSequenceOf(currentState.getPlayerToMove()));
                         if (oppRP != null && oppRP > 0) exactValue = exactValue / oppRP;
                         temporaryLeafs.add(currentState);

@@ -163,7 +163,7 @@ public class SQFBestResponseAlgorithm {
 				sel.abandonCurrentNode();
 				if (sel.allNodesProbability < EPS_CONSTANT) break;
 				if ((sel.getResult().getRight() + sel.allNodesProbability*MAX_UTILITY_VALUE) < lowerBound) { // 
-					continue;
+					break;
 				}
 			}				
 
@@ -171,7 +171,9 @@ public class SQFBestResponseAlgorithm {
 
 			for (GameState currentNode : alternativeNodes) { // storing the results based on the action
 				if (sel.actionRealValues.get(currentNode) == null) {
-					continue;
+					if (currentNode.equals(gameState))
+                        returnValue = -MAX_UTILITY_VALUE;
+                    continue;
 				}
                 double v;
                 if (resultAction == null) {
@@ -183,7 +185,10 @@ public class SQFBestResponseAlgorithm {
 				cachedValuesForNodes.put(currentNode, v);
 				if (currentNode.equals(gameState)) returnValue = v;
 			}
-			
+
+//            if (returnValue == null) {
+//                System.out.println();
+//            }
 			assert (returnValue != null);
 			
 			Sequence resultSequence = new LinkedListSequenceImpl(currentHistory.get(players[searchingPlayerIndex]));
@@ -203,12 +208,20 @@ public class SQFBestResponseAlgorithm {
 				nodeProbability *= currentOppRealizationPlan;
 				nonZeroORP = true;
 			}
-			BROppSelection sel = new BROppSelection(lowerBound, nodeProbability, nonZeroORP);
-			selectAction(gameState, sel, lowerBound);
-			returnValue = sel.getResult().getRight();
-			if (nonZeroORP && !sel.nonZeroContinuation) {
-				returnValue *= currentOppRealizationPlan;
-			}
+            if (algConfig.getActualNonzeroUtilityValues(gameState) != null) {
+                returnValue = algConfig.getActualNonzeroUtilityValues(gameState);
+                if (nonZeroORP) {
+                    returnValue *= currentOppRealizationPlan;
+                }
+                if (searchingPlayerIndex != 0) returnValue *= -1;
+            } else {
+			    BROppSelection sel = new BROppSelection(lowerBound, nodeProbability, nonZeroORP);
+			    selectAction(gameState, sel, lowerBound);
+			    returnValue = sel.getResult().getRight();
+			    if (nonZeroORP && !sel.nonZeroContinuation) {
+				    returnValue *= currentOppRealizationPlan;
+			    }
+            }
 		} 
 			
 		assert (returnValue != null);

@@ -39,10 +39,10 @@ public class GeneralDoubleOracle {
 
 	public static void main(String[] args) {
 //        runBP();
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-//        runRandomGame();
+        runRandomGame();
 	}
 
     public static void runKuhnPoker() {
@@ -137,15 +137,22 @@ public class GeneralDoubleOracle {
 		double p2BoundUtility = gameConfig.getMaxUtility();
 		
 		int[] oldSize = new int[] {-1,-1};
+        int[] diffSize = new int[] {-1, -1};
 		
 		while ((p1BoundUtility + p2BoundUtility) > EPS) {
 			
 			iterations++;
+            diffSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex];
             algConfig.clearNewSequences();
 			debugOutput.println("Last difference: " + (algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex]));
             debugOutput.println("Current Size: " + algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]));
 			oldSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]);
-			
+
+            if (diffSize[0] == 0 && diffSize[1] == 0) {
+                System.out.println("ERROR : NOT CONVERGED");
+                break;
+            }
+
 			int opponentPlayerIndex = ( currentPlayerIndex + 1 ) % 2;
 			
 			long startFullBR = System.currentTimeMillis();

@@ -32,7 +32,7 @@ public class DoubleOracleBestResponse extends SQFBestResponseAlgorithm {
 	
 	
 	public DoubleOracleBestResponse(Expander<DoubleOracleInformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, DoubleOracleConfig algConfig, GameInfo gameInfo) {
-		super((Expander)expander, searchingPlayerIndex, actingPlayers, algConfig, gameInfo);
+        super((Expander) expander, searchingPlayerIndex, actingPlayers, algConfig, gameInfo);
 	}
 
 }

@@ -64,6 +64,7 @@ public class GeneralSequenceFormLP {
 
 	private void createModelFor(Player player) throws IloException {
 		IloCplex cplex = new IloCplex();
+        cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Auto);
 		IloNumVar v0 = cplex.numVar(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, IloNumVarType.Float, "v0");
 		cplex.setOut(null);
 		cplex.addMinimize(v0);
@@ -127,7 +128,8 @@ public class GeneralSequenceFormLP {
 		for (Sequence sequence : algConfig.getSequencesFor(secondPlayer)) {
 			try {
 				double relPl = cplex.getValue(variables.get(sequence));
-
+//                if (relPl < 0.0000001)
+//                    relPl = 0;
 				if (sequence.size() == 0)
 					relPl = 1;
 				solution.put(sequence, relPl);

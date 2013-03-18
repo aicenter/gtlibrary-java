@@ -15,10 +15,10 @@ public class RandomGameInfo implements GameInfo {
 
     public static int MAX_DEPTH = 3;
     public static int MAX_BF = 3;
-    public static int MAX_OBSERVATION = 2;
-    public static int MAX_UTILITY = 1;
-    public static boolean BINARY_UTILITY = false;
-    public static boolean UTILITY_CORRELATION = true;
+    public static int MAX_OBSERVATION = 3;
+    public static int MAX_UTILITY = 5;
+    public static boolean BINARY_UTILITY = true;
+    public static boolean UTILITY_CORRELATION = false;
 
     public static long seed = 1;
 
@@ -26,8 +26,13 @@ public class RandomGameInfo implements GameInfo {
 
     public RandomGameInfo() {
         rnd = new Random(seed);
-        if (UTILITY_CORRELATION)
-            MAX_UTILITY = 2*MAX_DEPTH;
+        if (UTILITY_CORRELATION) {
+            if (BINARY_UTILITY)
+                MAX_UTILITY = 1;
+            else
+                MAX_UTILITY = 2*MAX_DEPTH;
+        }
+
     }
 
     @Override
