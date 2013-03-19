@@ -36,7 +36,7 @@ public class GeneralDoubleOracle {
 	final private double EPS = 0.000001;
     final private static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
-    final private boolean IMPROVED_PLAYER_SELECTION = false;
+    final private boolean IMPROVED_PLAYER_SELECTION = true;
 
 	public static void main(String[] args) {
 //        runBP();

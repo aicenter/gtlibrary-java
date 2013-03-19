@@ -9,6 +9,7 @@ import java.util.Random;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
@@ -18,6 +19,7 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.strategy.Strategy;
 
 public class BRInnerNode extends InnerNode {
 
@@ -119,47 +121,19 @@ public class BRInnerNode extends InnerNode {
 	}
 
 	@Override
-	public Map<Sequence, Double> getPureStrategyFor(Player player) {
+	public Strategy getStrategyFor(Player player, Distribution distribution) {
 		if (currentPlayer.equals(opponent))
-			return getPureStrategyForOpponent(player);
-		return getPureStrategy(player);
+			return getStrategyForOpponent(player, distribution);
+		return super.getStrategyFor(player, distribution);
 	}
 
-	private Map<Sequence, Double> getPureStrategy(Player player) {
-		if (children == null)
-			return null;
-		Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
-		Action mostPlayedAction = getMostPlayedAction(currentPlayer.getId());
-
-		pureStrategy.put(createSequenceForPureStrategy(mostPlayedAction), 1d);
-		pureStrategy.putAll(getPureStrategyFor(children.get(mostPlayedAction), player));
-		return pureStrategy;
-	}
-
-	private Sequence createSequenceForPureStrategy(Action action) {
-		Sequence currentSequence = new LinkedListSequenceImpl(gameState.getSequenceFor(currentPlayer));
-
-		currentSequence.addLast(action);
-		return currentSequence;
-	}
-
-	private Map<Sequence, Double> getPureStrategyForOpponent(Player player) {
-		Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
+	private Strategy getStrategyForOpponent(Player player, Distribution distribution) {
+		Strategy pureStrategy = algConfig.getEmptyStrategy();
 
 		for (Node node : getNodesWithNonZeroRPContinuation()) {
-			pureStrategy.putAll(getPureStrategyFor(node, player));
+			pureStrategy.putAll(getStrategyFor(node, player, distribution));
 		}
 		return pureStrategy;
-	}
-
-	protected Map<Sequence, Double> getPureStrategyFor(Node node, Player player) {
-		if (node == null) {
-			Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
-			
-			pureStrategy.put(null, 1d);
-			return pureStrategy;
-		}
-		return node.getPureStrategyFor(player);
 	}
 
 	private List<Node> getNodesWithNonZeroRPContinuation() {

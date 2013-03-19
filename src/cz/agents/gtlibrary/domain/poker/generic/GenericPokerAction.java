@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.domain.poker.generic;
 
-import cz.agents.gtlibrary.domain.poker.PokerGameState;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.poker.PokerAction;
