@@ -64,7 +64,7 @@ public class SequenceFormLP {
 
 	private void createModelFor(Player player) throws IloException {
 		IloCplex cplex = new IloCplex();
-        cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Auto);
+        cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Dual);
         IloNumVar v0 = cplex.numVar(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, IloNumVarType.Float, "v0");
 		cplex.setOut(null);
 		cplex.addMinimize(v0);
