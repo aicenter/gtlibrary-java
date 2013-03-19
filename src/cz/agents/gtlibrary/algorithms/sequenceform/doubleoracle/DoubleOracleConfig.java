@@ -328,4 +328,9 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
     public Set<Sequence> getNewSequences() {
         return newSequences;
     }
+    
+    @Override
+    public I createInformationSetFor(GameState gameState) {
+    	return (I) new DoubleOracleInformationSet(gameState);
+    }
 }

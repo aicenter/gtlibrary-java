@@ -7,7 +7,7 @@ import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.History;
 
-public class CFRConfig<I extends CFRInformationSet> extends ConfigImpl<I> {
+public abstract class CFRConfig<I extends CFRInformationSet> extends ConfigImpl<I> {
 	private GameState rootState;
 	private int iterations;
 	private Map<History, float[]> terminalStates;

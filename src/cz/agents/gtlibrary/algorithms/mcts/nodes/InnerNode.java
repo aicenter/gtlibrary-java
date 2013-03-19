@@ -15,6 +15,7 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class InnerNode extends NodeImpl {
@@ -200,10 +201,7 @@ public class InnerNode extends NodeImpl {
 
 	protected Map<Sequence, Double> getStrategyFor(Node node, Player player, Distribution distribution) {
 		if (node == null) {
-			Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
-
-			pureStrategy.put(null, 1d);
-			return pureStrategy;
+			return algConfig.getEmptyStrategy();
 		}
 		return node.getStrategyFor(player, distribution);
 	}
@@ -213,10 +211,10 @@ public class InnerNode extends NodeImpl {
 	}
 
 	@Override
-	public Map<Sequence, Double> getStrategyFor(Player player, Distribution distribution) {
+	public Strategy getStrategyFor(Player player, Distribution distribution) {
 		if (children == null)
-			return null;
-		Map<Sequence, Double> strategy = new HashMap<Sequence, Double>();
+			return algConfig.getEmptyStrategy();
+		Strategy strategy = algConfig.getEmptyStrategy();
 		Map<Action, Double> actionDistribution = distribution.getDistributionFor(informationSet.getActionStats(), actionStats);
 
 		if (player.equals(currentPlayer)) {
@@ -230,7 +228,7 @@ public class InnerNode extends NodeImpl {
 		return strategy;
 	}
 
-	public void updateStrategy(Map<Sequence, Double> strategy, Map<Action, Double> actionDistribution) {
+	public void updateStrategy(Strategy strategy, Map<Action, Double> actionDistribution) {
 		Sequence currentSequence = createSequenceForStrategy();
 
 		for (Entry<Action, Double> entry : actionDistribution.entrySet()) {

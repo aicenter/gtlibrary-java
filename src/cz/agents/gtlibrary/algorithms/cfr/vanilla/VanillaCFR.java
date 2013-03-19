@@ -24,15 +24,15 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 public class VanillaCFR extends CFR<VanillaInformationSet> {
 
 	public static void main(String[] args) {
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
-		runGoofSpiel();
+//		runGoofSpiel();
 	}
 
 	public static void runKuhnPoker() {
 		GameState rootState = new KuhnPokerGameState();
-		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new KuhnPokerGameState());
+		CFRConfig<VanillaInformationSet> config = new VanillaCFRConfig(new KuhnPokerGameState());
 		VanillaCFR cfr = new VanillaCFR(config);
 
 		cfr.buildGameTree(rootState, new KuhnPokerExpander<VanillaInformationSet>(config));
@@ -41,7 +41,7 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 	
 	public static void runGoofSpiel() {
 		GameState rootState = new GoofSpielGameState();
-		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new GoofSpielGameState());
+		CFRConfig<VanillaInformationSet> config = new VanillaCFRConfig(new GoofSpielGameState());
 		VanillaCFR cfr = new VanillaCFR(config);
 
 		cfr.buildGameTree(rootState, new GoofSpielExpander<VanillaInformationSet>(config));
@@ -50,7 +50,7 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 
 	public static void runBPG() {
 		GameState rootState = new BPGGameState();
-		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new BPGGameState());
+		CFRConfig<VanillaInformationSet> config = new VanillaCFRConfig(new BPGGameState());
 		VanillaCFR cfr = new VanillaCFR(config);
 
 		cfr.buildGameTree(rootState, new BPGExpander<VanillaInformationSet>(config));
@@ -59,7 +59,7 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 
 	public static void runGenericPoker() {
 		GameState rootState = new GenericPokerGameState();
-		CFRConfig<VanillaInformationSet> config = new CFRConfig<VanillaInformationSet>(new GenericPokerGameState());
+		CFRConfig<VanillaInformationSet> config = new VanillaCFRConfig(new GenericPokerGameState());
 		VanillaCFR cfr = new VanillaCFR(config);
 
 		cfr.buildGameTree(rootState, new GenericPokerExpander<VanillaInformationSet>(config));
