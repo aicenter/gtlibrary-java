@@ -19,6 +19,7 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.strategy.Strategy;
 
 public class BRInnerNode extends InnerNode {
 
@@ -120,28 +121,14 @@ public class BRInnerNode extends InnerNode {
 	}
 
 	@Override
-	public Map<Sequence, Double> getStrategyFor(Player player, Distribution distribution) {
+	public Strategy getStrategyFor(Player player, Distribution distribution) {
 		if (currentPlayer.equals(opponent))
-			return getPureStrategyForOpponent(player, distribution);
+			return getStrategyForOpponent(player, distribution);
 		return super.getStrategyFor(player, distribution);
 	}
 
-//	private Map<Sequence, Double> getPureStrategy(Player player, Distribution distribution) {
-//		if (children == null)
-//			return null;
-//		Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
-////		Action mostPlayedAction = getMostPlayedAction(currentPlayer.getId());
-//		Sequence currentSequence = createSequenceForStrategy();
-//
-//		pureStrategy.put(new LinkedListSequenceImpl(currentSequence), 1d);
-//		currentSequence.addLast(mostPlayedAction);
-//		pureStrategy.put(currentSequence, 1d);
-//		pureStrategy.putAll(getPureStrategyFor(children.get(mostPlayedAction), player));
-//		return pureStrategy;
-//	}
-
-	private Map<Sequence, Double> getPureStrategyForOpponent(Player player, Distribution distribution) {
-		Map<Sequence, Double> pureStrategy = new HashMap<Sequence, Double>();
+	private Strategy getStrategyForOpponent(Player player, Distribution distribution) {
+		Strategy pureStrategy = algConfig.getEmptyStrategy();
 
 		for (Node node : getNodesWithNonZeroRPContinuation()) {
 			pureStrategy.putAll(getStrategyFor(node, player, distribution));

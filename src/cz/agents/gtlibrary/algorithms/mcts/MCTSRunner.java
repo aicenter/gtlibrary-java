@@ -12,26 +12,29 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.strategy.Strategy;
+import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 
 public class MCTSRunner {
-	
+
 	private final int MCTS_ITERATIONS_PER_CALL = 1000;
-	private final int SAME_STRATEGY_CHECK_COUNT = 50;
+	private final int SAME_STRATEGY_CHECK_COUNT = 100;
 
 	private InnerNode rootNode;
 	private MCTSConfig algConfig;
 	private GameState gameState;
 	private Expander<MCTSInformationSet> expander;
-	
+
 	public static void main(String[] args) {
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(5));
+		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(), new UniformStrategyForMissingSequences.Factory(), new UCTSelector(5));
 		MCTSRunner runner = new MCTSRunner(firstMCTSConfig, new KuhnPokerGameState(), new KuhnPokerExpander<MCTSInformationSet>(firstMCTSConfig));
 		Map<Sequence, Double> pureStrategy = runner.runMCTS(100000, KPGameInfo.FIRST_PLAYER, new FrequenceDistribution());
-		
+
 		System.out.println(pureStrategy);
 	}
 
@@ -41,7 +44,7 @@ public class MCTSRunner {
 		this.expander = expander;
 	}
 
-	public Map<Sequence, Double> runMCTS(int iterations, Player player, Distribution distribution) {
+	public Strategy runMCTS(int iterations, Player player, Distribution distribution) {
 		if (rootNode == null)
 			rootNode = createRootNode(gameState, expander, algConfig);
 		Node selectedLeaf = rootNode;
@@ -51,25 +54,20 @@ public class MCTSRunner {
 			selectedLeaf.expand();
 			selectedLeaf.backPropagate(selectedLeaf.simulate());
 		}
-		Map<Sequence, Double> pureStrategy = rootNode.getStrategyFor(player, distribution);
+		Strategy strategy = rootNode.getStrategyFor(player, distribution);
 		
-		if(pureStrategy.containsKey(null))
-			return null;
-		return pureStrategy;
+		strategy.put(new LinkedListSequenceImpl(player), 1d);
+		return strategy;
 	}
-	
-	public Map<Sequence, Double> runMCTS(Player player, Distribution distribution) {
-		Map<Sequence, Double> lastPureStrategy = null;
-		Map<Sequence, Double> pureStrategy = null;
-		int counter = 0;
-		
-		while (true) {
-			pureStrategy = null;
 
-			while (pureStrategy == null) {
-				pureStrategy = runMCTS(MCTS_ITERATIONS_PER_CALL, player, distribution);
-			}
-			if (pureStrategy.equals(lastPureStrategy)) {
+	public Strategy runMCTS(Player player, Distribution distribution) {
+		Strategy lastPureStrategy = null;
+		Strategy strategy = null;
+		int counter = 0;
+
+		while (true) {
+			strategy = runMCTS(MCTS_ITERATIONS_PER_CALL, player, distribution);
+			if (strategy.equals(lastPureStrategy)) {
 				counter++;
 			} else {
 				counter = 0;
@@ -77,11 +75,11 @@ public class MCTSRunner {
 			if (counter == SAME_STRATEGY_CHECK_COUNT) {
 				break;
 			}
-			lastPureStrategy = pureStrategy;
+			lastPureStrategy = strategy;
 		}
-		
-		return pureStrategy;
+		return strategy;
 	}
+
 //
 //	/**
 //	 * Runs MCTS until given +- epsilon is reached

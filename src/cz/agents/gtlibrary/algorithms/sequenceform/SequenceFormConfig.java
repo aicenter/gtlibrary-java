@@ -268,4 +268,9 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
         assert (getAllSequences().size() == rqSequences.size());
 
     }
+
+	@Override
+	public I createInformationSetFor(GameState gameState) {
+		return (I) new SequenceInformationSet(gameState);
+	}
 }
