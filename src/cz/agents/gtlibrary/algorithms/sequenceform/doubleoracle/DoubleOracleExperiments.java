@@ -59,7 +59,12 @@ public class DoubleOracleExperiments {
     }
 
     public void runAlgorithm(String alg, String domain) {
-        if (alg.equalsIgnoreCase("DO")) {
+        if (alg.startsWith("DO")) {
+            if (alg.equalsIgnoreCase("DOI")) {
+                GeneralDoubleOracle.IMPROVED_PLAYER_SELECTION = true;
+            } else {
+                GeneralDoubleOracle.IMPROVED_PLAYER_SELECTION = false;
+            }
             if (domain.equalsIgnoreCase("BP"))
                 GeneralDoubleOracle.runBP();
             else if (domain.equalsIgnoreCase("GP"))
