@@ -20,7 +20,7 @@ public class RandomGameInfo implements GameInfo {
     public static boolean BINARY_UTILITY = true;
     public static boolean UTILITY_CORRELATION = false;
 
-    public static long seed = 1;
+    public static long seed = 3;
 
     protected static Random rnd = new Random(seed);
 
