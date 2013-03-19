@@ -4,20 +4,12 @@
  */
 package cz.agents.gtlibrary.domain.phantomTTT;
 
-import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.Simulator;
-import cz.agents.gtlibrary.algorithms.mcts.backprop.SampleWeightedBackPropStrategy;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
-import cz.agents.gtlibrary.algorithms.sequenceform.GeneralFullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
-import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.io.GambitEFG;
@@ -225,11 +217,7 @@ public class TTTState extends GameStateImpl {
 	GameInfo gameInfo = new TTTInfo();
 	SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
         algConfig.addStateToSequenceForm(rootState);
-	MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1.2));
-	MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(), new UCTSelector(1.2));
-	Expander<MCTSInformationSet> firstMCTSExpander = new TTTExpander <MCTSInformationSet>(firstMCTSConfig);
-	Expander<MCTSInformationSet> secondMCTSExpander = new TTTExpander<MCTSInformationSet>(secondMCTSConfig);
-	GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new TTTExpander(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
+	FullSequenceEFG efg = new FullSequenceEFG(rootState, new TTTExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
         
 	return efg.generate();
     }

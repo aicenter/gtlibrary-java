@@ -4,7 +4,7 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import ilog.concert.IloException;
-import cz.agents.gtlibrary.algorithms.sequenceform.GeneralSequenceFormLP;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormLP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class DoubleOracleSequenceFormLP extends GeneralSequenceFormLP {
+public class DoubleOracleSequenceFormLP extends SequenceFormLP {
 
     private Map<Player, Set<Sequence>> newSequencesSinceLastLPCalculation = new FixedSizeMap<Player, Set<Sequence>>(2);
     private Player[] players;

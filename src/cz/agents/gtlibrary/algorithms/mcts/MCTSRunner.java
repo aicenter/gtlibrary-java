@@ -23,7 +23,7 @@ import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 public class MCTSRunner {
 
 	private final int MCTS_ITERATIONS_PER_CALL = 1000;
-	private final int SAME_STRATEGY_CHECK_COUNT = 100;
+	private final int SAME_STRATEGY_CHECK_COUNT = 20;
 
 	private InnerNode rootNode;
 	private MCTSConfig algConfig;
