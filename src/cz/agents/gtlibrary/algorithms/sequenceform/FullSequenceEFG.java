@@ -5,13 +5,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import cz.agents.gtlibrary.algorithms.mcts.BestResponseMCTSRunner;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.Simulator;
-import cz.agents.gtlibrary.algorithms.mcts.backprop.SampleWeightedBackPropStrategy;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.MostFrequentAction;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -33,42 +26,29 @@ import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.strategy.Strategy;
-import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
-import cz.agents.gtlibrary.utils.UtilityCalculator;
 
-public class GeneralFullSequenceEFG {
+public class FullSequenceEFG {
 
 	private GameState rootState;
 	private Expander<SequenceInformationSet> expander;
-	private Expander<MCTSInformationSet> firtstMCTSExpander;
-	private Expander<MCTSInformationSet> secondMCTSExpander;
 	private GameInfo gameConfig;
 	private SequenceFormConfig<SequenceInformationSet> algConfig;
-	private MCTSConfig firstMCTSConfig;
-	private MCTSConfig secondMCTSConfig;
 
 	private PrintStream debugOutput = System.out;
 
 	public static void main(String[] args) {
 //		runKuhnPoker();
-		runGenericPoker();
-//		runBPG();
+//		runGenericPoker();
+		runBPG();
 //		runGoofSpiel();
-//        runRandomGame();
+//      runRandomGame();
 	}
 
 	public static void runKuhnPoker() {
 		GameState rootState = new KuhnPokerGameState();
 		KPGameInfo gameInfo = new KPGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(),
-				new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(),
-				new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
-		Expander<MCTSInformationSet> firstMCTSExpander = new KuhnPokerExpander<MCTSInformationSet>(firstMCTSConfig);
-		Expander<MCTSInformationSet> secondMCTSExpander = new KuhnPokerExpander<MCTSInformationSet>(secondMCTSConfig);
-		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 
 		efg.generate();
 	}
@@ -77,13 +57,7 @@ public class GeneralFullSequenceEFG {
         GameState rootState = new RandomGameState();
         GameInfo gameInfo = new RandomGameInfo();
         SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-        MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(),
-        		new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
-        MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(),
-        		new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
-        Expander<MCTSInformationSet> firstMCTSExpander = new RandomGameExpander<MCTSInformationSet>(firstMCTSConfig);
-        Expander<MCTSInformationSet> secondMCTSExpander = new RandomGameExpander<MCTSInformationSet>(secondMCTSConfig);
-        GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new RandomGameExpander<SequenceInformationSet>(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, new RandomGameExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 
         efg.generate();
     }
@@ -93,13 +67,7 @@ public class GeneralFullSequenceEFG {
 		GameState rootState = new GoofSpielGameState();
 		GSGameInfo gameInfo = new GSGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(),
-				new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(),
-				new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
-		Expander<MCTSInformationSet> firstMCTSExpander = new GoofSpielExpander<MCTSInformationSet>(firstMCTSConfig);
-		Expander<MCTSInformationSet> secondMCTSExpander = new GoofSpielExpander<MCTSInformationSet>(secondMCTSConfig);
-		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GoofSpielExpander<SequenceInformationSet>(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new GoofSpielExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 
 		efg.generate();
 	}
@@ -108,13 +76,7 @@ public class GeneralFullSequenceEFG {
 		GameState rootState = new GenericPokerGameState();
 		GPGameInfo gameInfo = new GPGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(),
-				new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(),
-				new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
-		Expander<MCTSInformationSet> firstMCTSExpander = new GenericPokerExpander<MCTSInformationSet>(firstMCTSConfig);
-		Expander<MCTSInformationSet> secondMCTSExpander = new GenericPokerExpander<MCTSInformationSet>(secondMCTSConfig);
-		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 
 		efg.generate();
 	}
@@ -123,30 +85,16 @@ public class GeneralFullSequenceEFG {
 		GameState rootState = new BPGGameState();
 		BPGGameInfo gameInfo = new BPGGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(),
-				new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(),
-				new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
-		Expander<MCTSInformationSet> firstMCTSExpander = new BPGExpander<MCTSInformationSet>(firstMCTSConfig);
-		Expander<MCTSInformationSet> secondMCTSExpander = new BPGExpander<MCTSInformationSet>(secondMCTSConfig);
-		GeneralFullSequenceEFG efg = new GeneralFullSequenceEFG(rootState, new BPGExpander<SequenceInformationSet>(algConfig), firstMCTSExpander, secondMCTSExpander, firstMCTSConfig, secondMCTSConfig, gameInfo, algConfig);
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new BPGExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 
 		efg.generate();
 	}
 
-	private static double getC(double maxUtility) {
-		return Math.sqrt(2) * maxUtility;
-	}
-
-	public GeneralFullSequenceEFG(GameState rootState, Expander<SequenceInformationSet> expander, Expander<MCTSInformationSet> firstMCTSExpander, Expander<MCTSInformationSet> secondMCTSExpander, MCTSConfig firstMCTSConfig, MCTSConfig secondMCTSConfig, GameInfo config, SequenceFormConfig<SequenceInformationSet> algConfig) {
+	public FullSequenceEFG(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo config, SequenceFormConfig<SequenceInformationSet> algConfig) {
 		this.rootState = rootState;
 		this.expander = expander;
 		this.gameConfig = config;
 		this.algConfig = algConfig;
-		this.firtstMCTSExpander = firstMCTSExpander;
-		this.secondMCTSExpander = secondMCTSExpander;
-		this.firstMCTSConfig = firstMCTSConfig;
-		this.secondMCTSConfig = secondMCTSConfig;
 	}
 
 	public Map<Player, Map<Sequence, Double>> generate() {
@@ -166,7 +114,7 @@ public class GeneralFullSequenceEFG {
 
 		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
 		long startCPLEX = System.currentTimeMillis();
-		GeneralSequenceFormLP sequenceFormLP = new GeneralSequenceFormLP(actingPlayers);
+		SequenceFormLP sequenceFormLP = new SequenceFormLP(actingPlayers);
 
 		sequenceFormLP.calculateBothPlStrategy(rootState, algConfig);
 
@@ -219,21 +167,6 @@ public class GeneralFullSequenceEFG {
 		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
 
         algConfig.validateGameStructure(rootState, expander);
-
-		BestResponseMCTSRunner mctsRunner = new BestResponseMCTSRunner(firstMCTSConfig, rootState, firtstMCTSExpander, realizationPlans.get(actingPlayers[1]), actingPlayers[1]);
-		UtilityCalculator utility = new UtilityCalculator(rootState, firtstMCTSExpander);
-		
-		Strategy firstPlayerRP = firstMCTSConfig.getEmptyStrategy();
-		Strategy secondPlayerRP = firstMCTSConfig.getEmptyStrategy();
-
-		firstPlayerRP.putAll(realizationPlans.get(actingPlayers[0]));
-		secondPlayerRP.putAll(realizationPlans.get(actingPlayers[1]));
-		System.out.println("MCTS response: " + utility.computeUtility(mctsRunner.runMCTS(actingPlayers[0], new MostFrequentAction()), secondPlayerRP));
-
-		utility = new UtilityCalculator(rootState, secondMCTSExpander);
-		mctsRunner = new BestResponseMCTSRunner(secondMCTSConfig, rootState, secondMCTSExpander, realizationPlans.get(actingPlayers[0]), actingPlayers[0]);
-
-		System.out.println("MCTS response: " + utility.computeUtility(firstPlayerRP, mctsRunner.runMCTS(actingPlayers[1], new MostFrequentAction())));
 
 		return realizationPlans;
 	}

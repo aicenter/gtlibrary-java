@@ -21,7 +21,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
-public class GeneralSequenceFormLP {
+public class SequenceFormLP {
 
     private long overallConstraintGenerationTime = 0;
     private long overallConstraintLPSolvingTime = 0;
@@ -35,7 +35,7 @@ public class GeneralSequenceFormLP {
 	protected Map<Player, Set<Sequence>> sequences = new FixedSizeMap<Player, Set<Sequence>>(2);
 	protected Map<Player, Set<SequenceInformationSet>> informationSets = new FixedSizeMap<Player, Set<SequenceInformationSet>>(2);
 
-	public GeneralSequenceFormLP(Player[] players) {
+	public SequenceFormLP(Player[] players) {
 		for (Player player : players) {
 			if (!resultStrategies.containsKey(player))
 				resultStrategies.put(player, new HashMap<Sequence, Double>());
