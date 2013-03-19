@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.GeneralFullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
@@ -68,11 +68,11 @@ public class DoubleOracleExperiments {
                 GeneralDoubleOracle.runRandomGame();
         } else if (alg.equalsIgnoreCase("LP")) {
             if (domain.equalsIgnoreCase("BP"))
-                GeneralFullSequenceEFG.runBPG();
+                FullSequenceEFG.runBPG();
             else if (domain.equalsIgnoreCase("GP"))
-                GeneralFullSequenceEFG.runGenericPoker();
+                FullSequenceEFG.runGenericPoker();
             else if (domain.equalsIgnoreCase("RG"))
-                GeneralFullSequenceEFG.runRandomGame();
+                FullSequenceEFG.runRandomGame();
         } else throw new IllegalArgumentException("Illegal algorithm: " + alg);
     }
 }

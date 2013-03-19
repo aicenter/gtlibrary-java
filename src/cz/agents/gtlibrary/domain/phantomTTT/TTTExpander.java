@@ -23,7 +23,7 @@ public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet
      public List<Action> getActions(GameState gameState) {
 		TTTState s = (TTTState) gameState;
                 InformationSet curIS = getAlgorithmConfig().getInformationSetFor(gameState);
-		ArrayList<TTTAction> actions = new ArrayList<TTTAction>();
+		ArrayList<Action> actions = new ArrayList<Action>();
 
                 byte[] allowed;
 //                if (s.moveNum == 0) allowed = new byte[]{4};//x
@@ -54,7 +54,7 @@ public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet
                     }
                 }
                 
-		return (List) actions;
+		return actions;
 	}
         
         boolean isWinningMove(byte f, TTTState s){

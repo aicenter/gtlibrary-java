@@ -4,9 +4,12 @@ import java.util.Random;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.strategy.Strategy;
 
 public class ChanceNode extends InnerNode {
 	private Random random;
@@ -44,5 +47,15 @@ public class ChanceNode extends InnerNode {
 			}
 		}
 		return actions.get(actions.size() - 1);
+	}
+	
+	@Override
+	public Strategy getStrategyFor(Player player, Distribution distribution) {
+		Strategy strategy = algConfig.getEmptyStrategy();
+
+		for (Node child : children.values()) {
+			strategy.putAll(getStrategyFor(child, player, distribution));
+		}
+		return strategy;
 	}
 }

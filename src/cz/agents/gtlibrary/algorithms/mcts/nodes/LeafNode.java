@@ -1,12 +1,10 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.strategy.Strategy;
 
 public class LeafNode extends NodeImpl {
 
@@ -57,7 +55,7 @@ public class LeafNode extends NodeImpl {
 	}
 
 	@Override
-	public Map<Sequence, Double> getPureStrategyFor(Player player) {
-		return new HashMap<Sequence, Double>();
+	public Strategy getStrategyFor(Player player, Distribution distribution) {
+		return algConfig.getEmptyStrategy();
 	}
 }

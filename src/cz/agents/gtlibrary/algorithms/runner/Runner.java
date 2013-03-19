@@ -1,7 +1,7 @@
 package cz.agents.gtlibrary.algorithms.runner;
 
 import cz.agents.gtlibrary.algorithms.cfr.vanilla.VanillaCFR;
-import cz.agents.gtlibrary.algorithms.sequenceform.GeneralFullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 
 public class Runner {
 	public static enum Algorithm {
@@ -20,15 +20,15 @@ public class Runner {
 		case FullSequenceEFG:
 			switch (domain) {
 			case KuhnPoker:
-				GeneralFullSequenceEFG.runKuhnPoker();
+				FullSequenceEFG.runKuhnPoker();
 				break;
 
 			case GenericPoker:
-				GeneralFullSequenceEFG.runGenericPoker();
+				FullSequenceEFG.runGenericPoker();
 				break;
 
 			case BPG:
-				GeneralFullSequenceEFG.runBPG();
+				FullSequenceEFG.runBPG();
 				break;
 			default:
 				throw new UnsupportedOperationException("Unsupported domain");

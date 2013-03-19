@@ -11,12 +11,20 @@ public interface Expander<I extends InformationSet> {
 	 * @param gameState
 	 * @return list of actions available in given game state for player to move, actions must include information set
 	 */
-	List<Action> getActions(GameState gameState);
+	public List<Action> getActions(GameState gameState);
+	
+	/**
+	 * This method should be used only in situations where IS is not guaranteed to exist
+	 * 
+	 * @param gameState
+	 * @return list of actions available in given game state for player to move
+	 */
+	public List<Action> getActionsForUnknownIS(GameState gameState);
 	
 	/**
 	 * 
 	 * @param gameState
 	 * @return list of actions available in given information set, actions must include information set
 	 */
-	List<Action> getActions(I informationSet);
+	public List<Action> getActions(I informationSet);
 }
