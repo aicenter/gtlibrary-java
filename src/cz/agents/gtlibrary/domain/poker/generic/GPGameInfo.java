@@ -19,7 +19,7 @@ public class GPGameInfo implements GameInfo {
 	public static final int ANTE = 1;
 	public static int MAX_RAISES_IN_ROW = 2;
 
-	public static int MAX_BETS = 1;
+	public static int MAX_BETS = 2;
 	public static int[] BETS_FIRST_ROUND;
 
 	{
@@ -41,7 +41,7 @@ public class GPGameInfo implements GameInfo {
 			RAISES_FIRST_ROUND[i] = (i + 1) * 2;
 	}
 
-	public static int MAX_CARD_TYPES = 3;
+	public static int MAX_CARD_TYPES = 2;
 	public static int[] CARD_TYPES;
 
 	{
@@ -51,7 +51,7 @@ public class GPGameInfo implements GameInfo {
 	}
 
 	public static int MAX_CARD_OF_EACH_TYPE = 2;
-	public static int[] DECK; // does not currently work for different sizes of card-types (e.g., {0,0,1,2}); returns incorrect nature-probability
+	public static int[] DECK;
 
 	{
 		DECK = new int[MAX_CARD_OF_EACH_TYPE * MAX_CARD_TYPES];

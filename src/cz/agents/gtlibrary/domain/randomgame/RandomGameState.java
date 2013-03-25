@@ -21,6 +21,10 @@ public class RandomGameState extends GameStateImpl {
     private Player playerToMove;
     private Map<Player, LinkedList<Integer>> observations = new FixedSizeMap<Player, LinkedList<Integer>>(2);
 
+    private int hash = 0;
+    private Pair<Integer, Sequence> ISKey = null;
+    private boolean changed = true;
+
     public RandomGameState() {
         super(RandomGameInfo.ALL_PLAYERS);
         ID = RandomGameInfo.rnd.nextInt();
@@ -51,6 +55,8 @@ public class RandomGameState extends GameStateImpl {
         observations.get(getPlayerToMove()).add(newObservation);
 
         this.ID = newID;
+        this.ISKey = null;
+        this.changed = true;
     }
 
     @Override
@@ -104,12 +110,19 @@ public class RandomGameState extends GameStateImpl {
 
     @Override
     public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-        return new Pair<Integer, Sequence>(observations.get(getPlayerToMove()).hashCode(), getHistory().getSequenceOf(getPlayerToMove()));
+        if (ISKey == null) {
+            ISKey = new Pair<Integer, Sequence>(observations.get(getPlayerToMove()).hashCode(), getHistory().getSequenceOf(getPlayerToMove()));
+        }
+        return ISKey;
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 31).append(history).append(observations).append(ID).toHashCode();
+        if (changed) {
+            hash = new HashCodeBuilder(17, 31).append(history).append(observations).append(ID).toHashCode();
+            changed = false;
+        }
+        return hash;
     }
 
     @Override

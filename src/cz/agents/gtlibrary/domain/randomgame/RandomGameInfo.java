@@ -13,16 +13,16 @@ public class RandomGameInfo implements GameInfo {
 
     public static final Player[] ALL_PLAYERS = new Player[] {FIRST_PLAYER, SECOND_PLAYER};
 
-    public static int MAX_DEPTH = 3;
-    public static int MAX_BF = 3;
-    public static int MAX_OBSERVATION = 3;
-    public static int MAX_UTILITY = 5;
+    public static int MAX_DEPTH = 4;
+    public static int MAX_BF = 5;
+    public static int MAX_OBSERVATION = 2;
+    public static int MAX_UTILITY = 1;
     public static boolean BINARY_UTILITY = true;
-    public static boolean UTILITY_CORRELATION = false;
+    public static boolean UTILITY_CORRELATION = true;
 
-    public static long seed = 3;
+    public static long seed = 2;
 
-    protected static Random rnd = new Random(seed);
+    public static Random rnd = new Random(seed);
 
     public RandomGameInfo() {
         rnd = new Random(seed);
