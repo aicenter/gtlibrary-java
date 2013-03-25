@@ -14,7 +14,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerAction;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 
-public class GameStateTest {
+public class KPGameStateTest {
 	
 	@Test
 	public void testAfterDifferentCardsAndBet() {
