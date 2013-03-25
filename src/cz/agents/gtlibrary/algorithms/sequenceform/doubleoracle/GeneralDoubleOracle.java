@@ -141,8 +141,10 @@ public class GeneralDoubleOracle {
         int[] diffSize = new int[] {-1, -1};
         double[] lastBRValue = new double[] {-1.0, -1.0};
 		
-		while ((p1BoundUtility + p2BoundUtility) > EPS) {
-			
+		while ((Math.abs(p1BoundUtility + p2BoundUtility) > EPS) ||
+                Math.abs(doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]) + doRestrictedGameSolver.getResultForPlayer(actingPlayers[1])) > EPS){
+//		while (true) {
+
 			iterations++;
 //            algConfig.setCurrentIteration(iterations);
 
@@ -237,7 +239,7 @@ public class GeneralDoubleOracle {
                             currentPlayerIndex = 1;
                         }
                     } else {
-                        if (Math.abs(p1BoundUtility - (-oldLPResult)) > Math.abs(p2BoundUtility - (oldLPResult))) {
+                        if (Math.abs(p1BoundUtility - (-oldLPResult)) >= Math.abs(p2BoundUtility - (oldLPResult))) {
 //                        if (Math.abs(currentBRVal - (oldLPResult)) > EPS) {
 //                        if (Math.abs(lastBRValue[0] - (-oldLPResult2)) >= Math.abs(lastBRValue[1] - (-oldLPResult1)) - EPS ) {
                             currentPlayerIndex = 0;

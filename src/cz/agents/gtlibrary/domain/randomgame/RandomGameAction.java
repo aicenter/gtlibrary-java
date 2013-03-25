@@ -52,8 +52,8 @@ public class RandomGameAction extends ActionImpl{
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-
-        builder.append("["+ value);
+        builder.append("[" + informationSet.getPlayer() + ", " + informationSet.hashCode() + ", ");
+        builder.append(value.substring(value.indexOf("_")+1));
         builder.append("]");
         return builder.toString();
     }
