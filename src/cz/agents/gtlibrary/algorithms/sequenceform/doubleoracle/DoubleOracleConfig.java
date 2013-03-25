@@ -35,6 +35,9 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 	private Set<GameState> temporaryLeafs = new HashSet<GameState>();
 
     private Set<Sequence> newSequences = new HashSet<Sequence>();
+//    private int currentIteration = 1;
+
+//    private Map<Sequence, Integer> sequencesInIterations = new HashMap<Sequence, Integer>();
 
     public DoubleOracleConfig(GameState rootState, GameInfo gameInfo) {
 		this.rootState = rootState;
@@ -193,7 +196,8 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 	@Override
 	public void addStateToSequenceForm(GameState state) {
 		super.addStateToSequenceForm(state);
-		
+//        sequencesInIterations.put(state.getSequenceFor(rootState.getAllPlayers()[0]), currentIteration);
+//        sequencesInIterations.put(state.getSequenceFor(rootState.getAllPlayers()[1]), currentIteration);
 	}
 
     public void validateRestrictedGameStructure(Expander<DoubleOracleInformationSet> expander, SQFBestResponseAlgorithm[] bestResponseAlgorithms) {
@@ -302,8 +306,10 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
                     if (gameInfo.getOpponent(currentState.getPlayerToMove()).getId() != 0) exactValue *= -1; // we are storing the utility value for the first player
                     if (exactValue == 0) {
                         assert (getActualNonzeroUtilityValues(currentState) == null);
-                    } else
-                        assert (Math.abs(getActualNonzeroUtilityValues(currentState) - exactValue) < 0.00001);
+                    } else {
+                        bestResponseAlgorithms[gameInfo.getOpponent(currentState.getPlayerToMove()).getId()].calculateBRNoClear(currentState);
+//                        assert (Math.abs(getActualNonzeroUtilityValues(currentState) - exactValue) < 0.00001);
+                    }
                     assert (getInformationSetFor(currentState).getOutgoingSequences().size() == 0);
                 }
             }
@@ -333,4 +339,12 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
     public I createInformationSetFor(GameState gameState) {
     	return (I) new DoubleOracleInformationSet(gameState);
     }
+
+//    public void setCurrentIteration(int currentIteration) {
+//        this.currentIteration = currentIteration;
+//    }
+
+//    public int getIterationForSequence(Sequence s) {
+//        return sequencesInIterations.get(s);
+//    }
 }
