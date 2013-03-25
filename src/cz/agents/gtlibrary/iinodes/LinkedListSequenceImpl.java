@@ -28,7 +28,7 @@ public class LinkedListSequenceImpl implements Sequence {
 
 	@Override
 	public Iterator<Action> iterator() {
-		hashCode = -1;
+//		hashCode = -1;
 		return actions.iterator();
 	}
 
