@@ -9,7 +9,7 @@ import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
-public abstract class StrategyImpl implements Strategy {
+public abstract class StrategyImpl extends Strategy {
 
 	private Map<Sequence, Double> strategy;
 
