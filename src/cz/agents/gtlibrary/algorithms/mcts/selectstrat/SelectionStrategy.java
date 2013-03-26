@@ -15,17 +15,17 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
+import cz.agents.gtlibrary.algorithms.mcts.backprop.BPStrategy;
 import java.util.Map;
 
-import cz.agents.gtlibrary.algorithms.mcts.backprop.BackPropagationStrategy;
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.utils.RunningStats;
+import cz.agents.gtlibrary.interfaces.Player;
 
 public interface SelectionStrategy {
 
     /**
      * Returns selected action.
      */
-	public Action select(RunningStats nodeStats, Map<Action, BackPropagationStrategy> actionStats);
+	public Action select(Player player, BPStrategy nodeStats, Map<Action, BPStrategy> nodeActionStats, BPStrategy isStats, Map<Action, BPStrategy> isActionStats);
 
 }
