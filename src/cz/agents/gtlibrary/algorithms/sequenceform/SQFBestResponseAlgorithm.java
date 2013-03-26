@@ -127,6 +127,7 @@ public class SQFBestResponseAlgorithm {
 			List<GameState> alternativeNodes = new ArrayList<GameState>();
 			
 			boolean nonZeroOppRP = (getOpponentRealizationPlan().get(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex])) != null && getOpponentRealizationPlan().get(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex])) > 0);
+            boolean nonZeroOppRPAlt = false;
 
 			InformationSet currentIS = algConfig.getInformationSetFor(gameState); 				
 			if (currentIS != null) {
@@ -143,17 +144,31 @@ public class SQFBestResponseAlgorithm {
 			HashMap<GameState,Double> alternativeNodesProbs = new HashMap<GameState, Double>();
 
 			double ISProbability = 0;
+
 			for (GameState currentNode : alternativeNodes) {
 				double currentNodeProb = currentNode.getNatureProbability();
 				if (nonZeroOppRP) {
 					if (getOpponentRealizationPlan().containsKey(currentNode.getHistory().getSequenceOf(players[opponentPlayerIndex]))) {
-						currentNodeProb *= getOpponentRealizationPlan().get(currentNode.getHistory().getSequenceOf(players[opponentPlayerIndex]));
+                        double altProb = getOpponentRealizationPlan().get(currentNode.getHistory().getSequenceOf(players[opponentPlayerIndex]));
+						currentNodeProb *= altProb;
+                        if (altProb > 0) nonZeroOppRPAlt = true;
 					} else currentNodeProb = 0;
 				}
 				ISProbability += currentNodeProb;
 				alternativeNodesProbs.put(currentNode, currentNodeProb);
 			}
-				
+
+            if (!nonZeroOppRP && !nonZeroOppRPAlt && ISProbability > gameState.getNatureProbability()) {
+                // if there is zero OppRP prob we keep only those nodes in IS that are caused by the moves of nature
+                // i.e., -> we keep all the nodes that share the same history of the opponent
+                for (GameState state : new ArrayList<GameState>(alternativeNodes)) {
+                    if (!state.getHistory().getSequenceOf(players[opponentPlayerIndex]).equals(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex]))) {
+                        alternativeNodes.remove(state);
+                        alternativeNodesProbs.remove(state);
+                    }
+                }
+            }
+
 			BRSrchSelection	sel = new BRSrchSelection(lowerBound, ISProbability, alternativeNodesProbs, nonZeroOppRP);
 			Collections.sort(alternativeNodes, comparator);
 				

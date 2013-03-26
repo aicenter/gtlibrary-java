@@ -5,6 +5,8 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 
+import java.util.Random;
+
 /**
  * Created with IntelliJ IDEA.
  * User: bosansky
@@ -46,15 +48,17 @@ public class DoubleOracleExperiments {
             GPGameInfo.MAX_CARD_TYPES = new Integer(args[4]);
             GPGameInfo.MAX_CARD_OF_EACH_TYPE = new Integer(args[5]);
         } else if (args[1].equalsIgnoreCase("RG")) { // Random Games
-            if (args.length != 8) {
-                throw new IllegalArgumentException("Illegal random game domain arguments count. 6 are required {DEPTH} {BF} {OBSERVATION} {UTILITY} {BIN} {CORR}");
+            if (args.length != 9) {
+                throw new IllegalArgumentException("Illegal random game domain arguments count. 7 are required {SEED} {DEPTH} {BF} {OBSERVATION} {UTILITY} {BIN} {CORR}");
             }
-            RandomGameInfo.MAX_DEPTH = new Integer(args[2]);
-            RandomGameInfo.MAX_BF = new Integer(args[3]);
-            RandomGameInfo.MAX_OBSERVATION = new Integer(args[4]);
-            RandomGameInfo.MAX_UTILITY = new Integer(args[5]);
-            RandomGameInfo.BINARY_UTILITY = new Boolean(args[6]);
-            RandomGameInfo.UTILITY_CORRELATION = new Boolean(args[7]);
+            RandomGameInfo.seed = new Integer(args[2]);
+            RandomGameInfo.rnd = new Random(RandomGameInfo.seed);
+            RandomGameInfo.MAX_DEPTH = new Integer(args[3]);
+            RandomGameInfo.MAX_BF = new Integer(args[4]);
+            RandomGameInfo.MAX_OBSERVATION = new Integer(args[5]);
+            RandomGameInfo.MAX_UTILITY = new Integer(args[6]);
+            RandomGameInfo.BINARY_UTILITY = new Boolean(args[7]);
+            RandomGameInfo.UTILITY_CORRELATION = new Boolean(args[8]);
         } else throw new IllegalArgumentException("Illegal domain: " + args[1]);
     }
 

@@ -39,9 +39,9 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runKuhnPoker();
 //		runGenericPoker();
-		runBPG();
+//		runBPG();
 //		runGoofSpiel();
-//      runRandomGame();
+      runRandomGame();
 	}
 
 	public static void runKuhnPoker() {
@@ -160,13 +160,13 @@ public class FullSequenceEFG {
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
 
 		// sanity check -> calculation of Full BR on the solution of SQF LP
-		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
-
-		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
-
-        algConfig.validateGameStructure(rootState, expander);
+//		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+//		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+//
+//		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+//		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+//
+//        algConfig.validateGameStructure(rootState, expander);
 
 		return realizationPlans;
 	}

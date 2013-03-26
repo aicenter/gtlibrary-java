@@ -40,10 +40,10 @@ public class GeneralDoubleOracle {
 
 	public static void main(String[] args) {
 //        runBP();
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-//        runRandomGame();
+        runRandomGame();
 	}
 
     public static void runKuhnPoker() {
@@ -139,20 +139,25 @@ public class GeneralDoubleOracle {
 		
 		int[] oldSize = new int[] {-1,-1};
         int[] diffSize = new int[] {-1, -1};
+        double[] lastBRValue = new double[] {-1.0, -1.0};
 		
-		while ((p1BoundUtility + p2BoundUtility) > EPS) {
-			
+		while ((Math.abs(p1BoundUtility + p2BoundUtility) > EPS) ||
+                Math.abs(doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]) + doRestrictedGameSolver.getResultForPlayer(actingPlayers[1])) > EPS){
+//		while (true) {
+
 			iterations++;
+//            algConfig.setCurrentIteration(iterations);
+
             diffSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex];
             algConfig.clearNewSequences();
 			debugOutput.println("Last difference: " + (algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex]));
             debugOutput.println("Current Size: " + algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]));
 			oldSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]);
 
-//            if (diffSize[0] == 0 && diffSize[1] == 0) {
-//                System.out.println("ERROR : NOT CONVERGED");
-//                break;
-//            }
+            if (diffSize[0] == 0 && diffSize[1] == 0) {
+                System.out.println("ERROR : NOT CONVERGED");
+                break;
+            }
 
 			int opponentPlayerIndex = ( currentPlayerIndex + 1 ) % 2;
 			
@@ -168,6 +173,7 @@ public class GeneralDoubleOracle {
             debugOutput.println("Iteration " + iterations + " : full BR time : " + thisBR);
 			overallBRCalculation += thisBR;
 
+            lastBRValue[currentPlayerIndex] = currentBRVal;
 			
 			HashSet<Sequence> currentFullBRSequences = brAlgorithms[currentPlayerIndex].getFullBRSequences();
 			HashSet<Sequence> newFullBRSequences = new HashSet<Sequence>();
@@ -200,7 +206,7 @@ public class GeneralDoubleOracle {
 
             if (!IMPROVED_PLAYER_SELECTION) {
                 long startCPLEX = System.currentTimeMillis();
-                doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig);
+                doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
                 long thisCPLEX = System.currentTimeMillis() - startCPLEX;
 
                 debugOutput.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
@@ -209,9 +215,10 @@ public class GeneralDoubleOracle {
 
                 currentPlayerIndex = opponentPlayerIndex;
             } else {
-                if (doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]) == null) { // we have not calculated the value for the current player in RG yet
+                if (doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]) == null ||
+                    doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]) == null) { // we have not calculated the value for the current player in RG yet
                     long startCPLEX = System.currentTimeMillis();
-                    doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig);
+                    doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
                     long thisCPLEX = System.currentTimeMillis() - startCPLEX;
 
                     debugOutput.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
@@ -221,14 +228,20 @@ public class GeneralDoubleOracle {
                     currentPlayerIndex = opponentPlayerIndex;
                 } else {
                     double oldLPResult = doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]);
+//                    double oldLPResult1 = doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]);
+//                    double oldLPResult2 = doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]);
                     if (currentPlayerIndex == 0) {
                         if (Math.abs(p1BoundUtility - (oldLPResult)) > Math.abs(p2BoundUtility - (-oldLPResult))) {
+//                        if (Math.abs(currentBRVal - (oldLPResult)) > EPS) {
+//                        if (Math.abs(lastBRValue[0] - (oldLPResult2)) - EPS > Math.abs(lastBRValue[1] - (oldLPResult1))) {
                             currentPlayerIndex = 0;
                         } else {
                             currentPlayerIndex = 1;
                         }
                     } else {
-                        if (Math.abs(p1BoundUtility - (-oldLPResult)) > Math.abs(p2BoundUtility - (oldLPResult))) {
+                        if (Math.abs(p1BoundUtility - (-oldLPResult)) >= Math.abs(p2BoundUtility - (oldLPResult))) {
+//                        if (Math.abs(currentBRVal - (oldLPResult)) > EPS) {
+//                        if (Math.abs(lastBRValue[0] - (-oldLPResult2)) >= Math.abs(lastBRValue[1] - (-oldLPResult1)) - EPS ) {
                             currentPlayerIndex = 0;
                         } else {
                             currentPlayerIndex = 1;
@@ -238,11 +251,12 @@ public class GeneralDoubleOracle {
                     opponentPlayerIndex = (1+currentPlayerIndex)%2;
 
                     long startCPLEX = System.currentTimeMillis();
-                    doRestrictedGameSolver.calculateStrategyForPlayer(opponentPlayerIndex, rootState, algConfig);
+                    doRestrictedGameSolver.calculateStrategyForPlayer(opponentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
                     long thisCPLEX = System.currentTimeMillis() - startCPLEX;
 
                     debugOutput.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
                     overallCPLEX += thisCPLEX;
+                    debugOutput.println("LP Value " + actingPlayers[currentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]));
                     debugOutput.println("LP Value " + actingPlayers[opponentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]));
                 }
             }
@@ -265,11 +279,16 @@ public class GeneralDoubleOracle {
 
         debugOutput.println("done.");
         long finishTime = System.currentTimeMillis() - start;
+
+        doRestrictedGameSolver.calculateStrategyForPlayer(1, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
+
 		int[] support_size = new int[] { 0, 0 };
+//        int[] maxIt = new int[] { 0, 0 };
 		for (Player player : actingPlayers) {
 			for (Sequence sequence : realizationPlans.get(player).keySet()) {
 				if (realizationPlans.get(player).get(sequence) > 0) {
 					support_size[player.getId()]++;
+//                    maxIt[player.getId()] = Math.max(maxIt[player.getId()], algConfig.getIterationForSequence(sequence));
                     if (DEBUG)
                         debugOutput.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
 				}
@@ -291,6 +310,7 @@ public class GeneralDoubleOracle {
         System.out.println("final BR time: " + overallBRCalculation);
         System.out.println("final RGB time: " + overallRGBuilding);
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
+//        debugOutput.println("last support sequence iteration: PL1: " + maxIt[0] + " \t PL2: " + maxIt[1]);
         debugOutput.println("LP GenerationTime:" + doRestrictedGameSolver.getOverallGenerationTime());
         debugOutput.println("LP Constraint GenerationTime:" + doRestrictedGameSolver.getOverallConstraintGenerationTime());
         debugOutput.println("LP ComputationTime:" + doRestrictedGameSolver.getOverallConstraintLPSolvingTime());

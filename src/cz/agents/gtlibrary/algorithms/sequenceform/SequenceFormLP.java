@@ -101,7 +101,7 @@ public class SequenceFormLP {
 			System.out.println("phase 2 done");
             overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
 
-			cplex.exportModel("gt-lib-sqf-rnd-" + firstPlayer + ".lp"); // uncomment for model export
+//			cplex.exportModel("gt-lib-sqf-rnd-" + firstPlayer + ".lp"); // uncomment for model export
             startTime = System.currentTimeMillis();
 			System.out.println("Solving");
 			cplex.solve();
@@ -180,7 +180,7 @@ public class SequenceFormLP {
 		return actions;
 	}
 
-	private IloNumVar createVariableForIS(IloCplex cplex, InformationSet is) throws IloException {
+    protected IloNumVar createVariableForIS(IloCplex cplex, InformationSet is) throws IloException {
 		double ub = Double.POSITIVE_INFINITY;
 		IloNumVar v = cplex.numVar(Double.NEGATIVE_INFINITY, ub, IloNumVarType.Float, "V" + is.toString());
 
@@ -188,7 +188,7 @@ public class SequenceFormLP {
 		return v;
 	}
 
-	private IloNumVar createVariableForSequence(IloCplex cplex, Sequence sequence) throws IloException {
+	protected IloNumVar createVariableForSequence(IloCplex cplex, Sequence sequence) throws IloException {
 		IloNumVar r = cplex.numVar(0, 1, IloNumVarType.Float, "R" + sequence.toString());
 
 		if (sequence.size() == 0)

@@ -10,6 +10,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import ilog.concert.IloNumVar;
+import ilog.concert.IloNumVarType;
 import ilog.cplex.IloCplex;
 
 import java.util.HashSet;
@@ -23,6 +24,10 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
     private long overallGenerationTime = 0;
     private long overallComputationTime = 0;
 
+    private double EPS = 0.00;
+    private double boundSize = -1;
+    private int updates = 0;
+
 	public DoubleOracleSequenceFormLP(Player[] players) {
 		super(players);
         this.players = players;
@@ -31,8 +36,23 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
         }
 	}
 
-	public Double calculateStrategyForPlayer(int secondPlayerIndex, GameState root, DoubleOracleConfig algConfig) {
+	public Double calculateStrategyForPlayer(int secondPlayerIndex, GameState root, DoubleOracleConfig algConfig, double currentBoundSize) {
 		try {
+
+//            if (this.boundSize < 0) {
+//                this.boundSize = currentBoundSize;
+//            } else {
+//                if (1.0 > currentBoundSize && updates == 0) {
+//                    EPS = 0;
+//                    updateSequenceVariables();
+//                    updates++;
+////                } else if (2.0 > currentBoundSize && updates == 0) {
+////                    EPS = 0.001;
+////                    updateSequenceVariables();
+////                    updates++;
+//                }
+//            }
+
 			int firstPlayerIndex = (1 + secondPlayerIndex) % 2;
 			createVariables(algConfig, root.getAllPlayers());
 
@@ -82,5 +102,23 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
 
     public long getOverallComputationTime() {
         return overallComputationTime;
+    }
+
+    @Override
+    protected IloNumVar createVariableForSequence(IloCplex cplex, Sequence sequence) throws IloException {
+        IloNumVar r = cplex.numVar(Math.pow(EPS, sequence.size()), 1, IloNumVarType.Float, "R" + sequence.toString());
+
+        if (sequence.size() == 0)
+            r.setLB(1d);
+        variables.put(sequence, r);
+        return r;
+    }
+
+    protected void updateSequenceVariables() throws IloException {
+        for (Object o : variables.keySet()) {
+            if (o instanceof  Sequence) {
+                    variables.get(o).setLB(Math.pow(EPS, ((Sequence) o).size()));
+            }
+        }
     }
 }
