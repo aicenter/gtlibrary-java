@@ -15,8 +15,7 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
-import cz.agents.gtlibrary.algorithms.mcts.backprop.BackPropagationStrategy;
-import cz.agents.gtlibrary.utils.RunningStats;
+import cz.agents.gtlibrary.algorithms.mcts.backprop.BPStrategy;
 
 public class UCTSelector extends MaxFunctionSelector {
 
@@ -26,7 +25,7 @@ public class UCTSelector extends MaxFunctionSelector {
 		this.C = C;
 	}
 
-	protected double evaluate(RunningStats nodeStats, BackPropagationStrategy actionStats) {
+	protected double evaluate(BPStrategy nodeStats, BPStrategy actionStats) {
 		int nbSamples = actionStats.getNbSamples();
 		
 		if (nbSamples == 0)
