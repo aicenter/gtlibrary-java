@@ -15,13 +15,12 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
-import cz.agents.gtlibrary.algorithms.mcts.backprop.BackPropagationStrategy;
-import cz.agents.gtlibrary.utils.RunningStats;
+import cz.agents.gtlibrary.algorithms.mcts.backprop.BPStrategy;
 
 public class MaxValueSelector extends MaxFunctionSelector {
 
     @Override
-    protected double evaluate(RunningStats nodeStats, BackPropagationStrategy actionStats) {
+    protected double evaluate(BPStrategy nodeStats, BPStrategy actionStats) {
         return actionStats.getEV();
     }
 
