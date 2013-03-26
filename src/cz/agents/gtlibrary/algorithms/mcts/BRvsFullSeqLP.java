@@ -23,6 +23,9 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
+import cz.agents.gtlibrary.domain.simrandomgame.SimRandomExpander;
+import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameInfo;
+import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -37,9 +40,10 @@ public class BRvsFullSeqLP {
 	public static void main(String[] args) {
 //		runKuhnPoker();
 //		runGenericPoker();
-		runBPG();
+//		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
+		runSimRandomGame();
 	}
 
 	public static void runKuhnPoker() {
@@ -65,6 +69,18 @@ public class BRvsFullSeqLP {
 		Expander<MCTSInformationSet> secondMCTSExpander = new RandomGameExpander<MCTSInformationSet>(secondMCTSConfig);
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new RandomGameExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 
+		runMCTS(rootState, gameInfo, firstMCTSConfig, secondMCTSConfig, firstMCTSExpander, secondMCTSExpander, efg.generate());
+	}
+	
+	public static void runSimRandomGame() {
+		GameState rootState = new SimRandomGameState();
+		GameInfo gameInfo = new SimRandomGameInfo();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(), new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
+		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new SampleWeightedBackPropStrategy.Factory(), new UniformStrategyForMissingSequences.Factory(), new UCTSelector(getC(gameInfo.getMaxUtility())));
+		Expander<MCTSInformationSet> firstMCTSExpander = new SimRandomExpander<MCTSInformationSet>(firstMCTSConfig);
+		Expander<MCTSInformationSet> secondMCTSExpander = new SimRandomExpander<MCTSInformationSet>(secondMCTSConfig);
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new SimRandomExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 
 		runMCTS(rootState, gameInfo, firstMCTSConfig, secondMCTSConfig, firstMCTSExpander, secondMCTSExpander, efg.generate());
 	}

@@ -92,14 +92,4 @@ public class BPGExpander<I extends InformationSet> extends ExpanderImpl<I> {
 		return nodes;
 	}
 
-	@Override
-	public List<Action> getActions(I informationSet) {
-		BPGGameState gameState = (BPGGameState) informationSet.getAllStates().iterator().next();
-
-		if (gameState.getPlayerToMove().equals(BPGGameInfo.ATTACKER)) {
-			return getActionsOfAttacker(gameState, informationSet);
-		}
-		return getActionsForPatroller(gameState, informationSet);
-	}
-
 }

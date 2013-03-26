@@ -20,6 +20,9 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
+import cz.agents.gtlibrary.domain.simrandomgame.SimRandomExpander;
+import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameInfo;
+import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
@@ -41,7 +44,17 @@ public class FullSequenceEFG {
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
-      runRandomGame();
+//      runRandomGame();
+      runSimRandomGame();
+	}
+
+	private static void runSimRandomGame() {
+		GameState rootState = new SimRandomGameState();
+        GameInfo gameInfo = new SimRandomGameInfo();
+        SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, new SimRandomExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+
+        efg.generate();
 	}
 
 	public static void runKuhnPoker() {

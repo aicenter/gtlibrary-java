@@ -30,19 +30,6 @@ public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>
 		return actions;
 	}
 
-	@Override
-	public List<Action> getActions(I informationSet) {
-		KuhnPokerGameState kpState = (KuhnPokerGameState) informationSet.getAllStates().iterator().next();
-		List<Action> actions = new LinkedList<Action>();
-
-		if (kpState.getRound() == 0) {			
-			addActionsOfNature(kpState, actions, informationSet);
-			return actions;
-		}
-		addActionsOfRegularPlayer(kpState, actions, informationSet);
-		return actions;
-	}
-	
 	private void addActionsOfRegularPlayer(KuhnPokerGameState kpState, List<Action> actions, I informationSet) {
 		LinkedList<PokerAction> history = kpState.getSequenceForAllPlayers();
 

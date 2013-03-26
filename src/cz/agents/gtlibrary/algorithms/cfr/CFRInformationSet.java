@@ -9,7 +9,6 @@ import java.util.Set;
 import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public abstract class CFRInformationSet extends InformationSetImpl {
 
@@ -29,7 +28,7 @@ public abstract class CFRInformationSet extends InformationSetImpl {
 
 	public void initializeFor(Collection<Action> actions, GameState state) {
 		if (this.actions == null) {
-			regret = new FixedSizeMap<Action, Float>(actions.size());
+			regret = new HashMap<Action, Float>(actions.size());
 			this.actions = actions;
 			initializeRegret(actions);
 			initializeStrategies(state, actions);
@@ -43,8 +42,8 @@ public abstract class CFRInformationSet extends InformationSetImpl {
 	}
 
 	private void initializeStrategies(GameState state, Collection<Action> actions) {
-		strategy = new FixedSizeMap<Action, Float>(actions.size());
-		averageStrategy = new FixedSizeMap<Action, Float>(actions.size());
+		strategy = new HashMap<Action, Float>(actions.size());
+		averageStrategy = new HashMap<Action, Float>(actions.size());
 
 		if (state.isPlayerToMoveNature()) {
 			fillStrategies(state, actions);
