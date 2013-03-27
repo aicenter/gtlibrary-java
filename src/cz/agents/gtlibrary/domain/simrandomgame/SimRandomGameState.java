@@ -148,6 +148,8 @@ public class SimRandomGameState extends GameStateImpl {
 			return false;
 		if (!actions.equals(other.actions))
 			return false;
+		if(!history.equals(other.history))
+			return false;
 		return true;
 	}
 
