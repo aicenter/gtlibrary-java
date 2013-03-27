@@ -14,10 +14,10 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.domain.simrandomgame.SimRandomExpander;
+import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameInfo;
+import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameState;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import java.util.Map;
@@ -30,17 +30,38 @@ public class SMMCTSExperiment {
         private static final int MCTS_ITERATIONS_PER_CALL = 1000;
 	private static final int SAME_STRATEGY_CHECK_COUNT = 20;
     
-    
-        public static void main(String[] args) {
-            GSGameInfo gameInfo = new GSGameInfo();
-            GameState rootState = new GoofSpielGameState();
-            SequenceFormConfig<SequenceInformationSet> sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-            Expander<SequenceInformationSet> sfExpander = new GoofSpielExpander<SequenceInformationSet>(sfAlgConfig);
-            FullSequenceEFG efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
-            Map<Player, Map<Sequence, Double>> optStrategies = efg.generate();
-            SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(sfExpander, 1, new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] }, sfAlgConfig, gameInfo);
         
-            
+        static GameInfo gameInfo;
+        static GameState rootState;
+        static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
+        static Expander<SequenceInformationSet> sfExpander;
+        static FullSequenceEFG efg;
+        static Map<Player, Map<Sequence, Double>> optStrategies;
+        static SQFBestResponseAlgorithm brAlg;
+        
+        
+        public static void setupGS(){
+            gameInfo = new GSGameInfo();
+            rootState = new GoofSpielGameState();
+            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+            sfExpander = new GoofSpielExpander<SequenceInformationSet>(sfAlgConfig);
+            efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
+            optStrategies = efg.generate();
+            brAlg = new SQFBestResponseAlgorithm(sfExpander, 1, new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] }, sfAlgConfig, gameInfo);
+        }
+        
+        public static void setupRnd(long seed){
+            gameInfo = new SimRandomGameInfo();
+            SimRandomGameInfo.seed = seed;
+            rootState = new SimRandomGameState();
+            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+            sfExpander = new SimRandomExpander<SequenceInformationSet>(sfAlgConfig);
+            efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
+            optStrategies = efg.generate();
+            brAlg = new SQFBestResponseAlgorithm(sfExpander, 1, new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] }, sfAlgConfig, gameInfo);
+        }
+        
+        public static void runSMMCTS(){
             //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new DefaultBackPropFactory(), new UniformStrategyForMissingSequences.Factory(), new UCTSelector(5));
             double gamma = 0.01;
             double maxCFValue = gameInfo.getMaxUtility() / Math.pow(gamma/5.0, gameInfo.getMaxDepth());
@@ -76,9 +97,16 @@ public class SMMCTSExperiment {
                     lastPureStrategy = strategy;
             }
             
-            Map<Sequence, Double> pureStrategy = runner.runMCTS(GSGameInfo.FIRST_PLAYER, new FrequenceDistribution());
+            //Map<Sequence, Double> pureStrategy = runner.runMCTS(GSGameInfo.FIRST_PLAYER, new FrequenceDistribution());
 
-            System.out.println(pureStrategy);
+            //System.out.println(pureStrategy);
+        }
+        
+        
+    
+        public static void main(String[] args) {
+            setupRnd(0);
+            runSMMCTS();
 	}
     
 }
