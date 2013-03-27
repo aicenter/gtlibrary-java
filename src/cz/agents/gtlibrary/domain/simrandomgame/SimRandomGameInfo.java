@@ -17,7 +17,9 @@ public class SimRandomGameInfo implements GameInfo {
 	public static long seed = 1;
 	public static final int[] MAX_BF = { 4, 4 };
 	public static final int MAX_DEPTH = 4;
-	public static final double MAX_UTILITY = 1;
+	public static int MAX_UTILITY = 1;
+	public static boolean BINARY_UTILITY = true;
+	public static boolean UTILITY_CORRELATION = true;
 
 	public static Random rnd = new Random(seed);
 
