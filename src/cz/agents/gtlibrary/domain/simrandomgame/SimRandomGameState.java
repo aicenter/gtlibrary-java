@@ -97,8 +97,21 @@ public class SimRandomGameState extends GameStateImpl {
 		if (!isGameEnd())
 			return new double[] { 0, 0 };
 
-		double rndValue = new Random(ID).nextGaussian() * center * SimRandomGameInfo.MAX_UTILITY;
+		double rndValue;
 
+		if (SimRandomGameInfo.UTILITY_CORRELATION) {
+			if (SimRandomGameInfo.BINARY_UTILITY) {
+				rndValue = Math.signum(center);
+			} else {
+				rndValue = center;
+			}
+		} else {
+			if (SimRandomGameInfo.BINARY_UTILITY) {
+				rndValue = new Random(ID).nextInt(SimRandomGameInfo.MAX_UTILITY + 1); // totally random binary
+			} else {
+				rndValue = new Random(ID).nextDouble() * SimRandomGameInfo.MAX_UTILITY; // totally random
+			}
+		}
 		return new double[] { rndValue, -rndValue };
 	}
 
@@ -149,7 +162,7 @@ public class SimRandomGameState extends GameStateImpl {
 
 	@Override
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-		if(key == null)
+		if (key == null)
 			key = new Pair<Integer, Sequence>(actions.hashCode(), getSequenceForPlayerToMove());
 		return key;
 	}
