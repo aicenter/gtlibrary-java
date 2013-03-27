@@ -18,11 +18,21 @@ public class SimRandomGameInfo implements GameInfo {
 	public static final int[] MAX_BF = { 4, 4 };
 	public static final int MAX_DEPTH = 4;
 	public static int MAX_UTILITY = 1;
-	public static boolean BINARY_UTILITY = true;
+	public static boolean BINARY_UTILITY = false;
 	public static boolean UTILITY_CORRELATION = true;
 
 	public static Random rnd = new Random(seed);
 
+        public SimRandomGameInfo() {
+            rnd = new Random(seed);
+            if (UTILITY_CORRELATION) {
+                if (BINARY_UTILITY)
+                    MAX_UTILITY = 1;
+                else
+                    MAX_UTILITY = 2*MAX_DEPTH;
+            }
+        }
+        
 	@Override
 	public double getMaxUtility() {
 		return MAX_UTILITY;
@@ -40,7 +50,7 @@ public class SimRandomGameInfo implements GameInfo {
 
 	@Override
 	public String getInfo() {
-		return "Simultaneous Random game:\nMAX_UTILITY:" + MAX_UTILITY + ", MAX_BF:" + Arrays.toString(MAX_BF) + ", MAX_DEPTH:" + MAX_DEPTH;
+		return "Simultaneous Random game:\nMAX_UTILITY:" + MAX_UTILITY + ", MAX_BF:" + Arrays.toString(MAX_BF) + ", MAX_DEPTH:" + MAX_DEPTH + ", BIN_UTIL:" + BINARY_UTILITY + ", UTIL_CORR:" + UTILITY_CORRELATION;
 	}
 
 	@Override
