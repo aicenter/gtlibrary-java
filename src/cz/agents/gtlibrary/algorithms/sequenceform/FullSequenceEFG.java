@@ -17,6 +17,9 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
@@ -45,10 +48,20 @@ public class FullSequenceEFG {
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
-      runSimRandomGame();
+//      runSimRandomGame();
+		runPursuit();
 	}
+	
+	public static void runPursuit() {
+        GameState rootState = new PursuitGameState();
+        GameInfo gameInfo = new PursuitGameInfo();
+        SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, new PursuitExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+        
+        efg.generate();
+    }
 
-	private static void runSimRandomGame() {
+	public static void runSimRandomGame() {
 		GameState rootState = new SimRandomGameState();
         GameInfo gameInfo = new SimRandomGameInfo();
         SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
@@ -173,13 +186,13 @@ public class FullSequenceEFG {
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
 
 		// sanity check -> calculation of Full BR on the solution of SQF LP
-//		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
-//		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
-//
-//		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
-//		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
-//
-//        algConfig.validateGameStructure(rootState, expander);
+		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+
+		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+
+        algConfig.validateGameStructure(rootState, expander);
 
 		return realizationPlans;
 	}
