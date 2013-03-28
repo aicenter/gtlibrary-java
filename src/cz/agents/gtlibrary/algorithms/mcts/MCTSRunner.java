@@ -1,23 +1,14 @@
 package cz.agents.gtlibrary.algorithms.mcts;
 
-import cz.agents.gtlibrary.algorithms.mcts.backprop.DefaultBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.FrequenceDistribution;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
-import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
-import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
-import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.strategy.Strategy;
-import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
-import java.util.Map;
 
 public class MCTSRunner {
 
@@ -28,14 +19,6 @@ public class MCTSRunner {
 	private MCTSConfig algConfig;
 	private GameState gameState;
 	private Expander<MCTSInformationSet> expander;
-
-	public static void main(String[] args) {
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new DefaultBackPropFactory(), new UniformStrategyForMissingSequences.Factory(), new UCTSelector(5));
-		MCTSRunner runner = new MCTSRunner(firstMCTSConfig, new KuhnPokerGameState(), new KuhnPokerExpander<MCTSInformationSet>(firstMCTSConfig));
-		Map<Sequence, Double> pureStrategy = runner.runMCTS(100000, KPGameInfo.FIRST_PLAYER, new FrequenceDistribution());
-                
-		System.out.println(pureStrategy);
-	}
 
 	public MCTSRunner(MCTSConfig algConfig, GameState gameState, Expander<MCTSInformationSet> expander) {
 		this.algConfig = algConfig;
@@ -71,6 +54,7 @@ public class MCTSRunner {
 		while (true) {
 			strategy = runMCTS(MCTS_ITERATIONS_PER_CALL, player, distribution);
 			if (lastPureStrategy != null && strategy.maxDifferenceFrom(lastPureStrategy) < 0.001) {
+//			if(strategy.equals(lastPureStrategy)) {
 				counter++;
 			} else {
 				counter = 0;
