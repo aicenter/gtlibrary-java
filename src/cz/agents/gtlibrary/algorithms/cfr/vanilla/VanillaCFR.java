@@ -30,7 +30,17 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
-		runSimRandomGame();
+//		runSimRandomGame();
+		runPursuit();
+	}
+	
+	public static void runPursuit() {
+		GameState rootState = new SimRandomGameState();
+		CFRConfig<VanillaInformationSet> config = new VanillaCFRConfig(new SimRandomGameState());
+		VanillaCFR cfr = new VanillaCFR(config);
+
+		cfr.buildGameTree(rootState, new SimRandomExpander<VanillaInformationSet>(config));
+		cfr.updateTree(200000);
 	}
 	
 	public static void runSimRandomGame() {
