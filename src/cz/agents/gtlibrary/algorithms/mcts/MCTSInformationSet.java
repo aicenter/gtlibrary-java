@@ -12,10 +12,9 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.utils.RunningStats;
 
 public class MCTSInformationSet extends InformationSetImpl {
-	
+
 	private Set<InnerNode> allNodes;
 	private Map<Action, BPStrategy> actionStats;
 	private BPStrategy[] informationSetStats;
@@ -26,11 +25,11 @@ public class MCTSInformationSet extends InformationSetImpl {
 		informationSetStats = new BPStrategy[state.getAllPlayers().length];
 		actionStats = new LinkedHashMap<Action, BPStrategy>();
 	}
-	
+
 	public void addNode(InnerNode node) {
 		allNodes.add(node);
 	}
-	
+
 	public Set<InnerNode> getAllNodes() {
 		return allNodes;
 	}
@@ -38,7 +37,7 @@ public class MCTSInformationSet extends InformationSetImpl {
 	public void addValuesToStats(double[] values) {
 		for (int i = 0; i < values.length; i++) {
 			informationSetStats[i].onBackPropagate(values[i]);
-		}		
+		}
 	}
 
 	public void updateActionStatsFor(Action action, double[] values) {
@@ -46,18 +45,20 @@ public class MCTSInformationSet extends InformationSetImpl {
 	}
 
 	public void initStats(List<Action> actions, BackPropFactory backPropagationStrategyFactory) {
-		for (Action action : actions) {
-			actionStats.put(action, backPropagationStrategyFactory.createForISAction(this, action));
-		}
-                for (int i = 0; i < informationSetStats.length; i++) {
-			informationSetStats[i] = backPropagationStrategyFactory.createForIS(this);
+		if (actionStats.isEmpty()) {
+			for (Action action : actions) {
+				actionStats.put(action, backPropagationStrategyFactory.createForISAction(this, action));
+			}
+			for (int i = 0; i < informationSetStats.length; i++) {
+				informationSetStats[i] = backPropagationStrategyFactory.createForIS(this);
+			}
 		}
 	}
-	
+
 	public BPStrategy getStatsFor(int playerIndex) {
 		return informationSetStats[playerIndex];
 	}
-	
+
 	public Map<Action, BPStrategy> getActionStats() {
 		return actionStats;
 	}
