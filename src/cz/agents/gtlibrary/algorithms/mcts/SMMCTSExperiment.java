@@ -14,10 +14,12 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomExpander;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameInfo;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import java.util.Map;
@@ -51,19 +53,21 @@ public class SMMCTSExperiment {
         }
         
         public static void setupRnd(long seed){
-            gameInfo = new SimRandomGameInfo();
-            SimRandomGameInfo.seed = seed;
+            gameInfo = new RandomGameInfo();
+            RandomGameInfo.seed = seed;
             rootState = new SimRandomGameState();
             sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-            sfExpander = new SimRandomExpander<SequenceInformationSet>(sfAlgConfig);
+            sfExpander = new RandomGameExpander<SequenceInformationSet>(sfAlgConfig);
             efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
             optStrategies = efg.generate();
             brAlg = new SQFBestResponseAlgorithm(sfExpander, 1, new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] }, sfAlgConfig, gameInfo);
+            GambitEFG.write("RND222_"+seed+".efg", rootState, sfExpander);
+            System.out.println(optStrategies);
         }
         
         public static void runSMMCTS(){
             //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new DefaultBackPropFactory(), new UniformStrategyForMissingSequences.Factory(), new UCTSelector(5));
-            double gamma = 0.01;
+            double gamma = 0.05;
             double maxCFValue = gameInfo.getMaxUtility() / Math.pow(gamma/5.0, gameInfo.getMaxDepth());
             //double maxCFValue = 1e10;
             //double maxCFValue = (new GSGameInfo()).getMaxUtility();
@@ -72,7 +76,7 @@ public class SMMCTSExperiment {
 //                Map<Sequence, Double> pureStrategy = runner.runMCTS(KPGameInfo.FIRST_PLAYER, new FrequenceDistribution());
 
 
-            MCTSRunner runner = new MCTSRunner(firstMCTSConfig, new GoofSpielGameState(), new GoofSpielExpander<MCTSInformationSet>(firstMCTSConfig));
+            MCTSRunner runner = new MCTSRunner(firstMCTSConfig, rootState, new RandomGameExpander<MCTSInformationSet> (firstMCTSConfig));
             
             
             
@@ -89,7 +93,7 @@ public class SMMCTSExperiment {
                     } else {
                             counter = 0;
                     }
-                    //System.out.println(strategy);
+                    System.out.println(strategy);
                     System.out.println("Value: " + runner.getEV()[0] + " BR: " + brAlg.calculateBR(rootState, strategy) + " Same: " + counter);
                     if (counter == SAME_STRATEGY_CHECK_COUNT) {
                             break;
@@ -105,8 +109,8 @@ public class SMMCTSExperiment {
         
     
         public static void main(String[] args) {
-            setupRnd(0);
-            runSMMCTS();
+            for (int i=0; i<5; i++) setupRnd(i);
+  //          runSMMCTS();
 	}
     
 }

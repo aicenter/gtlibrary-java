@@ -22,9 +22,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomExpander;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameInfo;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
@@ -70,9 +68,9 @@ public class GeneralDoubleOracle {
     
     public static void runSimRandomGame() {
         GameState rootState = new SimRandomGameState();
-        GameInfo gameInfo = new SimRandomGameInfo();
+        GameInfo gameInfo = new RandomGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
-        Expander<DoubleOracleInformationSet> expander = new SimRandomExpander<DoubleOracleInformationSet>(algConfig);
+        Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
         doefg.generate();
     }

@@ -23,9 +23,7 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomExpander;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameInfo;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
@@ -63,9 +61,9 @@ public class FullSequenceEFG {
 
 	public static void runSimRandomGame() {
 		GameState rootState = new SimRandomGameState();
-        GameInfo gameInfo = new SimRandomGameInfo();
+        GameInfo gameInfo = new RandomGameInfo();
         SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-        FullSequenceEFG efg = new FullSequenceEFG(rootState, new SimRandomExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, new RandomGameExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 
         efg.generate();
 	}

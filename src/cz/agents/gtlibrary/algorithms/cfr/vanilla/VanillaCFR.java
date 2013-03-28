@@ -15,8 +15,8 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomExpander;
-import cz.agents.gtlibrary.domain.simrandomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.History;
@@ -38,7 +38,7 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 		CFRConfig<VanillaInformationSet> config = new VanillaCFRConfig(new SimRandomGameState());
 		VanillaCFR cfr = new VanillaCFR(config);
 
-		cfr.buildGameTree(rootState, new SimRandomExpander<VanillaInformationSet>(config));
+		cfr.buildGameTree(rootState, new RandomGameExpander<VanillaInformationSet>(config));
 		cfr.updateTree(200000);
 	}
 
