@@ -20,7 +20,7 @@ public class InnerNode extends NodeImpl {
 	protected Player currentPlayer;
 	protected Expander<MCTSInformationSet> expander;
 	protected MCTSInformationSet informationSet;
-        private BPStrategy nodeStats;
+	private BPStrategy nodeStats;
 	private Map<Action, BPStrategy> actionStats;
 
 	protected boolean isLocked;
@@ -39,7 +39,6 @@ public class InnerNode extends NodeImpl {
 		currentPlayer = gameState.getPlayerToMove();
 		isLocked = false;
 		this.expander = expander;
-
 		attendInformationSet();
 		actions = expander.getActions(gameState);
 	}
@@ -55,7 +54,7 @@ public class InnerNode extends NodeImpl {
 		informationSet.addStateToIS(gameState);
 	}
 
-        @Override
+	@Override
 	public double[] simulate() {
 		return algConfig.getSimulator().simulate(gameState, expander);
 	}
@@ -79,7 +78,7 @@ public class InnerNode extends NodeImpl {
 	@Override
 	public void backPropagate(double[] values) {
 		informationSet.addValuesToStats(values);
-                nodeStats.onBackPropagate(values[currentPlayer.getId()]);
+		nodeStats.onBackPropagate(values[currentPlayer.getId()]);
 		if (parent != null && !parent.isLocked()) {
 			parent.backPropagateInActions(lastAction, values);
 			parent.backPropagate(values);
@@ -109,7 +108,7 @@ public class InnerNode extends NodeImpl {
 	}
 
 	protected Action getActionFromDecisionStrategy(int playerIndex) {
-		return algConfig.getSelectionStrategy().select(currentPlayer, nodeStats,actionStats, informationSet.getStatsFor(playerIndex), informationSet.getActionStats());
+		return algConfig.getSelectionStrategy().select(currentPlayer, nodeStats, actionStats, informationSet.getStatsFor(playerIndex), informationSet.getActionStats());
 	}
 
 	@Override
@@ -150,13 +149,13 @@ public class InnerNode extends NodeImpl {
 		if (children != null) {
 			return;
 		}
-                nodeStats =  algConfig.getBackPropagationStrategyFactory().createForNode(this);
+		nodeStats = algConfig.getBackPropagationStrategyFactory().createForNode(this);
 		actionStats = new HashMap<Action, BPStrategy>();
 		for (Action action : actions) {
 			actionStats.put(action, algConfig.getBackPropagationStrategyFactory().createForNodeAction(this, action));
 		}
-		informationSet.initStats(actions, algConfig.getBackPropagationStrategyFactory());
 		children = new FixedSizeMap<Action, Node>(actions.size());
+		informationSet.initStats(actions, algConfig.getBackPropagationStrategyFactory());
 	}
 
 	@Override
@@ -172,30 +171,6 @@ public class InnerNode extends NodeImpl {
 	public int getNbSamples() {
 		return informationSet.getStatsFor(0).getNbSamples();
 	}
-
-	protected int getIndexOfAction(Action randomAction) {
-		int index = 0;
-
-		for (Action action : actions) {
-			if (action.equals(randomAction))
-				return index;
-			index++;
-		}
-		return -1;
-	}
-
-//	protected Action getMostPlayedAction(int playerIndex) {
-//		int max = Integer.MIN_VALUE;
-//		Action action = null;
-//
-//		for (Entry<Action, BackPropagationStrategy> entry : informationSet.getActionStats().entrySet()) {
-//			if (entry.getValue().getNbSamples() > max) {
-//				max = entry.getValue().getNbSamples();
-//				action = entry.getKey();
-//			}
-//		}
-//		return action;
-//	}
 
 	protected Map<Sequence, Double> getStrategyFor(Node node, Player player, Distribution distribution) {
 		if (node == null) {
@@ -218,14 +193,13 @@ public class InnerNode extends NodeImpl {
 		if (player.equals(currentPlayer)) {
 			updateStrategy(strategy, actionDistribution);
 		}
-
 		for (Entry<Action, Double> entry : actionDistribution.entrySet()) {
-			if (entry.getValue() > 0){
-                            for (Map.Entry<Sequence, Double> en : getStrategyFor(children.get(entry.getKey()), player, distribution).entrySet()){
-                                strategy.put(en.getKey(), entry.getValue() * en.getValue());
-                            }
-                        }
-				
+			if (entry.getValue() > 0) {
+				for (Map.Entry<Sequence, Double> en : getStrategyFor(children.get(entry.getKey()), player, distribution).entrySet()) {
+					strategy.put(en.getKey(), entry.getValue() * en.getValue());
+				}
+			}
+
 		}
 		return strategy;
 	}
@@ -238,7 +212,7 @@ public class InnerNode extends NodeImpl {
 				Sequence sequence = new LinkedListSequenceImpl(currentSequence);
 
 				sequence.addLast(entry.getKey());
-				strategy.put(sequence, entry.getValue());// not rp, needs to be multiplied by previous value
+				strategy.put(sequence, entry.getValue());
 			}
 		}
 	}
