@@ -19,6 +19,9 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
@@ -46,8 +49,18 @@ public class GeneralDoubleOracle {
 //        runGoofSpiel();
 //        runRandomGame();
 		runSimRandomGame();
+//		runPursuit();
 	}
 
+	public static void runPursuit() {
+        GameState rootState = new PursuitGameState();
+        GameInfo gameInfo = new PursuitGameInfo();
+		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new PursuitExpander<DoubleOracleInformationSet>(algConfig);
+		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+        doefg.generate();
+    }
+	
     public static void runKuhnPoker() {
         GameState rootState = new KuhnPokerGameState();
         GameInfo gameInfo = new KPGameInfo();
