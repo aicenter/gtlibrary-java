@@ -48,7 +48,7 @@ public class Exp3Selector implements SelectionStrategy {
     @Override
     public Action select(Player player, BPStrategy nodeStats, Map<Action, BPStrategy> nodeActionStats, BPStrategy isStats, Map<Action, BPStrategy> isActionStats){
         Map<Action, Exp3ActionBPStrategy> actionStats = (Map<Action, Exp3ActionBPStrategy>) (Map) isActionStats;
-        if (nodeStats.getNbSamples() == 0) {
+        if (isStats.getNbSamples() == 1) {
             initialize(actionStats);
         } else {
             updateProb(actionStats);
