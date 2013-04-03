@@ -38,10 +38,10 @@ public class FullSequenceEFG {
 
 	public static void main(String[] args) {
 //		runKuhnPoker();
-//		runGenericPoker();
+		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
-      runRandomGame();
+//      runRandomGame();
 	}
 
 	public static void runKuhnPoker() {
