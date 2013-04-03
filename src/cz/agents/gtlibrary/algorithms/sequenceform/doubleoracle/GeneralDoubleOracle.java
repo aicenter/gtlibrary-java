@@ -36,14 +36,20 @@ public class GeneralDoubleOracle {
 	final private double EPS = 0.000001;
     final private static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
-    public static boolean IMPROVED_PLAYER_SELECTION = true;
+//    public static boolean IMPROVED_PLAYER_SELECTION = true;
+
+    public enum PlayerSelection {
+        BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
+    }
+
+    public static PlayerSelection playerSelection = PlayerSelection.BOTH;
 
 	public static void main(String[] args) {
 //        runBP();
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-        runRandomGame();
+//        runRandomGame();
 	}
 
     public static void runKuhnPoker() {
@@ -143,21 +149,20 @@ public class GeneralDoubleOracle {
 		
 		while ((Math.abs(p1BoundUtility + p2BoundUtility) > EPS) ||
                 Math.abs(doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]) + doRestrictedGameSolver.getResultForPlayer(actingPlayers[1])) > EPS){
-//		while (true) {
 
 			iterations++;
-//            algConfig.setCurrentIteration(iterations);
+            debugOutput.println("Iteration " + iterations + ": Cumulative Time from Beginning:" + (System.currentTimeMillis() - start));
 
             diffSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex];
-            algConfig.clearNewSequences();
+
 			debugOutput.println("Last difference: " + (algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex]));
             debugOutput.println("Current Size: " + algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]));
 			oldSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]);
 
-            if (diffSize[0] == 0 && diffSize[1] == 0) {
-                System.out.println("ERROR : NOT CONVERGED");
-                break;
-            }
+//            if (diffSize[0] == 0 && diffSize[1] == 0) {
+//                System.out.println("ERROR : NOT CONVERGED");
+//                break;
+//            }
 
 			int opponentPlayerIndex = ( currentPlayerIndex + 1 ) % 2;
 			
@@ -203,74 +208,96 @@ public class GeneralDoubleOracle {
             if (DEBUG) debugOutput.println(algConfig.getNewSequences());
 
 
+            switch (playerSelection) {
+                case BOTH:
+                    if (currentPlayerIndex != 0) {
+                        long startCPLEX = System.currentTimeMillis();
+                        doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
+                        doRestrictedGameSolver.calculateStrategyForPlayer(opponentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
+                        long thisCPLEX = System.currentTimeMillis() - startCPLEX;
 
-            if (!IMPROVED_PLAYER_SELECTION) {
-                long startCPLEX = System.currentTimeMillis();
-                doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
-                long thisCPLEX = System.currentTimeMillis() - startCPLEX;
-
-                debugOutput.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
-                overallCPLEX += thisCPLEX;
-                debugOutput.println("LP Value " + actingPlayers[opponentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]));
-
-                currentPlayerIndex = opponentPlayerIndex;
-            } else {
-                if (doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]) == null ||
-                    doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]) == null) { // we have not calculated the value for the current player in RG yet
+                        debugOutput.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
+                        overallCPLEX += thisCPLEX;
+                        debugOutput.println("LP Value " + actingPlayers[currentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]));
+                        debugOutput.println("LP Value " + actingPlayers[opponentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]));
+                        algConfig.clearNewSequences();
+                    }
+                    currentPlayerIndex = opponentPlayerIndex;
+                    break;
+                case SINGLE_ALTERNATING:
                     long startCPLEX = System.currentTimeMillis();
                     doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
                     long thisCPLEX = System.currentTimeMillis() - startCPLEX;
 
                     debugOutput.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
                     overallCPLEX += thisCPLEX;
+                    debugOutput.println("LP Value " + actingPlayers[currentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]));
                     debugOutput.println("LP Value " + actingPlayers[opponentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]));
 
                     currentPlayerIndex = opponentPlayerIndex;
-                } else {
-                    double oldLPResult = doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]);
+                    algConfig.clearNewSequences();
+                    break;
+
+                case SINGLE_IMPROVED:
+                    if (doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]) == null ||
+                            doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]) == null) { // we have not calculated the value for the current player in RG yet
+                            currentPlayerIndex = opponentPlayerIndex;
+                    } else {
+                        double oldLPResult = doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]);
 //                    double oldLPResult1 = doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]);
 //                    double oldLPResult2 = doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]);
-                    if (currentPlayerIndex == 0) {
-                        if (Math.abs(p1BoundUtility - (oldLPResult)) > Math.abs(p2BoundUtility - (-oldLPResult))) {
+                        if (currentPlayerIndex == 0) {
+                            if (newFullBRSequences.size() > 0 && Math.abs(p1BoundUtility - (oldLPResult)) > Math.abs(p2BoundUtility - (-oldLPResult))) {
 //                        if (Math.abs(currentBRVal - (oldLPResult)) > EPS) {
 //                        if (Math.abs(lastBRValue[0] - (oldLPResult2)) - EPS > Math.abs(lastBRValue[1] - (oldLPResult1))) {
-                            currentPlayerIndex = 0;
+                                currentPlayerIndex = 0;
+                            } else {
+                                currentPlayerIndex = 1;
+                            }
                         } else {
-                            currentPlayerIndex = 1;
-                        }
-                    } else {
-                        if (Math.abs(p1BoundUtility - (-oldLPResult)) >= Math.abs(p2BoundUtility - (oldLPResult))) {
+                            if (newFullBRSequences.size() == 0 || Math.abs(p1BoundUtility - (-oldLPResult)) >= Math.abs(p2BoundUtility - (oldLPResult))) {
 //                        if (Math.abs(currentBRVal - (oldLPResult)) > EPS) {
 //                        if (Math.abs(lastBRValue[0] - (-oldLPResult2)) >= Math.abs(lastBRValue[1] - (-oldLPResult1)) - EPS ) {
-                            currentPlayerIndex = 0;
-                        } else {
-                            currentPlayerIndex = 1;
+                                currentPlayerIndex = 0;
+                            } else {
+                                currentPlayerIndex = 1;
+                            }
                         }
+
                     }
+
+
 
                     opponentPlayerIndex = (1+currentPlayerIndex)%2;
 
-                    long startCPLEX = System.currentTimeMillis();
+                    startCPLEX = System.currentTimeMillis();
                     doRestrictedGameSolver.calculateStrategyForPlayer(opponentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
-                    long thisCPLEX = System.currentTimeMillis() - startCPLEX;
+                    thisCPLEX = System.currentTimeMillis() - startCPLEX;
 
                     debugOutput.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
                     overallCPLEX += thisCPLEX;
                     debugOutput.println("LP Value " + actingPlayers[currentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]));
                     debugOutput.println("LP Value " + actingPlayers[opponentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]));
-                }
+
+                    algConfig.clearNewSequences();
+
+                    break;
+                default:
+                    assert false;
+                    break;
             }
 
             realizationPlans.put(actingPlayers[currentPlayerIndex], doRestrictedGameSolver.getResultStrategiesForPlayer(actingPlayers[currentPlayerIndex]));
-            if (IMPROVED_PLAYER_SELECTION) realizationPlans.put(actingPlayers[opponentPlayerIndex], doRestrictedGameSolver.getResultStrategiesForPlayer(actingPlayers[opponentPlayerIndex]));
+            realizationPlans.put(actingPlayers[opponentPlayerIndex], doRestrictedGameSolver.getResultStrategiesForPlayer(actingPlayers[opponentPlayerIndex]));
 
-            for (Player player : actingPlayers) {
-				for (Sequence sequence : realizationPlans.get(player).keySet()) {
-					if (realizationPlans.get(player).get(sequence) > 0) {
-                        if (DEBUG) debugOutput.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
-					}
-				}
-			}
+            if (DEBUG)
+                for (Player player : actingPlayers) {
+                    for (Sequence sequence : realizationPlans.get(player).keySet()) {
+                        if (realizationPlans.get(player).get(sequence) > 0) {
+                            if (DEBUG) debugOutput.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+                        }
+                    }
+                }
 
             if (DEBUG)
                 algConfig.validateRestrictedGameStructure(expander, brAlgorithms);
