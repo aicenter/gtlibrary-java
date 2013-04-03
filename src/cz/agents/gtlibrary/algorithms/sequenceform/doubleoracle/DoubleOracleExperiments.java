@@ -44,7 +44,7 @@ public class DoubleOracleExperiments {
                 throw new IllegalArgumentException("Illegal poker domain arguments count. 4 are required {MAX_RISES} {MAX_BETS} {MAX_CARD_TYPES} {MAX_CARD_OF_EACH_TYPE}");
             }
             GPGameInfo.MAX_RAISES_IN_ROW = new Integer(args[2]);
-            GPGameInfo.MAX_BETS = new Integer(args[3]);
+            GPGameInfo.MAX_DIFFERENT_BETS = new Integer(args[3]);
             GPGameInfo.MAX_CARD_TYPES = new Integer(args[4]);
             GPGameInfo.MAX_CARD_OF_EACH_TYPE = new Integer(args[5]);
         } else if (args[1].equalsIgnoreCase("RG")) { // Random Games
@@ -64,10 +64,12 @@ public class DoubleOracleExperiments {
 
     public void runAlgorithm(String alg, String domain) {
         if (alg.startsWith("DO")) {
-            if (alg.equalsIgnoreCase("DOI")) {
-                GeneralDoubleOracle.IMPROVED_PLAYER_SELECTION = true;
-            } else {
-                GeneralDoubleOracle.IMPROVED_PLAYER_SELECTION = false;
+            if (alg.equalsIgnoreCase("DO-B")) {
+                GeneralDoubleOracle.playerSelection = GeneralDoubleOracle.PlayerSelection.BOTH;
+            } else if (alg.equalsIgnoreCase("DO-SA")) {
+                GeneralDoubleOracle.playerSelection = GeneralDoubleOracle.PlayerSelection.SINGLE_ALTERNATING;
+            } else if (alg.equalsIgnoreCase("DO-SI")) {
+                GeneralDoubleOracle.playerSelection = GeneralDoubleOracle.PlayerSelection.SINGLE_IMPROVED;
             }
             if (domain.equalsIgnoreCase("BP"))
                 GeneralDoubleOracle.runBP();

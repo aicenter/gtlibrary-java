@@ -39,6 +39,7 @@ public class FullSequenceEFG {
 	private SequenceFormConfig<SequenceInformationSet> algConfig;
 
 	private PrintStream debugOutput = System.out;
+    final private static boolean DEBUG = false;
 
 	public static void main(String[] args) {
 //		runKuhnPoker();
@@ -46,8 +47,8 @@ public class FullSequenceEFG {
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
-//      runSimRandomGame();
-		runPursuit();
+      runSimRandomGame();
+//		runPursuit();
 	}
 	
 	public static void runPursuit() {
@@ -158,7 +159,8 @@ public class FullSequenceEFG {
 			for (Sequence sequence : realizationPlans.get(player).keySet()) {
 				if (realizationPlans.get(player).get(sequence) > 0) {
 					support_size[player.getId()]++;
-					//	System.out.println(sequence + "\t:\t" + realizationPlans.get(playerID).get(sequence) /*+ ", " + tree.getProbabilityOfSequenceFromAverageStrategy(sequence)*/);
+					if (DEBUG)
+                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
 				}
 			}
 		}
@@ -168,10 +170,6 @@ public class FullSequenceEFG {
             Thread.sleep(500l);
         } catch (InterruptedException e) {
         }
-
-		//		for (BasicPlayerID playerID : rootState.getAllPlayers()) {
-		//			System.out.println("final result for " + playerID + ": " + SequenceFormLP.resultValues.get(playerID) /*+ ", " + tree.getIS(InformationSet.calculateISEquivalenceForPlayerToMove(rootState)).getValueOfGameForPlayer(playerID)*/);
-		//		}
 
         System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
@@ -183,15 +181,16 @@ public class FullSequenceEFG {
         System.out.println("final RGB time: " + 0);
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
 
-		// sanity check -> calculation of Full BR on the solution of SQF LP
-		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+        if (DEBUG) {
+            // sanity check -> calculation of Full BR on the solution of SQF LP
+            SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+            System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
 
-		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+            SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+            System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
 
-        algConfig.validateGameStructure(rootState, expander);
-
+            algConfig.validateGameStructure(rootState, expander);
+        }
 		return realizationPlans;
 	}
 
