@@ -40,7 +40,7 @@ public class GoofSpielGameState extends GameStateImpl {
 
 		createPlayerCards();
 	}
-	
+
 	public GoofSpielGameState(Sequence natureSequence) {
 		super(GSGameInfo.ALL_PLAYERS);
 		sequenceForAllPlayers = new LinkedList<Action>();
@@ -52,7 +52,7 @@ public class GoofSpielGameState extends GameStateImpl {
 
 		createPlayerCards();
 	}
-	
+
 	private Sequence createRandomSequence() {
 		List<Integer> indices = new LinkedList<Integer>();
 		Sequence natureSequence = new LinkedListSequenceImpl(GSGameInfo.NATURE);
@@ -81,7 +81,7 @@ public class GoofSpielGameState extends GameStateImpl {
 		this.sequenceForAllPlayers = new LinkedList<Action>(gameState.sequenceForAllPlayers);
 		this.natureSequence = new LinkedListSequenceImpl(gameState.natureSequence);
 	}
-	
+
 	public Sequence getNatureSequence() {
 		return natureSequence;
 	}
@@ -272,6 +272,8 @@ public class GoofSpielGameState extends GameStateImpl {
 				return false;
 		} else if (!sequenceForAllPlayers.equals(other.sequenceForAllPlayers))
 			return false;
+		if (!history.equals(other.history))
+			return false;
 		return true;
 	}
 
@@ -288,6 +290,11 @@ public class GoofSpielGameState extends GameStateImpl {
 
 	public Collection<Integer> getCardsForPlayerToMove() {
 		return playerCards.get(getPlayerToMove());
+	}
+	
+	@Override
+	public String toString() {
+		return history.toString();
 	}
 
 }

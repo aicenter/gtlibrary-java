@@ -11,6 +11,7 @@ import cz.agents.gtlibrary.utils.Pair;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -19,7 +20,7 @@ public class RandomGameState extends GameStateImpl {
     private int ID;
     private double center;
     private Player playerToMove;
-    private Map<Player, LinkedList<Integer>> observations = new FixedSizeMap<Player, LinkedList<Integer>>(2);
+    protected Map<Player, LinkedList<Integer>> observations = new FixedSizeMap<Player, LinkedList<Integer>>(2);
 
     private int hash = 0;
     private Pair<Integer, Sequence> ISKey = null;
@@ -45,18 +46,22 @@ public class RandomGameState extends GameStateImpl {
 
     protected void evaluateAction(RandomGameAction action) {
         int newID = (ID + action.getOrder())*31 + 17;
-        switchPlayers();
         if (new Random(newID).nextBoolean()) {
             center++;
         } else {
             center--;
         }
-        int newObservation = new Random(newID).nextInt(RandomGameInfo.MAX_OBSERVATION);
-        observations.get(getPlayerToMove()).add(newObservation);
-
+        generateObservations(newID, action);
+        
         this.ID = newID;
         this.ISKey = null;
         this.changed = true;
+    }
+    
+    protected void generateObservations(int newID, RandomGameAction action){
+        switchPlayers();
+        int newObservation = new Random(newID).nextInt(RandomGameInfo.MAX_OBSERVATION);
+        observations.get(getPlayerToMove()).add(newObservation);
     }
 
     @Override
@@ -111,9 +116,20 @@ public class RandomGameState extends GameStateImpl {
     @Override
     public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
         if (ISKey == null) {
-            ISKey = new Pair<Integer, Sequence>(observations.get(getPlayerToMove()).hashCode(), getHistory().getSequenceOf(getPlayerToMove()));
+            ISKey = new Pair<Integer, Sequence>(
+                    uniqueHash(observations.get(getPlayerToMove()), Math.max(RandomGameInfo.MAX_OBSERVATION, RandomGameInfo.MAX_BF)),
+                    getHistory().getSequenceOf(getPlayerToMove()));
         }
         return ISKey;
+    }
+    
+    private int uniqueHash(List<Integer> list, int base){
+        int out = 1;
+        for (Integer i : list){
+            out *= base;
+            out += i;
+        }
+        return out;
     }
 
     @Override
@@ -124,7 +140,7 @@ public class RandomGameState extends GameStateImpl {
         }
         return hash;
     }
-
+    
     @Override
     public boolean equals(Object object) {
         if (this == object)
@@ -142,7 +158,7 @@ public class RandomGameState extends GameStateImpl {
 
     }
 
-    private void switchPlayers() {
+    protected void switchPlayers() {
         int newIndex = (getPlayerToMove().getId() + 1) % 2;
         playerToMove = players[newIndex];
     }

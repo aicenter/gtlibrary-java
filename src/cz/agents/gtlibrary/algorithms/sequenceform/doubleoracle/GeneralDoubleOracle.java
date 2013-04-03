@@ -19,9 +19,13 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
@@ -46,12 +50,23 @@ public class GeneralDoubleOracle {
 
 	public static void main(String[] args) {
 //        runBP();
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
+		runSimRandomGame();
+//		runPursuit();
 	}
 
+	public static void runPursuit() {
+        GameState rootState = new PursuitGameState();
+        GameInfo gameInfo = new PursuitGameInfo();
+		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new PursuitExpander<DoubleOracleInformationSet>(algConfig);
+		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+        doefg.generate();
+    }
+	
     public static void runKuhnPoker() {
         GameState rootState = new KuhnPokerGameState();
         GameInfo gameInfo = new KPGameInfo();
@@ -63,6 +78,15 @@ public class GeneralDoubleOracle {
 
     public static void runRandomGame() {
         GameState rootState = new RandomGameState();
+        GameInfo gameInfo = new RandomGameInfo();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+        doefg.generate();
+    }
+    
+    public static void runSimRandomGame() {
+        GameState rootState = new SimRandomGameState();
         GameInfo gameInfo = new RandomGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);

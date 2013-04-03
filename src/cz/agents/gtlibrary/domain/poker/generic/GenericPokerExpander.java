@@ -146,17 +146,4 @@ public class GenericPokerExpander<I extends InformationSet> extends ExpanderImpl
 		return cardCount;
 	}
 
-	@Override
-	public List<Action> getActions(I informationSet) {
-		GenericPokerGameState gpState = (GenericPokerGameState) informationSet.getAllStates().iterator().next();
-		List<Action> actions = new LinkedList<Action>();
-
-		if (gpState.isPlayerToMoveNature()) {
-			addActionsOfNature(gpState, actions, informationSet);
-			return actions;
-		}
-		addActionsOfRegularPlayer(gpState, actions, informationSet);
-		return actions;
-	}
-
 }

@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.cfr.vanilla;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,20 +15,41 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class VanillaCFR extends CFR<VanillaInformationSet> {
 
 	public static void main(String[] args) {
-		runKuhnPoker();
+//		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
+//		runSimRandomGame();
+		runPursuit();
+	}
+	
+	public static void runPursuit() {
+		GameState rootState = new SimRandomGameState();
+		CFRConfig<VanillaInformationSet> config = new VanillaCFRConfig(new SimRandomGameState());
+		VanillaCFR cfr = new VanillaCFR(config);
+
+		cfr.buildGameTree(rootState, new RandomGameExpander<VanillaInformationSet>(config));
+		cfr.updateTree(200000);
+	}
+	
+	public static void runSimRandomGame() {
+		GameState rootState = new SimRandomGameState();
+		CFRConfig<VanillaInformationSet> config = new VanillaCFRConfig(new SimRandomGameState());
+		VanillaCFR cfr = new VanillaCFR(config);
+
+		cfr.buildGameTree(rootState, new RandomGameExpander<VanillaInformationSet>(config));
+		cfr.updateTree(200000);
 	}
 
 	public static void runKuhnPoker() {
@@ -92,8 +114,8 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 
 	private void updateStateValues() {
 		VanillaInformationSet set = config.getInformationSetFor(config.getRootState());
-		Map<GameState, float[]> valuesOfChildren = new FixedSizeMap<GameState, float[]>(set.getSuccessorsFor(config.getRootState()).size());
-		Map<GameState, float[]> avgValuesOfChildren = new FixedSizeMap<GameState, float[]>(set.getSuccessorsFor(config.getRootState()).size());
+		Map<GameState, float[]> valuesOfChildren = new HashMap<GameState, float[]>(set.getSuccessorsFor(config.getRootState()).size());
+		Map<GameState, float[]> avgValuesOfChildren = new HashMap<GameState, float[]>(set.getSuccessorsFor(config.getRootState()).size());
 
 		for (GameState successor : set.getSuccessorsFor(config.getRootState())) {
 			valuesOfChildren.put(successor, updateStateValuesRecursively(successor));
@@ -109,8 +131,8 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 			return config.getUtilityFor(gameState.getHistory());
 		}
 		Set<GameState> successors = set.getSuccessorsFor(gameState);
-		Map<GameState, float[]> valuesOfChildren = new FixedSizeMap<GameState, float[]>(successors.size());
-		Map<GameState, float[]> avgValuesOfChildren = new FixedSizeMap<GameState, float[]>(successors.size());
+		Map<GameState, float[]> valuesOfChildren = new HashMap<GameState, float[]>(successors.size());
+		Map<GameState, float[]> avgValuesOfChildren = new HashMap<GameState, float[]>(successors.size());
 
 		for (GameState successor : successors) {
 			valuesOfChildren.put(successor, updateStateValuesRecursively(successor));
@@ -122,8 +144,8 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 
 	private void updateState(Map<GameState, float[]> valuesOfChildren, Map<GameState, float[]> averageValuesOfChildren, GameState gameState) {
 		VanillaInformationSet set = config.getInformationSetFor(gameState);
-		Map<Action, Float> valuesOfActionsForState = new FixedSizeMap<Action, Float>(set.getActions().size());
-		Map<Action, Float> avgValuesOfActionsForState = new FixedSizeMap<Action, Float>(set.getActions().size());
+		Map<Action, Float> valuesOfActionsForState = new HashMap<Action, Float>(set.getActions().size());
+		Map<Action, Float> avgValuesOfActionsForState = new HashMap<Action, Float>(set.getActions().size());
 		float[] valuesOfState = new float[config.getRootState().getAllPlayers().length];
 		float[] avgValuesOfState = new float[config.getRootState().getAllPlayers().length];
 		int indexOfPlayer = getIndexOfPlayer(set.getPlayer());
@@ -214,7 +236,7 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 	}
 
 	public Map<GameState, Float> getAverageProbabilitiesOfStates(VanillaInformationSet set) {
-		Map<GameState, Float> probabilities = new FixedSizeMap<GameState, Float>(set.getStates().size());
+		Map<GameState, Float> probabilities = new HashMap<GameState, Float>(set.getStates().size());
 
 		for (GameState gameState : set.getStates()) {
 			probabilities.put(gameState, getProbabilityOfOpponentHistoryFromAvgStrat(gameState.getHistory(), set.getPlayer()));
@@ -224,7 +246,7 @@ public class VanillaCFR extends CFR<VanillaInformationSet> {
 	}
 
 	public Map<GameState, Float> getProbabilitiesOfStates(VanillaInformationSet set) {
-		Map<GameState, Float> probabilities = new FixedSizeMap<GameState, Float>(set.getStates().size());
+		Map<GameState, Float> probabilities = new HashMap<GameState, Float>(set.getStates().size());
 
 		for (GameState gameState : set.getStates()) {
 			probabilities.put(gameState, getProbabilityOfOpponentHistory(gameState.getHistory(), set.getPlayer()));
