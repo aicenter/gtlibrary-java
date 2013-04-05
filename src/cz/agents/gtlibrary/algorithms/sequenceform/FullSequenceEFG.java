@@ -47,9 +47,9 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runKuhnPoker();
 //		runGenericPoker();
-		runBPG();
+//		runBPG();
 //		runGoofSpiel();
-//      runRandomGame();
+      runRandomGame();
 //      runSimRandomGame();
 //		runPursuit();
 	}

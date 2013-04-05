@@ -66,16 +66,34 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 		currentPlayerFullBRSet.addAll(newBRSequences);
 		fullBRSequences.put(player, currentPlayerFullBRSet);
 	}
-	
-	public void createValidRestrictedGame(Player addingPlayer, HashSet<Sequence> newBRSequences, SQFBestResponseAlgorithm[] bestResponseAlgorithms, Expander<DoubleOracleInformationSet> expander) {
-		
-		Player searchingPlayer = addingPlayer;
-		Player opponentPlayer = gameInfo.getOpponent(addingPlayer);
+
+    public void addFullBRSequence(Player player, Sequence newBRSequence) {
+        Set<Sequence> currentPlayerFullBRSet = fullBRSequences.get(player);
+        if (currentPlayerFullBRSet == null) {
+            currentPlayerFullBRSet = new HashSet<Sequence>();
+        }
+        currentPlayerFullBRSet.add(newBRSequence);
+        fullBRSequences.put(player, currentPlayerFullBRSet);
+    }
+
+    public void createValidRestrictedGame(Player addingPlayer, Set<Sequence> newBRSequences, SQFBestResponseAlgorithm[] bestResponseAlgorithms, Expander<DoubleOracleInformationSet> expander) {
+        Map<Player, Set<Sequence>> tmpMap = new HashMap<Player, Set<Sequence>>();
+        tmpMap.put(addingPlayer, newBRSequences);
+        tmpMap.put(gameInfo.getOpponent(addingPlayer), fullBRSequences.get(gameInfo.getOpponent(addingPlayer)));
+        initializeRG(tmpMap, bestResponseAlgorithms, expander);
+    }
+
+    public void initializeRG(Map<Player, Set<Sequence>> sequences, SQFBestResponseAlgorithm[] bestResponseAlgorithms, Expander<DoubleOracleInformationSet> expander) {
+
+        assert (sequences.keySet().size() == 2);
+
+		Player searchingPlayer = sequences.keySet().iterator().next();
+		Player opponentPlayer = gameInfo.getOpponent(searchingPlayer);
 
 		LinkedList<Pair<GameState, Map<Player, Set<Sequence>>>> queue = new LinkedList<Pair<GameState,Map<Player,Set<Sequence>>>>();
 		Map<Player, Set<Sequence>> tmpMap = new HashMap<Player, Set<Sequence>>();
-		tmpMap.put(searchingPlayer, newBRSequences);
-		tmpMap.put(opponentPlayer, fullBRSequences.get(opponentPlayer));
+		tmpMap.put(searchingPlayer, sequences.get(searchingPlayer));
+		tmpMap.put(opponentPlayer, sequences.get(opponentPlayer));
 		queue.add(new Pair<GameState, Map<Player, Set<Sequence>>>(rootState, tmpMap));
 		
 		while (!queue.isEmpty()) {
@@ -94,16 +112,16 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 			Map<Player, Set<Sequence>> currentSequences = currentTuple.getRight();
 
 			// TODO the following test could probably be removed
-			boolean isSomeUncheckedSequenceForThisState = false;
-			for (Sequence s : newBRSequences) {
-				if (currentState.getHistory().getSequenceOf(searchingPlayer).isPrefixOf(s)) {
-					isSomeUncheckedSequenceForThisState = true;
-					break;
-				}
-			}
-			if (!isSomeUncheckedSequenceForThisState) {
-				continue;
-			}
+//			boolean isSomeUncheckedSequenceForThisState = false;
+//			for (Sequence s : newBRSequences) {
+//				if (currentState.getHistory().getSequenceOf(searchingPlayer).isPrefixOf(s)) {
+//					isSomeUncheckedSequenceForThisState = true;
+//					break;
+//				}
+//			}
+//			if (!isSomeUncheckedSequenceForThisState) {
+//				continue;
+//			}
 			// TODO 	
 
 			if (currentState.isPlayerToMoveNature()) { // nature moving
@@ -112,8 +130,8 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 					GameState natureTempState = currentState.performAction(action);
 
 					Map<Player, Set<Sequence>> newCurrentSequences = new FixedSizeMap<Player, Set<Sequence>>(2);
-					newCurrentSequences.put(searchingPlayer, (HashSet<Sequence>)((HashSet<Sequence>)currentSequences.get(searchingPlayer)).clone());
-					newCurrentSequences.put(opponentPlayer, (HashSet<Sequence>)((HashSet<Sequence>)currentSequences.get(opponentPlayer)).clone());
+					newCurrentSequences.put(searchingPlayer, new HashSet<Sequence>(currentSequences.get(searchingPlayer)));
+					newCurrentSequences.put(opponentPlayer, new HashSet<Sequence>(currentSequences.get(opponentPlayer)));
 
 					queue.add(new Pair<GameState, Map<Player, Set<Sequence>>>(natureTempState, newCurrentSequences));
 				}
