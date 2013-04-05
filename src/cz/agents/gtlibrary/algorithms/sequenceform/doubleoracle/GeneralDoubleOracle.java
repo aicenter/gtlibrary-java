@@ -3,18 +3,20 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpanderDomain;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
@@ -37,7 +39,7 @@ public class GeneralDoubleOracle {
 
 	private PrintStream debugOutput = System.out;
 	
-	final private double EPS = 0.000001;
+	final private double EPS = 0.00001;
     final private static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
 //    public static boolean IMPROVED_PLAYER_SELECTION = true;
@@ -49,16 +51,28 @@ public class GeneralDoubleOracle {
     public static PlayerSelection playerSelection = PlayerSelection.BOTH;
 
 	public static void main(String[] args) {
-//        runBP();
+        runBP();
 //        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
-		runSimRandomGame();
+//		runSimRandomGame();
 //		runPursuit();
+//        runPhantomTTT();
 	}
 
-	public static void runPursuit() {
+    public static void runPhantomTTT() {
+        GameState rootState = new TTTState();
+        GameInfo gameInfo = new TTTInfo();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander expander = new TTTExpander<DoubleOracleInformationSet>(algConfig);
+//        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, , gameInfo, algConfig);
+//        doefg.generate();
+        GeneralDoubleOracle.traverseCompleteGameTree(rootState, expander);
+    }
+
+
+    public static void runPursuit() {
         GameState rootState = new PursuitGameState();
         GameInfo gameInfo = new PursuitGameInfo();
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
@@ -378,5 +392,28 @@ public class GeneralDoubleOracle {
         }
 
         return tmpState;
+    }
+
+    public static void traverseCompleteGameTree(GameState rootState, Expander<DoubleOracleInformationSet> expander) {
+        LinkedList<GameState> queue = new LinkedList<GameState>();
+        long nodes = 0;
+        queue.add(rootState);
+
+        while (queue.size() > 0) {
+            nodes++;
+            GameState currentState = queue.removeFirst();
+
+            if (currentState.isGameEnd()) {
+                continue;
+            }
+            for (Action action : expander.getActions(currentState)) {
+                GameState newState = currentState.performAction(action);
+
+                queue.addFirst(newState);
+                currentState.performAction(action);
+            }
+        }
+
+        System.out.println("Nodes: " + nodes);
     }
 }
