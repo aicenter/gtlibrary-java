@@ -11,6 +11,9 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -44,14 +47,14 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runKuhnPoker();
 //		runGenericPoker();
-//		runBPG();
+		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
-      runSimRandomGame();
+//      runSimRandomGame();
 //		runPursuit();
 	}
-	
-	public static void runPursuit() {
+
+    public static void runPursuit() {
         GameState rootState = new PursuitGameState();
         GameInfo gameInfo = new PursuitGameInfo();
         SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
