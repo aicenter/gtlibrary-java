@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.unprunning.UnprunningDoubleOracle;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
@@ -77,6 +78,8 @@ public class DoubleOracleExperiments {
                 GeneralDoubleOracle.runGenericPoker();
             else if (domain.equalsIgnoreCase("RG"))
                 GeneralDoubleOracle.runRandomGame();
+        } else if (alg.equals("UDO")) {
+            UnprunningDoubleOracle.main(null);
         } else if (alg.equalsIgnoreCase("LP")) {
             if (domain.equalsIgnoreCase("BP"))
                 FullSequenceEFG.runBPG();

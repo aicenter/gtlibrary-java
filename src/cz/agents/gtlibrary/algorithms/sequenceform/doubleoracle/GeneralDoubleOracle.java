@@ -1,10 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
 import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
@@ -48,14 +45,14 @@ public class GeneralDoubleOracle {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
 
-    public static PlayerSelection playerSelection = PlayerSelection.BOTH;
+    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_IMPROVED;
 
 	public static void main(String[] args) {
-        runBP();
+//        runBP();
 //        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-//        runRandomGame();
+        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
@@ -78,7 +75,7 @@ public class GeneralDoubleOracle {
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new PursuitExpander<DoubleOracleInformationSet>(algConfig);
 		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
-        doefg.generate();
+        doefg.generate(null);
     }
 	
     public static void runKuhnPoker() {
@@ -87,7 +84,7 @@ public class GeneralDoubleOracle {
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new KuhnPokerExpander<DoubleOracleInformationSet>(algConfig);
 		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
-        doefg.generate();
+        doefg.generate(null);
     }
 
     public static void runRandomGame() {
@@ -96,7 +93,7 @@ public class GeneralDoubleOracle {
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
-        doefg.generate();
+        doefg.generate(null);
     }
     
     public static void runSimRandomGame() {
@@ -105,7 +102,7 @@ public class GeneralDoubleOracle {
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
-        doefg.generate();
+        doefg.generate(null);
     }
 
     public static void runGenericPoker() {
@@ -115,7 +112,7 @@ public class GeneralDoubleOracle {
         Expander<DoubleOracleInformationSet> expander = new GenericPokerExpander<DoubleOracleInformationSet>(algConfig);
 //        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpanderDomain<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
-        doefg.generate();
+        doefg.generate(null);
     }
 
     public static void runBP() {
@@ -124,7 +121,7 @@ public class GeneralDoubleOracle {
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
 		Expander<DoubleOracleInformationSet> expander = new BPGExpander<DoubleOracleInformationSet>(algConfig);
 		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
-        doefg.generate();
+        doefg.generate(null);
     }
 
     public static void runGoofSpiel() {
@@ -133,7 +130,7 @@ public class GeneralDoubleOracle {
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new GoofSpielExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
-        doefg.generate();
+        doefg.generate(null);
     }
 
 
@@ -144,7 +141,7 @@ public class GeneralDoubleOracle {
 		this.algConfig = algConfig;
 	}
 
-	public Map<Player, Map<Sequence, Double>> generate() {
+	public Map<Player, Map<Sequence, Double>> generate(Map<Player, Map<Sequence, Double>> initializationRG) {
 		debugOutput.println("Double Oracle");
 		debugOutput.println(gameConfig.getInfo());
 		
@@ -155,26 +152,44 @@ public class GeneralDoubleOracle {
         long overallRGBuilding = 0;
 		int iterations = 0;
 
-        GameState firstState = findFirstNonNatureState(rootState, expander);
+        Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
+        DoubleOracleBestResponse[] brAlgorithms = new DoubleOracleBestResponse[] {
+                new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameConfig),
+                new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameConfig)};
+        Map<Player, Map<Sequence, Double>> realizationPlans = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
 
-		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
-		
-		algConfig.addStateToSequenceForm(firstState);
-		
-		DoubleOracleBestResponse[] brAlgorithms = new DoubleOracleBestResponse[] { 
-					new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameConfig),
-					new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameConfig)};
+        if (initializationRG == null || initializationRG.isEmpty()) {
+            GameState firstState = findFirstNonNatureState(rootState, expander);
 
-		// init realization plans -> for each player, an empty sequence has probability equal to 1
-		Map<Player, Map<Sequence, Double>> realizationPlans = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
-		realizationPlans.put(actingPlayers[0], new HashMap<Sequence, Double>());
-		realizationPlans.put(actingPlayers[1], new HashMap<Sequence, Double>());
-		realizationPlans.get(actingPlayers[0]).put(firstState.getSequenceFor(actingPlayers[0]), 1d);
-		realizationPlans.get(actingPlayers[1]).put(firstState.getSequenceFor(actingPlayers[1]), 1d);
-		
-		algConfig.addFullBRSequences(actingPlayers[0], realizationPlans.get(actingPlayers[0]).keySet());
-		algConfig.addFullBRSequences(actingPlayers[1], realizationPlans.get(actingPlayers[1]).keySet());
-		
+            algConfig.addStateToSequenceForm(firstState);
+
+            // init realization plans -> for each player, an empty sequence has probability equal to 1
+            realizationPlans.put(actingPlayers[0], new HashMap<Sequence, Double>());
+            realizationPlans.put(actingPlayers[1], new HashMap<Sequence, Double>());
+            realizationPlans.get(actingPlayers[0]).put(firstState.getSequenceFor(actingPlayers[0]), 1d);
+            realizationPlans.get(actingPlayers[1]).put(firstState.getSequenceFor(actingPlayers[1]), 1d);
+
+            algConfig.addFullBRSequences(actingPlayers[0], realizationPlans.get(actingPlayers[0]).keySet());
+            algConfig.addFullBRSequences(actingPlayers[1], realizationPlans.get(actingPlayers[1]).keySet());
+        } else {
+            realizationPlans = initializationRG;
+            Map<Player, Set<Sequence>> tmpMap = new HashMap<Player, Set<Sequence>>();
+            tmpMap.put(actingPlayers[0], initializationRG.get(actingPlayers[0]).keySet());
+            tmpMap.put(actingPlayers[1], initializationRG.get(actingPlayers[1]).keySet());
+            algConfig.initializeRG(tmpMap, brAlgorithms, expander);
+            for (Player p : actingPlayers) {
+                Set<Sequence> shorter = new HashSet<Sequence>();
+                for (Sequence s : initializationRG.get(p).keySet()) {
+                    if (s.size() == 0) continue;
+                    Sequence ss = s.getSubSequence(s.size()-1);
+                    shorter.add(ss);
+                }
+                for (Sequence s : initializationRG.get(p).keySet()) {
+                    if (!shorter.contains(s))
+                        algConfig.addFullBRSequence(p, s);
+                }
+            }
+        }
 		int currentPlayerIndex = 0;
 		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
 		

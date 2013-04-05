@@ -208,7 +208,7 @@ public class TTTState extends GameStateImpl {
         Expander<DoubleOracleInformationSet> expander = new TTTExpander<DoubleOracleInformationSet>(algConfig);
 	GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         
-        return doefg.generate();
+        return doefg.generate(null);
     }
     
     
