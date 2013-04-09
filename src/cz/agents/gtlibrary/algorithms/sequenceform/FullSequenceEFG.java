@@ -1,6 +1,8 @@
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -43,6 +45,7 @@ public class FullSequenceEFG {
 
 	private PrintStream debugOutput = System.out;
     final private static boolean DEBUG = false;
+    private ThreadMXBean threadBean ;
 
 	public static void main(String[] args) {
 //		runKuhnPoker();
@@ -128,25 +131,26 @@ public class FullSequenceEFG {
 	public Map<Player, Map<Sequence, Double>> generate() {
 		debugOutput.println("Full Sequence");
 		debugOutput.println(gameConfig.getInfo());
+        threadBean = ManagementFactory.getThreadMXBean();
 
-		long start = System.currentTimeMillis();
+		long start = threadBean.getCurrentThreadCpuTime();
 		long overallSequenceGeneration = 0;
 		long overallCPLEX = 0;
 		Map<Player, Map<Sequence, Double>> realizationPlans = new HashMap<Player, Map<Sequence, Double>>();
-		long startGeneration = System.currentTimeMillis();
+		long startGeneration = threadBean.getCurrentThreadCpuTime();
 
 		generateCompleteGame();
 		System.out.println("Game tree built...");
 		System.out.println("Information set count: " + algConfig.getAllInformationSets().size());
-		overallSequenceGeneration = System.currentTimeMillis() - startGeneration;
+		overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration)/1000000l;
 
 		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
-		long startCPLEX = System.currentTimeMillis();
+		long startCPLEX = threadBean.getCurrentThreadCpuTime();
 		SequenceFormLP sequenceFormLP = new SequenceFormLP(actingPlayers);
 
 		sequenceFormLP.calculateBothPlStrategy(rootState, algConfig);
 
-		long thisCPLEX = System.currentTimeMillis() - startCPLEX;
+		long thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX)/1000000l;
 
 		overallCPLEX += thisCPLEX;
 
@@ -155,7 +159,7 @@ public class FullSequenceEFG {
 		}
 
 		System.out.println("done.");
-        long finishTime = System.currentTimeMillis() - start;
+        long finishTime = (threadBean.getCurrentThreadCpuTime() - start)/1000000l;
 
 		int[] support_size = new int[] { 0, 0 };
 		for (Player player : actingPlayers) {

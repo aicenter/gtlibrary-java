@@ -1,6 +1,8 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
@@ -39,23 +41,31 @@ public class GeneralDoubleOracle {
 	final private double EPS = 0.00001;
     final private static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
+    private ThreadMXBean threadBean ;
 //    public static boolean IMPROVED_PLAYER_SELECTION = true;
 
     public enum PlayerSelection {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
 
-    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_IMPROVED;
+    public static PlayerSelection playerSelection = PlayerSelection.BOTH;
 
 	public static void main(String[] args) {
 //        runBP();
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-        runRandomGame();
+//        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
+
+//        GameState rootState = new BPGGameState();
+//        GameInfo gameInfo = new BPGGameInfo();
+//        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+//        Expander<DoubleOracleInformationSet> expander = new BPGExpander<DoubleOracleInformationSet>(algConfig);
+//
+//        traverseCompleteGameTree(rootState, expander);
 	}
 
     public static void runPhantomTTT() {
@@ -63,9 +73,9 @@ public class GeneralDoubleOracle {
         GameInfo gameInfo = new TTTInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander expander = new TTTExpander<DoubleOracleInformationSet>(algConfig);
-//        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, , gameInfo, algConfig);
-//        doefg.generate();
-        GeneralDoubleOracle.traverseCompleteGameTree(rootState, expander);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        doefg.generate(null);
+//        GeneralDoubleOracle.traverseCompleteGameTree(rootState, expander);
     }
 
 
@@ -144,8 +154,9 @@ public class GeneralDoubleOracle {
 	public Map<Player, Map<Sequence, Double>> generate(Map<Player, Map<Sequence, Double>> initializationRG) {
 		debugOutput.println("Double Oracle");
 		debugOutput.println(gameConfig.getInfo());
+        threadBean = ManagementFactory.getThreadMXBean();
 		
-		long start = System.currentTimeMillis();
+		long start = threadBean.getCurrentThreadCpuTime();
 		long overallSequenceGeneration = 0;
 		long overallBRCalculation = 0;
 		long overallCPLEX = 0;
@@ -204,7 +215,7 @@ public class GeneralDoubleOracle {
                 Math.abs(doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]) + doRestrictedGameSolver.getResultForPlayer(actingPlayers[1])) > EPS){
 
 			iterations++;
-            debugOutput.println("Iteration " + iterations + ": Cumulative Time from Beginning:" + (System.currentTimeMillis() - start));
+            debugOutput.println("Iteration " + iterations + ": Cumulative Time from Beginning:" + ((threadBean.getCurrentThreadCpuTime() - start)/1000000l));
 
             diffSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex];
 
@@ -219,13 +230,13 @@ public class GeneralDoubleOracle {
 
 			int opponentPlayerIndex = ( currentPlayerIndex + 1 ) % 2;
 			
-			long startFullBR = System.currentTimeMillis();
+			long startFullBR = threadBean.getCurrentThreadCpuTime();
             double currentBRVal;
             if (MY_RP_BR_ORDERING)
 			    currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]), realizationPlans.get(actingPlayers[currentPlayerIndex]));
             else
                 currentBRVal = brAlgorithms[currentPlayerIndex].calculateBR(rootState, realizationPlans.get(actingPlayers[opponentPlayerIndex]));
-            long thisBR = System.currentTimeMillis() - startFullBR;
+            long thisBR = (threadBean.getCurrentThreadCpuTime() - startFullBR)/1000000l;
 
             debugOutput.println("BR Value " + actingPlayers[currentPlayerIndex] + " : " + currentBRVal);
             debugOutput.println("Iteration " + iterations + " : full BR time : " + thisBR);
@@ -241,13 +252,13 @@ public class GeneralDoubleOracle {
 				}
 			}
             if (DEBUG) debugOutput.println("All BR Sequences: " + currentFullBRSequences);
-            long startRGB = System.currentTimeMillis();
+            long startRGB = threadBean.getCurrentThreadCpuTime();
             if (newFullBRSequences.size() > 0) {
                 if (DEBUG) debugOutput.println("New Full BR Sequences: " + newFullBRSequences);
                 algConfig.createValidRestrictedGame(actingPlayers[currentPlayerIndex], newFullBRSequences, brAlgorithms, expander);
                 algConfig.addFullBRSequences(actingPlayers[currentPlayerIndex], newFullBRSequences);
             }
-            long thisRGB = System.currentTimeMillis() - startRGB;
+            long thisRGB = (threadBean.getCurrentThreadCpuTime() - startRGB)/1000000l;
             overallRGBuilding += thisRGB;
 			
 			if (currentPlayerIndex == 0) {
@@ -264,10 +275,10 @@ public class GeneralDoubleOracle {
             switch (playerSelection) {
                 case BOTH:
                     if (currentPlayerIndex != 0) {
-                        long startCPLEX = System.currentTimeMillis();
+                        long startCPLEX = threadBean.getCurrentThreadCpuTime();
                         doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
                         doRestrictedGameSolver.calculateStrategyForPlayer(opponentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
-                        long thisCPLEX = System.currentTimeMillis() - startCPLEX;
+                        long thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX)/1000000l;
 
                         debugOutput.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
                         overallCPLEX += thisCPLEX;
@@ -278,9 +289,9 @@ public class GeneralDoubleOracle {
                     currentPlayerIndex = opponentPlayerIndex;
                     break;
                 case SINGLE_ALTERNATING:
-                    long startCPLEX = System.currentTimeMillis();
+                    long startCPLEX = threadBean.getCurrentThreadCpuTime();
                     doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
-                    long thisCPLEX = System.currentTimeMillis() - startCPLEX;
+                    long thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX)/1000000l;
 
                     debugOutput.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
                     overallCPLEX += thisCPLEX;
@@ -323,9 +334,9 @@ public class GeneralDoubleOracle {
 
                     opponentPlayerIndex = (1+currentPlayerIndex)%2;
 
-                    startCPLEX = System.currentTimeMillis();
+                    startCPLEX = threadBean.getCurrentThreadCpuTime();
                     doRestrictedGameSolver.calculateStrategyForPlayer(opponentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
-                    thisCPLEX = System.currentTimeMillis() - startCPLEX;
+                    thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX)/1000000l;
 
                     debugOutput.println("Iteration " + iterations + " : CPLEX time : " + thisCPLEX);
                     overallCPLEX += thisCPLEX;
@@ -358,7 +369,7 @@ public class GeneralDoubleOracle {
 		}
 
         debugOutput.println("done.");
-        long finishTime = System.currentTimeMillis() - start;
+        long finishTime = (threadBean.getCurrentThreadCpuTime() - start)/1000000l;
 
         doRestrictedGameSolver.calculateStrategyForPlayer(1, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
 
@@ -410,6 +421,7 @@ public class GeneralDoubleOracle {
     }
 
     public static void traverseCompleteGameTree(GameState rootState, Expander<DoubleOracleInformationSet> expander) {
+        System.out.println("Claculating the size of the game.");
         LinkedList<GameState> queue = new LinkedList<GameState>();
         long nodes = 0;
         queue.add(rootState);
