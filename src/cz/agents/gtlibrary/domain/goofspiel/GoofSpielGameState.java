@@ -230,7 +230,9 @@ public class GoofSpielGameState extends GameStateImpl {
 
 	@Override
 	public double getProbabilityOfNatureFor(Action action) {
-		return 1;
+		if (GSGameInfo.useFixedNatureSequence)
+			return 1;
+		return 1. / playerCards.get(GSGameInfo.NATURE).size();
 	}
 
 	@Override
@@ -291,7 +293,7 @@ public class GoofSpielGameState extends GameStateImpl {
 	public Collection<Integer> getCardsForPlayerToMove() {
 		return playerCards.get(getPlayerToMove());
 	}
-	
+
 	@Override
 	public String toString() {
 		return history.toString();
