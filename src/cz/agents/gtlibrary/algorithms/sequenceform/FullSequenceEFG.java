@@ -1,6 +1,8 @@
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -11,6 +13,9 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -39,18 +44,20 @@ public class FullSequenceEFG {
 	private SequenceFormConfig<SequenceInformationSet> algConfig;
 
 	private PrintStream debugOutput = System.out;
+    final private static boolean DEBUG = false;
+    private ThreadMXBean threadBean ;
 
 	public static void main(String[] args) {
 //		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
-//      runRandomGame();
+      runRandomGame();
 //      runSimRandomGame();
-		runPursuit();
+//		runPursuit();
 	}
-	
-	public static void runPursuit() {
+
+    public static void runPursuit() {
         GameState rootState = new PursuitGameState();
         GameInfo gameInfo = new PursuitGameInfo();
         SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
@@ -124,25 +131,26 @@ public class FullSequenceEFG {
 	public Map<Player, Map<Sequence, Double>> generate() {
 		debugOutput.println("Full Sequence");
 		debugOutput.println(gameConfig.getInfo());
+        threadBean = ManagementFactory.getThreadMXBean();
 
-		long start = System.currentTimeMillis();
+		long start = threadBean.getCurrentThreadCpuTime();
 		long overallSequenceGeneration = 0;
 		long overallCPLEX = 0;
 		Map<Player, Map<Sequence, Double>> realizationPlans = new HashMap<Player, Map<Sequence, Double>>();
-		long startGeneration = System.currentTimeMillis();
+		long startGeneration = threadBean.getCurrentThreadCpuTime();
 
 		generateCompleteGame();
 		System.out.println("Game tree built...");
 		System.out.println("Information set count: " + algConfig.getAllInformationSets().size());
-		overallSequenceGeneration = System.currentTimeMillis() - startGeneration;
+		overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration)/1000000l;
 
 		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
-		long startCPLEX = System.currentTimeMillis();
+		long startCPLEX = threadBean.getCurrentThreadCpuTime();
 		SequenceFormLP sequenceFormLP = new SequenceFormLP(actingPlayers);
 
 		sequenceFormLP.calculateBothPlStrategy(rootState, algConfig);
 
-		long thisCPLEX = System.currentTimeMillis() - startCPLEX;
+		long thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX)/1000000l;
 
 		overallCPLEX += thisCPLEX;
 
@@ -151,14 +159,15 @@ public class FullSequenceEFG {
 		}
 
 		System.out.println("done.");
-        long finishTime = System.currentTimeMillis() - start;
+        long finishTime = (threadBean.getCurrentThreadCpuTime() - start)/1000000l;
 
 		int[] support_size = new int[] { 0, 0 };
 		for (Player player : actingPlayers) {
 			for (Sequence sequence : realizationPlans.get(player).keySet()) {
 				if (realizationPlans.get(player).get(sequence) > 0) {
 					support_size[player.getId()]++;
-					//	System.out.println(sequence + "\t:\t" + realizationPlans.get(playerID).get(sequence) /*+ ", " + tree.getProbabilityOfSequenceFromAverageStrategy(sequence)*/);
+					if (DEBUG)
+                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
 				}
 			}
 		}
@@ -168,10 +177,6 @@ public class FullSequenceEFG {
             Thread.sleep(500l);
         } catch (InterruptedException e) {
         }
-
-		//		for (BasicPlayerID playerID : rootState.getAllPlayers()) {
-		//			System.out.println("final result for " + playerID + ": " + SequenceFormLP.resultValues.get(playerID) /*+ ", " + tree.getIS(InformationSet.calculateISEquivalenceForPlayerToMove(rootState)).getValueOfGameForPlayer(playerID)*/);
-		//		}
 
         System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
@@ -183,15 +188,16 @@ public class FullSequenceEFG {
         System.out.println("final RGB time: " + 0);
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
 
-		// sanity check -> calculation of Full BR on the solution of SQF LP
-		SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+        if (DEBUG) {
+            // sanity check -> calculation of Full BR on the solution of SQF LP
+            SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+            System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
 
-		SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
-		System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+            SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+            System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
 
-        algConfig.validateGameStructure(rootState, expander);
-
+            algConfig.validateGameStructure(rootState, expander);
+        }
 		return realizationPlans;
 	}
 
