@@ -35,7 +35,9 @@ public class SimRandomGameState extends RandomGameState {
     public GameState copy() {
         return new SimRandomGameState(this);
     }
-    
-    
-    
+
+    @Override
+    public String toString() {
+        return "GS" + getHistory();
+    }
 }
