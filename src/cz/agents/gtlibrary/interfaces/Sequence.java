@@ -1,8 +1,9 @@
 package cz.agents.gtlibrary.interfaces;
 
+import java.io.Serializable;
 import java.util.HashSet;
 
-public interface Sequence extends Iterable<Action> {
+public interface Sequence extends Iterable<Action>, Serializable {
 	public void addFirst(Action action);
 	public void addLast(Action action);
 	public Action get(int index);

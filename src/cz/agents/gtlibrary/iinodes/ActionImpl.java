@@ -5,6 +5,9 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public abstract class ActionImpl implements Action {
+	
+	private static final long serialVersionUID = -7380941202647059723L;
+	
 	protected InformationSet informationSet;
 
 	public ActionImpl(InformationSet informationSet) {

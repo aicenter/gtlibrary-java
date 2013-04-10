@@ -13,7 +13,9 @@ import cz.agents.gtlibrary.interfaces.Player;
  */
 public class SimRandomGameState extends RandomGameState {
 
-    public SimRandomGameState(SimRandomGameState gameState) {
+	private static final long serialVersionUID = -3801266782217001643L;
+
+	public SimRandomGameState(SimRandomGameState gameState) {
         super(gameState);
     }
 

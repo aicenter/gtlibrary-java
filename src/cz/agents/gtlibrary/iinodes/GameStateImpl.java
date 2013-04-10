@@ -9,6 +9,8 @@ import cz.agents.gtlibrary.utils.Pair;
 
 public abstract class GameStateImpl implements GameState {
 
+	private static final long serialVersionUID = 7693972683606265891L;
+	
 	protected Player[] players;
 	protected History history;
 	protected double natureProbability;

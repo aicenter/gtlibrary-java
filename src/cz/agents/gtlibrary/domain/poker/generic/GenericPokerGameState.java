@@ -7,6 +7,8 @@ import cz.agents.gtlibrary.interfaces.GameState;
 
 public class GenericPokerGameState extends PokerGameState {
 
+	private static final long serialVersionUID = -6924001547794664556L;
+	
 	private PokerAction table;
 	private int continuousRaiseCount;
 

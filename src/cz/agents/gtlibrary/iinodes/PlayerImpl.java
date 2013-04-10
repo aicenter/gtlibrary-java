@@ -4,6 +4,8 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 public class PlayerImpl implements Player {
 	
+	private static final long serialVersionUID = -4463334076128714335L;
+	
 	private int id;
 	private int hashCode;
         private String name;

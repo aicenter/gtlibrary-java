@@ -17,6 +17,8 @@ import cz.agents.gtlibrary.utils.Pair;
 
 public class BPGGameState extends GameStateImpl {
 
+	private static final long serialVersionUID = 7703160415991328955L;
+	
 	private BorderPatrollingGraph graph;
 	private Player playerToMove;
 	private Node attackerPosition;

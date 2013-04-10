@@ -16,6 +16,8 @@ import cz.agents.gtlibrary.utils.Pair;
 
 public class GoofSpielGameState extends GameStateImpl {
 
+	private static final long serialVersionUID = -1885375538236725674L;
+	
 	private Map<Player, HashSet<Integer>> playerCards;
 	private LinkedList<Action> sequenceForAllPlayers;
 	private GoofSpielAction faceUpCard;

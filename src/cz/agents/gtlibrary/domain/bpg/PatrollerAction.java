@@ -9,6 +9,8 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class PatrollerAction extends ActionImpl {
 
+	private static final long serialVersionUID = 5923340650378483826L;
+	
 	private Set<Node> flaggedNodes;
 	private Node fromNodeP1;
 	private Node fromNodeP2;

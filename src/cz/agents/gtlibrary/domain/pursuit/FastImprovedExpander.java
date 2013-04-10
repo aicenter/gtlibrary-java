@@ -13,6 +13,8 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class FastImprovedExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
+	private static final long serialVersionUID = -2839907519424628882L;
+
 	public FastImprovedExpander(AlgorithmConfig<I> algConfig) {
 		super(algConfig);
 	}

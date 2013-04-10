@@ -7,7 +7,9 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class RandomGameAction extends ActionImpl{
 
-    private final String value;
+	private static final long serialVersionUID = -3743050233407643384L;
+	
+	private final String value;
     private final int order;
     private int hashCode = -1;
 

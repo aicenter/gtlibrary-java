@@ -9,7 +9,10 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class TTTAction extends ActionImpl  {
-    public byte fieldID;
+	
+	private static final long serialVersionUID = -542752552988722459L;
+	
+	public byte fieldID;
 
     public TTTAction(byte fieldID, InformationSet i) {
         super(i);

@@ -14,6 +14,8 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class HistoryImpl implements History {
 
+	private static final long serialVersionUID = -36924832950052038L;
+	
 	private FixedSizeMap<Player, Sequence> sequencesOfPlayers;
 	private int hashCode = -1;
 	final private Player[] players;

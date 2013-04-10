@@ -10,7 +10,9 @@ import java.util.List;
 
 public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet>  extends ExpanderImpl<I> {
 
-    public TTTExpander(AlgorithmConfig<I> algConfig) {
+	private static final long serialVersionUID = 4771002747682438516L;
+
+	public TTTExpander(AlgorithmConfig<I> algConfig) {
         super(algConfig);
     }
     

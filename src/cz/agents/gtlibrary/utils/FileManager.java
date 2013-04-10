@@ -9,9 +9,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 
-public class FileManager<T extends Serializable> {
+public class FileManager<T extends Object> {
 	
 	public void saveObject(T object, String fileName) {
 		try {

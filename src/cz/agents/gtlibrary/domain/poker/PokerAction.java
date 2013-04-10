@@ -7,6 +7,8 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 public abstract class PokerAction extends ActionImpl {
 
+	private static final long serialVersionUID = 6347157865176927070L;
+	
 	protected final String action;
 	protected final Player player;
 
