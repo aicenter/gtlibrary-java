@@ -240,7 +240,8 @@ public class SQFBestResponseAlgorithm {
 		} 
 			
 		assert (returnValue != null);
-		assert (returnValue <= MAX_UTILITY_VALUE*(1+EPS_CONSTANT));
+		//assert (returnValue <= MAX_UTILITY_VALUE*(1+EPS_CONSTANT));
+                assert (returnValue <= MAX_UTILITY_VALUE*1.5);
 		return returnValue;
 	}
 	

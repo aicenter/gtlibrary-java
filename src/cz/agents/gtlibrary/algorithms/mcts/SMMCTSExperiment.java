@@ -4,13 +4,11 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts;
 
-import cz.agents.gtlibrary.algorithms.mcts.backprop.DefaultBackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.backprop.exp3.Exp3BackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.FrequenceDistribution;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.ValueDistribution;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3Selector;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.OOSMeanStratDist;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.OOSBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -21,12 +19,10 @@ import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
-import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
-import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -35,7 +31,7 @@ import java.util.Map;
  * @author vilo
  */
 public class SMMCTSExperiment {
-        private static final int MCTS_ITERATIONS_PER_CALL = 1000;
+        private static final int MCTS_ITERATIONS_PER_CALL = 10000;
 	private static final int SAME_STRATEGY_CHECK_COUNT = 20;
     
         
@@ -83,19 +79,20 @@ public class SMMCTSExperiment {
         
         static double gamma = 0.05;
         public static void runSMMCTS(){
-            //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new DefaultBackPropFactory(), new UniformStrategyForMissingSequences.Factory(), new UCTSelector(gameInfo.getMaxUtility()));
+            
             
             //double maxCFValue = gameInfo.getMaxUtility() / Math.pow(gamma/2.0, gameInfo.getMaxDepth());
             //double maxCFValue = 1e2;
             double maxCFValue = gameInfo.getMaxUtility();
-            Exp3BackPropFactory bpFactory = new Exp3BackPropFactory(-maxCFValue, maxCFValue);
-            MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), bpFactory, new UniformStrategyForMissingSequences.Factory(), new Exp3Selector(gamma));
+            MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new OOSBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
+            //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory((gamma/0.025)*gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
+            //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new Exp3BackPropFactory(-maxCFValue, maxCFValue, gamma), new UniformStrategyForMissingSequences.Factory(), null);
 //		MCTSRunner runner = new MCTSRunner(firstMCTSConfig, new KuhnPokerGameState(), new KuhnPokerExpander<MCTSInformationSet>(firstMCTSConfig));
 //                Map<Sequence, Double> pureStrategy = runner.runMCTS(KPGameInfo.FIRST_PLAYER, new FrequenceDistribution());
 
 
-            MCTSRunner runner = new MCTSRunner(firstMCTSConfig, rootState, new RandomGameExpander<MCTSInformationSet> (firstMCTSConfig));
-            //MCTSRunner runner = new MCTSRunner(firstMCTSConfig, rootState, new GoofSpielExpander<MCTSInformationSet> (firstMCTSConfig));
+            //MCTSRunner runner = new MCTSRunner(firstMCTSConfig, rootState, new RandomGameExpander<MCTSInformationSet> (firstMCTSConfig));
+            MCTSRunner runner = new MCTSRunner(firstMCTSConfig, rootState, new GoofSpielExpander<MCTSInformationSet> (firstMCTSConfig));
             
             
             Strategy strategy0 = null;
@@ -105,9 +102,8 @@ public class SMMCTSExperiment {
             System.out.print("P1BRs: ");
             
             for (int i=0; i<100; i++){
-                //strategy = runner.runMCTS(MCTS_ITERATIONS_PER_CALL, gameInfo.getAllPlayers()[0], new FrequenceDistribution((int)(MCTS_ITERATIONS_PER_CALL*i*gamma)));
-                strategy0 = runner.runMCTS(MCTS_ITERATIONS_PER_CALL, gameInfo.getAllPlayers()[0], new FrequenceDistribution());
-                strategy1 = runner.getCurrentStrategyFor(gameInfo.getAllPlayers()[1], new FrequenceDistribution());
+                strategy0 = runner.runMCTS(MCTS_ITERATIONS_PER_CALL, gameInfo.getAllPlayers()[0], new OOSMeanStratDist() /*FrequenceDistribution(gamma)*/);
+                strategy1 = runner.getCurrentStrategyFor(gameInfo.getAllPlayers()[1], new OOSMeanStratDist() /*FrequenceDistribution(gamma)*/);
                 
                 System.out.print(brAlg1.calculateBR(rootState, strategy0) + " ");
                 outLine += brAlg0.calculateBR(rootState, strategy1) + " ";
@@ -124,14 +120,18 @@ public class SMMCTSExperiment {
         
         //args: seed BF
         public static void main(String[] args) {           
-//             setupGS();
+             setupGS();
 //             runSMMCTS();
             
             
-            RandomGameInfo.MAX_BF = Integer.parseInt(args[1]);
-            setupRnd(Long.parseLong(args[0]));
-//            
-            for (double g : new double[]{/*0.1,*/0.05, 0.025}){
+//            RandomGameInfo.MAX_BF = Integer.parseInt(args[1]);
+//            setupRnd(Long.parseLong(args[0]));
+//          
+//            for (Map.Entry<Sequence, Double> en : optStrategies.get(gameInfo.getAllPlayers()[0]).entrySet()){
+//                if (en.getKey().size() < 3 && en.getValue() > 1e-5) System.out.println(en);
+//            }
+             
+            for (double g : new double[]{0.5,0.1,0.05, 0.025}){
               gamma = g;
               System.out.println("Gamma: " + g);
               for (int trial=0; trial < 100; trial++) runSMMCTS();

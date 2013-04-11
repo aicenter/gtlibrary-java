@@ -4,59 +4,109 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
-import cz.agents.gtlibrary.algorithms.mcts.backprop.BPStrategy;
-import cz.agents.gtlibrary.algorithms.mcts.backprop.exp3.Exp3ActionBPStrategy;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Player;
-import java.util.Map;
-import java.util.Random;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  *
  * @author vilo
  */
 public class OOSSelector implements SelectionStrategy {
-    public Random random = new Random();
-    private double gamma;
-
-    public OOSSelector(double gamma) {
-        this.gamma = gamma;
+    OOSBackPropFactory fact;
+    List<Action> actions;
+    MCTSInformationSet is;
+    /** Current probability of playing this action. */
+    double[] p;
+    double[] mp;
+    /** Cumulative reward. */
+    double[] r;
+    public OOSSelector(OOSBackPropFactory fact, MCTSInformationSet is){
+        this.fact = fact;
+        this.is = is;
+        actions = is.getAllNodes().iterator().next().getActions();
+        p = new double[actions.size()];
+        mp = new double[actions.size()];
+        r = new double[actions.size()];
     }
-
-    private void updateProb(Map<Action, Exp3ActionBPStrategy> actionStats) {
-        final int K = actionStats.size();
-
-        double sum = 0;
-        for (Exp3ActionBPStrategy bpi : actionStats.values()) {
-            sum += bpi.r;
-            bpi.p = (1 - gamma) * (bpi.r / sum) + gamma / K;
-        }
-        for (Exp3ActionBPStrategy bpi : actionStats.values()) {
-            if (sum > 0) bpi.p = (1 - gamma) * (bpi.r / sum) + gamma / K;
-            else bpi.p = 1 / K;
-            
-        }
-    }
-
-    @Override
-    public Action select(Player player, BPStrategy nodeStats, Map<Action, BPStrategy> nodeActionStats, BPStrategy isStats, Map<Action, BPStrategy> isActionStats){
-        Map<Action, Exp3ActionBPStrategy> actionStats = (Map<Action, Exp3ActionBPStrategy>) (Map) isActionStats;
-        updateProb(actionStats);
-
-        double rand = random.nextDouble();
+    
+    protected void updateProb() {
+        final int K = actions.size();
+        double R = 0;
+        for (double ri : r) R += Math.max(0,ri);
         
-        for (Map.Entry<Action,Exp3ActionBPStrategy> en : actionStats.entrySet()) {
-            final Exp3ActionBPStrategy bps = en.getValue();
-            if (rand > bps.p) {
-                rand -= bps.p;
+        if (R <= 0){
+            Arrays.fill(p,1.0/K);
+        } else {
+            for (int i=0; i<p.length; i++) p[i] = Math.max(0,r[i])/R;
+        }
+    }
+    
+    @Override
+    public Action select(){
+        updateProb();
+        int iexp = fact.root.getNbSamples() % 2;
+
+        double rand = fact.random.nextDouble();
+        
+        for (int i=0; i<p.length; i++) {
+            double pa;
+            //exploring player
+            if (iexp == is.getPlayer().getId()){
+                pa = (1-fact.gamma)*p[i] + fact.gamma/actions.size();
             } else {
-                bps.fact.pis.add(bps.fact.pi[player.getId()]);
-                bps.fact.pi[player.getId()] *= bps.p;
-                return en.getKey();
+                pa = p[i];
+            }
+            if (rand > pa) {
+                rand -= pa;
+            } else {
+                fact.pis.add(fact.pi);
+                if (iexp == is.getPlayer().getId()) fact.pi *= pa;
+                return actions.get(i);
             }
         }
-
+        
         assert false;
         return null;
     }
+
+    @Override
+    public double onBackPropagate(Action action, double value) {
+        //exploring player
+        if (fact.root.getNbSamples() % 2 == is.getPlayer().getId()){
+            double vsum = 0;
+            double[] v  = new double[p.length];
+            int i=0;
+            for (Action a : actions){
+                if (a.equals(action)){
+                    v[i] = value;
+                } else {
+                    v[i] = is.getActionStats().get(a).getEV();
+                }
+                vsum += p[i]*v[i];
+                i++;
+            }
+            
+            double pi = fact.pis.removeLast();
+            for (i=0; i<r.length; i++){
+                r[i] += (v[i] - vsum)/pi;
+            }
+        } else {
+            double pi = fact.pis.removeLast();
+            for (int i=0; i<p.length; i++) mp[i] += pi*p[i];
+        }
+        if (fact.pis.isEmpty()) fact.pi = 1;
+        return value;
+    }
+
+    public List<Action> getActions() {
+        return actions;
+    }
+
+    public double[] getMp() {
+        return mp;
+    }
+    
+    
 }

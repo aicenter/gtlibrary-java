@@ -22,6 +22,7 @@ public abstract class ConfigImpl<I extends InformationSetImpl> implements Algori
 		informationSet.addStateToIS(gameState);
 	}
 
+        @Override
 	public I getInformationSetFor(GameState gameState) {
 		return allInformationSets.get(gameState.getISKeyForPlayerToMove());
 	}
