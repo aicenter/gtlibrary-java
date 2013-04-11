@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.mcts.distribution;
 
-import cz.agents.gtlibrary.algorithms.mcts.backprop.BPStrategy;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -10,12 +11,12 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 public class MostFrequentAction implements Distribution {
 
 	@Override
-	public Map<Action, Double> getDistributionFor(Map<Action, BPStrategy> isActionStats, Map<Action, BPStrategy> nodeActionStats) {
-		Map<Action, Double> distribution = new FixedSizeMap<Action, Double>(isActionStats.size());
+	public Map<Action, Double> getDistributionFor(MCTSInformationSet infSet) {
+		Map<Action, Double> distribution = new FixedSizeMap<Action, Double>(infSet.getActionStats().size());
 		Action mostFrequentAction = null;
 		int count = Integer.MIN_VALUE;
 		
-		for (Entry<Action, BPStrategy> entry : isActionStats.entrySet()) {
+		for (Entry<Action, BasicStats> entry : infSet.getActionStats().entrySet()) {
 			if(entry.getValue().getNbSamples() > count) {
 				mostFrequentAction = entry.getKey();
 				count = entry.getValue().getNbSamples();

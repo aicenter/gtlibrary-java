@@ -34,7 +34,7 @@ public class MCTSRunner {
 		for (int i = 0; i < iterations; i++) {
 			selectedLeaf = rootNode.selectRecursively();
 			selectedLeaf.expand();
-			selectedLeaf.backPropagate(selectedLeaf.simulate());
+			selectedLeaf.backPropagate(null, selectedLeaf.simulate());
 		}
 		Strategy strategy = rootNode.getStrategyFor(player, distribution);
 		

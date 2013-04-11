@@ -15,7 +15,7 @@ public interface Node {
 	
 	public double[] simulate();
 
-	public void backPropagate(double[] value);
+	public void backPropagate(Action action, double[] value);
 
 	public InnerNode getParent();
 

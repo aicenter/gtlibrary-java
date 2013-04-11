@@ -15,17 +15,21 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
-import cz.agents.gtlibrary.algorithms.mcts.backprop.BPStrategy;
-import java.util.Map;
 
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Player;
 
 public interface SelectionStrategy {
 
     /**
      * Returns selected action.
      */
-	public Action select(Player player, BPStrategy nodeStats, Map<Action, BPStrategy> nodeActionStats, BPStrategy isStats, Map<Action, BPStrategy> isActionStats);
+    public Action select();
+    /**
+    * This action updates the data based on the current sample and returns the value to be propagated up.
+    * @param actions
+    * @param value
+    * @return 
+    */
+    public double onBackPropagate(Action actions, double value);
 
 }
