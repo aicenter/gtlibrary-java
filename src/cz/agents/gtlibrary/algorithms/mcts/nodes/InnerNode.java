@@ -77,12 +77,16 @@ public class InnerNode extends NodeImpl {
 	@Override
 	public void backPropagate(Action action, double[] values) {
                 //happens only in the current leaf node
-                if (action != null) values[currentPlayer.getId()] =  informationSet.backPropagate(action,values[currentPlayer.getId()]);
+                if (action != null) values[currentPlayer.getId()] =  informationSet.backPropagate(this, action, values[currentPlayer.getId()]);
                 for (int i=0; i < nodeStats.length; i++) nodeStats[i].onBackPropagate(values[i]);
 		if (parent != null && !parent.isLocked()) {
 			parent.backPropagate(lastAction, values);
 		}
 	}
+        
+        public Node getChildOrNull(Action action){
+            return children.get(action);
+        }
 
 	protected Node getChildFor(Action action) {
 		Node selected = children.get(action);
@@ -217,4 +221,9 @@ public class InnerNode extends NodeImpl {
             return strategy;
 	}
 
+    public Map<Action, Node> getChildren() {
+        return children;
+    }
+
+        
 }

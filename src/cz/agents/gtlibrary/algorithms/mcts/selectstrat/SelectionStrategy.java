@@ -16,6 +16,7 @@
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 
 public interface SelectionStrategy {
@@ -30,6 +31,6 @@ public interface SelectionStrategy {
     * @param value
     * @return 
     */
-    public double onBackPropagate(Action actions, double value);
+    public double onBackPropagate(InnerNode node, Action actions, double value);
 
 }

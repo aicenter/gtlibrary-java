@@ -36,6 +36,7 @@ public class MCTSRunner {
 			selectedLeaf.expand();
 			selectedLeaf.backPropagate(null, selectedLeaf.simulate());
 		}
+                if (distribution == null) return null;
 		Strategy strategy = rootNode.getStrategyFor(player, distribution);
 		
 		strategy.put(new LinkedListSequenceImpl(player), 1d);
@@ -126,4 +127,18 @@ public class MCTSRunner {
 			return new ChanceNode(expander, algConfig, gameState);
 		return new InnerNode(expander, algConfig, gameState);
 	}
+
+    private InnerNode oldParent = null;
+    public void setRootNode(InnerNode rootNode) {
+        if (oldParent != null) rootNode.setParent(oldParent);
+        this.rootNode = rootNode;
+        oldParent = rootNode.getParent();
+        rootNode.setParent(null);
+    }
+
+    public InnerNode getRootNode() {
+        return rootNode;
+    }
+
+        
 }

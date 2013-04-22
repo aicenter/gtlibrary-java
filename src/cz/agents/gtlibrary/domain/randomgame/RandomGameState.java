@@ -7,13 +7,12 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class RandomGameState extends GameStateImpl {
 
@@ -46,7 +45,7 @@ public class RandomGameState extends GameStateImpl {
 
     protected void evaluateAction(RandomGameAction action) {
         int newID = (ID + action.getOrder())*31 + 17;
-        if (new Random(newID).nextBoolean()) {
+        if (new HighQualityRandom(newID).nextBoolean()) {
             center++;
         } else {
             center--;
@@ -60,7 +59,7 @@ public class RandomGameState extends GameStateImpl {
     
     protected void generateObservations(int newID, RandomGameAction action){
         switchPlayers();
-        int newObservation = new Random(newID).nextInt(RandomGameInfo.MAX_OBSERVATION);
+        int newObservation = new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_OBSERVATION);
         observations.get(getPlayerToMove()).add(newObservation);
     }
 
@@ -89,9 +88,9 @@ public class RandomGameState extends GameStateImpl {
             }
         } else {
             if (RandomGameInfo.BINARY_UTILITY) {
-                rndValue = new Random(ID).nextInt(RandomGameInfo.MAX_UTILITY+1); // totally random binary
+                rndValue = new HighQualityRandom(ID).nextInt(RandomGameInfo.MAX_UTILITY+1); // totally random binary
             } else {
-                rndValue = new Random(ID).nextDouble()*RandomGameInfo.MAX_UTILITY; // totally random
+                rndValue = new HighQualityRandom(ID).nextDouble()*RandomGameInfo.MAX_UTILITY; // totally random
             }
         }
 

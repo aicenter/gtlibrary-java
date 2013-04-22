@@ -5,6 +5,7 @@
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class UCTSelectionStrategy implements SelectionStrategy {
     }
     
     @Override
-    public double onBackPropagate(Action actions, double value) {
+    public double onBackPropagate(InnerNode node, Action action, double value) {
         return value;
     }
     

@@ -4,6 +4,7 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -17,21 +18,21 @@ import java.util.List;
 public class Exp3SelectionStrategy implements SelectionStrategy {
     Exp3BackPropFactory fact;
     List<Action> actions;
-    Player player;
+    MCTSInformationSet infSet;
     /** Current probability of playing this action. */
-    double[] p;
+    public double[] p;
     /** Cumulative reward. */
     double[] r;
-    public Exp3SelectionStrategy(Exp3BackPropFactory fact, InnerNode node){
+    public Exp3SelectionStrategy(Exp3BackPropFactory fact, MCTSInformationSet infSet){
         this.fact = fact;
-        this.player = node.getInformationSet().getPlayer();
-        actions = node.getActions();
+        this.infSet = infSet;
+        actions = infSet.getAllNodes().iterator().next().getActions();
         p = new double[actions.size()];
         r = new double[actions.size()];
     }
 
     @Override
-    public double onBackPropagate(Action action, double value) {
+    public double onBackPropagate(InnerNode node, Action action, double value) {
         double effValue;
         if (fact.useCFRValues){
             effValue = value / fact.pis.removeLast();
@@ -71,8 +72,10 @@ public class Exp3SelectionStrategy implements SelectionStrategy {
             if (rand > p[i]) {
                 rand -= p[i];
             } else {
-                fact.pis.add(fact.pi[player.getId()]);
-                fact.pi[player.getId()] *= p[i];
+                if (fact.useCFRValues){
+                  fact.pis.add(fact.pi[infSet.getPlayer().getId()]);
+                  fact.pi[infSet.getPlayer().getId()] *= p[i];
+                }
                 return actions.get(i);
             }
         }

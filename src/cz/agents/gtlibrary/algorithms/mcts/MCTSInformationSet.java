@@ -17,9 +17,9 @@ import cz.agents.gtlibrary.interfaces.GameState;
 public class MCTSInformationSet extends InformationSetImpl {
 
 	private Set<InnerNode> allNodes;
-	public SelectionStrategy selectionStrategy;
-        private Map<Action, BasicStats> actionStats;
-	private BasicStats informationSetStats;
+	transient public SelectionStrategy selectionStrategy;
+        transient private Map<Action, BasicStats> actionStats;
+	transient private BasicStats informationSetStats;
 
 	public MCTSInformationSet(GameState state) {
 		super(state);
@@ -36,10 +36,10 @@ public class MCTSInformationSet extends InformationSetImpl {
 		return allNodes;
 	}
         
-        public double backPropagate(Action action, double value){
+        public double backPropagate(InnerNode node, Action action, double value){
             informationSetStats.onBackPropagate(value);
             actionStats.get(action).onBackPropagate(value);
-            return selectionStrategy.onBackPropagate(action, value);
+            return selectionStrategy.onBackPropagate(node, action, value);
         }
 
         
@@ -81,6 +81,6 @@ public class MCTSInformationSet extends InformationSetImpl {
     public BasicStats getInformationSetStats() {
         return informationSetStats;
     }
-        
-        
+
+
 }
