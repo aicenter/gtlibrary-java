@@ -44,7 +44,7 @@ public abstract class GameStateImpl implements GameState {
 			action.perform(this);
 		} else {
 			throw new IllegalStateException("Inconsistent move.");
-		}
+	}
 	}
 
 	private void updateNatureProbabilityFor(Action action) {

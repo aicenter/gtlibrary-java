@@ -5,12 +5,13 @@ import java.util.Map;
 
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import java.io.Serializable;
 
 /**
  * Strategy holds mapping of sequences to their probability of occurrence,
  * only sequences with nonzero probability are stored.
  */
-public abstract class Strategy implements Map<Sequence, Double> {
+public abstract class Strategy implements Map<Sequence, Double>, Serializable  {
 
 	public abstract Map<Action, Double> getDistributionOfContinuationOf(Sequence sequence, Collection<Action> actions);
 

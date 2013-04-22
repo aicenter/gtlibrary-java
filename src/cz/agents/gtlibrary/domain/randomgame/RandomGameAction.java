@@ -19,7 +19,7 @@ public class RandomGameAction extends ActionImpl{
 
     @Override
     public void perform(GameState gameState) {
-        if (!informationSet.getPlayer().equals(gameState.getPlayerToMove())) {
+        if (informationSet != null && !informationSet.getPlayer().equals(gameState.getPlayerToMove())) {
             throw new IllegalArgumentException("Incorrect player.");
         }
 

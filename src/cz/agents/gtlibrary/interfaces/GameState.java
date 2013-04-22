@@ -1,8 +1,9 @@
 package cz.agents.gtlibrary.interfaces;
 
 import cz.agents.gtlibrary.utils.Pair;
+import java.io.Serializable;
 
-public interface GameState {
+public interface GameState extends Serializable {
 	public Player[] getAllPlayers();
 	public Player getPlayerToMove();
 	public GameState performAction(Action action);

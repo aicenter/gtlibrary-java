@@ -15,16 +15,17 @@ import java.util.List;
  *
  * @author vilo
  */
-public class OOSSelector implements SelectionStrategy, MeanStrategyProvider {
-    OOSBackPropFactory fact;
+public class RMSelector implements SelectionStrategy, MeanStrategyProvider {
+    RMBackPropFactory fact;
     List<Action> actions;
     MCTSInformationSet is;
+    Action lastSelected = null;
     /** Current probability of playing this action. */
     double[] p;
     double[] mp;
     /** Cumulative regret. */
     double[] r;
-    public OOSSelector(OOSBackPropFactory fact, MCTSInformationSet is){
+    public RMSelector(RMBackPropFactory fact, MCTSInformationSet is){
         this.fact = fact;
         this.is = is;
         actions = is.getAllNodes().iterator().next().getActions();
@@ -43,62 +44,54 @@ public class OOSSelector implements SelectionStrategy, MeanStrategyProvider {
         } else {
             for (int i=0; i<p.length; i++) p[i] = Math.max(0,r[i])/R;
         }
+        for (int i=0; i<p.length; i++) mp[i] += p[i];
     }
     
     @Override
     public Action select(){
         updateProb();
-        int iexp = fact.root.getNbSamples() % 2;
 
         double rand = fact.random.nextDouble();
-        
         for (int i=0; i<p.length; i++) {
-            double pa;
-            //exploring player
-            if (iexp == is.getPlayer().getId()){
-                pa = (1-fact.gamma)*p[i] + fact.gamma/actions.size();
-            } else {
-                pa = p[i];
-            }
+            double pa = (1-fact.gamma)*p[i] + fact.gamma/actions.size();
+            
             if (rand > pa) {
                 rand -= pa;
             } else {
-                fact.pis.add(fact.pi);
-                if (iexp == is.getPlayer().getId()) fact.pi *= pa;
-                return actions.get(i);
+                lastSelected = actions.get(i);
+                return lastSelected;
             }
         }
-        
         assert false;
         return null;
     }
 
     @Override
     public double onBackPropagate(InnerNode node, Action action, double value) {
-        //exploring player
-        if (fact.root.getNbSamples() % 2 == is.getPlayer().getId()){
-            double vsum = 0;
-            double[] v  = new double[p.length];
-            int i=0;
-            for (Action a : actions){
-                if (a.equals(action)){
-                    v[i] = value;
-                } else {
-                    v[i] = valueEstimate(a, node);
+        try {
+            if (node.getInformationSet().getPlayer().getId() == 0){
+                assert node.getInformationSet().getAllNodes().size() == 1;
+                InnerNode child = (InnerNode) node.getChildOrNull(action);
+                Action oppAct = ((RMSelector) child.getInformationSet().selectionStrategy).lastSelected;
+                
+                int i=0;
+                for (Action a : node.getActions()){
+                    if (!a.equals(action)){
+                        r[i] += ((InnerNode)node.getChildOrNull(a)).getChildOrNull(oppAct).getEV()[node.getInformationSet().getPlayer().getId()] - value;
+                    }
+                    i++;
                 }
-                vsum += p[i]*v[i];
-                i++;
+            } else {
+                int i=0;
+                for (Action a : node.getActions()){
+                    if (!a.equals(action)) r[i] += node.getChildOrNull(a).getEV()[node.getInformationSet().getPlayer().getId()] - value;
+                    i++;
+                }
             }
-            
-            double pi = fact.pis.removeLast();
-            for (i=0; i<r.length; i++){
-                r[i] += (v[i] - vsum)/pi;
-            }
-        } else {
-            double pi = fact.pis.removeLast();
-            for (int i=0; i<p.length; i++) mp[i] += pi*p[i];
+        } catch (NullPointerException ex){
+            //intentionally empty
         }
-        if (fact.pis.isEmpty()) fact.pi = 1;
+        
         return value;
     }
 
@@ -115,17 +108,16 @@ public class OOSSelector implements SelectionStrategy, MeanStrategyProvider {
     private double valueEstimate(Action exp, InnerNode node){
         double out = 0;
         try {
-             if (node.getInformationSet().getPlayer().getId() == 0){
-                assert node.getInformationSet().getAllNodes().size() == 1;
+            if (node.getInformationSet().getAllNodes().size() == 1){
                 InnerNode child = (InnerNode) node.getChildOrNull(exp);
-                double[] p = ((OOSSelector) child.getInformationSet().selectionStrategy).p;
+                double[] p = ((RMSelector) child.getInformationSet().selectionStrategy).p;
                 int i=0;
                 for (Action a : child.getActions()){
                     out += p[i++] * ((InnerNode)child.getChildOrNull(a)).getEV()[node.getInformationSet().getPlayer().getId()];
                 }
             } else {
                 InnerNode parent = (InnerNode) node.getParent();
-                double[] p = ((OOSSelector) parent.getInformationSet().selectionStrategy).p;
+                double[] p = ((RMSelector) parent.getInformationSet().selectionStrategy).p;
                 int i=0;
                 for (Action a : parent.getActions()){
                     out += p[i++] * ((InnerNode)parent.getChildOrNull(a)).getChildOrNull(exp).getEV()[node.getInformationSet().getPlayer().getId()];
