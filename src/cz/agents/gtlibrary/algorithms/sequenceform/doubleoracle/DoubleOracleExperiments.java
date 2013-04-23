@@ -46,6 +46,7 @@ public class DoubleOracleExperiments {
             }
             GPGameInfo.MAX_RAISES_IN_ROW = new Integer(args[2]);
             GPGameInfo.MAX_DIFFERENT_BETS = new Integer(args[3]);
+            GPGameInfo.MAX_DIFFERENT_RAISES = GPGameInfo.MAX_DIFFERENT_BETS;
             GPGameInfo.MAX_CARD_TYPES = new Integer(args[4]);
             GPGameInfo.MAX_CARD_OF_EACH_TYPE = new Integer(args[5]);
         } else if (args[1].equalsIgnoreCase("RG")) { // Random Games

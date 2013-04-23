@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
@@ -120,5 +121,28 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
                     variables.get(o).setLB(Math.pow(EPS, ((Sequence) o).size()));
             }
         }
+    }
+
+    @Override
+    protected Map<Sequence, Double> createSolution(SequenceFormConfig<SequenceInformationSet> algConfig, Player secondPlayer, IloCplex cplex) throws IloException {
+        Map<Sequence, Double> result = super.createSolution(algConfig, secondPlayer, cplex);
+
+        for (Player p : players)  {
+            Set<Sequence> seqs = (Set)((DoubleOracleConfig)algConfig).getFullBRSequences().get(p);
+            for (Sequence s : seqs) {
+                if (result.containsKey(s) || s.size() > 0) continue;
+                Sequence ss = new LinkedListSequenceImpl(s);
+                HashSet<Sequence> toAdd = new HashSet<Sequence>();
+                while (!result.containsKey(ss) && ss.size() > 0) {
+                    toAdd.add(new LinkedListSequenceImpl(ss));
+                    ss.removeLast();
+                }
+                if (ss.size() > 0) {
+                    for (Sequence sss : toAdd)
+                        result.put(sss, result.get(ss));
+                }
+            }
+        }
+        return result;
     }
 }

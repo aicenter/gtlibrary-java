@@ -365,4 +365,9 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 //    public int getIterationForSequence(Sequence s) {
 //        return sequencesInIterations.get(s);
 //    }
+
+
+    public Map<Player, Set<Sequence>> getFullBRSequences() {
+        return fullBRSequences;
+    }
 }

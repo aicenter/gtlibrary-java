@@ -39,6 +39,7 @@ public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet
 //                else if (s.moveNum == 10) allowed = new byte[]{5,1};//o
 //                else
                     allowed = new byte[]{4,0,8,6,2,1,3,7,5};
+//                allowed = new byte[]{0,1,2,3,4,5,6,7,8};
                 for(byte i : allowed){
                     if (!s.getTried(s.toMove, i)) {
                         if (isWinningMove(i, s)){

@@ -48,17 +48,17 @@ public class GeneralDoubleOracle {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
 
-    public static PlayerSelection playerSelection = PlayerSelection.BOTH;
+    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_IMPROVED;
 
 	public static void main(String[] args) {
 //        runBP();
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
-//        runPhantomTTT();
+        runPhantomTTT();
 
 //        GameState rootState = new BPGGameState();
 //        GameInfo gameInfo = new BPGGameInfo();

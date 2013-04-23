@@ -258,6 +258,7 @@ public class SQFBestResponseAlgorithm {
 			if (oppRP == null) oppRP = 0d;
 			 
 			double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
+//            newLowerBound = Double.NEGATIVE_INFINITY;
 			if (newLowerBound <= MAX_UTILITY_VALUE) {
 				double value = bestResponse(newState, newLowerBound);
 				selection.addValue(action, value, natureProb, oppRP);
@@ -313,8 +314,10 @@ public class SQFBestResponseAlgorithm {
 //				nonZeroContinuation = true;
 				probability *= orpProb;
 			}
-			this.nodeProbability -= probability;
-			this.value += value;
+            if (this.nodeProbability > 0) {
+                this.nodeProbability -= probability;
+                this.value += value;
+            }
 		}
 
 		@Override
@@ -368,6 +371,7 @@ public class SQFBestResponseAlgorithm {
 					if (prob > 0) nonZeroContinuation = true;
 					sequenceMap.put(a, prob); // the standard way is to sort ascending; hence, we store negative probability
 				}
+                if (!nonZeroContinuation) return actions;
 				ValueComparator<Action> comp = new ValueComparator<Action>(sequenceMap);
 		        TreeMap<Action,Double> sortedMap = new TreeMap<Action,Double>(comp);
 		        sortedMap.putAll(sequenceMap);
