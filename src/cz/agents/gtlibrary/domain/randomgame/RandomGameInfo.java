@@ -14,8 +14,8 @@ public class RandomGameInfo implements GameInfo {
 
     public static final Player[] ALL_PLAYERS = new Player[] {FIRST_PLAYER, SECOND_PLAYER};
 
-    public static int MAX_DEPTH = 1;
-    public static int MAX_BF = 10;
+    public static int MAX_DEPTH = 4;
+    public static int MAX_BF = 2;
     public static int MAX_OBSERVATION = 1;
     public static int MAX_UTILITY = 1;
     public static boolean BINARY_UTILITY = false;
