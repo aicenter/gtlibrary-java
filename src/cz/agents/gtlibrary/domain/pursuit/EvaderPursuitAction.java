@@ -7,6 +7,8 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class EvaderPursuitAction extends ActionImpl {
 
+	private static final long serialVersionUID = 4464689353944463622L;
+	
 	private Node origin;
 	private Node destination;
 	private int hashCode = -1;

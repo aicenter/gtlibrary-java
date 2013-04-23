@@ -1,14 +1,18 @@
 package cz.agents.gtlibrary.iinodes;
 
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.InformationSet;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
+
 public abstract class InformationSetImpl implements InformationSet {
+	
+	private static final long serialVersionUID = 3656344734672077909L;
+	
 	protected Sequence playerHistory;
 	protected Player player;
 	protected LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<GameState>();

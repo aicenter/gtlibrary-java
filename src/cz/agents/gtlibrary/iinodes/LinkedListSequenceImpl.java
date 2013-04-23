@@ -11,6 +11,8 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class LinkedListSequenceImpl implements Sequence {
 
+	private static final long serialVersionUID = 6406066344355924513L;
+	
 	private LinkedList<Action> actions;
 	private Player player;
 	private int hashCode = -1;

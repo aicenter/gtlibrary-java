@@ -41,6 +41,13 @@ public class MCTSRunner {
 		strategy.put(new LinkedListSequenceImpl(player), 1d);
 		return strategy;
 	}
+        
+        public Strategy getCurrentStrategyFor(Player player, Distribution distribution){
+                Strategy strategy = rootNode.getStrategyFor(player, distribution);
+		
+		strategy.put(new LinkedListSequenceImpl(player), 1d);
+		return strategy;
+        }
 
         public double[] getEV(){
             return rootNode.getEV();

@@ -1,8 +1,9 @@
 package cz.agents.gtlibrary.interfaces;
 
+import java.io.Serializable;
 import java.util.List;
 
-public interface Expander<I extends InformationSet> {
+public interface Expander<I extends InformationSet> extends Serializable {
 	
 	public AlgorithmConfig<I> getAlgorithmConfig();
 	

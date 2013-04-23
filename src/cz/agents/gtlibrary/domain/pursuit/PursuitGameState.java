@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.domain.pursuit;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,6 +15,8 @@ import cz.agents.gtlibrary.utils.Pair;
 
 public class PursuitGameState extends GameStateImpl {
 
+	private static final long serialVersionUID = -1158263262570332115L;
+	
 	private List<Action> sequence;
 	private Graph graph;
 	private Node evaderPosition;

@@ -22,7 +22,10 @@ import java.util.*;
  */
 
 public class TTTState extends GameStateImpl {
-    //bitmap with 4 bits per board field. First two are the symbol: 00 -> ' ', 10 -> 'o', 11 -> 'x'. The next two bits are if the field has been tries out by x player and o player.
+
+	private static final long serialVersionUID = -8229777952409518678L;
+	
+	//bitmap with 4 bits per board field. First two are the symbol: 00 -> ' ', 10 -> 'o', 11 -> 'x'. The next two bits are if the field has been tries out by x player and o player.
     //could be reimplemented with 9x3 fields and a primitive type
     BitSet s = new BitSet(36);
     public char toMove = 'x';
