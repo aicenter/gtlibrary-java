@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
+import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,7 +35,7 @@ public class SQFBestResponseAlgorithm {
 	
 	public long nodes = 0;
 	
-	protected Expander<SequenceInformationSet> expander;
+	protected Expander expander;
 	
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<GameState, Double>();
 	private Map<Sequence, Double> opponentRealizationPlan = new HashMap<Sequence, Double>();
@@ -46,7 +47,7 @@ public class SQFBestResponseAlgorithm {
 	final protected int searchingPlayerIndex;
 	final protected int opponentPlayerIndex;
 	final protected Player[] players;
-	final protected SequenceFormConfig<SequenceInformationSet> algConfig;
+	final protected ConfigImpl algConfig;
 	final protected GameInfo gameInfo;
 	
 	protected double MAX_UTILITY_VALUE;
@@ -57,7 +58,7 @@ public class SQFBestResponseAlgorithm {
 	
 	protected GameState gameTreeRoot = null;
 
-	public SQFBestResponseAlgorithm(Expander<SequenceInformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, SequenceFormConfig<SequenceInformationSet> algConfig, GameInfo gameInfo) {
+	public SQFBestResponseAlgorithm(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, ConfigImpl algConfig, GameInfo gameInfo) {
 		this.searchingPlayerIndex = searchingPlayerIndex;
 		this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
 		this.players = actingPlayers;	
@@ -240,7 +241,8 @@ public class SQFBestResponseAlgorithm {
 		} 
 			
 		assert (returnValue != null);
-		assert (returnValue <= MAX_UTILITY_VALUE*(1+EPS_CONSTANT));
+		//assert (returnValue <= MAX_UTILITY_VALUE*(1+EPS_CONSTANT));
+                assert (returnValue <= MAX_UTILITY_VALUE*1.5);
 		return returnValue;
 	}
 	
