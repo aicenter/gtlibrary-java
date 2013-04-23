@@ -5,6 +5,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -28,6 +29,7 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.io.GambitEFG;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class GeneralDoubleOracle {
@@ -55,10 +57,10 @@ public class GeneralDoubleOracle {
 //        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-//        runRandomGame();
+        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
-        runPhantomTTT();
+//        runPhantomTTT();
 
 //        GameState rootState = new BPGGameState();
 //        GameInfo gameInfo = new BPGGameInfo();
@@ -104,6 +106,7 @@ public class GeneralDoubleOracle {
         Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
         doefg.generate(null);
+//        GambitEFG.write("randomgame.gbt", rootState, (Expander)expander);
     }
     
     public static void runSimRandomGame() {
