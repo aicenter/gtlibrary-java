@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -46,11 +47,12 @@ public class RandomGameState extends GameStateImpl {
 
     protected void evaluateAction(RandomGameAction action) {
         int newID = (ID + action.getOrder())*31 + 17;
-        if (new Random(newID).nextBoolean()) {
-            center++;
-        } else {
-            center--;
-        }
+        center += new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_CENTER_MODIFICATION*2+1)-RandomGameInfo.MAX_CENTER_MODIFICATION;
+//        if (new HighQualityRandom(newID).nextBoolean()) {
+//            center++;
+//        } else {
+//            center--;
+//        }
         generateObservations(newID, action);
         
         this.ID = newID;
@@ -89,9 +91,9 @@ public class RandomGameState extends GameStateImpl {
             }
         } else {
             if (RandomGameInfo.BINARY_UTILITY) {
-                rndValue = new Random(ID).nextInt(RandomGameInfo.MAX_UTILITY+1); // totally random binary
+                rndValue = new HighQualityRandom(ID).nextInt(RandomGameInfo.MAX_UTILITY+1); // totally random binary
             } else {
-                rndValue = new Random(ID).nextDouble()*RandomGameInfo.MAX_UTILITY; // totally random
+                rndValue = new HighQualityRandom(ID).nextDouble()*RandomGameInfo.MAX_UTILITY; // totally random
             }
         }
 

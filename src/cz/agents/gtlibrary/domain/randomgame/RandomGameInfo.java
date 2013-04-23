@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.domain.randomgame;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 import java.util.Random;
 
@@ -13,19 +14,20 @@ public class RandomGameInfo implements GameInfo {
 
     public static final Player[] ALL_PLAYERS = new Player[] {FIRST_PLAYER, SECOND_PLAYER};
 
-    public static int MAX_DEPTH = 5;
-    public static int MAX_BF = 4;
-    public static int MAX_OBSERVATION = 3;
+    public static int MAX_DEPTH = 1;
+    public static int MAX_BF = 10;
+    public static int MAX_OBSERVATION = 1;
     public static int MAX_UTILITY = 1;
     public static boolean BINARY_UTILITY = false;
-    public static boolean UTILITY_CORRELATION = true;
+    public static boolean UTILITY_CORRELATION = false;
+    public static int MAX_CENTER_MODIFICATION = 1;
 
-    public static long seed = 7;
+    public static long seed = 1;
 
-    public static Random rnd = new Random(seed);
+    public static Random rnd = new HighQualityRandom(seed);
 
     public RandomGameInfo() {
-        rnd = new Random(seed);
+        rnd = new HighQualityRandom(seed);
         if (UTILITY_CORRELATION) {
             if (BINARY_UTILITY)
                 MAX_UTILITY = 1;
