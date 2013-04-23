@@ -6,9 +6,9 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 
 public class RandomGameExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
@@ -18,7 +18,7 @@ public class RandomGameExpander<I extends InformationSet> extends ExpanderImpl<I
 
     public RandomGameExpander(AlgorithmConfig<I> algConfig) {
         super(algConfig);
-        RandomGameInfo.rnd = new Random(RandomGameInfo.seed);
+        RandomGameInfo.rnd = new HighQualityRandom(RandomGameInfo.seed);
         firstSeed = RandomGameInfo.rnd.nextLong();
     }
 
