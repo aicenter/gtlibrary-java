@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.unprunning.Unpru
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 import java.util.Random;
 
@@ -54,7 +55,7 @@ public class DoubleOracleExperiments {
                 throw new IllegalArgumentException("Illegal random game domain arguments count. 7 are required {SEED} {DEPTH} {BF} {OBSERVATION} {UTILITY} {BIN} {CORR}");
             }
             RandomGameInfo.seed = new Integer(args[2]);
-            RandomGameInfo.rnd = new Random(RandomGameInfo.seed);
+            RandomGameInfo.rnd = new HighQualityRandom(RandomGameInfo.seed);
             RandomGameInfo.MAX_DEPTH = new Integer(args[3]);
             RandomGameInfo.MAX_BF = new Integer(args[4]);
             RandomGameInfo.MAX_OBSERVATION = new Integer(args[5]);

@@ -1,29 +1,30 @@
 package cz.agents.gtlibrary.algorithms.mcts.distribution;
 
-import cz.agents.gtlibrary.algorithms.mcts.backprop.BPStrategy;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class ValueDistribution implements Distribution {
 
 	@Override
-	public Map<Action, Double> getDistributionFor(Map<Action, BPStrategy> informationSetStats, Map<Action, BPStrategy> nodeActionStats) {
+	public Map<Action, Double> getDistributionFor(MCTSInformationSet infSet) {
+                Map<Action, BasicStats> informationSetStats = infSet.getActionStats();
 		double sum = getSumOfValues(informationSetStats);
 		Map<Action, Double> distribution = new FixedSizeMap<Action, Double>(informationSetStats.size());
 		
-		for (Entry<Action, BPStrategy> entry : informationSetStats.entrySet()) {
+		for (Entry<Action, BasicStats> entry : informationSetStats.entrySet()) {
 			distribution.put(entry.getKey(), entry.getValue().getEV()/sum);
 		}
 		return distribution;
 	}
 
-	private double getSumOfValues(Map<Action, BPStrategy> actionStats) {
+	private double getSumOfValues(Map<Action, BasicStats> actionStats) {
 		double sum = 0;
 
-		for (BPStrategy backPropagationStrategy : actionStats.values()) {
+		for (BasicStats backPropagationStrategy : actionStats.values()) {
 			sum += backPropagationStrategy.getEV();
 		}
 		return sum;
