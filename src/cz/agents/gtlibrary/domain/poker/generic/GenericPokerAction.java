@@ -8,6 +8,8 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 public class GenericPokerAction extends PokerAction {
 
+	private static final long serialVersionUID = -1491826905055714815L;
+	
 	final private int value;
 
 	public GenericPokerAction(String action, InformationSet i, Player player, int value) {

@@ -7,6 +7,8 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class AttackerAction extends ActionImpl {
 
+	private static final long serialVersionUID = -8635820135191985365L;
+	
 	final private Node fromNode;
 	final private Node toNode;
 	final private AttackerMovementType type;

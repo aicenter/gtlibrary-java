@@ -2,7 +2,6 @@ package cz.agents.gtlibrary.domain.randomgame;
 
 
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
-import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -11,9 +10,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-public class RandomGameExpander<I extends InformationSetImpl> extends ExpanderImpl<I> {
+public class RandomGameExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
-    private long firstSeed;
+	private static final long serialVersionUID = -4773226796724312872L;
+	
+	private long firstSeed;
 
     public RandomGameExpander(AlgorithmConfig<I> algConfig) {
         super(algConfig);

@@ -18,7 +18,9 @@ import java.util.Random;
 
 public class RandomGameState extends GameStateImpl {
 
-    private int ID;
+	private static final long serialVersionUID = 6086530572992658181L;
+	
+	private int ID;
     private double center;
     private Player playerToMove;
     protected Map<Player, LinkedList<Integer>> observations = new FixedSizeMap<Player, LinkedList<Integer>>(2);

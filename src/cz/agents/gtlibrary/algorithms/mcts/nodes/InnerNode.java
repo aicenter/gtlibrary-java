@@ -172,7 +172,7 @@ public class InnerNode extends NodeImpl {
 		return informationSet.getStatsFor(0).getNbSamples();
 	}
 
-	protected Map<Sequence, Double> getStrategyFor(Node node, Player player, Distribution distribution) {
+	protected Strategy getStrategyFor(Node node, Player player, Distribution distribution) {
 		if (node == null) {
 			return algConfig.getEmptyStrategy();
 		}
@@ -185,36 +185,36 @@ public class InnerNode extends NodeImpl {
 
 	@Override
 	public Strategy getStrategyFor(Player player, Distribution distribution) {
-		if (children == null)
-			return algConfig.getEmptyStrategy();
-		Strategy strategy = algConfig.getEmptyStrategy();
-		Map<Action, Double> actionDistribution = distribution.getDistributionFor(informationSet.getActionStats(), actionStats);
+            if (children == null)
+                    return algConfig.getEmptyStrategy();
+            Strategy strategy = algConfig.getEmptyStrategy();
+            Map<Action, Double> actionDistribution = distribution.getDistributionFor(informationSet.getActionStats(), actionStats);
 
-		if (player.equals(currentPlayer)) {
-			updateStrategy(strategy, actionDistribution);
-		}
-		for (Entry<Action, Double> entry : actionDistribution.entrySet()) {
-			if (entry.getValue() > 0) {
-				for (Map.Entry<Sequence, Double> en : getStrategyFor(children.get(entry.getKey()), player, distribution).entrySet()) {
-					strategy.put(en.getKey(), entry.getValue() * en.getValue());
-				}
-			}
-
-		}
-		return strategy;
-	}
-
-	public void updateStrategy(Strategy strategy, Map<Action, Double> actionDistribution) {
-		Sequence currentSequence = createSequenceForStrategy();
-
-		for (Entry<Action, Double> entry : actionDistribution.entrySet()) {
-			if (entry.getValue() > 0) {
-				Sequence sequence = new LinkedListSequenceImpl(currentSequence);
-
-				sequence.addLast(entry.getKey());
-				strategy.put(sequence, entry.getValue());
-			}
-		}
+            for (Entry<Action, Double> actionEn : actionDistribution.entrySet()) {
+                if (player.equals(currentPlayer)) {
+                    if (actionEn.getValue() > 0) {
+                        Sequence sequence = new LinkedListSequenceImpl(currentPlayer);
+                        sequence.addLast(actionEn.getKey());
+                        strategy.put(sequence, actionEn.getValue());
+                        for (Map.Entry<Sequence, Double> seqEn : getStrategyFor(children.get(actionEn.getKey()), player, distribution).entrySet()) {
+                            sequence = new LinkedListSequenceImpl(seqEn.getKey());
+                            sequence.addFirst(actionEn.getKey());
+                            strategy.put(sequence, actionEn.getValue() * seqEn.getValue());
+                        }
+                    }
+                } else {
+                    for (Map.Entry<Sequence, Double> seqEn : getStrategyFor(children.get(actionEn.getKey()), player, distribution).entrySet()) {
+//                        Double prob = strategy.get(seqEn.getKey());
+//                        if (prob != null) {
+//                            assert seqEn.getValue() == prob;
+//                        } else {
+                            strategy.put(seqEn.getKey(),seqEn.getValue());
+//                        }
+                        
+                    }
+                }
+            }
+            return strategy;
 	}
 
 }

@@ -7,6 +7,8 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class PatrollerPursuitAction extends ActionImpl {
 	
+	private static final long serialVersionUID = 7653401367755825764L;
+	
 	private Node p1Origin;
 	private Node p1Destination;
 	private Node p2Origin;

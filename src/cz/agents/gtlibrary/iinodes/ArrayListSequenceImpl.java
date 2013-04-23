@@ -11,6 +11,8 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class ArrayListSequenceImpl implements Sequence {
 
+	private static final long serialVersionUID = -2037759537736542277L;
+	
 	private ArrayList<Action> actions;
 	private Player player;
 	private int hashCode = -1;

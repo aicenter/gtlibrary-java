@@ -1,23 +1,31 @@
 package cz.agents.gtlibrary.domain.poker.generic;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
+import cz.agents.gtlibrary.algorithms.rpoptimization.ActionComparator;
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 
-public class GenericPokerExpander<I extends InformationSet> extends ExpanderImpl<I> {
+public class RPOptimizedGPExpander<I extends InformationSet> extends ExpanderImpl<I> {
+
+	private static final long serialVersionUID = 6717689755973433499L;
 	
-	private static final long serialVersionUID = 5112190454182040130L;
+	private Map<Player, Map<Sequence, Double>> plans;
 
-	public GenericPokerExpander(AlgorithmConfig<I> algConfig) {
+	public RPOptimizedGPExpander(AlgorithmConfig<I> algConfig, Map<Player, Map<Sequence, Double>> plans) {
 		super(algConfig);
+		this.plans = plans;
 	}
-	
+
 	@Override
 	public List<Action> getActions(GameState gameState) {
 		GenericPokerGameState gpState = (GenericPokerGameState) gameState;
@@ -28,6 +36,8 @@ public class GenericPokerExpander<I extends InformationSet> extends ExpanderImpl
 			return actions;
 		}
 		addActionsOfRegularPlayer(gpState, actions, getAlgorithmConfig().getInformationSetFor(gameState));
+		if (!gameState.isPlayerToMoveNature())
+			Collections.sort(actions, new ActionComparator(plans.get(gameState.getPlayerToMove()), gameState));
 		return actions;
 	}
 

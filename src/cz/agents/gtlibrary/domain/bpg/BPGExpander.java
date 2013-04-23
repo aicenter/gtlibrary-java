@@ -16,6 +16,8 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class BPGExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
+	private static final long serialVersionUID = 3620429320502817997L;
+
 	public BPGExpander(AlgorithmConfig<I> algConfig) {
 		super(algConfig);
 	}

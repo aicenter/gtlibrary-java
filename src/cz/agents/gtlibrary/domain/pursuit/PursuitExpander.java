@@ -12,6 +12,8 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class PursuitExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
+	private static final long serialVersionUID = 3736551160185044265L;
+
 	public PursuitExpander(AlgorithmConfig<I> algConfig) {
 		super(algConfig);
 	}

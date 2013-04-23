@@ -7,6 +7,8 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 public class GoofSpielAction extends ActionImpl implements Comparable<GoofSpielAction> {
 
+	private static final long serialVersionUID = -3504137065821329745L;
+
 	private final int value;
 
 	private Player player;

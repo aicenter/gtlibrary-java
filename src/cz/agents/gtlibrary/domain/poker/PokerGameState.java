@@ -13,6 +13,8 @@ import cz.agents.gtlibrary.utils.Pair;
 
 public abstract class PokerGameState extends GameStateImpl {
 
+	private static final long serialVersionUID = 1768690890035774941L;
+
 	protected LinkedList<PokerAction> sequenceForAllPlayers;
 
 	protected PokerAction[] playerCards;

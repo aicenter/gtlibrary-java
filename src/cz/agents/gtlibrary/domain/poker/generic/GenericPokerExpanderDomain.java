@@ -10,6 +10,8 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class GenericPokerExpanderDomain<I extends InformationSet> extends GenericPokerExpander<I> {
 	
+	private static final long serialVersionUID = 7535153881793134220L;
+
 	public GenericPokerExpanderDomain(AlgorithmConfig<I> algConfig) {
 		super(algConfig);
 	}
