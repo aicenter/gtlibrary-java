@@ -3,8 +3,8 @@ package cz.agents.gtlibrary.domain.randomgame;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 
-import java.util.Random;
 
 
 public class RandomGameInfo implements GameInfo {
@@ -22,10 +22,10 @@ public class RandomGameInfo implements GameInfo {
 
     public static long seed = 7;
 
-    public static Random rnd = new Random(seed);
+    public static HighQualityRandom rnd = new HighQualityRandom(seed);
 
     public RandomGameInfo() {
-        rnd = new Random(seed);
+        rnd = new HighQualityRandom(seed);
         if (UTILITY_CORRELATION) {
             if (BINARY_UTILITY)
                 MAX_UTILITY = 1;

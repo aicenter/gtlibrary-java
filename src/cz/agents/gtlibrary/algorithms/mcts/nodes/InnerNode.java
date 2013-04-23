@@ -2,7 +2,7 @@ package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.backprop.BPStrategy;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -20,8 +20,7 @@ public class InnerNode extends NodeImpl {
 	protected Player currentPlayer;
 	protected Expander<MCTSInformationSet> expander;
 	protected MCTSInformationSet informationSet;
-	private BPStrategy nodeStats;
-	private Map<Action, BPStrategy> actionStats;
+        protected BasicStats[] nodeStats;
 
 	protected boolean isLocked;
 
@@ -46,8 +45,8 @@ public class InnerNode extends NodeImpl {
 	private void attendInformationSet() {
 		informationSet = algConfig.getInformationSetFor(gameState);
 
-		if (informationSet == null) {
-			informationSet = new MCTSInformationSet(gameState);
+                //adding a new information set to the config
+		if (informationSet.getAllNodes().isEmpty()) {
 			algConfig.addInformationSetFor(gameState, informationSet);
 		}
 		informationSet.addNode(this);
@@ -76,20 +75,18 @@ public class InnerNode extends NodeImpl {
 	}
 
 	@Override
-	public void backPropagate(double[] values) {
-		informationSet.addValuesToStats(values);
-		nodeStats.onBackPropagate(values[currentPlayer.getId()]);
+	public void backPropagate(Action action, double[] values) {
+                //happens only in the current leaf node
+                if (action != null) values[currentPlayer.getId()] =  informationSet.backPropagate(this, action, values[currentPlayer.getId()]);
+                for (int i=0; i < nodeStats.length; i++) nodeStats[i].onBackPropagate(values[i]);
 		if (parent != null && !parent.isLocked()) {
-			parent.backPropagateInActions(lastAction, values);
-			parent.backPropagate(values);
+			parent.backPropagate(lastAction, values);
 		}
-
 	}
-
-	public void backPropagateInActions(Action action, double[] values) {
-		actionStats.get(action).onBackPropagate(values[currentPlayer.getId()]);
-		informationSet.updateActionStatsFor(action, values);
-	}
+        
+        public Node getChildOrNull(Action action){
+            return children.get(action);
+        }
 
 	protected Node getChildFor(Action action) {
 		Node selected = children.get(action);
@@ -108,7 +105,7 @@ public class InnerNode extends NodeImpl {
 	}
 
 	protected Action getActionFromDecisionStrategy(int playerIndex) {
-		return algConfig.getSelectionStrategy().select(currentPlayer, nodeStats, actionStats, informationSet.getStatsFor(playerIndex), informationSet.getActionStats());
+		return informationSet.selectionStrategy.select();
 	}
 
 	@Override
@@ -144,16 +141,23 @@ public class InnerNode extends NodeImpl {
 		return this.hashCode() == obj.hashCode();
 	}
 
+        public List<Action> getActions() {
+            return actions;
+        }
+
+        public MCTSInformationSet getInformationSet() {
+            return informationSet;
+        }
+
 	@Override
 	public void expand() {
 		if (children != null) {
 			return;
 		}
-		nodeStats = algConfig.getBackPropagationStrategyFactory().createForNode(this);
-		actionStats = new HashMap<Action, BPStrategy>();
-		for (Action action : actions) {
-			actionStats.put(action, algConfig.getBackPropagationStrategyFactory().createForNodeAction(this, action));
-		}
+                nodeStats =  new BasicStats[gameState.getAllPlayers().length];
+                for (int i = 0; i < nodeStats.length; i++) {
+                        nodeStats[i] = new BasicStats();
+                }
 		children = new FixedSizeMap<Action, Node>(actions.size());
 		informationSet.initStats(actions, algConfig.getBackPropagationStrategyFactory());
 	}
@@ -163,13 +167,13 @@ public class InnerNode extends NodeImpl {
 		double[] ev = new double[gameState.getAllPlayers().length];
 
 		for (int i = 0; i < ev.length; i++)
-			ev[i] = informationSet.getStatsFor(i).getEV();
+			ev[i] = nodeStats[i].getEV();
 		return ev;
 	}
 
 	@Override
 	public int getNbSamples() {
-		return informationSet.getStatsFor(0).getNbSamples();
+		return nodeStats[0].getNbSamples();
 	}
 
 	protected Strategy getStrategyFor(Node node, Player player, Distribution distribution) {
@@ -188,7 +192,7 @@ public class InnerNode extends NodeImpl {
             if (children == null)
                     return algConfig.getEmptyStrategy();
             Strategy strategy = algConfig.getEmptyStrategy();
-            Map<Action, Double> actionDistribution = distribution.getDistributionFor(informationSet.getActionStats(), actionStats);
+            Map<Action, Double> actionDistribution = distribution.getDistributionFor(informationSet);
 
             for (Entry<Action, Double> actionEn : actionDistribution.entrySet()) {
                 if (player.equals(currentPlayer)) {
@@ -217,4 +221,9 @@ public class InnerNode extends NodeImpl {
             return strategy;
 	}
 
+    public Map<Action, Node> getChildren() {
+        return children;
+    }
+
+        
 }

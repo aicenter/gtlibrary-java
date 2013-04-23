@@ -3,18 +3,18 @@
  * and open the template in the editor.
  */
 
-package cz.agents.gtlibrary.algorithms.mcts.backprop;
+package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 /**
  * 
  * @author Vilo
  */
-public class BPStrategy {
+public class BasicStats {
 	private int n = 0;
 	private double oldM;
 	private double newM;
 
-	public void onBackPropagate(double value) {
+	public double onBackPropagate(double value) {
 		if (Double.isInfinite(value) || Double.isNaN(value)) {
 			throw new IllegalArgumentException("Bad value: " + value);
 		}
@@ -26,6 +26,7 @@ public class BPStrategy {
 			newM = oldM + (value - oldM) / n;
 		}
 		oldM = newM;
+                return value;
 	}
 
 	public double getEV() {

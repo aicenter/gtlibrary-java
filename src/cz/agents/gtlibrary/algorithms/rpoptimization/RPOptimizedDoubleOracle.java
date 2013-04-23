@@ -20,6 +20,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FileManager;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 public class RPOptimizedDoubleOracle {
 
@@ -76,11 +77,11 @@ public class RPOptimizedDoubleOracle {
 		for (int i = 0; i < 10; i++) {
 			realizationPlans = new FileManager<Map<Player, Map<Sequence, Double>>>().loadObject("RandomGameRP"); 
 			tempConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
-			RandomGameInfo.rnd = new Random(RandomGameInfo.seed);
+			RandomGameInfo.rnd = new HighQualityRandom(RandomGameInfo.seed);
 			long time = System.currentTimeMillis();
 			Map<Player, Map<Sequence, Double>> realizationPlans1 =  new GeneralDoubleOracle(rootState, new RPOptimizedRandomExpander<DoubleOracleInformationSet>(tempConfig, realizationPlans), gameInfo, tempConfig).generate(null);
 			time = System.currentTimeMillis() - time;
-			RandomGameInfo.rnd = new Random(RandomGameInfo.seed);
+			RandomGameInfo.rnd = new HighQualityRandom(RandomGameInfo.seed);
 			realizationPlans = new RPMerger(rootState, new RandomGameExpander<DoubleOracleInformationSet>(tempConfig)).mergePlans(realizationPlans1, realizationPlans);
 				new FileManager<Map<Player, Map<Sequence, Double>>>().saveObject(realizationPlans, "RandomGameRP");
 		}

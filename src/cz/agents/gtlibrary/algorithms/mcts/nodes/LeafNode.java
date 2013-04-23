@@ -25,10 +25,9 @@ public class LeafNode extends NodeImpl {
 	}
 
 	@Override
-	public void backPropagate(double[] value) {
+	public void backPropagate(Action action, double[] value) {
 		++nbSamples;
-		parent.backPropagateInActions(lastAction, value);
-		parent.backPropagate(value);
+		parent.backPropagate(lastAction, value);
 	}
 
 	@Override
