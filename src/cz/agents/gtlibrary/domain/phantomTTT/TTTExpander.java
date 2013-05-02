@@ -6,7 +6,9 @@ import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet>  extends ExpanderImpl<I> {
 
@@ -56,7 +58,7 @@ public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet
                         }
                     }
                 }
-                
+//        Collections.shuffle(actions, new Random(1)); // uncomment if the domain-dependent should not be used
 		return actions;
 	}
         

@@ -27,7 +27,7 @@ public class PlayerImpl implements Player {
 	
 	public int computeHashCode() {
 		final int prime = 31;
-		int result = 1;
+		int result = 351357;
 		
 		result = prime * result + id;
 		return result;

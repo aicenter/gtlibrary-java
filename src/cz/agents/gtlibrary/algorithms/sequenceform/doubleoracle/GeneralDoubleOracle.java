@@ -24,10 +24,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
-import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.*;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.io.GambitEFG;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
@@ -56,8 +53,8 @@ public class GeneralDoubleOracle {
 //        runBP();
 //        runGenericPoker();
 //        runKuhnPoker();
-        runGoofSpiel();
-//        runRandomGame();
+//        runGoofSpiel();
+        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
@@ -104,6 +101,7 @@ public class GeneralDoubleOracle {
         GameInfo gameInfo = new RandomGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
+//        Expander<DoubleOracleInformationSet> expander = new RandomGameExpanderWithMoveOrdering<DoubleOracleInformationSet>(algConfig, new int[] {1, 2, 0});
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
         doefg.generate(null);
 //        GambitEFG.write("randomgame.gbt", rootState, (Expander)expander);
@@ -206,6 +204,7 @@ public class GeneralDoubleOracle {
         }
 		int currentPlayerIndex = 0;
 		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
+        doRestrictedGameSolver.setDebugOutput(debugOutput);
 		
 		double p1BoundUtility = gameConfig.getMaxUtility();
 		double p2BoundUtility = gameConfig.getMaxUtility();
@@ -395,15 +394,15 @@ public class GeneralDoubleOracle {
         } catch (InterruptedException e) {
         }
 
-        System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
-		System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
-		System.out.println("final result:" + doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]));
-		System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
-        System.out.println("final time: " + finishTime);
-		System.out.println("final CPLEX time: " + overallCPLEX);
-        System.out.println("final BR time: " + overallBRCalculation);
-        System.out.println("final RGB time: " + overallRGBuilding);
-        System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
+        debugOutput.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
+        debugOutput.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
+        debugOutput.println("final result:" + doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]));
+        debugOutput.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
+        debugOutput.println("final time: " + finishTime);
+        debugOutput.println("final CPLEX time: " + overallCPLEX);
+        debugOutput.println("final BR time: " + overallBRCalculation);
+        debugOutput.println("final RGB time: " + overallRGBuilding);
+        debugOutput.println("final StrategyGenerating time: " + overallSequenceGeneration);
 //        debugOutput.println("last support sequence iteration: PL1: " + maxIt[0] + " \t PL2: " + maxIt[1]);
         debugOutput.println("LP GenerationTime:" + doRestrictedGameSolver.getOverallGenerationTime());
         debugOutput.println("LP Constraint GenerationTime:" + doRestrictedGameSolver.getOverallConstraintGenerationTime());
@@ -445,5 +444,9 @@ public class GeneralDoubleOracle {
         }
 
         System.out.println("Nodes: " + nodes);
+    }
+
+    public void setDebugOutput(PrintStream debugOutput) {
+        this.debugOutput = debugOutput;
     }
 }

@@ -51,8 +51,8 @@ public class FullSequenceEFG {
 //		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
-		runGoofSpiel();
-//      runRandomGame();
+//		runGoofSpiel();
+      runRandomGame();
 //      runSimRandomGame();
 //		runPursuit();
 	}

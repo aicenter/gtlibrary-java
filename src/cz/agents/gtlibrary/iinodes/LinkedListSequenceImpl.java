@@ -180,9 +180,11 @@ public class LinkedListSequenceImpl implements Sequence {
 			return false;
 		LinkedListSequenceImpl other = (LinkedListSequenceImpl) obj;
 
+        if (!player.equals(other.player))
+            return false;
+        if (actions.size() != other.actions.size())
+            return false;
 		if (!actions.equals(other.actions))
-			return false;
-		if (!player.equals(other.player))
 			return false;
 		return true;
 	}
