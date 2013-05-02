@@ -31,7 +31,7 @@ public class RandomGameAction extends ActionImpl{
     @Override
     public int hashCode() {
         if(hashCode == -1)
-            hashCode = new HashCodeBuilder(17,31).append(value).append(informationSet).toHashCode();
+            hashCode = new HashCodeBuilder(17,31).append(value).append(order).append(informationSet).toHashCode();
         return hashCode;
     }
 

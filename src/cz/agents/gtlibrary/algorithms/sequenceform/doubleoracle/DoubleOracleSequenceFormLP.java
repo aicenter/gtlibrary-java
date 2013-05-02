@@ -78,6 +78,8 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
         sequences.get(firstPlayer).clear();
         informationSets.get(secondPlayer).clear();
 
+        debugOutput.println("Starting identification of Sequences/IS");
+
         for (Sequence s : newSequencesSinceLastLPCalculation.get(secondPlayer)) {
             if (s.getPlayer().equals(firstPlayer)) {
                 sequences.get(firstPlayer).add(s);
@@ -95,6 +97,8 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
                 }
             } else assert false;
         }
+
+        debugOutput.println("Ending identification of Sequences/IS");
     }
 
     public long getOverallGenerationTime() {
@@ -127,22 +131,22 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
     protected Map<Sequence, Double> createSolution(SequenceFormConfig<SequenceInformationSet> algConfig, Player secondPlayer, IloCplex cplex) throws IloException {
         Map<Sequence, Double> result = super.createSolution(algConfig, secondPlayer, cplex);
 
-        for (Player p : players)  {
-            Set<Sequence> seqs = (Set)((DoubleOracleConfig)algConfig).getFullBRSequences().get(p);
-            for (Sequence s : seqs) {
-                if (result.containsKey(s) || s.size() > 0) continue;
-                Sequence ss = new LinkedListSequenceImpl(s);
-                HashSet<Sequence> toAdd = new HashSet<Sequence>();
-                while (!result.containsKey(ss) && ss.size() > 0) {
-                    toAdd.add(new LinkedListSequenceImpl(ss));
-                    ss.removeLast();
-                }
-                if (ss.size() > 0) {
-                    for (Sequence sss : toAdd)
-                        result.put(sss, result.get(ss));
-                }
-            }
-        }
+//        for (Player p : players)  {
+//            Set<Sequence> seqs = (Set)((DoubleOracleConfig)algConfig).getFullBRSequences().get(p);
+//            for (Sequence s : seqs) {
+//                if (result.containsKey(s) || s.size() > 0) continue;
+//                Sequence ss = new LinkedListSequenceImpl(s);
+//                HashSet<Sequence> toAdd = new HashSet<Sequence>();
+//                while (!result.containsKey(ss) && ss.size() > 0) {
+//                    toAdd.add(new LinkedListSequenceImpl(ss));
+//                    ss.removeLast();
+//                }
+//                if (ss.size() > 0) {
+//                    for (Sequence sss : toAdd)
+//                        result.put(sss, result.get(ss));
+//                }
+//            }
+//        }
         return result;
     }
 }
