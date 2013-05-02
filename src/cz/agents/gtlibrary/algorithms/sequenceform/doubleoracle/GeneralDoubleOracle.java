@@ -41,7 +41,6 @@ public class GeneralDoubleOracle {
     final private static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
     private ThreadMXBean threadBean ;
-//    public static boolean IMPROVED_PLAYER_SELECTION = true;
 
     public enum PlayerSelection {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
@@ -58,13 +57,6 @@ public class GeneralDoubleOracle {
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
-
-//        GameState rootState = new BPGGameState();
-//        GameInfo gameInfo = new BPGGameInfo();
-//        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
-//        Expander<DoubleOracleInformationSet> expander = new BPGExpander<DoubleOracleInformationSet>(algConfig);
-//
-//        traverseCompleteGameTree(rootState, expander);
 	}
 
     public static void runPhantomTTT() {
