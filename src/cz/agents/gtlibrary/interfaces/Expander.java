@@ -20,6 +20,7 @@ public interface Expander<I extends InformationSet> extends Serializable {
 	 * @param gameState
 	 * @return list of actions available in given game state for player to move
 	 */
+	@Deprecated
 	public List<Action> getActionsForUnknownIS(GameState gameState);
 	
 	/**
