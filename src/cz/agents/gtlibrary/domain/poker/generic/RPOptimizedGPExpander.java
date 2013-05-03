@@ -5,8 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import cz.agents.gtlibrary.algorithms.rpoptimization.ActionComparator;
 import cz.agents.gtlibrary.domain.poker.PokerAction;
+import cz.agents.gtlibrary.experimental.rpoptimization.ActionComparator;
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;

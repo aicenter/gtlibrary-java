@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.rpoptimization;
+package cz.agents.gtlibrary.experimental.rpoptimization;
 
 import java.io.IOException;
 import java.util.Map;

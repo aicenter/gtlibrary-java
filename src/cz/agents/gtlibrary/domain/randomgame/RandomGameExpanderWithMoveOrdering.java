@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.domain.randomgame;
 
-import cz.agents.gtlibrary.algorithms.rpoptimization.ActionComparator;
+import cz.agents.gtlibrary.experimental.rpoptimization.ActionComparator;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.Arrays;
