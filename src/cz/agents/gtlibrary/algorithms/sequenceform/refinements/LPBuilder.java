@@ -20,6 +20,7 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
@@ -28,7 +29,6 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import cz.agents.gtlibrary.utils.Pair;
-import cz.agents.gtlibrary.utils.UtilityCalculator;
 
 public class LPBuilder extends TreeVisitor {
 
@@ -43,9 +43,9 @@ public class LPBuilder extends TreeVisitor {
 
 	public static void main(String[] args) {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-//		LPBuilder lpBuilder = new LPBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState(), algConfig, 0.001);
+		LPBuilder lpBuilder = new LPBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState(), algConfig, 0.001);
 //		LPBuilder lpBuilder = new LPBuilder(new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KuhnPokerGameState(), algConfig, 0.001);
-		LPBuilder lpBuilder = new LPBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), algConfig, 0.001);
+//		LPBuilder lpBuilder = new LPBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), algConfig, 0.001);
 
 		lpBuilder.buildLP();
 	}
@@ -261,12 +261,9 @@ public class LPBuilder extends TreeVisitor {
 				equationIndex = getIndex(new Key(child.getSequenceFor(state.getPlayerToMove())), equations);
 				p1Indices.put(child.getSequenceFor(state.getAllPlayers()[0]), equationIndex - 1);
 				lpTable[equationIndex][variableIndex] = 1;//E
-				varNames[equationIndex][variableIndex] = "E_" + child.getISKeyForFirstPlayer();
 				int tmpidx = getIndex(new Key("U", new Key(child.getSequenceFor(state.getPlayerToMove()))), variables);
 				lpTable[equationIndex][tmpidx] = -1;//u (eye)
-				varNames[equationIndex][variableIndex] = "uIdx_" + child.getISKeyForFirstPlayer();
 				lpTable[0][tmpidx] = Math.pow(epsilon, child.getSequenceFor(state.getAllPlayers()[0]).size());//k(\epsilon)
-				varNames[0][tmpidx] = "k_" + child.getISKeyForFirstPlayer();
 			}
 			break;
 		case 1:
@@ -281,12 +278,9 @@ public class LPBuilder extends TreeVisitor {
 				variableIndex = getIndex(new Key(child.getSequenceFor(state.getPlayerToMove())), variables);
 				p2Indices.put(child.getSequenceFor(state.getAllPlayers()[1]), variableIndex - 1);
 				lpTable[equationIndex][variableIndex] = 1;//F
-				varNames[equationIndex][variableIndex] = "F_" + child.getISKeyForSecondPlayer();
 				int tmpidx = getIndex(new Key("V", new Key(child.getSequenceFor(state.getPlayerToMove()))), equations);
 				lpTable[tmpidx][variableIndex] = 1;//indexy y
-				varNames[tmpidx][variableIndex] = "yIdx_" + child.getISKeyForSecondPlayer();
 				lpTable[tmpidx][0] = -Math.pow(epsilon, child.getSequenceFor(state.getAllPlayers()[1]).size());//l(\epsilon)
-				varNames[tmpidx][0] = "l_" + child.getISKeyForSecondPlayer();
 			}
 			break;
 		}
