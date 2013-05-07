@@ -1,14 +1,11 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
 import ilog.concert.IloException;
-import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
-import ilog.cplex.IloCplex.UnknownObjectException;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -34,80 +31,42 @@ import cz.agents.gtlibrary.utils.Pair;
 public class LPBuilder extends TreeVisitor {
 
 	private LPTable lpTable;
-	private Map<Key, Integer> equations;
-	private Map<Key, Integer> variables;
-	private Map<Sequence, Integer> p1Indices;
-	private Map<Sequence, Integer> p2Indices;
 	private double utilityShift;
 	private double epsilon;
 
 	public static void main(String[] args) {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		LPBuilder lpBuilder = new LPBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState(), algConfig, 0.001);
+//		LPBuilder lpBuilder = new LPBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState(), algConfig, 0.001);
 //		LPBuilder lpBuilder = new LPBuilder(new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KuhnPokerGameState(), algConfig, 0.001);
-//		LPBuilder lpBuilder = new LPBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), algConfig, 0.001);
+		LPBuilder lpBuilder = new LPBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), algConfig, 0.001);
 
 		lpBuilder.buildLP();
+		lpBuilder.solve();
 	}
 
 	public LPBuilder(Expander<SequenceInformationSet> expander, GameState rootState, AlgorithmConfig<SequenceInformationSet> algConfig, double epsilon) {
 		super(rootState, expander, algConfig);
 		this.expander = expander;
-		equations = new LinkedHashMap<Key, Integer>();
-		variables = new LinkedHashMap<Key, Integer>();
-		p1Indices = new HashMap<Sequence, Integer>();
-		p2Indices = new HashMap<Sequence, Integer>();
 		this.epsilon = epsilon;
 	}
 
-	public IloCplex buildLP() {
+	public void buildLP() {
 		initTable();
 		visitTree(rootState);
-//		for (double[] row : lpTable) {
-//			System.out.println(Arrays.toString(row));
-//		}
-//		System.out.println();
-//		for (String[] row : varNames) {
-//			System.out.println(Arrays.toString(row));
-//		}
-//		System.out.println();
-		IloCplex cplex = null;
-
-		try {
-			cplex = new IloCplex();
-			populateCplex(cplex);
-		} catch (IloException e) {
-			e.printStackTrace();
-		}
-
-		return cplex;
+//		System.out.println(lpTable.toString());
 	}
 
-	private void populateCplex(IloCplex cplex) {
-		double[] lb = new double[lpTable.columnCount() - 1];
-		double[] ub = new double[lpTable.columnCount() - 1];
-		String[] variableNames = new String[lpTable.columnCount() - 1];
-
-		for (int i = 1; i < lpTable.columnCount(); i++) {
-			ub[i - 1] = Double.POSITIVE_INFINITY;
-		}
-		for (Entry<Key, Integer> entry : variables.entrySet()) {
-			if (entry.getValue() != 0)
-				variableNames[entry.getValue() - 1] = entry.getKey().toString();
-		}
+	public void solve() {
 		try {
-			IloNumVar[] x = cplex.numVarArray(variableNames.length, lb, ub, variableNames);
+			LPData lpData = lpTable.toCplex();
 
-			addObjective(cplex, x);
+			lpData.getSolver().exportModel("lp.lp");
+			System.out.println(lpData.getSolver().solve());
+			System.out.println(lpData.getSolver().getStatus());
+			System.out.println(lpData.getSolver().getObjValue());
 
-			IloRange[] constrains = addConstrains(cplex, x);
-			cplex.exportModel("lp.lp");
-			System.out.println(cplex.solve());
-			System.out.println(cplex.getStatus());
-			System.out.println(cplex.getObjValue());
-
-			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(cplex, constrains);
-			Map<Sequence, Double> p2RealizationPlan = createSecondPlayerStrategy(cplex, x);
+			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedDualVariables());
+			Map<Sequence, Double> p2RealizationPlan = createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
 
 			System.out.println(p1RealizationPlan);
 			System.out.println(p2RealizationPlan);
@@ -125,45 +84,22 @@ public class LPBuilder extends TreeVisitor {
 
 	}
 
-	public Map<Sequence, Double> createFirstPlayerStrategy(IloCplex cplex, IloRange[] constrains) throws UnknownObjectException, IloException {
-		Map<Sequence, Double> p1RealizationPlan = new HashMap<Sequence, Double>();
+	public Map<Sequence, Double> createFirstPlayerStrategy(IloCplex cplex, Map<Object, IloRange> watchedDualVars) throws IloException {
+		Map<Sequence, Double> p1Strategy = new HashMap<Sequence, Double>();
 
-		for (Entry<Sequence, Integer> entry : p1Indices.entrySet()) {
-			p1RealizationPlan.put(entry.getKey(), -cplex.getDual(constrains[entry.getValue()]));
+		for (Entry<Object, IloRange> entry : watchedDualVars.entrySet()) {
+			p1Strategy.put((Sequence) entry.getKey(), -cplex.getDual(entry.getValue()));
 		}
-		return p1RealizationPlan;
+		return p1Strategy;
 	}
 
-	public Map<Sequence, Double> createSecondPlayerStrategy(IloCplex cplex, IloNumVar[] x) throws UnknownObjectException, IloException {
-		Map<Sequence, Double> p2RealizationPlan = new HashMap<Sequence, Double>();
+	public Map<Sequence, Double> createSecondPlayerStrategy(IloCplex cplex, Map<Object, IloNumVar> watchedPrimalVars) throws IloException {
+		Map<Sequence, Double> p2Strategy = new HashMap<Sequence, Double>();
 
-		for (Entry<Sequence, Integer> entry : p2Indices.entrySet()) {
-			p2RealizationPlan.put(entry.getKey(), cplex.getValue(x[entry.getValue()]));
+		for (Entry<Object, IloNumVar> entry : watchedPrimalVars.entrySet()) {
+			p2Strategy.put((Sequence) entry.getKey(), cplex.getValue(entry.getValue()));
 		}
-		return p2RealizationPlan;
-	}
-
-	public IloRange[] addConstrains(IloCplex cplex, IloNumVar[] x) throws IloException {
-		IloRange[] constrains = new IloRange[lpTable.rowCount() - 1];
-
-		for (int i = 1; i < lpTable.rowCount(); i++) {
-			IloLinearNumExpr constrain = cplex.linearNumExpr();
-
-			for (int j = 0; j < x.length; j++) {
-				constrain.addTerm(x[j], lpTable.get(i, j + 1));
-			}
-			constrains[i - 1] = cplex.addGe(constrain, -lpTable.get(i, 0));
-		}
-		return constrains;
-	}
-
-	public void addObjective(IloCplex cplex, IloNumVar[] x) throws IloException {
-		IloLinearNumExpr objective = cplex.linearNumExpr();
-
-		for (int i = 0; i < x.length; i++) {
-			objective.addTerm(x[i], lpTable.get(0, i + 1));
-		}
-		cplex.addMaximize(objective);
+		return p2Strategy;
 	}
 
 	public void initTable() {
@@ -178,42 +114,19 @@ public class LPBuilder extends TreeVisitor {
 	}
 
 	public void initf() {
-		int equationIndex = getIndex(new Key("Q", lastKeys[1]), equations);
-		int variableIndex = getIndex(new Key("cons"), variables);
-
-		lpTable.set(equationIndex, variableIndex, -1);//f for root
+		lpTable.setConstant(new Key("Q", lastKeys[1]), -1);//f for root
 	}
 
 	public void initF() {
-		int equationIndex = getIndex(new Key("Q", lastKeys[1]), equations);
-		int variableIndex = getIndex(lastKeys[1], variables);
-
-		lpTable.set(equationIndex, variableIndex, 1);//F in root (only 1)
+		lpTable.set(new Key("Q", lastKeys[1]), lastKeys[1], 1);//F in root (only 1)
 	}
 
 	public void initE() {
-		int equationIndex = getIndex(lastKeys[0], equations);
-		int variableIndex = getIndex(new Key("P", lastKeys[0]), variables);
-
-		lpTable.set(equationIndex, variableIndex, 1);//E in root (only 1)
+		lpTable.set(lastKeys[0], new Key("P", lastKeys[0]), 1);//E in root (only 1)
 	}
 
 	public void initCost() {
-		int equationIndex = getIndex(new Key("COST"), equations);
-		getIndex(new Key("cons"), variables);
-		int variableIndex = getIndex(new Key("P", lastKeys[0]), variables);
-
-		lpTable.set(equationIndex, variableIndex, -1);
-	}
-
-	private int getIndex(Key key, Map<Key, Integer> map) {
-		Integer result = map.get(key);
-
-		if (result == null) {
-			result = map.size();
-			map.put(key, result);
-		}
-		return result;
+		lpTable.setObjective(new Key("P", lastKeys[0]), -1);
 	}
 
 	private Pair<Integer, Integer> getLPSize() {
@@ -234,10 +147,7 @@ public class LPBuilder extends TreeVisitor {
 
 	@Override
 	protected void visitLeaf(GameState state) {
-		int p1realidx = getIndex(lastKeys[0], equations);
-		int p2realidx = getIndex(lastKeys[1], variables);
-
-		lpTable.substract(p1realidx, p2realidx, state.getNatureProbability() * (state.getUtilities()[0] + utilityShift));
+		lpTable.substract(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0] + utilityShift));
 	}
 
 	@Override
@@ -250,48 +160,45 @@ public class LPBuilder extends TreeVisitor {
 		super.visitNormalNode(state);
 	}
 
-	public void updateLPForSecondPlayer(GameState state) {
-		int equationIndex = getIndex(new Key("Q", new Key(state.getISKeyForPlayerToMove())), equations);
-		int variableIndex = getIndex(lastKeys[1], variables);
-
-		p2Indices.put(state.getSequenceForPlayerToMove(), variableIndex - 1);
-		lpTable.set(equationIndex, variableIndex, -1);//F
-		for (Action action : expander.getActions(state)) {
-			updateLPForSecondPlayerChild(state.performAction(action), state.getPlayerToMove(), equationIndex);
-		}
-	}
-
 	public void updateLPForFirstPlayer(GameState state) {
-		int equationIndex = getIndex(lastKeys[0], equations);
-		int variableIndex = getIndex(new Key("P", new Key(state.getISKeyForPlayerToMove())), variables);
+		Key varKey = new Key("P", new Key(state.getISKeyForPlayerToMove()));
 
-		p1Indices.put(state.getSequenceForPlayerToMove(), equationIndex - 1);
-		lpTable.set(equationIndex, variableIndex, -1);//E
+		lpTable.set(lastKeys[0], varKey, -1);//E
+		lpTable.watchDualVariable(lastKeys[0], state.getSequenceForPlayerToMove());
 		for (Action action : expander.getActions(state)) {
-			updateLPForFirstPlayerChild(state.performAction(action), state.getPlayerToMove(), variableIndex);
+			updateLPForFirstPlayerChild(state.performAction(action), state.getPlayerToMove(), varKey);
 		}
 	}
 
-	public void updateLPForFirstPlayerChild(GameState child, Player lastPlayer, int variableIndex) {
-		int equationIndex = getIndex(new Key(child.getSequenceFor(lastPlayer)), equations);
-		int tmpidx = getIndex(new Key("U", new Key(child.getSequenceFor(lastPlayer))), variables);
+	public void updateLPForFirstPlayerChild(GameState child, Player lastPlayer, Key varKey) {
+		Key eqKey = new Key(child.getSequenceFor(lastPlayer));
+		Key tmpKey = new Key("U", new Key(child.getSequenceFor(lastPlayer)));
 
-		p1Indices.put(child.getSequenceFor(lastPlayer), equationIndex - 1);
-		lpTable.set(equationIndex, variableIndex, 1);//E child
+		lpTable.watchDualVariable(eqKey, child.getSequenceFor(lastPlayer));
+		lpTable.set(eqKey, varKey, 1);//E child
 
-		lpTable.set(equationIndex, tmpidx, -1);//u (eye)
-		lpTable.set(0, tmpidx, Math.pow(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
+		lpTable.set(eqKey, tmpKey, -1);//u (eye)
+		lpTable.setObjective(tmpKey, Math.pow(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
 	}
 
-	public void updateLPForSecondPlayerChild(GameState child, Player lastPlayer, int equationIndex) {
-		int variableIndex = getIndex(new Key(child.getSequenceFor(lastPlayer)), variables);
-		int tmpidx = getIndex(new Key("V", new Key(child.getSequenceFor(lastPlayer))), equations);
+	public void updateLPForSecondPlayer(GameState state) {
+		Key eqKey = new Key("Q", new Key(state.getISKeyForPlayerToMove()));
 
-		p2Indices.put(child.getSequenceFor(lastPlayer), variableIndex - 1);
-		lpTable.set(equationIndex, variableIndex, 1);//F child
+		lpTable.set(eqKey, lastKeys[1], -1);//F
+		lpTable.watchPrimalVariable(lastKeys[1], state.getSequenceForPlayerToMove());
+		for (Action action : expander.getActions(state)) {
+			updateLPForSecondPlayerChild(state.performAction(action), state.getPlayerToMove(), eqKey);
+		}
+	}
 
-		lpTable.set(tmpidx, variableIndex, 1);//indexy y
-		lpTable.set(tmpidx, 0, -Math.pow(epsilon, child.getSequenceFor(lastPlayer).size()));//l(\epsilon)
+	public void updateLPForSecondPlayerChild(GameState child, Player lastPlayer, Key eqKey) {
+		Key varKey = new Key(child.getSequenceFor(lastPlayer));
+		Key tmpKey = new Key("V", new Key(child.getSequenceFor(lastPlayer)));
+
+		lpTable.set(eqKey, varKey, 1);//F child
+		lpTable.watchPrimalVariable(varKey, child.getSequenceFor(lastPlayer));
+		lpTable.set(tmpKey, varKey, 1);//indices y
+		lpTable.setConstant(tmpKey, -Math.pow(epsilon, child.getSequenceFor(lastPlayer).size()));//l(\epsilon)
 	}
 
 	private double computeEpsilon() {

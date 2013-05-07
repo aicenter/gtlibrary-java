@@ -37,5 +37,10 @@ public class EpsilonPolynom extends Number {
 			value = Math.pow(epsilon.doubleValue(), exponent);
 		return value;
 	}
+	
+	@Override
+	public String toString() {
+		return "eps^" + exponent;
+	}
 
 }
