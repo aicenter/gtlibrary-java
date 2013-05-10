@@ -13,6 +13,8 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
@@ -32,27 +34,59 @@ public class LPBuilder extends TreeVisitor {
 
 	private LPTable lpTable;
 	private double utilityShift;
-	private double epsilon;
+	private Epsilon epsilon;
 
 	public static void main(String[] args) {
+//		runAoS();
+//		runGoofSpiel();
+//		runKuhnPoker();
+		runGenericPoker();
+		
+	}
+
+	public static void runKuhnPoker() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-//		LPBuilder lpBuilder = new LPBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState(), algConfig, 0.001);
-//		LPBuilder lpBuilder = new LPBuilder(new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KuhnPokerGameState(), algConfig, 0.001);
-		LPBuilder lpBuilder = new LPBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), algConfig, 0.001);
+		LPBuilder lpBuilder = new LPBuilder(new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KuhnPokerGameState(), algConfig);
 
 		lpBuilder.buildLP();
 		lpBuilder.solve();
 	}
 
-	public LPBuilder(Expander<SequenceInformationSet> expander, GameState rootState, AlgorithmConfig<SequenceInformationSet> algConfig, double epsilon) {
+	public static void runGenericPoker() {
+		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		LPBuilder lpBuilder = new LPBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), algConfig);
+
+		lpBuilder.buildLP();
+		lpBuilder.solve();
+	}
+
+	public static void runAoS() {
+		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		LPBuilder lpBuilder = new LPBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState(), algConfig);
+
+		lpBuilder.buildLP();
+		lpBuilder.solve();
+	}
+
+	public static void runGoofSpiel() {
+		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		LPBuilder lpBuilder = new LPBuilder(new GoofSpielExpander<SequenceInformationSet>(algConfig), new GoofSpielGameState(), algConfig);
+
+		lpBuilder.buildLP();
+		lpBuilder.solve();
+	}
+
+	public LPBuilder(Expander<SequenceInformationSet> expander, GameState rootState, AlgorithmConfig<SequenceInformationSet> algConfig) {
 		super(rootState, expander, algConfig);
 		this.expander = expander;
-		this.epsilon = epsilon;
+		epsilon = new Epsilon();
 	}
 
 	public void buildLP() {
 		initTable();
 		visitTree(rootState);
+		computeEpsilon();
+		System.out.println("epsilon: " + epsilon);
 //		System.out.println(lpTable.toString());
 	}
 
@@ -60,6 +94,7 @@ public class LPBuilder extends TreeVisitor {
 		try {
 			LPData lpData = lpTable.toCplex();
 
+//			lpData.getSolver().setParam(IloCplex.DoubleParam.EpMrk, 0.9999);
 			lpData.getSolver().exportModel("lp.lp");
 			System.out.println(lpData.getSolver().solve());
 			System.out.println(lpData.getSolver().getStatus());
@@ -67,17 +102,23 @@ public class LPBuilder extends TreeVisitor {
 
 			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedDualVariables());
 			Map<Sequence, Double> p2RealizationPlan = createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
-
 			System.out.println(p1RealizationPlan);
 			System.out.println(p2RealizationPlan);
+
 			UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
 			Strategy p1Strategy = new UniformStrategyForMissingSequences();
 			Strategy p2Strategy = new UniformStrategyForMissingSequences();
 
 			p1Strategy.putAll(p1RealizationPlan);
 			p2Strategy.putAll(p2RealizationPlan);
+			
+//			System.out.println(p1Strategy.fancyToString(rootState, expander, new PlayerImpl(0)));
+//			System.out.println("************************************");
+//			System.out.println(p2Strategy.fancyToString(rootState, expander, new PlayerImpl(1)));
 
 			System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
+			p1Strategy.sanityCheck(rootState, expander);
+			p2Strategy.sanityCheck(rootState, expander);
 		} catch (IloException e) {
 			e.printStackTrace();
 		}
@@ -119,10 +160,12 @@ public class LPBuilder extends TreeVisitor {
 
 	public void initF() {
 		lpTable.set(new Key("Q", lastKeys[1]), lastKeys[1], 1);//F in root (only 1)
+		lpTable.setConstraintType(new Key("Q", lastKeys[1]), 1);
 	}
 
 	public void initE() {
 		lpTable.set(lastKeys[0], new Key("P", lastKeys[0]), 1);//E in root (only 1)
+		lpTable.setLowerBound(new Key("P", lastKeys[0]), Double.NEGATIVE_INFINITY);
 	}
 
 	public void initCost() {
@@ -164,6 +207,7 @@ public class LPBuilder extends TreeVisitor {
 		Key varKey = new Key("P", new Key(state.getISKeyForPlayerToMove()));
 
 		lpTable.set(lastKeys[0], varKey, -1);//E
+		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
 		lpTable.watchDualVariable(lastKeys[0], state.getSequenceForPlayerToMove());
 		for (Action action : expander.getActions(state)) {
 			updateLPForFirstPlayerChild(state.performAction(action), state.getPlayerToMove(), varKey);
@@ -176,15 +220,17 @@ public class LPBuilder extends TreeVisitor {
 
 		lpTable.watchDualVariable(eqKey, child.getSequenceFor(lastPlayer));
 		lpTable.set(eqKey, varKey, 1);//E child
+		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
 
 		lpTable.set(eqKey, tmpKey, -1);//u (eye)
-		lpTable.setObjective(tmpKey, Math.pow(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
+		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
 	}
 
 	public void updateLPForSecondPlayer(GameState state) {
 		Key eqKey = new Key("Q", new Key(state.getISKeyForPlayerToMove()));
 
 		lpTable.set(eqKey, lastKeys[1], -1);//F
+		lpTable.setConstraintType(eqKey, 1);
 		lpTable.watchPrimalVariable(lastKeys[1], state.getSequenceForPlayerToMove());
 		for (Action action : expander.getActions(state)) {
 			updateLPForSecondPlayerChild(state.performAction(action), state.getPlayerToMove(), eqKey);
@@ -196,16 +242,17 @@ public class LPBuilder extends TreeVisitor {
 		Key tmpKey = new Key("V", new Key(child.getSequenceFor(lastPlayer)));
 
 		lpTable.set(eqKey, varKey, 1);//F child
+		lpTable.setConstraintType(eqKey, 1);
 		lpTable.watchPrimalVariable(varKey, child.getSequenceFor(lastPlayer));
 		lpTable.set(tmpKey, varKey, 1);//indices y
-		lpTable.setConstant(tmpKey, -Math.pow(epsilon, child.getSequenceFor(lastPlayer).size()));//l(\epsilon)
+		lpTable.setConstant(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()).negate());//l(\epsilon)
 	}
 
-	private double computeEpsilon() {
+	private void computeEpsilon() {
 		double equationCount = lpTable.rowCount() - 1;
 		double maxCoefficient = getMaxCoefficient();
 
-		return 0.5 * Math.pow(equationCount, -equationCount - 1) * Math.pow(maxCoefficient, -2 * equationCount - 1);
+		epsilon.setValue(0.5 * Math.pow(equationCount, -equationCount - 1) * Math.pow(maxCoefficient, -2 * equationCount - 1));
 	}
 
 	private double getMaxCoefficient() {

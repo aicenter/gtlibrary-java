@@ -10,22 +10,22 @@ public class LPData {
 	
 	private IloCplex solver;
 	private IloNumVar[] variables;
-	private IloRange[] constrains;
+	private IloRange[] constraints;
 	private Map<Object, IloNumVar> watchedPrimalVars;
 	private Map<Object, IloRange> watchedDualVars;
 	
-	public LPData(IloCplex solver, IloNumVar[] variables, IloRange[] constrains, Map<Object, IloNumVar> watchedPrimalVars,
+	public LPData(IloCplex solver, IloNumVar[] variables, IloRange[] constraints, Map<Object, IloNumVar> watchedPrimalVars,
 			Map<Object, IloRange> watchedDualVars) {
 		super();
 		this.solver = solver;
 		this.variables = variables;
-		this.constrains = constrains;
+		this.constraints = constraints;
 		this.watchedDualVars = watchedDualVars;
 		this.watchedPrimalVars = watchedPrimalVars;
 	}
 	
-	public IloRange[] getConstrains() {
-		return constrains;
+	public IloRange[] getConstraints() {
+		return constraints;
 	}
 	
 	public IloNumVar[] getVariables() {

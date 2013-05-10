@@ -17,6 +17,8 @@ public class LPTable {
 	private Map<Key, Integer> variableIndices;
 	private Map<Object, Integer> primalWatch;
 	private Map<Object, Integer> dualWatch;
+	private byte[] constraintTypes;
+	private double[] lb;
 
 	public LPTable(int m, int n) {
 		table = new Number[m][n];
@@ -24,6 +26,8 @@ public class LPTable {
 		variableIndices = new LinkedHashMap<Key, Integer>(n);
 		primalWatch = new LinkedHashMap<Object, Integer>();
 		dualWatch = new LinkedHashMap<Object, Integer>();
+		constraintTypes = new byte[m - 1];
+		lb = new double[n - 1];
 	}
 
 	public double get(int i, int j) {
@@ -34,42 +38,42 @@ public class LPTable {
 		return get(getEquationIndex(eqKey), getVariableIndex(varKey));
 	}
 
-	public void set(int i, int j, double value) {
+	public void set(int i, int j, Number value) {
 		table[i][j] = value;
 	}
 
-	public void setObjective(Key varKey, double value) {
+	public void setObjective(Key varKey, Number value) {
 		table[0][getVariableIndex(varKey)] = value;
 	}
 
-	public void setConstant(Key eqKey, double value) {
+	public void setConstant(Key eqKey, Number value) {
 		table[getEquationIndex(eqKey)][0] = value;
 	}
 
-	public void set(Key eqKey, Key varKey, double value) {
+	public void set(Key eqKey, Key varKey, Number value) {
 		table[getEquationIndex(eqKey)][getVariableIndex(varKey)] = value;
 	}
 
-	public void add(int i, int j, double value) {
-		table[i][j] = get(i, j) + value;
+	public void add(int i, int j, Number value) {
+		table[i][j] = get(i, j) + value.doubleValue();
 	}
 
-	public void add(Key eqKey, Key varKey, double value) {
+	public void add(Key eqKey, Key varKey, Number value) {
 		int equationIndex = getEquationIndex(eqKey);
 		int variableIndex = getVariableIndex(varKey);
 
-		table[equationIndex][variableIndex] = get(equationIndex, variableIndex) + value;
+		table[equationIndex][variableIndex] = get(equationIndex, variableIndex) + value.doubleValue();
 	}
 
-	public void substract(int i, int j, double value) {
-		table[i][j] = get(i, j) - value;
+	public void substract(int i, int j, Number value) {
+		table[i][j] = get(i, j) - value.doubleValue();
 	}
 
-	public void substract(Key eqKey, Key varKey, double value) {
+	public void substract(Key eqKey, Key varKey, Number value) {
 		int equationIndex = getEquationIndex(eqKey);
 		int variableIndex = getVariableIndex(varKey);
 
-		table[equationIndex][variableIndex] = get(equationIndex, variableIndex) - value;
+		table[equationIndex][variableIndex] = get(equationIndex, variableIndex) - value.doubleValue();
 	}
 
 	public int rowCount() {
@@ -107,7 +111,6 @@ public class LPTable {
 	}
 
 	public LPData toCplex() throws IloException {
-		double[] lb = new double[columnCount() - 1];
 		double[] ub = new double[columnCount() - 1];
 		String[] variableNames = new String[columnCount() - 1];
 		IloCplex cplex = new IloCplex();
@@ -115,22 +118,23 @@ public class LPTable {
 		for (int i = 1; i < columnCount(); i++) {
 			ub[i - 1] = Double.POSITIVE_INFINITY;
 		}
+
 		for (Entry<Key, Integer> entry : variableIndices.entrySet()) {
 			if (entry.getValue() != 0)
 				variableNames[entry.getValue() - 1] = entry.getKey().toString();
 		}
 		IloNumVar[] variables = cplex.numVarArray(variableNames.length, lb, ub, variableNames);
-		IloRange[] constrains = addConstrains(cplex, variables);
+		IloRange[] constraints = addConstraints(cplex, variables);
 
 		addObjective(cplex, variables);
-		return new LPData(cplex, variables, constrains, getWatchedPrimalVars(variables), getWatchedDualVars(constrains));
+		return new LPData(cplex, variables, constraints, getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
 	}
 
-	private Map<Object, IloRange> getWatchedDualVars(IloRange[] constrains) {
+	private Map<Object, IloRange> getWatchedDualVars(IloRange[] constraints) {
 		Map<Object, IloRange> watchedDualVars = new LinkedHashMap<Object, IloRange>();
 
 		for (Entry<Object, Integer> entry : dualWatch.entrySet()) {
-			watchedDualVars.put(entry.getKey(), constrains[entry.getValue()]);
+			watchedDualVars.put(entry.getKey(), constraints[entry.getValue()]);
 		}
 		return watchedDualVars;
 	}
@@ -144,27 +148,59 @@ public class LPTable {
 		return watchedPrimalVars;
 	}
 
-	public IloRange[] addConstrains(IloCplex cplex, IloNumVar[] x) throws IloException {
-		IloRange[] constrains = new IloRange[rowCount() - 1];
+	private IloRange[] addConstraints(IloCplex cplex, IloNumVar[] x) throws IloException {
+		IloRange[] constraints = new IloRange[rowCount() - 1];
 
 		for (int i = 1; i < rowCount(); i++) {
-			IloLinearNumExpr constrain = cplex.linearNumExpr();
+			IloLinearNumExpr constraint = cplex.linearNumExpr();
 
 			for (int j = 0; j < x.length; j++) {
-				constrain.addTerm(x[j], get(i, j + 1));
+				constraint.addTerm(x[j], get(i, j + 1));
 			}
-			constrains[i - 1] = cplex.addGe(constrain, -get(i, 0));
+			switch (constraintTypes[i - 1]) {
+			case 0:
+				constraints[i - 1] = cplex.addGe(constraint, -get(i, 0));
+				break;
+			case 1:
+				constraints[i - 1] = cplex.addEq(constraint, -get(i, 0));
+				break;
+			case 2:
+				constraints[i - 1] = cplex.addLe(constraint, -get(i, 0));
+				break;
+			default:
+				break;
+			}
 		}
-		return constrains;
+		return constraints;
 	}
 
-	public void addObjective(IloCplex cplex, IloNumVar[] x) throws IloException {
+	private void addObjective(IloCplex cplex, IloNumVar[] x) throws IloException {
 		IloLinearNumExpr objective = cplex.linearNumExpr();
 
 		for (int i = 0; i < x.length; i++) {
 			objective.addTerm(x[i], get(0, i + 1));
 		}
 		cplex.addMaximize(objective);
+	}
+
+	/**
+	 * Set constraint for equation represented by eqKey, default constraint is ge
+	 * @param eqKey
+	 * @param type
+	 *            0 ... ge, 1 .. eq, 2 ... le
+	 */
+	public void setConstraintType(Key eqKey, int type) {
+		constraintTypes[getEquationIndex(eqKey) - 1] = (byte) type;
+	}
+	
+	/**
+	 * Set lower bound for variable represented by varKey, default value is 0
+	 * @param eqKey
+	 * @param type
+	 *            0 ... ge, 1 .. eq, 2 ... le
+	 */
+	public void setLowerBound(Key varKey, double value) {
+		lb[getVariableIndex(varKey) - 1] = value;
 	}
 
 	@Override
