@@ -32,14 +32,15 @@ import cz.agents.gtlibrary.utils.Pair;
 
 public class LPBuilder extends TreeVisitor {
 
-	private LPTable lpTable;
-	private double utilityShift;
-	private Epsilon epsilon;
+	protected String lpFileName;
+	protected LPTable lpTable;
+	protected double utilityShift;
+	protected Epsilon epsilon;
 
 	public static void main(String[] args) {
-//		runAoS();
+		runAoS();
 //		runGoofSpiel();
-		runKuhnPoker();
+//		runKuhnPoker();
 //		runGenericPoker();
 	}
 
@@ -79,6 +80,7 @@ public class LPBuilder extends TreeVisitor {
 		super(rootState, expander, algConfig);
 		this.expander = expander;
 		epsilon = new Epsilon();
+		lpFileName = "lp.lp";
 	}
 
 	public void buildLP() {
@@ -94,7 +96,7 @@ public class LPBuilder extends TreeVisitor {
 			LPData lpData = lpTable.toCplex();
 
 //			lpData.getSolver().setParam(IloCplex.DoubleParam.EpMrk, 0.9999);
-			lpData.getSolver().exportModel("lp.lp");
+			lpData.getSolver().exportModel(lpFileName);
 			System.out.println(lpData.getSolver().solve());
 			System.out.println(lpData.getSolver().getStatus());
 			System.out.println(lpData.getSolver().getObjValue());
@@ -128,7 +130,7 @@ public class LPBuilder extends TreeVisitor {
 		Map<Sequence, Double> p1Strategy = new HashMap<Sequence, Double>();
 
 		for (Entry<Object, IloRange> entry : watchedDualVars.entrySet()) {
-			p1Strategy.put((Sequence) entry.getKey(), -cplex.getDual(entry.getValue()));
+			p1Strategy.put((Sequence) entry.getKey(), cplex.getDual(entry.getValue()));
 		}
 		return p1Strategy;
 	}
@@ -171,7 +173,7 @@ public class LPBuilder extends TreeVisitor {
 		lpTable.setObjective(new Key("P", lastKeys[0]), -1);
 	}
 
-	private Pair<Integer, Integer> getLPSize() {
+	protected Pair<Integer, Integer> getLPSize() {
 		SizeVisitor visitor = new SizeVisitor(rootState, expander, algConfig);
 
 		visitor.visitTree(rootState);
@@ -247,14 +249,14 @@ public class LPBuilder extends TreeVisitor {
 		lpTable.setConstant(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()).negate());//l(\epsilon)
 	}
 
-	private void computeEpsilon() {
+	protected void computeEpsilon() {
 		double equationCount = lpTable.rowCount() - 1;
 		double maxCoefficient = getMaxCoefficient();
 
 		epsilon.setValue(0.5 * Math.pow(equationCount, -equationCount - 1) * Math.pow(maxCoefficient, -2 * equationCount - 1));
 	}
 
-	private double getMaxCoefficient() {
+	protected double getMaxCoefficient() {
 		double maxCoefficient = Double.NEGATIVE_INFINITY;
 
 		for (int i = 0; i < lpTable.rowCount(); i++) {

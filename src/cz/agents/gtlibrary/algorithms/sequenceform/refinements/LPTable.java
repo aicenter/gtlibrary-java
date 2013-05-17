@@ -12,13 +12,13 @@ import java.util.Map.Entry;
 
 public class LPTable {
 
-	private Number[][] table;
-	private Map<Key, Integer> equationIndices;
-	private Map<Key, Integer> variableIndices;
-	private Map<Object, Integer> primalWatch;
-	private Map<Object, Integer> dualWatch;
-	private byte[] constraintTypes;
-	private double[] lb;
+	protected Number[][] table;
+	protected Map<Key, Integer> equationIndices;
+	protected Map<Key, Integer> variableIndices;
+	protected Map<Object, Integer> primalWatch;
+	protected Map<Object, Integer> dualWatch;
+	protected byte[] constraintTypes;
+	protected double[] lb;
 
 	public LPTable(int m, int n) {
 		table = new Number[m][n];
@@ -81,15 +81,15 @@ public class LPTable {
 		return table[0].length;
 	}
 
-	private int getEquationIndex(Key eqKey) {
+	protected int getEquationIndex(Key eqKey) {
 		return getIndex(eqKey, equationIndices);
 	}
 
-	private int getVariableIndex(Key varKey) {
+	protected int getVariableIndex(Key varKey) {
 		return getIndex(varKey, variableIndices);
 	}
 
-	private int getIndex(Key key, Map<Key, Integer> map) {
+	protected int getIndex(Key key, Map<Key, Integer> map) {
 		Integer result = map.get(key);
 
 		if (result == null) {
@@ -126,7 +126,7 @@ public class LPTable {
 		return new LPData(cplex, variables, constraints, getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
 	}
 
-	private Map<Object, IloRange> getWatchedDualVars(IloRange[] constraints) {
+	protected Map<Object, IloRange> getWatchedDualVars(IloRange[] constraints) {
 		Map<Object, IloRange> watchedDualVars = new LinkedHashMap<Object, IloRange>();
 
 		for (Entry<Object, Integer> entry : dualWatch.entrySet()) {
@@ -135,7 +135,7 @@ public class LPTable {
 		return watchedDualVars;
 	}
 
-	private Map<Object, IloNumVar> getWatchedPrimalVars(IloNumVar[] variables) {
+	protected Map<Object, IloNumVar> getWatchedPrimalVars(IloNumVar[] variables) {
 		Map<Object, IloNumVar> watchedPrimalVars = new LinkedHashMap<Object, IloNumVar>();
 
 		for (Entry<Object, Integer> entry : primalWatch.entrySet()) {
@@ -144,24 +144,24 @@ public class LPTable {
 		return watchedPrimalVars;
 	}
 
-	private IloRange[] addConstraints(IloCplex cplex, IloNumVar[] x) throws IloException {
+	protected IloRange[] addConstraints(IloCplex cplex, IloNumVar[] x) throws IloException {
 		IloRange[] constraints = new IloRange[rowCount() - 1];
 
 		for (int i = 1; i < rowCount(); i++) {
 			IloLinearNumExpr constraint = cplex.linearNumExpr();
 
 			for (int j = 0; j < x.length; j++) {
-				constraint.addTerm(x[j], get(i, j + 1));
+				constraint.addTerm(x[j], -get(i, j + 1));
 			}
 			switch (constraintTypes[i - 1]) {
 			case 0:
-				constraints[i - 1] = cplex.addGe(constraint, -get(i, 0));
+				constraints[i - 1] = cplex.addLe(constraint, get(i, 0));
 				break;
 			case 1:
-				constraints[i - 1] = cplex.addEq(constraint, -get(i, 0));
+				constraints[i - 1] = cplex.addEq(constraint, get(i, 0));
 				break;
 			case 2:
-				constraints[i - 1] = cplex.addLe(constraint, -get(i, 0));
+				constraints[i - 1] = cplex.addGe(constraint, get(i, 0));
 				break;
 			default:
 				break;
@@ -170,7 +170,7 @@ public class LPTable {
 		return constraints;
 	}
 
-	private void addObjective(IloCplex cplex, IloNumVar[] x) throws IloException {
+	protected void addObjective(IloCplex cplex, IloNumVar[] x) throws IloException {
 		IloLinearNumExpr objective = cplex.linearNumExpr();
 
 		for (int i = 0; i < x.length; i++) {
@@ -184,7 +184,7 @@ public class LPTable {
 	 * 
 	 * @param eqKey
 	 * @param type
-	 *            0 ... ge, 1 .. eq, 2 ... le
+	 *            0 ... le, 1 .. eq, 2 ... ge
 	 */
 	public void setConstraintType(Key eqKey, int type) {
 		constraintTypes[getEquationIndex(eqKey) - 1] = (byte) type;
