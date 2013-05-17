@@ -39,9 +39,8 @@ public class LPBuilder extends TreeVisitor {
 	public static void main(String[] args) {
 //		runAoS();
 //		runGoofSpiel();
-//		runKuhnPoker();
-		runGenericPoker();
-		
+		runKuhnPoker();
+//		runGenericPoker();
 	}
 
 	public static void runKuhnPoker() {
@@ -190,7 +189,7 @@ public class LPBuilder extends TreeVisitor {
 
 	@Override
 	protected void visitLeaf(GameState state) {
-		lpTable.substract(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0] + utilityShift));
+		lpTable.substract(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0]/* + utilityShift*/));
 	}
 
 	@Override

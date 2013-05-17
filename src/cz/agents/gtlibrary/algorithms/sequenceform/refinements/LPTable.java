@@ -70,10 +70,7 @@ public class LPTable {
 	}
 
 	public void substract(Key eqKey, Key varKey, Number value) {
-		int equationIndex = getEquationIndex(eqKey);
-		int variableIndex = getVariableIndex(varKey);
-
-		table[equationIndex][variableIndex] = get(equationIndex, variableIndex) - value.doubleValue();
+		substract(getEquationIndex(eqKey), getVariableIndex(varKey), value);
 	}
 
 	public int rowCount() {
@@ -120,8 +117,7 @@ public class LPTable {
 		}
 
 		for (Entry<Key, Integer> entry : variableIndices.entrySet()) {
-			if (entry.getValue() != 0)
-				variableNames[entry.getValue() - 1] = entry.getKey().toString();
+			variableNames[entry.getValue()] = entry.getKey().toString();
 		}
 		IloNumVar[] variables = cplex.numVarArray(variableNames.length, lb, ub, variableNames);
 		IloRange[] constraints = addConstraints(cplex, variables);
@@ -185,6 +181,7 @@ public class LPTable {
 
 	/**
 	 * Set constraint for equation represented by eqKey, default constraint is ge
+	 * 
 	 * @param eqKey
 	 * @param type
 	 *            0 ... ge, 1 .. eq, 2 ... le
@@ -192,9 +189,10 @@ public class LPTable {
 	public void setConstraintType(Key eqKey, int type) {
 		constraintTypes[getEquationIndex(eqKey) - 1] = (byte) type;
 	}
-	
+
 	/**
 	 * Set lower bound for variable represented by varKey, default value is 0
+	 * 
 	 * @param eqKey
 	 * @param type
 	 *            0 ... ge, 1 .. eq, 2 ... le
