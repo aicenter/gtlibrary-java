@@ -19,6 +19,7 @@ public class LPTable {
 	protected Map<Object, Integer> dualWatch;
 	protected byte[] constraintTypes;
 	protected double[] lb;
+	protected double maxCoefficient;
 
 	public LPTable(int m, int n) {
 		table = new Number[m][n];
@@ -28,6 +29,7 @@ public class LPTable {
 		dualWatch = new LinkedHashMap<Object, Integer>();
 		constraintTypes = new byte[m - 1];
 		lb = new double[n - 1];
+		maxCoefficient = Double.NEGATIVE_INFINITY;
 	}
 
 	public double get(int i, int j) {
@@ -40,33 +42,38 @@ public class LPTable {
 
 	public void set(int i, int j, Number value) {
 		table[i][j] = value;
+		updateMaxCoefficient(value);
+	}
+
+	public void updateMaxCoefficient(Number value) {
+		double absValue = Math.abs(value.doubleValue());
+		
+		if(maxCoefficient < absValue)
+			maxCoefficient = absValue;
 	}
 
 	public void setObjective(Key varKey, Number value) {
-		table[0][getVariableIndex(varKey)] = value;
+		set(0, getVariableIndex(varKey), value);
 	}
 
 	public void setConstant(Key eqKey, Number value) {
-		table[getEquationIndex(eqKey)][0] = value;
+		set(getEquationIndex(eqKey), 0, value);
 	}
 
 	public void set(Key eqKey, Key varKey, Number value) {
-		table[getEquationIndex(eqKey)][getVariableIndex(varKey)] = value;
+		set(getEquationIndex(eqKey), getVariableIndex(varKey), value);
 	}
 
 	public void add(int i, int j, Number value) {
-		table[i][j] = get(i, j) + value.doubleValue();
+		set(i, j, get(i, j) + value.doubleValue());
 	}
 
 	public void add(Key eqKey, Key varKey, Number value) {
-		int equationIndex = getEquationIndex(eqKey);
-		int variableIndex = getVariableIndex(varKey);
-
-		table[equationIndex][variableIndex] = get(equationIndex, variableIndex) + value.doubleValue();
+		add(getEquationIndex(eqKey), getVariableIndex(varKey), value);
 	}
 
 	public void substract(int i, int j, Number value) {
-		table[i][j] = get(i, j) - value.doubleValue();
+		set(i, j, get(i, j) - value.doubleValue());
 	}
 
 	public void substract(Key eqKey, Key varKey, Number value) {
@@ -193,14 +200,17 @@ public class LPTable {
 	/**
 	 * Set lower bound for variable represented by varKey, default value is 0
 	 * 
-	 * @param eqKey
-	 * @param type
-	 *            0 ... ge, 1 .. eq, 2 ... le
+	 * @param varKey
+	 * @param value
 	 */
 	public void setLowerBound(Key varKey, double value) {
 		lb[getVariableIndex(varKey) - 1] = value;
 	}
-
+	
+	public double getMaxCoefficient() {
+		return maxCoefficient;
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
