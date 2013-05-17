@@ -5,6 +5,7 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,9 +39,9 @@ public class LPBuilder extends TreeVisitor {
 	protected Epsilon epsilon;
 
 	public static void main(String[] args) {
-		runAoS();
+//		runAoS();
 //		runGoofSpiel();
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
 	}
 
@@ -116,7 +117,7 @@ public class LPBuilder extends TreeVisitor {
 //			System.out.println(p1Strategy.fancyToString(rootState, expander, new PlayerImpl(0)));
 //			System.out.println("************************************");
 //			System.out.println(p2Strategy.fancyToString(rootState, expander, new PlayerImpl(1)));
-
+			System.out.println("Solution: " + Arrays.toString(lpData.getSolver().getValues(lpData.getVariables())));
 			System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 			p1Strategy.sanityCheck(rootState, expander);
 			p2Strategy.sanityCheck(rootState, expander);
@@ -251,21 +252,9 @@ public class LPBuilder extends TreeVisitor {
 
 	protected void computeEpsilon() {
 		double equationCount = lpTable.rowCount() - 1;
-		double maxCoefficient = getMaxCoefficient();
+		double maxCoefficient = lpTable.getMaxCoefficient();
 
 		epsilon.setValue(0.5 * Math.pow(equationCount, -equationCount - 1) * Math.pow(maxCoefficient, -2 * equationCount - 1));
-	}
-
-	protected double getMaxCoefficient() {
-		double maxCoefficient = Double.NEGATIVE_INFINITY;
-
-		for (int i = 0; i < lpTable.rowCount(); i++) {
-			for (int j = 0; j < lpTable.columnCount(); j++) {
-				if (Math.abs(lpTable.get(i, j)) > maxCoefficient)
-					maxCoefficient = Math.abs(lpTable.get(i, j));
-			}
-		}
-		return maxCoefficient;
 	}
 
 }
