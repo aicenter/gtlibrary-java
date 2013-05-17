@@ -41,8 +41,8 @@ public class LPBuilder extends TreeVisitor {
 	public static void main(String[] args) {
 //		runAoS();
 //		runGoofSpiel();
-		runKuhnPoker();
-//		runGenericPoker();
+//		runKuhnPoker();
+		runGenericPoker();
 	}
 
 	public static void runKuhnPoker() {
@@ -161,12 +161,12 @@ public class LPBuilder extends TreeVisitor {
 	}
 
 	public void initF() {
-		lpTable.set(new Key("Q", lastKeys[1]), lastKeys[1], 1);//F in root (only 1)
+		lpTable.setConstraint(new Key("Q", lastKeys[1]), lastKeys[1], 1);//F in root (only 1)
 		lpTable.setConstraintType(new Key("Q", lastKeys[1]), 1);
 	}
 
 	public void initE() {
-		lpTable.set(lastKeys[0], new Key("P", lastKeys[0]), 1);//E in root (only 1)
+		lpTable.setConstraint(lastKeys[0], new Key("P", lastKeys[0]), 1);//E in root (only 1)
 		lpTable.setLowerBound(new Key("P", lastKeys[0]), Double.NEGATIVE_INFINITY);
 	}
 
@@ -192,7 +192,7 @@ public class LPBuilder extends TreeVisitor {
 
 	@Override
 	protected void visitLeaf(GameState state) {
-		lpTable.substract(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0]/* + utilityShift*/));
+		lpTable.substractFromConstraint(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0]/* + utilityShift*/));
 	}
 
 	@Override
@@ -208,7 +208,7 @@ public class LPBuilder extends TreeVisitor {
 	public void updateLPForFirstPlayer(GameState state) {
 		Key varKey = new Key("P", new Key(state.getISKeyForPlayerToMove()));
 
-		lpTable.set(lastKeys[0], varKey, -1);//E
+		lpTable.setConstraint(lastKeys[0], varKey, -1);//E
 		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
 		lpTable.watchDualVariable(lastKeys[0], state.getSequenceForPlayerToMove());
 		for (Action action : expander.getActions(state)) {
@@ -221,17 +221,17 @@ public class LPBuilder extends TreeVisitor {
 		Key tmpKey = new Key("U", new Key(child.getSequenceFor(lastPlayer)));
 
 		lpTable.watchDualVariable(eqKey, child.getSequenceFor(lastPlayer));
-		lpTable.set(eqKey, varKey, 1);//E child
+		lpTable.setConstraint(eqKey, varKey, 1);//E child
 		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
 
-		lpTable.set(eqKey, tmpKey, -1);//u (eye)
+		lpTable.setConstraint(eqKey, tmpKey, -1);//u (eye)
 		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
 	}
 
 	public void updateLPForSecondPlayer(GameState state) {
 		Key eqKey = new Key("Q", new Key(state.getISKeyForPlayerToMove()));
 
-		lpTable.set(eqKey, lastKeys[1], -1);//F
+		lpTable.setConstraint(eqKey, lastKeys[1], -1);//F
 		lpTable.setConstraintType(eqKey, 1);
 		lpTable.watchPrimalVariable(lastKeys[1], state.getSequenceForPlayerToMove());
 		for (Action action : expander.getActions(state)) {
@@ -243,10 +243,10 @@ public class LPBuilder extends TreeVisitor {
 		Key varKey = new Key(child.getSequenceFor(lastPlayer));
 		Key tmpKey = new Key("V", new Key(child.getSequenceFor(lastPlayer)));
 
-		lpTable.set(eqKey, varKey, 1);//F child
+		lpTable.setConstraint(eqKey, varKey, 1);//F child
 		lpTable.setConstraintType(eqKey, 1);
 		lpTable.watchPrimalVariable(varKey, child.getSequenceFor(lastPlayer));
-		lpTable.set(tmpKey, varKey, 1);//indices y
+		lpTable.setConstraint(tmpKey, varKey, 1);//indices y
 		lpTable.setConstant(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()).negate());//l(\epsilon)
 	}
 
