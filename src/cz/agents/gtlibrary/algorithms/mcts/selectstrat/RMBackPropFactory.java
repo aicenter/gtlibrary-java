@@ -23,7 +23,7 @@ public class RMBackPropFactory implements BackPropFactory  {
     @Override
     public SelectionStrategy createForIS(MCTSInformationSet infSet) {
         if (infSet.getPlayer().getId() > 1) return null;
-        return new RMSelector(this, infSet);
+        return new RMMSelector(this, infSet);
     }
 
     @Override

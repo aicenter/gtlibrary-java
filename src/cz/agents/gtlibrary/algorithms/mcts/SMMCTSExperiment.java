@@ -22,13 +22,13 @@ import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import cz.agents.gtlibrary.utils.FileManager;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
-import cz.agents.gtlibrary.utils.UtilityCalculator;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.security.SecureRandom;
@@ -50,7 +50,7 @@ import java.util.logging.Logger;
  * @author vilo
  */
 public class SMMCTSExperiment {
-        private static final int MCTS_ITERATIONS_PER_CALL = 10000;
+        private static final int MCTS_ITERATIONS_PER_CALL = 10;
 	private static final int SAME_STRATEGY_CHECK_COUNT = 20;
     
         
@@ -79,6 +79,7 @@ public class SMMCTSExperiment {
         }
         
         public static void setupRnd(long seed){
+            if (seed == RandomGameInfo.seed && rootState != null) return;
             RandomGameInfo.seed = seed;
             gameInfo = new RandomGameInfo();
             rootState = new SimRandomGameState();
@@ -100,16 +101,18 @@ public class SMMCTSExperiment {
         }
         
         static double gamma = 0.05;
+        static MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
+        //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new OOSBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
+        //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(gamma*gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
+        //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new Exp3BackPropFactory(-maxCFValue, maxCFValue, gamma), new UniformStrategyForMissingSequences.Factory(), null);
+        //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new Exp3MRemBackPropFactory(-maxCFValue, maxCFValue, gamma), new UniformStrategyForMissingSequences.Factory(), null);
+        
         public static void runSMMCTS() throws Exception {
             
             //double maxCFValue = gameInfo.getMaxUtility() / Math.pow(gamma/2.0, gameInfo.getMaxDepth());
             //double maxCFValue = 1e2;
             double maxCFValue = gameInfo.getMaxUtility();
-            //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
-            //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new OOSBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
-            //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(gamma*gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
-            MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new Exp3BackPropFactory(-maxCFValue, maxCFValue, gamma), new UniformStrategyForMissingSequences.Factory(), null);
-            //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new Exp3MRemBackPropFactory(-maxCFValue, maxCFValue, gamma), new UniformStrategyForMissingSequences.Factory(), null);
+            
 //		MCTSRunner runner = new MCTSRunner(firstMCTSConfig, new KuhnPokerGameState(), new KuhnPokerExpander<MCTSInformationSet>(firstMCTSConfig));
 //                Map<Sequence, Double> pureStrategy = runner.runMCTS(KPGameInfo.FIRST_PLAYER, new FrequenceDistribution());
 
@@ -129,12 +132,12 @@ public class SMMCTSExperiment {
             String outLine = "";
             System.out.print("P1BRs: ");
             
-            for (int i=0; i<100; i++){
-                strategy0 = runner.runMCTS(MCTS_ITERATIONS_PER_CALL, gameInfo.getAllPlayers()[0], /*new MeanStratDist() /*/ new FrequenceDistribution(gamma));
-                strategy1 = runner.getCurrentStrategyFor(gameInfo.getAllPlayers()[1],/* new MeanStratDist() /*/ new FrequenceDistribution(gamma));
+            for (int i=0; i<500; i++){
+                strategy0 = runner.runMCTS(MCTS_ITERATIONS_PER_CALL, gameInfo.getAllPlayers()[0], new MeanStratDist() /*/ new FrequenceDistribution()*/);
+                strategy1 = runner.getCurrentStrategyFor(gameInfo.getAllPlayers()[1], new MeanStratDist() /*/ new FrequenceDistribution()*/);
                 
-                System.out.print(brAlg1.calculateBR(rootState, strategy0) + " ");
-                outLine += brAlg0.calculateBR(rootState, strategy1) + " ";
+                System.out.print((brAlg1.calculateBR(rootState, strategy0) + efg.getGameValue()) + " ");
+                outLine += (brAlg0.calculateBR(rootState, strategy1) - efg.getGameValue()) + " ";
                 
                 //System.out.println("Value: " + runner.getEV()[0] + " BR: " + brAlg.calculateBR(rootState, strategy) + " Same: " + counter);
                 //System.out.println("Strat: " + strategy);
@@ -202,7 +205,7 @@ public class SMMCTSExperiment {
             for (Map.Entry<Sequence, Double> en : l){
                 System.out.print(en.getValue() + ",");
             }
-            System.out.print(" ");
+            System.out.println();
         }
 
         public static void runSMMCTSExploitability(int milisPerMove){
@@ -288,14 +291,18 @@ public class SMMCTSExperiment {
         static int run = 0;
         //args: seed BF
         public static void main(String[] args) throws Exception {
-            setupGS();
-            runSMMCTS_VK();
-//            for (int i = 0; i < 100; i++) {
-//                run = i;
-//                setupGS();
-//                //runSMMCTS();
-//                runSMMCTSExploitability(Integer.parseInt(args[0]));
-//            }
+            System.out.println("Gamma=" + gamma + "; " + SMMCTSExperiment.firstMCTSConfig.getBackPropagationStrategyFactory().getClass());
+            int game = 182;
+            //for (int game = 0; game < 1000; game++){
+                System.out.println("GAME: " + game);
+                setupRnd(game);
+                for (int i = 0; i < 1000; i++) {
+                    run = i;
+                    setupRnd(game);
+                    runSMMCTS();
+                }
+            //}
+            
             //             runSMMCTS();
             //            RandomGameInfo.MAX_BF = Integer.parseInt(args[1]);
             //            setupRnd(Long.parseLong(args[0]));

@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.utils;
+package cz.agents.gtlibrary.experimental.utils;
 
 import java.util.Map;
 import java.util.Map.Entry;

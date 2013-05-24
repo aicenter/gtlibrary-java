@@ -236,13 +236,11 @@ public class SQFBestResponseAlgorithm {
         }
 
         assert (returnValue != null);
-        //assert (returnValue <= MAX_UTILITY_VALUE*(1+EPS_CONSTANT));
-        assert (returnValue <= MAX_UTILITY_VALUE * 1.5);
+        assert (returnValue <= MAX_UTILITY_VALUE*(1.5));
         return returnValue;
     }
 
     public void selectAction(GameState state, BRActionSelection selection, double lowerBound) {
-        boolean changed = false;
         List<Action> actionsToExplore = expander.getActions(state);
         actionsToExplore = selection.sortActions(state, actionsToExplore);
         for (Action act : actionsToExplore) {
@@ -257,15 +255,10 @@ public class SQFBestResponseAlgorithm {
             }
 
             double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
-//            newLowerBound = Double.NEGATIVE_INFINITY;
             if (newLowerBound <= MAX_UTILITY_VALUE) {
                 double value = bestResponse(newState, newLowerBound);
                 selection.addValue(action, value, natureProb, oppRP);
-                changed = true;
             }
-        }
-        if (!changed) {
-            assert false; // DEBUG -> remove
         }
     }
 

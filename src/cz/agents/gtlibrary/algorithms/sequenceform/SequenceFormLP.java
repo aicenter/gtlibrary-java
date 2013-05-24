@@ -9,6 +9,7 @@ import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.CplexStatus;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -26,26 +27,34 @@ public class SequenceFormLP {
     private long overallConstraintGenerationTime = 0;
     private long overallConstraintLPSolvingTime = 0;
 
+    public static int CPLEXALG = IloCplex.Algorithm.Barrier;
+    public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
+
 	protected Map<Player, Double> resultValues = new FixedSizeMap<Player, Double>(2);
 	protected Map<Player, Map<Sequence, Double>> resultStrategies = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
 	protected Map<Object, IloRange> constraints = new HashMap<Object, IloRange>();
 	protected Map<Object, IloNumVar> variables = new HashMap<Object, IloNumVar>();
-	protected Map<Player, IloCplex> modelsForPlayers = new FixedSizeMap<Player, IloCplex>(2);
+	static protected Map<Player, IloCplex> modelsForPlayers = new FixedSizeMap<Player, IloCplex>(2);
 	protected Map<Player, IloNumVar> objectiveForPlayers = new FixedSizeMap<Player, IloNumVar>(2);
 	protected Map<Player, Set<Sequence>> sequences = new FixedSizeMap<Player, Set<Sequence>>(2);
 	protected Map<Player, Set<SequenceInformationSet>> informationSets = new FixedSizeMap<Player, Set<SequenceInformationSet>>(2);
+
+    protected PrintStream debugOutput = System.out;
 
 	public SequenceFormLP(Player[] players) {
 		for (Player player : players) {
 			if (!resultStrategies.containsKey(player))
 				resultStrategies.put(player, new HashMap<Sequence, Double>());
-			if (!modelsForPlayers.containsKey(player)) {
-				try {
-					createModelFor(player);
-				} catch (IloException e) {
-					e.printStackTrace();
-				}
-			}
+            try {
+                if (!modelsForPlayers.containsKey(player)) {
+                    createModelFor(player);
+                } else {
+                    IloCplex cplex = modelsForPlayers.get(player);
+                    resetModel(cplex, player);
+                }
+            } catch (IloException e) {
+                e.printStackTrace();
+            }
 			sequences.put(player, new HashSet<Sequence>());
 			informationSets.put(player, new HashSet<SequenceInformationSet>());
 		}
@@ -62,15 +71,20 @@ public class SequenceFormLP {
 		}
 	}
 
+    private void resetModel(IloCplex cplex, Player player) throws IloException{
+        cplex.clearModel();
+        cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
+        cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+        IloNumVar v0 = cplex.numVar(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, IloNumVarType.Float, "v0");
+        cplex.setOut(null);
+        cplex.addMinimize(v0);
+        objectiveForPlayers.put(player, v0);
+    }
+
 	private void createModelFor(Player player) throws IloException {
 		IloCplex cplex = new IloCplex();
-        cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Auto);
-        //cplex.setParam(IloCplex.IntParam.Threads, 1);
-        IloNumVar v0 = cplex.numVar(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, IloNumVarType.Float, "v0");
-		cplex.setOut(null);
-		cplex.addMinimize(v0);
-		modelsForPlayers.put(player, cplex);
-		objectiveForPlayers.put(player, v0);
+        resetModel(cplex, player);
+        modelsForPlayers.put(player, cplex);
 	}
 
 	protected void createVariables(SequenceFormConfig<SequenceInformationSet> algConfig, Player[] players) throws IloException {
@@ -88,7 +102,7 @@ public class SequenceFormLP {
 				informationSets.get(informationSet.getPlayer()).add(informationSet);
 			}
 		}
-		System.out.println("variables created");
+		debugOutput.println("variables created");
 	}
 
 	protected Double calculateOnePlStrategy(SequenceFormConfig<SequenceInformationSet> algConfig, GameState root, Player firstPlayer, Player secondPlayer) {
@@ -97,17 +111,17 @@ public class SequenceFormLP {
 			IloNumVar v0 = objectiveForPlayers.get(firstPlayer);
             long startTime = System.currentTimeMillis();
 			createConstraintsForSequences(algConfig, cplex, sequences.get(firstPlayer));
-			System.out.println("phase 1 done");
+            debugOutput.println("phase 1 done");
 			createConstraintsForSets(secondPlayer, cplex, informationSets.get(secondPlayer));
-			System.out.println("phase 2 done");
+            debugOutput.println("phase 2 done");
             overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
 
 //			cplex.exportModel("gt-lib-sqf-rnd-" + firstPlayer + ".lp"); // uncomment for model export
             startTime = System.currentTimeMillis();
-			System.out.println("Solving");
+            debugOutput.println("Solving");
 			cplex.solve();
             overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
-			System.out.println("Status: " + cplex.getStatus());
+            debugOutput.println("Status: " + cplex.getStatus());
 			
 			if (cplex.getCplexStatus() != CplexStatus.Optimal) {
 				return null;
@@ -292,5 +306,9 @@ public class SequenceFormLP {
 
     public long getOverallConstraintGenerationTime() {
         return overallConstraintGenerationTime;
+    }
+
+    public void setDebugOutput(PrintStream debugOutput) {
+        this.debugOutput = debugOutput;
     }
 }

@@ -11,10 +11,7 @@ import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class RandomGameState extends GameStateImpl {
 
@@ -26,7 +23,7 @@ public class RandomGameState extends GameStateImpl {
     protected Map<Player, LinkedList<Integer>> observations = new FixedSizeMap<Player, LinkedList<Integer>>(2);
 
     private int hash = 0;
-    private Pair<Integer, Sequence> ISKey = null;
+    protected Pair<Integer, Sequence> ISKey = null;
     private boolean changed = true;
 
     public RandomGameState() {
@@ -132,6 +129,12 @@ public class RandomGameState extends GameStateImpl {
         for (Integer i : list){
             out *= base;
             out += i;
+        }
+        Iterator i = getHistory().getSequenceOf(getPlayerToMove()).iterator();
+        while (i.hasNext()) {
+            RandomGameAction a = (RandomGameAction)i.next();
+            out *= base;
+            out += a.getOrder();
         }
         return out;
     }

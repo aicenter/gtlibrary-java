@@ -4,6 +4,10 @@ import java.util.Collection;
 import java.util.Map;
 
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.InformationSet;
+import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import java.io.Serializable;
 
@@ -13,7 +17,11 @@ import java.io.Serializable;
  */
 public abstract class Strategy implements Map<Sequence, Double>, Serializable  {
 
+	private static final long serialVersionUID = -4151229061368151006L;
+
 	public abstract Map<Action, Double> getDistributionOfContinuationOf(Sequence sequence, Collection<Action> actions);
+	
+	public abstract String fancyToString(GameState root, Expander<? extends InformationSet> expander, Player player);
 
 	public static interface Factory {
 		public Strategy create();
@@ -33,6 +41,23 @@ public abstract class Strategy implements Map<Sequence, Double>, Serializable  {
 			}
 		}
 		return max;
+	}
+	
+	public void sanityCheck(GameState root, Expander<? extends InformationSet> expander) {
+		double probability = get(root.getSequenceForPlayerToMove());
+		double probabilitySum = 0;
+		
+		if(root.isGameEnd())
+			return;
+		for (Action action : expander.getActions(root)) {
+			GameState child = root.performAction(action);
+			
+			probabilitySum += get(child.getSequenceFor(root.getPlayerToMove()));
+			sanityCheck(child, expander);
+		}
+		if(!root.isPlayerToMoveNature())
+			if(Math.abs(probability - probabilitySum) > 1e-5 && Math.abs(probabilitySum - 1) > 1e-5)
+				throw new IllegalStateException("Inconsistent strategy, expected " + probability + " or 1 but was " + probabilitySum);
 	}
 
 }

@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.rpoptimization;
+package cz.agents.gtlibrary.experimental.rpoptimization;
 
 import java.util.HashMap;
 import java.util.LinkedList;
