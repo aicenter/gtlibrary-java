@@ -46,5 +46,7 @@ public class EpsilonPolynom extends Number {
 	public String toString() {
 		return epsilon + "^" + exponent;
 	}
+	
+	
 
 }
