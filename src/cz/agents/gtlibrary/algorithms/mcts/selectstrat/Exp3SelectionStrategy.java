@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class Exp3SelectionStrategy implements SelectionStrategy {
     Exp3BackPropFactory fact;
-    List<Action> actions;
+    public List<Action> actions;
     MCTSInformationSet infSet;
     /** Current probability of playing this action. */
     public double[] p;

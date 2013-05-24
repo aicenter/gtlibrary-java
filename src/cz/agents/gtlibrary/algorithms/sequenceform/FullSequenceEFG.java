@@ -46,6 +46,8 @@ public class FullSequenceEFG {
 	private PrintStream debugOutput = System.out;
     final private static boolean DEBUG = false;
     private ThreadMXBean threadBean ;
+    
+    private double gameValue = Double.NaN;
 
 	public static void main(String[] args) {
 //		runKuhnPoker();
@@ -178,9 +180,10 @@ public class FullSequenceEFG {
         } catch (InterruptedException e) {
         }
 
+        gameValue = sequenceFormLP.getResultForPlayer(actingPlayers[0]);
         System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
-        System.out.println("final result:" + sequenceFormLP.getResultForPlayer(actingPlayers[0]));
+        System.out.println("final result:" + gameValue);
 		System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
         System.out.println("final time: " + finishTime);
         System.out.println("final CPLEX time: " + overallCPLEX);
@@ -222,4 +225,8 @@ public class FullSequenceEFG {
 			}
 		}
 	}
+
+    public double getGameValue() {
+        return gameValue;
+    }
 }
