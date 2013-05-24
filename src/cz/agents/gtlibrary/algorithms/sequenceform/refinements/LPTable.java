@@ -12,87 +12,123 @@ import java.util.Map.Entry;
 
 public class LPTable {
 
-	private Number[][] table;
-	private Map<Key, Integer> equationIndices;
-	private Map<Key, Integer> variableIndices;
-	private Map<Object, Integer> primalWatch;
-	private Map<Object, Integer> dualWatch;
-	private byte[] constraintTypes;
-	private double[] lb;
+	protected Map<Key, Number> objective;
+	protected Map<Key, Map<Key, Number>> constraints;
+	protected Map<Key, Number> constants;
+
+	protected Map<Key, Integer> equationIndices;
+	protected Map<Key, Integer> variableIndices;
+	protected Map<Object, Integer> primalWatch;
+	protected Map<Object, Integer> dualWatch;
+
+	protected byte[] constraintTypes;
+	protected double[] lb;
+
+	protected double maxCoefficient;
+	protected int rowCount;
+	protected int columnCount;
 
 	public LPTable(int m, int n) {
-		table = new Number[m][n];
+		constants = new LinkedHashMap<Key, Number>(m);
+		constraints = new LinkedHashMap<Key, Map<Key, Number>>(m);
+		objective = new LinkedHashMap<Key, Number>(n);
+
 		equationIndices = new LinkedHashMap<Key, Integer>(m);
 		variableIndices = new LinkedHashMap<Key, Integer>(n);
 		primalWatch = new LinkedHashMap<Object, Integer>();
 		dualWatch = new LinkedHashMap<Object, Integer>();
+
 		constraintTypes = new byte[m - 1];
 		lb = new double[n - 1];
-	}
 
-	public double get(int i, int j) {
-		return table[i][j] == null ? 0 : table[i][j].doubleValue();
+		maxCoefficient = Double.NEGATIVE_INFINITY;
+		rowCount = m;
+		columnCount = n;
 	}
 
 	public double get(Key eqKey, Key varKey) {
-		return get(getEquationIndex(eqKey), getVariableIndex(varKey));
+		Number value = constraints.get(eqKey).get(varKey);
+
+		return value == null ? 0 : value.doubleValue();
 	}
 
-	public void set(int i, int j, Number value) {
-		table[i][j] = value;
+	public void updateMaxCoefficient(Number value) {
+		double absValue = Math.abs(value.doubleValue());
+
+		if (maxCoefficient < absValue)
+			maxCoefficient = absValue;
+	}
+	
+	private void updateEquationIndices(Key eqKey) {
+		getEquationIndex(eqKey);
+	}
+	
+	private void updateVariableIndices(Key varKey) {
+		getVariableIndex(varKey);
 	}
 
 	public void setObjective(Key varKey, Number value) {
-		table[0][getVariableIndex(varKey)] = value;
+		objective.put(varKey, value);
+		updateMaxCoefficient(value);
+		updateVariableIndices(varKey);
+	}
+
+	public double getObjective(Key varKey) {
+		Number value = objective.get(varKey);
+
+		return value == null ? 0 : value.doubleValue();
 	}
 
 	public void setConstant(Key eqKey, Number value) {
-		table[getEquationIndex(eqKey)][0] = value;
+		constants.put(eqKey, value);
+		updateMaxCoefficient(value);
+		updateEquationIndices(eqKey);
 	}
 
-	public void set(Key eqKey, Key varKey, Number value) {
-		table[getEquationIndex(eqKey)][getVariableIndex(varKey)] = value;
+	public double getConstant(Key eqKey) {
+		Number value = constants.get(eqKey);
+
+		return value == null ? 0 : value.doubleValue();
 	}
 
-	public void add(int i, int j, Number value) {
-		table[i][j] = get(i, j) + value.doubleValue();
+	public void setConstraint(Key eqKey, Key varKey, Number value) {
+		Map<Key, Number> row = constraints.get(eqKey);
+
+		if (row == null) {
+			row = new LinkedHashMap<Key, Number>();
+			constraints.put(eqKey, row);
+		}
+		row.put(varKey, value);
+		updateMaxCoefficient(value);
+		updateEquationIndices(eqKey);
+		updateVariableIndices(varKey);
 	}
 
-	public void add(Key eqKey, Key varKey, Number value) {
-		int equationIndex = getEquationIndex(eqKey);
-		int variableIndex = getVariableIndex(varKey);
-
-		table[equationIndex][variableIndex] = get(equationIndex, variableIndex) + value.doubleValue();
+	public void addToConstraint(Key eqKey, Key varKey, Number value) {
+		setConstraint(eqKey, varKey, get(eqKey, varKey) + value.doubleValue());
 	}
 
-	public void substract(int i, int j, Number value) {
-		table[i][j] = get(i, j) - value.doubleValue();
-	}
-
-	public void substract(Key eqKey, Key varKey, Number value) {
-		int equationIndex = getEquationIndex(eqKey);
-		int variableIndex = getVariableIndex(varKey);
-
-		table[equationIndex][variableIndex] = get(equationIndex, variableIndex) - value.doubleValue();
+	public void substractFromConstraint(Key eqKey, Key varKey, Number value) {
+		setConstraint(eqKey, varKey, get(eqKey, varKey) - value.doubleValue());
 	}
 
 	public int rowCount() {
-		return table.length;
+		return rowCount;
 	}
 
 	public int columnCount() {
-		return table[0].length;
+		return columnCount;
 	}
 
-	private int getEquationIndex(Key eqKey) {
+	protected int getEquationIndex(Key eqKey) {
 		return getIndex(eqKey, equationIndices);
 	}
 
-	private int getVariableIndex(Key varKey) {
+	protected int getVariableIndex(Key varKey) {
 		return getIndex(varKey, variableIndices);
 	}
 
-	private int getIndex(Key key, Map<Key, Integer> map) {
+	protected int getIndex(Key key, Map<Key, Integer> map) {
 		Integer result = map.get(key);
 
 		if (result == null) {
@@ -120,8 +156,7 @@ public class LPTable {
 		}
 
 		for (Entry<Key, Integer> entry : variableIndices.entrySet()) {
-			if (entry.getValue() != 0)
-				variableNames[entry.getValue() - 1] = entry.getKey().toString();
+			variableNames[entry.getValue()] = entry.getKey().toString();
 		}
 		IloNumVar[] variables = cplex.numVarArray(variableNames.length, lb, ub, variableNames);
 		IloRange[] constraints = addConstraints(cplex, variables);
@@ -130,7 +165,7 @@ public class LPTable {
 		return new LPData(cplex, variables, constraints, getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
 	}
 
-	private Map<Object, IloRange> getWatchedDualVars(IloRange[] constraints) {
+	protected Map<Object, IloRange> getWatchedDualVars(IloRange[] constraints) {
 		Map<Object, IloRange> watchedDualVars = new LinkedHashMap<Object, IloRange>();
 
 		for (Entry<Object, Integer> entry : dualWatch.entrySet()) {
@@ -139,7 +174,7 @@ public class LPTable {
 		return watchedDualVars;
 	}
 
-	private Map<Object, IloNumVar> getWatchedPrimalVars(IloNumVar[] variables) {
+	protected Map<Object, IloNumVar> getWatchedPrimalVars(IloNumVar[] variables) {
 		Map<Object, IloNumVar> watchedPrimalVars = new LinkedHashMap<Object, IloNumVar>();
 
 		for (Entry<Object, Integer> entry : primalWatch.entrySet()) {
@@ -148,73 +183,70 @@ public class LPTable {
 		return watchedPrimalVars;
 	}
 
-	private IloRange[] addConstraints(IloCplex cplex, IloNumVar[] x) throws IloException {
-		IloRange[] constraints = new IloRange[rowCount() - 1];
+	protected IloRange[] addConstraints(IloCplex cplex, IloNumVar[] x) throws IloException {
+		IloRange[] cplexConstraints = new IloRange[rowCount() - 1];
 
-		for (int i = 1; i < rowCount(); i++) {
-			IloLinearNumExpr constraint = cplex.linearNumExpr();
+		for (Entry<Key, Map<Key, Number>> rowEntry : constraints.entrySet()) {
+			IloLinearNumExpr rowExpr = createRowExpresion(cplex, x, rowEntry);
+			int equationIndex = getEquationIndex(rowEntry.getKey()) - 1;
 
-			for (int j = 0; j < x.length; j++) {
-				constraint.addTerm(x[j], get(i, j + 1));
-			}
-			switch (constraintTypes[i - 1]) {
+			switch (constraintTypes[equationIndex]) {
 			case 0:
-				constraints[i - 1] = cplex.addGe(constraint, -get(i, 0));
+				cplexConstraints[equationIndex] = cplex.addLe(rowExpr, getConstant(rowEntry.getKey()));
 				break;
 			case 1:
-				constraints[i - 1] = cplex.addEq(constraint, -get(i, 0));
+				cplexConstraints[equationIndex] = cplex.addEq(rowExpr, getConstant(rowEntry.getKey()));
 				break;
 			case 2:
-				constraints[i - 1] = cplex.addLe(constraint, -get(i, 0));
+				cplexConstraints[equationIndex] = cplex.addGe(rowExpr, getConstant(rowEntry.getKey()));
 				break;
 			default:
 				break;
 			}
 		}
-		return constraints;
+		return cplexConstraints;
 	}
 
-	private void addObjective(IloCplex cplex, IloNumVar[] x) throws IloException {
-		IloLinearNumExpr objective = cplex.linearNumExpr();
+	public IloLinearNumExpr createRowExpresion(IloCplex cplex, IloNumVar[] x, Entry<Key, Map<Key, Number>> rowEntry) throws IloException {
+		IloLinearNumExpr rowExpr = cplex.linearNumExpr();
 
-		for (int i = 0; i < x.length; i++) {
-			objective.addTerm(x[i], get(0, i + 1));
+		for (Entry<Key, Number> memberEntry : rowEntry.getValue().entrySet()) {
+			rowExpr.addTerm(-memberEntry.getValue().doubleValue(), x[getVariableIndex(memberEntry.getKey()) - 1]);
 		}
-		cplex.addMaximize(objective);
+		return rowExpr;
+	}
+
+	protected void addObjective(IloCplex cplex, IloNumVar[] x) throws IloException {
+		double[] objCoef = new double[x.length];
+
+		for (Entry<Key, Number> entry : objective.entrySet()) {
+			objCoef[variableIndices.get(entry.getKey())] = entry.getValue().doubleValue();
+		}
+		cplex.addMaximize(cplex.scalProd(x, objCoef));
 	}
 
 	/**
 	 * Set constraint for equation represented by eqKey, default constraint is ge
+	 * 
 	 * @param eqKey
 	 * @param type
-	 *            0 ... ge, 1 .. eq, 2 ... le
+	 *            0 ... le, 1 .. eq, 2 ... ge
 	 */
 	public void setConstraintType(Key eqKey, int type) {
 		constraintTypes[getEquationIndex(eqKey) - 1] = (byte) type;
 	}
-	
+
 	/**
 	 * Set lower bound for variable represented by varKey, default value is 0
-	 * @param eqKey
-	 * @param type
-	 *            0 ... ge, 1 .. eq, 2 ... le
+	 * 
+	 * @param varKey
+	 * @param value
 	 */
 	public void setLowerBound(Key varKey, double value) {
 		lb[getVariableIndex(varKey) - 1] = value;
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-
-		for (int i = 0; i < table.length; i++) {
-			for (int j = 0; j < table[0].length; j++) {
-				builder.append(get(i, j));
-				builder.append(" ");
-			}
-			builder.append("\n");
-		}
-		return builder.toString();
+	public double getMaxCoefficient() {
+		return maxCoefficient;
 	}
-
 }
