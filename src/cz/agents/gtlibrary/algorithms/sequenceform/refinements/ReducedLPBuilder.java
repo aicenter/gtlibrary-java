@@ -18,7 +18,6 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
-import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -80,7 +79,8 @@ public class ReducedLPBuilder extends LPBuilder {
 	}
 	
 	@Override
-	protected void visitLeaf(GameState state) {
+	protected void visitLeaf(GameState state, Player lastPlayer, Key lastKey) {
+		updateParentLinks(state, lastPlayer, lastKey);
 		lpTable.substractFromConstraint(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0] + utilityShift));
 	}
 	
@@ -93,17 +93,15 @@ public class ReducedLPBuilder extends LPBuilder {
 		return p1Strategy;
 	}
 	
-	public void updateLPForFirstPlayer(GameState state) {
+	public void updateLPForFirstPlayer(GameState state, Player lastPlayer, Key lastKey) {
 		Key varKey = new Key("P", new Key(state.getISKeyForPlayerToMove()));
 
+		updateParentLinks(state, lastPlayer, lastKey);
 		lpTable.setConstraint(lastKeys[0], varKey, -1);//E
 		lpTable.watchDualVariable(lastKeys[0], state.getSequenceForPlayerToMove());
-		for (Action action : expander.getActions(state)) {
-			updateLPForFirstPlayerChild(state.performAction(action), state.getPlayerToMove(), varKey);
-		}
 	}
 
-	public void updateLPForFirstPlayerChild(GameState child, Player lastPlayer, Key varKey) {
+	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key varKey) {
 		Key eqKey = new Key(child.getSequenceFor(lastPlayer));
 		Key tmpKey = new Key("U", new Key(child.getSequenceFor(lastPlayer)));
 
@@ -114,17 +112,15 @@ public class ReducedLPBuilder extends LPBuilder {
 		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
 	}
 
-	public void updateLPForSecondPlayer(GameState state) {
+	public void updateLPForSecondPlayer(GameState state, Player lastPlayer, Key lastKey) {
 		Key eqKey = new Key("Q", new Key(state.getISKeyForPlayerToMove()));
 
+		updateParentLinks(state, lastPlayer, lastKey);
 		lpTable.setConstraint(eqKey, lastKeys[1], -1);//F
 		lpTable.watchPrimalVariable(lastKeys[1], state.getSequenceForPlayerToMove());
-		for (Action action : expander.getActions(state)) {
-			updateLPForSecondPlayerChild(state.performAction(action), state.getPlayerToMove(), eqKey);
-		}
 	}
 
-	public void updateLPForSecondPlayerChild(GameState child, Player lastPlayer, Key eqKey) {
+	public void updateForSecondPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
 		Key varKey = new Key(child.getSequenceFor(lastPlayer));
 		Key tmpKey = new Key("V", new Key(child.getSequenceFor(lastPlayer)));
 

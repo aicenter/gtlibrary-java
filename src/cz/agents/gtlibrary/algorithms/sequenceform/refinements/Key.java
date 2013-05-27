@@ -54,5 +54,10 @@ public class Key {
 	public int hashCode() {
 		return hashCode;
 	}
+	
+	@Override
+	public String toString() {
+		return "[" + object + (string.equals("")?"":(", " + string)) + "]";
+	}
 
 }
