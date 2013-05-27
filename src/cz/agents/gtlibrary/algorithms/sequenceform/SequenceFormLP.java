@@ -27,8 +27,10 @@ public class SequenceFormLP {
     private long overallConstraintGenerationTime = 0;
     private long overallConstraintLPSolvingTime = 0;
 
-    public static int CPLEXALG = IloCplex.Algorithm.Barrier;
+    public static int CPLEXALG = IloCplex.Algorithm.Dual;
     public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
+    private static double EPS = 0.000000001;
+
 
 	protected Map<Player, Double> resultValues = new FixedSizeMap<Player, Double>(2);
 	protected Map<Player, Map<Sequence, Double>> resultStrategies = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
@@ -143,7 +145,7 @@ public class SequenceFormLP {
 		for (Sequence sequence : algConfig.getSequencesFor(secondPlayer)) {
 			try {
 				double relPl = cplex.getValue(variables.get(sequence));
-
+                if (relPl < EPS) relPl = 0;
 				if (sequence.size() == 0)
 					relPl = 1;
 				solution.put(sequence, relPl);

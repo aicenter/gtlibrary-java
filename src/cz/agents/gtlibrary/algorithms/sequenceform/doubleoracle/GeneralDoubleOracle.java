@@ -46,7 +46,7 @@ public class GeneralDoubleOracle {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
 
-    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_IMPROVED;
+    public static PlayerSelection playerSelection = PlayerSelection.BOTH;
 
 	public static void main(String[] args) {
 //        runBP();

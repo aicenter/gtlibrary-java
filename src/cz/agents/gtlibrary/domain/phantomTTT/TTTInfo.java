@@ -14,7 +14,9 @@ import cz.agents.gtlibrary.interfaces.Player;
  * @author vilo
  */
 public class TTTInfo implements GameInfo{
-    
+
+    public static boolean useDomainDependentExpander = true;
+
     public static final Player XPlayer = new PlayerImpl(0,"x");
     public static final Player OPlayer = new PlayerImpl(1,"o");
     

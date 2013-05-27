@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.lplibrary.lpWrapper;
+package cz.agents.gtlibrary.nfg.lplibrary.lpWrapper;
 
 
 public class LPSolverException extends RuntimeException {

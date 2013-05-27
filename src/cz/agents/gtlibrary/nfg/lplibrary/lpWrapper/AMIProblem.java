@@ -1,7 +1,7 @@
 /**
  *
  */
-package cz.agents.gtlibrary.lplibrary.lpWrapper;
+package cz.agents.gtlibrary.nfg.lplibrary.lpWrapper;
 
 import java.io.OutputStream;
 import java.util.List;
