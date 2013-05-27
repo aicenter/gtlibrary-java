@@ -40,9 +40,9 @@ public class LPBuilder extends TreeVisitor {
 
 	public static void main(String[] args) {
 //		runAoS();
-//		runGoofSpiel();
+		runGoofSpiel();
 //		runKuhnPoker();
-		runGenericPoker();
+//		runGenericPoker();
 	}
 
 	public static void runKuhnPoker() {
@@ -104,8 +104,8 @@ public class LPBuilder extends TreeVisitor {
 
 			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedDualVariables());
 			Map<Sequence, Double> p2RealizationPlan = createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
-			System.out.println(p1RealizationPlan);
-			System.out.println(p2RealizationPlan);
+//			System.out.println(p1RealizationPlan);
+//			System.out.println(p2RealizationPlan);
 
 			UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
 			Strategy p1Strategy = new UniformStrategyForMissingSequences();
