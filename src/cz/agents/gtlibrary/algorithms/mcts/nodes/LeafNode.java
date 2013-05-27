@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.strategy.Strategy;
+import java.util.Arrays;
 
 public class LeafNode extends NodeImpl {
 
@@ -21,7 +22,7 @@ public class LeafNode extends NodeImpl {
 	@Override
 	public double[] simulate() {
 		leafNodeUsed++;
-		return utilities;
+		return Arrays.copyOf(utilities, utilities.length);
 	}
 
 	@Override
