@@ -30,9 +30,13 @@ public class Exp3BackPropFactory implements BackPropFactory  {
         this.gamma = gamma;
     }
     
-    public double normalizeValue(double value) {
-        assert minUtility <= value && value <= maxUtility;
+    public double normalizeValue(double value) {       
+        assert minUtility <= value + 1e-5 && value <= maxUtility + 1e-5;
         return (value - minUtility) / (maxUtility - minUtility);
+    }
+    
+    public double valuesSpread() {
+        return maxUtility - minUtility;
     }
 
     @Override

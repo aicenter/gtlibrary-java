@@ -23,7 +23,7 @@ public class RandomGameState extends GameStateImpl {
     protected Map<Player, LinkedList<Integer>> observations = new FixedSizeMap<Player, LinkedList<Integer>>(2);
 
     private int hash = 0;
-    private Pair<Integer, Sequence> ISKey = null;
+    protected Pair<Integer, Sequence> ISKey = null;
     private boolean changed = true;
 
     public RandomGameState() {

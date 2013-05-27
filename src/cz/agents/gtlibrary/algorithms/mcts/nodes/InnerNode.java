@@ -77,7 +77,10 @@ public class InnerNode extends NodeImpl {
 	@Override
 	public void backPropagate(Action action, double[] values) {
                 //happens only in the current leaf node
-                if (action != null) values[currentPlayer.getId()] =  informationSet.backPropagate(this, action, values[currentPlayer.getId()]);
+                if (action != null && currentPlayer.getId() < 2) {
+                    values[currentPlayer.getId()] =  informationSet.backPropagate(this, action, values[currentPlayer.getId()]);
+                    values[1-currentPlayer.getId()] = -values[currentPlayer.getId()];
+                }
                 for (int i=0; i < nodeStats.length; i++) nodeStats[i].onBackPropagate(values[i]);
 		if (parent != null && !parent.isLocked()) {
 			parent.backPropagate(lastAction, values);

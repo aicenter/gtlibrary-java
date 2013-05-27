@@ -12,12 +12,17 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 public class Simulator {
 	final private Random rnd;
 
+        public Simulator() {
+		this.rnd = new HighQualityRandom();
+	}
+        
 	public Simulator(long seed) {
-		this.rnd = new Random(seed);
+		this.rnd = new HighQualityRandom(seed);
 	}
 
 	public double[] simulate(GameState gameState, Expander<MCTSInformationSet> expander) {
