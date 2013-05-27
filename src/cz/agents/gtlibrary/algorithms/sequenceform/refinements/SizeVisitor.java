@@ -34,9 +34,10 @@ public class SizeVisitor extends TreeVisitor {
 	}
 
 	@Override
-	protected void visitLeaf(GameState state) {
+	protected void visitLeaf(GameState state, Player lastPlayer, Key lastKey) {
 		double currentUtility = state.getUtilities()[0];
 
+		updateParent(state, lastPlayer);
 		if (minUtility > currentUtility)
 			minUtility = currentUtility;
 		if (maxUtility < currentUtility)
@@ -44,14 +45,27 @@ public class SizeVisitor extends TreeVisitor {
 	}
 
 	@Override
-	protected void visitNormalNode(GameState state) {
+	protected void visitNormalNode(GameState state, Player lastPlayer, Key lastKey) {
 		isKeys.get(state.getPlayerToMove()).add(state.getISKeyForPlayerToMove());
+		updateParent(state, lastPlayer);
 		for (Action action : expander.getActions(state)) {
 			GameState child = state.performAction(action);
 
 			continuationKeys.get(state.getPlayerToMove()).add(child.getSequenceFor(state.getPlayerToMove()));
 		}
-		super.visitNormalNode(state);
+		super.visitNormalNode(state, lastPlayer, lastKey);
+	}
+	
+	@Override
+	protected void visitChanceNode(GameState state, Player lastPlayer, Key lastKey) {
+		updateParent(state, lastPlayer);
+		super.visitChanceNode(state, lastPlayer, lastKey);
+	}
+
+	public void updateParent(GameState state, Player lastPlayer) {
+		if(lastPlayer != null) {
+			continuationKeys.get(lastPlayer).add(state.getSequenceFor(lastPlayer));
+		}
 	}
 
 	public int getContinuationCountFor(Player player) {
