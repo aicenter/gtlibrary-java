@@ -69,11 +69,11 @@ public class SizeVisitor extends TreeVisitor {
 	}
 
 	public int getContinuationCountFor(Player player) {
-		return continuationKeys.get(player).size() + 1;
+		return continuationKeys.get(player).size();
 	}
 
 	public int getISCountFor(Player player) {
-		return isKeys.get(player).size() + 1;
+		return isKeys.get(player).size();
 	}
 	
 	public double getMinUtilityForPlayerOne() {
