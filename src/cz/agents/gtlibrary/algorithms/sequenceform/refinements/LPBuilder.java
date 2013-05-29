@@ -5,7 +5,6 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,13 +27,11 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
-import cz.agents.gtlibrary.utils.Pair;
 
 public class LPBuilder extends TreeVisitor {
 
 	protected String lpFileName;
 	protected LPTable lpTable;
-	protected double utilityShift;
 	protected Epsilon epsilon;
 
 	public static void main(String[] args) {
@@ -88,7 +85,6 @@ public class LPBuilder extends TreeVisitor {
 		visitTree(rootState, null, null);
 		computeEpsilon();
 		System.out.println("epsilon: " + epsilon);
-//		System.out.println(lpTable.toString());
 	}
 
 	public void solve() {
@@ -103,8 +99,8 @@ public class LPBuilder extends TreeVisitor {
 
 			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedDualVariables());
 			Map<Sequence, Double> p2RealizationPlan = createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
-//			System.out.println(p1RealizationPlan);
-//			System.out.println(p2RealizationPlan);
+			System.out.println(p1RealizationPlan);
+			System.out.println(p2RealizationPlan);
 
 			UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
 			Strategy p1Strategy = new UniformStrategyForMissingSequences();
@@ -116,7 +112,7 @@ public class LPBuilder extends TreeVisitor {
 //			System.out.println(p1Strategy.fancyToString(rootState, expander, new PlayerImpl(0)));
 //			System.out.println("************************************");
 //			System.out.println(p2Strategy.fancyToString(rootState, expander, new PlayerImpl(1)));
-			System.out.println("Solution: " + Arrays.toString(lpData.getSolver().getValues(lpData.getVariables())));
+//			System.out.println("Solution: " + Arrays.toString(lpData.getSolver().getValues(lpData.getVariables())));
 			System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 			p1Strategy.sanityCheck(rootState, expander);
 			p2Strategy.sanityCheck(rootState, expander);
@@ -145,9 +141,7 @@ public class LPBuilder extends TreeVisitor {
 	}
 
 	public void initTable() {
-		Pair<Integer, Integer> sizes = getLPSize();
-
-		lpTable = new LPTable(sizes.getLeft(), sizes.getRight());
+		lpTable = new LPTable();
 
 		initCost();
 		initE();
@@ -171,22 +165,6 @@ public class LPBuilder extends TreeVisitor {
 
 	public void initCost() {
 		lpTable.setObjective(new Key("P", lastKeys[0]), -1);
-	}
-
-	protected Pair<Integer, Integer> getLPSize() {
-		SizeVisitor visitor = new SizeVisitor(rootState, expander, algConfig);
-
-		visitor.visitTree(rootState, null, null);
-		utilityShift = -visitor.getMinUtilityForPlayerOne() + 1;
-
-		System.out.println("P1 IS count: " + visitor.getISCountFor(rootState.getAllPlayers()[0]));
-		System.out.println("P2 IS count: " + visitor.getISCountFor(rootState.getAllPlayers()[1]));
-		System.out.println("P1 cont count: " + visitor.getContinuationCountFor(rootState.getAllPlayers()[0]));
-		System.out.println("P2 cont count: " + visitor.getContinuationCountFor(rootState.getAllPlayers()[1]));
-
-		int combinedStateCount = visitor.getContinuationCountFor(rootState.getAllPlayers()[0]) + visitor.getContinuationCountFor(rootState.getAllPlayers()[1]);
-
-		return new Pair<Integer, Integer>(combinedStateCount + visitor.getISCountFor(rootState.getAllPlayers()[0]), combinedStateCount + visitor.getISCountFor(rootState.getAllPlayers()[1]));
 	}
 
 	@Override
@@ -262,7 +240,7 @@ public class LPBuilder extends TreeVisitor {
 	}
 
 	protected void computeEpsilon() {
-		double equationCount = lpTable.rowCount() - 1;
+		double equationCount = lpTable.rowCount();
 		double maxCoefficient = lpTable.getMaxCoefficient();
 
 		epsilon.setValue(0.5 * Math.pow(equationCount, -equationCount - 1) * Math.pow(maxCoefficient, -2 * equationCount - 1));
