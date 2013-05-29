@@ -180,7 +180,7 @@ public class SequenceFormLP {
 		}
 	}
 
-	private static double getUtility(SequenceFormConfig<SequenceInformationSet> algConfig, Map<Player, Sequence> sequenceCombination) {
+	protected static double getUtility(SequenceFormConfig<SequenceInformationSet> algConfig, Map<Player, Sequence> sequenceCombination) {
 		Double utility = algConfig.getUtilityForSequenceCombination(sequenceCombination);
 
 		if (utility == null) {
@@ -273,7 +273,7 @@ public class SequenceFormLP {
 		constraints.put(firstPlayerSequence, con);
 	}
 
-	private IloNumExpr computeSumGR(IloCplex cplex, Sequence firstPlayerSequence, SequenceFormConfig<SequenceInformationSet> algConfig, Player firstPlayer) throws IloException {
+	protected IloNumExpr computeSumGR(IloCplex cplex, Sequence firstPlayerSequence, SequenceFormConfig<SequenceInformationSet> algConfig, Player firstPlayer) throws IloException {
 		IloNumExpr sumGR = cplex.constant(0);
 		HashSet<Sequence> secondPlayerSequences = new HashSet<Sequence>();
 

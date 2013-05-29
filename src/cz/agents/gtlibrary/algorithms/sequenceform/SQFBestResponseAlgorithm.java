@@ -64,6 +64,26 @@ public class SQFBestResponseAlgorithm {
         return bestResponse(root, -MAX_UTILITY_VALUE);
     }
 
+    protected Double calculateEvaluation(Map<Player, Sequence> currentHistory, GameState gameState) {
+        double utRes = 0;
+        if (algConfig.getActualNonzeroUtilityValues(gameState) != null) {
+            utRes = algConfig.getActualNonzeroUtilityValues(gameState);
+        } else {
+            utRes = gameState.getUtilities()[0] * gameState.getNatureProbability();
+            if (utRes != 0) {
+                algConfig.setUtility(gameState, utRes);
+            }
+        }
+        if (searchingPlayerIndex == 1) {
+            utRes *= -1; // a zero sum game
+        }
+        Double weight = getOpponentRealizationPlan().get(currentHistory.get(players[opponentPlayerIndex]));
+        if (weight == null || weight == 0) {
+            weight = 1d;
+        }
+        return utRes * weight; // weighting with opponent's realization plan
+    }
+
     public Double calculateBRNoClear(GameState root) {
         return bestResponse(root, -MAX_UTILITY_VALUE);
     }
@@ -78,23 +98,7 @@ public class SQFBestResponseAlgorithm {
         Double returnValue = null;
 
         if (gameState.isGameEnd()) { // we are in a leaf
-            double utRes = 0;
-            if (algConfig.getActualNonzeroUtilityValues(gameState) != null) {
-                utRes = algConfig.getActualNonzeroUtilityValues(gameState);
-            } else {
-                utRes = gameState.getUtilities()[0] * gameState.getNatureProbability();
-                if (utRes != 0) {
-                    algConfig.setUtility(gameState, utRes);
-                }
-            }
-            if (searchingPlayerIndex == 1) {
-                utRes *= -1; // a zero sum game
-            }
-            Double weight = getOpponentRealizationPlan().get(currentHistory.get(players[opponentPlayerIndex]));
-            if (weight == null || weight == 0) {
-                weight = 1d;
-            }
-            return utRes * weight; // weighting with opponent's realization plan
+            return calculateEvaluation(currentHistory, gameState);
         }
 
         Double tmpVal = cachedValuesForNodes.get(gameState);
@@ -288,7 +292,7 @@ public class SQFBestResponseAlgorithm {
         protected double nodeProbability;
         protected double value = 0;
         protected boolean nonZeroORP;
-        protected boolean nonZeroContinuation = false;
+        public boolean nonZeroContinuation = false;
         protected Double tempValue = null;
 
         public BROppSelection(double lowerBound, double nodeProbability, boolean nonZeroORP) {
@@ -392,9 +396,9 @@ public class SQFBestResponseAlgorithm {
 
     public class BRSrchSelection extends BRActionSelection {
 
-        protected double allNodesProbability;
+        public double allNodesProbability;
         protected HashMap<Action, Double> actionExpectedValues = new HashMap<Action, Double>();
-        protected HashMap<GameState, HashMap<Action, Double>> actionRealValues = new HashMap<GameState, HashMap<Action, Double>>();
+        public HashMap<GameState, HashMap<Action, Double>> actionRealValues = new HashMap<GameState, HashMap<Action, Double>>();
         protected double maxValue = Double.NEGATIVE_INFINITY;
         protected double previousMaxValue = Double.NEGATIVE_INFINITY;
         protected Action maxAction = null;

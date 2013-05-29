@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.improvedBR.DoubleOracleWithBestMinmaxImprovement;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.unprunning.UnprunningDoubleOracle;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
@@ -90,6 +91,8 @@ public class DoubleOracleExperiments {
                 GeneralDoubleOracle.runPhantomTTT();
         } else if (alg.equals("UDO")) {
             UnprunningDoubleOracle.main(null);
+        } else if (alg.equals("MIDO")) {
+            DoubleOracleWithBestMinmaxImprovement.runRandomGame();
         } else if (alg.equalsIgnoreCase("LP")) {
             if (domain.equalsIgnoreCase("BP"))
                 FullSequenceEFG.runBPG();
