@@ -27,7 +27,7 @@ public class SequenceFormLP {
     private long overallConstraintGenerationTime = 0;
     private long overallConstraintLPSolvingTime = 0;
 
-    public static int CPLEXALG = IloCplex.Algorithm.Dual;
+    public static int CPLEXALG = IloCplex.Algorithm.Barrier;
     public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
     private static double EPS = 0.000000001;
 

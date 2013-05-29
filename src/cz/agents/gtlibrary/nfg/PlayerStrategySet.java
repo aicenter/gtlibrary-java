@@ -31,34 +31,6 @@ public class PlayerStrategySet<T extends PureStrategy> implements Iterable<T> {
         return strategies.toString();
     }
 
-//    public double getPayoff(List<Double> probs, PlayerStrategySet oppositePlayer, List<Double> oppProbs) {
-//        double payoff = 0;
-//
-//        for (int i = 0; i < strategies.size(); i++) {
-//            double prob = probs.get(i);
-//            for (int j = 0; j < oppProbs.size(); j++) {
-//                double oppProb = oppProbs.get(j);
-//                T oppPath = oppositePlayer.getStrategies().get(j);
-//                payoff += strategies.get(i).getUtility(oppPath) * prob * oppProb;
-//            }
-//        }
-//        return payoff;
-//    }
-
-//    public double getPayoff(List<Double> probs, PlayerStrategySet oppositePlayer, List<Double> oppProbs) {
-//        double payoff = 0;
-//
-//        for (int i = 0; i < strategies.size(); i++) {
-//            double prob = probs.get(i);
-//            for (int j = 0; j < oppProbs.size(); j++) {
-//                double oppProb = oppProbs.get(j);
-//                T oppPath = oppositePlayer.getStrategies().get(j);
-//                payoff += strategies.get(i).getUtility(oppPath) * prob * oppProb;
-//            }
-//        }
-//        return payoff;
-//    }
-
     public boolean add(List<T> strategies) {
         boolean added = false;
         for (T strategy : strategies) {
