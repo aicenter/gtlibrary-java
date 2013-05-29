@@ -20,8 +20,8 @@ import java.util.Set;
 
 public class DoubleOracleSequenceFormLP extends SequenceFormLP {
 
-    private Map<Player, Set<Sequence>> newSequencesSinceLastLPCalculation = new FixedSizeMap<Player, Set<Sequence>>(2);
-    private Player[] players;
+    protected Map<Player, Set<Sequence>> newSequencesSinceLastLPCalculation = new FixedSizeMap<Player, Set<Sequence>>(2);
+    protected Player[] players;
     private long overallGenerationTime = 0;
     private long overallComputationTime = 0;
 

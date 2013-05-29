@@ -1,14 +1,11 @@
-package cz.agents.gtlibrary.lplibrary.cplex;
+package cz.agents.gtlibrary.nfg.lplibrary.cplex;
 
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.BasisStatus;
 import ilog.cplex.IloCplex.UnknownObjectException;
-import cz.agents.gtlibrary.lplibrary.lpWrapper.AMIProblem;
-import cz.agents.gtlibrary.lplibrary.lpWrapper.Configuration;
-import cz.agents.gtlibrary.lplibrary.lpWrapper.LPSolverException;
-import cz.agents.gtlibrary.lplibrary.lpWrapper.AMIProblem.BOUNDS_TYPE;
-import cz.agents.gtlibrary.lplibrary.lpWrapper.AMIProblem.VARIABLE_TYPE;
+import cz.agents.gtlibrary.nfg.lplibrary.lpWrapper.AMIProblem;
+import cz.agents.gtlibrary.nfg.lplibrary.lpWrapper.LPSolverException;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -576,15 +573,15 @@ public abstract class MIProblemCplex extends AMIProblem {
         try {
             switch (boundType) {
                 case FREE:
-                    this.variables.get(columnNumber - 1).cplexVar.setLB(-Configuration.MM);
-                    this.variables.get(columnNumber - 1).cplexVar.setUB(Configuration.MM);
+                    this.variables.get(columnNumber - 1).cplexVar.setLB(-MM);
+                    this.variables.get(columnNumber - 1).cplexVar.setUB(MM);
                     break;
                 case LOWER:
                     this.variables.get(columnNumber - 1).cplexVar.setLB(lowerBound);
-                    this.variables.get(columnNumber - 1).cplexVar.setUB(Configuration.MM);
+                    this.variables.get(columnNumber - 1).cplexVar.setUB(MM);
                     break;
                 case UPPER:
-                    this.variables.get(columnNumber - 1).cplexVar.setLB(-Configuration.MM);
+                    this.variables.get(columnNumber - 1).cplexVar.setLB(-MM);
                     this.variables.get(columnNumber - 1).cplexVar.setUB(upperBound);
                     break;
                 case DOUBLE:
