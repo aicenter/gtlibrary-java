@@ -32,5 +32,7 @@ public interface Node {
 	public int getDepth();
 	
 	public Strategy getStrategyFor(Player player, Distribution distribution);
+        
+        public Strategy getStrategyFor(Player player, Distribution distribution, int cutOffDepth);
 
 }

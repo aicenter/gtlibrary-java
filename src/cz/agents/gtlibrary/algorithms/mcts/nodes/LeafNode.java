@@ -55,7 +55,7 @@ public class LeafNode extends NodeImpl {
 	}
 
 	@Override
-	public Strategy getStrategyFor(Player player, Distribution distribution) {
+	public Strategy getStrategyFor(Player player, Distribution distribution, int cutOffDepth) {
 		return algConfig.getEmptyStrategy();
 	}
 }

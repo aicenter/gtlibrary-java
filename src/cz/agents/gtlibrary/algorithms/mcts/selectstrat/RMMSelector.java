@@ -20,6 +20,7 @@ public class RMMSelector implements SelectionStrategy, MeanStrategyProvider {
     List<Action> actions;
     MCTSInformationSet is;
     Action lastSelected = null;
+    BasicStats statsBelow = new BasicStats();
     /** Current probability of playing this action. */
     double[] p;
     double[] mp;
@@ -92,8 +93,28 @@ public class RMMSelector implements SelectionStrategy, MeanStrategyProvider {
             //intentionally empty
         }
         
-        if (node.getInformationSet().getAllNodes().size() == 1) return node.getEV()[0];
+        if (node.getInformationSet().getAllNodes().size() == 1) {
+            statsBelow.onBackPropagate(value);
+            return statsBelow.getEV();
+        }
         else return value;
+    }
+    
+    public void printMatrix(){
+        try {
+            if (is.getPlayer().getId() == 0){
+                assert is.getAllNodes().size() == 1;
+                InnerNode node = is.getAllNodes().iterator().next();
+                for (Action a : node.getActions()){
+                    for (Action b : ((InnerNode)node.getChildOrNull(a)).getActions()){
+                        System.out.print(((InnerNode)node.getChildOrNull(a)).getChildOrNull(b).getEV()[is.getPlayer().getId()] + " ");
+                    }
+                    System.out.println();
+                }
+            }
+        } catch (NullPointerException ex){
+            //intentionally empty
+        }
     }
 
     @Override
