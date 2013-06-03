@@ -50,11 +50,11 @@ public class ChanceNode extends InnerNode {
 	}
 	
 	@Override
-	public Strategy getStrategyFor(Player player, Distribution distribution) {
+	public Strategy getStrategyFor(Player player, Distribution distribution, int cutOffDepth) {
 		Strategy strategy = algConfig.getEmptyStrategy();
 
 		for (Node child : children.values()) {
-			strategy.putAll(getStrategyFor(child, player, distribution));
+			strategy.putAll(getStrategyFor(child, player, distribution, cutOffDepth-1));
 		}
 		return strategy;
 	}

@@ -33,6 +33,8 @@ public class Exp3BackPropFactory implements BackPropFactory  {
     public double normalizeValue(double value) {       
         assert minUtility <= value + 1e-5 && value <= maxUtility + 1e-5;
         return (value - minUtility) / (maxUtility - minUtility);
+//        assert minUtility == 0 && maxUtility == 1;
+//        return value;
     }
     
     public double valuesSpread() {

@@ -1,8 +1,11 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.strategy.Strategy;
 
 public abstract class NodeImpl implements Node {
     
@@ -51,6 +54,11 @@ public abstract class NodeImpl implements Node {
 		return gameState;
 	}
 	
+        @Override
+	public Strategy getStrategyFor(Player player, Distribution distribution) {
+            return getStrategyFor(player, distribution, Integer.MAX_VALUE);
+        }
+        
 	@Override
 	public String toString() {
 		return "Node: " + gameState;

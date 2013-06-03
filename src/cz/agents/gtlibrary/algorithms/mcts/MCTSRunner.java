@@ -8,7 +8,9 @@ import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.strategy.Strategy;
+import java.util.Map;
 
 public class MCTSRunner {
 
@@ -45,8 +47,17 @@ public class MCTSRunner {
 	}
         
         public Strategy getCurrentStrategyFor(Player player, Distribution distribution){
-                Strategy strategy = rootNode.getStrategyFor(player, distribution);
-		
+            return getCurrentStrategyFor(player, distribution, Integer.MAX_VALUE);
+        }
+        
+        public Strategy getCurrentStrategyFor(Player player, Distribution distribution, int cutOffDepth){
+                Strategy strategy = rootNode.getStrategyFor(player, distribution, cutOffDepth);
+		for (Map.Entry<Sequence, Double> en : strategy.entrySet()){
+                    if (en.getValue() < 1e-6){
+                        en.setValue(0d);
+                    }
+                }
+                
 		strategy.put(new LinkedListSequenceImpl(player), 1d);
 		return strategy;
         }
