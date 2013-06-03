@@ -1,11 +1,9 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.improvedBR;
 
-import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.util.*;
-
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleBestResponse;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleSequenceFormLP;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -24,20 +22,27 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
-import cz.agents.gtlibrary.domain.randomgame.*;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.io.GambitEFG;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
-public class GeneralDoubleOracle {
+import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.*;
+
+public class DoubleOracleWithBestMinmaxImprovement {
 	private GameState rootState;
 	private Expander<DoubleOracleInformationSet> expander;
 	private GameInfo gameConfig;
 	private DoubleOracleConfig<DoubleOracleInformationSet> algConfig;
 
 	private PrintStream debugOutput = System.out;
-	
-	final private double EPS = 0.00001;
+
+	final private double EPS = 0.0000001;
     final private static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
     private ThreadMXBean threadBean ;
@@ -46,7 +51,7 @@ public class GeneralDoubleOracle {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
 
-    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_ALTERNATING;
+    public static PlayerSelection playerSelection = PlayerSelection.BOTH;
 
 	public static void main(String[] args) {
 //        runBP();
@@ -64,7 +69,7 @@ public class GeneralDoubleOracle {
         GameInfo gameInfo = new TTTInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander expander = new TTTExpander<DoubleOracleInformationSet>(algConfig);
-        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
 //        GeneralDoubleOracle.traverseCompleteGameTree(rootState, expander);
     }
@@ -75,16 +80,16 @@ public class GeneralDoubleOracle {
         GameInfo gameInfo = new PursuitGameInfo();
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new PursuitExpander<DoubleOracleInformationSet>(algConfig);
-		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+		DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState,  expander, gameInfo, algConfig);
         doefg.generate(null);
     }
-	
+
     public static void runKuhnPoker() {
         GameState rootState = new KuhnPokerGameState();
         GameInfo gameInfo = new KPGameInfo();
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new KuhnPokerExpander<DoubleOracleInformationSet>(algConfig);
-		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+		DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState,  expander, gameInfo, algConfig);
         doefg.generate(null);
     }
 
@@ -94,17 +99,17 @@ public class GeneralDoubleOracle {
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
 //        Expander<DoubleOracleInformationSet> expander = new RandomGameExpanderWithMoveOrdering<DoubleOracleInformationSet>(algConfig, new int[] {1, 2, 0});
-        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+        DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState,  expander, gameInfo, algConfig);
         doefg.generate(null);
 //        GambitEFG.write("randomgame.gbt", rootState, (Expander)expander);
     }
-    
+
     public static void runSimRandomGame() {
         GameState rootState = new SimRandomGameState();
         GameInfo gameInfo = new RandomGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
-        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+        DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState,  expander, gameInfo, algConfig);
         doefg.generate(null);
     }
 
@@ -114,7 +119,7 @@ public class GeneralDoubleOracle {
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new GenericPokerExpander<DoubleOracleInformationSet>(algConfig);
 //        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpanderDomain<DoubleOracleInformationSet>(algConfig);
-        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
     }
 
@@ -123,7 +128,7 @@ public class GeneralDoubleOracle {
 		GameInfo gameInfo = new BPGGameInfo();
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
 		Expander<DoubleOracleInformationSet> expander = new BPGExpander<DoubleOracleInformationSet>(algConfig);
-		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+		DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
     }
 
@@ -132,12 +137,12 @@ public class GeneralDoubleOracle {
         GSGameInfo gameInfo = new GSGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new GoofSpielExpander<DoubleOracleInformationSet>(algConfig);
-        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
     }
 
 
-    public GeneralDoubleOracle (GameState rootState, Expander<DoubleOracleInformationSet> expander, GameInfo config, DoubleOracleConfig<DoubleOracleInformationSet> algConfig) {
+    public DoubleOracleWithBestMinmaxImprovement(GameState rootState, Expander<DoubleOracleInformationSet> expander, GameInfo config, DoubleOracleConfig<DoubleOracleInformationSet> algConfig) {
 		this.rootState = rootState;
 		this.expander = expander;
 		this.gameConfig = config;
@@ -157,9 +162,13 @@ public class GeneralDoubleOracle {
 		int iterations = 0;
 
         Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
-        DoubleOracleBestResponse[] brAlgorithms = new DoubleOracleBestResponse[] {
-                new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameConfig),
-                new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameConfig)};
+        BestMinmaxCoreLP doRestrictedGameSolver = new BestMinmaxCoreLP(actingPlayers, rootState);
+        doRestrictedGameSolver.setDebugOutput(debugOutput);
+
+
+        BestMinmaxValueOracle[] brAlgorithms = new BestMinmaxValueOracle[] {
+                new BestMinmaxValueOracle(expander, 0, actingPlayers, algConfig, gameConfig, doRestrictedGameSolver),
+                new BestMinmaxValueOracle(expander, 1, actingPlayers, algConfig, gameConfig, doRestrictedGameSolver)};
         Map<Player, Map<Sequence, Double>> realizationPlans = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
 
         if (initializationRG == null || initializationRG.isEmpty()) {
@@ -195,9 +204,7 @@ public class GeneralDoubleOracle {
             }
         }
 		int currentPlayerIndex = 0;
-		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
-        doRestrictedGameSolver.setDebugOutput(debugOutput);
-		
+
 		double p1BoundUtility = gameConfig.getMaxUtility();
 		double p2BoundUtility = gameConfig.getMaxUtility();
 		
@@ -205,8 +212,9 @@ public class GeneralDoubleOracle {
         int[] diffSize = new int[] {-1, -1};
         double[] lastBRValue = new double[] {-1.0, -1.0};
 		
-		while ((Math.abs(p1BoundUtility + p2BoundUtility) > EPS) ||
-                Math.abs(doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]) + doRestrictedGameSolver.getResultForPlayer(actingPlayers[1])) > EPS){
+		while (Math.abs(p1BoundUtility + p2BoundUtility) > EPS) {
+//                Math.abs(doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]) + doRestrictedGameSolver.getResultForPlayer(actingPlayers[1])) > EPS){
+//        while (true) {
 
 			iterations++;
             debugOutput.println("Iteration " + iterations + ": Cumulative Time from Beginning:" + ((threadBean.getCurrentThreadCpuTime() - start)/1000000l));
@@ -217,10 +225,10 @@ public class GeneralDoubleOracle {
             debugOutput.println("Current Size: " + algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]));
 			oldSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]);
 
-//            if (diffSize[0] == 0 && diffSize[1] == 0) {
-//                System.out.println("ERROR : NOT CONVERGED");
-//                break;
-//            }
+            if (diffSize[0] == 0 && diffSize[1] == 0) {
+                System.out.println("ERROR : NOT CONVERGED");
+                break;
+            }
 
 			int opponentPlayerIndex = ( currentPlayerIndex + 1 ) % 2;
 			
@@ -256,9 +264,9 @@ public class GeneralDoubleOracle {
             overallRGBuilding += thisRGB;
 			
 			if (currentPlayerIndex == 0) {
-				p1BoundUtility = Math.min(p1BoundUtility, currentBRVal);
+				p1BoundUtility = currentBRVal;
 			} else {
-				p2BoundUtility = Math.min(p2BoundUtility, currentBRVal);
+				p2BoundUtility = currentBRVal;
 			}
 
             debugOutput.println("Iteration " + iterations + ": Bounds Interval Size :" + (p1BoundUtility + p2BoundUtility));
