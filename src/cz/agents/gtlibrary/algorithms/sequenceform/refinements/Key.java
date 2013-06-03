@@ -1,24 +1,30 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
-import java.util.HashSet;
-import java.util.Set;
 
 public class Key {
-	
-	private Set<Object> objects;
 
-	public Key(Object...objects) {
-		this.objects = new HashSet<Object>();
-		for (Object object : objects) {
-			this.objects.add(object);
-		}
+	private String string;
+	private Object object;
+	private int hashCode;
+
+	public Key(String string, Object object) {
+		this.string = string;
+		this.object = object;
+		hashCode = computeHashCode();
 	}
 
-	@Override
-	public int hashCode() {
+	public Key(Object object) {
+		this.string = "";
+		this.object = object;
+		hashCode = computeHashCode();
+	}
+
+	public int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((objects == null) ? 0 : objects.hashCode());
+
+		result = prime * result + ((object == null) ? 0 : object.hashCode());
+		result = prime * result + ((string == null) ? 0 : string.hashCode());
 		return result;
 	}
 
@@ -31,18 +37,27 @@ public class Key {
 		if (getClass() != obj.getClass())
 			return false;
 		Key other = (Key) obj;
-		if (objects == null) {
-			if (other.objects != null)
+		if (object == null) {
+			if (other.object != null)
 				return false;
-		} else if (!objects.equals(other.objects))
+		} else if (!object.equals(other.object))
+			return false;
+		if (string == null) {
+			if (other.string != null)
+				return false;
+		} else if (!string.equals(other.string))
 			return false;
 		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		return hashCode;
 	}
 	
 	@Override
 	public String toString() {
-		return objects.toString();
+		return "[" + object + (string.equals("")?"":(", " + string)) + "]";
 	}
-	
-	
+
 }

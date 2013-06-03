@@ -58,7 +58,8 @@ public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet
                         }
                     }
                 }
-//        Collections.shuffle(actions, new Random(1)); // uncomment if the domain-dependent should not be used
+        if (!TTTInfo.useDomainDependentExpander)
+            Collections.shuffle(actions, new Random(1)); // uncomment if the domain-dependent should not be used
 		return actions;
 	}
         

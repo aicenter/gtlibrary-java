@@ -6,16 +6,9 @@ import cz.agents.gtlibrary.nfg.PureStrategy;
 import cz.agents.gtlibrary.nfg.Utility;
 import ilog.concert.IloException;
 import ilog.cplex.IloCplex;
-import cz.agents.gtlibrary.lplibrary.cplex.MIProblemCplex;
-import cz.agents.gtlibrary.lplibrary.cplex.MIProblemCplex.StoreConstraint;
-import cz.agents.gtlibrary.lplibrary.cplex.MIProblemCplex.StoreVariable;
-import cz.agents.gtlibrary.lplibrary.lpWrapper.AMIProblem;
+import cz.agents.gtlibrary.nfg.lplibrary.cplex.MIProblemCplex;
+import cz.agents.gtlibrary.nfg.lplibrary.lpWrapper.AMIProblem;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,12 +36,6 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 
 	static private IloCplex singeltonModel = null;
 	
-	/**
-	 * TODO: The utility is set in the constructor. What about setting the
-	 * utility later, thus allowing easy exchange of utilities?
-	 * 
-	 * @param utilityComputer
-	 */
 	public ZeroSumGameNESolverImpl(Utility<T, U> utilityComputer) {
 		this.utilityComputer = utilityComputer;
 

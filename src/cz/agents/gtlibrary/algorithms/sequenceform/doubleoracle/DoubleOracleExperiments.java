@@ -1,8 +1,10 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.improvedBR.DoubleOracleWithBestMinmaxImprovement;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.unprunning.UnprunningDoubleOracle;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -62,6 +64,11 @@ public class DoubleOracleExperiments {
             RandomGameInfo.MAX_UTILITY = new Integer(args[6]);
             RandomGameInfo.BINARY_UTILITY = new Boolean(args[7]);
             RandomGameInfo.UTILITY_CORRELATION = new Boolean(args[8]);
+        } else if (args[1].equalsIgnoreCase("TTT")) { // Phantom TicTacToe
+            if (args.length != 3) {
+                throw new IllegalArgumentException("Illegal random game domain arguments count. 1 are required {DOMAIN_EXPANDER?}");
+            }
+            TTTInfo.useDomainDependentExpander = new Boolean(args[2]);
         } else throw new IllegalArgumentException("Illegal domain: " + args[1]);
     }
 
@@ -80,8 +87,12 @@ public class DoubleOracleExperiments {
                 GeneralDoubleOracle.runGenericPoker();
             else if (domain.equalsIgnoreCase("RG"))
                 GeneralDoubleOracle.runRandomGame();
+            else if (domain.equalsIgnoreCase("TTT"))
+                GeneralDoubleOracle.runPhantomTTT();
         } else if (alg.equals("UDO")) {
             UnprunningDoubleOracle.main(null);
+        } else if (alg.equals("MIDO")) {
+            DoubleOracleWithBestMinmaxImprovement.runRandomGame();
         } else if (alg.equalsIgnoreCase("LP")) {
             if (domain.equalsIgnoreCase("BP"))
                 FullSequenceEFG.runBPG();
