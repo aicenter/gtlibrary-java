@@ -54,7 +54,6 @@ public abstract class TreeVisitor {
 	}
 
 	private Key getISKey(GameState child, Player player) {
-//		return player.getId() == 0 ? child.getISKeyForFirstPlayer() : child.getISKeyForSecondPlayer();
 		return new Key(child.getSequenceFor(player));
 	}
 

@@ -34,8 +34,8 @@ public class ReducedLPBuilder extends LPBuilder {
 	protected double utilityShift;
 	
 	public static void main(String[] args) {
-		runAoS();
-//		runGoofSpiel();
+//		runAoS();
+		runGoofSpiel();
 //		runKuhnPoker();
 //		runGenericPoker();
 	}
@@ -81,16 +81,19 @@ public class ReducedLPBuilder extends LPBuilder {
 	
 	public void initF() {
 		lpTable.setConstraint(new Key("Q", lastKeys[1]), lastKeys[1], 1);//F in root (only 1)
+		lpTable.setConstraintType(new Key("Q", lastKeys[1]), 2);
 	}
 
 	public void initE() {
 		lpTable.setConstraint(lastKeys[0], new Key("P", lastKeys[0]), 1);//E in root (only 1)
+		lpTable.setLowerBound(new Key("P", lastKeys[0]), Double.NEGATIVE_INFINITY);
+//		lpTable.setUpperBound(new Key("P", lastKeys[0]), 0);
 	}
 	
 	@Override
 	protected void visitLeaf(GameState state, Player lastPlayer, Key lastKey) {
 		updateParentLinks(state, lastPlayer, lastKey);
-		lpTable.substractFromConstraint(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0] + utilityShift));
+		lpTable.substractFromConstraint(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0] - utilityShift));
 	}
 	
 	public Map<Sequence, Double> createFirstPlayerStrategy(IloCplex cplex, Map<Object, IloRange> watchedDualVars) throws IloException {
@@ -107,6 +110,8 @@ public class ReducedLPBuilder extends LPBuilder {
 
 		updateParentLinks(state, lastPlayer, lastKey);
 		lpTable.setConstraint(lastKeys[0], varKey, -1);//E
+		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+//		lpTable.setUpperBound(varKey, 0);
 		lpTable.watchDualVariable(lastKeys[0], state.getSequenceForPlayerToMove());
 	}
 
@@ -116,7 +121,8 @@ public class ReducedLPBuilder extends LPBuilder {
 
 		lpTable.watchDualVariable(eqKey, child.getSequenceFor(lastPlayer));
 		lpTable.setConstraint(eqKey, varKey, 1);//E child
-
+//		lpTable.setLowerBound(tmpKey, Double.NEGATIVE_INFINITY);
+//		lpTable.setUpperBound(tmpKey, 0);
 		lpTable.setConstraint(eqKey, tmpKey, -1);//u (eye)
 		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
 	}
@@ -126,6 +132,7 @@ public class ReducedLPBuilder extends LPBuilder {
 
 		updateParentLinks(state, lastPlayer, lastKey);
 		lpTable.setConstraint(eqKey, lastKeys[1], -1);//F
+		lpTable.setConstraintType(eqKey, 2);
 		lpTable.watchPrimalVariable(lastKeys[1], state.getSequenceForPlayerToMove());
 	}
 
@@ -134,6 +141,7 @@ public class ReducedLPBuilder extends LPBuilder {
 		Key tmpKey = new Key("V", new Key(child.getSequenceFor(lastPlayer)));
 
 		lpTable.setConstraint(eqKey, varKey, 1);//F child
+		lpTable.setConstraintType(eqKey, 2);
 		lpTable.watchPrimalVariable(varKey, child.getSequenceFor(lastPlayer));
 		lpTable.setConstraint(tmpKey, varKey, 1);//indices y
 		lpTable.setConstant(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()).negate());//l(\epsilon)

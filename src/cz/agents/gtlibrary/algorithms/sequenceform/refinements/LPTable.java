@@ -23,6 +23,7 @@ public class LPTable {
 
 	protected Map<Key, Integer> constraintTypes;
 	protected Map<Key, Double> lb;
+	protected Map<Key, Double> ub;
 
 	protected double maxCoefficient;
 
@@ -38,6 +39,7 @@ public class LPTable {
 
 		constraintTypes = new LinkedHashMap<Key, Integer>();
 		lb = new LinkedHashMap<Key, Double>();
+		ub = new LinkedHashMap<Key, Double>();
 
 		maxCoefficient = Double.NEGATIVE_INFINITY;
 	}
@@ -54,6 +56,7 @@ public class LPTable {
 
 		constraintTypes = new LinkedHashMap<Key, Integer>(m);
 		lb = new LinkedHashMap<Key, Double>(n);
+		ub = new LinkedHashMap<Key, Double>();
 
 		maxCoefficient = Double.NEGATIVE_INFINITY;
 	}
@@ -80,9 +83,13 @@ public class LPTable {
 	}
 
 	public void setObjective(Key varKey, Number value) {
+//		double dValue = value.doubleValue();
+//
+//		if (Math.abs(dValue) > Double.MIN_VALUE) {
 		objective.put(varKey, value);
 		updateMaxCoefficient(value);
 		updateVariableIndices(varKey);
+//		}
 	}
 
 	public double getObjective(Key varKey) {
@@ -92,6 +99,8 @@ public class LPTable {
 	}
 
 	public void setConstant(Key eqKey, Number value) {
+		if (Math.abs(value.doubleValue()) < Double.MIN_VALUE)
+			return;
 		constants.put(eqKey, value);
 		updateMaxCoefficient(value);
 		updateEquationIndices(eqKey);
@@ -104,6 +113,8 @@ public class LPTable {
 	}
 
 	public void setConstraint(Key eqKey, Key varKey, Number value) {
+		if (Math.abs(value.doubleValue()) < Double.MIN_VALUE)
+			return;
 		Map<Key, Number> row = constraints.get(eqKey);
 
 		if (row == null) {
@@ -121,7 +132,11 @@ public class LPTable {
 	}
 
 	public void substractFromConstraint(Key eqKey, Key varKey, Number value) {
-		setConstraint(eqKey, varKey, get(eqKey, varKey) - value.doubleValue());
+		double dValue = value.doubleValue();
+
+		if (Math.abs(dValue) < Double.MIN_VALUE)
+			return;
+		setConstraint(eqKey, varKey, get(eqKey, varKey) - dValue);
 	}
 
 	public int rowCount() {
@@ -172,7 +187,7 @@ public class LPTable {
 
 	private String[] getVariableNames() {
 		String[] variableNames = new String[columnCount()];
-		
+
 		for (Entry<Key, Integer> entry : variableIndices.entrySet()) {
 			variableNames[entry.getValue()] = entry.getKey().toString();
 		}
@@ -181,7 +196,7 @@ public class LPTable {
 
 	private double[] getLowerBounds() {
 		double[] lb = new double[columnCount()];
-		
+
 		for (Entry<Key, Double> entry : this.lb.entrySet()) {
 			lb[getVariableIndex(entry.getKey()) - 1] = entry.getValue();
 		}
@@ -190,9 +205,12 @@ public class LPTable {
 
 	private double[] getUpperBounds() {
 		double[] ub = new double[columnCount()];
-		
+
 		for (int i = 0; i < columnCount(); i++) {
 			ub[i] = Double.POSITIVE_INFINITY;
+		}
+		for (Entry<Key, Double> entry : this.ub.entrySet()) {
+			ub[getVariableIndex(entry.getKey()) - 1] = entry.getValue();
 		}
 		return ub;
 	}
@@ -283,6 +301,16 @@ public class LPTable {
 	 */
 	public void setLowerBound(Key varKey, double value) {
 		lb.put(varKey, value);
+	}
+
+	/**
+	 * Set upper bound for variable represented by varKey, default value is POSITIVE_INFINITY
+	 * 
+	 * @param varKey
+	 * @param value
+	 */
+	public void setUpperBound(Key varKey, double value) {
+		ub.put(varKey, value);
 	}
 
 	public double getMaxCoefficient() {
