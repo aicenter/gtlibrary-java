@@ -5,6 +5,7 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,10 +36,10 @@ public class LPBuilder extends TreeVisitor {
 	protected Epsilon epsilon;
 
 	public static void main(String[] args) {
-		runAoS();
+//		runAoS();
 //		runGoofSpiel();
 //		runKuhnPoker();
-//		runGenericPoker();
+		runGenericPoker();
 	}
 
 	public static void runKuhnPoker() {
@@ -99,8 +100,17 @@ public class LPBuilder extends TreeVisitor {
 
 			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedDualVariables());
 			Map<Sequence, Double> p2RealizationPlan = createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
-			System.out.println(p1RealizationPlan);
-			System.out.println(p2RealizationPlan);
+//			System.out.println(p1RealizationPlan);
+//			System.out.println(p2RealizationPlan);
+			
+			for (Entry<Sequence, Double> entry : p1RealizationPlan.entrySet()) {
+				if(entry.getValue() > 0)
+					System.out.println(entry);
+			}
+			for (Entry<Sequence, Double> entry : p2RealizationPlan.entrySet()) {
+				if(entry.getValue() > 0)
+					System.out.println(entry);
+			}
 
 			UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
 			Strategy p1Strategy = new UniformStrategyForMissingSequences();
@@ -113,6 +123,9 @@ public class LPBuilder extends TreeVisitor {
 //			System.out.println("************************************");
 //			System.out.println(p2Strategy.fancyToString(rootState, expander, new PlayerImpl(1)));
 //			System.out.println("Solution: " + Arrays.toString(lpData.getSolver().getValues(lpData.getVariables())));
+//			System.out.println("Dual solution: " + Arrays.toString(lpData.getSolver().getDuals(lpData.getConstraints())));
+//			System.out.println(lpData.getWatchedPrimalVariables());
+//			System.out.println(lpData.getWatchedDualVariables());
 			System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 			p1Strategy.sanityCheck(rootState, expander);
 			p2Strategy.sanityCheck(rootState, expander);
