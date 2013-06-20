@@ -316,4 +316,21 @@ public class LPTable {
 	public double getMaxCoefficient() {
 		return maxCoefficient;
 	}
+	
+	public void clearTable() {
+		constants = new LinkedHashMap<Key, Number>();
+		constraints = new LinkedHashMap<Key, Map<Key, Number>>();
+		objective = new LinkedHashMap<Key, Number>();
+
+		equationIndices = new LinkedHashMap<Key, Integer>();
+		variableIndices = new LinkedHashMap<Key, Integer>();
+		primalWatch = new LinkedHashMap<Object, Integer>();
+		dualWatch = new LinkedHashMap<Object, Integer>();
+
+		constraintTypes = new LinkedHashMap<Key, Integer>();
+		lb = new LinkedHashMap<Key, Double>();
+		ub = new LinkedHashMap<Key, Double>();
+
+		maxCoefficient = Double.NEGATIVE_INFINITY;
+	}
 }

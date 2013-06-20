@@ -188,6 +188,14 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
     public Double getUtilityForSequenceCombination(Map<Player, Sequence> sequenceCombination) {
         return utilityForSequenceCombination.get(sequenceCombination);
     }
+    
+    public Double getUtilityForSequences(Sequence sequence1, Sequence sequence2) {
+    	Map<Player, Sequence> sequenceMap = new HashMap<Player, Sequence>();
+    	
+    	sequenceMap.put(sequence1.getPlayer(), sequence1);
+    	sequenceMap.put(sequence2.getPlayer(), sequence2);
+    	return getUtilityForSequenceCombination(sequenceMap);
+    }
 
     public Collection<Sequence> getAllSequences() {
         return compatibleSequences.keySet();

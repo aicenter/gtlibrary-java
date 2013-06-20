@@ -5,7 +5,6 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,8 +37,8 @@ public class LPBuilder extends TreeVisitor {
 	public static void main(String[] args) {
 //		runAoS();
 //		runGoofSpiel();
-//		runKuhnPoker();
-		runGenericPoker();
+		runKuhnPoker();
+//		runGenericPoker();
 	}
 
 	public static void runKuhnPoker() {
