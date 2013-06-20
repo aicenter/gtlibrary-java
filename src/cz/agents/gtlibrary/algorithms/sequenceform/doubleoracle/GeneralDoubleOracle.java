@@ -6,6 +6,10 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.DOLPBuilder;
+import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
+import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
+import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -49,14 +53,16 @@ public class GeneralDoubleOracle {
     public static PlayerSelection playerSelection = PlayerSelection.SINGLE_ALTERNATING;
 
 	public static void main(String[] args) {
+		new Scanner(System.in).next();
 //        runBP();
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-        runRandomGame();
+//        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
+//		runAoS();
 	}
 
     public static void runPhantomTTT() {
@@ -67,6 +73,16 @@ public class GeneralDoubleOracle {
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
 //        GeneralDoubleOracle.traverseCompleteGameTree(rootState, expander);
+    }
+    
+    public static void runAoS() {
+        GameState rootState = new AoSGameState();
+        GameInfo gameInfo = new AoSGameInfo();
+		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new AoSExpander<DoubleOracleInformationSet>(algConfig);
+		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+        Map<Player, Map<Sequence, Double>> rp = doefg.generate(null);
+        System.out.println(rp);
     }
 
 
@@ -85,7 +101,8 @@ public class GeneralDoubleOracle {
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new KuhnPokerExpander<DoubleOracleInformationSet>(algConfig);
 		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
-        doefg.generate(null);
+		 Map<Player, Map<Sequence, Double>> rp = doefg.generate(null);
+        System.out.println(rp);
     }
 
     public static void runRandomGame() {
@@ -116,6 +133,7 @@ public class GeneralDoubleOracle {
 //        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpanderDomain<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
+        System.out.println();
     }
 
     public static void runBP() {
@@ -195,7 +213,8 @@ public class GeneralDoubleOracle {
             }
         }
 		int currentPlayerIndex = 0;
-		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
+//		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
+		DOLPBuilder doRestrictedGameSolver = new DOLPBuilder(actingPlayers);
         doRestrictedGameSolver.setDebugOutput(debugOutput);
 		
 		double p1BoundUtility = gameConfig.getMaxUtility();
