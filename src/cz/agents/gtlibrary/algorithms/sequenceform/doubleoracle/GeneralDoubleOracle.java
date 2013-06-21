@@ -54,7 +54,6 @@ public class GeneralDoubleOracle {
     public static PlayerSelection playerSelection = PlayerSelection.SINGLE_ALTERNATING;
 
 	public static void main(String[] args) {
-//		new Scanner(System.in).next();
 //        runBP();
         runGenericPoker();
 //        runKuhnPoker();

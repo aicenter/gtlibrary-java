@@ -27,62 +27,39 @@ public class FastDOLPBuilder extends DOLPBuilder {
 				updateForP2(sequence);
 		}
 		updateUtilities(config);
-		constraintGenerationTime += System.currentTimeMillis() - startTime;
+		constraintGenerationTime += System.currentTimeMillis() - startTime;  
 		generationTime += System.currentTimeMillis() - startTime;
 	}
 
 	private void updateUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config) {
-
 		for (Sequence sequence : config.getNewSequences()) {
 			if (sequence.getPlayer().equals(players[0]))
-				for (Sequence p2Sequence : config.getCompatibleSequencesFor(sequence)) {
-					Set<Sequence> prefixes = sequence.getAllPrefixes();
-
-					prefixes.add(sequence);
-					for (Sequence prefix : prefixes) {
-						updateUtility(config, prefix, p2Sequence);
-					}
-				}
+				updateForAllPrefixesOfP1(config, sequence);
 			else
-				for (Sequence p1Sequence : config.getCompatibleSequencesFor(sequence)) {
-					Set<Sequence> prefixes = sequence.getAllPrefixes();
-
-					prefixes.add(sequence);
-					for (Sequence prefix : prefixes) {
-						updateUtility(config, p1Sequence, prefix);
-					}
-				}
+				updateForAllPrefixesOfP2(config, sequence);
 		}
+	}
 
-//works		
-//		for (Sequence sequence : config.getNewSequences()) {
-//			if (sequence.getPlayer().equals(players[0]))
-//				for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
-//					Set<Sequence> prefixes = sequence.getAllPrefixes();
-//					
-//					prefixes.add(sequence);
-//					for (Sequence prefix : prefixes) {
-//						updateUtility(config, prefix, p2Sequence);
-//					}
-//				}
-//			else
-//				for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
-//					Set<Sequence> prefixes = sequence.getAllPrefixes();
-//					
-//					prefixes.add(sequence);
-//					for (Sequence prefix : prefixes) {
-//						updateUtility(config, p1Sequence, prefix);
-//					}
-//				}
-//		}
+	public void updateForAllPrefixesOfP2(DoubleOracleConfig<DoubleOracleInformationSet> config, Sequence sequence) {
+		for (Sequence p1Sequence : config.getCompatibleSequencesFor(sequence)) {
+			Set<Sequence> prefixes = sequence.getAllPrefixes();
 
-//works		
-//		System.out.println();
-//		for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
-//			for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
-//				updateUtility(config, p1Sequence, p2Sequence);
-//			}
-//		}
+			prefixes.add(sequence);
+			for (Sequence prefix : prefixes) {
+				updateUtility(config, p1Sequence, prefix);
+			}
+		}
+	}
+
+	public void updateForAllPrefixesOfP1(DoubleOracleConfig<DoubleOracleInformationSet> config, Sequence sequence) {
+		for (Sequence p2Sequence : config.getCompatibleSequencesFor(sequence)) {
+			Set<Sequence> prefixes = sequence.getAllPrefixes();
+
+			prefixes.add(sequence);
+			for (Sequence prefix : prefixes) {
+				updateUtility(config, prefix, p2Sequence);
+			}
+		}
 	}
 
 	public void updateUtility(DoubleOracleConfig<DoubleOracleInformationSet> config, Sequence p1Sequence, Sequence p2Sequence) {
