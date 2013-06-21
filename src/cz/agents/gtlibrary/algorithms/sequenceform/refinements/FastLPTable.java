@@ -169,12 +169,11 @@ public class FastLPTable {
 		
 		double[] ub = getUpperBounds();
 		double[] lb = getLowerBounds();
-		IloCplex cplex = new IloCplex();
 		String[] variableNames = getVariableNames();
 		IloNumVar[] variables = cplex.numVarArray(variableNames.length, lb, ub, variableNames);
 		IloRange[] constraints = addConstraints(cplex, variables);
 
-		addObjective(cplex, variables);
+		addObjective(variables);
 		return new LPData(cplex, variables, constraints, getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
 	}
 
@@ -266,7 +265,7 @@ public class FastLPTable {
 		return rowExpr;
 	}
 
-	protected void addObjective(IloCplex cplex, IloNumVar[] x) throws IloException {
+	protected void addObjective(IloNumVar[] x) throws IloException {
 		double[] objCoef = new double[x.length];
 
 		for (Entry<Object, Double> entry : objective.entrySet()) {
