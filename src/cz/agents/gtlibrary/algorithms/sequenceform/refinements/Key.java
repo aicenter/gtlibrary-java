@@ -6,6 +6,7 @@ public class Key {
 	private String string;
 	private Object object;
 	private int hashCode;
+	private String represenation;
 
 	public Key(String string, Object object) {
 		this.string = string;
@@ -57,7 +58,9 @@ public class Key {
 	
 	@Override
 	public String toString() {
-		return "[" + object + (string.equals("")?"":(", " + string)) + "]";
+		if(represenation == null)
+			represenation = "[" + object + (string.equals("")?"":(", " + string)) + "]";
+		return represenation;
 	}
 
 }

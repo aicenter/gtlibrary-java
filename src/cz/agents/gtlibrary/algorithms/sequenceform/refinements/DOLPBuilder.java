@@ -70,7 +70,7 @@ public class DOLPBuilder {
 			LPData lpData = lpTable.toCplex();
 
 //			lpData.getSolver().setParam(IloCplex.DoubleParam.EpMrk, 0.9999);
-			lpData.getSolver().exportModel(lpFileName);
+//			lpData.getSolver().exportModel(lpFileName);
 			
 			long lpStart = System.currentTimeMillis();
 			

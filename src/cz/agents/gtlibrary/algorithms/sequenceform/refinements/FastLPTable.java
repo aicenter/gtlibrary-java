@@ -15,34 +15,34 @@ public class FastLPTable {
 	public int CPLEXALG = IloCplex.Algorithm.Barrier;
 	public int CPLEXTHREADS = 0; // change to 0 to have no restrictions
 
-	protected Map<Key, Double> objective;
-	protected Map<Key, Map<Key, Double>> constraints;
-	protected Map<Key, Double> constants;
+	protected Map<Object, Double> objective;
+	protected Map<Object, Map<Object, Double>> constraints;
+	protected Map<Object, Double> constants;
 
-	protected Map<Key, Integer> equationIndices;
-	protected Map<Key, Integer> variableIndices;
+	protected Map<Object, Integer> equationIndices;
+	protected Map<Object, Integer> variableIndices;
 	protected Map<Object, Integer> primalWatch;
 	protected Map<Object, Integer> dualWatch;
 
-	protected Map<Key, Integer> constraintTypes;
-	protected Map<Key, Double> lb;
-	protected Map<Key, Double> ub;
+	protected Map<Object, Integer> constraintTypes;
+	protected Map<Object, Double> lb;
+	protected Map<Object, Double> ub;
 
 	protected IloCplex cplex;
 
 	public FastLPTable() {
-		constants = new LinkedHashMap<Key, Double>();
-		constraints = new LinkedHashMap<Key, Map<Key, Double>>();
-		objective = new LinkedHashMap<Key, Double>();
+		constants = new LinkedHashMap<Object, Double>();
+		constraints = new LinkedHashMap<Object, Map<Object, Double>>();
+		objective = new LinkedHashMap<Object, Double>();
 
-		equationIndices = new LinkedHashMap<Key, Integer>();
-		variableIndices = new LinkedHashMap<Key, Integer>();
+		equationIndices = new LinkedHashMap<Object, Integer>();
+		variableIndices = new LinkedHashMap<Object, Integer>();
 		primalWatch = new LinkedHashMap<Object, Integer>();
 		dualWatch = new LinkedHashMap<Object, Integer>();
 
-		constraintTypes = new LinkedHashMap<Key, Integer>();
-		lb = new LinkedHashMap<Key, Double>();
-		ub = new LinkedHashMap<Key, Double>();
+		constraintTypes = new LinkedHashMap<Object, Integer>();
+		lb = new LinkedHashMap<Object, Double>();
+		ub = new LinkedHashMap<Object, Double>();
 		try {
 			cplex = new IloCplex();
 		} catch (IloException e) {
@@ -51,65 +51,65 @@ public class FastLPTable {
 	}
 
 	public FastLPTable(int m, int n) {
-		constants = new LinkedHashMap<Key, Double>(m);
-		constraints = new LinkedHashMap<Key, Map<Key, Double>>(m);
-		objective = new LinkedHashMap<Key, Double>(n);
+		constants = new LinkedHashMap<Object, Double>(m);
+		constraints = new LinkedHashMap<Object, Map<Object, Double>>(m);
+		objective = new LinkedHashMap<Object, Double>(n);
 
-		equationIndices = new LinkedHashMap<Key, Integer>(m);
-		variableIndices = new LinkedHashMap<Key, Integer>(n);
+		equationIndices = new LinkedHashMap<Object, Integer>(m);
+		variableIndices = new LinkedHashMap<Object, Integer>(n);
 		primalWatch = new LinkedHashMap<Object, Integer>();
 		dualWatch = new LinkedHashMap<Object, Integer>();
 
-		constraintTypes = new LinkedHashMap<Key, Integer>(m);
-		lb = new LinkedHashMap<Key, Double>(n);
-		ub = new LinkedHashMap<Key, Double>();
+		constraintTypes = new LinkedHashMap<Object, Integer>(m);
+		lb = new LinkedHashMap<Object, Double>(n);
+		ub = new LinkedHashMap<Object, Double>();
 	}
 
-	public double get(Key eqKey, Key varKey) {
+	public double get(Object eqKey, Object varKey) {
 		Double value = constraints.get(eqKey).get(varKey);
 
 		return value == null ? 0 : value;
 	}
 
-	private void updateEquationIndices(Key eqKey) {
+	private void updateEquationIndices(Object eqKey) {
 		getEquationIndex(eqKey);
 	}
 
-	private void updateVariableIndices(Key varKey) {
+	private void updateVariableIndices(Object varKey) {
 		getVariableIndex(varKey);
 	}
 
-	public void setObjective(Key varKey, double value) {
+	public void setObjective(Object varKey, double value) {
 		objective.put(varKey, value);
 		updateVariableIndices(varKey);
 	}
 
-	public double getObjective(Key varKey) {
+	public double getObjective(Object varKey) {
 		Double value = objective.get(varKey);
 
 		return value == null ? 0 : value;
 	}
 
-	public void setConstant(Key eqKey, double value) {
+	public void setConstant(Object eqKey, double value) {
 		if (Math.abs(value) < Double.MIN_VALUE)
 			return;
 		constants.put(eqKey, value);
 		updateEquationIndices(eqKey);
 	}
 
-	public double getConstant(Key eqKey) {
+	public double getConstant(Object eqKey) {
 		Double value = constants.get(eqKey);
 
 		return value == null ? 0 : value.doubleValue();
 	}
 
-	public void setConstraint(Key eqKey, Key varKey, double value) {
+	public void setConstraint(Object eqKey, Object varKey, double value) {
 		if (Math.abs(value) < Double.MIN_VALUE)
 			return;
-		Map<Key, Double> row = constraints.get(eqKey);
+		Map<Object, Double> row = constraints.get(eqKey);
 
 		if (row == null) {
-			row = new LinkedHashMap<Key, Double>();
+			row = new LinkedHashMap<Object, Double>();
 			constraints.put(eqKey, row);
 		}
 		row.put(varKey, value);
@@ -117,11 +117,11 @@ public class FastLPTable {
 		updateVariableIndices(varKey);
 	}
 
-	public void addToConstraint(Key eqKey, Key varKey, double value) {
+	public void addToConstraint(Object eqKey, Object varKey, double value) {
 		setConstraint(eqKey, varKey, get(eqKey, varKey) + value);
 	}
 
-	public void substractFromConstraint(Key eqKey, Key varKey, double value) {
+	public void substractFromConstraint(Object eqKey, Object varKey, double value) {
 		if (Math.abs(value) < Double.MIN_VALUE)
 			return;
 		setConstraint(eqKey, varKey, get(eqKey, varKey) - value);
@@ -135,15 +135,15 @@ public class FastLPTable {
 		return variableIndices.size();
 	}
 
-	protected int getEquationIndex(Key eqKey) {
+	protected int getEquationIndex(Object eqKey) {
 		return getIndex(eqKey, equationIndices);
 	}
 
-	protected int getVariableIndex(Key varKey) {
+	protected int getVariableIndex(Object varKey) {
 		return getIndex(varKey, variableIndices);
 	}
 
-	protected int getIndex(Key key, Map<Key, Integer> map) {
+	protected int getIndex(Object key, Map<Object, Integer> map) {
 		Integer result = map.get(key);
 
 		if (result == null) {
@@ -153,11 +153,11 @@ public class FastLPTable {
 		return result + 1;
 	}
 
-	public void watchPrimalVariable(Key varKey, Object watchKey) {
+	public void watchPrimalVariable(Object varKey, Object watchKey) {
 		primalWatch.put(watchKey, getVariableIndex(varKey) - 1);
 	}
 
-	public void watchDualVariable(Key eqKey, Object watchKey) {
+	public void watchDualVariable(Object eqKey, Object watchKey) {
 		dualWatch.put(watchKey, getEquationIndex(eqKey) - 1);
 	}
 
@@ -181,7 +181,7 @@ public class FastLPTable {
 	private String[] getVariableNames() {
 		String[] variableNames = new String[columnCount()];
 
-		for (Entry<Key, Integer> entry : variableIndices.entrySet()) {
+		for (Entry<Object, Integer> entry : variableIndices.entrySet()) {
 			variableNames[entry.getValue()] = entry.getKey().toString();
 		}
 		return variableNames;
@@ -190,7 +190,7 @@ public class FastLPTable {
 	private double[] getLowerBounds() {
 		double[] lb = new double[columnCount()];
 
-		for (Entry<Key, Double> entry : this.lb.entrySet()) {
+		for (Entry<Object, Double> entry : this.lb.entrySet()) {
 			lb[getVariableIndex(entry.getKey()) - 1] = entry.getValue();
 		}
 		return lb;
@@ -202,7 +202,7 @@ public class FastLPTable {
 		for (int i = 0; i < columnCount(); i++) {
 			ub[i] = Double.POSITIVE_INFINITY;
 		}
-		for (Entry<Key, Double> entry : this.ub.entrySet()) {
+		for (Entry<Object, Double> entry : this.ub.entrySet()) {
 			ub[getVariableIndex(entry.getKey()) - 1] = entry.getValue();
 		}
 		return ub;
@@ -229,7 +229,7 @@ public class FastLPTable {
 	protected IloRange[] addConstraints(IloCplex cplex, IloNumVar[] x) throws IloException {
 		IloRange[] cplexConstraints = new IloRange[rowCount()];
 
-		for (Entry<Key, Map<Key, Double>> rowEntry : constraints.entrySet()) {
+		for (Entry<Object, Map<Object, Double>> rowEntry : constraints.entrySet()) {
 			IloLinearNumExpr rowExpr = createRowExpresion(cplex, x, rowEntry);
 			Integer constraintType = getConstraintType(rowEntry);
 			int equationIndex = getEquationIndex(rowEntry.getKey()) - 1;
@@ -251,16 +251,16 @@ public class FastLPTable {
 		return cplexConstraints;
 	}
 
-	private int getConstraintType(Entry<Key, Map<Key, Double>> rowEntry) {
+	private int getConstraintType(Entry<Object, Map<Object, Double>> rowEntry) {
 		Integer constraintType = constraintTypes.get(rowEntry.getKey());
 
 		return constraintType == null ? 0 : constraintType;
 	}
 
-	private IloLinearNumExpr createRowExpresion(IloCplex cplex, IloNumVar[] x, Entry<Key, Map<Key, Double>> rowEntry) throws IloException {
+	private IloLinearNumExpr createRowExpresion(IloCplex cplex, IloNumVar[] x, Entry<Object, Map<Object, Double>> rowEntry) throws IloException {
 		IloLinearNumExpr rowExpr = cplex.linearNumExpr();
 
-		for (Entry<Key, Double> memberEntry : rowEntry.getValue().entrySet()) {
+		for (Entry<Object, Double> memberEntry : rowEntry.getValue().entrySet()) {
 			rowExpr.addTerm(-memberEntry.getValue().doubleValue(), x[getVariableIndex(memberEntry.getKey()) - 1]);
 		}
 		return rowExpr;
@@ -269,41 +269,41 @@ public class FastLPTable {
 	protected void addObjective(IloCplex cplex, IloNumVar[] x) throws IloException {
 		double[] objCoef = new double[x.length];
 
-		for (Entry<Key, Double> entry : objective.entrySet()) {
+		for (Entry<Object, Double> entry : objective.entrySet()) {
 			objCoef[variableIndices.get(entry.getKey())] = entry.getValue().doubleValue();
 		}
 		cplex.addMaximize(cplex.scalProd(x, objCoef));
 	}
 
 	/**
-	 * Set constraint for equation represented by eqKey, default constraint is ge
+	 * Set constraint for equation represented by eqObject, default constraint is ge
 	 * 
 	 * @param eqKey
 	 * @param type
 	 *            0 ... le, 1 .. eq, 2 ... ge
 	 */
-	public void setConstraintType(Key eqKey, int type) {
-		constraintTypes.put(eqKey, type);
+	public void setConstraintType(Object eqObject, int type) {
+		constraintTypes.put(eqObject, type);
 	}
 
 	/**
-	 * Set lower bound for variable represented by varKey, default value is 0
+	 * Set lower bound for variable represented by varObject, default value is 0
 	 * 
 	 * @param varKey
 	 * @param value
 	 */
-	public void setLowerBound(Key varKey, double value) {
-		lb.put(varKey, value);
+	public void setLowerBound(Object varObject, double value) {
+		lb.put(varObject, value);
 	}
 
 	/**
-	 * Set upper bound for variable represented by varKey, default value is POSITIVE_INFINITY
+	 * Set upper bound for variable represented by varObject, default value is POSITIVE_INFINITY
 	 * 
 	 * @param varKey
 	 * @param value
 	 */
-	public void setUpperBound(Key varKey, double value) {
-		ub.put(varKey, value);
+	public void setUpperBound(Object varObject, double value) {
+		ub.put(varObject, value);
 	}
 
 	public void clearTable() {
@@ -315,22 +315,22 @@ public class FastLPTable {
 			e.printStackTrace();
 		}
 		cplex.setOut(null);
-		constants = new LinkedHashMap<Key, Double>();
-		constraints = new LinkedHashMap<Key, Map<Key, Double>>();
-		objective = new LinkedHashMap<Key, Double>();
+		constants = new LinkedHashMap<Object, Double>();
+		constraints = new LinkedHashMap<Object, Map<Object, Double>>();
+		objective = new LinkedHashMap<Object, Double>();
 
-		equationIndices = new LinkedHashMap<Key, Integer>();
-		variableIndices = new LinkedHashMap<Key, Integer>();
+		equationIndices = new LinkedHashMap<Object, Integer>();
+		variableIndices = new LinkedHashMap<Object, Integer>();
 		primalWatch = new LinkedHashMap<Object, Integer>();
 		dualWatch = new LinkedHashMap<Object, Integer>();
 
-		constraintTypes = new LinkedHashMap<Key, Integer>();
-		lb = new LinkedHashMap<Key, Double>();
-		ub = new LinkedHashMap<Key, Double>();
+		constraintTypes = new LinkedHashMap<Object, Integer>();
+		lb = new LinkedHashMap<Object, Double>();
+		ub = new LinkedHashMap<Object, Double>();
 	}
 
-	public void clearConstraint(Key eqKey, Key varKey) {
-		Map<Key, Double> row = constraints.get(eqKey);
+	public void clearConstraint(Object eqKey, Object varKey) {
+		Map<Object, Double> row = constraints.get(eqKey);
 		
 		if(row != null)
 			row.remove(varKey);
