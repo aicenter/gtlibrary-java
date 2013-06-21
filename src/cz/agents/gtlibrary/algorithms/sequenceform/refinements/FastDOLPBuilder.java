@@ -64,11 +64,11 @@ public class FastDOLPBuilder extends DOLPBuilder {
 
 	public void updateUtility(DoubleOracleConfig<DoubleOracleInformationSet> config, Sequence p1Sequence, Sequence p2Sequence) {
 		Double utility = config.getUtilityForSequences(p1Sequence, p2Sequence);
-		Key eqKey = new Key(p1Sequence);
-		Key varKey = new Key(p2Sequence);
+//		Key eqKey = new Key(p1Sequence);
+//		Key varKey = new Key(p2Sequence);
 
-		lpTable.clearConstraint(eqKey, varKey);
+		lpTable.clearConstraint(p1Sequence, p2Sequence);
 		if (utility != null)
-			lpTable.substractFromConstraint(eqKey, varKey, utility);
+			lpTable.substractFromConstraint(p1Sequence, p2Sequence, utility);
 	}
 }

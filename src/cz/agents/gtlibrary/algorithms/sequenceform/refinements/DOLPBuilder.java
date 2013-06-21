@@ -51,12 +51,12 @@ public class DOLPBuilder {
 	}
 
 	public void initF() {
-		lpTable.setConstraint(new Key("Q", players[1]), new Key(players[1]), 1);//F in root (only 1)
+		lpTable.setConstraint(new Key("Q", players[1]), players[1], 1);//F in root (only 1)
 		lpTable.setConstraintType(new Key("Q", players[1]), 1);
 	}
 
 	public void initE() {
-		lpTable.setConstraint(new Key(players[0]), new Key("P", players[0]), 1);//E in root (only 1)
+		lpTable.setConstraint(players[0], new Key("P", players[0]), 1);//E in root (only 1)
 		lpTable.setLowerBound(new Key("P", players[0]), Double.NEGATIVE_INFINITY);
 	}
 
@@ -139,8 +139,8 @@ public class DOLPBuilder {
 	public void updateForP2(Sequence sequence) {
 		if (sequence.size() == 0)
 			return;
-		Key eqKey = getKeyForIS("Q", sequence);
-		Key varKey = getSubsequenceKey(sequence);
+		Object eqKey = getKeyForIS("Q", sequence);
+		Object varKey = getSubsequenceKey(sequence);
 
 		lpTable.setConstraint(eqKey, varKey, -1);//F
 		lpTable.setConstraintType(eqKey, 1);
@@ -152,8 +152,8 @@ public class DOLPBuilder {
 	public void updateForP1(Sequence sequence) {
 		if (sequence.size() == 0)
 			return;
-		Key varKey = getKeyForIS("P", sequence);
-		Key eqKey = getSubsequenceKey(sequence);
+		Object varKey = getKeyForIS("P", sequence);
+		Object eqKey = getSubsequenceKey(sequence);
 
 		lpTable.setConstraint(eqKey, varKey, -1);//E
 		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
@@ -162,47 +162,45 @@ public class DOLPBuilder {
 		addLinksToPrevISForP1(sequence, varKey);
 	}
 
-	protected void addLinksToPrevISForP2(Sequence sequence, Key eqKey) {
+	protected void addLinksToPrevISForP2(Sequence sequence, Object eqKey) {
 		SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
 
 		for (Sequence outgoingSequence : set.getOutgoingSequences()) {
-			Key varKey = new Key(outgoingSequence);
-			Key tmpKey = new Key("V", new Key(outgoingSequence));
+			Key tmpKey = new Key("V", outgoingSequence);
 
-			lpTable.setConstraint(eqKey, varKey, 1);//F child
+			lpTable.setConstraint(eqKey, outgoingSequence, 1);//F child
 			lpTable.setConstraintType(eqKey, 1);
-			lpTable.watchPrimalVariable(varKey, outgoingSequence);
-			lpTable.setConstraint(tmpKey, varKey, 1);//indices y
+			lpTable.watchPrimalVariable(outgoingSequence, outgoingSequence);
+			lpTable.setConstraint(tmpKey, outgoingSequence, 1);//indices y
 //			lpTable.setConstant(tmpKey, 0);//l(\epsilon)
 		}
 
 	}
 
-	public void addLinksToPrevISForP1(Sequence sequence, Key varKey) {
+	public void addLinksToPrevISForP1(Sequence sequence, Object varKey) {
 		SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
 
 		for (Sequence outgoingSequence : set.getOutgoingSequences()) {
-			Key eqKey = new Key(outgoingSequence);
-			Key tmpKey = new Key("U", new Key(outgoingSequence));
+			Key tmpKey = new Key("U", outgoingSequence);
 
-			lpTable.watchDualVariable(eqKey, outgoingSequence);
-			lpTable.setConstraint(eqKey, varKey, 1);//E child
+			lpTable.watchDualVariable(outgoingSequence, outgoingSequence);
+			lpTable.setConstraint(outgoingSequence, varKey, 1);//E child
 			lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
 
-			lpTable.setConstraint(eqKey, tmpKey, -1);//u (eye)
+			lpTable.setConstraint(outgoingSequence, tmpKey, -1);//u (eye)
 //			lpTable.setObjective(tmpKey, 0);//k(\epsilon)
 		}
 	}
 
-	protected Key getSubsequenceKey(Sequence sequence) {
+	protected Object getSubsequenceKey(Sequence sequence) {
 		if (sequence.size() <= 1)
-			return new Key(sequence.getPlayer());
-		return new Key(sequence.getSubSequence(sequence.size() - 1));
+			return sequence.getPlayer();
+		return sequence.getSubSequence(sequence.size() - 1);
 	}
 
-	protected Key getKeyForIS(String string, Sequence sequence) {
+	protected Object getKeyForIS(String string, Sequence sequence) {
 		if (sequence.size() == 0)
-			return new Key(sequence.getPlayer());
+			return sequence.getPlayer();
 		return new Key(string, sequence.getLastInformationSet());
 	}
 
@@ -212,7 +210,7 @@ public class DOLPBuilder {
 				Double utility = config.getUtilityForSequences(p1Sequence, p2Sequence);
 
 				if (utility != null) {
-					lpTable.substractFromConstraint(new Key(p1Sequence), new Key(p2Sequence), utility);
+					lpTable.substractFromConstraint(p1Sequence, p2Sequence, utility);
 				}
 			}
 		}
