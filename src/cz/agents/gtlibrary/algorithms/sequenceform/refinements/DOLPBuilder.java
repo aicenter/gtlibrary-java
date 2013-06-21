@@ -19,25 +19,26 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class DOLPBuilder {
 
-	private String lpFileName = "DO_LP_mod.lp";
-	private LPTable lpTable;
-	private Player[] players;
-	private PrintStream output;
-	private Double p1Value;
-	private Map<Sequence, Double> p1RealizationPlan;
-	private Map<Sequence, Double> p2RealizationPlan;
-	private long generationTime;
-	private long constraintGenerationTime;
-	private long lpSolvingTime;
+	protected String lpFileName = "DO_LP_mod.lp";
+	protected FastLPTable lpTable;
+	protected Player[] players;
+	protected PrintStream output;
+	protected Double p1Value;
+	protected Map<Sequence, Double> p1RealizationPlan;
+	protected Map<Sequence, Double> p2RealizationPlan;
+	protected long generationTime;
+	protected long constraintGenerationTime;
+	protected long lpSolvingTime;
 
 	public DOLPBuilder(Player[] players) {
 		this.players = players;
+		lpTable = new FastLPTable();
 		initTable();
 		p1Value = Double.NaN;
 	}
 
 	public void initTable() {
-		lpTable = new LPTable();
+		lpTable.clearTable();
 
 		initCost();
 		initE();
@@ -75,10 +76,10 @@ public class DOLPBuilder {
 			
 			output.println(lpData.getSolver().solve());
 			lpSolvingTime += System.currentTimeMillis() - lpStart;
-			output.println(lpData.getSolver().getStatus());
-			output.println(lpData.getSolver().getObjValue());
+//			output.println(lpData.getSolver().getStatus());
+//			output.println(lpData.getSolver().getObjValue());
 
-			p1Value = lpData.getSolver().getObjValue();
+			p1Value = -lpData.getSolver().getObjValue();
 
 			p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedDualVariables());
 			p2RealizationPlan = createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
@@ -87,14 +88,14 @@ public class DOLPBuilder {
 //			output.println("Solution: " + Arrays.toString(lpData.getSolver().getValues(lpData.getVariables())));
 //			output.println("Dual solution: " + Arrays.toString(lpData.getSolver().getDuals(lpData.getConstraints())));
 
-			for (Entry<Sequence, Double> entry : p1RealizationPlan.entrySet()) {
-				if (entry.getValue() > 0)
-					output.println(entry);
-			}
-			for (Entry<Sequence, Double> entry : p2RealizationPlan.entrySet()) {
-				if (entry.getValue() > 0)
-					output.println(entry);
-			}
+//			for (Entry<Sequence, Double> entry : p1RealizationPlan.entrySet()) {
+//				if (entry.getValue() > 0)
+//					output.println(entry);
+//			}
+//			for (Entry<Sequence, Double> entry : p2RealizationPlan.entrySet()) {
+//				if (entry.getValue() > 0)
+//					output.println(entry);
+//			}
 			generationTime += System.currentTimeMillis() - generationStart;
 		} catch (IloException e) {
 			e.printStackTrace();
@@ -161,7 +162,7 @@ public class DOLPBuilder {
 		addLinksToPrevISForP1(sequence, varKey);
 	}
 
-	private void addLinksToPrevISForP2(Sequence sequence, Key eqKey) {
+	protected void addLinksToPrevISForP2(Sequence sequence, Key eqKey) {
 		SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
 
 		for (Sequence outgoingSequence : set.getOutgoingSequences()) {
@@ -193,19 +194,19 @@ public class DOLPBuilder {
 		}
 	}
 
-	private Key getSubsequenceKey(Sequence sequence) {
+	protected Key getSubsequenceKey(Sequence sequence) {
 		if (sequence.size() <= 1)
 			return new Key(sequence.getPlayer());
 		return new Key(sequence.getSubSequence(sequence.size() - 1));
 	}
 
-	private Key getKeyForIS(String string, Sequence sequence) {
+	protected Key getKeyForIS(String string, Sequence sequence) {
 		if (sequence.size() == 0)
 			return new Key(sequence.getPlayer());
 		return new Key(string, sequence.getLastInformationSet());
 	}
 
-	private void addUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config, Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
+	protected void addUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config, Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
 		for (Sequence p1Sequence : p1Sequences) {
 			for (Sequence p2Sequence : p2Sequences) {
 				Double utility = config.getUtilityForSequences(p1Sequence, p2Sequence);

@@ -7,6 +7,7 @@ import java.util.*;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.DOLPBuilder;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.FastDOLPBuilder;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -53,7 +54,7 @@ public class GeneralDoubleOracle {
     public static PlayerSelection playerSelection = PlayerSelection.SINGLE_ALTERNATING;
 
 	public static void main(String[] args) {
-		new Scanner(System.in).next();
+//		new Scanner(System.in).next();
 //        runBP();
         runGenericPoker();
 //        runKuhnPoker();
@@ -214,7 +215,8 @@ public class GeneralDoubleOracle {
         }
 		int currentPlayerIndex = 0;
 //		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
-		DOLPBuilder doRestrictedGameSolver = new DOLPBuilder(actingPlayers);
+//		DOLPBuilder doRestrictedGameSolver = new DOLPBuilder(actingPlayers);
+		DOLPBuilder doRestrictedGameSolver = new FastDOLPBuilder(actingPlayers);
         doRestrictedGameSolver.setDebugOutput(debugOutput);
 		
 		double p1BoundUtility = gameConfig.getMaxUtility();

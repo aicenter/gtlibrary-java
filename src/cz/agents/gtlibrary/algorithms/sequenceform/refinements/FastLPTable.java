@@ -10,11 +10,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class LPTable {
+public class FastLPTable {
+	
+	public int CPLEXALG = IloCplex.Algorithm.Barrier;
+	public int CPLEXTHREADS = 0; // change to 0 to have no restrictions
 
-	protected Map<Key, Number> objective;
-	protected Map<Key, Map<Key, Number>> constraints;
-	protected Map<Key, Number> constants;
+	protected Map<Key, Double> objective;
+	protected Map<Key, Map<Key, Double>> constraints;
+	protected Map<Key, Double> constants;
 
 	protected Map<Key, Integer> equationIndices;
 	protected Map<Key, Integer> variableIndices;
@@ -25,12 +28,12 @@ public class LPTable {
 	protected Map<Key, Double> lb;
 	protected Map<Key, Double> ub;
 
-	protected double maxCoefficient;
+	protected IloCplex cplex;
 
-	public LPTable() {
-		constants = new LinkedHashMap<Key, Number>();
-		constraints = new LinkedHashMap<Key, Map<Key, Number>>();
-		objective = new LinkedHashMap<Key, Number>();
+	public FastLPTable() {
+		constants = new LinkedHashMap<Key, Double>();
+		constraints = new LinkedHashMap<Key, Map<Key, Double>>();
+		objective = new LinkedHashMap<Key, Double>();
 
 		equationIndices = new LinkedHashMap<Key, Integer>();
 		variableIndices = new LinkedHashMap<Key, Integer>();
@@ -40,14 +43,17 @@ public class LPTable {
 		constraintTypes = new LinkedHashMap<Key, Integer>();
 		lb = new LinkedHashMap<Key, Double>();
 		ub = new LinkedHashMap<Key, Double>();
-
-		maxCoefficient = Double.NEGATIVE_INFINITY;
+		try {
+			cplex = new IloCplex();
+		} catch (IloException e) {
+			e.printStackTrace();
+		}
 	}
 
-	public LPTable(int m, int n) {
-		constants = new LinkedHashMap<Key, Number>(m);
-		constraints = new LinkedHashMap<Key, Map<Key, Number>>(m);
-		objective = new LinkedHashMap<Key, Number>(n);
+	public FastLPTable(int m, int n) {
+		constants = new LinkedHashMap<Key, Double>(m);
+		constraints = new LinkedHashMap<Key, Map<Key, Double>>(m);
+		objective = new LinkedHashMap<Key, Double>(n);
 
 		equationIndices = new LinkedHashMap<Key, Integer>(m);
 		variableIndices = new LinkedHashMap<Key, Integer>(n);
@@ -57,21 +63,12 @@ public class LPTable {
 		constraintTypes = new LinkedHashMap<Key, Integer>(m);
 		lb = new LinkedHashMap<Key, Double>(n);
 		ub = new LinkedHashMap<Key, Double>();
-
-		maxCoefficient = Double.NEGATIVE_INFINITY;
 	}
 
 	public double get(Key eqKey, Key varKey) {
-		Number value = constraints.get(eqKey).get(varKey);
+		Double value = constraints.get(eqKey).get(varKey);
 
-		return value == null ? 0 : value.doubleValue();
-	}
-
-	public void updateMaxCoefficient(Number value) {
-		double absValue = Math.abs(value.doubleValue());
-
-		if (maxCoefficient < absValue)
-			maxCoefficient = absValue;
+		return value == null ? 0 : value;
 	}
 
 	private void updateEquationIndices(Key eqKey) {
@@ -82,57 +79,52 @@ public class LPTable {
 		getVariableIndex(varKey);
 	}
 
-	public void setObjective(Key varKey, Number value) {
+	public void setObjective(Key varKey, double value) {
 		objective.put(varKey, value);
-		updateMaxCoefficient(value);
 		updateVariableIndices(varKey);
 	}
 
 	public double getObjective(Key varKey) {
-		Number value = objective.get(varKey);
+		Double value = objective.get(varKey);
 
-		return value == null ? 0 : value.doubleValue();
+		return value == null ? 0 : value;
 	}
 
-	public void setConstant(Key eqKey, Number value) {
-		if (Math.abs(value.doubleValue()) < Double.MIN_VALUE)
+	public void setConstant(Key eqKey, double value) {
+		if (Math.abs(value) < Double.MIN_VALUE)
 			return;
 		constants.put(eqKey, value);
-		updateMaxCoefficient(value);
 		updateEquationIndices(eqKey);
 	}
 
 	public double getConstant(Key eqKey) {
-		Number value = constants.get(eqKey);
+		Double value = constants.get(eqKey);
 
 		return value == null ? 0 : value.doubleValue();
 	}
 
-	public void setConstraint(Key eqKey, Key varKey, Number value) {
-		if (Math.abs(value.doubleValue()) < Double.MIN_VALUE)
+	public void setConstraint(Key eqKey, Key varKey, double value) {
+		if (Math.abs(value) < Double.MIN_VALUE)
 			return;
-		Map<Key, Number> row = constraints.get(eqKey);
+		Map<Key, Double> row = constraints.get(eqKey);
 
 		if (row == null) {
-			row = new LinkedHashMap<Key, Number>();
+			row = new LinkedHashMap<Key, Double>();
 			constraints.put(eqKey, row);
 		}
 		row.put(varKey, value);
-		updateMaxCoefficient(value);
 		updateEquationIndices(eqKey);
 		updateVariableIndices(varKey);
 	}
 
-	public void addToConstraint(Key eqKey, Key varKey, Number value) {
-		setConstraint(eqKey, varKey, get(eqKey, varKey) + value.doubleValue());
+	public void addToConstraint(Key eqKey, Key varKey, double value) {
+		setConstraint(eqKey, varKey, get(eqKey, varKey) + value);
 	}
 
-	public void substractFromConstraint(Key eqKey, Key varKey, Number value) {
-		double dValue = value.doubleValue();
-
-		if (Math.abs(dValue) < Double.MIN_VALUE)
+	public void substractFromConstraint(Key eqKey, Key varKey, double value) {
+		if (Math.abs(value) < Double.MIN_VALUE)
 			return;
-		setConstraint(eqKey, varKey, get(eqKey, varKey) - dValue);
+		setConstraint(eqKey, varKey, get(eqKey, varKey) - value);
 	}
 
 	public int rowCount() {
@@ -170,6 +162,11 @@ public class LPTable {
 	}
 
 	public LPData toCplex() throws IloException {
+		cplex.clearModel();
+		cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
+		cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+		cplex.setOut(null);
+		
 		double[] ub = getUpperBounds();
 		double[] lb = getLowerBounds();
 		IloCplex cplex = new IloCplex();
@@ -232,7 +229,7 @@ public class LPTable {
 	protected IloRange[] addConstraints(IloCplex cplex, IloNumVar[] x) throws IloException {
 		IloRange[] cplexConstraints = new IloRange[rowCount()];
 
-		for (Entry<Key, Map<Key, Number>> rowEntry : constraints.entrySet()) {
+		for (Entry<Key, Map<Key, Double>> rowEntry : constraints.entrySet()) {
 			IloLinearNumExpr rowExpr = createRowExpresion(cplex, x, rowEntry);
 			Integer constraintType = getConstraintType(rowEntry);
 			int equationIndex = getEquationIndex(rowEntry.getKey()) - 1;
@@ -254,16 +251,16 @@ public class LPTable {
 		return cplexConstraints;
 	}
 
-	private Integer getConstraintType(Entry<Key, Map<Key, Number>> rowEntry) {
+	private int getConstraintType(Entry<Key, Map<Key, Double>> rowEntry) {
 		Integer constraintType = constraintTypes.get(rowEntry.getKey());
 
 		return constraintType == null ? 0 : constraintType;
 	}
 
-	private IloLinearNumExpr createRowExpresion(IloCplex cplex, IloNumVar[] x, Entry<Key, Map<Key, Number>> rowEntry) throws IloException {
+	private IloLinearNumExpr createRowExpresion(IloCplex cplex, IloNumVar[] x, Entry<Key, Map<Key, Double>> rowEntry) throws IloException {
 		IloLinearNumExpr rowExpr = cplex.linearNumExpr();
 
-		for (Entry<Key, Number> memberEntry : rowEntry.getValue().entrySet()) {
+		for (Entry<Key, Double> memberEntry : rowEntry.getValue().entrySet()) {
 			rowExpr.addTerm(-memberEntry.getValue().doubleValue(), x[getVariableIndex(memberEntry.getKey()) - 1]);
 		}
 		return rowExpr;
@@ -272,7 +269,7 @@ public class LPTable {
 	protected void addObjective(IloCplex cplex, IloNumVar[] x) throws IloException {
 		double[] objCoef = new double[x.length];
 
-		for (Entry<Key, Number> entry : objective.entrySet()) {
+		for (Entry<Key, Double> entry : objective.entrySet()) {
 			objCoef[variableIndices.get(entry.getKey())] = entry.getValue().doubleValue();
 		}
 		cplex.addMaximize(cplex.scalProd(x, objCoef));
@@ -309,14 +306,18 @@ public class LPTable {
 		ub.put(varKey, value);
 	}
 
-	public double getMaxCoefficient() {
-		return maxCoefficient;
-	}
-	
 	public void clearTable() {
-		constants = new LinkedHashMap<Key, Number>();
-		constraints = new LinkedHashMap<Key, Map<Key, Number>>();
-		objective = new LinkedHashMap<Key, Number>();
+		try {
+			cplex.clearModel();
+			cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
+			cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+		} catch (IloException e) {
+			e.printStackTrace();
+		}
+		cplex.setOut(null);
+		constants = new LinkedHashMap<Key, Double>();
+		constraints = new LinkedHashMap<Key, Map<Key, Double>>();
+		objective = new LinkedHashMap<Key, Double>();
 
 		equationIndices = new LinkedHashMap<Key, Integer>();
 		variableIndices = new LinkedHashMap<Key, Integer>();
@@ -326,7 +327,12 @@ public class LPTable {
 		constraintTypes = new LinkedHashMap<Key, Integer>();
 		lb = new LinkedHashMap<Key, Double>();
 		ub = new LinkedHashMap<Key, Double>();
+	}
 
-		maxCoefficient = Double.NEGATIVE_INFINITY;
+	public void clearConstraint(Key eqKey, Key varKey) {
+		Map<Key, Double> row = constraints.get(eqKey);
+		
+		if(row != null)
+			row.remove(varKey);
 	}
 }
