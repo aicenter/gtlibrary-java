@@ -87,7 +87,7 @@ public class ReducedLPBuilder extends LPBuilder {
 	public void initE() {
 		lpTable.setConstraint(lastKeys[0], new Key("P", lastKeys[0]), 1);//E in root (only 1)
 		lpTable.setLowerBound(new Key("P", lastKeys[0]), Double.NEGATIVE_INFINITY);
-//		lpTable.setUpperBound(new Key("P", lastKeys[0]), 0);
+		lpTable.setUpperBound(new Key("P", lastKeys[0]), 0);
 	}
 	
 	@Override
@@ -102,7 +102,7 @@ public class ReducedLPBuilder extends LPBuilder {
 		for (Entry<Object, IloRange> entry : watchedDualVars.entrySet()) {
 			p1Strategy.put((Sequence) entry.getKey(), cplex.getDual(entry.getValue()));
 		}
-		return p1Strategy;
+		return p1Strategy;je tu probléms  tim shoftem, zksuit to nastavit tak aby jedna primár poèítal furt s kladnou a duál furt se zápornou nebo opaènì
 	}
 	
 	public void updateLPForFirstPlayer(GameState state, Player lastPlayer, Key lastKey) {
@@ -111,7 +111,7 @@ public class ReducedLPBuilder extends LPBuilder {
 		updateParentLinks(state, lastPlayer, lastKey);
 		lpTable.setConstraint(lastKeys[0], varKey, -1);//E
 		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-//		lpTable.setUpperBound(varKey, 0);
+		lpTable.setUpperBound(varKey, 0);
 		lpTable.watchDualVariable(lastKeys[0], state.getSequenceForPlayerToMove());
 	}
 
@@ -121,8 +121,6 @@ public class ReducedLPBuilder extends LPBuilder {
 
 		lpTable.watchDualVariable(eqKey, child.getSequenceFor(lastPlayer));
 		lpTable.setConstraint(eqKey, varKey, 1);//E child
-//		lpTable.setLowerBound(tmpKey, Double.NEGATIVE_INFINITY);
-//		lpTable.setUpperBound(tmpKey, 0);
 		lpTable.setConstraint(eqKey, tmpKey, -1);//u (eye)
 		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
 	}
