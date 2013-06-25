@@ -12,7 +12,7 @@ public class FastDOLPBuilder extends DOLPBuilder {
 
 	public FastDOLPBuilder(Player[] players) {
 		super(players);
-		lpFileName = "DO_LP_mod_fast.lp";
+		lpFileName = "DO_LP_mod_faster.lp";
 	}
 
 	@Override
@@ -28,7 +28,7 @@ public class FastDOLPBuilder extends DOLPBuilder {
 		}
 		updateUtilities(config);
 		constraintGenerationTime += System.currentTimeMillis() - startTime;  
-		generationTime += System.currentTimeMillis() - startTime;
+//		generationTime += System.currentTimeMillis() - startTime;
 	}
 
 	private void updateUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config) {

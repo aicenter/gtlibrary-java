@@ -9,6 +9,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
@@ -20,7 +21,7 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 public class DOLPBuilder {
 
 	protected String lpFileName = "DO_LP_mod.lp";
-	protected FastLPTable lpTable;
+	protected FasterLPTable lpTable;
 	protected Player[] players;
 	protected PrintStream output;
 	protected Double p1Value;
@@ -32,7 +33,7 @@ public class DOLPBuilder {
 
 	public DOLPBuilder(Player[] players) {
 		this.players = players;
-		lpTable = new FastLPTable();
+		lpTable = new FasterLPTable();
 		initTable();
 		p1Value = Double.NaN;
 	}
@@ -68,6 +69,7 @@ public class DOLPBuilder {
 		try {
 			long generationStart = System.currentTimeMillis();
 			LPData lpData = lpTable.toCplex();
+			constraintGenerationTime += System.currentTimeMillis() - generationStart;
 
 //			lpData.getSolver().setParam(IloCplex.DoubleParam.EpMrk, 0.9999);
 //			lpData.getSolver().exportModel(lpFileName);
@@ -96,9 +98,9 @@ public class DOLPBuilder {
 //				if (entry.getValue() > 0)
 //					output.println(entry);
 //			}
-			generationTime += System.currentTimeMillis() - generationStart;
 		} catch (IloException e) {
 			e.printStackTrace();
+//			new Scanner(System.in).next();
 		}
 	}
 
