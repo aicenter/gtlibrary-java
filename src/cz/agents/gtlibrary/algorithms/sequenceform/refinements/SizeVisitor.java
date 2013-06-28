@@ -7,7 +7,6 @@ import java.util.Set;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
-import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -18,16 +17,14 @@ import cz.agents.gtlibrary.utils.Pair;
 
 public class SizeVisitor extends TreeVisitor {
 
-	Map<Player, Set<Sequence>> continuationKeys;
+	Map<Player, Set<Sequence>> sequences;
 	Map<Player, Set<Pair<Integer, Sequence>>> isKeys;
-	private double minUtility = Double.POSITIVE_INFINITY;
-	private double maxUtility = Double.NEGATIVE_INFINITY;
 
 	public SizeVisitor(GameState rootState, Expander<? extends InformationSet> expander, AlgorithmConfig<SequenceInformationSet> algConfig) {
 		super(rootState, expander, algConfig);
-		continuationKeys = new HashMap<Player, Set<Sequence>>();
-		continuationKeys.put(new PlayerImpl(0), new HashSet<Sequence>());
-		continuationKeys.put(new PlayerImpl(1), new HashSet<Sequence>());
+		sequences = new HashMap<Player, Set<Sequence>>();
+		sequences.put(new PlayerImpl(0), new HashSet<Sequence>());
+		sequences.put(new PlayerImpl(1), new HashSet<Sequence>());
 		isKeys = new HashMap<Player, Set<Pair<Integer, Sequence>>>();
 		isKeys.put(new PlayerImpl(0), new HashSet<Pair<Integer, Sequence>>());
 		isKeys.put(new PlayerImpl(1), new HashSet<Pair<Integer, Sequence>>());
@@ -35,52 +32,28 @@ public class SizeVisitor extends TreeVisitor {
 
 	@Override
 	protected void visitLeaf(GameState state, Player lastPlayer, Key lastKey) {
-		double currentUtility = state.getUtilities()[0];
-
-		updateParent(state, lastPlayer);
-		if (minUtility > currentUtility)
-			minUtility = currentUtility;
-		if (maxUtility < currentUtility)
-			maxUtility = currentUtility;
+		updateSequences(state);
 	}
 
 	@Override
 	protected void visitNormalNode(GameState state, Player lastPlayer, Key lastKey) {
 		isKeys.get(state.getPlayerToMove()).add(state.getISKeyForPlayerToMove());
-		updateParent(state, lastPlayer);
-		for (Action action : expander.getActions(state)) {
-			GameState child = state.performAction(action);
-
-			continuationKeys.get(state.getPlayerToMove()).add(child.getSequenceFor(state.getPlayerToMove()));
-		}
+		updateSequences(state);
 		super.visitNormalNode(state, lastPlayer, lastKey);
+	}
+
+	public void updateSequences(GameState state) {
+		sequences.get(state.getAllPlayers()[0]).add(state.getSequenceFor(state.getAllPlayers()[0]));
+		sequences.get(state.getAllPlayers()[1]).add(state.getSequenceFor(state.getAllPlayers()[1]));
 	}
 	
 	@Override
 	protected void visitChanceNode(GameState state, Player lastPlayer, Key lastKey) {
-		updateParent(state, lastPlayer);
+		updateSequences(state);
 		super.visitChanceNode(state, lastPlayer, lastKey);
-	}
-
-	public void updateParent(GameState state, Player lastPlayer) {
-		if(lastPlayer != null) {
-			continuationKeys.get(lastPlayer).add(state.getSequenceFor(lastPlayer));
-		}
-	}
-
-	public int getContinuationCountFor(Player player) {
-		return continuationKeys.get(player).size();
 	}
 
 	public int getISCountFor(Player player) {
 		return isKeys.get(player).size();
-	}
-	
-	public double getMinUtilityForPlayerOne() {
-		return minUtility;
-	}
-	
-	public double getMaxUtilityForPlayerOne() {
-		return maxUtility;
 	}
 }
