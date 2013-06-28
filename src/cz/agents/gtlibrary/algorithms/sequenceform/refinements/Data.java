@@ -184,9 +184,9 @@ public class Data {
 
 	public void printSizes(BufferedWriter writer) throws IOException {
 		writer.write("S1: ");
-		writer.write(Integer.toString(sequences.get(new PlayerImpl(0)).size() + 1));
+		writer.write(Integer.toString(sequences.get(new PlayerImpl(0)).size()));
 		writer.write(" S2: ");
-		writer.write(Integer.toString(sequences.get(new PlayerImpl(1)).size() + 1));
+		writer.write(Integer.toString(sequences.get(new PlayerImpl(1)).size()));
 		writer.write(" H1: ");
 		writer.write(Integer.toString(isKeys.get(new PlayerImpl(0)).size() + 1));
 		writer.write(" H2: ");
