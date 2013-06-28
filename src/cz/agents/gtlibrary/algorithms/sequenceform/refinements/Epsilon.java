@@ -31,6 +31,7 @@ public class Epsilon extends Number {
 
 	@Override
 	public double doubleValue() {
+//		return 0;
 		return value;
 	}
 

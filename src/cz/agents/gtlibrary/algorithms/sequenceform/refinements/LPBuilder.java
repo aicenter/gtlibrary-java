@@ -35,9 +35,9 @@ public class LPBuilder extends TreeVisitor {
 	protected Epsilon epsilon;
 
 	public static void main(String[] args) {
-//		runAoS();
+		runAoS();
 //		runGoofSpiel();
-		runKuhnPoker();
+//		runKuhnPoker();
 //		runGenericPoker();
 	}
 
@@ -205,8 +205,8 @@ public class LPBuilder extends TreeVisitor {
 	}
 
 	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key varKey) {
-		Key eqKey = new Key(child.getSequenceFor(lastPlayer));
-		Key tmpKey = new Key("U", new Key(child.getSequenceFor(lastPlayer)));
+		Object eqKey = child.getSequenceFor(lastPlayer);
+		Key tmpKey = new Key("U", child.getSequenceFor(lastPlayer));
 
 		lpTable.watchDualVariable(eqKey, child.getSequenceFor(lastPlayer));
 		lpTable.setConstraint(eqKey, varKey, 1);//E child
@@ -226,8 +226,8 @@ public class LPBuilder extends TreeVisitor {
 	}
 
 	public void updateForSecondPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
-		Key varKey = new Key(child.getSequenceFor(lastPlayer));
-		Key tmpKey = new Key("V", new Key(child.getSequenceFor(lastPlayer)));
+		Object varKey = child.getSequenceFor(lastPlayer);
+		Key tmpKey = new Key("V", child.getSequenceFor(lastPlayer));
 
 		lpTable.setConstraint(eqKey, varKey, 1);//F child
 		lpTable.setConstraintType(eqKey, 1);
