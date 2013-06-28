@@ -14,12 +14,12 @@ public abstract class TreeVisitor {
 	protected Expander<? extends InformationSet> expander;
 	protected AlgorithmConfig<SequenceInformationSet> algConfig;
 
-	protected Key[] lastKeys;
+	protected Object[] lastKeys;
 
 	public TreeVisitor(GameState rootState, Expander<? extends InformationSet> expander, AlgorithmConfig<SequenceInformationSet> algConfig) {
 		this.rootState = rootState;
 		this.expander = expander;
-		lastKeys = new Key[] { new Key(rootState.getAllPlayers()[0]), new Key(rootState.getAllPlayers()[1]) };
+		lastKeys = new Object[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
 		this.algConfig = algConfig;
 	}
 
@@ -37,7 +37,7 @@ public abstract class TreeVisitor {
 	}
 
 	protected void visitNormalNode(GameState state, Player lastPlayer, Key lastKey) {
-		Key[] oldLastKeys = lastKeys.clone();
+		Object[] oldLastKeys = lastKeys.clone();
 		Key key = getKey(state);
 		
 		for (Action action : expander.getActions(state)) {
@@ -53,8 +53,8 @@ public abstract class TreeVisitor {
 		return new Key(state.getPlayerToMove().getId() == 0?"P":"Q", new Key(state.getISKeyForPlayerToMove()));
 	}
 
-	private Key getISKey(GameState child, Player player) {
-		return new Key(child.getSequenceFor(player));
+	private Object getISKey(GameState child, Player player) {
+		return child.getSequenceFor(player);
 	}
 
 	protected abstract void visitLeaf(GameState state, Player lastPlayer, Key lastKey);

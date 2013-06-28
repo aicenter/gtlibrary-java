@@ -63,17 +63,11 @@ public class ResultParser {
 		sizeTokenizer.nextToken();
 		int p2SequenceCount = Integer.parseInt(sizeTokenizer.nextToken());
 		
-		reader.readLine();
-		for (int i = 0; i < p1SequenceCount; i++) {
-			StringTokenizer rowTokenizer = new StringTokenizer(reader.readLine());
-			
-			rowTokenizer.nextToken();
-			String strategy = rowTokenizer.nextToken();
-			StringTokenizer strategyTokenizer = new StringTokenizer(strategy.substring(1, strategy.length() - 1), ",");
-			
-			strategyTokenizer.nextToken();
-			p1RealPlan.put(p1Sequences.get(i), Double.parseDouble(strategyTokenizer.nextToken()));			
-		}
+		loadP1Strategy(p1SequenceCount);
+		loadP2Strategy(p2SequenceCount);
+	}
+
+	public void loadP2Strategy(int p2SequenceCount) throws IOException {
 		reader.readLine();
 		for (int i = 0; i < p2SequenceCount; i++) {
 			StringTokenizer rowTokenizer = new StringTokenizer(reader.readLine());
@@ -84,6 +78,20 @@ public class ResultParser {
 			
 			strategyTokenizer.nextToken();
 			p2RealPlan.put(p2Sequences.get(i), Double.parseDouble(strategyTokenizer.nextToken()));			
+		}
+	}
+
+	public void loadP1Strategy(int p1SequenceCount) throws IOException {
+		reader.readLine();
+		for (int i = 0; i < p1SequenceCount; i++) {
+			StringTokenizer rowTokenizer = new StringTokenizer(reader.readLine());
+			
+			rowTokenizer.nextToken();
+			String strategy = rowTokenizer.nextToken();
+			StringTokenizer strategyTokenizer = new StringTokenizer(strategy.substring(1, strategy.length() - 1), ",");
+			
+			strategyTokenizer.nextToken();
+			p1RealPlan.put(p1Sequences.get(i), Double.parseDouble(strategyTokenizer.nextToken()));			
 		}
 	}
 
