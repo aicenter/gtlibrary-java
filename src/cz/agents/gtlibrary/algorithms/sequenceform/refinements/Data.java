@@ -171,8 +171,6 @@ public class Data {
 	}
 	
 	public Object getSubSequenceKey(Sequence sequence) {
-		if(sequence.size() <= 1)
-			return sequence.getPlayer();
 		return sequence.getSubSequence(sequence.size() - 1);
 	}
 
