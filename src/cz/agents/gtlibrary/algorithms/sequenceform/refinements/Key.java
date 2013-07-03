@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
-
 public class Key {
 
 	private String string;
@@ -55,11 +54,11 @@ public class Key {
 	public int hashCode() {
 		return hashCode;
 	}
-	
+
 	@Override
 	public String toString() {
-		if(represenation == null)
-			represenation = "[" + object + (string.equals("")?"":(", " + string)) + "]";
+		if (represenation == null)
+			represenation = "[" + object + (string.equals("") ? "" : (", " + string)) + "]";
 		return represenation;
 	}
 

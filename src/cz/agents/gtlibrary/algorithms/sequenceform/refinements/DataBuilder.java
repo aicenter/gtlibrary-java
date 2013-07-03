@@ -26,7 +26,7 @@ import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 
 public class DataBuilder extends TreeVisitor {
-	
+
 	protected String fileName;
 	protected Data data;
 
@@ -39,120 +39,53 @@ public class DataBuilder extends TreeVisitor {
 
 	public static void runKuhnPoker() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		DataBuilder lpBuilder = new DataBuilder(new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KuhnPokerGameState(), algConfig, "kuhnPokerRepr");
 
-		lpBuilder.buildLP();
-		try {
-			Runtime.getRuntime().exec("lemkeQP kuhnPokerRepr").waitFor();;
-		} catch (IOException e) {
-			System.err.println("Error during library invocation...");
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		ResultParser parser = new ResultParser("kuhnPokerReprl1qp", lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
-
-		System.out.println(parser.getP1RealizationPlan());
-		System.out.println(parser.getP2RealizationPlan());
-		
-		Strategy p1Strategy = new UniformStrategyForMissingSequences();
-		Strategy p2Strategy = new UniformStrategyForMissingSequences();
-		
-		p1Strategy.putAll(parser.getP1RealizationPlan());
-		p2Strategy.putAll(parser.getP2RealizationPlan());
-		
-		UtilityCalculator calculator = new UtilityCalculator(new KuhnPokerGameState(), new KuhnPokerExpander<SequenceInformationSet>(algConfig));
-		
-		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
+		runDataBuilder(new KuhnPokerGameState(), new KuhnPokerExpander<SequenceInformationSet>(algConfig), algConfig, "KuhnPokerRepr", "KuhnPokerReprl1qp");
 	}
 
 	public static void runGenericPoker() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		DataBuilder lpBuilder = new DataBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), algConfig, "GenericPokerRepr");
 
-		lpBuilder.buildLP();
-		
-		try {
-			Runtime.getRuntime().exec("lemkeQP GenericPokerRepr").waitFor();;
-		} catch (IOException e) {
-			System.err.println("Error during library invocation...");
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
-		ResultParser parser = new ResultParser("GenericPokerl1qp", lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
-
-		System.out.println(parser.getP1RealizationPlan());
-		System.out.println(parser.getP2RealizationPlan());
-		
-		Strategy p1Strategy = new UniformStrategyForMissingSequences();
-		Strategy p2Strategy = new UniformStrategyForMissingSequences();
-		
-		p1Strategy.putAll(parser.getP1RealizationPlan());
-		p2Strategy.putAll(parser.getP2RealizationPlan());
-		
-		UtilityCalculator calculator = new UtilityCalculator(new GenericPokerGameState(), new GenericPokerExpander<SequenceInformationSet>(algConfig));
-		
-		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
+		runDataBuilder(new GenericPokerGameState(), new GenericPokerExpander<SequenceInformationSet>(algConfig), algConfig, "GenericPokerRepr", "GenericPokerReprl1qp");
 	}
 
 	public static void runAoS() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		DataBuilder lpBuilder = new DataBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState(), algConfig, "AoSRepr");
 
-		lpBuilder.buildLP();
-		
-		try {
-			Runtime.getRuntime().exec("lemkeQP AoSRepr").waitFor();;
-		} catch (IOException e) {
-			System.err.println("Error during library invocation...");
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
-		ResultParser parser = new ResultParser("AoSReprl1qp", lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
-
-		System.out.println(parser.getP1RealizationPlan());
-		System.out.println(parser.getP2RealizationPlan());
-		
-		Strategy p1Strategy = new UniformStrategyForMissingSequences();
-		Strategy p2Strategy = new UniformStrategyForMissingSequences();
-		
-		p1Strategy.putAll(parser.getP1RealizationPlan());
-		p2Strategy.putAll(parser.getP2RealizationPlan());
-		
-		UtilityCalculator calculator = new UtilityCalculator(new AoSGameState(), new AoSExpander<SequenceInformationSet>(algConfig));
-		
-		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
-
+		runDataBuilder(new AoSGameState(), new AoSExpander<SequenceInformationSet>(algConfig), algConfig, "AoSRepr", "AoSReprl1qp");
 	}
 
 	public static void runGoofSpiel() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		DataBuilder lpBuilder = new DataBuilder(new GoofSpielExpander<SequenceInformationSet>(algConfig), new GoofSpielGameState(), algConfig, "GoofspielRepr");
+
+		runDataBuilder(new GoofSpielGameState(), new GoofSpielExpander<SequenceInformationSet>(algConfig), algConfig, "GoofspielRepr", "GoofspielReprl1qp");
+	}
+
+	public static void runDataBuilder(GameState rootState, Expander<SequenceInformationSet> expander, AlgorithmConfig<SequenceInformationSet> algConfig, String inputFileName, String outputFileName) {
+		DataBuilder lpBuilder = new DataBuilder(expander, rootState, algConfig, inputFileName);
 
 		lpBuilder.buildLP();
-		
 		try {
-			Runtime.getRuntime().exec("lemkeQP GoofspielRepr").waitFor();;
+			Runtime.getRuntime().exec("lemkeQP " + inputFileName).waitFor();
+			;
 		} catch (IOException e) {
 			System.err.println("Error during library invocation...");
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-
-		ResultParser parser = new ResultParser("GoofspielReprl1qp", lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
+		ResultParser parser = new ResultParser(outputFileName, lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
 
 		System.out.println(parser.getP1RealizationPlan());
 		System.out.println(parser.getP2RealizationPlan());
-		
+
 		Strategy p1Strategy = new UniformStrategyForMissingSequences();
 		Strategy p2Strategy = new UniformStrategyForMissingSequences();
-		
+
 		p1Strategy.putAll(parser.getP1RealizationPlan());
 		p2Strategy.putAll(parser.getP2RealizationPlan());
-		
-		UtilityCalculator calculator = new UtilityCalculator(new GoofSpielGameState(), new GoofSpielExpander<SequenceInformationSet>(algConfig));
-		
+
+		UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
+
 		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 	}
 
