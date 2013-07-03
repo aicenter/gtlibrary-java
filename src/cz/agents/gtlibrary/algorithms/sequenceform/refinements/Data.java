@@ -16,6 +16,8 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
 public class Data {
+	
+	private final int UTILITY_COEF = 10000000;
 
 	private Map<Object, Integer> E;
 	private Map<Object, Integer> F;
@@ -132,26 +134,6 @@ public class Data {
 		x2.put(isKey, key);
 	}
 	
-//	public void addOneToM1(Sequence key) {
-//		int index = getColumnIndexE(key);
-//		
-//		M1.put(new Pair<Integer, Integer>(index, index), "1");
-//	}
-//	
-//	public void addOneToM2(Sequence key) {
-//		int index = getColumnIndexF(key);
-//		
-//		M2.put(new Pair<Integer, Integer>(index, index), "1");
-//	}
-//	
-//	public void addEpsilonToM1(Sequence sequence, Sequence continuation) {
-//		M1.put(new Pair<Integer, Integer>(getColumnIndexE(continuation), getColumnIndexE(sequence)), "0,-1");
-//	}
-//	
-//	public void addEpsilonToM2(Sequence sequence, Sequence continuation) {
-//		M2.put(new Pair<Integer, Integer>(getColumnIndexF(continuation), getColumnIndexF(sequence)), "0,-1");
-//	}
-	
 	public void addP1PerturbationsFor(Sequence sequence) {
 		int index = getColumnIndexE(sequence);
 		int subseqIndex = getColumnIndexE(getSubSequenceKey(sequence));
@@ -264,7 +246,7 @@ public class Data {
 			writer.write(",");
 			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
 			writer.write(",(");
-			writer.write(new Integer((new Double(entry.getValue()*10000000).intValue())).toString());
+			writer.write(new Integer((new Double(entry.getValue()*UTILITY_COEF).intValue())).toString());
 			writer.write("))");
 			writer.newLine();
 		}
@@ -281,7 +263,7 @@ public class Data {
 			writer.write(",");
 			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
 			writer.write(",(");
-			writer.write(new Integer(new Double(-entry.getValue().doubleValue()*10000000).intValue()).toString());
+			writer.write(new Integer(new Double(-entry.getValue().doubleValue()*UTILITY_COEF).intValue()).toString());
 			writer.write("))");
 			writer.newLine();
 		}
