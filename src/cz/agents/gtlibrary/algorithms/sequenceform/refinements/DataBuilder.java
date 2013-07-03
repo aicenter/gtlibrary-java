@@ -29,7 +29,6 @@ public class DataBuilder extends TreeVisitor {
 	
 	protected String fileName;
 	protected Data data;
-//	protected Epsilon epsilon;
 	protected Player[] players;
 
 	public static void main(String[] args) {
@@ -173,8 +172,6 @@ public class DataBuilder extends TreeVisitor {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-//		computeEpsilon();
-//		System.out.println("epsilon: " + epsilon);
 	}
 
 	public void initData() {
@@ -182,21 +179,16 @@ public class DataBuilder extends TreeVisitor {
 
 		initE();
 		initF();
-//		initf();
 	}
 
-//	public void initf() {
-//		lpTable.setConstant(new Key("Q", lastKeys[1]), -1);//f for root
-//	}
-
 	public void initF() {
-		data.setF(new Key("Q", players[1]), players[1], 1);//F in root (only 1)
-		data.addToX2(new Key("Q", players[1]), players[1]);//empty sequence representation for initial strategy profile
+		data.setF(new Key("Q", new LinkedListSequenceImpl(players[1])), new LinkedListSequenceImpl(players[1]), 1);//F in root (only 1)
+		data.addToX2(new Key("Q", new LinkedListSequenceImpl(players[1])), new LinkedListSequenceImpl(players[1]));//empty sequence representation for initial strategy profile
 	}
 
 	public void initE() {
-		data.setE(new Key("P", players[0]), players[0], 1);//E in root (only 1)
-		data.addToX1(new Key("P", players[0]), players[0]);//empty sequence representation for initial strategy profile
+		data.setE(new Key("P", new LinkedListSequenceImpl(players[0])), new LinkedListSequenceImpl(players[0]), 1);//E in root (only 1)
+		data.addToX1(new Key("P", new LinkedListSequenceImpl(players[0])), new LinkedListSequenceImpl(players[0]));//empty sequence representation for initial strategy profile
 	}
 
 	@Override
@@ -226,15 +218,9 @@ public class DataBuilder extends TreeVisitor {
 	}
 
 	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
-//		Key varKey = new Key(child.getSequenceFor(lastPlayer));
-//		Key tmpKey = new Key("U", new Key(child.getSequenceFor(lastPlayer)));
-
 		data.setE(eqKey, child.getSequenceFor(lastPlayer), 1);//E child
 		data.addToX1(eqKey, child.getSequenceFor(lastPlayer));
 		data.addP1PerturbationsFor(child.getSequenceFor(lastPlayer));
-
-//		lpTable.setConstraint(eqKey, tmpKey, -1);//u (eye)
-//		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
 	}
 
 	public void updateLPForSecondPlayer(GameState state, Player lastPlayer, Key lastKey) {
@@ -242,21 +228,12 @@ public class DataBuilder extends TreeVisitor {
 
 		updateParentLinks(state, lastPlayer, lastKey);
 		data.setF(eqKey, lastKeys[1], -1);//F
-//		lpTable.setConstraintType(eqKey, 1);
-//		lpTable.watchPrimalVariable(lastKeys[1], state.getSequenceForPlayerToMove());
 	}
 
 	public void updateForSecondPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
-//		Key varKey = new Key(child.getSequenceFor(lastPlayer));
-//		Key tmpKey = new Key("V", new Key(child.getSequenceFor(lastPlayer)));
-
 		data.setF(eqKey, child.getSequenceFor(lastPlayer), 1);//F child
 		data.addToX2(eqKey, child.getSequenceFor(lastPlayer));
 		data.addP2PerturbationsFor(child.getSequenceFor(lastPlayer));
-//		lpTable.setConstraintType(eqKey, 1);
-//		lpTable.watchPrimalVariable(varKey, child.getSequenceFor(lastPlayer));
-//		lpTable.setConstraint(tmpKey, varKey, 1);//indices y
-//		lpTable.setConstant(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()).negate());//l(\epsilon)
 	}
 
 	@Override
@@ -299,12 +276,4 @@ public class DataBuilder extends TreeVisitor {
 		}
 		return p1Indices;
 	}
-//
-//	protected void computeEpsilon() {
-//		double equationCount = lpTable.rowCount();
-//		double maxCoefficient = lpTable.getMaxCoefficient();
-//
-//		epsilon.setValue(0.5 * Math.pow(equationCount, -equationCount - 1) * Math.pow(maxCoefficient, -2 * equationCount - 1));
-//	}
-
 }
