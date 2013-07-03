@@ -32,9 +32,9 @@ public class DataBuilder extends TreeVisitor {
 	protected Player[] players;
 
 	public static void main(String[] args) {
-//		runAoS();
+		runAoS();
 //		runGoofSpiel();
-		runKuhnPoker();
+//		runKuhnPoker();
 //		runGenericPoker();
 	}
 
@@ -195,7 +195,7 @@ public class DataBuilder extends TreeVisitor {
 	protected void visitLeaf(GameState state, Player lastPlayer, Key lastKey) {
 		updateSequences(state);
 		updateParentLinks(state, lastPlayer, lastKey);
-		data.addToU(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0]));
+		data.addToU(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), state.getNatureProbability() * (state.getUtilities()[0]));
 	}
 
 	@Override
@@ -214,7 +214,7 @@ public class DataBuilder extends TreeVisitor {
 		Key eqKey = new Key("P", new Key(state.getISKeyForPlayerToMove()));
 
 		updateParentLinks(state, lastPlayer, lastKey);
-		data.setE(eqKey, lastKeys[0], -1);//E
+		data.setE(eqKey, state.getSequenceFor(players[0]), -1);//E
 	}
 
 	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
@@ -227,7 +227,7 @@ public class DataBuilder extends TreeVisitor {
 		Key eqKey = new Key("Q", new Key(state.getISKeyForPlayerToMove()));
 
 		updateParentLinks(state, lastPlayer, lastKey);
-		data.setF(eqKey, lastKeys[1], -1);//F
+		data.setF(eqKey, state.getSequenceFor(players[1]), -1);//F
 	}
 
 	public void updateForSecondPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
