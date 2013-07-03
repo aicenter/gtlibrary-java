@@ -20,6 +20,7 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -36,8 +37,8 @@ public class LPBuilder extends TreeVisitor {
 
 	public static void main(String[] args) {
 //		runAoS();
-//		runGoofSpiel();
-		runKuhnPoker();
+		runGoofSpiel();
+//		runKuhnPoker();
 //		runGenericPoker();
 	}
 
@@ -153,30 +154,33 @@ public class LPBuilder extends TreeVisitor {
 	}
 
 	public void initTable() {
+		Sequence p1EmptySequence = new LinkedListSequenceImpl(players[0]);
+		Sequence p2EmptySequence = new LinkedListSequenceImpl(players[1]);
+		
 		lpTable = new LPTable();
 
-		initCost();
-		initE();
-		initF();
-		initf();
+		initCost(p1EmptySequence);
+		initE(p1EmptySequence);
+		initF(p2EmptySequence);
+		initf(p2EmptySequence);
 	}
 
-	public void initf() {
-		lpTable.setConstant(new Key("Q", lastKeys[1]), -1);//f for root
+	public void initf(Sequence p2EmptySequence) {
+		lpTable.setConstant(new Key("Q", p2EmptySequence), -1);//f for root
 	}
 
-	public void initF() {
-		lpTable.setConstraint(new Key("Q", lastKeys[1]), lastKeys[1], 1);//F in root (only 1)
-		lpTable.setConstraintType(new Key("Q", lastKeys[1]), 1);
+	public void initF(Sequence p2EmptySequence) {
+		lpTable.setConstraint(new Key("Q", p2EmptySequence), p2EmptySequence, 1);//F in root (only 1)
+		lpTable.setConstraintType(new Key("Q", p2EmptySequence), 1);
 	}
 
-	public void initE() {
-		lpTable.setConstraint(lastKeys[0], new Key("P", lastKeys[0]), 1);//E in root (only 1)
-		lpTable.setLowerBound(new Key("P", lastKeys[0]), Double.NEGATIVE_INFINITY);
+	public void initE(Sequence p1EmptySequence) {
+		lpTable.setConstraint(p1EmptySequence, new Key("P", p1EmptySequence), 1);//E in root (only 1)
+		lpTable.setLowerBound(new Key("P", p1EmptySequence), Double.NEGATIVE_INFINITY);
 	}
 
-	public void initCost() {
-		lpTable.setObjective(new Key("P", lastKeys[0]), -1);
+	public void initCost(Sequence p1EmptySequence) {
+		lpTable.setObjective(new Key("P", p1EmptySequence), -1);
 	}
 
 	@Override
