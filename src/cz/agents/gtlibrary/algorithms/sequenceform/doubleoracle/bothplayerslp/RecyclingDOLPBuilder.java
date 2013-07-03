@@ -1,18 +1,34 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp;
 
 import java.util.Set;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
-public class FastDOLPBuilder extends DOLPBuilder {
+public class RecyclingDOLPBuilder extends DOLPBuilder {
 
-	public FastDOLPBuilder(Player[] players) {
+	public RecyclingDOLPBuilder(Player[] players) {
 		super(players);
 		lpFileName = "DO_LP_mod_faster.lp";
+	}
+	
+	@Override
+	public void initTable() {
+		Sequence p1EmptySequence = new LinkedListSequenceImpl(players[0]);
+		Sequence p2EmptySequence = new LinkedListSequenceImpl(players[1]);
+		
+		if(lpTable == null)
+			lpTable = new RecyclingLPTable();
+		lpTable.clearTable();
+
+		initCost(p1EmptySequence);
+		initE(p1EmptySequence);
+		initF(p2EmptySequence);
+		initf(p2EmptySequence);
 	}
 
 	@Override
@@ -28,7 +44,6 @@ public class FastDOLPBuilder extends DOLPBuilder {
 		}
 		updateUtilities(config);
 		constraintGenerationTime += System.currentTimeMillis() - startTime;  
-//		generationTime += System.currentTimeMillis() - startTime;
 	}
 
 	private void updateUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config) {

@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp;
 
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
@@ -13,6 +13,8 @@ import java.util.Map.Entry;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -20,8 +22,8 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class DOLPBuilder {
 
-	protected String lpFileName = "DO_LP_mod.lp";
-	protected FastLPTable lpTable;
+	protected String lpFileName;
+	protected LPTable lpTable;
 	protected Player[] players;
 	protected PrintStream output;
 	protected Double p1Value;
@@ -33,15 +35,18 @@ public class DOLPBuilder {
 
 	public DOLPBuilder(Player[] players) {
 		this.players = players;
-		lpTable = new FastLPTable();
-		initTable();
+		lpFileName = "DO_LP_mod.lp";
 		p1Value = Double.NaN;
+		
+		initTable();
 	}
 	
 	public void initTable() {
 		Sequence p1EmptySequence = new LinkedListSequenceImpl(players[0]);
 		Sequence p2EmptySequence = new LinkedListSequenceImpl(players[1]);
 		
+		if(lpTable == null)
+			lpTable = new LPTable();
 		lpTable.clearTable();
 
 		initCost(p1EmptySequence);

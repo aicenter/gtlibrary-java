@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom;
 
 import java.io.BufferedReader;
 import java.io.File;

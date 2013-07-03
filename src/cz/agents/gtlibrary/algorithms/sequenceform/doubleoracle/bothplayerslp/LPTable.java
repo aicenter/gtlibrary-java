@@ -1,20 +1,19 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp;
 
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
-import ilog.concert.IloObjective;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
-public class FasterLPTable {
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 
+public class LPTable {
+	
 	public int CPLEXALG = IloCplex.Algorithm.Barrier;
 	public int CPLEXTHREADS = 0; // change to 0 to have no restrictions
 
@@ -31,17 +30,9 @@ public class FasterLPTable {
 	protected Map<Object, Double> lb;
 	protected Map<Object, Double> ub;
 
-	protected Map<Object, Double> newObjective;
-	protected Map<Object, Map<Object, Double>> newConstraints;
-	protected Set<Object> updatedConstraints;
-	protected Set<Object> removedConstraints;
-
 	protected IloCplex cplex;
-	protected IloObjective lpObj;
-	protected IloRange[] lpConstraints;
-	protected IloNumVar[] lpVariables;
 
-	public FasterLPTable() {
+	public LPTable() {
 		constants = new LinkedHashMap<Object, Double>();
 		constraints = new LinkedHashMap<Object, Map<Object, Double>>();
 		objective = new LinkedHashMap<Object, Double>();
@@ -54,12 +45,6 @@ public class FasterLPTable {
 		constraintTypes = new LinkedHashMap<Object, Integer>();
 		lb = new LinkedHashMap<Object, Double>();
 		ub = new LinkedHashMap<Object, Double>();
-
-		newConstraints = new LinkedHashMap<Object, Map<Object, Double>>();
-		newObjective = new LinkedHashMap<Object, Double>();
-		updatedConstraints = new HashSet<Object>();
-		removedConstraints = new HashSet<Object>();
-
 		try {
 			cplex = new IloCplex();
 		} catch (IloException e) {
@@ -67,7 +52,7 @@ public class FasterLPTable {
 		}
 	}
 
-	public FasterLPTable(int m, int n) {
+	public LPTable(int m, int n) {
 		constants = new LinkedHashMap<Object, Double>(m);
 		constraints = new LinkedHashMap<Object, Map<Object, Double>>(m);
 		objective = new LinkedHashMap<Object, Double>(n);
@@ -80,10 +65,6 @@ public class FasterLPTable {
 		constraintTypes = new LinkedHashMap<Object, Integer>(m);
 		lb = new LinkedHashMap<Object, Double>(n);
 		ub = new LinkedHashMap<Object, Double>();
-
-		newConstraints = new LinkedHashMap<Object, Map<Object, Double>>(m);
-		newObjective = new LinkedHashMap<Object, Double>(n);
-
 		try {
 			cplex = new IloCplex();
 		} catch (IloException e) {
@@ -97,19 +78,16 @@ public class FasterLPTable {
 		return value == null ? 0 : value;
 	}
 
-	private void updateEquationIndices(Object eqKey) {
+	protected void updateEquationIndices(Object eqKey) {
 		getEquationIndex(eqKey);
 	}
 
-	private void updateVariableIndices(Object varKey) {
+	protected void updateVariableIndices(Object varKey) {
 		getVariableIndex(varKey);
 	}
 
 	public void setObjective(Object varKey, double value) {
-		if (Math.abs(value) < Double.MIN_VALUE)
-			return;
-		if (objective.put(varKey, value) == null)
-			newObjective.put(varKey, value);
+		objective.put(varKey, value);
 		updateVariableIndices(varKey);
 	}
 
@@ -122,7 +100,7 @@ public class FasterLPTable {
 	public void setConstant(Object eqKey, double value) {
 		if (Math.abs(value) < Double.MIN_VALUE)
 			return;
-		constants.put(eqKey, value) ;
+		constants.put(eqKey, value);
 		updateEquationIndices(eqKey);
 	}
 
@@ -140,12 +118,8 @@ public class FasterLPTable {
 		if (row == null) {
 			row = new LinkedHashMap<Object, Double>();
 			constraints.put(eqKey, row);
-			newConstraints.put(eqKey, row);
 		}
-		
-		if(row.put(varKey, value) == null) {
-			newConstraints.put(eqKey, row);
-		}
+		row.put(varKey, value);
 		updateEquationIndices(eqKey);
 		updateVariableIndices(varKey);
 	}
@@ -195,33 +169,22 @@ public class FasterLPTable {
 	}
 
 	public LPData toCplex() throws IloException {
+		cplex.clearModel();
+		cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
+		cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+		cplex.setOut(null);
+		
 		double[] ub = getUpperBounds();
 		double[] lb = getLowerBounds();
 		String[] variableNames = getVariableNames();
+		IloNumVar[] variables = cplex.numVarArray(variableNames.length, lb, ub, variableNames);
+		IloRange[] constraints = addConstraints(cplex, variables);
 
-		lpVariables = updateVariables(variableNames, lb, ub);
-		lpConstraints = addConstraints(lpVariables);
-
-		addObjective(lpVariables);
-		return new LPData(cplex, lpVariables, lpConstraints, getWatchedPrimalVars(lpVariables), getWatchedDualVars(lpConstraints));
+		addObjective(variables);
+		return new LPData(cplex, variables, constraints, getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
 	}
 
-	private IloNumVar[] updateVariables(String[] variableNames, double[] lb, double[] ub) throws IloException {
-		if (lpVariables == null)
-			return cplex.numVarArray(variableNames.length, lb, ub, variableNames);
-
-		IloNumVar[] newVariables = new IloNumVar[variableNames.length];
-
-		for (int i = 0; i < lpVariables.length; i++) {
-			newVariables[i] = lpVariables[i];
-		}
-		for (int i = lpVariables.length; i < newVariables.length; i++) {
-			newVariables[i] = cplex.numVar(lb[i], ub[i], variableNames[i]);
-		}
-		return newVariables;
-	}
-
-	private String[] getVariableNames() {
+	protected String[] getVariableNames() {
 		String[] variableNames = new String[columnCount()];
 
 		for (Entry<Object, Integer> entry : variableIndices.entrySet()) {
@@ -230,7 +193,7 @@ public class FasterLPTable {
 		return variableNames;
 	}
 
-	private double[] getLowerBounds() {
+	protected double[] getLowerBounds() {
 		double[] lb = new double[columnCount()];
 
 		for (Entry<Object, Double> entry : this.lb.entrySet()) {
@@ -239,7 +202,7 @@ public class FasterLPTable {
 		return lb;
 	}
 
-	private double[] getUpperBounds() {
+	protected double[] getUpperBounds() {
 		double[] ub = new double[columnCount()];
 
 		for (int i = 0; i < columnCount(); i++) {
@@ -269,98 +232,53 @@ public class FasterLPTable {
 		return watchedPrimalVars;
 	}
 
-	protected IloRange[] addConstraints(IloNumVar[] x) throws IloException {
-		IloRange[] cplexConstraints = createConstraintsFromLastIteration();
-
-		for (Entry<Object, Map<Object, Double>> rowEntry : newConstraints.entrySet()) {
-			int equationIndex = getEquationIndex(rowEntry.getKey()) - 1;
-
-			if (cplexConstraints[equationIndex] == null) {
-				createNewConstraint(x, cplexConstraints, rowEntry.getKey(), rowEntry.getValue(), equationIndex);
-			} else {
-				cplex.remove(cplexConstraints[equationIndex]);
-				createNewConstraint(x, cplexConstraints, rowEntry.getKey(), rowEntry.getValue(), equationIndex);//teï to tady vymažu a nahradim zkusit to ale jenom editací(tzn v setConstr tam enmùžu vkládat celej øádek ale jenom tu zmìnu)
-//				modifyExistingConstraint(x, cplexConstraints, rowEntry, equationIndex);
-			}
-		}
-		newConstraints.clear();
-		for (Object eqKey : updatedConstraints) {
-			int equationIndex = getEquationIndex(eqKey) - 1;
-
-			cplex.remove(cplexConstraints[equationIndex]);
-			createNewConstraint(x, cplexConstraints, eqKey, constraints.get(eqKey), equationIndex);
-		}
-		for (Object eqKey : removedConstraints) {
-			int equationIndex = getEquationIndex(eqKey) - 1;
-			
-			cplex.remove(cplexConstraints[equationIndex]);
-			cplexConstraints[equationIndex] = null;
-		}
-		updatedConstraints.clear();
-		removedConstraints.clear();
-		return cplexConstraints;
-	}
-
-	private void modifyExistingConstraint(IloNumVar[] x, IloRange[] cplexConstraints, Entry<Object, Map<Object, Double>> rowEntry, int equationIndex) throws IloException {
-		cplex.addToExpr(cplexConstraints[equationIndex], createRowExpresion(x, rowEntry.getValue()));
-	}
-
-	private void createNewConstraint(IloNumVar[] x, IloRange[] cplexConstraints, Object key, Map<Object, Double> row, int equationIndex) throws IloException {
-		IloLinearNumExpr rowExpr = createRowExpresion(x, row);
-		Integer constraintType = getConstraintType(key);
-
-		switch (constraintType) {
-		case 0:
-			cplexConstraints[equationIndex] = cplex.addLe(rowExpr, getConstant(key));
-			break;
-		case 1:
-			cplexConstraints[equationIndex] = cplex.addEq(rowExpr, getConstant(key));
-			break;
-		case 2:
-			cplexConstraints[equationIndex] = cplex.addGe(rowExpr, getConstant(key));
-			break;
-		default:
-			break;
-		}
-	}
-
-	private IloRange[] createConstraintsFromLastIteration() {
+	protected IloRange[] addConstraints(IloCplex cplex, IloNumVar[] x) throws IloException {
 		IloRange[] cplexConstraints = new IloRange[rowCount()];
 
-		if (lpConstraints != null)
-			for (int i = 0; i < lpConstraints.length; i++) {
-				cplexConstraints[i] = lpConstraints[i];
+		for (Entry<Object, Map<Object, Double>> rowEntry : constraints.entrySet()) {
+			IloLinearNumExpr rowExpr = createRowExpresion(cplex, x, rowEntry);
+			Integer constraintType = getConstraintType(rowEntry);
+			int equationIndex = getEquationIndex(rowEntry.getKey()) - 1;
+
+			switch (constraintType) {
+			case 0:
+				cplexConstraints[equationIndex] = cplex.addLe(rowExpr, getConstant(rowEntry.getKey()));
+				break;
+			case 1:
+				cplexConstraints[equationIndex] = cplex.addEq(rowExpr, getConstant(rowEntry.getKey()));
+				break;
+			case 2:
+				cplexConstraints[equationIndex] = cplex.addGe(rowExpr, getConstant(rowEntry.getKey()));
+				break;
+			default:
+				break;
 			}
+		}
 		return cplexConstraints;
 	}
 
-	private int getConstraintType(Object eqKey) {
-		Integer constraintType = constraintTypes.get(eqKey);
+	protected int getConstraintType(Entry<Object, Map<Object, Double>> rowEntry) {
+		Integer constraintType = constraintTypes.get(rowEntry.getKey());
 
 		return constraintType == null ? 0 : constraintType;
 	}
 
-	private IloLinearNumExpr createRowExpresion(IloNumVar[] x, Map<Object, Double> row) throws IloException {
+	protected IloLinearNumExpr createRowExpresion(IloCplex cplex, IloNumVar[] x, Entry<Object, Map<Object, Double>> rowEntry) throws IloException {
 		IloLinearNumExpr rowExpr = cplex.linearNumExpr();
 
-		for (Entry<Object, Double> memberEntry : row.entrySet()) {
+		for (Entry<Object, Double> memberEntry : rowEntry.getValue().entrySet()) {
 			rowExpr.addTerm(-memberEntry.getValue().doubleValue(), x[getVariableIndex(memberEntry.getKey()) - 1]);
 		}
 		return rowExpr;
 	}
 
 	protected void addObjective(IloNumVar[] x) throws IloException {
-		IloLinearNumExpr objExpr = cplex.linearNumExpr();
+		double[] objCoef = new double[x.length];
 
-		for (Entry<Object, Double> entry : newObjective.entrySet()) {
-			objExpr.addTerm(entry.getValue(), x[getVariableIndex(entry.getKey()) - 1]);
-			;
+		for (Entry<Object, Double> entry : objective.entrySet()) {
+			objCoef[variableIndices.get(entry.getKey())] = entry.getValue().doubleValue();
 		}
-		if (lpObj == null)
-			lpObj = cplex.addMaximize(objExpr);
-		else
-			cplex.addToExpr(lpObj, objExpr);
-		newObjective.clear();
+		cplex.addMaximize(cplex.scalProd(x, objCoef));
 	}
 
 	/**
@@ -399,11 +317,10 @@ public class FasterLPTable {
 			cplex.clearModel();
 			cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
 			cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
-			cplex.setOut(null);
 		} catch (IloException e) {
 			e.printStackTrace();
 		}
-
+		cplex.setOut(null);
 		constants = new LinkedHashMap<Object, Double>();
 		constraints = new LinkedHashMap<Object, Map<Object, Double>>();
 		objective = new LinkedHashMap<Object, Double>();
@@ -420,15 +337,8 @@ public class FasterLPTable {
 
 	public void clearConstraint(Object eqKey, Object varKey) {
 		Map<Object, Double> row = constraints.get(eqKey);
-
-		if (row != null) {
+		
+		if(row != null)
 			row.remove(varKey);
-			updatedConstraints.add(eqKey);
-			if (row.isEmpty()) {
-				constraints.remove(eqKey);
-				removedConstraints.add(eqKey);
-			}
-		}
-
 	}
 }

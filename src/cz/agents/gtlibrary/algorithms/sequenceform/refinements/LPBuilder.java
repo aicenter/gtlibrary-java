@@ -11,6 +11,8 @@ import java.util.Map.Entry;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.numbers.Epsilon;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.numbers.EpsilonPolynom;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
@@ -32,7 +34,7 @@ import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 public class LPBuilder extends TreeVisitor {
 
 	protected String lpFileName;
-	protected LPTable lpTable;
+	protected EpsilonLPTable lpTable;
 	protected Epsilon epsilon;
 
 	public static void main(String[] args) {
@@ -157,7 +159,7 @@ public class LPBuilder extends TreeVisitor {
 		Sequence p1EmptySequence = new LinkedListSequenceImpl(players[0]);
 		Sequence p2EmptySequence = new LinkedListSequenceImpl(players[1]);
 		
-		lpTable = new LPTable();
+		lpTable = new EpsilonLPTable();
 
 		initCost(p1EmptySequence);
 		initE(p1EmptySequence);
