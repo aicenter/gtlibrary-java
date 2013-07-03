@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.numbers.EpsilonPolynom;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;

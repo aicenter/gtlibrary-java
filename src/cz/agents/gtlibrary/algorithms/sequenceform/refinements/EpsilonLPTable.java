@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class LPTable {
+public class EpsilonLPTable {
 
 	protected Map<Object, Number> objective;
 	protected Map<Object, Map<Object, Number>> constraints;
@@ -27,7 +27,7 @@ public class LPTable {
 
 	protected double maxCoefficient;
 
-	public LPTable() {
+	public EpsilonLPTable() {
 		constants = new LinkedHashMap<Object, Number>();
 		constraints = new LinkedHashMap<Object, Map<Object, Number>>();
 		objective = new LinkedHashMap<Object, Number>();
@@ -44,7 +44,7 @@ public class LPTable {
 		maxCoefficient = Double.NEGATIVE_INFINITY;
 	}
 
-	public LPTable(int m, int n) {
+	public EpsilonLPTable(int m, int n) {
 		constants = new LinkedHashMap<Object, Number>(m);
 		constraints = new LinkedHashMap<Object, Map<Object, Number>>(m);
 		objective = new LinkedHashMap<Object, Number>(n);

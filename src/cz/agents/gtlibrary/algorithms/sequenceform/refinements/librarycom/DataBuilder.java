@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -7,6 +7,8 @@ import java.util.Map.Entry;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
@@ -31,9 +33,9 @@ public class DataBuilder extends TreeVisitor {
 	protected Data data;
 
 	public static void main(String[] args) {
-		runAoS();
+//		runAoS();
 //		runGoofSpiel();
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
 	}
 
