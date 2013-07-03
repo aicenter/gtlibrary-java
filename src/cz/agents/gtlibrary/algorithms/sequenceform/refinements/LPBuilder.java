@@ -36,8 +36,8 @@ public class LPBuilder extends TreeVisitor {
 	protected Epsilon epsilon;
 
 	public static void main(String[] args) {
-//		runAoS();
-		runGoofSpiel();
+		runAoS();
+//		runGoofSpiel();
 //		runKuhnPoker();
 //		runGenericPoker();
 	}
@@ -186,7 +186,7 @@ public class LPBuilder extends TreeVisitor {
 	@Override
 	protected void visitLeaf(GameState state, Player lastPlayer, Key lastKey) {
 		updateParentLinks(state, lastPlayer, lastKey);
-		lpTable.substractFromConstraint(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0]/* + utilityShift */));
+		lpTable.substractFromConstraint(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), state.getNatureProbability() * state.getUtilities()[0]);
 	}
 
 	@Override
@@ -203,9 +203,9 @@ public class LPBuilder extends TreeVisitor {
 		Key varKey = new Key("P", new Key(state.getISKeyForPlayerToMove()));
 
 		updateParentLinks(state, lastPlayer, lastKey);
-		lpTable.setConstraint(lastKeys[0], varKey, -1);//E
+		lpTable.setConstraint(state.getSequenceFor(players[0]), varKey, -1);//E
 		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-		lpTable.watchDualVariable(lastKeys[0], state.getSequenceForPlayerToMove());
+		lpTable.watchDualVariable(state.getSequenceFor(players[0]), state.getSequenceForPlayerToMove());
 	}
 
 	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key varKey) {
@@ -224,9 +224,9 @@ public class LPBuilder extends TreeVisitor {
 		Key eqKey = new Key("Q", new Key(state.getISKeyForPlayerToMove()));
 
 		updateParentLinks(state, lastPlayer, lastKey);
-		lpTable.setConstraint(eqKey, lastKeys[1], -1);//F
+		lpTable.setConstraint(eqKey, state.getSequenceFor(players[1]), -1);//F
 		lpTable.setConstraintType(eqKey, 1);
-		lpTable.watchPrimalVariable(lastKeys[1], state.getSequenceForPlayerToMove());
+		lpTable.watchPrimalVariable(state.getSequenceFor(players[1]), state.getSequenceForPlayerToMove());
 	}
 
 	public void updateForSecondPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
