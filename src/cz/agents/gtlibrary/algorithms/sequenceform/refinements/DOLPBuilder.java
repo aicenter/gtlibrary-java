@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -20,7 +21,7 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 public class DOLPBuilder {
 
 	protected String lpFileName = "DO_LP_mod.lp";
-	protected FasterLPTable lpTable;
+	protected FastLPTable lpTable;
 	protected Player[] players;
 	protected PrintStream output;
 	protected Double p1Value;
@@ -32,36 +33,39 @@ public class DOLPBuilder {
 
 	public DOLPBuilder(Player[] players) {
 		this.players = players;
-		lpTable = new FasterLPTable();
+		lpTable = new FastLPTable();
 		initTable();
 		p1Value = Double.NaN;
 	}
-
+	
 	public void initTable() {
+		Sequence p1EmptySequence = new LinkedListSequenceImpl(players[0]);
+		Sequence p2EmptySequence = new LinkedListSequenceImpl(players[1]);
+		
 		lpTable.clearTable();
 
-		initCost();
-		initE();
-		initF();
-		initf();
+		initCost(p1EmptySequence);
+		initE(p1EmptySequence);
+		initF(p2EmptySequence);
+		initf(p2EmptySequence);
 	}
 
-	public void initf() {
-		lpTable.setConstant(new Key("Q", players[1]), -1);//f for root
+	public void initf(Sequence p2EmptySequence) {
+		lpTable.setConstant(new Key("Q", p2EmptySequence), -1);//f for root
 	}
 
-	public void initF() {
-		lpTable.setConstraint(new Key("Q", players[1]), players[1], 1);//F in root (only 1)
-		lpTable.setConstraintType(new Key("Q", players[1]), 1);
+	public void initF(Sequence p2EmptySequence) {
+		lpTable.setConstraint(new Key("Q", p2EmptySequence), p2EmptySequence, 1);//F in root (only 1)
+		lpTable.setConstraintType(new Key("Q", p2EmptySequence), 1);
 	}
 
-	public void initE() {
-		lpTable.setConstraint(players[0], new Key("P", players[0]), 1);//E in root (only 1)
-		lpTable.setLowerBound(new Key("P", players[0]), Double.NEGATIVE_INFINITY);
+	public void initE(Sequence p1EmptySequence) {
+		lpTable.setConstraint(p1EmptySequence, new Key("P", p1EmptySequence), 1);//E in root (only 1)
+		lpTable.setLowerBound(new Key("P", p1EmptySequence), Double.NEGATIVE_INFINITY);
 	}
 
-	public void initCost() {
-		lpTable.setObjective(new Key("P", players[0]), -1);
+	public void initCost(Sequence p1EmptySequence) {
+		lpTable.setObjective(new Key("P", p1EmptySequence), -1);
 	}
 
 	public void solve() {
@@ -99,7 +103,6 @@ public class DOLPBuilder {
 //			}
 		} catch (IloException e) {
 			e.printStackTrace();
-//			new Scanner(System.in).next();
 		}
 	}
 
@@ -194,8 +197,6 @@ public class DOLPBuilder {
 	}
 
 	protected Object getSubsequenceKey(Sequence sequence) {
-		if (sequence.size() <= 1)
-			return sequence.getPlayer();
 		return sequence.getSubSequence(sequence.size() - 1);
 	}
 
