@@ -20,8 +20,8 @@ public class Data {
 	private Map<Object, Integer> E;
 	private Map<Object, Integer> F;
 	private Map<Object, Double> U;
-	private Map<Object, Number> M1;
-	private Map<Object, Number> M2;
+	private Map<Object, String> M1;
+	private Map<Object, String> M2;
 	private Map<Object, Integer> rowIndicesE;
 	private Map<Object, Integer> columnIndicesE;
 	private Map<Object, Integer> rowIndicesF;
@@ -49,8 +49,8 @@ public class Data {
 		isKeys = new LinkedHashMap<Player, Set<Pair<Integer, Sequence>>>();
 		isKeys.put(new PlayerImpl(0), new HashSet<Pair<Integer, Sequence>>());
 		isKeys.put(new PlayerImpl(1), new HashSet<Pair<Integer, Sequence>>());
-		M1 = new LinkedHashMap<Object, Number>();
-		M2 = new LinkedHashMap<Object, Number>();
+		M1 = new LinkedHashMap<Object, String>();
+		M2 = new LinkedHashMap<Object, String>();
 		x1 = new LinkedHashMap<Object, Object>();
 		x2 = new LinkedHashMap<Object, Object>();
 	}
@@ -131,6 +131,50 @@ public class Data {
 	public void addToX2(Object isKey, Object key) {
 		x2.put(isKey, key);
 	}
+	
+//	public void addOneToM1(Sequence key) {
+//		int index = getColumnIndexE(key);
+//		
+//		M1.put(new Pair<Integer, Integer>(index, index), "1");
+//	}
+//	
+//	public void addOneToM2(Sequence key) {
+//		int index = getColumnIndexF(key);
+//		
+//		M2.put(new Pair<Integer, Integer>(index, index), "1");
+//	}
+//	
+//	public void addEpsilonToM1(Sequence sequence, Sequence continuation) {
+//		M1.put(new Pair<Integer, Integer>(getColumnIndexE(continuation), getColumnIndexE(sequence)), "0,-1");
+//	}
+//	
+//	public void addEpsilonToM2(Sequence sequence, Sequence continuation) {
+//		M2.put(new Pair<Integer, Integer>(getColumnIndexF(continuation), getColumnIndexF(sequence)), "0,-1");
+//	}
+	
+	public void addP1PerturbationsFor(Sequence sequence) {
+		int index = getColumnIndexE(sequence);
+		int subseqIndex = getColumnIndexE(getSubSequenceKey(sequence));
+		
+		M1.put(new Pair<Integer, Integer>(index, index), "1");
+		M1.put(new Pair<Integer, Integer>(subseqIndex, subseqIndex), "1");
+		M1.put(new Pair<Integer, Integer>(index, subseqIndex), "0,-1");
+	}
+	
+	public void addP2PerturbationsFor(Sequence sequence) {
+		int index = getColumnIndexF(sequence);
+		int subseqIndex = getColumnIndexF(getSubSequenceKey(sequence));
+		
+		M2.put(new Pair<Integer, Integer>(index, index), "1");
+		M2.put(new Pair<Integer, Integer>(subseqIndex, subseqIndex), "1");
+		M2.put(new Pair<Integer, Integer>(index, subseqIndex), "0,-1");
+	}
+	
+	public Object getSubSequenceKey(Sequence sequence) {
+		if(sequence.size() <= 1)
+			return sequence.getPlayer();
+		return sequence.getSubSequence(sequence.size() - 1);
+	}
 
 	public void export(String fileName) throws IOException {
 		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(fileName)));
@@ -141,9 +185,9 @@ public class Data {
 		writer.write("F2: " + F.size());
 		printEntrySet(writer, F);
 		writer.write("U1: " + U.size());
-		printEntrySet(writer, U);
+		printUtilityEntrySet(writer, U);
 		writer.write("U2: " + U.size());
-		printNegatedEntrySet(writer, U);
+		printUtilityNegatedEntrySet(writer, U);
 		writer.write("M1: " + M1.size());
 		printEntrySet(writer, M1);
 		writer.write("M2: " + M2.size());
@@ -196,7 +240,41 @@ public class Data {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void printEntrySet(BufferedWriter writer, Map<Object, ? extends Number> map) throws IOException {
+	public void printEntrySet(BufferedWriter writer, Map<Object, ? extends Object> map) throws IOException {
+		writer.newLine();
+		writer.newLine();
+		for (Entry<Object, ? extends Object> entry : map.entrySet()) {
+			writer.write("(");
+			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getLeft()));
+			writer.write(",");
+			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
+			writer.write(",(");
+			writer.write(entry.getValue().toString());
+			writer.write("))");
+			writer.newLine();
+		}
+		writer.newLine();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void printUtilityEntrySet(BufferedWriter writer, Map<Object, Double> map) throws IOException {
+		writer.newLine();
+		writer.newLine();
+		for (Entry<Object, Double> entry : map.entrySet()) {
+			writer.write("(");
+			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getLeft()));
+			writer.write(",");
+			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
+			writer.write(",(");
+			writer.write(new Integer((new Double(entry.getValue()*10000000).intValue())).toString());
+			writer.write("))");
+			writer.newLine();
+		}
+		writer.newLine();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void printUtilityNegatedEntrySet(BufferedWriter writer, Map<Object, ? extends Number> map) throws IOException {
 		writer.newLine();
 		writer.newLine();
 		for (Entry<Object, ? extends Number> entry : map.entrySet()) {
@@ -205,7 +283,7 @@ public class Data {
 			writer.write(",");
 			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
 			writer.write(",(");
-			writer.write(entry.getValue().toString());
+			writer.write(new Integer(new Double(-entry.getValue().doubleValue()*10000000).intValue()).toString());
 			writer.write("))");
 			writer.newLine();
 		}

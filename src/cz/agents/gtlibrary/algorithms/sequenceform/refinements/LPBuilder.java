@@ -35,9 +35,9 @@ public class LPBuilder extends TreeVisitor {
 	protected Epsilon epsilon;
 
 	public static void main(String[] args) {
-		runAoS();
+//		runAoS();
 //		runGoofSpiel();
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
 	}
 

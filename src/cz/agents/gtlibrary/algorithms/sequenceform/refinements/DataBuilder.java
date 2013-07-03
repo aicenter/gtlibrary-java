@@ -15,12 +15,15 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.strategy.Strategy;
+import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 
 public class DataBuilder extends TreeVisitor {
 	
@@ -30,9 +33,9 @@ public class DataBuilder extends TreeVisitor {
 	protected Player[] players;
 
 	public static void main(String[] args) {
-		runAoS();
+//		runAoS();
 //		runGoofSpiel();
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
 	}
 
@@ -52,13 +55,46 @@ public class DataBuilder extends TreeVisitor {
 
 		System.out.println(parser.getP1RealizationPlan());
 		System.out.println(parser.getP2RealizationPlan());
+		
+		Strategy p1Strategy = new UniformStrategyForMissingSequences();
+		Strategy p2Strategy = new UniformStrategyForMissingSequences();
+		
+		p1Strategy.putAll(parser.getP1RealizationPlan());
+		p2Strategy.putAll(parser.getP2RealizationPlan());
+		
+		UtilityCalculator calculator = new UtilityCalculator(new KuhnPokerGameState(), new KuhnPokerExpander<SequenceInformationSet>(algConfig));
+		
+		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 	}
 
 	public static void runGenericPoker() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		DataBuilder lpBuilder = new DataBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), algConfig, "genericPokerRepr");
+		DataBuilder lpBuilder = new DataBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), algConfig, "GenericPokerRepr");
 
 		lpBuilder.buildLP();
+		
+		try {
+			Runtime.getRuntime().exec("lemkeQP GenericPokerRepr").waitFor();;
+		} catch (IOException e) {
+			System.err.println("Error during library invocation...");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		ResultParser parser = new ResultParser("GenericPokerl1qp", lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
+
+		System.out.println(parser.getP1RealizationPlan());
+		System.out.println(parser.getP2RealizationPlan());
+		
+		Strategy p1Strategy = new UniformStrategyForMissingSequences();
+		Strategy p2Strategy = new UniformStrategyForMissingSequences();
+		
+		p1Strategy.putAll(parser.getP1RealizationPlan());
+		p2Strategy.putAll(parser.getP2RealizationPlan());
+		
+		UtilityCalculator calculator = new UtilityCalculator(new GenericPokerGameState(), new GenericPokerExpander<SequenceInformationSet>(algConfig));
+		
+		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 	}
 
 	public static void runAoS() {
@@ -79,6 +115,16 @@ public class DataBuilder extends TreeVisitor {
 
 		System.out.println(parser.getP1RealizationPlan());
 		System.out.println(parser.getP2RealizationPlan());
+		
+		Strategy p1Strategy = new UniformStrategyForMissingSequences();
+		Strategy p2Strategy = new UniformStrategyForMissingSequences();
+		
+		p1Strategy.putAll(parser.getP1RealizationPlan());
+		p2Strategy.putAll(parser.getP2RealizationPlan());
+		
+		UtilityCalculator calculator = new UtilityCalculator(new AoSGameState(), new AoSExpander<SequenceInformationSet>(algConfig));
+		
+		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 
 	}
 
@@ -87,6 +133,29 @@ public class DataBuilder extends TreeVisitor {
 		DataBuilder lpBuilder = new DataBuilder(new GoofSpielExpander<SequenceInformationSet>(algConfig), new GoofSpielGameState(), algConfig, "GoofspielRepr");
 
 		lpBuilder.buildLP();
+		
+		try {
+			Runtime.getRuntime().exec("lemkeQP GoofspielRepr").waitFor();;
+		} catch (IOException e) {
+			System.err.println("Error during library invocation...");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		ResultParser parser = new ResultParser("GoofspielReprl1qp", lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
+
+		System.out.println(parser.getP1RealizationPlan());
+		System.out.println(parser.getP2RealizationPlan());
+		
+		Strategy p1Strategy = new UniformStrategyForMissingSequences();
+		Strategy p2Strategy = new UniformStrategyForMissingSequences();
+		
+		p1Strategy.putAll(parser.getP1RealizationPlan());
+		p2Strategy.putAll(parser.getP2RealizationPlan());
+		
+		UtilityCalculator calculator = new UtilityCalculator(new GoofSpielGameState(), new GoofSpielExpander<SequenceInformationSet>(algConfig));
+		
+		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 	}
 
 	public DataBuilder(Expander<SequenceInformationSet> expander, GameState rootState, AlgorithmConfig<SequenceInformationSet> algConfig, String fileName) {
@@ -162,6 +231,7 @@ public class DataBuilder extends TreeVisitor {
 
 		data.setE(eqKey, child.getSequenceFor(lastPlayer), 1);//E child
 		data.addToX1(eqKey, child.getSequenceFor(lastPlayer));
+		data.addP1PerturbationsFor(child.getSequenceFor(lastPlayer));
 
 //		lpTable.setConstraint(eqKey, tmpKey, -1);//u (eye)
 //		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
@@ -182,6 +252,7 @@ public class DataBuilder extends TreeVisitor {
 
 		data.setF(eqKey, child.getSequenceFor(lastPlayer), 1);//F child
 		data.addToX2(eqKey, child.getSequenceFor(lastPlayer));
+		data.addP2PerturbationsFor(child.getSequenceFor(lastPlayer));
 //		lpTable.setConstraintType(eqKey, 1);
 //		lpTable.watchPrimalVariable(varKey, child.getSequenceFor(lastPlayer));
 //		lpTable.setConstraint(tmpKey, varKey, 1);//indices y
