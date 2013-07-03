@@ -29,7 +29,6 @@ public class DataBuilder extends TreeVisitor {
 	
 	protected String fileName;
 	protected Data data;
-	protected Player[] players;
 
 	public static void main(String[] args) {
 		runAoS();
@@ -161,7 +160,6 @@ public class DataBuilder extends TreeVisitor {
 		super(rootState, expander, algConfig);
 		this.expander = expander;
 		this.fileName = fileName;
-		this.players = rootState.getAllPlayers();
 	}
 
 	public void buildLP() {

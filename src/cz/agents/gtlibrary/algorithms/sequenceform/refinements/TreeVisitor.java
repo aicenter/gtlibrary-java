@@ -14,6 +14,7 @@ public abstract class TreeVisitor {
 	protected GameState rootState;
 	protected Expander<? extends InformationSet> expander;
 	protected AlgorithmConfig<SequenceInformationSet> algConfig;
+	protected Player[] players;
 
 	protected Object[] lastKeys;
 
@@ -23,6 +24,7 @@ public abstract class TreeVisitor {
 		lastKeys = new Object[] { new LinkedListSequenceImpl(rootState.getAllPlayers()[0]), 
 								  new LinkedListSequenceImpl(rootState.getAllPlayers()[1]) };
 		this.algConfig = algConfig;
+		this.players = rootState.getAllPlayers();
 	}
 
 	public void visitTree(GameState root, Player lastPlayer, Key lastKey) {
