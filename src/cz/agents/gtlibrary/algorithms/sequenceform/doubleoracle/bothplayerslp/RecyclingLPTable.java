@@ -18,7 +18,7 @@ public class RecyclingLPTable extends LPTable {
 
 	protected Map<Object, Double> newObjective;
 	protected Map<Object, Map<Object, Double>> newConstraints;
-	protected Set<Object> updatedConstraints;
+	protected Map<Object, Map<Object, Double>> updatedConstraints;
 	protected Set<Object> removedConstraints;
 
 	protected IloObjective lpObj;
@@ -29,7 +29,7 @@ public class RecyclingLPTable extends LPTable {
 		super();
 		newConstraints = new LinkedHashMap<Object, Map<Object, Double>>();
 		newObjective = new LinkedHashMap<Object, Double>();
-		updatedConstraints = new HashSet<Object>();
+		updatedConstraints = new LinkedHashMap<Object, Map<Object, Double>>();
 		removedConstraints = new HashSet<Object>();
 	}
 
@@ -37,7 +37,7 @@ public class RecyclingLPTable extends LPTable {
 		super(m, n);
 		newConstraints = new LinkedHashMap<Object, Map<Object, Double>>(m);
 		newObjective = new LinkedHashMap<Object, Double>(n);
-		updatedConstraints = new HashSet<Object>();
+		updatedConstraints = new LinkedHashMap<Object, Map<Object, Double>>();
 		removedConstraints = new HashSet<Object>();
 	}
 
@@ -57,11 +57,17 @@ public class RecyclingLPTable extends LPTable {
 		if (row == null) {
 			row = new LinkedHashMap<Object, Double>();
 			constraints.put(eqKey, row);
-			newConstraints.put(eqKey, row);
 		}
-		
-		if(row.put(varKey, value) == null) {
-			newConstraints.put(eqKey, row);
+
+		if (row.put(varKey, value) == null) {
+			Map<Object, Double> newRow = newConstraints.get(eqKey);
+
+			if (newRow == null)
+				newRow = new LinkedHashMap<Object, Double>();
+
+			newRow.put(varKey, value);
+			newConstraints.put(eqKey, newRow);
+//			newConstraints.put(eqKey, row);
 		}
 		updateEquationIndices(eqKey);
 		updateVariableIndices(varKey);
@@ -97,32 +103,35 @@ public class RecyclingLPTable extends LPTable {
 	protected IloRange[] addConstraints(IloNumVar[] x) throws IloException {
 		IloRange[] cplexConstraints = createConstraintsFromLastIteration();
 
+		for (Entry<Object, Map<Object, Double>> rowEntry : updatedConstraints.entrySet()) {
+//			int equationIndex = getEquationIndex(eqKey) - 1;
+//
+//			cplex.remove(cplexConstraints[equationIndex]);
+//			createNewConstraint(x, cplexConstraints, eqKey, constraints.get(eqKey), equationIndex);
+			modifyExistingConstraint(x, cplexConstraints, rowEntry, getEquationIndex(rowEntry.getKey()) - 1);
+		}
+		for (Object eqKey : removedConstraints) {
+			int equationIndex = getEquationIndex(eqKey) - 1;
+
+			cplex.remove(cplexConstraints[equationIndex]);
+			cplexConstraints[equationIndex] = null;
+		}
+		updatedConstraints.clear();
+		removedConstraints.clear();
+
 		for (Entry<Object, Map<Object, Double>> rowEntry : newConstraints.entrySet()) {
 			int equationIndex = getEquationIndex(rowEntry.getKey()) - 1;
 
 			if (cplexConstraints[equationIndex] == null) {
 				createNewConstraint(x, cplexConstraints, rowEntry.getKey(), rowEntry.getValue(), equationIndex);
 			} else {
-				cplex.remove(cplexConstraints[equationIndex]);
-				createNewConstraint(x, cplexConstraints, rowEntry.getKey(), rowEntry.getValue(), equationIndex);//teï to tady vymažu a nahradim zkusit to ale jenom editací(tzn v setConstr tam enmùžu vkládat celej øádek ale jenom tu zmìnu)
-//				modifyExistingConstraint(x, cplexConstraints, rowEntry, equationIndex);
+//				cplex.remove(cplexConstraints[equationIndex]);
+//				createNewConstraint(x, cplexConstraints, rowEntry.getKey(), rowEntry.getValue(), equationIndex);//teï to tady vymažu a nahradim zkusit to ale jenom editací(tzn v setConstr tam enmùžu vkládat celej øádek ale jenom tu zmìnu)
+				modifyExistingConstraint(x, cplexConstraints, rowEntry, equationIndex);
 			}
 		}
 		newConstraints.clear();
-		for (Object eqKey : updatedConstraints) {
-			int equationIndex = getEquationIndex(eqKey) - 1;
 
-			cplex.remove(cplexConstraints[equationIndex]);
-			createNewConstraint(x, cplexConstraints, eqKey, constraints.get(eqKey), equationIndex);
-		}
-		for (Object eqKey : removedConstraints) {
-			int equationIndex = getEquationIndex(eqKey) - 1;
-			
-			cplex.remove(cplexConstraints[equationIndex]);
-			cplexConstraints[equationIndex] = null;
-		}
-		updatedConstraints.clear();
-		removedConstraints.clear();
 		return cplexConstraints;
 	}
 
@@ -187,15 +196,24 @@ public class RecyclingLPTable extends LPTable {
 		newObjective.clear();
 	}
 
-	public void clearConstraint(Object eqKey, Object varKey) {
+	public void removeFromConstraint(Object eqKey, Object varKey) {
 		Map<Object, Double> row = constraints.get(eqKey);
 
 		if (row != null) {
-			row.remove(varKey);
-			updatedConstraints.add(eqKey);
+			Double removedValue = row.remove(varKey);
+
+			if (removedValue == null)
+				return;
 			if (row.isEmpty()) {
 				constraints.remove(eqKey);
 				removedConstraints.add(eqKey);
+			} else {
+				Map<Object, Double> updatedRow = updatedConstraints.get(eqKey);
+
+				if (updatedRow == null)
+					updatedRow = new LinkedHashMap<Object, Double>();
+				updatedRow.put(varKey, -removedValue);
+				updatedConstraints.put(eqKey, updatedRow);
 			}
 		}
 
