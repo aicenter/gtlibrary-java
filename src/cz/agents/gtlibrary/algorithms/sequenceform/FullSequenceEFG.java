@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
+import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
+import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -50,11 +53,12 @@ public class FullSequenceEFG {
     private double gameValue = Double.NaN;
 
 	public static void main(String[] args) {
+		runAoS();
 //		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
-      runRandomGame();
+//      runRandomGame();
 //      runSimRandomGame();
 //		runPursuit();
 	}
@@ -66,6 +70,15 @@ public class FullSequenceEFG {
         FullSequenceEFG efg = new FullSequenceEFG(rootState, new PursuitExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
         
         efg.generate();
+    }
+    
+    public static void runAoS() {
+        GameState rootState = new AoSGameState();
+        GameInfo gameInfo = new AoSGameInfo();
+        SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, new AoSExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+        
+        System.out.println(efg.generate());
     }
 
 	public static void runSimRandomGame() {
