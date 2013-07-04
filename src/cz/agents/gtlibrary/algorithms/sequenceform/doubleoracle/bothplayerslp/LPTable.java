@@ -335,7 +335,7 @@ public class LPTable {
 		ub = new LinkedHashMap<Object, Double>();
 	}
 
-	public void clearConstraint(Object eqKey, Object varKey) {
+	public void removeFromConstraint(Object eqKey, Object varKey) {
 		Map<Object, Double> row = constraints.get(eqKey);
 		
 		if(row != null)

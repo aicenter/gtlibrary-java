@@ -78,7 +78,6 @@ public class DOLPBuilder {
 			long generationStart = System.currentTimeMillis();
 			LPData lpData = lpTable.toCplex();
 			constraintGenerationTime += System.currentTimeMillis() - generationStart;
-
 //			lpData.getSolver().setParam(IloCplex.DoubleParam.EpMrk, 0.9999);
 //			lpData.getSolver().exportModel(lpFileName);
 			
