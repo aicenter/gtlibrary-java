@@ -35,8 +35,8 @@ public class ReducedLPBuilder extends LPBuilder {
 	protected double utilityShift;
 	
 	public static void main(String[] args) {
-//		runAoS();
-		runGoofSpiel();
+		runAoS();
+//		runGoofSpiel();
 //		runKuhnPoker();
 //		runGenericPoker();
 	}
@@ -80,21 +80,21 @@ public class ReducedLPBuilder extends LPBuilder {
 		utilityShift = info.getMaxUtility() + 1;
 	}
 	
-	public void initF() {
-		lpTable.setConstraint(new Key("Q", lastKeys[1]), lastKeys[1], 1);//F in root (only 1)
-		lpTable.setConstraintType(new Key("Q", lastKeys[1]), 2);
+	public void initF(Sequence p2EmptySequence) {
+		lpTable.setConstraint(new Key("Q", p2EmptySequence), p2EmptySequence, 1);//F in root (only 1)
+		lpTable.setConstraintType(new Key("Q", p2EmptySequence), 2);
 	}
 
-	public void initE() {
-		lpTable.setConstraint(lastKeys[0], new Key("P", lastKeys[0]), 1);//E in root (only 1)
-		lpTable.setLowerBound(new Key("P", lastKeys[0]), Double.NEGATIVE_INFINITY);
-		lpTable.setUpperBound(new Key("P", lastKeys[0]), 0);
+	public void initE(Sequence p1EmptySequence) {
+		lpTable.setConstraint(p1EmptySequence, new Key("P", p1EmptySequence), 1);//E in root (only 1)
+		lpTable.setLowerBound(new Key("P", p1EmptySequence), Double.NEGATIVE_INFINITY);
+		lpTable.setUpperBound(new Key("P", p1EmptySequence), 0);
 	}
 	
 	@Override
 	protected void visitLeaf(GameState state, Player lastPlayer, Key lastKey) {
 		updateParentLinks(state, lastPlayer, lastKey);
-		lpTable.substractFromConstraint(lastKeys[0], lastKeys[1], state.getNatureProbability() * (state.getUtilities()[0] - utilityShift));
+		lpTable.substractFromConstraint(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), state.getNatureProbability() * (state.getUtilities()[0] - utilityShift));
 	}
 	
 	public Map<Sequence, Double> createFirstPlayerStrategy(IloCplex cplex, Map<Object, IloRange> watchedDualVars) throws IloException {
@@ -103,21 +103,21 @@ public class ReducedLPBuilder extends LPBuilder {
 		for (Entry<Object, IloRange> entry : watchedDualVars.entrySet()) {
 			p1Strategy.put((Sequence) entry.getKey(), cplex.getDual(entry.getValue()));
 		}
-		return p1Strategy;je tu probléms  tim shoftem, zksuit to nastavit tak aby jedna primár poèítal furt s kladnou a duál furt se zápornou nebo opaènì
+		return p1Strategy;//je tu probléms  tim shoftem, zksuit to nastavit tak aby jedna primár poèítal furt s kladnou a duál furt se zápornou nebo opaènì
 	}
 	
 	public void updateLPForFirstPlayer(GameState state, Player lastPlayer, Key lastKey) {
 		Key varKey = new Key("P", new Key(state.getISKeyForPlayerToMove()));
 
 		updateParentLinks(state, lastPlayer, lastKey);
-		lpTable.setConstraint(lastKeys[0], varKey, -1);//E
+		lpTable.setConstraint(state.getSequenceFor(players[0]), varKey, -1);//E
 		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
 		lpTable.setUpperBound(varKey, 0);
-		lpTable.watchDualVariable(lastKeys[0], state.getSequenceForPlayerToMove());
+		lpTable.watchDualVariable(state.getSequenceFor(players[0]), state.getSequenceForPlayerToMove());
 	}
 
 	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key varKey) {
-		Key eqKey = new Key(child.getSequenceFor(lastPlayer));
+		Object eqKey = child.getSequenceFor(lastPlayer);
 		Key tmpKey = new Key("U", new Key(child.getSequenceFor(lastPlayer)));
 
 		lpTable.watchDualVariable(eqKey, child.getSequenceFor(lastPlayer));
@@ -130,13 +130,13 @@ public class ReducedLPBuilder extends LPBuilder {
 		Key eqKey = new Key("Q", new Key(state.getISKeyForPlayerToMove()));
 
 		updateParentLinks(state, lastPlayer, lastKey);
-		lpTable.setConstraint(eqKey, lastKeys[1], -1);//F
+		lpTable.setConstraint(eqKey, state.getSequenceFor(players[1]), -1);//F
 		lpTable.setConstraintType(eqKey, 2);
-		lpTable.watchPrimalVariable(lastKeys[1], state.getSequenceForPlayerToMove());
+		lpTable.watchPrimalVariable(state.getSequenceFor(players[1]), state.getSequenceForPlayerToMove());
 	}
 
 	public void updateForSecondPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
-		Key varKey = new Key(child.getSequenceFor(lastPlayer));
+		Object varKey = child.getSequenceFor(lastPlayer);
 		Key tmpKey = new Key("V", new Key(child.getSequenceFor(lastPlayer)));
 
 		lpTable.setConstraint(eqKey, varKey, 1);//F child
