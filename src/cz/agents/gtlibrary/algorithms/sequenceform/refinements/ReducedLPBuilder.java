@@ -35,10 +35,10 @@ public class ReducedLPBuilder extends LPBuilder {
 	protected double utilityShift;
 	
 	public static void main(String[] args) {
-		runAoS();
+//		runAoS();
 //		runGoofSpiel();
 //		runKuhnPoker();
-//		runGenericPoker();
+		runGenericPoker();
 	}
 
 	public static void runKuhnPoker() {

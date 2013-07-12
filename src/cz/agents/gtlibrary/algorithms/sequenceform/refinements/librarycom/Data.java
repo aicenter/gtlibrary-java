@@ -16,8 +16,8 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
 public class Data {
-	
-	private final int UTILITY_COEF = 10000000;
+
+	private final int UTILITY_COEF = 1000000;
 
 	private Map<Object, Integer> E;
 	private Map<Object, Integer> F;
@@ -31,7 +31,7 @@ public class Data {
 //	private Map<Object, Integer> rowIndicesU;
 //	private Map<Object, Integer> columnIndicesU;
 	private Map<Player, Set<Sequence>> sequences;
-	private Map<Player, Set<Pair<Integer, Sequence>>> isKeys;
+	private Map<Player, Set<Object>> isKeys;
 	private Map<Object, Object> x1;
 	private Map<Object, Object> x2;
 
@@ -48,9 +48,9 @@ public class Data {
 		sequences = new LinkedHashMap<Player, Set<Sequence>>();
 		sequences.put(new PlayerImpl(0), new HashSet<Sequence>());
 		sequences.put(new PlayerImpl(1), new HashSet<Sequence>());
-		isKeys = new LinkedHashMap<Player, Set<Pair<Integer, Sequence>>>();
-		isKeys.put(new PlayerImpl(0), new HashSet<Pair<Integer, Sequence>>());
-		isKeys.put(new PlayerImpl(1), new HashSet<Pair<Integer, Sequence>>());
+		isKeys = new LinkedHashMap<Player, Set<Object>>();
+		isKeys.put(new PlayerImpl(0), new HashSet<Object>());
+		isKeys.put(new PlayerImpl(1), new HashSet<Object>());
 		M1 = new LinkedHashMap<Object, String>();
 		M2 = new LinkedHashMap<Object, String>();
 		x1 = new LinkedHashMap<Object, Object>();
@@ -112,14 +112,17 @@ public class Data {
 	}
 
 	public void addToU(Object rowKey, Object columnKey, double value) {
+		if(value == 0)
+			return;
 		Object key = getKeyU(rowKey, columnKey);
 		Double oldValue = U.get(key);
 
 		U.put(key, (oldValue == null ? value : oldValue + value));
 	}
 
-	public void addISKeyFor(Player player, Pair<Integer, Sequence> isKey) {
-		isKeys.get(player).add(isKey);
+	public void addISKeyFor(Player player, Object isKey) {
+		if (isKey != null)
+			isKeys.get(player).add(isKey);
 	}
 
 	public void addSequence(Sequence sequence) {
@@ -133,25 +136,25 @@ public class Data {
 	public void addToX2(Object isKey, Object key) {
 		x2.put(isKey, key);
 	}
-	
+
 	public void addP1PerturbationsFor(Sequence sequence) {
 		int index = getColumnIndexE(sequence);
 		int subseqIndex = getColumnIndexE(getSubSequenceKey(sequence));
-		
+
 		M1.put(new Pair<Integer, Integer>(index, index), "1");
 		M1.put(new Pair<Integer, Integer>(subseqIndex, subseqIndex), "1");
 		M1.put(new Pair<Integer, Integer>(index, subseqIndex), "0,-1");
 	}
-	
+
 	public void addP2PerturbationsFor(Sequence sequence) {
 		int index = getColumnIndexF(sequence);
 		int subseqIndex = getColumnIndexF(getSubSequenceKey(sequence));
-		
+
 		M2.put(new Pair<Integer, Integer>(index, index), "1");
 		M2.put(new Pair<Integer, Integer>(subseqIndex, subseqIndex), "1");
 		M2.put(new Pair<Integer, Integer>(index, subseqIndex), "0,-1");
 	}
-	
+
 	public Object getSubSequenceKey(Sequence sequence) {
 		return sequence.getSubSequence(sequence.size() - 1);
 	}
@@ -235,7 +238,7 @@ public class Data {
 		}
 		writer.newLine();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public void printUtilityEntrySet(BufferedWriter writer, Map<Object, Double> map) throws IOException {
 		writer.newLine();
@@ -246,13 +249,13 @@ public class Data {
 			writer.write(",");
 			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
 			writer.write(",(");
-			writer.write(new Integer((new Double(entry.getValue()*UTILITY_COEF).intValue())).toString());
+			writer.write(new Integer((new Double(entry.getValue() * UTILITY_COEF).intValue())).toString());
 			writer.write("))");
 			writer.newLine();
 		}
 		writer.newLine();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public void printUtilityNegatedEntrySet(BufferedWriter writer, Map<Object, ? extends Number> map) throws IOException {
 		writer.newLine();
@@ -263,7 +266,7 @@ public class Data {
 			writer.write(",");
 			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
 			writer.write(",(");
-			writer.write(new Integer(new Double(-entry.getValue().doubleValue()*UTILITY_COEF).intValue()).toString());
+			writer.write(new Integer(new Double(-entry.getValue().doubleValue() * UTILITY_COEF).intValue()).toString());
 			writer.write("))");
 			writer.newLine();
 		}

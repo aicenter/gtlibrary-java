@@ -69,7 +69,6 @@ public class DataBuilder extends TreeVisitor {
 		lpBuilder.buildLP();
 		try {
 			Runtime.getRuntime().exec("lemkeQP " + inputFileName).waitFor();
-			;
 		} catch (IOException e) {
 			System.err.println("Error during library invocation...");
 		} catch (InterruptedException e) {
@@ -77,8 +76,17 @@ public class DataBuilder extends TreeVisitor {
 		}
 		ResultParser parser = new ResultParser(outputFileName, lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
 
-		System.out.println(parser.getP1RealizationPlan());
-		System.out.println(parser.getP2RealizationPlan());
+//		System.out.println(parser.getP1RealizationPlan());
+//		System.out.println(parser.getP2RealizationPlan());
+
+		for (Entry<Sequence, Double> entry : parser.getP1RealizationPlan().entrySet()) {
+			if (entry.getValue() > 0)
+				System.out.println(entry);
+		}
+		for (Entry<Sequence, Double> entry : parser.getP2RealizationPlan().entrySet()) {
+			if (entry.getValue() > 0)
+				System.out.println(entry);
+		}
 
 		Strategy p1Strategy = new UniformStrategyForMissingSequences();
 		Strategy p2Strategy = new UniformStrategyForMissingSequences();
@@ -88,6 +96,7 @@ public class DataBuilder extends TreeVisitor {
 
 		UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
 
+		System.out.println(parser.getGameValue());
 		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 	}
 
