@@ -16,11 +16,14 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInfo
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
-public class DOLPBuilder {
+public class ReducedDOLPBuilder {
 
 	protected String lpFileName;
 	protected LPTable lpTable;
@@ -32,11 +35,17 @@ public class DOLPBuilder {
 	protected long generationTime;
 	protected long constraintGenerationTime;
 	protected long lpSolvingTime;
+	protected double utilityShift;
+	protected GameState rootState;
+	protected Expander<? extends InformationSet> expander;
 
-	public DOLPBuilder(Player[] players) {
+	public ReducedDOLPBuilder(Player[] players, GameInfo gameInfo, GameState rootState, Expander<? extends InformationSet> expander) {
 		this.players = players;
-		lpFileName = "DO_LP_mod.lp";
+		lpFileName = "REDUCED_DO_LP_mod.lp";
 		p1Value = Double.NaN;
+		utilityShift = gameInfo.getMaxUtility() + 1;
+		this.rootState = rootState;
+		this.expander = expander;
 		
 		initTable();
 	}
@@ -61,14 +70,15 @@ public class DOLPBuilder {
 
 	public void initF(Sequence p2EmptySequence) {
 		lpTable.setConstraint(new Key("Q", p2EmptySequence), p2EmptySequence, 1);//F in root (only 1)
-		lpTable.setConstraintType(new Key("Q", p2EmptySequence), 1);
+		lpTable.setConstraintType(new Key("Q", p2EmptySequence), 2);
 	}
 
 	public void initE(Sequence p1EmptySequence) {
 		lpTable.setConstraint(p1EmptySequence, new Key("P", p1EmptySequence), 1);//E in root (only 1)
 		lpTable.setLowerBound(new Key("P", p1EmptySequence), Double.NEGATIVE_INFINITY);
+		lpTable.setUpperBound(new Key("P", p1EmptySequence), 0);
 	}
-
+	
 	public void initCost(Sequence p1EmptySequence) {
 		lpTable.setObjective(new Key("P", p1EmptySequence), -1);
 	}
@@ -88,10 +98,20 @@ public class DOLPBuilder {
 //			output.println(lpData.getSolver().getStatus());
 //			output.println(lpData.getSolver().getObjValue());
 
-			p1Value = -lpData.getSolver().getObjValue();
+			p1Value = -lpData.getSolver().getObjValue() + utilityShift;
 
 			p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedDualVariables());
 			p2RealizationPlan = createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
+//			Strategy p1Strategy = new UniformStrategyForMissingSequences();
+//			Strategy p2Strategy = new UniformStrategyForMissingSequences();
+//			
+//			p1Strategy.putAll(p1RealizationPlan);
+//			p2Strategy.putAll(p2RealizationPlan);
+//			
+//			UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
+//			
+//			p1Value = calculator.computeUtility(p1Strategy, p2Strategy);
+			
 //			output.println(p1RealizationPlan);
 //			output.println(p2RealizationPlan);
 //			output.println("Solution: " + Arrays.toString(lpData.getSolver().getValues(lpData.getVariables())));
@@ -151,7 +171,7 @@ public class DOLPBuilder {
 		Object varKey = getSubsequenceKey(sequence);
 
 		lpTable.setConstraint(eqKey, varKey, -1);//F
-		lpTable.setConstraintType(eqKey, 1);
+		lpTable.setConstraintType(eqKey, 2);
 		lpTable.watchPrimalVariable(varKey, sequence.getSubSequence(sequence.size() - 1));
 
 		addLinksToPrevISForP2(sequence, eqKey);
@@ -165,6 +185,7 @@ public class DOLPBuilder {
 
 		lpTable.setConstraint(eqKey, varKey, -1);//E
 		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+		lpTable.setUpperBound(varKey, 0);
 		lpTable.watchDualVariable(eqKey, sequence.getSubSequence(sequence.size() - 1));
 
 		addLinksToPrevISForP1(sequence, varKey);
@@ -177,7 +198,7 @@ public class DOLPBuilder {
 			Key tmpKey = new Key("V", outgoingSequence);
 
 			lpTable.setConstraint(eqKey, outgoingSequence, 1);//F child
-			lpTable.setConstraintType(eqKey, 1);
+			lpTable.setConstraintType(eqKey, 2);
 			lpTable.watchPrimalVariable(outgoingSequence, outgoingSequence);
 			lpTable.setConstraint(tmpKey, outgoingSequence, 1);//indices y
 //			lpTable.setConstant(tmpKey, 0);//l(\epsilon)
@@ -194,6 +215,7 @@ public class DOLPBuilder {
 			lpTable.watchDualVariable(outgoingSequence, outgoingSequence);
 			lpTable.setConstraint(outgoingSequence, varKey, 1);//E child
 			lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+			lpTable.setUpperBound(varKey, 0);
 
 			lpTable.setConstraint(outgoingSequence, tmpKey, -1);//u (eye)
 //			lpTable.setObjective(tmpKey, 0);//k(\epsilon)
@@ -213,10 +235,10 @@ public class DOLPBuilder {
 	protected void addUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config, Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
 		for (Sequence p1Sequence : p1Sequences) {
 			for (Sequence p2Sequence : p2Sequences) {
-				Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
+				Double utility = config.getUtilityFromAllFor(p1Sequence, p2Sequence);
 
 				if (utility != null) {
-					lpTable.substractFromConstraint(p1Sequence, p2Sequence, utility);
+					lpTable.substractFromConstraint(p1Sequence, p2Sequence, utility - utilityShift*config.getNatureProbabilityFor(p1Sequence, p2Sequence));
 				}
 			}
 		}

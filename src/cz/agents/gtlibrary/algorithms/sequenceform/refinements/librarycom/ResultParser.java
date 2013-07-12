@@ -20,6 +20,8 @@ public class ResultParser {
 	private Map<Sequence, Double> p1RealPlan;
 	private Map<Sequence, Double> p2RealPlan;
 	
+	private double gameValue;
+	
 	public ResultParser(String fileName, Map<Integer, Sequence> p1Sequences, Map<Integer, Sequence> p2Sequences) {
 		try {
 			reader = new BufferedReader(new FileReader(new File(fileName)));
@@ -56,7 +58,11 @@ public class ResultParser {
 		reader.readLine();
 		reader.readLine();
 		
-		StringTokenizer sizeTokenizer = new StringTokenizer(reader.readLine());
+		String firstRPLine = reader.readLine();
+		
+		if(firstRPLine == null)
+			return;
+		StringTokenizer sizeTokenizer = new StringTokenizer(firstRPLine);
 		
 		sizeTokenizer.nextToken();
 		int p1SequenceCount = Integer.parseInt(sizeTokenizer.nextToken());
@@ -65,6 +71,19 @@ public class ResultParser {
 		
 		loadP1Strategy(p1SequenceCount);
 		loadP2Strategy(p2SequenceCount);
+		loadValueOfGame();
+	}
+
+	private void loadValueOfGame() throws IOException {
+		reader.readLine();
+		
+		while(!reader.readLine().equals(""));
+		StringTokenizer tokenizer = new StringTokenizer(reader.readLine(), ",");
+		
+		tokenizer.nextToken();
+		
+		String token = tokenizer.nextToken();
+		gameValue = Double.parseDouble(token.substring(0, token.length() - 1));
 	}
 
 	public void loadP2Strategy(int p2SequenceCount) throws IOException {
@@ -93,6 +112,10 @@ public class ResultParser {
 			strategyTokenizer.nextToken();
 			p1RealPlan.put(p1Sequences.get(i), Double.parseDouble(strategyTokenizer.nextToken()));			
 		}
+	}
+	
+	public double getGameValue() {
+		return gameValue;
 	}
 
 }

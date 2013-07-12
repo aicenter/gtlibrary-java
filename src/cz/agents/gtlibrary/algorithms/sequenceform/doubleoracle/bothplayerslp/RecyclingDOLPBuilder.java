@@ -92,7 +92,7 @@ public class RecyclingDOLPBuilder extends DOLPBuilder {
 	}
 
 	public void updateUtility(DoubleOracleConfig<DoubleOracleInformationSet> config, Sequence p1Sequence, Sequence p2Sequence) {
-		Double utility = config.getUtilityForSequences(p1Sequence, p2Sequence);
+		Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
 
 		lpTable.removeFromConstraint(p1Sequence, p2Sequence);
 		if (utility != null)
