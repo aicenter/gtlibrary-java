@@ -11,6 +11,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConf
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
+import cz.agents.gtlibrary.experimental.utils.UtilityCalculatorForRestrictedGame;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -34,6 +35,8 @@ public class DODataBuilder {
 	protected long lpSolvingTime;
 	GameState rootState;
 	Expander<? extends InformationSet> expander;
+	Map<GameState, Double> tempUtilities;
+	Map<Map<Player, Sequence>, Double> utilForSeqComb;
 
 	public DODataBuilder(Player[] players, GameState rootState, Expander<? extends InformationSet> expander) {
 		this.players = players;
@@ -57,12 +60,12 @@ public class DODataBuilder {
 	
 	public void initF(Sequence p2EmptySequence) {
 		data.setF(new Key("Q", p2EmptySequence), p2EmptySequence, 1);//F in root (only 1)
-		data.addToX2(new Key("Q", p2EmptySequence), p2EmptySequence);
+//		data.addToX2(new Key("Q", p2EmptySequence), p2EmptySequence);
 	}
 
 	public void initE(Sequence p1EmptySequence) {
 		data.setE(new Key("P", p1EmptySequence), p1EmptySequence, 1);//E in root (only 1)
-		data.addToX1(new Key("P", p1EmptySequence), p1EmptySequence);
+//		data.addToX1(new Key("P", p1EmptySequence), p1EmptySequence);
 	}
 
 	public void solve() {
@@ -99,17 +102,24 @@ public class DODataBuilder {
 		p1Strategy.putAll(p1RealizationPlan);
 		p2Strategy.putAll(p2RealizationPlan);
 		
-		UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
+//		UtilityCalculator calculator = new UtilityCalculatorForRestrictedGame(rootState, expander, tempUtilities);
+//		p1Value = calculator.computeUtility(p1Strategy, p2Strategy);
+//		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 		
-		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
+//		p1Value = -parser.getGameValue();
 		
-		p1Value = -parser.getGameValue();
+		GameValueCalculator calculator = new GameValueCalculator(utilForSeqComb, p1RealizationPlan, p2RealizationPlan);
+		
+		p1Value = calculator.getGameValue();
+
 	}
 
 
 	public void calculateStrategyForPlayer(int playerIndex, GameState root, DoubleOracleConfig<DoubleOracleInformationSet> config, double currentBoundSize) {
 		long startTime = System.currentTimeMillis();
 
+		tempUtilities = config.getActualNonZeroUtilityValuesInLeafs();
+		utilForSeqComb = config.getUtilityForSequenceCombination();
 		p1Value = Double.NaN;
 		initTable();
 		for (Sequence sequence : config.getSequencesFor(players[0])) {
@@ -152,7 +162,7 @@ public class DODataBuilder {
 
 		for (Sequence outgoingSequence : set.getOutgoingSequences()) {
 			data.setF(eqKey, outgoingSequence, 1);//F child
-			data.addToX2(eqKey, outgoingSequence);
+//			data.addToX2(eqKey, outgoingSequence);
 			data.addP2PerturbationsFor(outgoingSequence);
 		}
 	}
@@ -162,7 +172,7 @@ public class DODataBuilder {
 
 		for (Sequence outgoingSequence : set.getOutgoingSequences()) {
 			data.setE(eqKey, outgoingSequence, 1);//E child
-			data.addToX1(eqKey, outgoingSequence);
+//			data.addToX1(eqKey, outgoingSequence);
 			data.addP1PerturbationsFor(outgoingSequence);
 		}
 	}
@@ -178,7 +188,7 @@ public class DODataBuilder {
 	protected void addUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config, Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
 		for (Sequence p1Sequence : p1Sequences) {
 			for (Sequence p2Sequence : p2Sequences) {
-				Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
+				Double utility = config.getUtilityFromAllFor(p1Sequence, p2Sequence);
 
 				if (utility != null) 
 					data.addToU(p1Sequence, p2Sequence, utility);

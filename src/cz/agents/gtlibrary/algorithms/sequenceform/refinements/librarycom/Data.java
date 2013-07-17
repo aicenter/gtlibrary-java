@@ -4,8 +4,14 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -32,8 +38,9 @@ public class Data {
 //	private Map<Object, Integer> columnIndicesU;
 	private Map<Player, Set<Sequence>> sequences;
 	private Map<Player, Set<Object>> isKeys;
-	private Map<Object, Object> x1;
-	private Map<Object, Object> x2;
+//	private Map<Object, Object> x1;
+//	private Map<Object, Object> x2;
+	private Map<Player, Set<Sequence>> initStrategy;
 
 	public Data() {
 		E = new LinkedHashMap<Object, Integer>();
@@ -53,8 +60,11 @@ public class Data {
 		isKeys.put(new PlayerImpl(1), new HashSet<Object>());
 		M1 = new LinkedHashMap<Object, String>();
 		M2 = new LinkedHashMap<Object, String>();
-		x1 = new LinkedHashMap<Object, Object>();
-		x2 = new LinkedHashMap<Object, Object>();
+//		x1 = new LinkedHashMap<Object, Object>();
+//		x2 = new LinkedHashMap<Object, Object>();
+		initStrategy = new HashMap<Player, Set<Sequence>>();
+		initStrategy.put(new PlayerImpl(0), new LinkedHashSet<Sequence>());
+		initStrategy.put(new PlayerImpl(1), new LinkedHashSet<Sequence>());
 	}
 
 	protected int getRowIndexE(Object rowKey) {
@@ -112,8 +122,8 @@ public class Data {
 	}
 
 	public void addToU(Object rowKey, Object columnKey, double value) {
-		if(value == 0)
-			return;
+//		if (value == 0)
+//			return;
 		Object key = getKeyU(rowKey, columnKey);
 		Double oldValue = U.get(key);
 
@@ -129,13 +139,17 @@ public class Data {
 		sequences.get(sequence.getPlayer()).add(sequence);
 	}
 
-	public void addToX1(Object isKey, Object key) {
-		x1.put(isKey, key);
+	public void addSequenceToInitialStrategy(Sequence sequence) {
+		initStrategy.get(sequence.getPlayer()).add(sequence);
 	}
 
-	public void addToX2(Object isKey, Object key) {
-		x2.put(isKey, key);
-	}
+//	public void addToX1(Object isKey, Object key) {
+//		x1.put(isKey, key);
+//	}
+//
+//	public void addToX2(Object isKey, Object key) {
+//		x2.put(isKey, key);
+//	}
 
 	public void addP1PerturbationsFor(Sequence sequence) {
 		int index = getColumnIndexE(sequence);
@@ -175,9 +189,9 @@ public class Data {
 		printEntrySet(writer, M1);
 		writer.write("M2: " + M2.size());
 		printEntrySet(writer, M2);
-		writer.write("x1: " + x1.size());
+		writer.write("x1: " + initStrategy.get(new PlayerImpl(0)).size());
 		printX1(writer);
-		writer.write("x2: " + x2.size());
+		writer.write("x2: " + initStrategy.get(new PlayerImpl(1)).size());
 		printX2(writer);
 		writer.flush();
 		writer.close();
@@ -186,7 +200,7 @@ public class Data {
 	public void printX1(BufferedWriter writer) throws IOException {
 		writer.newLine();
 		writer.newLine();
-		for (Object object : x1.values()) {
+		for (Object object : initStrategy.get(new PlayerImpl(0))) {
 			writer.write("(");
 			writer.write(Integer.toString(getColumnIndexE(object)));
 			writer.write(",(");
@@ -199,7 +213,7 @@ public class Data {
 	public void printX2(BufferedWriter writer) throws IOException {
 		writer.newLine();
 		writer.newLine();
-		for (Object object : x2.values()) {
+		for (Object object : initStrategy.get(new PlayerImpl(1))) {
 			writer.write("(");
 			writer.write(Integer.toString(getColumnIndexF(object)));
 			writer.write(",(");
@@ -226,7 +240,11 @@ public class Data {
 	public void printEntrySet(BufferedWriter writer, Map<Object, ? extends Object> map) throws IOException {
 		writer.newLine();
 		writer.newLine();
-		for (Entry<Object, ? extends Object> entry : map.entrySet()) {
+		List<Entry<Pair<Integer, Integer>, ? extends Object>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Object>>();
+
+		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Object>>) map.entrySet());
+		Collections.sort(entryList, new EntryComparator());
+		for (Entry<Pair<Integer, Integer>, ? extends Object> entry : entryList) {
 			writer.write("(");
 			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getLeft()));
 			writer.write(",");
@@ -243,7 +261,11 @@ public class Data {
 	public void printUtilityEntrySet(BufferedWriter writer, Map<Object, Double> map) throws IOException {
 		writer.newLine();
 		writer.newLine();
-		for (Entry<Object, Double> entry : map.entrySet()) {
+		List<Entry<Pair<Integer, Integer>, Double>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, Double>>();
+
+		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, Double>>) map.entrySet());
+		Collections.sort(entryList, new EntryComparator());
+		for (Entry<Pair<Integer, Integer>, Double> entry : entryList) {
 			writer.write("(");
 			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getLeft()));
 			writer.write(",");
@@ -260,11 +282,15 @@ public class Data {
 	public void printUtilityNegatedEntrySet(BufferedWriter writer, Map<Object, ? extends Number> map) throws IOException {
 		writer.newLine();
 		writer.newLine();
-		for (Entry<Object, ? extends Number> entry : map.entrySet()) {
+		List<Entry<Pair<Integer, Integer>, ? extends Number>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Number>>();
+
+		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Number>>) map.entrySet());
+		Collections.sort(entryList, new EntryComparator());
+		for (Entry<Pair<Integer, Integer>, ? extends Number> entry : entryList) {
 			writer.write("(");
-			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getLeft()));
+			writer.write(Integer.toString(entry.getKey().getLeft()));
 			writer.write(",");
-			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
+			writer.write(Integer.toString(entry.getKey().getRight()));
 			writer.write(",(");
 			writer.write(new Integer(new Double(-entry.getValue().doubleValue() * UTILITY_COEF).intValue()).toString());
 			writer.write("))");
@@ -277,11 +303,16 @@ public class Data {
 	public void printNegatedEntrySet(BufferedWriter writer, Map<Object, ? extends Number> map) throws IOException {
 		writer.newLine();
 		writer.newLine();
-		for (Entry<Object, ? extends Number> entry : map.entrySet()) {
+
+		List<Entry<Pair<Integer, Integer>, ? extends Number>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Number>>();
+
+		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Number>>) map.entrySet());
+		Collections.sort(entryList, new EntryComparator());
+		for (Entry<Pair<Integer, Integer>, ? extends Number> entry : entryList) {
 			writer.write("(");
-			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getLeft()));
+			writer.write(Integer.toString(entry.getKey().getLeft()));
 			writer.write(",");
-			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
+			writer.write(Integer.toString(entry.getKey().getRight()));
 			writer.write(",(");
 			writer.write(new Double(-entry.getValue().doubleValue()).toString());
 			writer.write("))");
