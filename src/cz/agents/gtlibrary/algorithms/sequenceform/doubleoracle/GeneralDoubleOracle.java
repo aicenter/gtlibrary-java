@@ -6,8 +6,11 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.DOLPBuilder;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.FastDOLPBuilder;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp.DOLPBuilder;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp.RecyclingDOLPBuilder;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp.ReducedDOLPBuilder;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.ReducedLPBuilder;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DODataBuilder;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -37,7 +40,7 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 public class GeneralDoubleOracle {
 	private GameState rootState;
 	private Expander<DoubleOracleInformationSet> expander;
-	private GameInfo gameConfig;
+	private GameInfo gameInfo;
 	private DoubleOracleConfig<DoubleOracleInformationSet> algConfig;
 
 	private PrintStream debugOutput = System.out;
@@ -51,25 +54,25 @@ public class GeneralDoubleOracle {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
 
-    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_ALTERNATING;
+    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_IMPROVED;
 
 	public static void main(String[] args) {
 //        runBP();
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
-//		runAoS();
+		runAoS();
 	}
 
     public static void runPhantomTTT() {
         GameState rootState = new TTTState();
         GameInfo gameInfo = new TTTInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
-        Expander expander = new TTTExpander<DoubleOracleInformationSet>(algConfig);
+        Expander<DoubleOracleInformationSet> expander = new TTTExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
 //        GeneralDoubleOracle.traverseCompleteGameTree(rootState, expander);
@@ -154,17 +157,16 @@ public class GeneralDoubleOracle {
         doefg.generate(null);
     }
 
-
     public GeneralDoubleOracle (GameState rootState, Expander<DoubleOracleInformationSet> expander, GameInfo config, DoubleOracleConfig<DoubleOracleInformationSet> algConfig) {
 		this.rootState = rootState;
 		this.expander = expander;
-		this.gameConfig = config;
+		this.gameInfo = config;
 		this.algConfig = algConfig;
 	}
 
 	public Map<Player, Map<Sequence, Double>> generate(Map<Player, Map<Sequence, Double>> initializationRG) {
 		debugOutput.println("Double Oracle");
-		debugOutput.println(gameConfig.getInfo());
+		debugOutput.println(gameInfo.getInfo());
         threadBean = ManagementFactory.getThreadMXBean();
 		
 		long start = threadBean.getCurrentThreadCpuTime();
@@ -176,8 +178,8 @@ public class GeneralDoubleOracle {
 
         Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
         DoubleOracleBestResponse[] brAlgorithms = new DoubleOracleBestResponse[] {
-                new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameConfig),
-                new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameConfig)};
+                new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameInfo),
+                new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameInfo)};
         Map<Player, Map<Sequence, Double>> realizationPlans = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
 
         if (initializationRG == null || initializationRG.isEmpty()) {
@@ -215,11 +217,13 @@ public class GeneralDoubleOracle {
 		int currentPlayerIndex = 0;
 //		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
 //		DOLPBuilder doRestrictedGameSolver = new DOLPBuilder(actingPlayers);
-		DOLPBuilder doRestrictedGameSolver = new FastDOLPBuilder(actingPlayers);
+//		DOLPBuilder doRestrictedGameSolver = new RecyclingDOLPBuilder(actingPlayers);
+//		ReducedDOLPBuilder doRestrictedGameSolver = new ReducedDOLPBuilder(actingPlayers, gameInfo, rootState, expander);
+		DODataBuilder doRestrictedGameSolver = new DODataBuilder(actingPlayers, rootState, expander);
         doRestrictedGameSolver.setDebugOutput(debugOutput);
 		
-		double p1BoundUtility = gameConfig.getMaxUtility();
-		double p2BoundUtility = gameConfig.getMaxUtility();
+		double p1BoundUtility = gameInfo.getMaxUtility();
+		double p2BoundUtility = gameInfo.getMaxUtility();
 		
 		int[] oldSize = new int[] {-1,-1};
         int[] diffSize = new int[] {-1, -1};

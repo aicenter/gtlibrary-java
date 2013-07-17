@@ -11,8 +11,8 @@ import cz.agents.gtlibrary.strategy.Strategy;
 
 public class UtilityCalculator {
 
-	private GameState rootState;
-	private Expander<? extends InformationSet> expander;
+	protected GameState rootState;
+	protected Expander<? extends InformationSet> expander;
 
 	public UtilityCalculator(GameState rootState, Expander<? extends InformationSet> expander) {
 		super();
@@ -24,7 +24,7 @@ public class UtilityCalculator {
 		return computeUtility(rootState, strategy1, strategy2);
 	}
 
-	private double computeUtility(GameState state, Strategy strategy1, Strategy strategy2) {
+	protected double computeUtility(GameState state, Strategy strategy1, Strategy strategy2) {
 		if (state.isGameEnd())
 			return state.getUtilities()[0];
 		if (state.isPlayerToMoveNature()) {
@@ -33,13 +33,13 @@ public class UtilityCalculator {
 		return computeUtilityForRegularPlayer(state, strategy1, strategy2);
 	}
 
-	private double computeUtilityForRegularPlayer(GameState state, Strategy strategy1, Strategy strategy2) {
+	protected double computeUtilityForRegularPlayer(GameState state, Strategy strategy1, Strategy strategy2) {
 		if (state.getPlayerToMove().getId() == 0)
 			return getUtilityForFirstPlayer(state, strategy1, strategy2);
 		return getUtilityForSecondPlayer(state, strategy1, strategy2);
 	}
 
-	private double getUtilityForFirstPlayer(GameState state, Strategy strategy1, Strategy strategy2) {
+	protected double getUtilityForFirstPlayer(GameState state, Strategy strategy1, Strategy strategy2) {
 		Map<Action, Double> contOfStrat = getContOfStrat(state, strategy1);
 		double utility = 0;
 		double sum = getProbabilitySumOf(contOfStrat);
@@ -55,7 +55,7 @@ public class UtilityCalculator {
 		return utility;
 	}
 
-	private double getUtilityForSecondPlayer(GameState state, Strategy strategy1, Strategy strategy2) {
+	protected double getUtilityForSecondPlayer(GameState state, Strategy strategy1, Strategy strategy2) {
 		Map<Action, Double> contOfStrat = getContOfStrat(state, strategy2);
 		double utility = 0;
 		double sum = getProbabilitySumOf(contOfStrat);
@@ -71,7 +71,7 @@ public class UtilityCalculator {
 		return utility;
 	}
 
-	private boolean hasOnlyZeros(Map<Action, Double> contOfStrat) {
+	protected boolean hasOnlyZeros(Map<Action, Double> contOfStrat) {
 		for (Double value : contOfStrat.values()) {
 			if (value > 0)
 				return false;
@@ -79,7 +79,7 @@ public class UtilityCalculator {
 		return true;
 	}
 
-	private double getProbabilitySumOf(Map<Action, Double> contOfStrat) {
+	protected double getProbabilitySumOf(Map<Action, Double> contOfStrat) {
 		double probabilitySum = 0;
 
 		for (Double value : contOfStrat.values()) {
@@ -88,7 +88,7 @@ public class UtilityCalculator {
 		return probabilitySum;
 	}
 
-	private double computeUtilityForNature(GameState state, Strategy strategy1, Strategy strategy2) {
+	protected double computeUtilityForNature(GameState state, Strategy strategy1, Strategy strategy2) {
 		double utility = 0;
 
 		for (Action action : expander.getActions(state)) {
@@ -97,7 +97,7 @@ public class UtilityCalculator {
 		return utility;
 	}
 
-	private Map<Action, Double> getContOfStrat(GameState state, Strategy strategy) {
+	protected Map<Action, Double> getContOfStrat(GameState state, Strategy strategy) {
 		return strategy.getDistributionOfContinuationOf(state.getSequenceForPlayerToMove(), expander.getActionsForUnknownIS(state));
 	}
 
