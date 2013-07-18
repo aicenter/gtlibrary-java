@@ -26,7 +26,6 @@ import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
@@ -40,8 +39,8 @@ public class LPBuilder extends TreeVisitor {
 	public static void main(String[] args) {
 //		runAoS();
 //		runGoofSpiel();
-//		runKuhnPoker();
-		runGenericPoker();
+		runKuhnPoker();
+//		runGenericPoker();
 	}
 
 	public static void runKuhnPoker() {
@@ -85,7 +84,7 @@ public class LPBuilder extends TreeVisitor {
 
 	public void buildLP() {
 		initTable();
-		visitTree(rootState, null, null);
+		visitTree(rootState);
 		computeEpsilon();
 		System.out.println("epsilon: " + epsilon);
 	}
@@ -186,76 +185,110 @@ public class LPBuilder extends TreeVisitor {
 	}
 
 	@Override
-	protected void visitLeaf(GameState state, Player lastPlayer, Key lastKey) {
-		updateParentLinks(state, lastPlayer, lastKey);
+	protected void visitLeaf(GameState state) {
+		updateParentLinks(state);
 		lpTable.substractFromConstraint(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), state.getNatureProbability() * state.getUtilities()[0]);
 	}
 
 	@Override
-	protected void visitNormalNode(GameState state, Player lastPlayer, Key lastKey) {
+	protected void visitNormalNode(GameState state) {
 		if (state.getPlayerToMove().getId() == 0) {
-			updateLPForFirstPlayer(state, lastPlayer, lastKey);
+			updateLPForFirstPlayer(state);
 		} else {
-			updateLPForSecondPlayer(state, lastPlayer, lastKey);
+			updateLPForSecondPlayer(state);
 		}
-		super.visitNormalNode(state, lastPlayer, lastKey);
+		super.visitNormalNode(state);
 	}
 
-	public void updateLPForFirstPlayer(GameState state, Player lastPlayer, Key lastKey) {
+	public void updateLPForFirstPlayer(GameState state) {
 		Key varKey = new Key("P", new Key(state.getISKeyForPlayerToMove()));
 
-		updateParentLinks(state, lastPlayer, lastKey);
+		updateParentLinks(state);
 		lpTable.setConstraint(state.getSequenceFor(players[0]), varKey, -1);//E
 		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
 		lpTable.watchDualVariable(state.getSequenceFor(players[0]), state.getSequenceForPlayerToMove());
 	}
 
-	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key varKey) {
-		Object eqKey = child.getSequenceFor(lastPlayer);
-		Key tmpKey = new Key("U", child.getSequenceFor(lastPlayer));
-
-		lpTable.watchDualVariable(eqKey, child.getSequenceFor(lastPlayer));
-		lpTable.setConstraint(eqKey, varKey, 1);//E child
-		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-
-		lpTable.setConstraint(eqKey, tmpKey, -1);//u (eye)
-		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
-	}
-
-	public void updateLPForSecondPlayer(GameState state, Player lastPlayer, Key lastKey) {
+	public void updateLPForSecondPlayer(GameState state) {
 		Key eqKey = new Key("Q", new Key(state.getISKeyForPlayerToMove()));
 
-		updateParentLinks(state, lastPlayer, lastKey);
+		updateParentLinks(state);
 		lpTable.setConstraint(eqKey, state.getSequenceFor(players[1]), -1);//F
 		lpTable.setConstraintType(eqKey, 1);
 		lpTable.watchPrimalVariable(state.getSequenceFor(players[1]), state.getSequenceForPlayerToMove());
 	}
 
-	public void updateForSecondPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
-		Object varKey = child.getSequenceFor(lastPlayer);
-		Key tmpKey = new Key("V", child.getSequenceFor(lastPlayer));
-
-		lpTable.setConstraint(eqKey, varKey, 1);//F child
-		lpTable.setConstraintType(eqKey, 1);
-		lpTable.watchPrimalVariable(varKey, child.getSequenceFor(lastPlayer));
-		lpTable.setConstraint(tmpKey, varKey, 1);//indices y
-		lpTable.setConstant(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()).negate());//l(\epsilon)
-	}
-
 	@Override
-	protected void visitChanceNode(GameState state, Player lastPlayer, Key lastKey) {
-		updateParentLinks(state, lastPlayer, lastKey);
-		super.visitChanceNode(state, lastPlayer, lastKey);
+	protected void visitChanceNode(GameState state) {
+		updateParentLinks(state);
+		super.visitChanceNode(state);
 	}
 
-	public void updateParentLinks(GameState state, Player lastPlayer, Key lastKey) {
-		if (lastPlayer != null)
-			if (lastPlayer.getId() == 0) {
-				updateForFirstPlayerParent(state, lastPlayer, lastKey);
-			} else {
-				updateForSecondPlayerParent(state, lastPlayer, lastKey);
-			}
+	public void updateParentLinks(GameState state) {
+		updateP1Parent(state);
+		updateP2Parent(state);
+//		if (lastPlayer != null)
+//			if (lastPlayer.getId() == 0) {
+//				updateForFirstPlayerParent(state, lastPlayer, lastKey);
+//			} else {
+//				updateForSecondPlayerParent(state, lastPlayer, lastKey);
+//			}
 	}
+	
+	protected void updateP1Parent(GameState state) {
+		Sequence p1Sequence = state.getSequenceFor(players[0]);
+		
+		if(p1Sequence.size() == 0) 
+			return;
+		Object varKey = getLastISKey(p1Sequence);
+		Key tmpKey = new Key("U", p1Sequence);
+
+		lpTable.watchDualVariable(p1Sequence, p1Sequence);
+		lpTable.setConstraint(p1Sequence, varKey, 1);//E child
+		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+
+		lpTable.setConstraint(p1Sequence, tmpKey, -1);//u (eye)
+		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, p1Sequence.size()));//k(\epsilon)
+	}
+	
+//	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key varKey) {
+//		Object eqKey = child.getSequenceFor(lastPlayer);
+//		Key tmpKey = new Key("U", child.getSequenceFor(lastPlayer));
+//
+//		lpTable.watchDualVariable(eqKey, child.getSequenceFor(lastPlayer));
+//		lpTable.setConstraint(eqKey, varKey, 1);//E child
+//		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+//
+//		lpTable.setConstraint(eqKey, tmpKey, -1);//u (eye)
+//		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
+//	}
+
+
+	protected void updateP2Parent(GameState state) {
+		Sequence p2Sequence = state.getSequenceFor(players[1]);
+		
+		if(p2Sequence.size() == 0) 
+			return;
+		Object eqKey = getLastISKey(p2Sequence);
+		Key tmpKey = new Key("V", p2Sequence);
+
+		lpTable.setConstraint(eqKey, p2Sequence, 1);//F child
+		lpTable.setConstraintType(eqKey, 1);
+		lpTable.watchPrimalVariable(p2Sequence, p2Sequence);
+		lpTable.setConstraint(tmpKey, p2Sequence, 1);//indices y
+		lpTable.setConstant(tmpKey, new EpsilonPolynom(epsilon, p2Sequence.size()).negate());//l(\epsilon)
+	}
+	
+//	public void updateForSecondPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
+//		Object varKey = child.getSequenceFor(lastPlayer);
+//		Key tmpKey = new Key("V", child.getSequenceFor(lastPlayer));
+//
+//		lpTable.setConstraint(eqKey, varKey, 1);//F child
+//		lpTable.setConstraintType(eqKey, 1);
+//		lpTable.watchPrimalVariable(varKey, child.getSequenceFor(lastPlayer));
+//		lpTable.setConstraint(tmpKey, varKey, 1);//indices y
+//		lpTable.setConstant(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()).negate());//l(\epsilon)
+//	}
 
 	protected void computeEpsilon() {
 		double equationCount = lpTable.rowCount();

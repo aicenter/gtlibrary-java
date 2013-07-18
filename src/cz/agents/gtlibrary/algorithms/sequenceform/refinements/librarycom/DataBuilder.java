@@ -21,17 +21,14 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
-import cz.agents.gtlibrary.utils.Pair;
 
 public class DataBuilder extends TreeVisitor {
 
@@ -42,8 +39,8 @@ public class DataBuilder extends TreeVisitor {
 //		runAoS();
 //		runGoofSpiel();
 //		runKuhnPoker();
-		runGenericPoker();
-//		runBPG();
+//		runGenericPoker();
+		runBPG();
 	}
 
 	public static void runBPG() {
@@ -122,7 +119,7 @@ public class DataBuilder extends TreeVisitor {
 
 	public void build() {
 		initData();
-		visitTree(rootState, null, null);
+		visitTree(rootState);
 		addInitialStrategy(rootState);
 		try {
 			data.export(fileName);
@@ -132,8 +129,8 @@ public class DataBuilder extends TreeVisitor {
 	}
 
 	protected void addInitialStrategy(GameState state) {
-		data.addSequenceToInitialStrategy(state.getSequenceFor(new PlayerImpl(0)));
-		data.addSequenceToInitialStrategy(state.getSequenceFor(new PlayerImpl(1)));
+		data.addSequenceToInitialStrategy(state.getSequenceFor(players[0]));
+		data.addSequenceToInitialStrategy(state.getSequenceFor(players[1]));
 		if (state.isGameEnd()) {
 			return;
 		}
@@ -155,49 +152,49 @@ public class DataBuilder extends TreeVisitor {
 
 	public void initF() {
 		data.setF(new Key("Q", new LinkedListSequenceImpl(players[1])), new LinkedListSequenceImpl(players[1]), 1);//F in root (only 1)
-//		data.addSequenceToInitialStrategy(new LinkedListSequenceImpl(players[1]));//empty sequence representation for initial strategy profile
+		data.addSequenceToInitialStrategy(new LinkedListSequenceImpl(players[1]));//empty sequence representation for initial strategy profile
 	}
 
 	public void initE() {
 		data.setE(new Key("P", new LinkedListSequenceImpl(players[0])), new LinkedListSequenceImpl(players[0]), 1);//E in root (only 1)
-//		data.addSequenceToInitialStrategy(new LinkedListSequenceImpl(players[0]));//empty sequence representation for initial strategy profile
+		data.addSequenceToInitialStrategy(new LinkedListSequenceImpl(players[0]));//empty sequence representation for initial strategy profile
 	}
 
 	@Override
-	protected void visitLeaf(GameState state, Player lastPlayer, Key lastKey) {
+	protected void visitLeaf(GameState state) {
 		updateSequences(state);
-		updateParentLinks(state, lastPlayer, lastKey);
+		updateParentLinks(state);
 		data.addToU(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), state.getNatureProbability() * (state.getUtilities()[0]));
 	}
 
 	@Override
-	protected void visitNormalNode(GameState state, Player lastPlayer, Key lastKey) {
+	protected void visitNormalNode(GameState state) {
 		data.addISKeyFor(state.getPlayerToMove(), state.getISKeyForPlayerToMove());
 		updateSequences(state);
 		if (state.getPlayerToMove().getId() == 0) {
-			updateLPForFirstPlayer(state, lastPlayer, lastKey);
+			updateLPForFirstPlayer(state);
 		} else {
-			updateLPForSecondPlayer(state, lastPlayer, lastKey);
+			updateLPForSecondPlayer(state);
 		}
-		super.visitNormalNode(state, lastPlayer, lastKey);
+		super.visitNormalNode(state);
 	}
 
-	public void updateLPForFirstPlayer(GameState state, Player lastPlayer, Key lastKey) {
+	public void updateLPForFirstPlayer(GameState state) {
 		Key eqKey = new Key("P", new Key(state.getISKeyForPlayerToMove()));
 
-		updateParentLinks(state, lastPlayer, lastKey);
+		updateParentLinks(state);
 		data.setE(eqKey, state.getSequenceFor(players[0]), -1);//E
 	}
 
-	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
-		data.setE(eqKey, child.getSequenceFor(lastPlayer), 1);//E child
-		data.addP1PerturbationsFor(child.getSequenceFor(lastPlayer));
-	}
+//	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
+//		data.setE(eqKey, child.getSequenceFor(lastPlayer), 1);//E child
+//		data.addP1PerturbationsFor(child.getSequenceFor(lastPlayer));
+//	}
 
-	public void updateLPForSecondPlayer(GameState state, Player lastPlayer, Key lastKey) {
+	public void updateLPForSecondPlayer(GameState state) {
 		Key eqKey = new Key("Q", new Key(state.getISKeyForPlayerToMove()));
 
-		updateParentLinks(state, lastPlayer, lastKey);
+		updateParentLinks(state);
 		data.setF(eqKey, state.getSequenceFor(players[1]), -1);//F
 	}
 
@@ -207,21 +204,15 @@ public class DataBuilder extends TreeVisitor {
 	}
 
 	@Override
-	protected void visitChanceNode(GameState state, Player lastPlayer, Key lastKey) {
+	protected void visitChanceNode(GameState state) {
 		updateSequences(state);
-//		updateParentLinks(state, lastPlayer, lastKey);
-		super.visitChanceNode(state, lastPlayer, lastKey);
+		updateParentLinks(state);
+		super.visitChanceNode(state);
 	}
 
-	public void updateParentLinks(GameState state, Player lastPlayer, Key lastKey) {
+	public void updateParentLinks(GameState state) {
 		updateP1Parent(state);
 		updateP2Parent(state);
-//		if (lastPlayer != null)
-//			if (lastPlayer.getId() == 0) {
-//				updateForFirstPlayerParent(state, lastPlayer, lastKey);
-//			} else {
-//				updateForSecondPlayerParent(state, lastPlayer, lastKey);
-//			}
 	}
 
 	protected void updateP1Parent(GameState state) {
@@ -240,13 +231,6 @@ public class DataBuilder extends TreeVisitor {
 			data.setF(getLastISKey(p2Sequence), p2Sequence, 1);//F child
 			data.addP2PerturbationsFor(p2Sequence);
 		}
-	}
-
-	public Object getLastISKey(Sequence sequence) {
-		InformationSet informationSet = sequence.getLastInformationSet();
-		String string = sequence.getPlayer().equals(players[0]) ? "P" : "Q";
-
-		return new Key(string, new Key(new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory())));
 	}
 
 	public void updateSequences(GameState state) {

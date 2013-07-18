@@ -141,7 +141,7 @@ public class BreadthFirstDataBuilder {
 			}
 			updateForNormalNode(currentState);
 		}
-		addInitialStrategy(rootState);
+//		addInitialStrategy(rootState);
 		try {
 			data.export(fileName);
 		} catch (IOException e) {
