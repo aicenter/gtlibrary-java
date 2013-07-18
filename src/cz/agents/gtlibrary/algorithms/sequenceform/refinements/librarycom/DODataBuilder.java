@@ -10,8 +10,6 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
-import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
-import cz.agents.gtlibrary.experimental.utils.UtilityCalculatorForRestrictedGame;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
