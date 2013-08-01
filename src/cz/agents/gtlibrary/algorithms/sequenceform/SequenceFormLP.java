@@ -181,7 +181,7 @@ public class SequenceFormLP {
 	}
 
 	protected static double getUtility(SequenceFormConfig<SequenceInformationSet> algConfig, Map<Player, Sequence> sequenceCombination) {
-		Double utility = algConfig.getUtilityForSequenceCombination(sequenceCombination);
+		Double utility = algConfig.getUtilityFor(sequenceCombination);
 
 		if (utility == null) {
 			utility = 0d;
