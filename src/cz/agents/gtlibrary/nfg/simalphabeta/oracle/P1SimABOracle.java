@@ -80,8 +80,8 @@ public class P1SimABOracle implements SimABOracle {
 			if (entry.getValue() > 1e-8) {
 				Double cacheValue = getValueFromCache(strategy, entry.getKey());
 				double cacheWindow = getLowerBoundFromCache(strategy, entry.getKey());
-
 				double windowValue = Math.max(cacheWindow, getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index));
+				
 				assert windowValue >= getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index);
 				if (cacheValue == null) {
 					if (getOptimisticValueFromCache(strategy, entry.getKey()) < windowValue) {
@@ -104,9 +104,7 @@ public class P1SimABOracle implements SimABOracle {
 				utilityValue += util * entry.getValue();
 			}
 			index++;
-
 		}
-
 		return utilityValue;
 	}
 

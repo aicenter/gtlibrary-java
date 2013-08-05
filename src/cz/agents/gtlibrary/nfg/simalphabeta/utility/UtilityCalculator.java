@@ -6,7 +6,9 @@ import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.Data;
-import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABOracleImpl;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.P1SimABOracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.P2SimABOracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimDoubleOracle;
 
 public class UtilityCalculator {
@@ -46,17 +48,14 @@ public class UtilityCalculator {
 			
 			utilityValue += state.getProbabilityOfNatureFor(action) * computeUtilityOf(newState, alpha, beta);
 		}
-//		cache.setPesAndOptValueFor(s1, s2, utilityValue);//nevim jestli je tohle ok
 		return utilityValue;
 	}
 
 	protected double computeUtilityOf(GameState state, double alpha, double beta) {
 		DOCache cache = new DOCacheImpl();
 		SimUtility utility = new SimUtilityImpl(state, new UtilityCalculator(cache, data));
-		SimABOracleImpl  p1Oracle = new SimABOracleImpl(state, state.getAllPlayers()[0], utility, data, cache);
-		SimABOracleImpl p2Oracle = new SimABOracleImpl(state, state.getAllPlayers()[1], new NegativeSimUtility(utility), data, cache);
-//		SimABOracle p1Oracle = new P1SimABOracle(state, utility, data, cache);
-//		SimABOracle p2Oracle = new P2SimABOracle(state, new NegativeSimUtility(utility), data, cache);
+		SimABOracle p1Oracle = new P1SimABOracle(state, utility, data, cache);
+		SimABOracle p2Oracle = new P2SimABOracle(state, new NegativeSimUtility(utility), data, cache);
 		SimDoubleOracle doubleOracle = new SimDoubleOracle(p1Oracle, p2Oracle, utility, alpha, beta, cache, data, state);
 		
 		doubleOracle.execute();
