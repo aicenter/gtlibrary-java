@@ -22,20 +22,20 @@ public abstract class ConfigImpl<I extends InformationSetImpl> implements Algori
 		informationSet.addStateToIS(gameState);
 	}
 
-        @Override
+	@Override
 	public I getInformationSetFor(GameState gameState) {
 		return allInformationSets.get(gameState.getISKeyForPlayerToMove());
 	}
-	
+
 	public HashMap<Pair<Integer, Sequence>, I> getAllInformationSets() {
 		return allInformationSets;
 	}
 
-       public Double getActualNonzeroUtilityValues(GameState leaf) {
-          return null;
-      }
+	public Double getActualNonzeroUtilityValues(GameState leaf) {
+		return null;
+	}
 
-      public void setUtility(GameState leaf, double utility) {
-         //intentionally empty
-      }
+	public void setUtility(GameState leaf, double utility) {
+		//intentionally empty
+	}
 }

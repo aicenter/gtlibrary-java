@@ -1,7 +1,14 @@
 package cz.agents.gtlibrary.nfg.doubleoracle;
 
+import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
@@ -9,14 +16,13 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.nfg.*;
+import cz.agents.gtlibrary.nfg.MixedStrategy;
+import cz.agents.gtlibrary.nfg.NFGActionUtilityComputer;
+import cz.agents.gtlibrary.nfg.PlayerStrategySet;
+import cz.agents.gtlibrary.nfg.PureStrategy;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolver;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolverImpl;
 import cz.agents.gtlibrary.utils.Pair;
-
-import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,7 +38,7 @@ public class NFGDoubleOracle {
 
     private GameState rootState;
     private Expander<DoubleOracleInformationSet> expander;
-    private GameInfo gameConfig;
+    private GameInfo gameInfo;
     private DoubleOracleConfig algConfig;
 
     private PrintStream debugOutput = System.out;
@@ -51,10 +57,10 @@ public class NFGDoubleOracle {
     final private static boolean MY_RP_BR_ORDERING = false;
     private ThreadMXBean threadBean ;
 
-    public NFGDoubleOracle(GameState rootState, Expander<DoubleOracleInformationSet> expander, GameInfo gameConfig, DoubleOracleConfig algConfig) {
+    public NFGDoubleOracle(GameState rootState, Expander<DoubleOracleInformationSet> expander, GameInfo gameInfo, DoubleOracleConfig algConfig) {
         this.rootState = rootState;
         this.expander = expander;
-        this.gameConfig = gameConfig;
+        this.gameInfo = gameInfo;
         this.algConfig = algConfig;
     }
 
@@ -72,10 +78,11 @@ public class NFGDoubleOracle {
         NFGDoubleOracle doefg = new NFGDoubleOracle(rootState,  expander, gameInfo, algConfig);
         doefg.generate();
     }
+    
 
     public void generate() {
         debugOutput.println("NFG Double Oracle");
-        debugOutput.println(gameConfig.getInfo());
+        debugOutput.println(gameInfo.getInfo());
         threadBean = ManagementFactory.getThreadMXBean();
 
         long start = threadBean.getCurrentThreadCpuTime();
@@ -87,13 +94,13 @@ public class NFGDoubleOracle {
 
         Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
         NFGOracle[] brAlgorithms = new NFGBROracle[] {
-                new NFGBROracle(gameConfig, rootState, expander, actingPlayers[0], actingPlayers[1]),
-                new NFGBROracle(gameConfig, rootState, expander, actingPlayers[1], actingPlayers[0])};
+                new NFGBROracle(gameInfo, rootState, expander, actingPlayers[0], actingPlayers[1]),
+                new NFGBROracle(gameInfo, rootState, expander, actingPlayers[1], actingPlayers[0])};
 
-        upperBound = gameConfig.getMaxUtility();
+        upperBound = gameInfo.getMaxUtility();
         lowerBound = -upperBound;
 
-        NFGActionUtilityComputer utilityComputer = new NFGActionUtilityComputer(rootState, expander);
+        NFGActionUtilityComputer utilityComputer = new NFGActionUtilityComputer(rootState);
 
         coreSolver = new ZeroSumGameNESolverImpl(utilityComputer);
 

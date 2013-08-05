@@ -11,6 +11,8 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
+import cz.agents.gtlibrary.domain.artificialchance.ACExpander;
+import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
@@ -42,10 +44,17 @@ public class BreadthFirstDataBuilder {
 	protected Player[] players;
 	
 	public static void main(String[] args) {
+		runAC();
 //		runAoS();
 //		runKuhnPoker();
-		runGenericPoker();
+//		runGenericPoker();
 //		runBPG();
+	}
+	
+	public static void runAC() {
+		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+
+		runDataBuilder(new ACGameState(), new ACExpander<SequenceInformationSet>(algConfig), algConfig, "ACRepr", "ACReprl1qp");
 	}
 	
 	public static void runBPG() {
@@ -92,6 +101,7 @@ public class BreadthFirstDataBuilder {
 			if (entry.getValue() > 0)
 				System.out.println(entry);
 		}
+		System.out.println("*************");
 		for (Entry<Sequence, Double> entry : parser.getP2RealizationPlan().entrySet()) {
 			if (entry.getValue() > 0)
 				System.out.println(entry);
@@ -141,7 +151,7 @@ public class BreadthFirstDataBuilder {
 			}
 			updateForNormalNode(currentState);
 		}
-//		addInitialStrategy(rootState);
+		addInitialStrategy(rootState);
 		try {
 			data.export(fileName);
 		} catch (IOException e) {
@@ -154,12 +164,6 @@ public class BreadthFirstDataBuilder {
 			queue.addLast(currentState.performAction(action));
 		}
 	}
-
-//	public void addContinuationStatesAsFirst(LinkedList<GameState> queue, GameState currentState) {
-//		for (Action action : expander.getActions(currentState)) {
-//			queue.addFirst(currentState.performAction(action));
-//		}
-//	}
 
 	public void addStateToConfig(GameState currentState) {
 		if (algConfig.getInformationSetFor(currentState) == null)
@@ -176,12 +180,12 @@ public class BreadthFirstDataBuilder {
 
 	public void initF() {
 		data.setF(new Key("Q", new LinkedListSequenceImpl(players[1])), new LinkedListSequenceImpl(players[1]), 1);//F in root (only 1)
-//		data.addSequenceToInitialStrategy(new LinkedListSequenceImpl(players[1]));//empty sequence representation for initial strategy profile
+		data.addSequenceToInitialStrategy(new LinkedListSequenceImpl(players[1]));//empty sequence representation for initial strategy profile
 	}
 
 	public void initE() {
 		data.setE(new Key("P", new LinkedListSequenceImpl(players[0])), new LinkedListSequenceImpl(players[0]), 1);//E in root (only 1)
-//		data.addSequenceToInitialStrategy(new LinkedListSequenceImpl(players[0]));//empty sequence representation for initial strategy profile
+		data.addSequenceToInitialStrategy(new LinkedListSequenceImpl(players[0]));//empty sequence representation for initial strategy profile
 	}
 
 	protected void updateForLeaf(GameState state) {

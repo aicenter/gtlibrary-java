@@ -11,6 +11,8 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
+import cz.agents.gtlibrary.domain.artificialchance.ACExpander;
+import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
@@ -36,11 +38,18 @@ public class DataBuilder extends TreeVisitor {
 	protected Data data;
 
 	public static void main(String[] args) {
+		runAC();
 //		runAoS();
 //		runGoofSpiel();
 //		runKuhnPoker();
 //		runGenericPoker();
-		runBPG();
+//		runBPG();
+	}
+	
+	public static void runAC() {
+		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+
+		runDataBuilder(new ACGameState(), new ACExpander<SequenceInformationSet>(algConfig), algConfig, "ACRepr", "ACReprl1qp");
 	}
 
 	public static void runBPG() {
@@ -93,6 +102,7 @@ public class DataBuilder extends TreeVisitor {
 			if (entry.getValue() > 0)
 				System.out.println(entry);
 		}
+		System.out.println("**************");
 		for (Entry<Sequence, Double> entry : parser.getP2RealizationPlan().entrySet()) {
 			if (entry.getValue() > 0)
 				System.out.println(entry);
@@ -186,11 +196,6 @@ public class DataBuilder extends TreeVisitor {
 		data.setE(eqKey, state.getSequenceFor(players[0]), -1);//E
 	}
 
-//	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
-//		data.setE(eqKey, child.getSequenceFor(lastPlayer), 1);//E child
-//		data.addP1PerturbationsFor(child.getSequenceFor(lastPlayer));
-//	}
-
 	public void updateLPForSecondPlayer(GameState state) {
 		Key eqKey = new Key("Q", new Key(state.getISKeyForPlayerToMove()));
 
@@ -250,7 +255,7 @@ public class DataBuilder extends TreeVisitor {
 		Map<Integer, Sequence> p1Indices = new HashMap<Integer, Sequence>();
 
 		for (Entry<Object, Integer> entry : map.entrySet()) {
-//			if (entry.getKey() instanceof Sequence)
+			if (entry.getKey() instanceof Sequence)
 				p1Indices.put(entry.getValue(), (Sequence) entry.getKey());
 		}
 		return p1Indices;

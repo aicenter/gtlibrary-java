@@ -34,12 +34,8 @@ public class Data {
 	private Map<Object, Integer> columnIndicesE;
 	private Map<Object, Integer> rowIndicesF;
 	private Map<Object, Integer> columnIndicesF;
-//	private Map<Object, Integer> rowIndicesU;
-//	private Map<Object, Integer> columnIndicesU;
 	private Map<Player, Set<Sequence>> sequences;
 	private Map<Player, Set<Object>> isKeys;
-//	private Map<Object, Object> x1;
-//	private Map<Object, Object> x2;
 	private Map<Player, Set<Sequence>> initStrategy;
 
 	public Data() {
@@ -50,8 +46,6 @@ public class Data {
 		columnIndicesE = new LinkedHashMap<Object, Integer>();
 		rowIndicesF = new LinkedHashMap<Object, Integer>();
 		columnIndicesF = new LinkedHashMap<Object, Integer>();
-//		rowIndicesU = new LinkedHashMap<Object, Integer>();
-//		columnIndicesU = new LinkedHashMap<Object, Integer>();
 		sequences = new LinkedHashMap<Player, Set<Sequence>>();
 		sequences.put(new PlayerImpl(0), new HashSet<Sequence>());
 		sequences.put(new PlayerImpl(1), new HashSet<Sequence>());
@@ -60,8 +54,6 @@ public class Data {
 		isKeys.put(new PlayerImpl(1), new HashSet<Object>());
 		M1 = new LinkedHashMap<Object, String>();
 		M2 = new LinkedHashMap<Object, String>();
-//		x1 = new LinkedHashMap<Object, Object>();
-//		x2 = new LinkedHashMap<Object, Object>();
 		initStrategy = new HashMap<Player, Set<Sequence>>();
 		initStrategy.put(new PlayerImpl(0), new LinkedHashSet<Sequence>());
 		initStrategy.put(new PlayerImpl(1), new LinkedHashSet<Sequence>());
@@ -122,8 +114,6 @@ public class Data {
 	}
 
 	public void addToU(Object rowKey, Object columnKey, double value) {
-//		if (value == 0)
-//			return;
 		Object key = getKeyU(rowKey, columnKey);
 		Double oldValue = U.get(key);
 
@@ -142,14 +132,6 @@ public class Data {
 	public void addSequenceToInitialStrategy(Sequence sequence) {
 		initStrategy.get(sequence.getPlayer()).add(sequence);
 	}
-
-//	public void addToX1(Object isKey, Object key) {
-//		x1.put(isKey, key);
-//	}
-//
-//	public void addToX2(Object isKey, Object key) {
-//		x2.put(isKey, key);
-//	}
 
 	public void addP1PerturbationsFor(Sequence sequence) {
 		int index = getColumnIndexE(sequence);

@@ -227,12 +227,6 @@ public class LPBuilder extends TreeVisitor {
 	public void updateParentLinks(GameState state) {
 		updateP1Parent(state);
 		updateP2Parent(state);
-//		if (lastPlayer != null)
-//			if (lastPlayer.getId() == 0) {
-//				updateForFirstPlayerParent(state, lastPlayer, lastKey);
-//			} else {
-//				updateForSecondPlayerParent(state, lastPlayer, lastKey);
-//			}
 	}
 	
 	protected void updateP1Parent(GameState state) {
@@ -250,19 +244,6 @@ public class LPBuilder extends TreeVisitor {
 		lpTable.setConstraint(p1Sequence, tmpKey, -1);//u (eye)
 		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, p1Sequence.size()));//k(\epsilon)
 	}
-	
-//	public void updateForFirstPlayerParent(GameState child, Player lastPlayer, Key varKey) {
-//		Object eqKey = child.getSequenceFor(lastPlayer);
-//		Key tmpKey = new Key("U", child.getSequenceFor(lastPlayer));
-//
-//		lpTable.watchDualVariable(eqKey, child.getSequenceFor(lastPlayer));
-//		lpTable.setConstraint(eqKey, varKey, 1);//E child
-//		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-//
-//		lpTable.setConstraint(eqKey, tmpKey, -1);//u (eye)
-//		lpTable.setObjective(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()));//k(\epsilon)
-//	}
-
 
 	protected void updateP2Parent(GameState state) {
 		Sequence p2Sequence = state.getSequenceFor(players[1]);
@@ -279,17 +260,6 @@ public class LPBuilder extends TreeVisitor {
 		lpTable.setConstant(tmpKey, new EpsilonPolynom(epsilon, p2Sequence.size()).negate());//l(\epsilon)
 	}
 	
-//	public void updateForSecondPlayerParent(GameState child, Player lastPlayer, Key eqKey) {
-//		Object varKey = child.getSequenceFor(lastPlayer);
-//		Key tmpKey = new Key("V", child.getSequenceFor(lastPlayer));
-//
-//		lpTable.setConstraint(eqKey, varKey, 1);//F child
-//		lpTable.setConstraintType(eqKey, 1);
-//		lpTable.watchPrimalVariable(varKey, child.getSequenceFor(lastPlayer));
-//		lpTable.setConstraint(tmpKey, varKey, 1);//indices y
-//		lpTable.setConstant(tmpKey, new EpsilonPolynom(epsilon, child.getSequenceFor(lastPlayer).size()).negate());//l(\epsilon)
-//	}
-
 	protected void computeEpsilon() {
 		double equationCount = lpTable.rowCount();
 		double maxCoefficient = lpTable.getMaxCoefficient();
