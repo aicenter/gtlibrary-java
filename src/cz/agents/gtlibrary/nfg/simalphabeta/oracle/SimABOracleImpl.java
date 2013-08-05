@@ -14,9 +14,9 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
-import cz.agents.gtlibrary.nfg.Utility;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
+import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.utils.Pair;
 
 public class SimABOracleImpl implements SimABOracle {
@@ -30,13 +30,13 @@ public class SimABOracleImpl implements SimABOracle {
 	private GameState rootState;
 	private Expander<? extends InformationSet> expander;
 	private Player player;
-	private Utility<ActionPureStrategy, ActionPureStrategy> utility;
+	private SimUtility utility;
 	public AlphaBeta alphaBeta;
 	private DOCache cache;
 	private AlphaBeta oppAlphaBeta;
 	private AlgorithmConfig<SimABInformationSet> algConfig;
 
-	public SimABOracleImpl(GameState rootState, Player player, Utility<ActionPureStrategy, ActionPureStrategy> utility, Data data, DOCache cache) {
+	public SimABOracleImpl(GameState rootState, Player player, SimUtility utility, Data data, DOCache cache) {
 		this.rootState = rootState;
 		this.expander = data.expander;
 		this.player = player;
@@ -101,7 +101,7 @@ public class SimABOracleImpl implements SimABOracle {
 						return Double.NEGATIVE_INFINITY;
 					}
 				}
-				Double util = ((IIUtility) utility).getUtility(strategy, entry.getKey(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+				Double util = utility.getUtility(strategy, entry.getKey(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
 				if (util.isNaN()) {
 					return Double.NEGATIVE_INFINITY;
@@ -144,7 +144,7 @@ public class SimABOracleImpl implements SimABOracle {
 						assert false;
 				}
 			assert optimisticUtility >= pesimisticUtility;
-			double utilityValue = (player.getId() == 0 ? 1 : -1) * ((IIUtility) utility).getUtility(fpStrategy, spStrategy, pesimisticUtility - 1e-4, optimisticUtility);
+			double utilityValue = (player.getId() == 0 ? 1 : -1) * utility.getUtility(fpStrategy, spStrategy, pesimisticUtility - 1e-4, optimisticUtility);
 
 			if (utilityValue == utilityValue) {
 				cache.setPesAndOptValueFor(strategyPair, utilityValue);
@@ -173,13 +173,13 @@ public class SimABOracleImpl implements SimABOracle {
 				double pesimisticUtility = 0;
 				double optimisticUtility = 0;
 				if (player.getId() == 0) {
-					long time = System.currentTimeMillis();
+//					long time = System.currentTimeMillis();
 					pesimisticUtility = -oppAlphaBeta.getValue(rootState.performAction(strategy2.getAction()), strategy1.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 					optimisticUtility = alphaBeta.getValue(rootState.performAction(strategy2.getAction()), strategy1.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 //					Info.addToABTime(System.currentTimeMillis() - time);
 					cache.setPesAndOptValueFor(strategy2, strategy1, optimisticUtility, pesimisticUtility);
 				} else {
-					long time = System.currentTimeMillis();
+//					long time = System.currentTimeMillis();
 					optimisticUtility = oppAlphaBeta.getValue(rootState.performAction(strategy1.getAction()), strategy2.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 					pesimisticUtility = -alphaBeta.getValue(rootState.performAction(strategy1.getAction()), strategy2.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 //					Info.addToABTime(System.currentTimeMillis() - time);
@@ -209,13 +209,13 @@ public class SimABOracleImpl implements SimABOracle {
 				double pesimisticUtility = 0;
 				double optimisticUtility = 0;
 				if (player.getId() == 0) {
-					long time = System.currentTimeMillis();
+//					long time = System.currentTimeMillis();
 					pesimisticUtility = -oppAlphaBeta.getValue(rootState.performAction(strategy2.getAction()), strategy1.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 					optimisticUtility = alphaBeta.getValue(rootState.performAction(strategy2.getAction()), strategy1.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 //					Info.addToABTime(System.currentTimeMillis() - time);
 					cache.setPesAndOptValueFor(strategy2, strategy1, optimisticUtility, pesimisticUtility);
 				} else {
-					long time = System.currentTimeMillis();
+//					long time = System.currentTimeMillis();
 					optimisticUtility = oppAlphaBeta.getValue(rootState.performAction(strategy1.getAction()), strategy2.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 					pesimisticUtility = -alphaBeta.getValue(rootState.performAction(strategy1.getAction()), strategy2.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 //					Info.addToABTime(System.currentTimeMillis() - time);

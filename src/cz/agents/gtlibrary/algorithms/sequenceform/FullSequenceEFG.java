@@ -11,6 +11,9 @@ import java.util.Map.Entry;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
+import cz.agents.gtlibrary.domain.artificialchance.ACExpander;
+import cz.agents.gtlibrary.domain.artificialchance.ACGameInfo;
+import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -55,15 +58,36 @@ public class FullSequenceEFG {
 	private double gameValue = Double.NaN;
 
 	public static void main(String[] args) {
+		runAC();
 //		runAoS();
 //		runKuhnPoker();
-		runGenericPoker();
+//		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
 //		runPursuit();
 	}
+	
+	public static void runAC() {
+		GameState rootState = new ACGameState();
+		GameInfo gameInfo = new ACGameInfo();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new ACExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+
+		Map<Player, Map<Sequence, Double>> rps = efg.generate();
+		
+		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
+			if(entry.getValue() > 0)
+				System.out.println(entry);
+		}
+		System.out.println("**********");
+		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
+			if(entry.getValue() > 0)
+				System.out.println(entry);
+		}
+	}
+
 
 	public static void runPursuit() {
 		GameState rootState = new PursuitGameState();
