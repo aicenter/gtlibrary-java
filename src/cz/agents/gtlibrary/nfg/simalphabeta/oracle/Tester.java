@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.P1AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.P2AlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NullAlphaBetaCache;
@@ -21,7 +22,7 @@ public class Tester {
 		state.performActionModifyingThisState(state.getNatureSequence().getFirst());
 		DOCache cache = new DOCacheImpl();
 		Expander<SimABInformationSet> expander = new GoofSpielExpander<SimABInformationSet>(new SimABConfig());
-		Data data = new Data(new P1AlphaBeta(GSGameInfo.FIRST_PLAYER, expander, new NullAlphaBetaCache()), new P2AlphaBeta(GSGameInfo.SECOND_PLAYER, expander, new NullAlphaBetaCache()), new GSGameInfo(), expander);
+		Data data = new Data(new P1AlphaBeta(GSGameInfo.FIRST_PLAYER, expander, new AlphaBetaCacheImpl()), new P2AlphaBeta(GSGameInfo.SECOND_PLAYER, expander, new AlphaBetaCacheImpl()), new GSGameInfo(), expander);
 		SimUtility utility = new SimUtilityImpl(state, new UtilityCalculator(cache, data));
 		SimABOracle firstPlayerOracle = new P1SimABOracle(state, utility, data, cache);
 		SimABOracle secondPlayerOracle = new P2SimABOracle(state, new NegativeSimUtility(utility), data, cache);

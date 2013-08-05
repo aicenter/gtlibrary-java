@@ -106,8 +106,8 @@ public class P2SimABOracle implements SimABOracle {
 			if (entry.getValue() > 1e-8) {
 				Double cacheValue = getValueFromCache(entry.getKey(), strategy);
 				double cacheWindow = getLowerBoundFromCache(entry.getKey(), strategy);
-
 				double windowValue = Math.max(cacheWindow, getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index));
+				
 				assert windowValue >= getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index);
 				if (cacheValue == null) {
 					if (getPesimisticValueFromCache(entry.getKey(), strategy) < windowValue) {
