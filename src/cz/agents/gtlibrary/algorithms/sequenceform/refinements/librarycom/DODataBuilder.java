@@ -31,10 +31,10 @@ public class DODataBuilder {
 	protected long generationTime;
 	protected long constraintGenerationTime;
 	protected long lpSolvingTime;
-	GameState rootState;
-	Expander<? extends InformationSet> expander;
-	Map<GameState, Double> tempUtilities;
-	Map<Map<Player, Sequence>, Double> utilForSeqComb;
+	protected GameState rootState;
+	protected Expander<? extends InformationSet> expander;
+	protected Map<GameState, Double> tempUtilities;
+	protected Map<Map<Player, Sequence>, Double> utilForSeqComb;
 
 	public DODataBuilder(Player[] players, GameState rootState, Expander<? extends InformationSet> expander) {
 		this.players = players;
@@ -58,12 +58,10 @@ public class DODataBuilder {
 	
 	public void initF(Sequence p2EmptySequence) {
 		data.setF(new Key("Q", p2EmptySequence), p2EmptySequence, 1);//F in root (only 1)
-//		data.addToX2(new Key("Q", p2EmptySequence), p2EmptySequence);
 	}
 
 	public void initE(Sequence p1EmptySequence) {
 		data.setE(new Key("P", p1EmptySequence), p1EmptySequence, 1);//E in root (only 1)
-//		data.addToX1(new Key("P", p1EmptySequence), p1EmptySequence);
 	}
 
 	public void solve() {
@@ -160,7 +158,6 @@ public class DODataBuilder {
 
 		for (Sequence outgoingSequence : set.getOutgoingSequences()) {
 			data.setF(eqKey, outgoingSequence, 1);//F child
-//			data.addToX2(eqKey, outgoingSequence);
 			data.addP2PerturbationsFor(outgoingSequence);
 		}
 	}
@@ -170,7 +167,6 @@ public class DODataBuilder {
 
 		for (Sequence outgoingSequence : set.getOutgoingSequences()) {
 			data.setE(eqKey, outgoingSequence, 1);//E child
-//			data.addToX1(eqKey, outgoingSequence);
 			data.addP1PerturbationsFor(outgoingSequence);
 		}
 	}

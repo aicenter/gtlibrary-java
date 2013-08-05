@@ -20,7 +20,7 @@ public class ActionPureStrategy implements PureStrategy {
 
     @Override
     public String toString() {
-        return (action == null) ? "" : action.toString();
+        return action.toString();
     }
 
     public Action getAction() {

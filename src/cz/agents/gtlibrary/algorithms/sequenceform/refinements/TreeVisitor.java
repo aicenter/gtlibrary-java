@@ -28,10 +28,10 @@ public abstract class TreeVisitor {
 		if (algConfig.getInformationSetFor(root) == null)
 			algConfig.addInformationSetFor(root, new SequenceInformationSet(root));
 		algConfig.getInformationSetFor(root).addStateToIS(root);
-		if (root.isPlayerToMoveNature()) {
-			visitChanceNode(root);
-		} else if (root.isGameEnd()) {
+		if (root.isGameEnd()) {
 			visitLeaf(root);
+		} else if (root.isPlayerToMoveNature()) {
+			visitChanceNode(root);
 		} else {
 			visitNormalNode(root);
 		}
@@ -43,10 +43,6 @@ public abstract class TreeVisitor {
 		}
 	}
 
-	protected Key getKey(GameState state) {
-		return new Key(state.getPlayerToMove().getId() == 0 ? "P" : "Q", new Key(state.getISKeyForPlayerToMove()));
-	}
-
 	protected abstract void visitLeaf(GameState state);
 
 	protected void visitChanceNode(GameState state) {
@@ -54,7 +50,7 @@ public abstract class TreeVisitor {
 			visitTree(state.performAction(action));
 		}
 	}
-	
+
 	protected Object getLastISKey(Sequence sequence) {
 		InformationSet informationSet = sequence.getLastInformationSet();
 		String string = sequence.getPlayer().equals(players[0]) ? "P" : "Q";

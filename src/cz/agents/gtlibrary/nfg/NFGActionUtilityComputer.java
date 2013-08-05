@@ -1,12 +1,7 @@
 package cz.agents.gtlibrary.nfg;
 
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.utils.FixedSizeMap;
-
-import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,33 +12,27 @@ import java.util.Map;
  */
 public class NFGActionUtilityComputer extends Utility<ActionPureStrategy, ActionPureStrategy> {
 
-    private GameState root;
-    private Expander expander;
+	private GameState root;
 
-    public NFGActionUtilityComputer(GameState root, Expander expander) {
-        this.root = root;
-        this.expander = expander;
-    }
+	public NFGActionUtilityComputer(GameState root) {
+		this.root = root;
+	}
 
-    @Override
-    public double getUtility(ActionPureStrategy s1, ActionPureStrategy s2) {
-        //TODO can be done a bit faster if avoiding building the map -- rewrite
-        double utility = 0;
+	@Override
+	public double getUtility(ActionPureStrategy s1, ActionPureStrategy s2) {
+		if (s1 == null || s2 == null || s1.getAction().getInformationSet() == null || s2.getAction().getInformationSet() == null)
+			throw new IllegalArgumentException();
 
-        if (s1 == null || s2 == null || s1.getAction().getInformationSet() == null || s2.getAction().getInformationSet() == null)
-            throw new IllegalArgumentException();
+		GameState newState = performProperAction(root, s1.getAction(), s2.getAction());
 
-        Map<Player, Action> actions = new FixedSizeMap<Player, Action>(2);
-        actions.put(s1.getAction().getInformationSet().getPlayer(), s1.getAction());
-        actions.put(s2.getAction().getInformationSet().getPlayer(), s2.getAction());
+		newState = performProperAction(newState, s1.getAction(), s2.getAction());
+		assert (newState.isGameEnd());
+		return newState.getUtilities()[0];
+	}
 
-        GameState newState = root.performAction(actions.get(root.getPlayerToMove()));
-        newState = newState.performAction(actions.get(newState.getPlayerToMove()));
-
-        assert (newState.isGameEnd());
-
-        utility = newState.getUtilities()[0];
-
-        return utility;
-    }
+	private GameState performProperAction(GameState state, Action action1, Action action2) {
+		if (action1.getInformationSet().getPlayer().equals(state.getPlayerToMove()))
+			return state.performAction(action1);
+		return state.performAction(action2);
+	}
 }

@@ -27,8 +27,8 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 	private PlayerStrategySet<T> playerOneStrategySet = null;
 	private PlayerStrategySet<U> playerTwoStrategySet = null;
 
-	private MixedStrategy playerOneMixedStrategy = null;
-	private MixedStrategy playerTwoMixedStrategy = null;
+	private MixedStrategy<T> playerOneMixedStrategy = null;
+	private MixedStrategy<U> playerTwoMixedStrategy = null;
 
 	private Utility<T, U> utilityComputer;
 	
