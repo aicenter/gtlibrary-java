@@ -45,4 +45,9 @@ public class NullDOCache implements DOCache {
 	public Double getPesimisticUtilityFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		return null;
 	}
+
+	@Override
+	public Double getOptimisticUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
+		return null;
+	}
 }

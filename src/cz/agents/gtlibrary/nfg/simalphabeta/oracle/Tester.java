@@ -23,8 +23,10 @@ public class Tester {
 		Expander<SimABInformationSet> expander = new GoofSpielExpander<SimABInformationSet>(new SimABConfig());
 		Data data = new Data(new P1AlphaBeta(GSGameInfo.FIRST_PLAYER, expander, new NullAlphaBetaCache()), new P2AlphaBeta(GSGameInfo.SECOND_PLAYER, expander, new NullAlphaBetaCache()), new GSGameInfo(), expander);
 		SimUtility utility = new SimUtilityImpl(state, new UtilityCalculator(cache, data));
-		SimABOracleImpl firstPlayerOracle = new SimABOracleImpl(state, GSGameInfo.FIRST_PLAYER, utility, data, cache);
-		SimABOracleImpl secondPlayerOracle = new SimABOracleImpl(state, GSGameInfo.SECOND_PLAYER, new NegativeSimUtility(utility), data, cache);
+		SimABOracle firstPlayerOracle = new P1SimABOracle(state, utility, data, cache);
+		SimABOracle secondPlayerOracle = new P2SimABOracle(state, new NegativeSimUtility(utility), data, cache);
+//		SimABOracle firstPlayerOracle = new SimABOracleImpl(state, GSGameInfo.FIRST_PLAYER, utility, data, cache);
+//		SimABOracle secondPlayerOracle = new SimABOracleImpl(state, GSGameInfo.SECOND_PLAYER, new NegativeSimUtility(utility), data, cache);
 		SimDoubleOracle oracle = new SimDoubleOracle(firstPlayerOracle, secondPlayerOracle, utility, -data.gameInfo.getMaxUtility(), data.gameInfo.getMaxUtility(), cache, data, state);
 
 		oracle.execute();
