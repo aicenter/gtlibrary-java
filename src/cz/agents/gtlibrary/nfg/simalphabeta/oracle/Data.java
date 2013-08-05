@@ -9,7 +9,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
 
 public class Data {
 	
-	private AlphaBeta[] alphaBetas;
+	public AlphaBeta[] alphaBetas;
 	public GameInfo gameInfo;
 	public Expander<SimABInformationSet> expander;
 	public AlgorithmConfig<SimABInformationSet> config;

@@ -42,6 +42,11 @@ public class DOCacheImpl implements DOCache {
 	public Double getOptimisticUtilityFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		return optimisticUtilities.get(strategyPair);
 	}
+	
+	@Override
+	public Double getOptimisticUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
+		return getOptimisticUtilityFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2));
+	}
 
 //	public void setPesimisticValueFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, Double utility) {
 //		pesimisticUtilities.put(strategyPair, utility);
@@ -85,5 +90,7 @@ public class DOCacheImpl implements DOCache {
 		if (optimisticUtility - pesimisticUtility < 1e-14)
 			actualUtilities.put(strategyPair, optimisticUtility);
 	}
+
+	
 
 }

@@ -23,5 +23,7 @@ public interface DOCache {
 
 	public Double getPesimisticUtilityFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair);
 
+	public Double getOptimisticUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2);
+
 	
 }
