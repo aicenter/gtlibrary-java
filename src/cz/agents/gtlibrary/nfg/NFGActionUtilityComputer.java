@@ -10,7 +10,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
  * Time: 11:38 AM
  * To change this template use File | Settings | File Templates.
  */
-public class NFGActionUtilityComputer extends Utility<ActionPureStrategy, ActionPureStrategy> {
+public class NFGActionUtilityComputer<T extends ActionPureStrategy, U extends ActionPureStrategy> extends Utility<T, U> {
 
 	private GameState root;
 
@@ -19,7 +19,7 @@ public class NFGActionUtilityComputer extends Utility<ActionPureStrategy, Action
 	}
 
 	@Override
-	public double getUtility(ActionPureStrategy s1, ActionPureStrategy s2) {
+	public double getUtility(T s1, U s2) {
 		if (s1 == null || s2 == null || s1.getAction().getInformationSet() == null || s2.getAction().getInformationSet() == null)
 			throw new IllegalArgumentException();
 

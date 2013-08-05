@@ -12,10 +12,13 @@ import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
+import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.NFGActionUtilityComputer;
 import cz.agents.gtlibrary.nfg.PlayerStrategySet;
@@ -33,31 +36,31 @@ import cz.agents.gtlibrary.utils.Pair;
  */
 public class NFGDoubleOracle {
 
-    private double lowerBound;
-    private double upperBound;
+    protected double lowerBound;
+    protected double upperBound;
 
-    private GameState rootState;
-    private Expander<DoubleOracleInformationSet> expander;
-    private GameInfo gameInfo;
-    private DoubleOracleConfig algConfig;
+    protected GameState rootState;
+    protected Expander<? extends InformationSet> expander;
+    protected GameInfo gameInfo;
+    protected AlgorithmConfig<? extends InformationSet> algConfig;
 
-    private PrintStream debugOutput = System.out;
+    protected PrintStream debugOutput = System.out;
 
-    private MixedStrategy<PureStrategy> maxPlayerMixedStrategy = new MixedStrategy<PureStrategy>();
-    private MixedStrategy<PureStrategy> minPlayerMixedStrategy = new MixedStrategy<PureStrategy>();
+    protected MixedStrategy<ActionPureStrategy> maxPlayerMixedStrategy = new MixedStrategy<ActionPureStrategy>();
+    protected MixedStrategy<ActionPureStrategy> minPlayerMixedStrategy = new MixedStrategy<ActionPureStrategy>();
 
-    private PlayerStrategySet<PureStrategy> maxPlayerStrategySet = new PlayerStrategySet<PureStrategy>();
-    private PlayerStrategySet<PureStrategy> minPlayerStrategySet = new PlayerStrategySet<PureStrategy>();
+    protected PlayerStrategySet<ActionPureStrategy> maxPlayerStrategySet = new PlayerStrategySet<ActionPureStrategy>();
+    protected PlayerStrategySet<ActionPureStrategy> minPlayerStrategySet = new PlayerStrategySet<ActionPureStrategy>();
 
-    private ZeroSumGameNESolver coreSolver;
-    private double resultValue;
+    protected ZeroSumGameNESolver<ActionPureStrategy, ActionPureStrategy> coreSolver;
+    protected double resultValue;
 
-    final private double EPS = 0.00001;
-    final private static boolean DEBUG = false;
-    final private static boolean MY_RP_BR_ORDERING = false;
-    private ThreadMXBean threadBean ;
+    final protected double EPS = 0.00001;
+    final protected static boolean DEBUG = false;
+    final protected static boolean MY_RP_BR_ORDERING = false;
+    protected ThreadMXBean threadBean ;
 
-    public NFGDoubleOracle(GameState rootState, Expander<DoubleOracleInformationSet> expander, GameInfo gameInfo, DoubleOracleConfig algConfig) {
+    public NFGDoubleOracle(GameState rootState, Expander<? extends InformationSet> expander, GameInfo gameInfo, AlgorithmConfig<? extends InformationSet> algConfig) {
         this.rootState = rootState;
         this.expander = expander;
         this.gameInfo = gameInfo;
@@ -93,23 +96,23 @@ public class NFGDoubleOracle {
         int iterations = 0;
 
         Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
-        NFGOracle[] brAlgorithms = new NFGBROracle[] {
+        NFGOracle<ActionPureStrategy>[] brAlgorithms = new NFGBROracle[] {
                 new NFGBROracle(gameInfo, rootState, expander, actingPlayers[0], actingPlayers[1]),
                 new NFGBROracle(gameInfo, rootState, expander, actingPlayers[1], actingPlayers[0])};
 
         upperBound = gameInfo.getMaxUtility();
         lowerBound = -upperBound;
 
-        NFGActionUtilityComputer utilityComputer = new NFGActionUtilityComputer(rootState);
+        NFGActionUtilityComputer<ActionPureStrategy, ActionPureStrategy> utilityComputer = new NFGActionUtilityComputer<ActionPureStrategy, ActionPureStrategy>(rootState);
 
-        coreSolver = new ZeroSumGameNESolverImpl(utilityComputer);
+        coreSolver = new ZeroSumGameNESolverImpl<ActionPureStrategy, ActionPureStrategy>(utilityComputer);
 
         while (Math.abs(upperBound - lowerBound) > EPS) {
 
             iterations++;
 
-            Pair<PureStrategy, Double> maxPlayerOracleResult;
-            Pair<PureStrategy, Double> minPlayerOracleResult;
+            Pair<ActionPureStrategy, Double> maxPlayerOracleResult;
+            Pair<ActionPureStrategy, Double> minPlayerOracleResult;
 
             maxPlayerOracleResult = brAlgorithms[0].getNewStrategy(utilityComputer, minPlayerMixedStrategy);
             minPlayerOracleResult = brAlgorithms[1].getNewStrategy(utilityComputer, maxPlayerMixedStrategy);

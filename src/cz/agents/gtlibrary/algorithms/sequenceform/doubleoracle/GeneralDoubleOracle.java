@@ -3,17 +3,19 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp.DOLPBuilder;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp.RecyclingDOLPBuilder;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp.ReducedDOLPBuilder;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.ReducedLPBuilder;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DODataBuilder;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
+import cz.agents.gtlibrary.domain.artificialchance.ACExpander;
+import cz.agents.gtlibrary.domain.artificialchance.ACGameInfo;
+import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -32,9 +34,16 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
-import cz.agents.gtlibrary.domain.randomgame.*;
-import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.io.GambitEFG;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameInfo;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class GeneralDoubleOracle {
@@ -57,6 +66,7 @@ public class GeneralDoubleOracle {
     public static PlayerSelection playerSelection = PlayerSelection.SINGLE_IMPROVED;
 
 	public static void main(String[] args) {
+		runAC();
 //        runBP();
 //        runGenericPoker();
 //        runKuhnPoker();
@@ -65,8 +75,18 @@ public class GeneralDoubleOracle {
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
-		runAoS();
+//		runAoS();
 	}
+	
+	 public static void runAC() {
+	        GameState rootState = new ACGameState();
+	        GameInfo gameInfo = new ACGameInfo();
+			DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+	        Expander<DoubleOracleInformationSet> expander = new ACExpander<DoubleOracleInformationSet>(algConfig);
+			GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+	        Map<Player, Map<Sequence, Double>> rp = doefg.generate(null);
+	        System.out.println(rp);
+	    }
 
     public static void runPhantomTTT() {
         GameState rootState = new TTTState();
@@ -215,11 +235,11 @@ public class GeneralDoubleOracle {
             }
         }
 		int currentPlayerIndex = 0;
-//		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
+		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
 //		DOLPBuilder doRestrictedGameSolver = new DOLPBuilder(actingPlayers);
 //		DOLPBuilder doRestrictedGameSolver = new RecyclingDOLPBuilder(actingPlayers);
 //		ReducedDOLPBuilder doRestrictedGameSolver = new ReducedDOLPBuilder(actingPlayers, gameInfo, rootState, expander);
-		DODataBuilder doRestrictedGameSolver = new DODataBuilder(actingPlayers, rootState, expander);
+//		DODataBuilder doRestrictedGameSolver = new DODataBuilder(actingPlayers, rootState, expander);
         doRestrictedGameSolver.setDebugOutput(debugOutput);
 		
 		double p1BoundUtility = gameInfo.getMaxUtility();

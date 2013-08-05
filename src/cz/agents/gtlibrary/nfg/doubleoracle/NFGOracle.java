@@ -1,7 +1,7 @@
 package cz.agents.gtlibrary.nfg.doubleoracle;
 
+import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
-import cz.agents.gtlibrary.nfg.PureStrategy;
 import cz.agents.gtlibrary.nfg.Utility;
 import cz.agents.gtlibrary.utils.Pair;
 
@@ -12,6 +12,6 @@ import cz.agents.gtlibrary.utils.Pair;
  * Time: 3:03 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface NFGOracle {
-    public Pair<PureStrategy, Double> getNewStrategy(Utility utilityCalculator, MixedStrategy opponentStrategy);
+public interface NFGOracle<T extends ActionPureStrategy> {
+    public Pair<T, Double> getNewStrategy(Utility<T, T> utilityCalculator, MixedStrategy<T> opponentStrategy);
 }

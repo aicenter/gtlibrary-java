@@ -19,7 +19,7 @@ import java.util.Map;
  * Time: 3:01 PM
  * To change this template use File | Settings | File Templates.
  */
-public class NFGBROracle implements NFGOracle{
+public class NFGBROracle implements NFGOracle {
 
     private GameInfo gameInfo;
     private Expander expander;
