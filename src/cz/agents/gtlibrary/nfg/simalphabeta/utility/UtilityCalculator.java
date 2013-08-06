@@ -3,13 +3,13 @@ package cz.agents.gtlibrary.nfg.simalphabeta.utility;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
+import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimDoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
-import cz.agents.gtlibrary.nfg.simalphabeta.oracle.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.P1SimABOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.P2SimABOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABOracle;
-import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimDoubleOracle;
 
 public class UtilityCalculator {
 	protected Data data;
@@ -27,9 +27,9 @@ public class UtilityCalculator {
 			assert !utility.isNaN();
 			return utility;
 		}
-		if(cache != null && alpha == Double.NEGATIVE_INFINITY && beta == Double.POSITIVE_INFINITY)
+		if(alpha == Double.NEGATIVE_INFINITY && beta == Double.POSITIVE_INFINITY)
 			return Double.NaN;
-		if(cache != null && alpha == Double.NEGATIVE_INFINITY && beta == Double.NEGATIVE_INFINITY) {
+		if(alpha == Double.NEGATIVE_INFINITY && beta == Double.NEGATIVE_INFINITY) {
 //			Info.fullRunFromNESolver++;
 			if (state.isPlayerToMoveNature())
 				return computeUtilityForNature(state, s1, s2, cache.getPesimisticUtilityFor(s1, s2), cache.getPesimisticUtilityFor(s1, s2));

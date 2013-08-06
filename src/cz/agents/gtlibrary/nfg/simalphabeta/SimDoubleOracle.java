@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.nfg.simalphabeta.oracle;
+package cz.agents.gtlibrary.nfg.simalphabeta;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.nfg.PlayerStrategySet;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolverImpl;
 import cz.agents.gtlibrary.nfg.doubleoracle.NFGDoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.utils.Pair;
 
