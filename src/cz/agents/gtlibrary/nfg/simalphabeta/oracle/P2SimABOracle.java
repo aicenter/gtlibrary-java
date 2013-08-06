@@ -1,48 +1,20 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.oracle;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
-import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
-import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
-import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.utils.Pair;
 
-public class P2SimABOracle implements SimABOracle {
-
-	public static boolean USE_ALPHABETA = true;
-	public static boolean USE_ALPHABETA_CACHE = false;
-	private static boolean USE_INCREASING_BOUND = false;
-
-	private HashSet<ActionPureStrategy> actions;
-	private GameState rootState;
-	private Expander<? extends InformationSet> expander;
-	private SimUtility utility;
-	private AlphaBeta alphaBeta;
-	private DOCache cache;
-	private AlphaBeta oppAlphaBeta;
-	private AlgorithmConfig<SimABInformationSet> algConfig;
-	private Player player;
+public class P2SimABOracle extends SimABOracleImpl {
 
 	public P2SimABOracle(GameState rootState, SimUtility utility, Data data, DOCache cache) {
-		this.rootState = rootState;
-		this.player = rootState.getAllPlayers()[1];
-		this.expander = data.expander;
-		this.utility = utility;
-		this.alphaBeta = data.getAlphaBetaFor(player);
-		this.cache = cache;
-		this.oppAlphaBeta = data.alphaBetas[0];
-		this.algConfig = data.config;
+		super(rootState, rootState.getAllPlayers()[1], utility, data, cache);
 	}
 
 	@Override
@@ -67,11 +39,6 @@ public class P2SimABOracle implements SimABOracle {
 			}
 		}
 		return new Pair<ActionPureStrategy, Double>(bestStrategy, bestValue);
-	}
-
-	@Override
-	public ActionPureStrategy getForcedBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta) {
-		return getActions().iterator().next();
 	}
 	
 	private void updateCacheValuesFor(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy, double bound) {
@@ -188,36 +155,4 @@ public class P2SimABOracle implements SimABOracle {
 		}
 		return (bestValue - utility) / currProbability;
 	}
-
-	private Collection<ActionPureStrategy> getActions() {
-		if (actions == null)
-			initActions();
-		return actions;
-	}
-
-	private void initActions() {
-		actions = new LinkedHashSet<ActionPureStrategy>();
-		if (player.equals(rootState.getPlayerToMove())) {
-			initFotPlayerToMove();
-			return;
-		}
-		initForOtherPlayer();
-	}
-
-	private void initForOtherPlayer() {
-		GameState newState = rootState.performAction(expander.getActions(rootState).get(0));
-
-		algConfig.createInformationSetFor(newState);
-		for (Action action : expander.getActions(newState)) {
-			actions.add(new ActionPureStrategy(action));
-		}
-	}
-
-	private void initFotPlayerToMove() {
-		algConfig.createInformationSetFor(rootState);
-		for (Action action : expander.getActions(rootState)) {
-			actions.add(new ActionPureStrategy(action));
-		}
-	}
-
 }

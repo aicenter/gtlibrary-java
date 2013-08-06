@@ -58,7 +58,7 @@ public class FullSequenceEFG {
 	private double gameValue = Double.NaN;
 
 	public static void main(String[] args) {
-		runAC();
+//		runAC();
 //		runAoS();
 //		runKuhnPoker();
 //		runGenericPoker();
@@ -66,7 +66,7 @@ public class FullSequenceEFG {
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
-//		runPursuit();
+		runPursuit();
 	}
 	
 	public static void runAC() {

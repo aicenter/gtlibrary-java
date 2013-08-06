@@ -27,14 +27,6 @@ public class DOCacheImpl implements DOCache {
 		return optimisticUtilities.get(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2));
 	}
 
-//	public void setPesimisticValueFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2, Double utility) {
-//		setPesimisticValueFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2), utility);
-//	}
-//
-//	public void setOptimisticValueFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2, Double utility) {
-//		setOptimisticValueFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2), utility);
-//	}
-
 	public Double getPesimisticUtilityFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		return pesimisticUtilities.get(strategyPair);
 	}
@@ -47,14 +39,6 @@ public class DOCacheImpl implements DOCache {
 	public Double getOptimisticUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
 		return getOptimisticUtilityFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2));
 	}
-
-//	public void setPesimisticValueFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, Double utility) {
-//		pesimisticUtilities.put(strategyPair, utility);
-//	}
-//
-//	public void setOptimisticValueFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, Double utility) {
-//		optimisticUtilities.put(strategyPair, utility);
-//	}
 
 	public void setPesAndOptValueFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, Double utility) {
 		if (!utility.isNaN()) {

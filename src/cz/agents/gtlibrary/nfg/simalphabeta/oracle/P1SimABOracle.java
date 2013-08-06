@@ -1,47 +1,20 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.oracle;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
-import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
-import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
-import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.utils.Pair;
 
-public class P1SimABOracle implements SimABOracle {
-
-	public static boolean USE_ALPHABETA = true;
-	private static boolean USE_INCREASING_BOUND = false;
-
-	private HashSet<ActionPureStrategy> actions;
-	private GameState rootState;
-	private Expander<? extends InformationSet> expander;
-	private Player player;
-	private SimUtility utility;
-	public AlphaBeta alphaBeta;
-	private DOCache cache;
-	private AlphaBeta oppAlphaBeta;
-	private AlgorithmConfig<SimABInformationSet> algConfig;
+public class P1SimABOracle extends SimABOracleImpl {
 
 	public P1SimABOracle(GameState rootState, SimUtility utility, Data data, DOCache cache) {
-		this.rootState = rootState;
-		this.expander = data.expander;
-		this.player = rootState.getAllPlayers()[0];
-		this.utility = utility;
-		this.alphaBeta = data.getAlphaBetaFor(player);
-		this.cache = cache;
-		this.oppAlphaBeta = data.alphaBetas[1];
-		this.algConfig = data.config;
+		super(rootState, rootState.getAllPlayers()[0], utility, data, cache);
 	}
 
 	public Pair<ActionPureStrategy, Double> getBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta, double hardAlpha, double hardBeta) {
@@ -184,37 +157,6 @@ public class P1SimABOracle implements SimABOracle {
 
 	private Double getValueFromCache(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		return cache.getUtilityFor(p1Strategy, p2Strategy);
-	}
-
-	private Collection<ActionPureStrategy> getActions() {
-		if (actions == null)
-			initActions();
-		return actions;
-	}
-
-	private void initActions() {
-		actions = new LinkedHashSet<ActionPureStrategy>();
-		if (player.equals(rootState.getPlayerToMove())) {
-			initFotPlayerToMove();
-			return;
-		}
-		initForOtherPlayer();
-	}
-
-	private void initForOtherPlayer() {
-		GameState newState = rootState.performAction(expander.getActions(rootState).get(0));
-
-		algConfig.createInformationSetFor(newState);
-		for (Action action : expander.getActions(newState)) {
-			actions.add(new ActionPureStrategy(action));
-		}
-	}
-
-	private void initFotPlayerToMove() {
-		algConfig.createInformationSetFor(rootState);
-		for (Action action : expander.getActions(rootState)) {
-			actions.add(new ActionPureStrategy(action));
-		}
 	}
 
 }

@@ -1,10 +1,11 @@
-package cz.agents.gtlibrary.nfg.simalphabeta.oracle;
+package cz.agents.gtlibrary.nfg.simalphabeta;
 
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABInformationSet;
 
 
 public class Data {
