@@ -40,11 +40,6 @@ public class P1SimABOracle extends SimABOracleImpl {
 		return new Pair<ActionPureStrategy, Double>(bestStrategy, bestValue);
 	}
 
-	@Override
-	public ActionPureStrategy getForcedBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta) {
-		return getActions().iterator().next();
-	}
-
 	private double getValueForAction(MixedStrategy<ActionPureStrategy> mixedStrategy, double bestValue, ActionPureStrategy strategy) {
 		double utilityValue = 0;
 		int index = 0;

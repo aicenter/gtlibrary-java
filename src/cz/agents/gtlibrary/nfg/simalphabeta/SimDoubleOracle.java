@@ -61,88 +61,77 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 			return;
 		}
 
-		double patrollerValue = 0;
-		double evaderValue = 0;
-		PlayerStrategySet<ActionPureStrategy> firstPlayerStrategySet = new PlayerStrategySet<ActionPureStrategy>();
-		PlayerStrategySet<ActionPureStrategy> secondPlayerStrategySet = new PlayerStrategySet<ActionPureStrategy>();
-		MixedStrategy<ActionPureStrategy> firstPlayerMixedStrategy = new MixedStrategy<ActionPureStrategy>();
-		MixedStrategy<ActionPureStrategy> secondPlayerMixedStrategy = new MixedStrategy<ActionPureStrategy>();
-		ActionPureStrategy firstPlayerOracleBestResponse = p1Oracle.getForcedBestResponse(secondPlayerMixedStrategy, alpha, beta);
+		double p2Value = 0;
+		double p1Value = 0;
+		PlayerStrategySet<ActionPureStrategy> p1StrategySet = new PlayerStrategySet<ActionPureStrategy>();
+		PlayerStrategySet<ActionPureStrategy> p2StrategySet = new PlayerStrategySet<ActionPureStrategy>();
+		ActionPureStrategy initialStrategy = p1Oracle.getFirstStrategy();
 
-		firstPlayerStrategySet.add(firstPlayerOracleBestResponse);
-		firstPlayerMixedStrategy.add(firstPlayerOracleBestResponse, 1.0);
-		coreSolver.addPlayerOneStrategies(firstPlayerStrategySet);
-
-		Pair<ActionPureStrategy, Double> secondPlayerOracleBestResponse = p2Oracle.getBestResponse(firstPlayerMixedStrategy, alpha, beta, hardAlpha, hardBeta);
-		
-		assert !secondPlayerOracleBestResponse.getRight().isNaN();
-		if (-secondPlayerOracleBestResponse.getRight() > alpha)
-			alpha = -secondPlayerOracleBestResponse.getRight();
-		if (secondPlayerOracleBestResponse.getLeft() == null) {
-			gameValue = Double.NaN;
-			return;
-		}
-		secondPlayerStrategySet.add(secondPlayerOracleBestResponse.getLeft());
-		secondPlayerMixedStrategy.add(secondPlayerOracleBestResponse.getLeft(), 1.0);
-		coreSolver.addPlayerTwoStrategies(secondPlayerStrategySet);
-		coreSolver.computeNashEquilibrium();
-		firstPlayerMixedStrategy = coreSolver.getPlayerOneStrategy();
-		secondPlayerMixedStrategy = coreSolver.getPlayerTwoStrategy();
-		gameValue = coreSolver.getGameValue();
-		assert gameValue == gameValue;
-
+		p1StrategySet.add(initialStrategy);
+		coreSolver.addPlayerOneStrategies(p1StrategySet);
 		while (true) {
-			Pair<ActionPureStrategy, Double> evadersBR = p1Oracle.getBestResponse(secondPlayerMixedStrategy, alpha, beta, hardAlpha, hardBeta);
-
-			assert alpha <= beta + 1e-8;
-			assert !evadersBR.getRight().isNaN();
-			if (evadersBR.getRight() < beta)
-				beta = evadersBR.getRight();
-			if (evadersBR.getLeft() == null) {
+			Pair<ActionPureStrategy, Double> p2BestResponse = p2Oracle.getBestResponse(getP1MixedStrategy(initialStrategy), alpha, beta, hardAlpha, hardBeta);
+			
+			if (-p2BestResponse.getRight() > alpha)
+				alpha = -p2BestResponse.getRight();
+			if (p2BestResponse.getLeft() == null) {
 				gameValue = Double.NaN;
 				return;
 			}
-
-			boolean evaderBRadded = firstPlayerStrategySet.add(evadersBR.getLeft());
-
-			updateCacheValues(firstPlayerStrategySet, secondPlayerStrategySet);
-			if (evaderBRadded) {
-				coreSolver.addPlayerOneStrategies(firstPlayerStrategySet);
+			
+			boolean p2BestResponseadded = p2StrategySet.add(p2BestResponse.getLeft());
+			
+			assert !p2BestResponse.getRight().isNaN();
+			updateCacheValues(p1StrategySet, p2StrategySet);
+			if (p2BestResponseadded) {
+				coreSolver.addPlayerTwoStrategies(p2StrategySet);
 				coreSolver.computeNashEquilibrium();
-				firstPlayerMixedStrategy = coreSolver.getPlayerOneStrategy();
-				secondPlayerMixedStrategy = coreSolver.getPlayerTwoStrategy();
 				gameValue = coreSolver.getGameValue();
 				assert gameValue == gameValue;
 			}
-
-			Pair<ActionPureStrategy, Double> patrollerBR = p2Oracle.getBestResponse(firstPlayerMixedStrategy, alpha, beta, hardAlpha, hardBeta);
 			
-			if (-patrollerBR.getRight() > alpha)
-				alpha = -patrollerBR.getRight();
-			if (patrollerBR.getLeft() == null) {
+			Pair<ActionPureStrategy, Double> p1BestResponse = p1Oracle.getBestResponse(getP2MixedStrategy(), alpha, beta, hardAlpha, hardBeta);
+
+			assert alpha <= beta + 1e-8;
+			assert !p1BestResponse.getRight().isNaN();
+			if (p1BestResponse.getRight() < beta)
+				beta = p1BestResponse.getRight();
+			if (p1BestResponse.getLeft() == null) {
 				gameValue = Double.NaN;
 				return;
 			}
-			
-			boolean patrollerBRadded = secondPlayerStrategySet.add(patrollerBR.getLeft());
-			
-			assert !patrollerBR.getRight().isNaN();
-			updateCacheValues(firstPlayerStrategySet, secondPlayerStrategySet);
-			if (patrollerBRadded) {
-				coreSolver.addPlayerTwoStrategies(secondPlayerStrategySet);
+
+			boolean p1BestResponseadded = p1StrategySet.add(p1BestResponse.getLeft());
+
+			updateCacheValues(p1StrategySet, p2StrategySet);
+			if (p1BestResponseadded) {
+				coreSolver.addPlayerOneStrategies(p1StrategySet);
 				coreSolver.computeNashEquilibrium();
-				firstPlayerMixedStrategy = coreSolver.getPlayerOneStrategy();
-				secondPlayerMixedStrategy = coreSolver.getPlayerTwoStrategy();
 				gameValue = coreSolver.getGameValue();
 				assert gameValue == gameValue;
 			}
 
 			if (CHECK_STRATEGY_SET_CHANGES) {
-				if (!evaderBRadded && !patrollerBRadded)
+				if (!p1BestResponseadded && !p2BestResponseadded)
 					break;
-			} else if (Math.abs(patrollerValue + gameValue) < EPS && Math.abs(evaderValue - gameValue) < EPS) 
+			} else if (Math.abs(p2Value + gameValue) < EPS && Math.abs(p1Value - gameValue) < EPS) 
 				break;
 		}
+	}
+
+	private MixedStrategy<ActionPureStrategy> getP2MixedStrategy() {
+		return coreSolver.getPlayerTwoStrategy();
+	}
+
+	private MixedStrategy<ActionPureStrategy> getP1MixedStrategy(ActionPureStrategy p1BestResponse) {
+		return coreSolver.getPlayerOneStrategy() == null?getInitMixedStrategy(p1BestResponse):coreSolver.getPlayerOneStrategy();
+	}
+
+	private MixedStrategy<ActionPureStrategy> getInitMixedStrategy(ActionPureStrategy p1BestResponse) {
+		MixedStrategy<ActionPureStrategy> p1MixedStrategy = new MixedStrategy<ActionPureStrategy>();
+		
+		p1MixedStrategy.add(p1BestResponse, 1.0);
+		return p1MixedStrategy;
 	}
 
 	private void updateCacheValues(PlayerStrategySet<ActionPureStrategy> firstPlayerStrategySet, PlayerStrategySet<ActionPureStrategy> secondPlayerStrategySet) {
@@ -155,7 +144,7 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 		}
 	}
 
-	public void updateCacheFromRecursion(ActionPureStrategy fpStrategy, ActionPureStrategy spStrategy) {
+	private void updateCacheFromRecursion(ActionPureStrategy fpStrategy, ActionPureStrategy spStrategy) {
 		double pesimisticUtility = cache.getPesimisticUtilityFor(fpStrategy, spStrategy);
 		double optimisticUtility = cache.getOptimisticUtilityFor(fpStrategy, spStrategy);
 
@@ -167,7 +156,7 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 		}
 	}
 
-	public void updateCacheFromAlphaBeta(ActionPureStrategy fpStrategy, ActionPureStrategy spStrategy) {
+	private void updateCacheFromAlphaBeta(ActionPureStrategy fpStrategy, ActionPureStrategy spStrategy) {
 		GameState tempState = getStateAfter(fpStrategy, spStrategy);
 		double pesimisticUtility = -data.getAlphaBetaFor(tempState.getAllPlayers()[1]).getValue(tempState, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 		double optimisticUtility = data.getAlphaBetaFor(tempState.getAllPlayers()[0]).getValue(tempState, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
@@ -175,7 +164,7 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 		cache.setPesAndOptValueFor(fpStrategy, spStrategy, optimisticUtility, pesimisticUtility);
 	}
 
-	public GameState getStateAfter(ActionPureStrategy fpStrategy, ActionPureStrategy spStrategy) {
+	private GameState getStateAfter(ActionPureStrategy fpStrategy, ActionPureStrategy spStrategy) {
 		GameState tempState = state.performAction(fpStrategy.getAction());
 
 		tempState.performActionModifyingThisState(spStrategy.getAction());
