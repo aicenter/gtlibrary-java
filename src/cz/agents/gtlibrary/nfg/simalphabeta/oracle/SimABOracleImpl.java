@@ -11,7 +11,6 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
-import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
@@ -44,7 +43,7 @@ public abstract class SimABOracleImpl implements SimABOracle {
 	
 
 	@Override
-	public ActionPureStrategy getForcedBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta) {
+	public ActionPureStrategy getFirstStrategy() {
 		return getActions().iterator().next();
 	}
 	

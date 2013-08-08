@@ -8,5 +8,5 @@ public interface SimABOracle {
 	
 	public Pair<ActionPureStrategy, Double> getBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta, double hardAlpha, double hardBeta);
 
-	public ActionPureStrategy getForcedBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta);
+	public ActionPureStrategy getFirstStrategy();
 }
