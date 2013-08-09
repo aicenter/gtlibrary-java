@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.domain.goofspiel;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
@@ -20,7 +20,7 @@ public class GoofSpielExpander<I extends InformationSet> extends ExpanderImpl<I>
 	@Override
 	public List<Action> getActions(GameState gameState) {
 		GoofSpielGameState gsState = (GoofSpielGameState) gameState;
-		List<Action> actions = new LinkedList<Action>();
+		List<Action> actions = new ArrayList<Action>();
 
 		if(gsState.isPlayerToMoveNature()) {
 			if(GSGameInfo.useFixedNatureSequence) {

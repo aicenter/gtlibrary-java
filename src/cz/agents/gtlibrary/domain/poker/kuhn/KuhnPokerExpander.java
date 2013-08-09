@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.poker.kuhn;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,6 +14,8 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>{
 
+	private static final long serialVersionUID = -5389882092681466870L;
+
 	public KuhnPokerExpander(AlgorithmConfig<I> algConfig) {
 		super(algConfig);
 	}
@@ -20,7 +23,7 @@ public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>
 	@Override
 	public List<Action> getActions(GameState gameState) {
 		KuhnPokerGameState kpState = (KuhnPokerGameState) gameState;
-		List<Action> actions = new LinkedList<Action>();
+		List<Action> actions = new ArrayList<Action>();
 
 		if (kpState.getRound() == 0) {			
 			addActionsOfNature(kpState, actions, getAlgorithmConfig().getInformationSetFor(gameState));
