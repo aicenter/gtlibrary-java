@@ -25,8 +25,8 @@ import cz.agents.gtlibrary.nfg.simalphabeta.utility.UtilityCalculator;
 public class SimAlphaBeta {
 
 	public static void main(String[] args) {
-//		runGoofSpiel();
-		runPursuit();
+		runGoofSpiel();
+//		runPursuit();
 	}
 
 	public static void runGoofSpiel() {

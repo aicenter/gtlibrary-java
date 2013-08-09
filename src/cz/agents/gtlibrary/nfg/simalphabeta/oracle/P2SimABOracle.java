@@ -71,7 +71,6 @@ public class P2SimABOracle extends SimABOracleImpl {
 				double cacheWindow = getLowerBoundFromCache(entry.getKey(), strategy);
 				double windowValue = Math.max(cacheWindow, getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index));
 
-				assert windowValue >= getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index);
 				if (cacheValue == null) {
 					if (getPesimisticValueFromCache(entry.getKey(), strategy) < windowValue)
 						return Double.NEGATIVE_INFINITY;
@@ -98,12 +97,15 @@ public class P2SimABOracle extends SimABOracleImpl {
 	}
 
 	private Double updateCacheAndGetOptimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
-		double pesimisticUtility = -alphaBeta.getValue(rootState.performAction(p1Strategy.getAction()), p2Strategy.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-		double optimisticUtility = oppAlphaBeta.getValue(rootState.performAction(p1Strategy.getAction()), p2Strategy.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+		GameState state = getStateAfter(p1Strategy, p2Strategy);
+		double pesimisticUtility = -alphaBeta.getUnboundedValue(state);
+		double optimisticUtility = oppAlphaBeta.getUnboundedValue(state);
 
 		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
 		return optimisticUtility;
 	}
+
+	
 
 	private Double getPesimisticValueFromCache(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		Double cachedValue = cache.getPesimisticUtilityFor(p1Strategy, p2Strategy);
@@ -114,8 +116,9 @@ public class P2SimABOracle extends SimABOracleImpl {
 	}
 
 	private Double updateCacheAndGetPesimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
-		double pesimisticUtility = -alphaBeta.getValue(rootState.performAction(p1Strategy.getAction()), p2Strategy.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-		double optimisticUtility = oppAlphaBeta.getValue(rootState.performAction(p1Strategy.getAction()), p2Strategy.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+		GameState state = getStateAfter(p1Strategy, p2Strategy);
+		double pesimisticUtility = -alphaBeta.getUnboundedValue(state);
+		double optimisticUtility = oppAlphaBeta.getUnboundedValue(state);
 
 		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
 		return pesimisticUtility;
@@ -139,5 +142,12 @@ public class P2SimABOracle extends SimABOracleImpl {
 			currentIndex++;
 		}
 		return (bestValue - utility) / currProbability;
+	}
+	
+	private GameState getStateAfter(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
+		GameState state = rootState.performAction(p1Strategy.getAction());
+		
+		state.performActionModifyingThisState(p2Strategy.getAction());
+		return state;
 	}
 }

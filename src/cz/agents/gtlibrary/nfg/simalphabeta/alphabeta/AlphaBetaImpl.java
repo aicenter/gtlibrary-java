@@ -24,10 +24,10 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 		this.algConfig = expander.getAlgorithmConfig();
 	}
 
-	public double getValue(GameState state, Action action, double alpha, double beta) {
-		return getValue(state.performAction((Action) action), alpha, beta);
+	public double getUnboundedValue(GameState state) {
+		return getValue(state, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 	}
-
+	
 	public double getValue(GameState state, double alpha, double beta) {
 		Double value = cache.get(state);
 		
@@ -43,10 +43,6 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 		if (state.isPlayerToMoveNature()) {
 			return getUtilityForNature(state, alpha, beta);
 		} else {
-//			if (player.getId() == 0)
-//				Info.increaseFPABStates();
-//			else
-//				Info.increaseSPABStates();
 			for (Action minAction : getMinimizingActions(state)) {
 				double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
 				
