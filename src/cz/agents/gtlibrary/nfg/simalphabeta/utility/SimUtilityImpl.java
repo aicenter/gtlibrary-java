@@ -27,4 +27,14 @@ public class SimUtilityImpl extends SimUtility {
 		newState.performActionModifyingThisState(s2.getAction());
 		return newState;
 	}
+
+	@Override
+	public double getUtilityFromCache(ActionPureStrategy s1, ActionPureStrategy s2) {
+		return calculator.getUtilityFromCache(s1, s2);
+	}
+
+	@Override
+	public double getUtility(ActionPureStrategy s1, ActionPureStrategy s2) {
+		return getUtilityFromCache(s1, s2);
+	}
 }

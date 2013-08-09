@@ -15,4 +15,9 @@ public class NegativeSimUtility extends SimUtility {
 		return -utility.getUtility(s2, s1, alpha, beta);
 	}
 
+	@Override
+	public double getUtilityFromCache(ActionPureStrategy s1, ActionPureStrategy s2) {
+		return -utility.getUtilityFromCache(s2, s1);
+	}
+
 }

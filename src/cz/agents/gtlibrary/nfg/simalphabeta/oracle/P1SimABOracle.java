@@ -49,27 +49,15 @@ public class P1SimABOracle extends SimABOracleImpl {
 				Double cacheValue = getValueFromCache(strategy, entry.getKey());
 				double cacheWindow = getLowerBoundFromCache(strategy, entry.getKey());
 				double windowValue = Math.max(cacheWindow, getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index));
-				
+
 				assert windowValue >= getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index);
 				if (cacheValue == null) {
-					if (getOptimisticValueFromCache(strategy, entry.getKey()) < windowValue) {
-//						Info.incrementABCuts();
+					if (getOptimisticValueFromCache(strategy, entry.getKey()) < windowValue)
 						return Double.NEGATIVE_INFINITY;
-					}
 					updateCacheValuesFor(strategy, entry.getKey(), windowValue);
-				} else {
-					assert !cacheValue.isNaN();
-					if (cacheValue < windowValue - 1e-8) {
-//						Info.incrementCacheCuts();
-						return Double.NEGATIVE_INFINITY;
-					}
-				}
-				Double util = utility.getUtility(strategy, entry.getKey(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-
-				if (util.isNaN()) {
+				} else if (cacheValue < windowValue - 1e-8)
 					return Double.NEGATIVE_INFINITY;
-				}
-				utilityValue += util * entry.getValue();
+				utilityValue += utility.getUtilityFromCache(strategy, entry.getKey()) * entry.getValue();
 			}
 			index++;
 		}
@@ -86,19 +74,13 @@ public class P1SimABOracle extends SimABOracleImpl {
 			if (USE_INCREASING_BOUND)
 				if (bound >= pesimisticUtility)
 					pesimisticUtility = bound;
-				else
-					assert false;
 			assert optimisticUtility >= pesimisticUtility;
 			double utilityValue = utility.getUtility(p1Strategy, p2Strategy, pesimisticUtility - 1e-4, optimisticUtility);
 
-			if (utilityValue == utilityValue) {
+			if (utilityValue == utilityValue)
 				cache.setPesAndOptValueFor(p1Strategy, p2Strategy, utilityValue);
-			} else {
-				if (pesimisticUtilityFromCache <= bound && bound < optimisticUtilityFromCache) {
-//					Info.incrementBoundsTightened();
-					cache.setPesAndOptValueFor(p1Strategy, p2Strategy, bound, pesimisticUtilityFromCache);
-				}
-			}
+			else if (pesimisticUtilityFromCache <= bound && bound < optimisticUtilityFromCache)
+				cache.setPesAndOptValueFor(p1Strategy, p2Strategy, bound, pesimisticUtilityFromCache);
 		}
 	}
 
