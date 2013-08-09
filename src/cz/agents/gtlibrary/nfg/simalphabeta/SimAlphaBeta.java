@@ -25,8 +25,8 @@ import cz.agents.gtlibrary.nfg.simalphabeta.utility.UtilityCalculator;
 public class SimAlphaBeta {
 
 	public static void main(String[] args) {
-		runGoofSpiel();
-//		runPursuit();
+//		runGoofSpiel();
+		runPursuit();
 	}
 
 	public static void runGoofSpiel() {
@@ -42,7 +42,6 @@ public class SimAlphaBeta {
 	}
 
 	public void runSimAlpabeta(GameState rootState, Expander<SimABInformationSet> expander) {
-
 		if (rootState.isPlayerToMoveNature())
 			for (Action action : expander.getActions(rootState)) {
 				runSimAlpabeta(rootState.performAction(action), expander);

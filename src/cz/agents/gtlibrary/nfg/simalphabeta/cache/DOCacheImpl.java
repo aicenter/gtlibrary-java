@@ -56,7 +56,6 @@ public class DOCacheImpl implements DOCache {
 		Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2);
 
 		assert (optimisticUtility >= pesimisticUtility);
-		
 		optimisticUtilities.put(strategyPair, optimisticUtility);
 		pesimisticUtilities.put(strategyPair, pesimisticUtility);
 		if (optimisticUtility - pesimisticUtility < 1e-14)

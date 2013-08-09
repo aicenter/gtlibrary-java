@@ -19,23 +19,13 @@ public class UtilityCalculator {
 		this.data = data;
 		this.cache = cache;
 	}
-	
+
 	public double getUtilities(GameState state, ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
 		Double utility = cache.getUtilityFor(s1, s2);
-		
-		if(utility != null) {
-			assert !utility.isNaN();
+
+		if (utility != null)
 			return utility;
-		}
-		if(alpha == Double.NEGATIVE_INFINITY && beta == Double.POSITIVE_INFINITY)
-			return Double.NaN;
-		if(alpha == Double.NEGATIVE_INFINITY && beta == Double.NEGATIVE_INFINITY) {
-//			Info.fullRunFromNESolver++;
-			if (state.isPlayerToMoveNature())
-				return computeUtilityForNature(state, s1, s2, cache.getPesimisticUtilityFor(s1, s2), cache.getPesimisticUtilityFor(s1, s2));
-			return computeUtilityOf(state, cache.getPesimisticUtilityFor(s1, s2), cache.getPesimisticUtilityFor(s1, s2));
-		}
-		if (state.isPlayerToMoveNature()) 
+		if (state.isPlayerToMoveNature())
 			return computeUtilityForNature(state, s1, s2, alpha, beta);
 		return computeUtilityOf(state, alpha, beta);
 	}
@@ -44,9 +34,7 @@ public class UtilityCalculator {
 		double utilityValue = 0;
 
 		for (Action action : data.expander.getActions(state)) {
-			GameState newState = state.performAction(action);
-			
-			utilityValue += state.getProbabilityOfNatureFor(action) * computeUtilityOf(newState, alpha, beta);
+			utilityValue += state.getProbabilityOfNatureFor(action) * computeUtilityOf(state.performAction(action), alpha, beta);
 		}
 		return utilityValue;
 	}
@@ -57,9 +45,12 @@ public class UtilityCalculator {
 		SimABOracle p1Oracle = new P1SimABOracle(state, utility, data, cache);
 		SimABOracle p2Oracle = new P2SimABOracle(state, new NegativeSimUtility(utility), data, cache);
 		SimDoubleOracle doubleOracle = new SimDoubleOracle(p1Oracle, p2Oracle, utility, alpha, beta, cache, data, state);
-		
+
 		doubleOracle.execute();
 		return doubleOracle.getGameValue();
 	}
 
+	public double getUtilityFromCache(ActionPureStrategy s1, ActionPureStrategy s2) {
+		return cache.getUtilityFor(s1, s2);
+	}
 }

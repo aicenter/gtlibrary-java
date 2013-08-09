@@ -40,7 +40,7 @@ public class P2SimABOracle extends SimABOracleImpl {
 		}
 		return new Pair<ActionPureStrategy, Double>(bestStrategy, bestValue);
 	}
-	
+
 	private void updateCacheValuesFor(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy, double bound) {
 		double pesimisticUtilityFromCache = cache.getPesimisticUtilityFor(p1Strategy, p2Strategy);
 		double optimisticUtilityFromCache = cache.getOptimisticUtilityFor(p1Strategy, p2Strategy);
@@ -49,19 +49,15 @@ public class P2SimABOracle extends SimABOracleImpl {
 
 		if (optimisticUtility - pesimisticUtility > 1e-14) {
 			if (USE_INCREASING_BOUND)
-					if (-bound <= optimisticUtility)
-						optimisticUtility = -bound;
-					else
-						assert false;
+				if (-bound <= optimisticUtility)
+					optimisticUtility = -bound;
 			assert optimisticUtility >= pesimisticUtility;
 			double utilityValue = -utility.getUtility(p2Strategy, p1Strategy, pesimisticUtility - 1e-4, optimisticUtility);
 
-			if (utilityValue == utilityValue) {
+			if (utilityValue == utilityValue) 
 				cache.setPesAndOptValueFor(p1Strategy, p2Strategy, utilityValue);
-			} else {
-				if (-bound <= optimisticUtilityFromCache && -bound > pesimisticUtilityFromCache)
-					cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtilityFromCache, -bound);
-			}
+			else if (-bound <= optimisticUtilityFromCache && -bound > pesimisticUtilityFromCache)
+				cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtilityFromCache, -bound);
 		}
 	}
 
@@ -74,26 +70,15 @@ public class P2SimABOracle extends SimABOracleImpl {
 				Double cacheValue = getValueFromCache(entry.getKey(), strategy);
 				double cacheWindow = getLowerBoundFromCache(entry.getKey(), strategy);
 				double windowValue = Math.max(cacheWindow, getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index));
-				
+
 				assert windowValue >= getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index);
 				if (cacheValue == null) {
-					if (getPesimisticValueFromCache(entry.getKey(), strategy) < windowValue) {
-//						Info.incrementABCuts();
+					if (getPesimisticValueFromCache(entry.getKey(), strategy) < windowValue)
 						return Double.NEGATIVE_INFINITY;
-					}
 					updateCacheValuesFor(entry.getKey(), strategy, windowValue);
-				} else {
-					assert !cacheValue.isNaN();
-					if (cacheValue < windowValue - 1e-8) {
-//						Info.incrementCacheCuts();
+				} else if (cacheValue < windowValue - 1e-8)
 						return Double.NEGATIVE_INFINITY;
-					}
-				}
-				Double util = utility.getUtility(strategy, entry.getKey(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-
-				if (util.isNaN())
-					return Double.NEGATIVE_INFINITY;
-				utilityValue += util * entry.getValue();
+				utilityValue += utility.getUtilityFromCache(strategy, entry.getKey()) * entry.getValue();
 			}
 			index++;
 		}
@@ -131,15 +116,15 @@ public class P2SimABOracle extends SimABOracleImpl {
 	private Double updateCacheAndGetPesimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		double pesimisticUtility = -alphaBeta.getValue(rootState.performAction(p1Strategy.getAction()), p2Strategy.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 		double optimisticUtility = oppAlphaBeta.getValue(rootState.performAction(p1Strategy.getAction()), p2Strategy.getAction(), Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-		
+
 		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
 		return pesimisticUtility;
 	}
 
 	private Double getValueFromCache(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		Double utility = cache.getUtilityFor(p1Strategy, p2Strategy);
-		
-		if(utility == null)
+
+		if (utility == null)
 			return null;
 		return -utility;
 	}
