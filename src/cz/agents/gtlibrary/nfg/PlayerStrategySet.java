@@ -3,12 +3,19 @@ package cz.agents.gtlibrary.nfg;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 
 public class PlayerStrategySet<T extends PureStrategy> implements Iterable<T> {
 
-    //private List<T> strategies = new ArrayList<Path>();
-    private LinkedHashSet<T> strategies = new LinkedHashSet<T>();
+    private LinkedHashSet<T> strategies;
+    
+    public PlayerStrategySet() {
+    	strategies = new LinkedHashSet<T>();
+	}
+    
+    public PlayerStrategySet(Iterable<T> strategies) {
+    	this.strategies = new LinkedHashSet<T>();
+		addAll(strategies);
+	}
 
     public boolean add(T strategy) {
         return strategies.add(strategy);
@@ -31,7 +38,7 @@ public class PlayerStrategySet<T extends PureStrategy> implements Iterable<T> {
         return strategies.toString();
     }
 
-    public boolean add(List<T> strategies) {
+    public boolean addAll(Iterable<T> strategies) {
         boolean added = false;
         for (T strategy : strategies) {
             added |= add(strategy);

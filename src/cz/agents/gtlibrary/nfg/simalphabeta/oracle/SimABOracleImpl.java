@@ -30,13 +30,13 @@ public abstract class SimABOracleImpl implements SimABOracle {
 	protected AlphaBeta oppAlphaBeta;
 	protected AlgorithmConfig<SimABInformationSet> algConfig;
 
-	public SimABOracleImpl(GameState rootState, Player player, SimUtility utility, Data data, DOCache cache) {
+	public SimABOracleImpl(GameState rootState, Player player, SimUtility utility, Data data) {
 		this.rootState = rootState;
 		this.expander = data.expander;
 		this.player = player;
 		this.utility = utility;
 		this.alphaBeta = data.getAlphaBetaFor(player);
-		this.cache = cache;
+		this.cache = data.cache;
 		this.oppAlphaBeta = data.getAlphaBetaFor(data.gameInfo.getOpponent(player));
 		this.algConfig = data.config;
 	}
@@ -47,7 +47,7 @@ public abstract class SimABOracleImpl implements SimABOracle {
 		return getActions().iterator().next();
 	}
 	
-	protected Collection<ActionPureStrategy> getActions() {
+	public Collection<ActionPureStrategy> getActions() {
 		if (actions == null)
 			initActions();
 		return actions;

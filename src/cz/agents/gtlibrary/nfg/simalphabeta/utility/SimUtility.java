@@ -7,10 +7,7 @@ public abstract class SimUtility extends Utility<ActionPureStrategy, ActionPureS
 
 	public abstract double getUtility(ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta);
 	
-	public abstract double getUtilityFromCache(ActionPureStrategy s1, ActionPureStrategy s2);
+//	public abstract double getUtilityFromCache(ActionPureStrategy s1, ActionPureStrategy s2);
 	
-	@Override
-	public double getUtility(ActionPureStrategy s1, ActionPureStrategy s2) {
-		return getUtilityFromCache(s1, s2);
-	}
+	public abstract double getUtility(ActionPureStrategy s1, ActionPureStrategy s2);
 }

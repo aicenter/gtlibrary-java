@@ -1,21 +1,20 @@
-package cz.agents.gtlibrary.nfg.simalphabeta;
+package cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.PlayerStrategySet;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolverImpl;
-import cz.agents.gtlibrary.nfg.doubleoracle.NFGDoubleOracle;
-import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
+import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABOracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.utils.Pair;
 
-public class SimDoubleOracle extends NFGDoubleOracle {
+public class SimDoubleOracle extends DoubleOracle {
 	
 	private final boolean CHECK_STRATEGY_SET_CHANGES = true;
 
-	private DOCache cache;
 	private SimABOracle p1Oracle;
 	private SimABOracle p2Oracle;
 
@@ -28,15 +27,14 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 	private Data data;
 	private SimUtility p1Utility;
 
-	public SimDoubleOracle(SimABOracle firstPlayerOracle, SimABOracle secondPlayerOracle, SimUtility utility, double alpha, double beta, DOCache cache, Data data, GameState state) {
-		super(state, data.expander, data.gameInfo, data.config);
-		this.p1Oracle = firstPlayerOracle;
-		this.p2Oracle = secondPlayerOracle;
+	public SimDoubleOracle(SimUtility utility, double alpha, double beta, Data data, GameState state) {
+		super(state, data);
+		this.p1Oracle = data.getP1Oracle(state, utility, data.cache);
+		this.p2Oracle = data.getP2Oracle(state, utility, data.cache);
 		this.alpha = alpha;
 		this.beta = beta;
 		this.hardAlpha = alpha;
 		this.hardBeta = beta;
-		this.cache = cache;
 		this.state = state;
 		this.data = data;
 		this.p1Utility = utility;
@@ -55,7 +53,7 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 		return coreSolver.getPlayerTwoStrategy();
 	}
 
-	public void execute() {
+	public void generate() {
 		if ((hardBeta - hardAlpha) < 1e-14) {
 			gameValue = hardAlpha;
 			return;
@@ -68,6 +66,7 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 		ActionPureStrategy initialStrategy = p1Oracle.getFirstStrategy();
 
 		p1StrategySet.add(initialStrategy);
+		Stats.incrementP1StrategyCount();
 		coreSolver.addPlayerOneStrategies(p1StrategySet);
 		while (true) {
 			Pair<ActionPureStrategy, Double> p2BestResponse = p2Oracle.getBestResponse(getP1MixedStrategy(initialStrategy), alpha, beta, hardAlpha, hardBeta);
@@ -75,6 +74,7 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 			if (-p2BestResponse.getRight() > alpha)
 				alpha = -p2BestResponse.getRight();
 			if (p2BestResponse.getLeft() == null) {
+				Stats.incrementNaNCuts();
 				gameValue = Double.NaN;
 				return;
 			}
@@ -84,9 +84,7 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 			assert !p2BestResponse.getRight().isNaN();
 			updateCacheValues(p1StrategySet, p2StrategySet);
 			if (p2BestResponseadded) {
-				coreSolver.addPlayerTwoStrategies(p2StrategySet);
-				coreSolver.computeNashEquilibrium();
-				gameValue = coreSolver.getGameValue();
+				updateForP2Response(p2StrategySet);
 				assert gameValue == gameValue;
 			}
 			
@@ -97,6 +95,7 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 			if (p1BestResponse.getRight() < beta)
 				beta = p1BestResponse.getRight();
 			if (p1BestResponse.getLeft() == null) {
+				Stats.incrementNaNCuts();
 				gameValue = Double.NaN;
 				return;
 			}
@@ -105,18 +104,40 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 
 			updateCacheValues(p1StrategySet, p2StrategySet);
 			if (p1BestResponseadded) {
-				coreSolver.addPlayerOneStrategies(p1StrategySet);
-				coreSolver.computeNashEquilibrium();
-				gameValue = coreSolver.getGameValue();
+				updateForP1Response(p1StrategySet);
 				assert gameValue == gameValue;
 			}
 
 			if (CHECK_STRATEGY_SET_CHANGES) {
-				if (!p1BestResponseadded && !p2BestResponseadded)
+				if (!p1BestResponseadded && !p2BestResponseadded) {
+					Stats.addToP1NESize(getP1MixedStrategy(null));
+					Stats.addToP2NESize(getP2MixedStrategy());
 					break;
+				}
 			} else if (Math.abs(p2Value + gameValue) < EPS && Math.abs(p1Value - gameValue) < EPS) 
 				break;
 		}
+	}
+
+	private void updateForP2Response(PlayerStrategySet<ActionPureStrategy> p2StrategySet) {
+		Stats.incrementP2StrategyCount();
+		coreSolver.addPlayerTwoStrategies(p2StrategySet);
+		computeNE();
+		gameValue = coreSolver.getGameValue();
+	}
+
+	private void updateForP1Response(PlayerStrategySet<ActionPureStrategy> p1StrategySet) {
+		Stats.incrementP1StrategyCount();
+		coreSolver.addPlayerOneStrategies(p1StrategySet);
+		computeNE();
+		gameValue = coreSolver.getGameValue();
+	}
+
+	public void computeNE() {
+		long time = System.currentTimeMillis();
+		
+		coreSolver.computeNashEquilibrium();
+		Stats.addToLPSolveTime(System.currentTimeMillis() - time);
 	}
 
 	private MixedStrategy<ActionPureStrategy> getP2MixedStrategy() {
@@ -137,7 +158,7 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 	private void updateCacheValues(PlayerStrategySet<ActionPureStrategy> firstPlayerStrategySet, PlayerStrategySet<ActionPureStrategy> secondPlayerStrategySet) {
 		for (ActionPureStrategy fpStrategy : firstPlayerStrategySet) {
 			for (ActionPureStrategy spStrategy : secondPlayerStrategySet) {
-				if (cache.getOptimisticUtilityFor(fpStrategy, spStrategy) == null || cache.getPesimisticUtilityFor(fpStrategy, spStrategy) == null)
+				if (data.cache.getOptimisticUtilityFor(fpStrategy, spStrategy) == null || data.cache.getPesimisticUtilityFor(fpStrategy, spStrategy) == null)
 					updateCacheFromAlphaBeta(fpStrategy, spStrategy);
 				updateCacheFromRecursion(fpStrategy, spStrategy);
 			}
@@ -145,14 +166,14 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 	}
 
 	private void updateCacheFromRecursion(ActionPureStrategy fpStrategy, ActionPureStrategy spStrategy) {
-		double pesimisticUtility = cache.getPesimisticUtilityFor(fpStrategy, spStrategy);
-		double optimisticUtility = cache.getOptimisticUtilityFor(fpStrategy, spStrategy);
+		double pesimisticUtility = data.cache.getPesimisticUtilityFor(fpStrategy, spStrategy);
+		double optimisticUtility = data.cache.getOptimisticUtilityFor(fpStrategy, spStrategy);
 
 		if (optimisticUtility - pesimisticUtility > 1e-14) {
 			Double utility = p1Utility.getUtility(fpStrategy, spStrategy, pesimisticUtility, optimisticUtility);
 
 			if (!utility.isNaN())
-				cache.setPesAndOptValueFor(fpStrategy, spStrategy, utility);
+				data.cache.setPesAndOptValueFor(fpStrategy, spStrategy, utility);
 		}
 	}
 
@@ -161,7 +182,7 @@ public class SimDoubleOracle extends NFGDoubleOracle {
 		double pesimisticUtility = -data.getAlphaBetaFor(tempState.getAllPlayers()[1]).getValue(tempState, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 		double optimisticUtility = data.getAlphaBetaFor(tempState.getAllPlayers()[0]).getValue(tempState, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
-		cache.setPesAndOptValueFor(fpStrategy, spStrategy, optimisticUtility, pesimisticUtility);
+		data.cache.setPesAndOptValueFor(fpStrategy, spStrategy, optimisticUtility, pesimisticUtility);
 	}
 
 	private GameState getStateAfter(ActionPureStrategy fpStrategy, ActionPureStrategy spStrategy) {

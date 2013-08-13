@@ -7,14 +7,14 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
-import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
+import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.utils.Pair;
 
 public class P1SimABOracle extends SimABOracleImpl {
 
-	public P1SimABOracle(GameState rootState, SimUtility utility, Data data, DOCache cache) {
-		super(rootState, rootState.getAllPlayers()[0], utility, data, cache);
+	public P1SimABOracle(GameState rootState, SimUtility utility, Data data) {
+		super(rootState, rootState.getAllPlayers()[0], utility, data);
 	}
 
 	public Pair<ActionPureStrategy, Double> getBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta, double hardAlpha, double hardBeta) {
@@ -51,12 +51,20 @@ public class P1SimABOracle extends SimABOracleImpl {
 				double windowValue = Math.max(cacheWindow, getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index));
 
 				if (cacheValue == null) {
-					if (getOptimisticValueFromCache(strategy, entry.getKey()) < windowValue)
+					if (getOptimisticValueFromCache(strategy, entry.getKey()) < windowValue) {
+						Stats.incrementABCuts();
 						return Double.NEGATIVE_INFINITY;
+					}
 					updateCacheValuesFor(strategy, entry.getKey(), windowValue);
-				} else if (cacheValue < windowValue - 1e-8)
+				} else if (cacheValue < windowValue - 1e-8) {
+					Stats.incrementCacheCuts();
 					return Double.NEGATIVE_INFINITY;
-				utilityValue += utility.getUtilityFromCache(strategy, entry.getKey()) * entry.getValue();
+				}
+				Double util = utility.getUtility(strategy, entry.getKey());
+				
+				if (util == null)
+					return Double.NEGATIVE_INFINITY;
+				utilityValue += util * entry.getValue();
 			}
 			index++;
 		}
@@ -76,10 +84,12 @@ public class P1SimABOracle extends SimABOracleImpl {
 			assert optimisticUtility >= pesimisticUtility;
 			double utilityValue = utility.getUtility(p1Strategy, p2Strategy, pesimisticUtility - 1e-4, optimisticUtility);
 
-			if (utilityValue == utilityValue)
+			if (utilityValue == utilityValue) {
 				cache.setPesAndOptValueFor(p1Strategy, p2Strategy, utilityValue);
-			else if (pesimisticUtilityFromCache <= bound && bound < optimisticUtilityFromCache)
+			} else if (pesimisticUtilityFromCache <= bound && bound < optimisticUtilityFromCache) {
+				Stats.incrementBoundsTightened();
 				cache.setPesAndOptValueFor(p1Strategy, p2Strategy, bound, pesimisticUtilityFromCache);
+			}
 		}
 	}
 
@@ -100,7 +110,7 @@ public class P1SimABOracle extends SimABOracleImpl {
 	}
 
 	private Double getPesimisticValueFromCache(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
-		Double cachedValue = cache.getPesimisticUtilityFor(strategy2, strategy1);
+		Double cachedValue = cache.getPesimisticUtilityFor(strategy1, strategy2);
 
 		if (cachedValue == null)
 			cachedValue = updateCacheAndGetPesimistic(strategy1, strategy2);
@@ -109,9 +119,11 @@ public class P1SimABOracle extends SimABOracleImpl {
 
 	public Double updateCacheAndGetPesimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		GameState state = getStateAfter(p1Strategy, p2Strategy);
+		long time = System.currentTimeMillis();
 		double pesimisticUtility = -oppAlphaBeta.getUnboundedValue(state);
 		double optimisticUtility = alphaBeta.getUnboundedValue(state);
 
+		Stats.addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
 		return pesimisticUtility;
 	}
@@ -126,9 +138,11 @@ public class P1SimABOracle extends SimABOracleImpl {
 
 	public Double updateCacheAndGetOptimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		GameState state = getStateAfter(p1Strategy, p2Strategy);
+		long time = System.currentTimeMillis();
 		double pesimisticUtility = -oppAlphaBeta.getUnboundedValue(state);
 		double optimisticUtility = alphaBeta.getUnboundedValue(state);
 
+		Stats.addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
 		return optimisticUtility;
 	}

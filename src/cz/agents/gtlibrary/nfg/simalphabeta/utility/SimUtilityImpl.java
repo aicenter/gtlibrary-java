@@ -28,13 +28,17 @@ public class SimUtilityImpl extends SimUtility {
 		return newState;
 	}
 
-	@Override
-	public double getUtilityFromCache(ActionPureStrategy s1, ActionPureStrategy s2) {
-		return calculator.getUtilityFromCache(s1, s2);
-	}
+//	@Override
+//	public double getUtilityFromCache(ActionPureStrategy s1, ActionPureStrategy s2) {
+//		return calculator.getUtilityFromCache(state, s1, s2);
+//	}
 
-	@Override
+//	@Override
 	public double getUtility(ActionPureStrategy s1, ActionPureStrategy s2) {
-		return getUtilityFromCache(s1, s2);
+		GameState newState = getStateAfterActions(s1, s2);
+
+		if (newState.isGameEnd())
+			return newState.getUtilities()[0];
+		return calculator.getUtility(newState, s1, s2);
 	}
 }
