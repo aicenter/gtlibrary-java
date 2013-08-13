@@ -79,4 +79,7 @@ public class BorderPatrollingGraph {
 		return dl;
 	}
 
+    public Node getNodeByID(int ID) {
+        return allNodes.get("ID" + ID);
+    }
 }

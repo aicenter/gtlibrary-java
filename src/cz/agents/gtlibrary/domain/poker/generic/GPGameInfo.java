@@ -23,7 +23,7 @@ public class GPGameInfo implements GameInfo {
     public static int MAX_DIFFERENT_RAISES = 2;
     public static int[] BETS_FIRST_ROUND;
 
-    static {
+    {
         BETS_FIRST_ROUND = new int[MAX_DIFFERENT_BETS];
         for (int i = 0; i < MAX_DIFFERENT_BETS; i++)
             BETS_FIRST_ROUND[i] = (i + 1) * 2;
@@ -36,7 +36,7 @@ public class GPGameInfo implements GameInfo {
      */
     public static int[] RAISES_FIRST_ROUND;
 
-    static {
+    {
         RAISES_FIRST_ROUND = new int[MAX_DIFFERENT_RAISES];
         for (int i = 0; i < MAX_DIFFERENT_RAISES; i++)
             RAISES_FIRST_ROUND[i] = (i + 1) * 2;
@@ -45,7 +45,7 @@ public class GPGameInfo implements GameInfo {
     public static int MAX_CARD_TYPES = 2;
     public static int[] CARD_TYPES;
 
-    static {
+    {
         CARD_TYPES = new int[MAX_CARD_TYPES];
         for (int i = 0; i < MAX_CARD_TYPES; i++)
             CARD_TYPES[i] = i;
@@ -54,7 +54,7 @@ public class GPGameInfo implements GameInfo {
     public static int MAX_CARD_OF_EACH_TYPE = 3;
     public static int[] DECK;
 
-    static {
+    {
         DECK = new int[MAX_CARD_OF_EACH_TYPE * MAX_CARD_TYPES];
         for (int i = 0; i < MAX_CARD_TYPES; i++)
             for (int j = 0; j < MAX_CARD_OF_EACH_TYPE; j++) {
@@ -65,7 +65,7 @@ public class GPGameInfo implements GameInfo {
     public static int[] BETS_SECOND_ROUND;
     public static int[] RAISES_SECOND_ROUND;
 
-    static {
+    {
         BETS_SECOND_ROUND = new int[BETS_FIRST_ROUND.length];
         for (int i = 0; i < BETS_FIRST_ROUND.length; i++) {
             BETS_SECOND_ROUND[i] = 2 * BETS_FIRST_ROUND[i];

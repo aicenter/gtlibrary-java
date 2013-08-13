@@ -14,10 +14,6 @@ public class MixedStrategy<T extends PureStrategy> implements Iterable<Map.Entry
 
     private Map<T, Double> mixedStrategy = new HashMap<T, Double>();
 
-    public void add(T strategy, double probability) {
-        mixedStrategy.put(strategy, probability);
-    }
-
     public void put(T strategy, double probability) {
         mixedStrategy.put(strategy, probability);
     }
