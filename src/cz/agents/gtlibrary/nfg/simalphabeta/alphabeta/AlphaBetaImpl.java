@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABInformationSet;
+import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 public abstract class AlphaBetaImpl implements AlphaBeta {
 
@@ -43,10 +44,11 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 		if (state.isPlayerToMoveNature()) {
 			return getUtilityForNature(state, alpha, beta);
 		} else {
+			Stats.increaseABStatesFor(player);
 			for (Action minAction : getMinimizingActions(state)) {
 				double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
 				
-				if (beta <= tempAlpha) 
+				if (beta <= tempAlpha)
 					prune = true;
 				beta = Math.min(beta, tempAlpha);
 				if (beta <= alpha) {

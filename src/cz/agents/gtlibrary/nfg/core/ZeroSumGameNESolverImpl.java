@@ -1,16 +1,17 @@
 package cz.agents.gtlibrary.nfg.core;
 
+import ilog.concert.IloException;
+import ilog.cplex.IloCplex;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.PlayerStrategySet;
 import cz.agents.gtlibrary.nfg.PureStrategy;
 import cz.agents.gtlibrary.nfg.Utility;
-import ilog.concert.IloException;
-import ilog.cplex.IloCplex;
 import cz.agents.gtlibrary.nfg.lplibrary.cplex.MIProblemCplex;
 import cz.agents.gtlibrary.nfg.lplibrary.lpWrapper.AMIProblem;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Basic implementation of the zero-sum game solver searching for a Nash
@@ -189,7 +190,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 	}
 
 	@Override
-	public void addPlayerOneStrategies(PlayerStrategySet<T> playerStrategySet) {
+	public void addPlayerOneStrategies(Iterable<T> playerStrategySet) {
 
 		List<T> strategiesToAdd = new ArrayList<T>();
 		if (playerOneStrategySet == null) {
@@ -238,11 +239,11 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 			}
 		}
 
-		playerOneStrategySet.add(strategiesToAdd);
+		playerOneStrategySet.addAll(strategiesToAdd);
 	}
 
 	@Override
-	public void addPlayerTwoStrategies(PlayerStrategySet<U> playerStrategySet) {
+	public void addPlayerTwoStrategies(Iterable<U> playerStrategySet) {
 		List<U> strategiesToAdd = new ArrayList<U>();
 		if (playerTwoStrategySet == null) {
 			playerTwoStrategySet = new PlayerStrategySet<U>();
@@ -287,7 +288,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 			}
 		}
 
-		playerTwoStrategySet.add(strategiesToAdd);
+		playerTwoStrategySet.addAll(strategiesToAdd);
 	}
 
 //	public void releaseModel() {

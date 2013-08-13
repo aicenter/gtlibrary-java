@@ -7,14 +7,14 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
-import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
+import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.utils.Pair;
 
 public class P2SimABOracle extends SimABOracleImpl {
 
-	public P2SimABOracle(GameState rootState, SimUtility utility, Data data, DOCache cache) {
-		super(rootState, rootState.getAllPlayers()[1], utility, data, cache);
+	public P2SimABOracle(GameState rootState, SimUtility utility, Data data) {
+		super(rootState, rootState.getAllPlayers()[1], utility, data);
 	}
 
 	@Override
@@ -54,10 +54,12 @@ public class P2SimABOracle extends SimABOracleImpl {
 			assert optimisticUtility >= pesimisticUtility;
 			double utilityValue = -utility.getUtility(p2Strategy, p1Strategy, pesimisticUtility - 1e-4, optimisticUtility);
 
-			if (utilityValue == utilityValue) 
+			if (utilityValue == utilityValue) {
 				cache.setPesAndOptValueFor(p1Strategy, p2Strategy, utilityValue);
-			else if (-bound <= optimisticUtilityFromCache && -bound > pesimisticUtilityFromCache)
+			} else if (-bound <= optimisticUtilityFromCache && -bound > pesimisticUtilityFromCache) {
+				Stats.incrementBoundsTightened();
 				cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtilityFromCache, -bound);
+			}
 		}
 	}
 
@@ -72,12 +74,20 @@ public class P2SimABOracle extends SimABOracleImpl {
 				double windowValue = Math.max(cacheWindow, getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index));
 
 				if (cacheValue == null) {
-					if (getPesimisticValueFromCache(entry.getKey(), strategy) < windowValue)
+					if (getPesimisticValueFromCache(entry.getKey(), strategy) < windowValue) {
+						Stats.incrementABCuts();
 						return Double.NEGATIVE_INFINITY;
+					}
 					updateCacheValuesFor(entry.getKey(), strategy, windowValue);
-				} else if (cacheValue < windowValue - 1e-8)
-						return Double.NEGATIVE_INFINITY;
-				utilityValue += utility.getUtilityFromCache(strategy, entry.getKey()) * entry.getValue();
+				} else if (cacheValue < windowValue - 1e-8) {
+					Stats.incrementCacheCuts();
+					return Double.NEGATIVE_INFINITY;
+				}
+				Double util = utility.getUtility(strategy, entry.getKey());
+				
+				if (util == null)
+					return Double.NEGATIVE_INFINITY;
+				utilityValue += util * entry.getValue();
 			}
 			index++;
 		}
@@ -98,14 +108,14 @@ public class P2SimABOracle extends SimABOracleImpl {
 
 	private Double updateCacheAndGetOptimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		GameState state = getStateAfter(p1Strategy, p2Strategy);
+		long time = System.currentTimeMillis();
 		double pesimisticUtility = -alphaBeta.getUnboundedValue(state);
 		double optimisticUtility = oppAlphaBeta.getUnboundedValue(state);
-
+		
+		Stats.addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
 		return optimisticUtility;
 	}
-
-	
 
 	private Double getPesimisticValueFromCache(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		Double cachedValue = cache.getPesimisticUtilityFor(p1Strategy, p2Strategy);
@@ -117,9 +127,11 @@ public class P2SimABOracle extends SimABOracleImpl {
 
 	private Double updateCacheAndGetPesimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		GameState state = getStateAfter(p1Strategy, p2Strategy);
+		long time = System.currentTimeMillis();
 		double pesimisticUtility = -alphaBeta.getUnboundedValue(state);
 		double optimisticUtility = oppAlphaBeta.getUnboundedValue(state);
 
+		Stats.addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
 		return pesimisticUtility;
 	}
@@ -143,10 +155,10 @@ public class P2SimABOracle extends SimABOracleImpl {
 		}
 		return (bestValue - utility) / currProbability;
 	}
-	
+
 	private GameState getStateAfter(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		GameState state = rootState.performAction(p1Strategy.getAction());
-		
+
 		state.performActionModifyingThisState(p2Strategy.getAction());
 		return state;
 	}
