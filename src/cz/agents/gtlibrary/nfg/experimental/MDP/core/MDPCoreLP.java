@@ -35,8 +35,8 @@ public class MDPCoreLP {
 
     private double finalValue = -Double.MAX_VALUE;
 
-    private Map<Player, IloCplex> lpModels = null;
-    private Map<Player, IloNumVar> objectives = null;
+    private Map<Player, IloCplex> lpModels = new HashMap<Player, IloCplex>();
+    private Map<Player, IloNumVar> objectives = new HashMap<Player, IloNumVar>();
     private Collection<Player> allPlayers = null;
 
 
@@ -51,7 +51,7 @@ public class MDPCoreLP {
                 IloCplex cplex = new IloCplex();
                 cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Dual);
     //            cplex.setOut(null);
-                IloNumVar obj = createVariableForMDPState(cplex, playerStrategy.get(p).getRootState());
+                IloNumVar obj = createVariableForMDPState(cplex, playerStrategy.get(config.getOtherPlayer(p)).getRootState());
                 if (p.getId() == 0) {
                   cplex.addMaximize(obj);
                 } else if (p.getId() == 1) {
@@ -68,10 +68,6 @@ public class MDPCoreLP {
             }
     }
 
-    private void initModel() throws IloException {
-
-    }
-
     public double solveForPlayer(Player player) {
         IloCplex cplex = lpModels.get(player);
         buildLPFromStrategies(player);
@@ -80,6 +76,7 @@ public class MDPCoreLP {
             cplex.exportModel("MDP-LP"+player.getId()+".lp");
             cplex.solve();
             if (cplex.getStatus() != IloCplex.Status.Optimal) {
+                System.out.println(cplex.getStatus());
                 assert false;
             }
             finalValue = cplex.getValue(objectives.get(player));
@@ -95,7 +92,8 @@ public class MDPCoreLP {
         Player opponent = config.getOtherPlayer(player);
         try {
             for (MDPState s : playerStrategy.get(opponent).getStates()) {
-                createVariableForMDPState(lpModels.get(player), s);
+                if (playerStrategy.get(opponent).hasStateASuccessor(s) && !s.isRoot())
+                    createVariableForMDPState(lpModels.get(player), s);
             }
             for (MDPStateActionMarginal sam : playerStrategy.get(player).getActionStates()) {
                 createVariableForStateAction(lpModels.get(player), sam, player);
@@ -113,7 +111,7 @@ public class MDPCoreLP {
     }
 
     private IloNumVar createVariableForMDPState(IloCplex cplex, MDPState state) throws IloException {
-        IloNumVar result = cplex.numVar(0, 1, IloNumVarType.Float, "V_" + state.toString());
+        IloNumVar result = cplex.numVar(-1, 1, IloNumVarType.Float, "V_" + state.toString());
         variables.put(state,result);
         return result;
     }
@@ -136,7 +134,7 @@ public class MDPCoreLP {
             }
         }
         for (MDPStateActionMarginal myActions : playerStrategy.get(player).getStrategy().keySet()) {
-            IloNumVar x = variables.get(myActions.getState());
+            IloNumVar x = variables.get(myActions);
             assert (x != null);
             sumR = cplex.sum(sumR, cplex.prod(x, utilityComputer.getUtility(myActions, opponentsStateAction)));
         }
@@ -156,13 +154,13 @@ public class MDPCoreLP {
         MDPStrategy strategy = playerStrategy.get(player);
         boolean hasSuccessors = false;
 
-        for (MDPAction a : strategy.getActions(state))
-            for (Entry<MDPState, Double> e : strategy.getSuccessors(new MDPStateActionMarginal(state,a)).entrySet()) {
-                if (variables.containsKey(e.getKey())) {
-                    hasSuccessors = true;
-                    RS = cplex.sum(LS, cplex.prod(e.getValue(), variables.get(e.getKey())));
-                }
+        for (MDPAction a : strategy.getActions(state)) {
+            MDPStateActionMarginal am = new MDPStateActionMarginal(state,a);
+            if (variables.containsKey(am)) {
+                hasSuccessors = true;
+                RS = cplex.sum(RS, variables.get(am));
             }
+        }
 
         if (!hasSuccessors) return;
 
@@ -172,6 +170,8 @@ public class MDPCoreLP {
             for (Entry<MDPStateActionMarginal, Double> e : strategy.getPredecessors(state).entrySet()) {
                 if (variables.containsKey(e.getKey())) {
                     LS = cplex.sum(LS, cplex.prod(e.getValue(), variables.get(e.getKey())));
+                } else {
+                    assert true;
                 }
             }
         }

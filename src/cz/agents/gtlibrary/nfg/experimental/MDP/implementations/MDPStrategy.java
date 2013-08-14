@@ -78,7 +78,12 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
     }
 
     public Map<MDPStateActionMarginal, Double> getPredecessors(MDPState state) {
-        return expander.getPredecessors(state);
+        Map<MDPStateActionMarginal, Double> result = expander.getPredecessors(state);
+        if (result == null) {
+            result = new HashMap<MDPStateActionMarginal, Double>();
+            result.put(new MDPStateActionMarginal(getRootState(), getActions(getRootState()).get(0)), 1d);
+        }
+        return result;
     }
 
     public List<MDPAction> getActions(MDPState state) {
@@ -140,11 +145,23 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
 
         @Override
         public String toString() {
-            return "MDPRootState";
+            return "MDPRootState:"+getPlayer();
         }
     }
 
     public Map<MDPState, Double> getFrequency() {
         return frequency;
+    }
+
+    public boolean hasStateASuccessor(MDPState state) {
+        List<MDPAction> actions = getActions(state);
+        if (actions == null || actions.isEmpty())
+            return false;
+        for (MDPAction a : actions) {
+            MDPStateActionMarginal map = new MDPStateActionMarginal(state, a);
+            if (!getSuccessors(map).isEmpty())
+                return true;
+        }
+        return false;
     }
 }

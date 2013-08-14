@@ -86,7 +86,7 @@ public class BPState extends MDPStateImpl {
                 return newState;
             }
             if (newState.moveUnit(a.getMoves()[0].getUnitNumber(),a.getMoves()[0].getToNode(),a.getMoves()[0].isWillSeeTheFlag()) &&
-                newState.moveUnit(a.getMoves()[1].getUnitNumber(),a.getMoves()[1].getToNode(),a.getMoves()[0].isWillSeeTheFlag())) {
+                newState.moveUnit(a.getMoves()[1].getUnitNumber(),a.getMoves()[1].getToNode(),a.getMoves()[1].isWillSeeTheFlag())) {
                 newState.incTimeStep();
                 return newState;
             }
