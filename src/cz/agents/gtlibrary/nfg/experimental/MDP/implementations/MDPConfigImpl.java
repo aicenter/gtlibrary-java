@@ -17,7 +17,7 @@ import java.util.Map;
  */
 public abstract class MDPConfigImpl implements MDPConfig {
 
-    protected static List<Player> allPlayers;
+    protected List<Player> allPlayers;
     public abstract double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction);
 
     public Player getOtherPlayer(Player player) {

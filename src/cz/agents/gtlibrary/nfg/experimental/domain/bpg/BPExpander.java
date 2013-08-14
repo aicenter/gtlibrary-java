@@ -124,7 +124,7 @@ public class BPExpander extends MDPExpanderImpl {
         BPState s = (BPState)state;
 
         if (s.getTimeStep() == 0) {
-            // TODO return a root node
+            return null;
         }
 
         if (s.getPlayer().getId() == 0) {
@@ -151,18 +151,26 @@ public class BPExpander extends MDPExpanderImpl {
                 }
             }
         } else {
-
             LinkedHashSet<BPAction.UnitMove>[] possibleMoves = new LinkedHashSet[s.getUNITS()];
-            for (int unitNumber=0; unitNumber < s.getUNITS(); unitNumber++) {
-                Node n = s.getGraph().getNodeByID(s.getUnitNodes()[unitNumber]);
-                LinkedHashSet<BPAction.UnitMove> set = new LinkedHashSet<BPAction.UnitMove>();
-                for (Edge e : s.getGraph().getGraph().incomingEdgesOf(n)) {
-                    if (Arrays.binarySearch(allowedTargetsForDefender[unitNumber],e.getSource().getIntID()) < 0)
-                        continue;
-                    BPAction.UnitMove m = new BPAction.UnitMove(unitNumber, e.getSource().getIntID(), n.getIntID());
+            if (s.getTimeStep() == 1) {
+                for (int unitNumber=0; unitNumber < s.getUNITS(); unitNumber++) {
+                    LinkedHashSet<BPAction.UnitMove> set = new LinkedHashSet<BPAction.UnitMove>();
+                    BPAction.UnitMove m = new BPAction.UnitMove(unitNumber, startingPositions[1][unitNumber], s.getUnitNodes()[unitNumber]);
                     set.add(m);
+                    possibleMoves[unitNumber] = set;
                 }
-                possibleMoves[unitNumber] = set;
+            } else {
+                for (int unitNumber=0; unitNumber < s.getUNITS(); unitNumber++) {
+                    Node n = s.getGraph().getNodeByID(s.getUnitNodes()[unitNumber]);
+                    LinkedHashSet<BPAction.UnitMove> set = new LinkedHashSet<BPAction.UnitMove>();
+                    for (Edge e : s.getGraph().getGraph().incomingEdgesOf(n)) {
+                        if (Arrays.binarySearch(allowedTargetsForDefender[unitNumber],e.getSource().getIntID()) < 0)
+                            continue;
+                        BPAction.UnitMove m = new BPAction.UnitMove(unitNumber, e.getSource().getIntID(), n.getIntID());
+                        set.add(m);
+                    }
+                    possibleMoves[unitNumber] = set;
+                }
             }
 
             for (BPAction.UnitMove um1 : possibleMoves[0]) {
@@ -194,7 +202,6 @@ public class BPExpander extends MDPExpanderImpl {
                             }
                 }
             }
-
         }
         return result;
     }
