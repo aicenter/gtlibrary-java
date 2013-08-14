@@ -40,6 +40,8 @@ public class DOUtilityCalculator implements UtilityCalculator {
 	}
 
 	public double getUtility(GameState state, ActionPureStrategy s1, ActionPureStrategy s2) {
-		return data.cache.getUtilityFor(s1, s2);
+		Double utility = data.cache.getUtilityFor(s1, s2);
+
+		return utility == null ? Double.NaN : utility;
 	}
 }

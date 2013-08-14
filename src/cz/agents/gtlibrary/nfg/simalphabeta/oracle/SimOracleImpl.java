@@ -16,9 +16,9 @@ import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 
-public abstract class SimABOracleImpl implements SimABOracle {
+public abstract class SimOracleImpl implements SimOracle {
 	
-	protected static boolean USE_INCREASING_BOUND = false;
+	protected static boolean USE_INCREASING_BOUND = true;
 	
 	protected HashSet<ActionPureStrategy> actions;
 	protected GameState rootState;
@@ -30,7 +30,7 @@ public abstract class SimABOracleImpl implements SimABOracle {
 	protected AlphaBeta oppAlphaBeta;
 	protected AlgorithmConfig<SimABInformationSet> algConfig;
 
-	public SimABOracleImpl(GameState rootState, Player player, SimUtility utility, Data data) {
+	public SimOracleImpl(GameState rootState, Player player, SimUtility utility, Data data) {
 		this.rootState = rootState;
 		this.expander = data.expander;
 		this.player = player;

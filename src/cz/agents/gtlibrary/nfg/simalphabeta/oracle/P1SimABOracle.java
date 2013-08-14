@@ -11,13 +11,13 @@ import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.utils.Pair;
 
-public class P1SimABOracle extends SimABOracleImpl {
+public class P1SimABOracle extends SimOracleImpl {
 
 	public P1SimABOracle(GameState rootState, SimUtility utility, Data data) {
 		super(rootState, rootState.getAllPlayers()[0], utility, data);
 	}
 
-	public Pair<ActionPureStrategy, Double> getBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta, double hardAlpha, double hardBeta) {
+	public Pair<ActionPureStrategy, Double> getBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta) {
 		Collection<ActionPureStrategy> possibleActions = getActions();
 		ActionPureStrategy bestStrategy = null;
 		double bestValue = alpha;
@@ -62,7 +62,7 @@ public class P1SimABOracle extends SimABOracleImpl {
 				}
 				Double util = utility.getUtility(strategy, entry.getKey());
 				
-				if (util == null)
+				if (util.isNaN())
 					return Double.NEGATIVE_INFINITY;
 				utilityValue += util * entry.getValue();
 			}
@@ -129,7 +129,7 @@ public class P1SimABOracle extends SimABOracleImpl {
 	}
 
 	private Double getOptimisticValueFromCache(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
-		Double cachedValue = cache.getOptUtilityFor(strategy1, strategy2);
+		Double cachedValue = cache.getOptimisticUtilityFor(strategy1, strategy2);
 
 		if (cachedValue == null)
 			cachedValue = updateCacheAndGetOptimistic(strategy1, strategy2);

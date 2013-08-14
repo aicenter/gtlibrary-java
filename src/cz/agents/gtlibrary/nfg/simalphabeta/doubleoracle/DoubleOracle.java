@@ -10,6 +10,7 @@ public abstract class DoubleOracle extends NFGDoubleOracle {
 	public DoubleOracle(GameState rootState, Data data) {
 		super(rootState, data.expander, data.gameInfo, data.config);
 		Stats.incrementStatesVisited();
+		Stats.addState(rootState);
 	}
 	
 	public double getGameValue() {

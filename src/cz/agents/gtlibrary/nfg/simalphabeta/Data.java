@@ -11,7 +11,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.OracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABInformationSet;
-import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABOracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 
 
@@ -41,11 +41,11 @@ public class Data {
 		return alphaBetas[player.getId()];
 	}
 	
-	public SimABOracle getP1Oracle(GameState state, SimUtility utility, DOCache cache) {
+	public SimOracle getP1Oracle(GameState state, SimUtility utility, DOCache cache) {
 		return oracleFactory.getP1Oracle(state, this, utility);
 	}
 	
-	public SimABOracle getP2Oracle(GameState state, SimUtility utility, DOCache cache) {
+	public SimOracle getP2Oracle(GameState state, SimUtility utility, DOCache cache) {
 		return oracleFactory.getP2Oracle(state, this, utility);
 	}
 	

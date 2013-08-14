@@ -11,8 +11,6 @@ public interface DOCache {
 
 	public void setPesAndOptValueFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, Double bound, Double pesimisticUtilityFromCache);
 
-	public Double getOptUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2);
-
 	public void setPesAndOptValueFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2, Double optimisticUtility, Double pesimisticUtility);
 
 	public Double getPesimisticUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2);
