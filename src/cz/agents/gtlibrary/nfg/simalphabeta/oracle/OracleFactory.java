@@ -6,8 +6,8 @@ import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 
 public interface OracleFactory {
 
-	public SimABOracle getP1Oracle(GameState state, Data data, SimUtility utility);
+	public SimOracle getP1Oracle(GameState state, Data data, SimUtility utility);
 	
-	public SimABOracle getP2Oracle(GameState state, Data data, SimUtility utility);
+	public SimOracle getP2Oracle(GameState state, Data data, SimUtility utility);
 	
 }

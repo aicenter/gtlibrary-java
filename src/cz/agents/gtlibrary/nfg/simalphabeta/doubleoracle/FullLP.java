@@ -5,14 +5,14 @@ import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.PlayerStrategySet;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolverImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
-import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABOracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 
 public class FullLP extends DoubleOracle {
 	
-	private SimABOracle p1Oracle;
-	private SimABOracle p2Oracle;
+	private SimOracle p1Oracle;
+	private SimOracle p2Oracle;
 
 	public FullLP(GameState rootState, Data data, SimUtility utility) {
 		super(rootState, data);

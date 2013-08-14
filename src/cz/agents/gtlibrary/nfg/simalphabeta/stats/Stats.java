@@ -1,7 +1,10 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.stats;
 
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
 
+import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
@@ -36,6 +39,8 @@ public class Stats {
 	private static long abTime = 0;
 	private static int p1ABStates = 0;
 	private static int p2ABStates = 0;
+	private static Set<GameState> stateSet = new HashSet<GameState>();
+	private static int LPinvocations = 0;;
 	
 	public static void printInfo() {
 		System.out.println("********** Current run statistics **********");
@@ -53,6 +58,8 @@ public class Stats {
 		System.out.println("Alpha-beta time: " + abTime);
 		System.out.println("Alpha-beta states for player one: " + p1ABStates);
 		System.out.println("Alpha-beta states for player two: " + p2ABStates);
+		System.out.println("Unique LP states: " + stateSet.size());
+		System.out.println("LP invocations: " + LPinvocations);
 	}
 	
 	public static void printOverallInfo() {
@@ -87,6 +94,8 @@ public class Stats {
 		abTime = 0;
 		p1ABStates = 0;
 		p2ABStates = 0;
+		stateSet.clear();
+		LPinvocations = 0;
 	}
 	
 	public static void resetOverall() {
@@ -153,6 +162,7 @@ public class Stats {
 	public static void addToLPSolveTime(long time) {
 		solveLPTime += time;
 		solveLPTimeOverall += time;
+		LPinvocations ++;
 	}
 	
 	public static void addToABTime(long time) {
@@ -199,5 +209,9 @@ public class Stats {
 	public static void addToP1StrategyCount(int count) {
 		p1StrategiesAdded += count;
 		p1StrategiesAddedOverall+= count;
+	}
+	
+	public static void addState(GameState state) {
+		stateSet.add(state);
 	}
 }

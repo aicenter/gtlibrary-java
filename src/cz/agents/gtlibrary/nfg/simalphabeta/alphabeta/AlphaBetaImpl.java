@@ -79,9 +79,9 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 		List<Action> actions = expander.getActions(state);
 
 		for (Action action : actions) {
-			utility += getValue(state.performAction(action), alpha, beta);
+			utility += state.getProbabilityOfNatureFor(action) * getValue(state.performAction(action), alpha, beta);
 		}
-		return utility / actions.size();
+		return utility;
 	}
 
 	public int getCacheSize() {
