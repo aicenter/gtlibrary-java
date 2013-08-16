@@ -47,7 +47,7 @@ public class P2SimABOracle extends SimOracleImpl {
 		double pesimisticUtility = pesimisticUtilityFromCache;
 		double optimisticUtility = optimisticUtilityFromCache;
 
-		if (optimisticUtility - pesimisticUtility > 1e-14) {
+		if (Math.abs(optimisticUtility - pesimisticUtility) > 1e-14) {
 			if (USE_INCREASING_BOUND)
 				if (-bound <= optimisticUtility)
 					optimisticUtility = -bound;

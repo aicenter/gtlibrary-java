@@ -49,13 +49,7 @@ public class DOCacheImpl implements DOCache {
 	}
 
 	public void setPesAndOptValueFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2, Double optimisticUtility, Double pesimisticUtility) {
-		Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2);
-
-		assert (optimisticUtility >= pesimisticUtility);
-		optimisticUtilities.put(strategyPair, optimisticUtility);
-		pesimisticUtilities.put(strategyPair, pesimisticUtility);
-		if (optimisticUtility - pesimisticUtility < 1e-14)
-			actualUtilities.put(strategyPair, optimisticUtility);
+		setPesAndOptValueFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2), optimisticUtility, pesimisticUtility);
 	}
 
 	public Double getUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {

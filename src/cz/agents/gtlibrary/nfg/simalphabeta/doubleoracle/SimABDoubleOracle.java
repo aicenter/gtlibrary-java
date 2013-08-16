@@ -55,8 +55,6 @@ public class SimABDoubleOracle extends DoubleOracle {
 			return;
 		}
 
-		double p2Value = 0;
-		double p1Value = 0;
 		PlayerStrategySet<ActionPureStrategy> p1StrategySet = new PlayerStrategySet<ActionPureStrategy>();
 		PlayerStrategySet<ActionPureStrategy> p2StrategySet = new PlayerStrategySet<ActionPureStrategy>();
 		ActionPureStrategy initialStrategy = p1Oracle.getFirstStrategy();
@@ -110,7 +108,7 @@ public class SimABDoubleOracle extends DoubleOracle {
 					Stats.addToP2NESize(getP2MixedStrategy());
 					break;
 				}
-			} else if (Math.abs(p2Value + gameValue) < EPS && Math.abs(p1Value - gameValue) < EPS) 
+			} else if (Math.abs(p2BestResponse.getRight() + gameValue) < EPS && Math.abs(p1BestResponse.getRight() - gameValue) < EPS) 
 				break;
 		}
 	}
@@ -118,22 +116,15 @@ public class SimABDoubleOracle extends DoubleOracle {
 	private void updateForP2Response(PlayerStrategySet<ActionPureStrategy> p2StrategySet) {
 		Stats.incrementP2StrategyCount();
 		coreSolver.addPlayerTwoStrategies(p2StrategySet);
-		computeNE();
+		coreSolver.computeNashEquilibrium();
 		gameValue = coreSolver.getGameValue();
 	}
 
 	private void updateForP1Response(PlayerStrategySet<ActionPureStrategy> p1StrategySet) {
 		Stats.incrementP1StrategyCount();
 		coreSolver.addPlayerOneStrategies(p1StrategySet);
-		computeNE();
-		gameValue = coreSolver.getGameValue();
-	}
-
-	public void computeNE() {
-		long time = System.currentTimeMillis();
-		
 		coreSolver.computeNashEquilibrium();
-		Stats.addToLPSolveTime(System.currentTimeMillis() - time);
+		gameValue = coreSolver.getGameValue();
 	}
 
 	private MixedStrategy<ActionPureStrategy> getP2MixedStrategy() {

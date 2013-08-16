@@ -1,8 +1,7 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.oracle;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.List;
 
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
@@ -20,7 +19,7 @@ public abstract class SimOracleImpl implements SimOracle {
 	
 	protected static boolean USE_INCREASING_BOUND = true;
 	
-	protected HashSet<ActionPureStrategy> actions;
+	protected List<ActionPureStrategy> actions;
 	protected GameState rootState;
 	protected Expander<? extends InformationSet> expander;
 	protected Player player;
@@ -41,20 +40,19 @@ public abstract class SimOracleImpl implements SimOracle {
 		this.algConfig = data.config;
 	}
 	
-
 	@Override
 	public ActionPureStrategy getFirstStrategy() {
-		return getActions().iterator().next();
+		return getActions().get(0);
 	}
 	
-	public Collection<ActionPureStrategy> getActions() {
+	public List<ActionPureStrategy> getActions() {
 		if (actions == null)
 			initActions();
 		return actions;
 	}
 
 	protected void initActions() {
-		actions = new LinkedHashSet<ActionPureStrategy>();
+		actions = new ArrayList<ActionPureStrategy>();
 		if (player.equals(rootState.getPlayerToMove())) {
 			initFotPlayerToMove();
 			return;

@@ -13,9 +13,7 @@ public abstract class DoubleOracle extends NFGDoubleOracle {
 		Stats.addState(rootState);
 	}
 	
-	public double getGameValue() {
-		return coreSolver.getGameValue();
-	}
+	public abstract double getGameValue();
 	
 	public abstract void generate();
 

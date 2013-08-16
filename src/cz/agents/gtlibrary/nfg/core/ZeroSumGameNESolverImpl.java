@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.nfg.PureStrategy;
 import cz.agents.gtlibrary.nfg.Utility;
 import cz.agents.gtlibrary.nfg.lplibrary.cplex.MIProblemCplex;
 import cz.agents.gtlibrary.nfg.lplibrary.lpWrapper.AMIProblem;
+import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 /**
  * Basic implementation of the zero-sum game solver searching for a Nash
@@ -111,6 +112,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 			restoreModel();
 			long time = System.currentTimeMillis();
 			solve();
+			Stats.addToLPSolveTime(System.currentTimeMillis() - time);
 			finalValue = cplex.getObjValue();
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -30,16 +30,14 @@ public class FullLP extends DoubleOracle {
 		Stats.addToP2StrategyCount(p2StrategySet.size());
 		coreSolver.addPlayerTwoStrategies(p2StrategySet);
 		coreSolver.addPlayerOneStrategies(p1StrategySet);
-		computeNE();
+		coreSolver.computeNashEquilibrium();
 		Stats.addToP1NESize(coreSolver.getPlayerOneStrategy());
 		Stats.addToP2NESize(coreSolver.getPlayerTwoStrategy());
 	}
-
-	public void computeNE() {
-		long time = System.currentTimeMillis();
-		
-		coreSolver.computeNashEquilibrium();
-		Stats.addToLPSolveTime(System.currentTimeMillis() - time);
+	
+	@Override
+	public double getGameValue() {
+		return coreSolver.getGameValue();
 	}
 
 }
