@@ -127,7 +127,7 @@ public class BPAction extends MDPActionImpl {
 
         @Override
         public String toString() {
-            return "UM:"+unitNumber+":"+fromNode+"->"+toNode+(isWillSeeTheFlag()?"\'":"");
+            return "UM:"+unitNumber+":"+fromNode+"->"+toNode;//+(isWillSeeTheFlag()?"\'":"");
         }
 
         protected void setWillSeeTheFlag(boolean willSeeTheFlag) {

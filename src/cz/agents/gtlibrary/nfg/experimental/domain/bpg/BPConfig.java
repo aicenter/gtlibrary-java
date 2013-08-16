@@ -54,11 +54,18 @@ public class BPConfig extends MDPConfigImpl {
             attState = (BPState)secondPlayerAction.getState();
         }
 
+        if (defState.getTimeStep() != attState.getTimeStep())
+            return 0;
+        if ((defAction.getMoves()[0].getToNode() == attAction.getMoves()[0].getToNode()) ||
+            (defAction.getMoves()[1].getToNode() == attAction.getMoves()[0].getToNode()) ||
+            (defAction.getMoves()[0].getFromNode() == attAction.getMoves()[0].getFromNode()) ||
+            (defAction.getMoves()[1].getFromNode() == attAction.getMoves()[0].getFromNode()) ||
+            (defAction.getMoves()[0].getToNode() == attAction.getMoves()[0].getFromNode() && defAction.getMoves()[0].getFromNode() == attAction.getMoves()[0].getToNode()) ||
+            (defAction.getMoves()[1].getToNode() == attAction.getMoves()[0].getFromNode() && defAction.getMoves()[1].getFromNode() == attAction.getMoves()[0].getToNode())
+           )
+            return -1;
         if (attAction.getMoves()[0].getToNode() == 16)
             return 1;
-        if ((defAction.getMoves()[0].getToNode() == attAction.getMoves()[0].getToNode() && defState.getTimeStep() == attState.getTimeStep()) ||
-            (defAction.getMoves()[1].getToNode() == attAction.getMoves()[0].getToNode() && defState.getTimeStep() == attState.getTimeStep()))
-            return -1;
         return 0;
     }
 

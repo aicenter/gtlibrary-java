@@ -10,11 +10,8 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -127,12 +124,16 @@ public class MDPCoreLP {
         IloNumExpr sumR = cplex.constant(0);
         IloNumExpr LS = variables.get(opponentsStateAction.getState());
         assert (LS != null);
-        Set<MDPState> successors = playerStrategy.get(opponentsStateAction.getPlayer()).getSuccessors(opponentsStateAction).keySet();
-        for (MDPState s : successors) {
+        Map<MDPState, Double> successors = playerStrategy.get(opponentsStateAction.getPlayer()).getSuccessors(opponentsStateAction);
+        for (MDPState s : successors.keySet()) {
             if (variables.containsKey(s)) {
-                sumR = cplex.sum(sumR, variables.get(s));
+                sumR = cplex.sum(sumR, cplex.prod(successors.get(s), variables.get(s)));
             }
         }
+
+
+
+
         for (MDPStateActionMarginal myActions : playerStrategy.get(player).getStrategy().keySet()) {
             IloNumVar x = variables.get(myActions);
             assert (x != null);
@@ -169,6 +170,7 @@ public class MDPCoreLP {
         } else {
             for (Entry<MDPStateActionMarginal, Double> e : strategy.getPredecessors(state).entrySet()) {
                 if (variables.containsKey(e.getKey())) {
+                    assert (e.getValue() > 0);
                     LS = cplex.sum(LS, cplex.prod(e.getValue(), variables.get(e.getKey())));
                 } else {
                     assert true;
@@ -177,5 +179,19 @@ public class MDPCoreLP {
         }
 
         constraints.put(state, cplex.addEq(cplex.diff(LS,RS),0));
+    }
+
+    public void extractStrategyForPlayer(Player player) {
+        for (MDPStateActionMarginal map : playerStrategy.get(player).getStrategy().keySet()) {
+            double v = 0;
+            if (variables.containsKey(map)) {
+                try {
+                    v = lpModels.get(player).getValue(variables.get(map));
+                } catch (IloException e) {
+                    v = 0;
+                }
+            }
+            playerStrategy.get(player).putStrategy(map, v);
+        }
     }
 }

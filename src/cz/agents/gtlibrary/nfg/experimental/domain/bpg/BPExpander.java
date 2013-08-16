@@ -101,6 +101,9 @@ public class BPExpander extends MDPExpanderImpl {
                         prob *= (flag2)?BPConfig.getFLAG_PROB():(1-BPConfig.getFLAG_PROB());
                         result.put(state,prob);
                         cumulProb += prob;
+                        assert ((action.getState().isRoot() && ((BPState)state).getTimeStep() == 0) ||
+                                ((BPState)state).getTimeStep() - 1 == ((BPState)action.getState()).getTimeStep());
+
                     }
                 }
             }
@@ -138,15 +141,21 @@ public class BPExpander extends MDPExpanderImpl {
                 for (Edge e : s.getGraph().getGraph().incomingEdgesOf(s.getGraph().getNodeByID(currentNode))) {
                     if (s.getFlaggedNodes().contains(e.getSource().getIntID())) {
                         int fromNode = e.getSource().getIntID();
-                        for (boolean observed : new boolean[] {true, false}) {
+                        boolean[] set = (s.getFlaggedNodes().size() + 2 <= s.getTimeStep()) ? (new boolean[] {true, false}) : (new boolean[] {true});
+                        for (boolean observed : set) {
                             BPState oldState = (BPState)s.copy();
                             oldState.decTimeStep();
-                            if (oldState.undoUnitMove(0, fromNode, observed))
-                                predecessors.add(new MDPStateActionMarginal(oldState, new BPAction(oldState.getPlayer(), new BPAction.UnitMove[]{new BPAction.UnitMove(0,fromNode,currentNode)})));
+                            if (oldState.undoUnitMove(0, fromNode, observed)) {
+                                BPAction.UnitMove m = new BPAction.UnitMove(0,fromNode,currentNode);
+                                m.setWillSeeTheFlag(observed);
+                                predecessors.add(new MDPStateActionMarginal(oldState, new BPAction(oldState.getPlayer(), new BPAction.UnitMove[]{m})));
+                            }
                         }
                     }
                 }
                 for (MDPStateActionMarginal a : predecessors) {
+                    assert ((a.getState().isRoot() && (s.getTimeStep() == 0)) ||
+                            (s.getTimeStep() - 1 == ((BPState)a.getState()).getTimeStep()));
                     result.put(a,1d);
                 }
             }
@@ -186,6 +195,8 @@ public class BPExpander extends MDPExpanderImpl {
                         moves[1] = um2;
                         for (boolean observed1 : set1)
                             for (boolean observed2 : set2) {
+                                um1.setWillSeeTheFlag(observed1);
+                                um2.setWillSeeTheFlag(observed2);
                                 BPState oldState = (BPState)s.copy();
                                 oldState.decTimeStep();
                                 boolean r1 = true;
@@ -197,6 +208,10 @@ public class BPExpander extends MDPExpanderImpl {
 //                                    prob *= (observed2)?BPConfig.getFLAG_PROB():(1-BPConfig.getFLAG_PROB());
                                     MDPStateActionMarginal am = new MDPStateActionMarginal(oldState, new BPAction(oldState.getPlayer(), new BPAction.UnitMove[]{um1,um2}));
                                     double prob = getSuccessors(am).get(s);
+
+                                    assert ((am.getState().isRoot() && (s.getTimeStep() == 0)) ||
+                                            (s.getTimeStep() - 1 == ((BPState)am.getState()).getTimeStep()));
+
                                     result.put(am,prob);
                                 }
                             }
@@ -204,5 +219,13 @@ public class BPExpander extends MDPExpanderImpl {
             }
         }
         return result;
+    }
+
+    public static int[][] getAllowedTargetsForDefender() {
+        return allowedTargetsForDefender;
+    }
+
+    public static int[][] getStartingPositions() {
+        return startingPositions;
     }
 }
