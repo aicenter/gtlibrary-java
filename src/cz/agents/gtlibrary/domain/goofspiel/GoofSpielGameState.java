@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.goofspiel;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -24,7 +25,7 @@ public class GoofSpielGameState extends GameStateImpl {
 	private static final long serialVersionUID = -1885375538236725674L;
 
 	private Map<Player, HashSet<Integer>> playerCards;
-	private LinkedList<Action> sequenceForAllPlayers;
+	private List<Action> sequenceForAllPlayers;
 	private GoofSpielAction faceUpCard;
 	private Sequence natureSequence;
 
@@ -38,7 +39,7 @@ public class GoofSpielGameState extends GameStateImpl {
 
 	public GoofSpielGameState() {
 		super(GSGameInfo.ALL_PLAYERS);
-		sequenceForAllPlayers = new LinkedList<Action>();
+		sequenceForAllPlayers = new ArrayList<Action>(GSGameInfo.CARDS_FOR_PLAYER.length*3);
 		playerCards = new FixedSizeMap<Player, HashSet<Integer>>(3);
 		playerScore = new int[2];
 		round = 0;
@@ -50,7 +51,7 @@ public class GoofSpielGameState extends GameStateImpl {
 
 	public GoofSpielGameState(Sequence natureSequence) {
 		super(GSGameInfo.ALL_PLAYERS);
-		sequenceForAllPlayers = new LinkedList<Action>();
+		sequenceForAllPlayers = new ArrayList<Action>(GSGameInfo.CARDS_FOR_PLAYER.length*3);
 		playerCards = new FixedSizeMap<Player, HashSet<Integer>>(3);
 		playerScore = new int[2];
 		round = 0;
@@ -84,7 +85,7 @@ public class GoofSpielGameState extends GameStateImpl {
 		this.playerScore = gameState.playerScore.clone();
 		this.playerCards = getDeepCopyOfPlayerCards(gameState.playerCards);
 		this.faceUpCard = gameState.faceUpCard;
-		this.sequenceForAllPlayers = new LinkedList<Action>(gameState.sequenceForAllPlayers);
+		this.sequenceForAllPlayers = new ArrayList<Action>(gameState.sequenceForAllPlayers);
 		this.natureSequence = new LinkedListSequenceImpl(gameState.natureSequence);
 	}
 
@@ -226,7 +227,7 @@ public class GoofSpielGameState extends GameStateImpl {
 		return round;
 	}
 
-	public LinkedList<Action> getSequenceForAllPlayers() {
+	public List<Action> getSequenceForAllPlayers() {
 		return sequenceForAllPlayers;
 	}
 

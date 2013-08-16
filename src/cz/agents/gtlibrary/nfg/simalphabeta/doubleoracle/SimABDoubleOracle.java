@@ -145,39 +145,41 @@ public class SimABDoubleOracle extends DoubleOracle {
 	private void updateCacheValues(PlayerStrategySet<ActionPureStrategy> p1StrategySet, PlayerStrategySet<ActionPureStrategy> p2StrategySet) {
 		for (ActionPureStrategy p1Strategy : p1StrategySet) {
 			for (ActionPureStrategy p2Strategy : p2StrategySet) {
-				if (data.cache.getOptimisticUtilityFor(p1Strategy, p2Strategy) == null || data.cache.getPesimisticUtilityFor(p1Strategy, p2Strategy) == null)
-					updateCacheFromAlphaBeta(p1Strategy, p2Strategy);
-				updateCacheFromRecursion(p1Strategy, p2Strategy);
+				Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(p1Strategy, p2Strategy);
+				
+				if (data.cache.getOptimisticUtilityFor(strategyPair) == null || data.cache.getPesimisticUtilityFor(strategyPair) == null)
+					updateCacheFromAlphaBeta(strategyPair);
+				updateCacheFromRecursion(strategyPair);
 			}
 		}
 	}
 
-	private void updateCacheFromRecursion(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
-		double pesimisticUtility = data.cache.getPesimisticUtilityFor(p1Strategy, p2Strategy);
-		double optimisticUtility = data.cache.getOptimisticUtilityFor(p1Strategy, p2Strategy);
+	private void updateCacheFromRecursion(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		double pesimisticUtility = data.cache.getPesimisticUtilityFor(strategyPair);
+		double optimisticUtility = data.cache.getOptimisticUtilityFor(strategyPair);
 
 		if (optimisticUtility - pesimisticUtility > 1e-14) {
-			Double utility = p1Utility.getUtility(p1Strategy, p2Strategy, pesimisticUtility, optimisticUtility);
+			Double utility = p1Utility.getUtility(strategyPair.getLeft(), strategyPair.getRight(), pesimisticUtility, optimisticUtility);
 
 			if (!utility.isNaN())
-				data.cache.setPesAndOptValueFor(p1Strategy, p2Strategy, utility);
+				data.cache.setPesAndOptValueFor(strategyPair, utility);
 		}
 	}
 
-	private void updateCacheFromAlphaBeta(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
-		GameState tempState = getStateAfter(p1Strategy, p2Strategy);
+	private void updateCacheFromAlphaBeta(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		GameState tempState = getStateAfter(strategyPair);
 		long time = System.currentTimeMillis();
 		double pesimisticUtility = -data.getAlphaBetaFor(tempState.getAllPlayers()[1]).getUnboundedValue(tempState);
 		double optimisticUtility = data.getAlphaBetaFor(tempState.getAllPlayers()[0]).getUnboundedValue(tempState);
 
 		Stats.addToABTime(System.currentTimeMillis() - time);
-		data.cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
+		data.cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 	}
 
-	private GameState getStateAfter(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
-		GameState tempState = state.performAction(p1Strategy.getAction());
+	private GameState getStateAfter(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		GameState tempState = state.performAction(strategyPair.getLeft().getAction());
 
-		tempState.performActionModifyingThisState(p2Strategy.getAction());
+		tempState.performActionModifyingThisState(strategyPair.getRight().getAction());
 		return tempState;
 	}
 }
