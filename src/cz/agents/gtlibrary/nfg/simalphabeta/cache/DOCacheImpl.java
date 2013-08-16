@@ -53,8 +53,13 @@ public class DOCacheImpl implements DOCache {
 	}
 
 	public Double getUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
-		return actualUtilities.get(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2));
+		return getUtilityFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2));
 	}
+	
+	public Double getUtilityFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		return actualUtilities.get(strategyPair);
+	}
+
 
 	public void setPesAndOptValueFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, Double optimisticUtility, Double pesimisticUtility) {
 		assert optimisticUtility >= pesimisticUtility;

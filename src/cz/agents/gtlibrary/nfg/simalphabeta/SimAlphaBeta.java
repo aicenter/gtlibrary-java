@@ -21,8 +21,8 @@ import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 public class SimAlphaBeta {
 
 	public static void main(String[] args) {
-		runGoofSpiel();
-//		runPursuit();
+//		runGoofSpiel();
+		runPursuit();
 	}
 
 	public static void runGoofSpiel() {

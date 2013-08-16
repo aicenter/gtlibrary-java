@@ -46,16 +46,17 @@ public class P1SimABOracle extends SimOracleImpl {
 
 		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) {
 			if (entry.getValue() > 1e-8) {
-				Double cacheValue = getValueFromCache(strategy, entry.getKey());
-				double cacheWindow = getLowerBoundFromCache(strategy, entry.getKey());
+				Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(strategy, entry.getKey());
+				Double cacheValue = getValueFromCache(strategyPair);
+				double cacheWindow = getLowerBoundFromCache(strategyPair);
 				double windowValue = Math.max(cacheWindow, getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index));
 
 				if (cacheValue == null) {
-					if (getOptimisticValueFromCache(strategy, entry.getKey()) < windowValue) {
+					if (getOptimisticValueFromCache(strategyPair) < windowValue) {
 						Stats.incrementABCuts();
 						return Double.NEGATIVE_INFINITY;
 					}
-					updateCacheValuesFor(strategy, entry.getKey(), windowValue);
+					updateCacheValuesFor(strategyPair, windowValue);
 				} else if (cacheValue < windowValue - 1e-8) {
 					Stats.incrementCacheCuts();
 					return Double.NEGATIVE_INFINITY;
@@ -71,9 +72,9 @@ public class P1SimABOracle extends SimOracleImpl {
 		return utilityValue;
 	}
 
-	private void updateCacheValuesFor(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy, double bound) {
-		double pesimisticUtilityFromCache = cache.getPesimisticUtilityFor(p1Strategy, p2Strategy);
-		double optimisticUtilityFromCache = cache.getOptimisticUtilityFor(p1Strategy, p2Strategy);
+	private void updateCacheValuesFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, double bound) {
+		double pesimisticUtilityFromCache = cache.getPesimisticUtilityFor(strategyPair);
+		double optimisticUtilityFromCache = cache.getOptimisticUtilityFor(strategyPair);
 		double pesimisticUtility = pesimisticUtilityFromCache;
 		double optimisticUtility = optimisticUtilityFromCache;
 
@@ -82,13 +83,13 @@ public class P1SimABOracle extends SimOracleImpl {
 				if (bound >= pesimisticUtility)
 					pesimisticUtility = bound;
 			assert optimisticUtility >= pesimisticUtility;
-			double utilityValue = utility.getUtility(p1Strategy, p2Strategy, pesimisticUtility - 1e-4, optimisticUtility);
+			double utilityValue = utility.getUtility(strategyPair.getLeft(), strategyPair.getRight(), pesimisticUtility - 1e-4, optimisticUtility);
 
 			if (utilityValue == utilityValue) {
-				cache.setPesAndOptValueFor(p1Strategy, p2Strategy, utilityValue);
+				cache.setPesAndOptValueFor(strategyPair, utilityValue);
 			} else if (pesimisticUtilityFromCache <= bound && bound < optimisticUtilityFromCache) {
 				Stats.incrementBoundsTightened();
-				cache.setPesAndOptValueFor(p1Strategy, p2Strategy, bound, pesimisticUtilityFromCache);
+				cache.setPesAndOptValueFor(strategyPair, bound, pesimisticUtilityFromCache);
 			}
 		}
 	}
@@ -99,62 +100,62 @@ public class P1SimABOracle extends SimOracleImpl {
 
 		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) {
 			if (currentIndex > index)
-				utility += getOptimisticValueFromCache(strategy, entry.getKey()) * entry.getValue();
+				utility += getOptimisticValueFromCache(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy, entry.getKey())) * entry.getValue();
 			currentIndex++;
 		}
 		return (bestValue - utility) / currProbability;
 	}
 
-	private Double getLowerBoundFromCache(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
-		return getPesimisticValueFromCache(strategy1, strategy2);
+	private Double getLowerBoundFromCache(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		return getPesimisticValueFromCache(strategyPair);
 	}
 
-	private Double getPesimisticValueFromCache(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
-		Double cachedValue = cache.getPesimisticUtilityFor(strategy1, strategy2);
+	private Double getPesimisticValueFromCache(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		Double cachedValue = cache.getPesimisticUtilityFor(strategyPair);
 
 		if (cachedValue == null)
-			cachedValue = updateCacheAndGetPesimistic(strategy1, strategy2);
+			cachedValue = updateCacheAndGetPesimistic(strategyPair);
 		return cachedValue;
 	}
 
-	public Double updateCacheAndGetPesimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
-		GameState state = getStateAfter(p1Strategy, p2Strategy);
+	public Double updateCacheAndGetPesimistic(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		GameState state = getStateAfter(strategyPair);
 		long time = System.currentTimeMillis();
 		double pesimisticUtility = -oppAlphaBeta.getUnboundedValue(state);
 		double optimisticUtility = alphaBeta.getUnboundedValue(state);
 
 		Stats.addToABTime(System.currentTimeMillis() - time);
-		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
+		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 		return pesimisticUtility;
 	}
 
-	private Double getOptimisticValueFromCache(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
-		Double cachedValue = cache.getOptimisticUtilityFor(strategy1, strategy2);
+	private Double getOptimisticValueFromCache(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		Double cachedValue = cache.getOptimisticUtilityFor(strategyPair);
 
 		if (cachedValue == null)
-			cachedValue = updateCacheAndGetOptimistic(strategy1, strategy2);
+			cachedValue = updateCacheAndGetOptimistic(strategyPair);
 		return cachedValue;
 	}
 
-	public Double updateCacheAndGetOptimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
-		GameState state = getStateAfter(p1Strategy, p2Strategy);
+	public Double updateCacheAndGetOptimistic(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		GameState state = getStateAfter(strategyPair);
 		long time = System.currentTimeMillis();
 		double pesimisticUtility = -oppAlphaBeta.getUnboundedValue(state);
 		double optimisticUtility = alphaBeta.getUnboundedValue(state);
 
 		Stats.addToABTime(System.currentTimeMillis() - time);
-		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
+		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 		return optimisticUtility;
 	}
 
-	private Double getValueFromCache(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
-		return cache.getUtilityFor(p1Strategy, p2Strategy);
+	private Double getValueFromCache(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		return cache.getUtilityFor(strategyPair);
 	}
 	
-	private GameState getStateAfter(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
-		GameState state = rootState.performAction(p1Strategy.getAction());
+	private GameState getStateAfter(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+		GameState state = rootState.performAction(strategyPair.getLeft().getAction());
 		
-		state.performActionModifyingThisState(p2Strategy.getAction());
+		state.performActionModifyingThisState(strategyPair.getRight().getAction());
 		return state;
 	}
 
