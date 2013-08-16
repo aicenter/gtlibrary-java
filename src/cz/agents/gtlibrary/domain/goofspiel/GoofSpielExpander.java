@@ -37,9 +37,7 @@ public class GoofSpielExpander<I extends InformationSet> extends ExpanderImpl<I>
 
 	public void addCardsForPlayerToMove(GoofSpielGameState gsState, List<Action> actions) {
 		for (Integer actionValue : gsState.getCardsForPlayerToMove()) {
-			GoofSpielAction action = new GoofSpielAction(actionValue, gsState.getPlayerToMove(), getAlgorithmConfig().getInformationSetFor(gsState));
-			
-			actions.add(action);
+			actions.add(new GoofSpielAction(actionValue, gsState.getPlayerToMove(), getAlgorithmConfig().getInformationSetFor(gsState)));
 		}
 	}
 }

@@ -8,13 +8,12 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.NullAlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.P1AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.P2AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
-import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.FullLPFactory;
+import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.SimABDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
@@ -47,9 +46,9 @@ public class SimAlphaBeta {
 			}
 		} else {
 			long time = System.currentTimeMillis();
-			Data data = new Data(new NullAlphaBeta(), new NullAlphaBeta()/*new P1AlphaBeta(rootState.getAllPlayers()[0], expander, new AlphaBetaCacheImpl()), new P2AlphaBeta(rootState.getAllPlayers()[1], expander, new AlphaBetaCacheImpl())*/, new GSGameInfo(), expander, 
-					new FullLPFactory(), new SimABOracleFactory(), new DOCacheImpl());
-			DoubleOracle oracle = data.getDoubleOracle(rootState, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+			Data data = new Data(new P1AlphaBeta(rootState.getAllPlayers()[0], expander, new AlphaBetaCacheImpl()), new P2AlphaBeta(rootState.getAllPlayers()[1], expander, new AlphaBetaCacheImpl()), new GSGameInfo(), expander, 
+					new SimABDoubleOracleFactory(), new SimABOracleFactory(), new DOCacheImpl());
+			DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
 
 			oracle.generate();
 			System.out.println("****************");
