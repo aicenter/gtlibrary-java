@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.nfg.experimental.MDP.interfaces;
 
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
+import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.Map;
 public interface MDPConfig {
     public List<Player> getAllPlayers();
     public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction);
+    public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy);
     public Player getOtherPlayer(Player player);
     public MDPState getDomainRootState(Player player);
 }
