@@ -58,14 +58,14 @@ public class FullCostPairedMDP {
         firstPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(0),config,expander);
         secondPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(1),config,expander);
         firstPlayerStrategy.generateCompleteStrategy();
-        /*
-        for (MDPState s : firstPlayerStrategy.getFrequency().keySet()) {
+
+/*        for (MDPState s : firstPlayerStrategy.getStates()) {
             debugOutput.println(s.toString() + ":" + s.hashCode());
-//            if (!s.isRoot()) debugOutput.println("Predecessors:" + firstPlayerStrategy.getPredecessors(s));
+            if (!s.isRoot()) debugOutput.println("Predecessors:" + firstPlayerStrategy.getPredecessors(s));
         } //*/
         secondPlayerStrategy.generateCompleteStrategy();
 
-/*        for (MDPState s : secondPlayerStrategy.getFrequency().keySet()) {
+/*        for (MDPState s : secondPlayerStrategy.getStates()) {
             debugOutput.println(s.toString() + ":" + s.hashCode());
             if (!s.isRoot()) debugOutput.println("Predecessors:" + secondPlayerStrategy.getPredecessors(s));
         }
@@ -73,10 +73,12 @@ public class FullCostPairedMDP {
 /*        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
             for (MDPStateActionMarginal m2 : secondPlayerStrategy.getStrategy().keySet()) {
                 double utility = config.getUtility(m1, m2);
-                if (utility > 0)
+                if (utility != 0)
                    debugOutput.println("["+m1+","+m2+"] = " + utility);
             }
         } //*/
+
+//        debugOutput.println(secondPlayerStrategy.getSuccessors(new MDPStateActionMarginal(secondPlayerStrategy.getRootState(), secondPlayerStrategy.getActions(secondPlayerStrategy.getRootState()).get(0))));
 
         Map<Player, MDPStrategy> playerStrategy = new HashMap<Player, MDPStrategy>();
         playerStrategy.put(config.getAllPlayers().get(0), firstPlayerStrategy);
@@ -86,8 +88,21 @@ public class FullCostPairedMDP {
         double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
         debugOutput.println("Result: " + r1);
 
-//        double r2 = lp.solveForPlayer(config.getAllPlayers().get(1));
-//        debugOutput.println("Result: " + r2);
+        double r2 = lp.solveForPlayer(config.getAllPlayers().get(1));
+        debugOutput.println("Result: " + r2);
+
+        lp.extractStrategyForPlayer(config.getAllPlayers().get(0));
+//        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
+//            debugOutput.println(m1 + " = " + firstPlayerStrategy.getStrategy().get(m1));
+//        }
+
+        lp.extractStrategyForPlayer(config.getAllPlayers().get(1));
+//        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getStrategy().keySet()) {
+//            debugOutput.println(m2 + " = " + secondPlayerStrategy.getStrategy().get(m2));
+//        }
+
+        firstPlayerStrategy.sanityCheck();
+        secondPlayerStrategy.sanityCheck();
 //*/
     }
 }

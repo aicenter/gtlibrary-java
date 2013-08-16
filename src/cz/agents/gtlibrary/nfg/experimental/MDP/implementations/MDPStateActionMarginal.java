@@ -72,6 +72,13 @@ public class MDPStateActionMarginal implements PureStrategy {
             return false;
         if (this.hashCode() != obj.hashCode())
             return false;
+        MDPStateActionMarginal other = (MDPStateActionMarginal)obj;
+        if (!this.info.equals(other.info))
+            return false;
+        if (!this.getState().equals(other.getState()))
+            return false;
+        if (!this.getAction().equals(other.getAction()))
+            return false;
         return true;
     }
 

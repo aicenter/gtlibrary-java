@@ -83,7 +83,10 @@ public class BPState extends MDPStateImpl {
         } else {
             if ((a.getMoves()[0].getFromNode() == -1 && a.getMoves()[0].getToNode() == -1) &&
                 (a.getMoves()[1].getFromNode() == -1 && a.getMoves()[1].getToNode() == -1)){
-                return newState;
+                if (a.getMoves()[0].isWillSeeTheFlag() || a.getMoves()[1].isWillSeeTheFlag())
+                    return null;
+                else
+                    return newState;
             }
             if (newState.moveUnit(a.getMoves()[0].getUnitNumber(),a.getMoves()[0].getToNode(),a.getMoves()[0].isWillSeeTheFlag()) &&
                 newState.moveUnit(a.getMoves()[1].getUnitNumber(),a.getMoves()[1].getToNode(),a.getMoves()[1].isWillSeeTheFlag())) {
@@ -115,6 +118,8 @@ public class BPState extends MDPStateImpl {
             return false;
         if (!this.getPlayer().equals(other.getPlayer()))
             return false;
+        if (this.getTimeStep() != other.getTimeStep())
+            return false;
         if (this.flaggedNodes.size() != other.getFlaggedNodes().size())
             return false;
         if (this.flaggedNodesObservedByPatroller.size() != other.getFlaggedNodesObservedByPatroller().size())
@@ -126,6 +131,7 @@ public class BPState extends MDPStateImpl {
             return false;
         if (!other.getFlaggedNodesObservedByPatroller().containsAll(this.flaggedNodesObservedByPatroller))
             return false;
+
         return true;
     }
 
@@ -192,8 +198,12 @@ public class BPState extends MDPStateImpl {
             flaggedNodes.add(unitNodes[unitNumber]);
         } else {
             if (willSeeFlag != null) {
-                if (willSeeFlag)
-                    flaggedNodesObservedByPatroller.add(targetID);
+                if (willSeeFlag) {
+                    if (targetID == BPExpander.getStartingPositions()[getPlayer().getId()][unitNumber])
+                        return false;
+                    else
+                        flaggedNodesObservedByPatroller.add(targetID);
+                }
                 else if (!willSeeFlag && flaggedNodesObservedByPatroller.contains(targetID))
                     return false;
             }
@@ -215,7 +225,7 @@ public class BPState extends MDPStateImpl {
 
         if (getPlayer().getId() == 0) {
             if (removeFlag)
-                flaggedNodes.remove(unitNodes[unitNumber]);
+                flaggedNodes.remove(sourceID);
         } else {
             if (removeFlag != null) {
                 if (removeFlag) {

@@ -23,7 +23,7 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
     private MDPExpander expander;
 
     private MDPState root;
-    private Map<MDPState, Double> frequency = new HashMap<MDPState, Double>();
+    private Set<MDPState> strategyStates = new HashSet<MDPState>();
     private Map<MDPStateActionMarginal, Double> strategy = new HashMap<MDPStateActionMarginal, Double>();
 //    private Map<MDPState, Set<MDPStateActionMarginal>> outgoingActions = new HashMap<MDPState, Set<MDPStateActionMarginal>>();
 //    private Map<Set<MDPStateActionMarginal>, MDPState> incomingActions = new HashMap<Set<MDPStateActionMarginal>, MDPState>();
@@ -36,7 +36,7 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         this.expander = expander;
         root = new MDPRootState(player);
         HashSet<MDPState> rootStates = new HashSet<MDPState>();
-        frequency.put(root,1d);
+        strategyStates.add(root);
     }
 
     private void addNewAction(MDPState state, MDPAction action) {
@@ -54,7 +54,26 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
 
     @Override
     public void sanityCheck() {
-
+          for (MDPState s : strategyStates) {
+              if (s.isRoot()) continue;
+              if (hasStateASuccessor(s)) {
+                  double ls = 0;
+                  double rs = 0;
+                  Map<MDPStateActionMarginal, Double> m = getPredecessors(s);
+                  for (MDPStateActionMarginal pred : m.keySet()) {
+                      if (strategy.containsKey(pred))
+                        ls += strategy.get(pred)*m.get(pred);
+                  }
+                  for (MDPAction a : getActions(s)) {
+                      MDPStateActionMarginal map2 = new MDPStateActionMarginal(s,a);
+                      if (strategy.containsKey(map2)) {
+                          rs += strategy.get(map2);
+                      }
+                  }
+                  if (Math.abs(ls - rs) > MDPConfigImpl.getEpsilon())
+                      assert false;
+              }
+          }
     }
 
     public Map<MDPStateActionMarginal, Double> getStrategy() {
@@ -62,7 +81,7 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
     }
 
     public Set<MDPState> getStates() {
-        return frequency.keySet();
+        return strategyStates;
     }
 
     public Set<MDPStateActionMarginal> getActionStates() {
@@ -95,11 +114,11 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         queue.add(getRootState());
         while (!queue.isEmpty()) {
             MDPState state = queue.poll();
-            frequency.put(state,1d);
+            strategyStates.add(state);
             List<MDPAction> actions = getActions(state);
             for (MDPAction a : actions) {
                 MDPStateActionMarginal mdpsam = new MDPStateActionMarginal(state, a);
-                strategy.put(mdpsam,1d);
+                strategy.put(mdpsam,0d);
                 for (Map.Entry<MDPState, Double> e : getSuccessors(mdpsam).entrySet()) {
                     queue.addLast(e.getKey());
 
@@ -149,9 +168,9 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         }
     }
 
-    public Map<MDPState, Double> getFrequency() {
-        return frequency;
-    }
+//    public Map<MDPState, Double> getFrequency() {
+//        return frequency;
+//    }
 
     public boolean hasStateASuccessor(MDPState state) {
         List<MDPAction> actions = getActions(state);
@@ -163,5 +182,9 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
                 return true;
         }
         return false;
+    }
+
+    public void putStrategy(MDPStateActionMarginal map, Double prob) {
+        strategy.put(map, prob);
     }
 }

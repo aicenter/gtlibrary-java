@@ -23,4 +23,8 @@ public abstract class MDPConfigImpl implements MDPConfig {
     public Player getOtherPlayer(Player player) {
         return allPlayers.get(0).equals(player) ? allPlayers.get(1) : allPlayers.get(0);
     }
+
+    public static double getEpsilon() {
+        return 0.0000001;
+    }
 }
