@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.nfg.experimental.MDP;
 
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.nfg.experimental.MDP.core.MDPBestResponse;
 import cz.agents.gtlibrary.nfg.experimental.MDP.core.MDPCoreLP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
@@ -92,17 +93,26 @@ public class FullCostPairedMDP {
         debugOutput.println("Result: " + r2);
 
         lp.extractStrategyForPlayer(config.getAllPlayers().get(0));
-//        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
+        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
 //            debugOutput.println(m1 + " = " + firstPlayerStrategy.getStrategy().get(m1));
-//        }
+        }
 
         lp.extractStrategyForPlayer(config.getAllPlayers().get(1));
-//        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getStrategy().keySet()) {
+        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getStrategy().keySet()) {
 //            debugOutput.println(m2 + " = " + secondPlayerStrategy.getStrategy().get(m2));
-//        }
+        }
 
         firstPlayerStrategy.sanityCheck();
         secondPlayerStrategy.sanityCheck();
+
+        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
+        debugOutput.println("BR : " + br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy));
+        debugOutput.println(br1.extractBestResponse(firstPlayerStrategy));
+
+        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
+        debugOutput.println("BR : " + br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy));
+        debugOutput.println(br2.extractBestResponse(secondPlayerStrategy));
+
 //*/
     }
 }

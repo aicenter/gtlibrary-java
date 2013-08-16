@@ -27,4 +27,15 @@ public abstract class MDPConfigImpl implements MDPConfig {
     public static double getEpsilon() {
         return 0.0000001;
     }
+
+    @Override
+    public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy) {
+        double result = 0;
+
+        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getStrategy().keySet()) {
+            result += getUtility(firstPlayerAction, mdp) * secondPlayerStrategy.getStrategy().get(mdp);
+        }
+
+        return result;
+    }
 }
