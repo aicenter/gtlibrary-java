@@ -24,7 +24,7 @@ public class HistoryImpl implements History {
 		this.players = players;
 		sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(players.length);
 		for (Player player : players) {
-			sequencesOfPlayers.put(player, new LinkedListSequenceImpl(player));
+			sequencesOfPlayers.put(player, new ArrayListSequenceImpl(player));
 		}
 	}
 
@@ -32,7 +32,7 @@ public class HistoryImpl implements History {
 		this.sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(sequencesOfPlayers.size());
 		this.players = players;
 		for (Entry<Player, Sequence> entry : sequencesOfPlayers.entrySet()) {
-			this.sequencesOfPlayers.put(entry.getKey(), new LinkedListSequenceImpl(entry.getValue()));
+			this.sequencesOfPlayers.put(entry.getKey(), new ArrayListSequenceImpl(entry.getValue()));
 		}
 	}
 
