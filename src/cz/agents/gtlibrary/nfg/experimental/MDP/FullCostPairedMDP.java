@@ -94,12 +94,12 @@ public class FullCostPairedMDP {
 
         lp.extractStrategyForPlayer(config.getAllPlayers().get(0));
         for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
-//            debugOutput.println(m1 + " = " + firstPlayerStrategy.getStrategy().get(m1));
+            debugOutput.println(m1 + " = " + firstPlayerStrategy.getStrategy().get(m1));
         }
 
         lp.extractStrategyForPlayer(config.getAllPlayers().get(1));
         for (MDPStateActionMarginal m2 : secondPlayerStrategy.getStrategy().keySet()) {
-//            debugOutput.println(m2 + " = " + secondPlayerStrategy.getStrategy().get(m2));
+            debugOutput.println(m2 + " = " + secondPlayerStrategy.getStrategy().get(m2));
         }
 
         firstPlayerStrategy.sanityCheck();

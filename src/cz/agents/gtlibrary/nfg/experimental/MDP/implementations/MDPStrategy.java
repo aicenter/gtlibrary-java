@@ -22,13 +22,11 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
     private Player player;
     private MDPExpander expander;
 
+//    private Map<Set<MDPStateActionMarginal>, Double> utilityCache = new HashMap<Set<MDPStateActionMarginal>, Double>();
+
     private MDPState root;
     private Set<MDPState> strategyStates = new HashSet<MDPState>();
     private Map<MDPStateActionMarginal, Double> strategy = new HashMap<MDPStateActionMarginal, Double>();
-//    private Map<MDPState, Set<MDPStateActionMarginal>> outgoingActions = new HashMap<MDPState, Set<MDPStateActionMarginal>>();
-//    private Map<Set<MDPStateActionMarginal>, MDPState> incomingActions = new HashMap<Set<MDPStateActionMarginal>, MDPState>();
-
-
 
     public MDPStrategy(Player player, MDPConfig config, MDPExpander expander) {
         this.config = config;
@@ -37,19 +35,6 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         root = new MDPRootState(player);
         HashSet<MDPState> rootStates = new HashSet<MDPState>();
         strategyStates.add(root);
-    }
-
-    private void addNewAction(MDPState state, MDPAction action) {
-        MDPStateActionMarginal x = new MDPStateActionMarginal(state, action);
-//        Set<MDPStateActionMarginal> actions = outgoingActions.get(state);
-//        if (actions == null) actions = new HashSet<MDPStateActionMarginal>();
-//        actions.add(x);
-//        if (outgoingActions.size() == 1) { // there is only a root in the strategy
-//
-//        } else {
-//            for
-//        }
-//        outgoingActions.put(state,actions);
     }
 
     @Override
@@ -88,8 +73,16 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         return strategy.keySet();
     }
 
+    public Set<MDPStateActionMarginal> getAllActionStates() {
+        return strategy.keySet();
+    }
+
     public MDPState getRootState() {
         return root;
+    }
+
+    public Map<MDPState, Double> getAllSuccessors(MDPStateActionMarginal action) {
+        return getSuccessors(action);
     }
 
     public Map<MDPState, Double> getSuccessors(MDPStateActionMarginal action) {
@@ -114,11 +107,11 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         queue.add(getRootState());
         while (!queue.isEmpty()) {
             MDPState state = queue.poll();
-            strategyStates.add(state);
+            addStrategyState(state);
             List<MDPAction> actions = getActions(state);
             for (MDPAction a : actions) {
                 MDPStateActionMarginal mdpsam = new MDPStateActionMarginal(state, a);
-                strategy.put(mdpsam,0d);
+                putStrategy(mdpsam,0d);
                 for (Map.Entry<MDPState, Double> e : getSuccessors(mdpsam).entrySet()) {
                     queue.addLast(e.getKey());
 
@@ -126,6 +119,68 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
             }
         }
     }
+
+
+    public boolean hasStateASuccessor(MDPState state) {
+        List<MDPAction> actions = getActions(state);
+        if (actions == null || actions.isEmpty())
+            return false;
+        for (MDPAction a : actions) {
+            MDPStateActionMarginal map = new MDPStateActionMarginal(state, a);
+            if (!getSuccessors(map).isEmpty())
+                return true;
+        }
+        return false;
+    }
+
+    public boolean hasAllStateASuccessor(MDPState state) {
+        List<MDPAction> actions = getActions(state);
+        if (actions == null || actions.isEmpty())
+            return false;
+        for (MDPAction a : actions) {
+            MDPStateActionMarginal map = new MDPStateActionMarginal(state, a);
+            if (!getAllSuccessors(map).isEmpty())
+                return true;
+        }
+        return false;
+    }
+
+    public void putStrategy(MDPStateActionMarginal map, Double prob) {
+        strategy.put(map, prob);
+    }
+
+    protected void addStrategyState(MDPState state) {
+        strategyStates.add(state);
+    }
+
+    public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction) {
+        return config.getUtility(firstPlayerAction,secondPlayerAction);
+    }
+
+
+    public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy) {
+        double result = 0;
+
+        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getStrategy().keySet()) {
+            result += getUtility(firstPlayerAction, mdp) * secondPlayerStrategy.getStrategy().get(mdp);
+        }
+
+        return result;
+    }
+
+//    protected Double getUtilityFromCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction) {
+//        Set<MDPStateActionMarginal> mdps = new HashSet<MDPStateActionMarginal>();
+//        mdps.add(firstPlayerAction);
+//        mdps.add(secondPlayerAction);
+//        return utilityCache.get(mdps);
+//    }
+//
+//    protected void storeUtilityToCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction, Double value) {
+//        Set<MDPStateActionMarginal> mdps = new HashSet<MDPStateActionMarginal>();
+//        mdps.add(firstPlayerAction);
+//        mdps.add(secondPlayerAction);
+//        utilityCache.put(mdps, value);
+//    }
 
     public class MDPRootState extends MDPStateImpl {
 
@@ -168,23 +223,4 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         }
     }
 
-//    public Map<MDPState, Double> getFrequency() {
-//        return frequency;
-//    }
-
-    public boolean hasStateASuccessor(MDPState state) {
-        List<MDPAction> actions = getActions(state);
-        if (actions == null || actions.isEmpty())
-            return false;
-        for (MDPAction a : actions) {
-            MDPStateActionMarginal map = new MDPStateActionMarginal(state, a);
-            if (!getSuccessors(map).isEmpty())
-                return true;
-        }
-        return false;
-    }
-
-    public void putStrategy(MDPStateActionMarginal map, Double prob) {
-        strategy.put(map, prob);
-    }
 }

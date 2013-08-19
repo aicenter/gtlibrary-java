@@ -5,8 +5,7 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,16 +25,5 @@ public abstract class MDPConfigImpl implements MDPConfig {
 
     public static double getEpsilon() {
         return 0.0000001;
-    }
-
-    @Override
-    public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy) {
-        double result = 0;
-
-        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getStrategy().keySet()) {
-            result += getUtility(firstPlayerAction, mdp) * secondPlayerStrategy.getStrategy().get(mdp);
-        }
-
-        return result;
     }
 }

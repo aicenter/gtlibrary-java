@@ -18,8 +18,8 @@ import java.util.List;
  */
 public class BPConfig extends MDPConfigImpl {
 
-    final private static int MAX_TIME_STEP = 4;
-    final private static double FLAG_PROB = 0.1;
+    final private static int MAX_TIME_STEP = 2;
+    final private static double FLAG_PROB = 0.5;
 
     public BPConfig() {
         allPlayers = new ArrayList<Player>(2);
@@ -37,6 +37,9 @@ public class BPConfig extends MDPConfigImpl {
         assert (firstPlayerAction.getPlayer().getId() != secondPlayerAction.getPlayer().getId());
         if (firstPlayerAction.getState().isRoot() || secondPlayerAction.getState().isRoot())
             return 0;
+
+        Double result = 0d;
+
         BPAction attAction;
         BPAction defAction;
         BPState attState;
@@ -55,18 +58,20 @@ public class BPConfig extends MDPConfigImpl {
         }
 
         if (defState.getTimeStep() != attState.getTimeStep())
-            return 0;
-        if ((defAction.getMoves()[0].getToNode() == attAction.getMoves()[0].getToNode()) ||
+            result = 0d;
+        else if ((defAction.getMoves()[0].getToNode() == attAction.getMoves()[0].getToNode()) ||
             (defAction.getMoves()[1].getToNode() == attAction.getMoves()[0].getToNode()) ||
             (defAction.getMoves()[0].getFromNode() == attAction.getMoves()[0].getFromNode()) ||
             (defAction.getMoves()[1].getFromNode() == attAction.getMoves()[0].getFromNode()) ||
             (defAction.getMoves()[0].getToNode() == attAction.getMoves()[0].getFromNode() && defAction.getMoves()[0].getFromNode() == attAction.getMoves()[0].getToNode()) ||
             (defAction.getMoves()[1].getToNode() == attAction.getMoves()[0].getFromNode() && defAction.getMoves()[1].getFromNode() == attAction.getMoves()[0].getToNode())
            )
-            return -1;
-        if (attAction.getMoves()[0].getToNode() == 16)
-            return 1;
-        return 0;
+            result = -1d;
+        else if (attAction.getMoves()[0].getToNode() == 16)
+            result = 1d;
+        else result = 0d;
+
+        return result;
     }
 
     public class BPAttacker extends PlayerImpl {
