@@ -38,7 +38,7 @@ public class MDPBestResponse {
 
     private double calculateBRValue(MDPState state, MDPStrategy myStrategy, MDPStrategy opponentStrategy) {
 
-        if (!myStrategy.hasStateASuccessor(state)) { // terminal state
+        if (!myStrategy.hasAllStateASuccessor(state)) { // terminal state
             return 0;
         }
 
@@ -52,8 +52,8 @@ public class MDPBestResponse {
 
         for (MDPAction action : myStrategy.getActions(state)) {
             MDPStateActionMarginal mdp = new MDPStateActionMarginal(state, action);
-            double currentActionValue = config.getUtility(mdp, opponentStrategy);
-            Map<MDPState, Double> successors = myStrategy.getSuccessors(mdp);
+            double currentActionValue = myStrategy.getUtility(mdp, opponentStrategy);
+            Map<MDPState, Double> successors = myStrategy.getAllSuccessors(mdp);
             for (MDPState suc : successors.keySet()) {
                 currentActionValue += calculateBRValue(suc, myStrategy, opponentStrategy) * successors.get(suc);
             }

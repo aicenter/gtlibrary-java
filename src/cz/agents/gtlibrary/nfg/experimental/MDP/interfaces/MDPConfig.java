@@ -17,7 +17,7 @@ import java.util.Map;
 public interface MDPConfig {
     public List<Player> getAllPlayers();
     public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction);
-    public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy);
+//    public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy);
     public Player getOtherPlayer(Player player);
     public MDPState getDomainRootState(Player player);
 }

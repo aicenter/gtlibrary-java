@@ -27,21 +27,21 @@ public class MDPCoreLP {
 
     private Map<Player, MDPStrategy> playerStrategy = null;
 
-    private MDPUtilityComputer utilityComputer;
+//    private MDPUtilityComputer utilityComputer;
     private MDPConfig config;
 
     private double finalValue = -Double.MAX_VALUE;
 
     private Map<Player, IloCplex> lpModels = new HashMap<Player, IloCplex>();
     private Map<Player, IloNumVar> objectives = new HashMap<Player, IloNumVar>();
-    private Collection<Player> allPlayers = null;
+//    private Collection<Player> allPlayers = null;
 
 
     public MDPCoreLP(Collection<Player> allPlayers, Map<Player, MDPStrategy> playerStrategy, MDPConfig config) {
-        this.allPlayers = allPlayers;
+//        this.allPlayers = allPlayers;
         this.playerStrategy = playerStrategy;
         this.config = config;
-        this.utilityComputer = new MDPUtilityComputer(config);
+//        this.utilityComputer = new MDPUtilityComputer(config);
         for (Player p : allPlayers)
             try {
 
@@ -137,7 +137,7 @@ public class MDPCoreLP {
         for (MDPStateActionMarginal myActions : playerStrategy.get(player).getStrategy().keySet()) {
             IloNumVar x = variables.get(myActions);
             assert (x != null);
-            sumR = cplex.sum(sumR, cplex.prod(x, utilityComputer.getUtility(myActions, opponentsStateAction)));
+            sumR = cplex.sum(sumR, cplex.prod(x, playerStrategy.get(player).getUtility(myActions, opponentsStateAction)));
         }
 
         if (player.getId() == 0) {
