@@ -21,7 +21,7 @@ public class P1SimABOracle extends SimOracleImpl {
 		Collection<ActionPureStrategy> possibleActions = getActions();
 		ActionPureStrategy bestStrategy = null;
 		double bestValue = alpha;
-
+		
 		for (ActionPureStrategy strategy : possibleActions) {
 			double utilityValue = getValueForAction(mixedStrategy, bestValue, strategy);
 
@@ -44,7 +44,7 @@ public class P1SimABOracle extends SimOracleImpl {
 		double utilityValue = 0;
 		int index = 0;
 
-		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) {
+		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) { 
 			if (entry.getValue() > 1e-8) {
 				Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(strategy, entry.getKey());
 				Double cacheValue = getValueFromCache(strategyPair);

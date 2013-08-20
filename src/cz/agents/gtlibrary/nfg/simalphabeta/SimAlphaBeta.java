@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.P1AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.P2AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.SimABDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABInformationSet;
@@ -21,11 +22,21 @@ import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 public class SimAlphaBeta {
 
 	public static void main(String[] args) {
-//		runGoofSpiel();
-		runPursuit();
+		runGoofSpielWithNature();
+//		runPursuit();
 	}
 
-	public static void runGoofSpiel() {
+	public static void runGoofSpielWithFixedNatureSequence() {
+		GSGameInfo.useFixedNatureSequence = true;
+		SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
+		GoofSpielGameState root = new GoofSpielGameState();
+		
+		System.out.println(root.getNatureSequence());
+		simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()));
+	}
+	
+	public static void runGoofSpielWithNature() {
+		GSGameInfo.useFixedNatureSequence = false;
 		SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
 		GoofSpielGameState root = new GoofSpielGameState();
 		
@@ -46,8 +57,8 @@ public class SimAlphaBeta {
 			}
 		} else {
 			long time = System.currentTimeMillis();
-			Data data = new Data(new P1AlphaBeta(rootState.getAllPlayers()[0], expander, new AlphaBetaCacheImpl()), new P2AlphaBeta(rootState.getAllPlayers()[1], expander, new AlphaBetaCacheImpl()), new GSGameInfo(), expander, 
-					new SimABDoubleOracleFactory(), new SimABOracleFactory(), new DOCacheImpl());
+			Data data = new Data(new P1AlphaBeta(rootState.getAllPlayers()[0], expander, new AlphaBetaCacheImpl(), new GSGameInfo()), new P2AlphaBeta(rootState.getAllPlayers()[1], expander, new AlphaBetaCacheImpl(), new GSGameInfo()), new GSGameInfo(), expander, 
+					new SimABDoubleOracleFactory(), new SimABOracleFactory(), new DOCacheImpl(), new NatureCacheImpl());
 			DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
 
 			oracle.generate();
