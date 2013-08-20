@@ -1,10 +1,12 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.alphabeta;
 
 import java.util.List;
+import java.util.ListIterator;
 
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCache;
@@ -17,21 +19,23 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 	protected AlphaBetaCache cache;
 	protected Expander<SimABInformationSet> expander;
 	protected AlgorithmConfig<SimABInformationSet> algConfig;
+	protected GameInfo gameInfo;
 
-	public AlphaBetaImpl(Player player, Expander<SimABInformationSet> expander, AlphaBetaCache cache) {
+	public AlphaBetaImpl(Player player, Expander<SimABInformationSet> expander, AlphaBetaCache cache, GameInfo gameInfo) {
 		this.player = player;
 		this.expander = expander;
 		this.cache = cache;
 		this.algConfig = expander.getAlgorithmConfig();
+		this.gameInfo = gameInfo;
 	}
 
 	public double getUnboundedValue(GameState state) {
-		return getValue(state, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+		return getValue(state, -gameInfo.getMaxUtility(), gameInfo.getMaxUtility());
 	}
-	
+
 	public double getValue(GameState state, double alpha, double beta) {
 		Double value = cache.get(state);
-		
+
 		if (value != null)
 			return value;
 
@@ -47,7 +51,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 			Stats.increaseABStatesFor(player);
 			for (Action minAction : getMinimizingActions(state)) {
 				double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
-				
+
 				if (beta <= tempAlpha)
 					prune = true;
 				beta = Math.min(beta, tempAlpha);
@@ -56,7 +60,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 					break;
 				}
 			}
-			if (!prune) 
+			if (!prune)
 				cache.put(state, beta);
 			return beta;
 		}
@@ -68,7 +72,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 
 		for (Action maxAction : getMaximizingActions(state)) {
 			tempAlpha = Math.max(tempAlpha, getValue(performActions(state, minAction, maxAction), tempAlpha, beta));
-			if (beta <= tempAlpha) 
+			if (beta <= tempAlpha)
 				return tempAlpha;
 		}
 		return tempAlpha;
@@ -77,17 +81,48 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 	public double getUtilityForNature(GameState state, double alpha, double beta) {
 		double utility = 0;
 		List<Action> actions = expander.getActions(state);
+		ListIterator<Action> iterator = actions.listIterator();
 
-		for (Action action : actions) {
-			utility += state.getProbabilityOfNatureFor(action) * getValue(state.performAction(action), alpha, beta);
+		while (iterator.hasNext()) {
+			Action action = iterator.next();
+			double lowerBound = Math.max(-gameInfo.getMaxUtility(), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
+			double upperBound = Math.min(gameInfo.getMaxUtility(), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
+
+			utility += state.getProbabilityOfNatureFor(action) * getValue(state.performAction(action), lowerBound, upperBound);
 		}
 		return utility;
+	}
+
+	private double getUpperBound(List<Action> actions, GameState state, double upperBound, double probability, double utilityValue, int index) {
+		ListIterator<Action> iterator = actions.listIterator();
+		double utility = utilityValue;
+
+		while (iterator.hasNext()) {
+			Action action = iterator.next();
+
+			if (iterator.previousIndex() > index)
+				utility += state.getProbabilityOfNatureFor(action) * -gameInfo.getMaxUtility();
+		}
+		return (upperBound - utility) / probability;
+	}
+
+	private double getLowerBound(List<Action> actions, GameState state, double lowerBound, double probability, double utilityValue, int index) {
+		ListIterator<Action> iterator = actions.listIterator();
+		double utility = utilityValue;
+
+		while (iterator.hasNext()) {
+			Action action = iterator.next();
+
+			if (iterator.previousIndex() > index)
+				utility += state.getProbabilityOfNatureFor(action) * gameInfo.getMaxUtility();
+		}
+		return (lowerBound - utility) / probability;
 	}
 
 	public int getCacheSize() {
 		return cache.size();
 	}
-	
+
 	protected abstract GameState performActions(GameState state, Action minAction, Action maxAction);
 
 	protected abstract List<Action> getMaximizingActions(GameState state);

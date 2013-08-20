@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.OracleFactory;
@@ -22,11 +23,12 @@ public class Data {
 	public Expander<SimABInformationSet> expander;
 	public AlgorithmConfig<SimABInformationSet> config;
 	public DOCache cache;
+	public NatureCache natureCache;
 	private DoubleOracleFactory doubleOracleFactory;
 	private OracleFactory oracleFactory;
 	
 	public Data(AlphaBeta fpAlphaBeta, AlphaBeta spAlphaBeta, GameInfo gameInfo, Expander<SimABInformationSet> expander,
-			DoubleOracleFactory doubleOracleFactory, OracleFactory oracleFactory, DOCache cache) {
+			DoubleOracleFactory doubleOracleFactory, OracleFactory oracleFactory, DOCache cache, NatureCache natureCache) {
 		super();
 		this.alphaBetas = new AlphaBeta[]{fpAlphaBeta, spAlphaBeta};
 		this.gameInfo = gameInfo;
@@ -35,6 +37,7 @@ public class Data {
 		this.doubleOracleFactory = doubleOracleFactory;
 		this.oracleFactory = oracleFactory;
 		this.cache = cache;
+		this.natureCache = natureCache;
 	}
 	
 	public AlphaBeta getAlphaBetaFor(Player player) {

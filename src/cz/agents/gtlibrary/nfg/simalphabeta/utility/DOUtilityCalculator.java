@@ -1,12 +1,17 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.utility;
 
+import java.util.List;
+import java.util.ListIterator;
+
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 public class DOUtilityCalculator implements UtilityCalculator {
+
 	protected Data data;
 
 	public DOUtilityCalculator(Data data) {
@@ -25,11 +30,76 @@ public class DOUtilityCalculator implements UtilityCalculator {
 
 	protected double computeUtilityForNature(GameState state, ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
 		double utilityValue = 0;
+		List<Action> actions = data.expander.getActions(state);
+		ListIterator<Action> iterator = actions.listIterator();
+		
+		while (iterator.hasNext()) {
+			Action action = iterator.next();
+			GameState nextState = state.performAction(action);
+			double lowerBound = Math.max(getPesimisticValue(nextState), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utilityValue, iterator.previousIndex()));
+			double upperBound = Math.min(getOptimisticValue(nextState), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utilityValue, iterator.previousIndex()));
+			double currentUtility = computeUtilityOf(nextState, lowerBound, upperBound);
 
-		for (Action action : data.expander.getActions(state)) {
-			utilityValue += state.getProbabilityOfNatureFor(action) * computeUtilityOf(state.performAction(action), alpha, beta);
+			assert lowerBound <= upperBound;
+			assert currentUtility == currentUtility;
+			data.natureCache.updateBothFor(nextState, currentUtility);
+			utilityValue += state.getProbabilityOfNatureFor(action) * currentUtility;
 		}
 		return utilityValue;
+	}
+
+	private double getUpperBound(List<Action> actions, GameState state, double upperBound, double probability, double utilityValue, int index) {
+		ListIterator<Action> iterator = actions.listIterator();
+		double utility = utilityValue;
+
+		while (iterator.hasNext()) {
+			Action action = iterator.next();
+
+			if (iterator.previousIndex() > index) {
+				utility += state.getProbabilityOfNatureFor(action) * getPesimisticValue(state.performAction(action));
+			}
+		}
+		return (upperBound - utility) / probability;
+	}
+
+	private double getLowerBound(List<Action> actions, GameState state, double lowerBound, double probability, double utilityValue, int index) {
+		ListIterator<Action> iterator = actions.listIterator();
+		double utility = utilityValue;
+
+		while (iterator.hasNext()) {
+			Action action = iterator.next();
+
+			if (iterator.previousIndex() > index) {
+				utility += state.getProbabilityOfNatureFor(action) * getOptimisticValue(state.performAction(action));
+			}
+		}
+		return (lowerBound - utility) / probability;
+	}
+
+	private double getPesimisticValue(GameState state) {
+		Double pesimistic = data.natureCache.getPesimisticFor(state);
+
+		if (pesimistic == null) {
+			long time = System.currentTimeMillis();
+			
+			pesimistic = -data.alphaBetas[1].getUnboundedValue(state);
+			Stats.addToABTime(System.currentTimeMillis() - time);
+			data.natureCache.updatePesimisticFor(state, pesimistic);
+		}
+		return pesimistic;
+	}
+
+	private double getOptimisticValue(GameState state) {
+		Double optimistic = data.natureCache.getOptimisticFor(state);
+
+		if (optimistic == null) {
+			long time = System.currentTimeMillis();
+			
+			optimistic = data.alphaBetas[0].getUnboundedValue(state);
+			Stats.addToABTime(System.currentTimeMillis() - time);
+			data.natureCache.updateOptimisticFor(state, optimistic);
+		}
+		return optimistic;
 	}
 
 	protected double computeUtilityOf(GameState state, double alpha, double beta) {
