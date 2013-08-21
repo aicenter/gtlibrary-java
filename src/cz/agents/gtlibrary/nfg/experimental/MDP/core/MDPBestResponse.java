@@ -50,7 +50,7 @@ public class MDPBestResponse {
         MDPAction bestAction = null;
         double bestValue = (player.getId() == 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
 
-        for (MDPAction action : myStrategy.getActions(state)) {
+        for (MDPAction action : myStrategy.getAllActions(state)) {
             MDPStateActionMarginal mdp = new MDPStateActionMarginal(state, action);
             double currentActionValue = myStrategy.getUtility(mdp, opponentStrategy);
             Map<MDPState, Double> successors = myStrategy.getAllSuccessors(mdp);
@@ -70,17 +70,20 @@ public class MDPBestResponse {
         return bestValue;
     }
 
-    public Set<MDPStateActionMarginal> extractBestResponse(MDPStrategy myStrategy) {
-        Set<MDPStateActionMarginal> result = new HashSet<MDPStateActionMarginal>();
+    public Map<MDPState, Set<MDPStateActionMarginal>> extractBestResponse(MDPStrategy myStrategy) {
+        Map<MDPState, Set<MDPStateActionMarginal>> result = new HashMap<MDPState, Set<MDPStateActionMarginal>>();
         LinkedList<MDPState> queue = new LinkedList<MDPState>();
         queue.addLast(myStrategy.getRootState());
 
         while (!queue.isEmpty()) {
             MDPState s = queue.poll();
             if (bestResponseData.containsKey(s)) {
+                Set<MDPStateActionMarginal> set = result.get(s);
+                if (set == null) set = new HashSet<MDPStateActionMarginal>();
                 MDPStateActionMarginal mdp = new MDPStateActionMarginal(s, bestResponseData.get(s));
-                result.add(mdp);
-                for (MDPState ss : myStrategy.getSuccessors(mdp).keySet()) {
+                set.add(mdp);
+                result.put(s, set);
+                for (MDPState ss : myStrategy.getAllSuccessors(mdp).keySet()) {
                     queue.addLast(ss);
                 }
             }

@@ -28,7 +28,12 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
     private Set<MDPState> strategyStates = new HashSet<MDPState>();
     private Map<MDPStateActionMarginal, Double> strategy = new HashMap<MDPStateActionMarginal, Double>();
 
+    static private Map<Set<MDPStateActionMarginal>, Double> utilityCache = null;
+
     public MDPStrategy(Player player, MDPConfig config, MDPExpander expander) {
+        if (utilityCache == null) {
+            utilityCache = new HashMap<Set<MDPStateActionMarginal>, Double>();
+        }
         this.config = config;
         this.player = player;
         this.expander = expander;
@@ -82,11 +87,11 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
     }
 
     public Map<MDPState, Double> getAllSuccessors(MDPStateActionMarginal action) {
-        return getSuccessors(action);
+        return expander.getSuccessors(action);
     }
 
     public Map<MDPState, Double> getSuccessors(MDPStateActionMarginal action) {
-        return expander.getSuccessors(action);
+        return getAllSuccessors(action);
     }
 
     public Map<MDPStateActionMarginal, Double> getPredecessors(MDPState state) {
@@ -98,8 +103,12 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         return result;
     }
 
-    public List<MDPAction> getActions(MDPState state) {
+    public List<MDPAction> getAllActions(MDPState state) {
         return expander.getActions(state);
+    }
+
+    public List<MDPAction> getActions(MDPState state) {
+        return getAllActions(state);
     }
 
     public void generateCompleteStrategy() {
@@ -134,7 +143,7 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
     }
 
     public boolean hasAllStateASuccessor(MDPState state) {
-        List<MDPAction> actions = getActions(state);
+        List<MDPAction> actions = getAllActions(state);
         if (actions == null || actions.isEmpty())
             return false;
         for (MDPAction a : actions) {
@@ -147,6 +156,7 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
 
     public void putStrategy(MDPStateActionMarginal map, Double prob) {
         strategy.put(map, prob);
+
     }
 
     protected void addStrategyState(MDPState state) {
@@ -168,19 +178,39 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         return result;
     }
 
-//    protected Double getUtilityFromCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction) {
-//        Set<MDPStateActionMarginal> mdps = new HashSet<MDPStateActionMarginal>();
-//        mdps.add(firstPlayerAction);
-//        mdps.add(secondPlayerAction);
-//        return utilityCache.get(mdps);
-//    }
-//
-//    protected void storeUtilityToCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction, Double value) {
-//        Set<MDPStateActionMarginal> mdps = new HashSet<MDPStateActionMarginal>();
-//        mdps.add(firstPlayerAction);
-//        mdps.add(secondPlayerAction);
-//        utilityCache.put(mdps, value);
-//    }
+    public Double getUtilityFromCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction) {
+        Set<MDPStateActionMarginal> mdps = new HashSet<MDPStateActionMarginal>();
+        mdps.add(firstPlayerAction);
+        mdps.add(secondPlayerAction);
+        Double v = utilityCache.get(mdps);
+        if (v == null) v = 0d;
+        return v;
+    }
+
+    public void storeUtilityToCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction, Double value) {
+        Set<MDPStateActionMarginal> mdps = new HashSet<MDPStateActionMarginal>();
+        mdps.add(firstPlayerAction);
+        mdps.add(secondPlayerAction);
+        utilityCache.put(mdps, value);
+    }
+
+    public void removeUtilityFromCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction) {
+        Set<MDPStateActionMarginal> mdps = new HashSet<MDPStateActionMarginal>();
+        mdps.add(firstPlayerAction);
+        mdps.add(secondPlayerAction);
+        utilityCache.remove(mdps);
+    }
+
+    public void storeAllUtilityToCache(Set<MDPStateActionMarginal> firstPlayerSet, Set<MDPStateActionMarginal> secondPlayerSet) {
+        for (MDPStateActionMarginal a1 : firstPlayerSet) {
+            for (MDPStateActionMarginal a2 : secondPlayerSet) {
+                double v = getUtility(a1, a2);
+                if (v != 0) {
+                    storeUtilityToCache(a1, a2, v);
+                }
+            }
+        }
+    }
 
     public class MDPRootState extends MDPStateImpl {
 

@@ -130,7 +130,7 @@ public class BPExpander extends MDPExpanderImpl {
             return null;
         }
 
-        if (s.getPlayer().getId() == 0) {
+        if (s.getPlayer().getId() == 0) { // attacker
             int currentNode = s.getUnitNodes()[0];
             if (s.getTimeStep() == 1) {
                 BPState oldState = (BPState)s.copy();
@@ -141,7 +141,7 @@ public class BPExpander extends MDPExpanderImpl {
                 for (Edge e : s.getGraph().getGraph().incomingEdgesOf(s.getGraph().getNodeByID(currentNode))) {
                     if (s.getFlaggedNodes().contains(e.getSource().getIntID())) {
                         int fromNode = e.getSource().getIntID();
-                        boolean[] set = (s.getFlaggedNodes().size() + 2 <= s.getTimeStep()) ? (new boolean[] {true, false}) : (new boolean[] {true});
+                        boolean[] set = (s.getFlaggedNodes().size() + 1 <= s.getTimeStep()) ? (new boolean[] {true, false}) : (new boolean[] {true});
                         for (boolean observed : set) {
                             BPState oldState = (BPState)s.copy();
                             oldState.decTimeStep();
@@ -159,7 +159,7 @@ public class BPExpander extends MDPExpanderImpl {
                     result.put(a,1d);
                 }
             }
-        } else {
+        } else { // defender
             LinkedHashSet<BPAction.UnitMove>[] possibleMoves = new LinkedHashSet[s.getUNITS()];
             if (s.getTimeStep() == 1) {
                 for (int unitNumber=0; unitNumber < s.getUNITS(); unitNumber++) {

@@ -55,15 +55,16 @@ public class FullCostPairedMDP {
     }
 
     private void test() {
+        long startTime = System.nanoTime();
         debugOutput.println("Testing Full CostPaired MDP.");
         firstPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(0),config,expander);
         secondPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(1),config,expander);
         firstPlayerStrategy.generateCompleteStrategy();
 
-/*        for (MDPState s : firstPlayerStrategy.getStates()) {
-            debugOutput.println(s.toString() + ":" + s.hashCode());
-            if (!s.isRoot()) debugOutput.println("Predecessors:" + firstPlayerStrategy.getPredecessors(s));
-        } //*/
+//        for (MDPState s : firstPlayerStrategy.getStates()) {
+//            debugOutput.println(s.toString() + ":" + s.hashCode());
+//            if (!s.isRoot()) debugOutput.println("Predecessors:" + firstPlayerStrategy.getPredecessors(s));
+//        } //*/
         secondPlayerStrategy.generateCompleteStrategy();
 
 /*        for (MDPState s : secondPlayerStrategy.getStates()) {
@@ -81,6 +82,8 @@ public class FullCostPairedMDP {
 
 //        debugOutput.println(secondPlayerStrategy.getSuccessors(new MDPStateActionMarginal(secondPlayerStrategy.getRootState(), secondPlayerStrategy.getActions(secondPlayerStrategy.getRootState()).get(0))));
 
+        firstPlayerStrategy.storeAllUtilityToCache(firstPlayerStrategy.getAllActionStates(), secondPlayerStrategy.getAllActionStates());
+
         Map<Player, MDPStrategy> playerStrategy = new HashMap<Player, MDPStrategy>();
         playerStrategy.put(config.getAllPlayers().get(0), firstPlayerStrategy);
         playerStrategy.put(config.getAllPlayers().get(1), secondPlayerStrategy);
@@ -93,26 +96,29 @@ public class FullCostPairedMDP {
         debugOutput.println("Result: " + r2);
 
         lp.extractStrategyForPlayer(config.getAllPlayers().get(0));
-        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
-            debugOutput.println(m1 + " = " + firstPlayerStrategy.getStrategy().get(m1));
-        }
+//        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
+//            debugOutput.println(m1 + " = " + firstPlayerStrategy.getStrategy().get(m1));
+//        }
 
         lp.extractStrategyForPlayer(config.getAllPlayers().get(1));
-        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getStrategy().keySet()) {
-            debugOutput.println(m2 + " = " + secondPlayerStrategy.getStrategy().get(m2));
-        }
+//        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getStrategy().keySet()) {
+//            debugOutput.println(m2 + " = " + secondPlayerStrategy.getStrategy().get(m2));
+//        }
 
-        firstPlayerStrategy.sanityCheck();
-        secondPlayerStrategy.sanityCheck();
-
-        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
-        debugOutput.println("BR : " + br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy));
-        debugOutput.println(br1.extractBestResponse(firstPlayerStrategy));
-
-        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
-        debugOutput.println("BR : " + br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy));
-        debugOutput.println(br2.extractBestResponse(secondPlayerStrategy));
+//        firstPlayerStrategy.sanityCheck();
+//        secondPlayerStrategy.sanityCheck();
+//
+//        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
+//        debugOutput.println("BR : " + br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy));
+//        debugOutput.println(br1.extractBestResponse(firstPlayerStrategy));
+//
+//        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
+//        debugOutput.println("BR : " + br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy));
+//        debugOutput.println(br2.extractBestResponse(secondPlayerStrategy));
 
 //*/
+
+        long endTime = System.nanoTime() - startTime;
+        debugOutput.println("Overall Time: " + (endTime / 1000000));
     }
 }
