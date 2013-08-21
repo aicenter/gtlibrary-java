@@ -25,10 +25,10 @@ public class MDPCoreLP {
     protected Map<Object, IloRange> constraints = new HashMap<Object, IloRange>();
     protected Map<Object, IloNumVar> variables = new HashMap<Object, IloNumVar>();
 
-    private Map<Player, MDPStrategy> playerStrategy = null;
+    protected Map<Player, MDPStrategy> playerStrategy = null;
 
 //    private MDPUtilityComputer utilityComputer;
-    private MDPConfig config;
+    protected MDPConfig config;
 
     private double finalValue = -Double.MAX_VALUE;
 
@@ -107,20 +107,26 @@ public class MDPCoreLP {
         }
     }
 
-    private IloNumVar createVariableForMDPState(IloCplex cplex, MDPState state) throws IloException {
-        IloNumVar result = cplex.numVar(-1, 1, IloNumVarType.Float, "V_" + state.toString());
+    protected IloNumVar createVariableForMDPState(IloCplex cplex, MDPState state) throws IloException {
+        if (variables.containsKey(state)) {
+            return variables.get(state);
+        }
+        IloNumVar result = cplex.numVar(-10, 10, IloNumVarType.Float, "V_" + state.toString());
         variables.put(state,result);
         return result;
     }
 
-    private IloNumVar createVariableForStateAction(IloCplex cplex, MDPStateActionMarginal action, Player player) throws IloException {
+    protected IloNumVar createVariableForStateAction(IloCplex cplex, MDPStateActionMarginal action, Player player) throws IloException {
+        if (variables.containsKey(action)) {
+            return variables.get(action);
+        }
         String letter = ((player.getId() == 0) ? "x" : "y") + "_";
         IloNumVar result = cplex.numVar(0, 1, IloNumVarType.Float, letter + action.toString());
         variables.put(action,result);
         return result;
     }
 
-    private void createConstraintForExpValues(IloCplex cplex, Player player, MDPStateActionMarginal opponentsStateAction) throws IloException {
+    protected void createConstraintForExpValues(IloCplex cplex, Player player, MDPStateActionMarginal opponentsStateAction) throws IloException {
         IloNumExpr sumR = cplex.constant(0);
         IloNumExpr LS = variables.get(opponentsStateAction.getState());
         assert (LS != null);
@@ -137,7 +143,7 @@ public class MDPCoreLP {
         for (MDPStateActionMarginal myActions : playerStrategy.get(player).getStrategy().keySet()) {
             IloNumVar x = variables.get(myActions);
             assert (x != null);
-            sumR = cplex.sum(sumR, cplex.prod(x, playerStrategy.get(player).getUtility(myActions, opponentsStateAction)));
+            sumR = cplex.sum(sumR, cplex.prod(x, playerStrategy.get(player).getUtilityFromCache(myActions, opponentsStateAction)));
         }
 
         if (player.getId() == 0) {
@@ -147,9 +153,8 @@ public class MDPCoreLP {
         }
     }
 
-    private void createConstraintForStrategy(IloCplex cplex, Player player, MDPState state) throws IloException {
+    protected void createConstraintForStrategy(IloCplex cplex, Player player, MDPState state) throws IloException {
         IloNumExpr LS = cplex.constant(0);
-        assert (LS != null);
         IloNumExpr RS = cplex.constant(0);
 
         MDPStrategy strategy = playerStrategy.get(player);
@@ -168,14 +173,17 @@ public class MDPCoreLP {
         if (state.equals(strategy.getRootState())) {
             LS = cplex.constant(1);
         } else {
+            boolean hasLS = false;
             for (Entry<MDPStateActionMarginal, Double> e : strategy.getPredecessors(state).entrySet()) {
                 if (variables.containsKey(e.getKey())) {
                     assert (e.getValue() > 0);
+                    hasLS = true;
                     LS = cplex.sum(LS, cplex.prod(e.getValue(), variables.get(e.getKey())));
                 } else {
                     assert true;
                 }
             }
+            assert hasLS;
         }
 
         constraints.put(state, cplex.addEq(cplex.diff(LS,RS),0));
@@ -193,5 +201,21 @@ public class MDPCoreLP {
             }
             playerStrategy.get(player).putStrategy(map, v);
         }
+    }
+
+    public Map<Player, IloCplex> getLpModels() {
+        return lpModels;
+    }
+
+    public Map<Player, IloNumVar> getObjectives() {
+        return objectives;
+    }
+
+    public double getFinalValue() {
+        return finalValue;
+    }
+
+    public void setFinalValue(double finalValue) {
+        this.finalValue = finalValue;
     }
 }
