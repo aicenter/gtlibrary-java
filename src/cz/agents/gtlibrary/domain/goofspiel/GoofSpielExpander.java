@@ -1,7 +1,9 @@
 package cz.agents.gtlibrary.domain.goofspiel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -31,7 +33,7 @@ public class GoofSpielExpander<I extends InformationSet> extends ExpanderImpl<I>
 			return actions;
 		}
 		addCardsForPlayerToMove(gsState, actions);
-//		Collections.shuffle(actions, new Random(GSGameInfo.seed));
+		Collections.shuffle(actions, new Random(GSGameInfo.seed));
 		return actions;
 	}
 

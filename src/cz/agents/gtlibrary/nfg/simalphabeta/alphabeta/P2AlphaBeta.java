@@ -19,17 +19,14 @@ public class P2AlphaBeta extends AlphaBetaImpl {
 
 	@Override
 	protected List<Action> getMaximizingActions(GameState state) {
-		algConfig.createInformationSetFor(state);
 
 		GameState newState = state.performAction(expander.getActions(state).get(0));
 
-		algConfig.createInformationSetFor(newState);
 		return expander.getActions(newState);
 	}
 
 	@Override
 	protected List<Action> getMinimizingActions(GameState state) {
-		algConfig.createInformationSetFor(state);
 		return expander.getActions(state);
 	}
 

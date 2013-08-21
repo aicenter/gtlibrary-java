@@ -17,7 +17,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 
 public abstract class SimOracleImpl implements SimOracle {
 	
-	protected static boolean USE_INCREASING_BOUND = false;
+	protected static boolean USE_INCREASING_BOUND = true;
 	
 	protected List<ActionPureStrategy> actions;
 	protected GameState rootState;
@@ -63,14 +63,12 @@ public abstract class SimOracleImpl implements SimOracle {
 	protected void initForOtherPlayer() {
 		GameState newState = rootState.performAction(expander.getActions(rootState).get(0));
 
-		algConfig.createInformationSetFor(newState);
 		for (Action action : expander.getActions(newState)) {
 			actions.add(new ActionPureStrategy(action));
 		}
 	}
 
 	protected void initFotPlayerToMove() {
-		algConfig.createInformationSetFor(rootState);
 		for (Action action : expander.getActions(rootState)) {
 			actions.add(new ActionPureStrategy(action));
 		}
