@@ -7,14 +7,12 @@ import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABInformationSet;
 public class SimABConfig extends ConfigImpl<SimABInformationSet>{
 
 	@Override
-	public SimABInformationSet createInformationSetFor(GameState gameState) {
-		SimABInformationSet informationSet = getInformationSetFor(gameState);
-		
-		if(informationSet == null) {
-			informationSet = new SimABInformationSet(gameState);
-			addInformationSetFor(gameState, informationSet);
-		}
-		return informationSet;
+	public SimABInformationSet getInformationSetFor(GameState gameState) {
+		return new SimABInformationSet(gameState);
 	}
 
+	@Override
+	public SimABInformationSet createInformationSetFor(GameState gameState) {
+		return null;
+	}
 }

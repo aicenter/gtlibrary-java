@@ -24,7 +24,9 @@ public class Stats {
 	private static long abTimeOverall = 0;
 	private static int p1ABStatesOverall = 0;
 	private static int p2ABStatesOverall = 0;
-	
+	private static int LPinvocationsOverall = 0;;
+	private static int uniqueStatesOverall = 0;;;
+
 	private static int abCutCount = 0;
 	private static int cacheCutCount = 0;
 	private static int statesVisited = 0;
@@ -40,8 +42,8 @@ public class Stats {
 	private static int p1ABStates = 0;
 	private static int p2ABStates = 0;
 	private static Set<GameState> stateSet = new HashSet<GameState>();
-	private static int LPinvocations = 0;;
-	
+	private static int LPinvocations = 0;
+
 	public static void printInfo() {
 		System.out.println("********** Current run statistics **********");
 		System.out.println("AlphaBeta cuts: " + abCutCount);
@@ -61,7 +63,7 @@ public class Stats {
 		System.out.println("Unique LP states: " + stateSet.size());
 		System.out.println("LP invocations: " + LPinvocations);
 	}
-	
+
 	public static void printOverallInfo() {
 		System.out.println("********** Overall statistics **********");
 		System.out.println("AlphaBeta cuts: " + abCutCountOverall);
@@ -77,6 +79,8 @@ public class Stats {
 		System.out.println("Alpha-beta time: " + abTimeOverall);
 		System.out.println("Alpha-beta states for player one: " + p1ABStatesOverall);
 		System.out.println("Alpha-beta states for player two: " + p2ABStatesOverall);
+		System.out.println("Unique LP states: " + uniqueStatesOverall);
+		System.out.println("LP invocations: " + LPinvocationsOverall);
 	}
 
 	public static void reset() {
@@ -97,7 +101,7 @@ public class Stats {
 		stateSet.clear();
 		LPinvocations = 0;
 	}
-	
+
 	public static void resetOverall() {
 		abCutCountOverall = 0;
 		cacheCutCountOverall = 0;
@@ -112,76 +116,79 @@ public class Stats {
 		abTimeOverall = 0;
 		p1ABStatesOverall = 0;
 		p2ABStatesOverall = 0;
+		LPinvocationsOverall = 0;
+		uniqueStatesOverall = 0;
 	}
-	
+
 	public static void incrementStatesVisited() {
 		statesVisited++;
 		statesVisitedOverall++;
 	}
-	
+
 	public static void incrementP1StrategyCount() {
 		p1StrategiesAdded++;
 		p1StrategiesAddedOverall++;
 	}
-	
+
 	public static void incrementP2StrategyCount() {
 		p2StrategiesAdded++;
 		p2StrategiesAddedOverall++;
 	}
-	
+
 	public static void incrementBoundsTightened() {
 		boundsTightened++;
 		boundsTightenedOverall++;
 	}
-	
+
 	public static void incrementNaNCuts() {
 		nanCuts++;
 		nanCutsOverall++;
 	}
-	
+
 	public static void incrementCacheCuts() {
 		cacheCutCount++;
 		cacheCutCountOverall++;
 	}
-	
+
 	public static void incrementABCuts() {
 		abCutCount++;
 		abCutCountOverall++;
 	}
-	
+
 	public static void addToP1NESize(int amount) {
 		p1NESize += amount;
 		p1NESizeOverall += amount;
 	}
-	
+
 	public static void addToP2NESize(int amount) {
 		p2NESize += amount;
 		p2NESizeOverall += amount;
 	}
-	
+
 	public static void addToLPSolveTime(long time) {
 		solveLPTime += time;
 		solveLPTimeOverall += time;
-		LPinvocations ++;
+		LPinvocations++;
+		LPinvocationsOverall++;
 	}
-	
+
 	public static void addToABTime(long time) {
 		abTime += time;
 		abTimeOverall += time;
 	}
-	
+
 	public static void increaseP1ABStates() {
 		p1ABStates++;
 		p1ABStatesOverall++;
 	}
-	
+
 	public static void increaseP2ABStates() {
 		p2ABStates++;
 		p2ABStatesOverall++;
 	}
 
 	public static void increaseABStatesFor(Player player) {
-		if(player.getId() == 0)
+		if (player.getId() == 0)
 			increaseP1ABStates();
 		else
 			increaseP2ABStates();
@@ -189,29 +196,30 @@ public class Stats {
 
 	public static void addToP1NESize(MixedStrategy<ActionPureStrategy> p1MixedStrategy) {
 		for (Entry<ActionPureStrategy, Double> entry : p1MixedStrategy) {
-			if(entry.getValue() > 1e-8)
+			if (entry.getValue() > 1e-8)
 				addToP1NESize(1);
 		}
 	}
-	
+
 	public static void addToP2NESize(MixedStrategy<ActionPureStrategy> p2MixedStrategy) {
 		for (Entry<ActionPureStrategy, Double> entry : p2MixedStrategy) {
-			if(entry.getValue() > 1e-8)
+			if (entry.getValue() > 1e-8)
 				addToP2NESize(1);
 		}
 	}
 
 	public static void addToP2StrategyCount(int count) {
 		p2StrategiesAdded += count;
-		p2StrategiesAddedOverall+= count;
+		p2StrategiesAddedOverall += count;
 	}
 
 	public static void addToP1StrategyCount(int count) {
 		p1StrategiesAdded += count;
-		p1StrategiesAddedOverall+= count;
+		p1StrategiesAddedOverall += count;
 	}
-	
+
 	public static void addState(GameState state) {
-		stateSet.add(state);
+		if(stateSet.add(state))
+			uniqueStatesOverall++;
 	}
 }

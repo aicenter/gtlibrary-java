@@ -11,21 +11,21 @@ import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.utils.Pair;
 
-public class SimABDoubleOracle extends DoubleOracle {
+public class SimDoubleOracle extends DoubleOracle {
 	
-	private final boolean CHECK_STRATEGY_SET_CHANGES = true;
+	protected final boolean CHECK_STRATEGY_SET_CHANGES = true;
 
-	private SimOracle p1Oracle;
-	private SimOracle p2Oracle;
+	protected SimOracle p1Oracle;
+	protected SimOracle p2Oracle;
 
-	private double alpha;
-	private double beta;
-	private double gameValue;
-	private GameState state;
-	private Data data;
-	private SimUtility p1Utility;
+	protected double alpha;
+	protected double beta;
+	protected double gameValue;
+	protected GameState state;
+	protected Data data;
+	protected SimUtility p1Utility;
 
-	public SimABDoubleOracle(SimUtility utility, double alpha, double beta, Data data, GameState state) {
+	public SimDoubleOracle(SimUtility utility, double alpha, double beta, Data data, GameState state) {
 		super(state, data);
 		this.p1Oracle = data.getP1Oracle(state, utility, data.cache);
 		this.p2Oracle = data.getP2Oracle(state, utility, data.cache);
@@ -113,36 +113,36 @@ public class SimABDoubleOracle extends DoubleOracle {
 		}
 	}
 
-	private void updateForP2Response(PlayerStrategySet<ActionPureStrategy> p2StrategySet) {
+	protected void updateForP2Response(PlayerStrategySet<ActionPureStrategy> p2StrategySet) {
 		Stats.incrementP2StrategyCount();
 		coreSolver.addPlayerTwoStrategies(p2StrategySet);
 		coreSolver.computeNashEquilibrium();
 		gameValue = coreSolver.getGameValue();
 	}
 
-	private void updateForP1Response(PlayerStrategySet<ActionPureStrategy> p1StrategySet) {
+	protected void updateForP1Response(PlayerStrategySet<ActionPureStrategy> p1StrategySet) {
 		Stats.incrementP1StrategyCount();
 		coreSolver.addPlayerOneStrategies(p1StrategySet);
 		coreSolver.computeNashEquilibrium();
 		gameValue = coreSolver.getGameValue();
 	}
 
-	private MixedStrategy<ActionPureStrategy> getP2MixedStrategy() {
+	protected MixedStrategy<ActionPureStrategy> getP2MixedStrategy() {
 		return coreSolver.getPlayerTwoStrategy();
 	}
 
-	private MixedStrategy<ActionPureStrategy> getP1MixedStrategy(ActionPureStrategy p1BestResponse) {
+	protected MixedStrategy<ActionPureStrategy> getP1MixedStrategy(ActionPureStrategy p1BestResponse) {
 		return coreSolver.getPlayerOneStrategy() == null?getInitMixedStrategy(p1BestResponse):coreSolver.getPlayerOneStrategy();
 	}
 
-	private MixedStrategy<ActionPureStrategy> getInitMixedStrategy(ActionPureStrategy p1BestResponse) {
+	protected MixedStrategy<ActionPureStrategy> getInitMixedStrategy(ActionPureStrategy p1BestResponse) {
 		MixedStrategy<ActionPureStrategy> p1MixedStrategy = new MixedStrategy<ActionPureStrategy>();
 		
 		p1MixedStrategy.add(p1BestResponse, 1.0);
 		return p1MixedStrategy;
 	}
 
-	private void updateCacheValues(PlayerStrategySet<ActionPureStrategy> p1StrategySet, PlayerStrategySet<ActionPureStrategy> p2StrategySet) {
+	protected void updateCacheValues(PlayerStrategySet<ActionPureStrategy> p1StrategySet, PlayerStrategySet<ActionPureStrategy> p2StrategySet) {
 		for (ActionPureStrategy p1Strategy : p1StrategySet) {
 			for (ActionPureStrategy p2Strategy : p2StrategySet) {
 				Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(p1Strategy, p2Strategy);
@@ -154,7 +154,7 @@ public class SimABDoubleOracle extends DoubleOracle {
 		}
 	}
 
-	private void updateCacheFromRecursion(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+	protected void updateCacheFromRecursion(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		double pesimisticUtility = data.cache.getPesimisticUtilityFor(strategyPair);
 		double optimisticUtility = data.cache.getOptimisticUtilityFor(strategyPair);
 
@@ -166,7 +166,7 @@ public class SimABDoubleOracle extends DoubleOracle {
 		}
 	}
 
-	private void updateCacheFromAlphaBeta(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+	protected void updateCacheFromAlphaBeta(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		GameState tempState = getStateAfter(strategyPair);
 		long time = System.currentTimeMillis();
 		double pesimisticUtility = -data.getAlphaBetaFor(tempState.getAllPlayers()[1]).getUnboundedValue(tempState);
@@ -176,7 +176,7 @@ public class SimABDoubleOracle extends DoubleOracle {
 		data.cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 	}
 
-	private GameState getStateAfter(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+	protected GameState getStateAfter(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		GameState tempState = state.performAction(strategyPair.getLeft().getAction());
 
 		tempState.performActionModifyingThisState(strategyPair.getRight().getAction());

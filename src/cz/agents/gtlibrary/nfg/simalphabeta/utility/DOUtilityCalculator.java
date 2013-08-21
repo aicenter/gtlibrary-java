@@ -36,19 +36,19 @@ public class DOUtilityCalculator implements UtilityCalculator {
 		while (iterator.hasNext()) {
 			Action action = iterator.next();
 			GameState nextState = state.performAction(action);
-			double lowerBound = Math.max(getPesimisticValue(nextState), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utilityValue, iterator.previousIndex()));
+			double lowerBound = Math.max(getPesimisticValue(nextState) - 1e-4, getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utilityValue, iterator.previousIndex()));
 			double upperBound = Math.min(getOptimisticValue(nextState), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utilityValue, iterator.previousIndex()));
 			double currentUtility = computeUtilityOf(nextState, lowerBound, upperBound);
-
-			assert lowerBound <= upperBound;
-			assert currentUtility == currentUtility;
+//
+			if(Double.isNaN(currentUtility))
+				return Double.NaN;
 			data.natureCache.updateBothFor(nextState, currentUtility);
 			utilityValue += state.getProbabilityOfNatureFor(action) * currentUtility;
 		}
 		return utilityValue;
 	}
 
-	private double getUpperBound(List<Action> actions, GameState state, double upperBound, double probability, double utilityValue, int index) {
+	protected double getUpperBound(List<Action> actions, GameState state, double upperBound, double probability, double utilityValue, int index) {
 		ListIterator<Action> iterator = actions.listIterator();
 		double utility = utilityValue;
 
@@ -62,7 +62,7 @@ public class DOUtilityCalculator implements UtilityCalculator {
 		return (upperBound - utility) / probability;
 	}
 
-	private double getLowerBound(List<Action> actions, GameState state, double lowerBound, double probability, double utilityValue, int index) {
+	protected double getLowerBound(List<Action> actions, GameState state, double lowerBound, double probability, double utilityValue, int index) {
 		ListIterator<Action> iterator = actions.listIterator();
 		double utility = utilityValue;
 
@@ -76,7 +76,7 @@ public class DOUtilityCalculator implements UtilityCalculator {
 		return (lowerBound - utility) / probability;
 	}
 
-	private double getPesimisticValue(GameState state) {
+	protected double getPesimisticValue(GameState state) {
 		Double pesimistic = data.natureCache.getPesimisticFor(state);
 
 		if (pesimistic == null) {
@@ -89,7 +89,7 @@ public class DOUtilityCalculator implements UtilityCalculator {
 		return pesimistic;
 	}
 
-	private double getOptimisticValue(GameState state) {
+	protected double getOptimisticValue(GameState state) {
 		Double optimistic = data.natureCache.getOptimisticFor(state);
 
 		if (optimistic == null) {

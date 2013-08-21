@@ -41,7 +41,6 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 
 		boolean prune = false;
 
-		algConfig.createInformationSetFor(state);
 		if (state.isGameEnd())
 			return state.getUtilities()[player.getId()];
 
