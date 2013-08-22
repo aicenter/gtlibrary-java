@@ -20,4 +20,9 @@ public class NegativeSimUtility extends SimUtility {
 		return -utility.getUtility(s2, s1);
 	}
 
+	@Override
+	public double getUtilityForIncreasedBounds(ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
+		return -utility.getUtilityForIncreasedBounds(s2, s1, alpha, beta);
+	}
+
 }

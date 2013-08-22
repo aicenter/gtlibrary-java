@@ -63,7 +63,7 @@ public class P2Oracle extends SimOracleImpl {
 					return Double.NEGATIVE_INFINITY;
 				}
 				Double util = utility.getUtility(strategy, entry.getKey());
-				
+
 				if (util.isNaN())
 					return Double.NEGATIVE_INFINITY;
 				utilityValue += util * entry.getValue();
@@ -72,20 +72,23 @@ public class P2Oracle extends SimOracleImpl {
 		}
 		return utilityValue;
 	}
-	
+
 	protected void updateCacheValuesFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, double bound) {
 		double pesimisticUtilityFromCache = cache.getPesimisticUtilityFor(strategyPair);
 		double optimisticUtilityFromCache = cache.getOptimisticUtilityFor(strategyPair);
 		double pesimisticUtility = pesimisticUtilityFromCache;
 		double optimisticUtility = optimisticUtilityFromCache;
+		double utilityValue;
 
 		if (Math.abs(optimisticUtility - pesimisticUtility) > 1e-14) {
-			if (USE_INCREASING_BOUND)
-				if (-bound <= optimisticUtility)
-					optimisticUtility = -bound;
-			assert optimisticUtility >= pesimisticUtility;
-			double utilityValue = -utility.getUtility(strategyPair.getRight(), strategyPair.getLeft(), pesimisticUtility - 1e-4, optimisticUtility);
+			if (USE_INCREASING_BOUND && -bound < optimisticUtility) {
+				optimisticUtility = -bound;
+				utilityValue = -utility.getUtilityForIncreasedBounds(strategyPair.getRight(), strategyPair.getLeft(), pesimisticUtility, optimisticUtility);
+			} else {
+				utilityValue = -utility.getUtilityForIncreasedBounds(strategyPair.getRight(), strategyPair.getLeft(), pesimisticUtility, optimisticUtility);
+			}
 
+			assert optimisticUtility >= pesimisticUtility;
 			if (utilityValue == utilityValue) {
 				cache.setPesAndOptValueFor(strategyPair, utilityValue);
 			} else if (-bound <= optimisticUtilityFromCache && -bound > pesimisticUtilityFromCache) {
@@ -94,7 +97,6 @@ public class P2Oracle extends SimOracleImpl {
 			}
 		}
 	}
-
 
 	protected Double getLowerBoundFromCache(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		return getOptimisticValueFromCache(strategyPair);
@@ -113,7 +115,7 @@ public class P2Oracle extends SimOracleImpl {
 		long time = System.currentTimeMillis();
 		double pesimisticUtility = -alphaBeta.getUnboundedValue(state);
 		double optimisticUtility = oppAlphaBeta.getUnboundedValue(state);
-		
+
 		Stats.addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 		return optimisticUtility;

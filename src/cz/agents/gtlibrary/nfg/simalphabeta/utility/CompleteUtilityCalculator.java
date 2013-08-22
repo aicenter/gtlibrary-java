@@ -47,4 +47,9 @@ public class CompleteUtilityCalculator implements UtilityCalculator {
 			return computeUtilityForNature(state, s1, s2);
 		return computeUtilityOf(state);
 	}
+
+	@Override
+	public double getUtilitiesForIncreasedBounds(GameState state, ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
+		throw new UnsupportedOperationException();
+	}
 }

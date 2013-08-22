@@ -13,7 +13,7 @@ public class GSGameInfo implements GameInfo {
 	public static final Player NATURE = new PlayerImpl(2);
 
 	public static final Player[] ALL_PLAYERS = { FIRST_PLAYER, SECOND_PLAYER, NATURE };
-	public static final int[] CARDS_FOR_PLAYER = new int[] { 1, 2, 3, 4/*, 5/*, 6 /* , 7, 8, 9, 10, 11, 12, 13 */};
+	public static final int[] CARDS_FOR_PLAYER = new int[] { 1, 2, 3, 4, 5/*, 6 /* , 7, 8, 9, 10, 11, 12, 13 */};
 	public static final long seed = 2;
 	public static boolean useFixedNatureSequence = true;
 
