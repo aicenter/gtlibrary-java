@@ -21,7 +21,7 @@ public class P1Oracle extends SimOracleImpl {
 		Collection<ActionPureStrategy> possibleActions = getActions();
 		ActionPureStrategy bestStrategy = null;
 		double bestValue = alpha;
-		
+
 		for (ActionPureStrategy strategy : possibleActions) {
 			double utilityValue = getValueForAction(mixedStrategy, bestValue, strategy);
 
@@ -44,7 +44,7 @@ public class P1Oracle extends SimOracleImpl {
 		double utilityValue = 0;
 		int index = 0;
 
-		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) { 
+		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) {
 			if (entry.getValue() > 1e-8) {
 				Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(strategy, entry.getKey());
 				Double cacheValue = getValueFromCache(strategyPair);
@@ -62,7 +62,7 @@ public class P1Oracle extends SimOracleImpl {
 					return Double.NEGATIVE_INFINITY;
 				}
 				Double util = utility.getUtility(strategy, entry.getKey());
-				
+
 				if (util.isNaN())
 					return Double.NEGATIVE_INFINITY;
 				utilityValue += util * entry.getValue();
@@ -77,13 +77,16 @@ public class P1Oracle extends SimOracleImpl {
 		double optimisticUtilityFromCache = cache.getOptimisticUtilityFor(strategyPair);
 		double pesimisticUtility = pesimisticUtilityFromCache;
 		double optimisticUtility = optimisticUtilityFromCache;
+		double utilityValue;
 
 		if (optimisticUtility - pesimisticUtility > 1e-14) {
-			if (USE_INCREASING_BOUND)
-				if (bound >= pesimisticUtility)
-					pesimisticUtility = bound;
+			if (USE_INCREASING_BOUND && bound >= pesimisticUtility) {
+				pesimisticUtility = bound;
+				utilityValue = utility.getUtilityForIncreasedBounds(strategyPair.getLeft(), strategyPair.getRight(), pesimisticUtility, optimisticUtility);
+			} else {
+				utilityValue = utility.getUtility(strategyPair.getLeft(), strategyPair.getRight(), pesimisticUtility, optimisticUtility);
+			}
 			assert optimisticUtility >= pesimisticUtility;
-			double utilityValue = utility.getUtility(strategyPair.getLeft(), strategyPair.getRight(), pesimisticUtility - 1e-4, optimisticUtility);
 
 			if (utilityValue == utilityValue) {
 				cache.setPesAndOptValueFor(strategyPair, utilityValue);
@@ -151,10 +154,10 @@ public class P1Oracle extends SimOracleImpl {
 	protected Double getValueFromCache(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		return cache.getUtilityFor(strategyPair);
 	}
-	
+
 	protected GameState getStateAfter(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		GameState state = rootState.performAction(strategyPair.getLeft().getAction());
-		
+
 		state.performActionModifyingThisState(strategyPair.getRight().getAction());
 		return state;
 	}

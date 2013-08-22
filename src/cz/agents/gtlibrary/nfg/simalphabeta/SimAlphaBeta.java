@@ -15,12 +15,9 @@ import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NullAlphaBetaCache;
-import cz.agents.gtlibrary.nfg.simalphabeta.cache.NullDOCache;
-import cz.agents.gtlibrary.nfg.simalphabeta.cache.NullNatureCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
-import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.NoCacheDoubleOracleFactory;
+import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.LocalCacheDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.SimABDoubleOracleFactory;
-import cz.agents.gtlibrary.nfg.simalphabeta.oracle.NoCacheOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
@@ -28,19 +25,30 @@ import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 public class SimAlphaBeta {
 
 	public static void main(String[] args) {
-		runGoofSpielWithNature();
+//		runGoofSpielWithNature();
+//		runGoofSpielWithNatureWithLocalCache();
 //		runGoofSpielWithFixedNatureSequence();
-//		runGoofSpielWithFixedNatureSequenceWithoutCache();
+		runGoofSpielWithFixedNatureSequenceWithLocalCache();
 		//		runPursuit();
 	}
 
-	public static void runGoofSpielWithFixedNatureSequenceWithoutCache() {
+	public static void runGoofSpielWithFixedNatureSequenceWithLocalCache() {
 		GSGameInfo.useFixedNatureSequence = true;
 		SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
 		GoofSpielGameState root = new GoofSpielGameState();
 		
 		System.out.println(root.getNatureSequence());
-		simAlphaBeta.runSimAlpabetaWithoutCache(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()));
+		simAlphaBeta.runSimAlpabetaWithLocalCache(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()));
+		
+	}
+	
+	public static void runGoofSpielWithNatureWithLocalCache() {
+		GSGameInfo.useFixedNatureSequence = false;
+		SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
+		GoofSpielGameState root = new GoofSpielGameState();
+		
+		System.out.println(root.getNatureSequence());
+		simAlphaBeta.runSimAlpabetaWithLocalCache(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()));
 		
 	}
 
@@ -93,12 +101,12 @@ public class SimAlphaBeta {
 		}
 	}
 	
-	public void runSimAlpabetaWithoutCache(GameState rootState, Expander<SimABInformationSet> expander) {
+	public void runSimAlpabetaWithLocalCache(GameState rootState, Expander<SimABInformationSet> expander) {
 		if (rootState.isPlayerToMoveNature()) {
 			long time = System.currentTimeMillis();
 			
 			for (Action action : expander.getActions(rootState)) {
-				runSimAlpabetaWithoutCache(rootState.performAction(action), expander);
+				runSimAlpabetaWithLocalCache(rootState.performAction(action), expander);
 			}
 			Stats.printOverallInfo();
 			Stats.resetOverall();
@@ -106,7 +114,7 @@ public class SimAlphaBeta {
 		} else {
 			long time = System.currentTimeMillis();
 			Data data = new Data(new P1AlphaBeta(rootState.getAllPlayers()[0], expander, new NullAlphaBetaCache(), new GSGameInfo()), new P2AlphaBeta(rootState.getAllPlayers()[1], expander, new NullAlphaBetaCache(), new GSGameInfo()), new GSGameInfo(), expander, 
-					new NoCacheDoubleOracleFactory(), new NoCacheOracleFactory(), new NullDOCache(), new NullNatureCache());
+					new LocalCacheDoubleOracleFactory(), new SimABOracleFactory(), new DOCacheImpl(), new NatureCacheImpl());
 			DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
 
 			oracle.generate();

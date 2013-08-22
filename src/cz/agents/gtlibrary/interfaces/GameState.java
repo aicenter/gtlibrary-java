@@ -3,7 +3,6 @@ package cz.agents.gtlibrary.interfaces;
 import java.io.Serializable;
 
 import cz.agents.gtlibrary.utils.Pair;
-import java.io.Serializable;
 
 public interface GameState extends Serializable {
 	public Player[] getAllPlayers();

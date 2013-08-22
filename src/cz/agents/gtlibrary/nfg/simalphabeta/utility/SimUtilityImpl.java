@@ -35,4 +35,13 @@ public class SimUtilityImpl extends SimUtility {
 			return newState.getUtilities()[0];
 		return calculator.getUtility(newState, s1, s2);
 	}
+
+	@Override
+	public double getUtilityForIncreasedBounds(ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
+		GameState newState = getStateAfterActions(s1, s2);
+
+		if (newState.isGameEnd())
+			return newState.getUtilities()[0];
+		return calculator.getUtilitiesForIncreasedBounds(newState, s1, s2, alpha, beta);
+	}
 }

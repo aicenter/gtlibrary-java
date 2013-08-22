@@ -6,6 +6,8 @@ import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.PlayerStrategySet;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolverImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
@@ -24,8 +26,9 @@ public class SimDoubleOracle extends DoubleOracle {
 	protected GameState state;
 	protected Data data;
 	protected SimUtility p1Utility;
+	protected DOCache cache = new DOCacheImpl();
 
-	public SimDoubleOracle(SimUtility utility, double alpha, double beta, Data data, GameState state) {
+	public SimDoubleOracle(SimUtility utility, double alpha, double beta, Data data, GameState state, DOCache cache) {
 		super(state, data);
 		this.p1Oracle = data.getP1Oracle(state, utility, data.cache);
 		this.p2Oracle = data.getP2Oracle(state, utility, data.cache);
@@ -35,6 +38,7 @@ public class SimDoubleOracle extends DoubleOracle {
 		this.data = data;
 		this.p1Utility = utility;
 		this.coreSolver = new ZeroSumGameNESolverImpl<ActionPureStrategy, ActionPureStrategy>(utility);
+		this.cache = cache;
 	}
 
 	public double getGameValue() {
