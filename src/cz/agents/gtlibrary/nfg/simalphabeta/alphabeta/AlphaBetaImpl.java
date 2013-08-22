@@ -86,11 +86,8 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 			Action action = iterator.next();
 			double lowerBound = Math.max(-gameInfo.getMaxUtility(), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
 			double upperBound = Math.min(gameInfo.getMaxUtility(), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
-			double currentUtility = getValue(state.performAction(action), lowerBound, upperBound);
-			
-			if(currentUtility <= lowerBound || currentUtility >= upperBound) 
-				return currentUtility;			
-			utility += state.getProbabilityOfNatureFor(action) * currentUtility;
+					
+			utility += state.getProbabilityOfNatureFor(action) * getValue(state.performAction(action), lowerBound, upperBound);
 		}
 		return utility;
 	}
