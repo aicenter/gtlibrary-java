@@ -26,9 +26,9 @@ public class SimAlphaBeta {
 
 	public static void main(String[] args) {
 //		runGoofSpielWithNature();
-//		runGoofSpielWithNatureWithLocalCache();
+		runGoofSpielWithNatureWithLocalCache();
 //		runGoofSpielWithFixedNatureSequence();
-		runGoofSpielWithFixedNatureSequenceWithLocalCache();
+//		runGoofSpielWithFixedNatureSequenceWithLocalCache();
 		//		runPursuit();
 	}
 
