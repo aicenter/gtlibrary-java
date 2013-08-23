@@ -5,16 +5,12 @@ import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
-import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.P1AlphaBeta;
-import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.P2AlphaBeta;
-import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCacheImpl;
+import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.NoCacheAlphaBetaFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCacheImpl;
-import cz.agents.gtlibrary.nfg.simalphabeta.cache.NullAlphaBetaCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.LocalCacheDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.SimABDoubleOracleFactory;
@@ -87,7 +83,7 @@ public class SimAlphaBeta {
 			System.out.println("Time: " + (System.currentTimeMillis() - time));
 		} else {
 			long time = System.currentTimeMillis();
-			Data data = new Data(new P1AlphaBeta(rootState.getAllPlayers()[0], expander, new AlphaBetaCacheImpl(), new GSGameInfo()), new P2AlphaBeta(rootState.getAllPlayers()[1], expander, new AlphaBetaCacheImpl(), new GSGameInfo()), new GSGameInfo(), expander, 
+			Data data = new Data(new NoCacheAlphaBetaFactory(), new GSGameInfo(), expander, 
 					new SimABDoubleOracleFactory(), new SimABOracleFactory(), new DOCacheImpl(), new NatureCacheImpl());
 			DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
 
@@ -113,7 +109,7 @@ public class SimAlphaBeta {
 			System.out.println("Time: " + (System.currentTimeMillis() - time));
 		} else {
 			long time = System.currentTimeMillis();
-			Data data = new Data(new P1AlphaBeta(rootState.getAllPlayers()[0], expander, new NullAlphaBetaCache(), new GSGameInfo()), new P2AlphaBeta(rootState.getAllPlayers()[1], expander, new NullAlphaBetaCache(), new GSGameInfo()), new GSGameInfo(), expander, 
+			Data data = new Data(new NoCacheAlphaBetaFactory(), new GSGameInfo(), expander, 
 					new LocalCacheDoubleOracleFactory(), new SimABOracleFactory(), new DOCacheImpl(), new NatureCacheImpl());
 			DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
 
@@ -124,7 +120,6 @@ public class SimAlphaBeta {
 			System.out.println("time: " + (System.currentTimeMillis() - time));
 			Stats.printInfo();
 			Stats.reset();
-			System.out.println(((ConfigImpl<SimABInformationSet>)expander.getAlgorithmConfig()).getAllInformationSets().size());
 		}
 	}
 }

@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBetaFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
@@ -27,10 +28,10 @@ public class Data {
 	private DoubleOracleFactory doubleOracleFactory;
 	private OracleFactory oracleFactory;
 	
-	public Data(AlphaBeta fpAlphaBeta, AlphaBeta spAlphaBeta, GameInfo gameInfo, Expander<SimABInformationSet> expander,
+	public Data(AlphaBetaFactory aBFactory, GameInfo gameInfo, Expander<SimABInformationSet> expander,
 			DoubleOracleFactory doubleOracleFactory, OracleFactory oracleFactory, DOCache cache, NatureCache natureCache) {
 		super();
-		this.alphaBetas = new AlphaBeta[]{fpAlphaBeta, spAlphaBeta};
+		this.alphaBetas = new AlphaBeta[]{aBFactory.getP1AlphaBeta(expander, gameInfo), aBFactory.getP2AlphaBeta(expander, gameInfo)};
 		this.gameInfo = gameInfo;
 		this.expander = expander;
 		this.config = expander.getAlgorithmConfig();

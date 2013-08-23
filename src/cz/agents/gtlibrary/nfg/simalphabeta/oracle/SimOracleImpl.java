@@ -17,7 +17,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 
 public abstract class SimOracleImpl implements SimOracle {
 	
-	protected static boolean USE_INCREASING_BOUND = true;
+	protected static boolean USE_INCREASING_BOUND = false;
 	
 	protected List<ActionPureStrategy> actions;
 	protected GameState rootState;
