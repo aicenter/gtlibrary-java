@@ -1,9 +1,11 @@
-package cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle;
+package cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCacheImpl;
+import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.SimDoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.DOUtilityCalculator;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtilityImpl;

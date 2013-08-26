@@ -1,8 +1,10 @@
-package cz.agents.gtlibrary.nfg.simalphabeta.alphabeta;
+package cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.factory;
 
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
-import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABInformationSet;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
+import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.NullAlphaBeta;
 
 public class NullAlphaBetaFactory implements AlphaBetaFactory {
 

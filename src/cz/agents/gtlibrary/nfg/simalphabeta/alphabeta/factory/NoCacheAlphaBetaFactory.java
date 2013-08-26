@@ -1,9 +1,12 @@
-package cz.agents.gtlibrary.nfg.simalphabeta.alphabeta;
+package cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.factory;
 
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
+import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.P1AlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.P2AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NullAlphaBetaCache;
-import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABInformationSet;
 
 public class NoCacheAlphaBetaFactory implements AlphaBetaFactory {
 

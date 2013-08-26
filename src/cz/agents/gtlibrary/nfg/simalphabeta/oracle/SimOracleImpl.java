@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -16,9 +15,9 @@ import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 
 public abstract class SimOracleImpl implements SimOracle {
-	
+
 	protected static boolean USE_INCREASING_BOUND = false;
-	
+
 	protected List<ActionPureStrategy> actions;
 	protected GameState rootState;
 	protected Expander<? extends InformationSet> expander;
@@ -27,7 +26,7 @@ public abstract class SimOracleImpl implements SimOracle {
 	protected AlphaBeta alphaBeta;
 	protected DOCache cache;
 	protected AlphaBeta oppAlphaBeta;
-	protected AlgorithmConfig<SimABInformationSet> algConfig;
+	protected Data data;
 
 	public SimOracleImpl(GameState rootState, Player player, SimUtility utility, Data data) {
 		this.rootState = rootState;
@@ -37,14 +36,14 @@ public abstract class SimOracleImpl implements SimOracle {
 		this.alphaBeta = data.getAlphaBetaFor(player);
 		this.cache = data.cache;
 		this.oppAlphaBeta = data.getAlphaBetaFor(data.gameInfo.getOpponent(player));
-		this.algConfig = data.config;
+		this.data = data;
 	}
-	
+
 	@Override
 	public ActionPureStrategy getFirstStrategy() {
 		return getActions().get(0);
 	}
-	
+
 	public List<ActionPureStrategy> getActions() {
 		if (actions == null)
 			initActions();

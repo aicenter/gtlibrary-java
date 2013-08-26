@@ -1,7 +1,10 @@
-package cz.agents.gtlibrary.nfg.simalphabeta.oracle;
+package cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.P1Oracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.P2Oracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.NegativeSimUtility;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 
