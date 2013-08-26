@@ -85,7 +85,7 @@ public class P2Oracle extends SimOracleImpl {
 				optimisticUtility = -bound;
 				utilityValue = -utility.getUtilityForIncreasedBounds(strategyPair.getRight(), strategyPair.getLeft(), pesimisticUtility, optimisticUtility);
 			} else {
-				utilityValue = -utility.getUtilityForIncreasedBounds(strategyPair.getRight(), strategyPair.getLeft(), pesimisticUtility, optimisticUtility);
+				utilityValue = -utility.getUtility(strategyPair.getRight(), strategyPair.getLeft(), pesimisticUtility, optimisticUtility);
 			}
 
 			assert optimisticUtility >= pesimisticUtility;

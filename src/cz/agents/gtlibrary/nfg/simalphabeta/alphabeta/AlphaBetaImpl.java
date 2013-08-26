@@ -9,8 +9,8 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCache;
-import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 public abstract class AlphaBetaImpl implements AlphaBeta {

@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.nfg.simalphabeta.oracle;
+package cz.agents.gtlibrary.nfg.simalphabeta;
 
 import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
