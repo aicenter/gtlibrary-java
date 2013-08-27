@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.P1SortingOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.P2SortingOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.utility.NegativeSimUtility;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 
 public class SortingOracleFactory implements OracleFactory {
@@ -16,7 +17,7 @@ public class SortingOracleFactory implements OracleFactory {
 
 	@Override
 	public SimOracle getP2Oracle(GameState state, Data data, SimUtility utility) {
-		return new P2SortingOracle(state, utility, data);
+		return new P2SortingOracle(state, new NegativeSimUtility(utility), data);
 	}
 
 }

@@ -8,7 +8,7 @@ import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
-public class P1LowerBoundComparator extends LowerBoundComparator {
+public class P1LowerBoundComparator extends BoundComparator {
 
 	public P1LowerBoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data) {
 		super(mixedStrategy, state, data);

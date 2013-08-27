@@ -8,28 +8,28 @@ import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
-public class P2LowerBoundComparator extends BoundComparator {
-
-	public P2LowerBoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data) {
+public class P1UpperBoundComparator extends BoundComparator {
+	
+	public P1UpperBoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data) {
 		super(mixedStrategy, state, data);
 	}
 
 	@Override
 	protected double getValue(ActionPureStrategy strategy) {
 		double value = 0;
-
-		for (Entry<ActionPureStrategy, Double> p1Entry : mixedStrategy) {
-			value += p1Entry.getValue() * getOptimistic(p1Entry.getKey(), strategy);
+		
+		for (Entry<ActionPureStrategy, Double> p2Entry : mixedStrategy) {
+			value += p2Entry.getValue() * getOptimistic(strategy, p2Entry.getKey());
 		}
 		return value;
 	}
 
 	protected Double getOptimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
-		Double cachedValue = cache.getOptimisticUtilityFor(p1Strategy, p2Strategy);
+		Double cachedValue = cache.getPesimisticUtilityFor(p1Strategy, p2Strategy);
 
 		if (cachedValue == null)
 			cachedValue = updateCacheAndGetOptimistic(p1Strategy, p2Strategy);
-		return -cachedValue;
+		return cachedValue;
 	}
 
 	protected Double updateCacheAndGetOptimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {

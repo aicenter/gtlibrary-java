@@ -8,9 +8,9 @@ import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
-public class P2LowerBoundComparator extends BoundComparator {
+public class P2UpperBoundComparator extends BoundComparator {
 
-	public P2LowerBoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data) {
+	public P2UpperBoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data) {
 		super(mixedStrategy, state, data);
 	}
 
@@ -19,20 +19,20 @@ public class P2LowerBoundComparator extends BoundComparator {
 		double value = 0;
 
 		for (Entry<ActionPureStrategy, Double> p1Entry : mixedStrategy) {
-			value += p1Entry.getValue() * getOptimistic(p1Entry.getKey(), strategy);
+			value += p1Entry.getValue() * getPesimistic(p1Entry.getKey(), strategy);
 		}
 		return value;
 	}
 
-	protected Double getOptimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
+	protected Double getPesimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		Double cachedValue = cache.getOptimisticUtilityFor(p1Strategy, p2Strategy);
 
 		if (cachedValue == null)
-			cachedValue = updateCacheAndGetOptimistic(p1Strategy, p2Strategy);
+			cachedValue = updateCacheAndGetPesimistic(p1Strategy, p2Strategy);
 		return -cachedValue;
 	}
 
-	protected Double updateCacheAndGetOptimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
+	protected Double updateCacheAndGetPesimistic(ActionPureStrategy p1Strategy, ActionPureStrategy p2Strategy) {
 		GameState state = getStateAfter(p1Strategy, p2Strategy);
 		long time = System.currentTimeMillis();
 		double pesimisticUtility = -p2AlphaBeta.getUnboundedValue(state);
@@ -40,7 +40,6 @@ public class P2LowerBoundComparator extends BoundComparator {
 
 		Stats.addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
-		return optimisticUtility;
+		return pesimisticUtility;
 	}
-
 }

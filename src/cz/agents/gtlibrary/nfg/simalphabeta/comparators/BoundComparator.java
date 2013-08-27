@@ -7,7 +7,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 
-public abstract class LowerBoundComparator extends StrategyComparator {
+public abstract class BoundComparator extends StrategyComparator {
 	
 	protected DOCache cache;
 	protected MixedStrategy<ActionPureStrategy> mixedStrategy;
@@ -15,7 +15,7 @@ public abstract class LowerBoundComparator extends StrategyComparator {
 	protected AlphaBeta p1AlphaBeta;
 	protected AlphaBeta p2AlphaBeta;
 	
-	public LowerBoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data) {
+	public BoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data) {
 		super();
 		this.cache = data.cache;
 		this.mixedStrategy = mixedStrategy;
