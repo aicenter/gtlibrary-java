@@ -12,7 +12,9 @@ import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.factory.NoCacheAlphaBetaFa
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.comparators.factory.LowerBoundComparatorFactory;
+import cz.agents.gtlibrary.nfg.simalphabeta.comparators.factory.UpperBoundComparatorFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
+import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.FullLPFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.LocalCacheDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.SimABDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.SimABOracleFactory;
@@ -85,7 +87,7 @@ public class SimAlphaBeta {
 		} else {
 			long time = System.currentTimeMillis();
 			Data data = new Data(new NoCacheAlphaBetaFactory(), new GSGameInfo(), expander, 
-					new SimABDoubleOracleFactory(), new SimABOracleFactory(), new DOCacheImpl(), new NatureCacheImpl(), new LowerBoundComparatorFactory());
+					new FullLPFactory(), new SimABOracleFactory(), new DOCacheImpl(), new NatureCacheImpl(), new LowerBoundComparatorFactory());
 			DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
 
 			oracle.generate();
@@ -106,12 +108,13 @@ public class SimAlphaBeta {
 				runSimAlpabetaWithLocalCache(rootState.performAction(action), expander);
 			}
 			Stats.printOverallInfo();
+			Stats.overallToCSV("overallStats.csv");
 			Stats.resetOverall();
 			System.out.println("Time: " + (System.currentTimeMillis() - time));
 		} else {
 			long time = System.currentTimeMillis();
 			Data data = new Data(new NoCacheAlphaBetaFactory(), new GSGameInfo(), expander, 
-					new LocalCacheDoubleOracleFactory(), new SimABOracleFactory(), new DOCacheImpl(), new NatureCacheImpl(), new LowerBoundComparatorFactory());
+					new LocalCacheDoubleOracleFactory(), new SortingOracleFactory(), new DOCacheImpl(), new NatureCacheImpl(), new UpperBoundComparatorFactory());
 			DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
 
 			oracle.generate();
@@ -120,6 +123,7 @@ public class SimAlphaBeta {
 			System.out.println("game value: " + oracle.getGameValue());
 			System.out.println("time: " + (System.currentTimeMillis() - time));
 			Stats.printInfo();
+			Stats.toCSV("stats.csv");
 			Stats.reset();
 		}
 	}

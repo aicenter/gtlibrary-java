@@ -1,8 +1,13 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.stats;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import org.apache.wicket.util.file.File;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -219,7 +224,58 @@ public class Stats {
 	}
 
 	public static void addState(GameState state) {
-		if(stateSet.add(state))
+		if (stateSet.add(state))
 			uniqueStatesOverall++;
 	}
+
+	public static void toCSV(String fileName) {
+		File file = new File(fileName);
+		BufferedWriter writer;
+		try {
+			if (!file.exists()) {
+				writer = new BufferedWriter(new FileWriter(file));
+				writer.write(getColumnLabels());
+			} else
+				writer = new BufferedWriter(new FileWriter(file, true));
+			writer.write(getValueColumns());
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+	
+	private static String getValueColumns() {
+		return ";" + abTime + ";" + abCutCount + ";" + p1ABStates + ";" + p2ABStates + ";" + solveLPTime + ";" + LPinvocations + 
+			   ";" + statesVisited + ";" + stateSet.size() + ";" + p1StrategiesAdded + ";" + p2StrategiesAdded + 
+			   ";" + p1NESize + ";" + p2NESize + ";" + cacheCutCount + ";" + boundsTightened + ";" + nanCuts + "\n";
+	}
+
+	private static String getOverallValueColumns() {
+		return ";" + abTimeOverall + ";" + abCutCountOverall + ";" + p1ABStatesOverall + ";" + p2ABStatesOverall + ";" + solveLPTimeOverall + ";" + LPinvocationsOverall + 
+			   ";" + statesVisitedOverall + ";" + uniqueStatesOverall + ";" + p1StrategiesAddedOverall + ";" + p2StrategiesAddedOverall + 
+			   ";" + p1NESizeOverall + ";" + p2NESizeOverall + ";" + cacheCutCountOverall + ";" + boundsTightenedOverall + ";" + nanCutsOverall + "\n";
+	}
+
+	private static String getColumnLabels() {
+		return ";Alpha-beta;;;;LP;;;;Strategies;;;;Oracle;\n " + 
+			   ";Time;Cuts;P1 states;P2 states;Time;Invocations;States;Unique states;P1 strategies;P2 Strategies;P1 NE;P2 NE;Cache cuts;Bounds tightened;NaN cuts\n ";
+	}
+
+	public static void overallToCSV(String fileName) {
+		File file = new File(fileName);
+		BufferedWriter writer;
+		try {
+			if (!file.exists()) {
+				writer = new BufferedWriter(new FileWriter(file));
+				writer.write(getColumnLabels());
+			} else
+				writer = new BufferedWriter(new FileWriter(file, true));
+			writer.write(getOverallValueColumns());
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 }
