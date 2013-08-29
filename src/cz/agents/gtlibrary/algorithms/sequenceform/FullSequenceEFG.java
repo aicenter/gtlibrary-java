@@ -61,12 +61,12 @@ public class FullSequenceEFG {
 //		runAC();
 //		runAoS();
 //		runKuhnPoker();
-//		runGenericPoker();
+		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
-		runPursuit();
+//		runPursuit();
 	}
 	
 	public static void runAC() {
@@ -271,10 +271,7 @@ public class FullSequenceEFG {
 				continue;
 			}
 			for (Action action : expander.getActions(currentState)) {
-				GameState newState = currentState.performAction(action);
-
-				queue.add(newState);
-				currentState.performAction(action);
+				queue.add(currentState.performAction(action));
 			}
 		}
 	}
