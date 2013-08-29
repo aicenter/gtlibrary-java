@@ -231,7 +231,7 @@ public class ACGameState extends GameStateImpl {
 	}
 
 	@Override
-	public String toString() {nevadìj teï ty plný hashCody?
+	public String toString() {//nevadìj teï ty plný hashCody?
 		return history.toString();
 	}
 
