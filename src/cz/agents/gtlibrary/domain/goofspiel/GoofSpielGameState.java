@@ -211,7 +211,7 @@ public class GoofSpielGameState extends GameStateImpl {
 
 	@Override
 	public boolean isGameEnd() {
-		return round == GSGameInfo.CARDS_FOR_PLAYER.length;
+		return round == GSGameInfo.depth;
 	}
 
 	@Override

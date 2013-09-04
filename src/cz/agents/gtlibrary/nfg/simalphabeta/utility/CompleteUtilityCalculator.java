@@ -33,7 +33,7 @@ public class CompleteUtilityCalculator implements UtilityCalculator {
 		double p2Bound = -data.getAlphaBetaFor(state.getAllPlayers()[1]).getUnboundedValue(state);
 		
 		if(p1Bound - p2Bound < 1e-8) {
-			Stats.incrementABCuts();
+			Stats.getInstance().incrementABCuts();
 			return p1Bound;
 		}
 		DoubleOracle oracle = data.getDoubleOracle(state, 0, 0);

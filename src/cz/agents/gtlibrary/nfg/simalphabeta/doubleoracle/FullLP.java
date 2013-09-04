@@ -26,13 +26,13 @@ public class FullLP extends DoubleOracle {
 		PlayerStrategySet<ActionPureStrategy> p1StrategySet = new PlayerStrategySet<ActionPureStrategy>(p1Oracle.getActions());
 		PlayerStrategySet<ActionPureStrategy> p2StrategySet = new PlayerStrategySet<ActionPureStrategy>(p2Oracle.getActions());
 
-		Stats.addToP1StrategyCount(p1StrategySet.size());
-		Stats.addToP2StrategyCount(p2StrategySet.size());
+		Stats.getInstance().addToP1StrategyCount(p1StrategySet.size());
+		Stats.getInstance().addToP2StrategyCount(p2StrategySet.size());
 		coreSolver.addPlayerTwoStrategies(p2StrategySet);
 		coreSolver.addPlayerOneStrategies(p1StrategySet);
 		coreSolver.computeNashEquilibrium();
-		Stats.addToP1NESize(coreSolver.getPlayerOneStrategy());
-		Stats.addToP2NESize(coreSolver.getPlayerTwoStrategy());
+		Stats.getInstance().addToP1NESize(coreSolver.getPlayerOneStrategy());
+		Stats.getInstance().addToP2NESize(coreSolver.getPlayerTwoStrategy());
 	}
 	
 	@Override
