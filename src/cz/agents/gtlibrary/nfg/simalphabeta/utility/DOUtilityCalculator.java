@@ -86,7 +86,7 @@ public class DOUtilityCalculator implements UtilityCalculator {
 			long time = System.currentTimeMillis();
 			
 			pesimistic = -data.alphaBetas[1].getUnboundedValue(state);
-			Stats.addToABTime(System.currentTimeMillis() - time);
+			Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 			data.natureCache.updatePesimisticFor(state, pesimistic);
 		}
 		return pesimistic;
@@ -99,7 +99,7 @@ public class DOUtilityCalculator implements UtilityCalculator {
 			long time = System.currentTimeMillis();
 			
 			optimistic = data.alphaBetas[0].getUnboundedValue(state);
-			Stats.addToABTime(System.currentTimeMillis() - time);
+			Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 			data.natureCache.updateOptimisticFor(state, optimistic);
 		}
 		return optimistic;

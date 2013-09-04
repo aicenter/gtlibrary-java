@@ -54,12 +54,12 @@ public class P2Oracle extends SimOracleImpl {
 
 				if (cacheValue == null) {
 					if (getPesimisticValueFromCache(strategyPair) < windowValue) {
-						Stats.incrementABCuts();
+						Stats.getInstance().incrementABCuts();
 						return Double.NEGATIVE_INFINITY;
 					}
 					updateCacheValuesFor(strategyPair, windowValue);
 				} else if (cacheValue < windowValue - 1e-8) {
-					Stats.incrementCacheCuts();
+					Stats.getInstance().incrementCacheCuts();
 					return Double.NEGATIVE_INFINITY;
 				}
 				Double util = utility.getUtility(strategy, entry.getKey());
@@ -92,7 +92,7 @@ public class P2Oracle extends SimOracleImpl {
 			if (utilityValue == utilityValue) {
 				cache.setPesAndOptValueFor(strategyPair, utilityValue);
 			} else if (-bound <= optimisticUtilityFromCache && -bound > pesimisticUtilityFromCache) {
-				Stats.incrementBoundsTightened();
+				Stats.getInstance().incrementBoundsTightened();
 				cache.setPesAndOptValueFor(strategyPair, optimisticUtilityFromCache, -bound);
 			}
 		}
@@ -116,7 +116,7 @@ public class P2Oracle extends SimOracleImpl {
 		double pesimisticUtility = -alphaBeta.getUnboundedValue(state);
 		double optimisticUtility = oppAlphaBeta.getUnboundedValue(state);
 
-		Stats.addToABTime(System.currentTimeMillis() - time);
+		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 		return optimisticUtility;
 	}
@@ -135,7 +135,7 @@ public class P2Oracle extends SimOracleImpl {
 		double pesimisticUtility = -alphaBeta.getUnboundedValue(state);
 		double optimisticUtility = oppAlphaBeta.getUnboundedValue(state);
 
-		Stats.addToABTime(System.currentTimeMillis() - time);
+		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 		return pesimisticUtility;
 	}

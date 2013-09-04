@@ -1,55 +1,66 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.stats;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import org.apache.wicket.util.file.File;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
+import cz.agents.gtlibrary.utils.Exportable;
 
-public class Stats {
+public class Stats implements Exportable {
+	
+	private static Stats instance;
 
-	private static int abCutCountOverall = 0;
-	private static int cacheCutCountOverall = 0;
-	private static int statesVisitedOverall = 0;
-	private static int nanCutsOverall = 0;
-	private static int boundsTightenedOverall = 0;
-	private static int p1StrategiesAddedOverall = 0;
-	private static int p2StrategiesAddedOverall = 0;
-	private static int p1NESizeOverall = 0;
-	private static int p2NESizeOverall = 0;
-	private static long solveLPTimeOverall = 0;
-	private static long abTimeOverall = 0;
-	private static int p1ABStatesOverall = 0;
-	private static int p2ABStatesOverall = 0;
-	private static int LPinvocationsOverall = 0;;
-	private static int uniqueStatesOverall = 0;;;
+	private int abCutCountOverall = 0;
+	private int cacheCutCountOverall = 0;
+	private int statesVisitedOverall = 0;
+	private int nanCutsOverall = 0;
+	private int boundsTightenedOverall = 0;
+	private int p1StrategiesAddedOverall = 0;
+	private int p2StrategiesAddedOverall = 0;
+	private int p1NESizeOverall = 0;
+	private int p2NESizeOverall = 0;
+	private long solveLPTimeOverall = 0;
+	private long abTimeOverall = 0;
+	private int p1ABStatesOverall = 0;
+	private int p2ABStatesOverall = 0;
+	private int LPinvocationsOverall = 0;;
+	private int uniqueStatesOverall = 0;
+	private long time;
 
-	private static int abCutCount = 0;
-	private static int cacheCutCount = 0;
-	private static int statesVisited = 0;
-	private static int nanCuts = 0;
-	public static int fullRunFromNESolver = 0;
-	private static int boundsTightened = 0;
-	private static int p1StrategiesAdded = 0;
-	private static int p2StrategiesAdded = 0;
-	private static int p1NESize = 0;
-	private static int p2NESize = 0;
-	private static long solveLPTime = 0;
-	private static long abTime = 0;
-	private static int p1ABStates = 0;
-	private static int p2ABStates = 0;
-	private static Set<GameState> stateSet = new HashSet<GameState>();
-	private static int LPinvocations = 0;
+	private int abCutCount = 0;
+	private int cacheCutCount = 0;
+	private int statesVisited = 0;
+	private int nanCuts = 0;
+	public int fullRunFromNESolver = 0;
+	private int boundsTightened = 0;
+	private int p1StrategiesAdded = 0;
+	private int p2StrategiesAdded = 0;
+	private int p1NESize = 0;
+	private int p2NESize = 0;
+	private long solveLPTime = 0;
+	private long abTime = 0;
+	private int p1ABStates = 0;
+	private int p2ABStates = 0;
+	private Set<GameState> stateSet = new HashSet<GameState>();
+	private int LPinvocations = 0;
+	private long overallTime;
+	
+	
+	
+	private Stats() {
+	}
+	
+	public static Stats getInstance() {
+		if(instance == null)
+			instance = new Stats();
+		return instance;
+	}
 
-	public static void printInfo() {
+	public void printInfo() {
 		System.out.println("********** Current run statistics **********");
 		System.out.println("AlphaBeta cuts: " + abCutCount);
 		System.out.println("Cache cuts: " + cacheCutCount);
@@ -67,9 +78,10 @@ public class Stats {
 		System.out.println("Alpha-beta states for player two: " + p2ABStates);
 		System.out.println("Unique LP states: " + stateSet.size());
 		System.out.println("LP invocations: " + LPinvocations);
+		System.out.println("Total time: " + time);
 	}
 
-	public static void printOverallInfo() {
+	public void printOverallInfo() {
 		System.out.println("********** Overall statistics **********");
 		System.out.println("AlphaBeta cuts: " + abCutCountOverall);
 		System.out.println("Cache cuts: " + cacheCutCountOverall);
@@ -86,9 +98,10 @@ public class Stats {
 		System.out.println("Alpha-beta states for player two: " + p2ABStatesOverall);
 		System.out.println("Unique LP states: " + uniqueStatesOverall);
 		System.out.println("LP invocations: " + LPinvocationsOverall);
+		System.out.println("Total time: " + overallTime);
 	}
 
-	public static void reset() {
+	public void reset() {
 		abCutCount = 0;
 		cacheCutCount = 0;
 		statesVisited = 0;
@@ -107,7 +120,7 @@ public class Stats {
 		LPinvocations = 0;
 	}
 
-	public static void resetOverall() {
+	public void resetOverall() {
 		abCutCountOverall = 0;
 		cacheCutCountOverall = 0;
 		statesVisitedOverall = 0;
@@ -125,157 +138,129 @@ public class Stats {
 		uniqueStatesOverall = 0;
 	}
 
-	public static void incrementStatesVisited() {
+	public void incrementStatesVisited() {
 		statesVisited++;
 		statesVisitedOverall++;
 	}
 
-	public static void incrementP1StrategyCount() {
+	public void incrementP1StrategyCount() {
 		p1StrategiesAdded++;
 		p1StrategiesAddedOverall++;
 	}
 
-	public static void incrementP2StrategyCount() {
+	public void incrementP2StrategyCount() {
 		p2StrategiesAdded++;
 		p2StrategiesAddedOverall++;
 	}
 
-	public static void incrementBoundsTightened() {
+	public void incrementBoundsTightened() {
 		boundsTightened++;
 		boundsTightenedOverall++;
 	}
 
-	public static void incrementNaNCuts() {
+	public void incrementNaNCuts() {
 		nanCuts++;
 		nanCutsOverall++;
 	}
 
-	public static void incrementCacheCuts() {
+	public void incrementCacheCuts() {
 		cacheCutCount++;
 		cacheCutCountOverall++;
 	}
 
-	public static void incrementABCuts() {
+	public void incrementABCuts() {
 		abCutCount++;
 		abCutCountOverall++;
 	}
 
-	public static void addToP1NESize(int amount) {
+	public void addToP1NESize(int amount) {
 		p1NESize += amount;
 		p1NESizeOverall += amount;
 	}
 
-	public static void addToP2NESize(int amount) {
+	public void addToP2NESize(int amount) {
 		p2NESize += amount;
 		p2NESizeOverall += amount;
 	}
 
-	public static void addToLPSolveTime(long time) {
+	public void addToLPSolveTime(long time) {
 		solveLPTime += time;
 		solveLPTimeOverall += time;
 		LPinvocations++;
 		LPinvocationsOverall++;
 	}
 
-	public static void addToABTime(long time) {
+	public void addToABTime(long time) {
 		abTime += time;
 		abTimeOverall += time;
 	}
 
-	public static void increaseP1ABStates() {
+	public void increaseP1ABStates() {
 		p1ABStates++;
 		p1ABStatesOverall++;
 	}
 
-	public static void increaseP2ABStates() {
+	public void increaseP2ABStates() {
 		p2ABStates++;
 		p2ABStatesOverall++;
 	}
 
-	public static void increaseABStatesFor(Player player) {
+	public void increaseABStatesFor(Player player) {
 		if (player.getId() == 0)
 			increaseP1ABStates();
 		else
 			increaseP2ABStates();
 	}
 
-	public static void addToP1NESize(MixedStrategy<ActionPureStrategy> p1MixedStrategy) {
+	public void addToP1NESize(MixedStrategy<ActionPureStrategy> p1MixedStrategy) {
 		for (Entry<ActionPureStrategy, Double> entry : p1MixedStrategy) {
 			if (entry.getValue() > 1e-8)
 				addToP1NESize(1);
 		}
 	}
 
-	public static void addToP2NESize(MixedStrategy<ActionPureStrategy> p2MixedStrategy) {
+	public void addToP2NESize(MixedStrategy<ActionPureStrategy> p2MixedStrategy) {
 		for (Entry<ActionPureStrategy, Double> entry : p2MixedStrategy) {
 			if (entry.getValue() > 1e-8)
 				addToP2NESize(1);
 		}
 	}
 
-	public static void addToP2StrategyCount(int count) {
+	public void addToP2StrategyCount(int count) {
 		p2StrategiesAdded += count;
 		p2StrategiesAddedOverall += count;
 	}
 
-	public static void addToP1StrategyCount(int count) {
+	public void addToP1StrategyCount(int count) {
 		p1StrategiesAdded += count;
 		p1StrategiesAddedOverall += count;
 	}
 
-	public static void addState(GameState state) {
+	public void addState(GameState state) {
 		if (stateSet.add(state))
 			uniqueStatesOverall++;
 	}
 
-	public static void toCSV(String fileName) {
-		File file = new File(fileName);
-		BufferedWriter writer;
-		try {
-			if (!file.exists()) {
-				writer = new BufferedWriter(new FileWriter(file));
-				writer.write(getColumnLabels());
-			} else
-				writer = new BufferedWriter(new FileWriter(file, true));
-			writer.write(getValueColumns());
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	@Override
+	public String getColumnLabels() {
+		return ";Alpha-beta;;;;LP;;;;Strategies;;;;Oracle;;;Total\n " + 
+			";Time;Cuts;P1 states;P2 states;Time;Invocations;States;Unique states;P1 strategies;P2 Strategies;P1 NE;P2 NE;Cache cuts;Bounds tightened;NaN cuts;Time\n ";
+	}
 
+	@Override
+	public String getColumnValues() {
+		return ";" + abTimeOverall + ";" + abCutCountOverall + ";" + p1ABStatesOverall + ";" + p2ABStatesOverall + ";" + solveLPTimeOverall + ";" + LPinvocationsOverall + 
+			";" + statesVisitedOverall + ";" + uniqueStatesOverall + ";" + p1StrategiesAddedOverall + ";" + p2StrategiesAddedOverall + 
+			";" + p1NESizeOverall + ";" + p2NESizeOverall + ";" + cacheCutCountOverall + ";" + boundsTightenedOverall + ";" + nanCutsOverall + ";" + overallTime + "\n";
 	}
 	
-	private static String getValueColumns() {
-		return ";" + abTime + ";" + abCutCount + ";" + p1ABStates + ";" + p2ABStates + ";" + solveLPTime + ";" + LPinvocations + 
-			   ";" + statesVisited + ";" + stateSet.size() + ";" + p1StrategiesAdded + ";" + p2StrategiesAdded + 
-			   ";" + p1NESize + ";" + p2NESize + ";" + cacheCutCount + ";" + boundsTightened + ";" + nanCuts + "\n";
+	public void startTime() {
+		time = System.currentTimeMillis();
 	}
-
-	private static String getOverallValueColumns() {
-		return ";" + abTimeOverall + ";" + abCutCountOverall + ";" + p1ABStatesOverall + ";" + p2ABStatesOverall + ";" + solveLPTimeOverall + ";" + LPinvocationsOverall + 
-			   ";" + statesVisitedOverall + ";" + uniqueStatesOverall + ";" + p1StrategiesAddedOverall + ";" + p2StrategiesAddedOverall + 
-			   ";" + p1NESizeOverall + ";" + p2NESizeOverall + ";" + cacheCutCountOverall + ";" + boundsTightenedOverall + ";" + nanCutsOverall + "\n";
-	}
-
-	private static String getColumnLabels() {
-		return ";Alpha-beta;;;;LP;;;;Strategies;;;;Oracle;\n " + 
-			   ";Time;Cuts;P1 states;P2 states;Time;Invocations;States;Unique states;P1 strategies;P2 Strategies;P1 NE;P2 NE;Cache cuts;Bounds tightened;NaN cuts\n ";
-	}
-
-	public static void overallToCSV(String fileName) {
-		File file = new File(fileName);
-		BufferedWriter writer;
-		try {
-			if (!file.exists()) {
-				writer = new BufferedWriter(new FileWriter(file));
-				writer.write(getColumnLabels());
-			} else
-				writer = new BufferedWriter(new FileWriter(file, true));
-			writer.write(getOverallValueColumns());
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	
+	public void stopTime() {
+		time = System.currentTimeMillis() - time;
+		overallTime += time;
 	}
 
 }

@@ -38,7 +38,7 @@ public class P2LowerBoundComparator extends BoundComparator {
 		double pesimisticUtility = -p2AlphaBeta.getUnboundedValue(state);
 		double optimisticUtility = p1AlphaBeta.getUnboundedValue(state);
 
-		Stats.addToABTime(System.currentTimeMillis() - time);
+		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(p1Strategy, p2Strategy, optimisticUtility, pesimisticUtility);
 		return optimisticUtility;
 	}

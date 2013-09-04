@@ -47,7 +47,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 		if (state.isPlayerToMoveNature()) {
 			return getUtilityForNature(state, alpha, beta);
 		} else {
-			Stats.increaseABStatesFor(player);
+			Stats.getInstance().increaseABStatesFor(player);
 			for (Action minAction : getMinimizingActions(state)) {
 				double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
 

@@ -64,7 +64,7 @@ public class SimDoubleOracle extends DoubleOracle {
 		ActionPureStrategy initialStrategy = p1Oracle.getFirstStrategy();
 
 		p1StrategySet.add(initialStrategy);
-		Stats.incrementP1StrategyCount();
+		Stats.getInstance().incrementP1StrategyCount();
 		coreSolver.addPlayerOneStrategies(p1StrategySet);
 		while (true) {
 			Pair<ActionPureStrategy, Double> p2BestResponse = p2Oracle.getBestResponse(getP1MixedStrategy(initialStrategy), alpha, beta);
@@ -72,7 +72,7 @@ public class SimDoubleOracle extends DoubleOracle {
 			if (-p2BestResponse.getRight() > alpha)
 				alpha = -p2BestResponse.getRight();
 			if (p2BestResponse.getLeft() == null) {
-				Stats.incrementNaNCuts();
+				Stats.getInstance().incrementNaNCuts();
 				gameValue = Double.NaN;
 				return;
 			}
@@ -93,7 +93,7 @@ public class SimDoubleOracle extends DoubleOracle {
 			if (p1BestResponse.getRight() < beta)
 				beta = p1BestResponse.getRight();
 			if (p1BestResponse.getLeft() == null) {
-				Stats.incrementNaNCuts();
+				Stats.getInstance().incrementNaNCuts();
 				gameValue = Double.NaN;
 				return;
 			}
@@ -108,8 +108,8 @@ public class SimDoubleOracle extends DoubleOracle {
 
 			if (CHECK_STRATEGY_SET_CHANGES) {
 				if (!p1BestResponseadded && !p2BestResponseadded) {
-					Stats.addToP1NESize(getP1MixedStrategy(null));
-					Stats.addToP2NESize(getP2MixedStrategy());
+					Stats.getInstance().addToP1NESize(getP1MixedStrategy(null));
+					Stats.getInstance().addToP2NESize(getP2MixedStrategy());
 					break;
 				}
 			} else if (Math.abs(p2BestResponse.getRight() + gameValue) < EPS && Math.abs(p1BestResponse.getRight() - gameValue) < EPS) 
@@ -118,14 +118,14 @@ public class SimDoubleOracle extends DoubleOracle {
 	}
 
 	protected void updateForP2Response(PlayerStrategySet<ActionPureStrategy> p2StrategySet) {
-		Stats.incrementP2StrategyCount();
+		Stats.getInstance().incrementP2StrategyCount();
 		coreSolver.addPlayerTwoStrategies(p2StrategySet);
 		coreSolver.computeNashEquilibrium();
 		gameValue = coreSolver.getGameValue();
 	}
 
 	protected void updateForP1Response(PlayerStrategySet<ActionPureStrategy> p1StrategySet) {
-		Stats.incrementP1StrategyCount();
+		Stats.getInstance().incrementP1StrategyCount();
 		coreSolver.addPlayerOneStrategies(p1StrategySet);
 		coreSolver.computeNashEquilibrium();
 		gameValue = coreSolver.getGameValue();
@@ -176,7 +176,7 @@ public class SimDoubleOracle extends DoubleOracle {
 		double pesimisticUtility = -data.getAlphaBetaFor(tempState.getAllPlayers()[1]).getUnboundedValue(tempState);
 		double optimisticUtility = data.getAlphaBetaFor(tempState.getAllPlayers()[0]).getUnboundedValue(tempState);
 
-		Stats.addToABTime(System.currentTimeMillis() - time);
+		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		data.cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 	}
 
