@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.nfg.experimental.MDP.implementations;
 
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
+import cz.agents.gtlibrary.nfg.PureStrategy;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPExpander;
@@ -16,7 +17,7 @@ import java.util.*;
  * Time: 1:53 PM
  * To change this template use File | Settings | File Templates.
  */
-public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
+public class MDPStrategy implements PureStrategy{
 
     private MDPConfig config;
     private Player player;
@@ -26,7 +27,7 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
 
     private MDPState root;
     private Set<MDPState> strategyStates = new HashSet<MDPState>();
-    private Map<MDPStateActionMarginal, Double> strategy = new HashMap<MDPStateActionMarginal, Double>();
+    public Map<MDPStateActionMarginal, Double> strategy = new HashMap<MDPStateActionMarginal, Double>();
 
     static private Map<Set<MDPStateActionMarginal>, Double> utilityCache = null;
 
@@ -42,7 +43,7 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         strategyStates.add(root);
     }
 
-    @Override
+
     public void sanityCheck() {
           for (MDPState s : strategyStates) {
               if (s.isRoot()) continue;
@@ -66,16 +67,16 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
           }
     }
 
-    public Map<MDPStateActionMarginal, Double> getStrategy() {
+    private Map<MDPStateActionMarginal, Double> getStrategy() {
         return strategy;
+    }
+
+    protected Double getStrategyProbability(MDPStateActionMarginal mdpStateActionMarginal) {
+        return strategy.get(mdpStateActionMarginal);
     }
 
     public Set<MDPState> getStates() {
         return strategyStates;
-    }
-
-    public Set<MDPStateActionMarginal> getActionStates() {
-        return strategy.keySet();
     }
 
     public Set<MDPStateActionMarginal> getAllActionStates() {
@@ -171,14 +172,18 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
     public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy) {
         double result = 0;
 
-        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getStrategy().keySet()) {
-            result += getUtility(firstPlayerAction, mdp) * secondPlayerStrategy.getStrategy().get(mdp);
+//        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllMarginalsInStrategy()) {
+//            result += getUtilityFromCache(firstPlayerAction, mdp) * secondPlayerStrategy.getStrategyProbability(mdp);
+//        }
+
+        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllActionStates()) {
+            result += getUtility(firstPlayerAction, mdp) * secondPlayerStrategy.getExpandedStrategy(mdp);
         }
 
         return result;
     }
 
-    public Double getUtilityFromCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction) {
+    public double getUtilityFromCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction) {
         Set<MDPStateActionMarginal> mdps = new HashSet<MDPStateActionMarginal>();
         mdps.add(firstPlayerAction);
         mdps.add(secondPlayerAction);
@@ -210,6 +215,18 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
                 }
             }
         }
+    }
+
+    public double getExpandedStrategy(MDPStateActionMarginal mdpStateActionMarginal) {
+        return strategy.get(mdpStateActionMarginal);
+    }
+
+    public Set<MDPStateActionMarginal> getAllMarginalsInStrategy() {
+        return strategy.keySet();
+    }
+
+    public static Map<Set<MDPStateActionMarginal>, Double> getUtilityCache() {
+        return utilityCache;
     }
 
     public class MDPRootState extends MDPStateImpl {
@@ -253,4 +270,7 @@ public class MDPStrategy extends MixedStrategy<MDPStateActionMarginal>{
         }
     }
 
+    public Map<MDPStateActionMarginal, Double> adaptAccordingToDefaultPolicy(MDPStateActionMarginal opponentsAction, Map<MDPStateActionMarginal, Double> valuesForOpponentsAction) {
+        return valuesForOpponentsAction;
+    }
 }

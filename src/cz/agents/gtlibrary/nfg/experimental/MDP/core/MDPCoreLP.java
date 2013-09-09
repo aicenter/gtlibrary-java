@@ -92,10 +92,10 @@ public class MDPCoreLP {
                 if (playerStrategy.get(opponent).hasStateASuccessor(s) && !s.isRoot())
                     createVariableForMDPState(lpModels.get(player), s);
             }
-            for (MDPStateActionMarginal sam : playerStrategy.get(player).getActionStates()) {
+            for (MDPStateActionMarginal sam : playerStrategy.get(player).getAllMarginalsInStrategy()) {
                 createVariableForStateAction(lpModels.get(player), sam, player);
             }
-            for (MDPStateActionMarginal sam : playerStrategy.get(opponent).getActionStates()) {
+            for (MDPStateActionMarginal sam : playerStrategy.get(opponent).getAllMarginalsInStrategy()) {
                 createConstraintForExpValues(lpModels.get(player), player, sam);
             }
             for (MDPState s : playerStrategy.get(player).getStates()) {
@@ -111,7 +111,7 @@ public class MDPCoreLP {
         if (variables.containsKey(state)) {
             return variables.get(state);
         }
-        IloNumVar result = cplex.numVar(-10, 10, IloNumVarType.Float, "V_" + state.toString());
+        IloNumVar result = cplex.numVar(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, IloNumVarType.Float, "V_" + state.toString());
         variables.put(state,result);
         return result;
     }
@@ -137,10 +137,7 @@ public class MDPCoreLP {
             }
         }
 
-
-
-
-        for (MDPStateActionMarginal myActions : playerStrategy.get(player).getStrategy().keySet()) {
+        for (MDPStateActionMarginal myActions : playerStrategy.get(player).getAllMarginalsInStrategy()) {
             IloNumVar x = variables.get(myActions);
             assert (x != null);
             sumR = cplex.sum(sumR, cplex.prod(x, playerStrategy.get(player).getUtilityFromCache(myActions, opponentsStateAction)));
@@ -190,7 +187,7 @@ public class MDPCoreLP {
     }
 
     public void extractStrategyForPlayer(Player player) {
-        for (MDPStateActionMarginal map : playerStrategy.get(player).getStrategy().keySet()) {
+        for (MDPStateActionMarginal map : playerStrategy.get(player).getAllMarginalsInStrategy()) {
             double v = 0;
             if (variables.containsKey(map)) {
                 try {
