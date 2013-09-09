@@ -2,7 +2,6 @@ package cz.agents.gtlibrary.nfg.experimental.MDP;
 
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.experimental.MDP.core.MDPBestResponse;
-import cz.agents.gtlibrary.nfg.experimental.MDP.core.MDPCoreLP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
@@ -28,11 +27,11 @@ import java.util.Set;
  * Time: 2:57 PM
  * To change this template use File | Settings | File Templates.
  */
-public class SingleOracleCostPairedMDP {
+public class DoubleOracleCostPairedMDP {
 
     private MDPExpander expander;
     private MDPConfig config;
-    private MDPStrategy firstPlayerStrategy;
+    private MDPIterativeStrategy firstPlayerStrategy;
     private MDPIterativeStrategy secondPlayerStrategy;
 
     private PrintStream debugOutput = System.out;
@@ -45,7 +44,7 @@ public class SingleOracleCostPairedMDP {
 		runBPG();
     }
 
-    public SingleOracleCostPairedMDP(MDPExpander expander, MDPConfig config) {
+    public DoubleOracleCostPairedMDP(MDPExpander expander, MDPConfig config) {
         this.expander = expander;
         this.config = config;
     }
@@ -53,20 +52,35 @@ public class SingleOracleCostPairedMDP {
     private static void runBPG() {
         MDPExpander expander = new BPExpander();
         MDPConfig config = new BPConfig();
-        SingleOracleCostPairedMDP mdp = new SingleOracleCostPairedMDP(expander, config);
+        DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(expander, config);
         mdp.test();
     }
 
     private void test() {
         long startTime = System.nanoTime();
-        debugOutput.println("Testing SO CostPaired MDP.");
-        firstPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(0),config,expander);
+        debugOutput.println("Testing DO CostPaired MDP.");
+        firstPlayerStrategy = new MDPIterativeStrategy(config.getAllPlayers().get(0),config,expander);
         secondPlayerStrategy = new MDPIterativeStrategy(config.getAllPlayers().get(1),config,expander);
-        firstPlayerStrategy.generateCompleteStrategy();
+
+        firstPlayerStrategy.initIterativeStrategy(secondPlayerStrategy);
+//        debugOutput.println(firstPlayerStrategy.getDefaultUtilityCache());
         secondPlayerStrategy.initIterativeStrategy(firstPlayerStrategy);
+//        debugOutput.println(secondPlayerStrategy.getDefaultUtilityCache());
 
 //        debugOutput.println(secondPlayerStrategy.getDefaultUtilityCache().get(secondPlayerStrategy.getRootState()));
 //        debugOutput.println(secondPlayerStrategy.getDefaultUtilityCache().get(secondPlayerStrategy.getRootState()));
+
+//        for (MDPState s : firstPlayerStrategy.getStates()) {
+//            debugOutput.println(s.toString() + ":" + s.hashCode());
+//        }
+//
+//        for (MDPState s : secondPlayerStrategy.getStates()) {
+//            debugOutput.println(s.toString() + ":" + s.hashCode());
+//        }
+
+        debugOutput.println(MDPStrategy.getUtilityCache());
+
+
 
         Map<Player, MDPStrategy> playerStrategy = new HashMap<Player, MDPStrategy>();
         playerStrategy.put(config.getAllPlayers().get(0), firstPlayerStrategy);
@@ -77,10 +91,18 @@ public class SingleOracleCostPairedMDP {
         double LB = Double.NEGATIVE_INFINITY;
         double UB = Double.POSITIVE_INFINITY;
 
-        Set<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
+        Set<MDPStateActionMarginal> newActions1 = new HashSet<MDPStateActionMarginal>();
+        Set<MDPStateActionMarginal> newActions2 = new HashSet<MDPStateActionMarginal>();
+
 
         int iterations = 0;
 
+        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
+        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
+
+//        debugOutput.println(firstPlayerStrategy.getUtility());
+
+//        if (0 == 0) return;
 
         while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon()) {
 //        for (int i=0; i<5; i++) {
@@ -89,23 +111,42 @@ public class SingleOracleCostPairedMDP {
 
             double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
             debugOutput.println("Result: " + r1);
-
-            UB = Math.min(UB, r1);
-
             lp.extractStrategyForPlayer(config.getAllPlayers().get(0));
 //            for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
 //                debugOutput.println(m1 + " = " + firstPlayerStrategy.getStrategy().get(m1));
 //            }
 
-            MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
-            double currentBRVal = br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy);
-            LB = Math.max(LB, currentBRVal);
-            debugOutput.println("BR : " + currentBRVal);
+            double r2 = lp.solveForPlayer(config.getAllPlayers().get(1));
+            debugOutput.println("Result: " + r2);
+            lp.extractStrategyForPlayer(config.getAllPlayers().get(1));
 
-            Map<MDPState, Set<MDPStateActionMarginal>> br = br2.extractBestResponse(secondPlayerStrategy);
+//            debugOutput.println("strategy(MAX): " + firstPlayerStrategy.strategy);
+//            debugOutput.println("strategy(MIN): " + secondPlayerStrategy.strategy);
+//            for (MDPStateActionMarginal m : firstPlayerStrategy.getAllActionStates()) {
+//                debugOutput.println("strategy(" + m + "): " + firstPlayerStrategy.getExpandedStrategy(m));
+//            }
 
-//            debugOutput.println("BR = " + br);
-            newActions = secondPlayerStrategy.addBRStrategy(br);
+            double currentBRValMax = br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy);
+            double currentBRValMin = br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy);
+            UB = Math.min(UB, currentBRValMax);
+            LB = Math.max(LB, currentBRValMin);
+            debugOutput.println("BR(MAX): " + currentBRValMax + " BR(MIN): " + currentBRValMin);
+
+            Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions1 = br1.extractBestResponse(firstPlayerStrategy);
+            Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions2 = br2.extractBestResponse(secondPlayerStrategy);
+
+            debugOutput.println(bestResponseActions1);
+            newActions1 = firstPlayerStrategy.addBRStrategy(bestResponseActions1);
+            debugOutput.println(bestResponseActions2);
+            newActions2 = secondPlayerStrategy.addBRStrategy(bestResponseActions2);
+//            debugOutput.println(MDPStrategy.getUtilityCache());
+
+            debugOutput.println("New Actions MAX: " + newActions1);
+            debugOutput.println("New Actions MIN: " + newActions2);
+
+            HashSet<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
+            newActions.addAll(newActions1);
+            newActions.addAll(newActions2);
 //            debugOutput.println("New Actions = " + newActions);
             lp.setNewActions(newActions);
 //            debugOutput.println(secondPlayerStrategy.getStrategy());

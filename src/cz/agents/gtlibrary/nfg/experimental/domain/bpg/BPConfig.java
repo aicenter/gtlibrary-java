@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class BPConfig extends MDPConfigImpl {
 
-    final private static int MAX_TIME_STEP = 4;
+    final private static int MAX_TIME_STEP = 2;
     final private static double FLAG_PROB = 0.5;
 
     public BPConfig() {
