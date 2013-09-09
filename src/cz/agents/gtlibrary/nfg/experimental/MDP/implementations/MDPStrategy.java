@@ -67,11 +67,11 @@ public class MDPStrategy implements PureStrategy{
           }
     }
 
-    private Map<MDPStateActionMarginal, Double> getStrategy() {
+    protected Map<MDPStateActionMarginal, Double> getStrategy() {
         return strategy;
     }
 
-    protected Double getStrategyProbability(MDPStateActionMarginal mdpStateActionMarginal) {
+    public Double getStrategyProbability(MDPStateActionMarginal mdpStateActionMarginal) {
         return strategy.get(mdpStateActionMarginal);
     }
 
@@ -256,7 +256,7 @@ public class MDPStrategy implements PureStrategy{
         @Override
         public boolean equals(Object o) {
             if (o == null) return false;
-            return o == this;
+            return o.hashCode() == this.hashCode();
         }
 
         @Override

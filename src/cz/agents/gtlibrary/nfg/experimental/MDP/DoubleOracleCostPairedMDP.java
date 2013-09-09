@@ -135,14 +135,14 @@ public class DoubleOracleCostPairedMDP {
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions1 = br1.extractBestResponse(firstPlayerStrategy);
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions2 = br2.extractBestResponse(secondPlayerStrategy);
 
-            debugOutput.println(bestResponseActions1);
+//            debugOutput.println(bestResponseActions1);
             newActions1 = firstPlayerStrategy.addBRStrategy(bestResponseActions1);
-            debugOutput.println(bestResponseActions2);
+//            debugOutput.println(bestResponseActions2);
             newActions2 = secondPlayerStrategy.addBRStrategy(bestResponseActions2);
 //            debugOutput.println(MDPStrategy.getUtilityCache());
 
-            debugOutput.println("New Actions MAX: " + newActions1);
-            debugOutput.println("New Actions MIN: " + newActions2);
+//            debugOutput.println("New Actions MAX: " + newActions1);
+//            debugOutput.println("New Actions MIN: " + newActions2);
 
             HashSet<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
             newActions.addAll(newActions1);
