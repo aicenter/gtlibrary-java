@@ -114,16 +114,12 @@ public class MDPOracleLP extends MDPCoreLP {
                         }
                     }
                     for (MDPStateActionMarginal precedingAction : playerStrategy.get(player).getPredecessors(mdpStateActionMarginal.getState()).keySet()) {
-//                        if (constraints.containsKey(precedingAction.getState())) {
-//                            getLpModels().get(player).delete(constraints.get(precedingAction.getState()));
-//                        }
-//                        createConstraintForStrategy(getLpModels().get(player), player, precedingAction.getState());
-
                         if (!whereIsMyAction.get(player).containsKey(precedingAction)) continue;
                         for (IloConstraint c : new HashSet<IloConstraint>(whereIsMyAction.get(player).get(precedingAction).keySet())) {
                             MDPStateActionMarginal opp = whereIsMyAction.get(player).get(precedingAction).remove(c);
-                            if (c != null) {
-                                getLpModels().get(player).delete(c);
+                            IloConstraint cc = constraints.remove(opp);
+                            if (cc != null) {
+                                getLpModels().get(player).delete(cc);
                             }
                             createConstraintForExpValues(getLpModels().get(player), player, opp);
                         }
@@ -172,6 +168,9 @@ public class MDPOracleLP extends MDPCoreLP {
             double utValue = playerStrategy.get(player).getUtilityFromCache(myActions, opponentsStateAction);
             if (utValue != 0) {
                 sumR = cplex.sum(sumR, cplex.prod(x, utValue));
+            }
+            if (playerStrategy.get(player).getSuccessors(myActions) == null && playerStrategy.get(player).getAllSuccessors(myActions) != null) {
+                // we remember only actions that currently do not have a successor, but there is one in the original game
                 rememberThisConstraintForActions.add(myActions);
             }
         }

@@ -147,6 +147,8 @@ public class McMahanDoubleOracle {
         }
 
         debugOutput.println("Finished.");
+        long endTime = System.nanoTime() - startTime;
+        debugOutput.println("Overall Time: " + (endTime / 1000000));
         debugOutput.println("final size: FirstPlayer Pure Strategies: " + maxPlayerStrategySet.size() + " \t SecondPlayer Pure Strategies: " + minPlayerStrategySet.size());
         debugOutput.println("final result:" + resultValue);
 
