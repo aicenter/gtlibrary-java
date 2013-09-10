@@ -105,7 +105,7 @@ public class DoubleOracleCostPairedMDP {
 //        if (0 == 0) return;
 
         while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon()) {
-//        for (int i=0; i<5; i++) {
+//        for (int i=0; i<3; i++) {
 
             debugOutput.println("*********** Iteration = " + (++iterations) + "   *************");
 
@@ -125,6 +125,11 @@ public class DoubleOracleCostPairedMDP {
 //            for (MDPStateActionMarginal m : firstPlayerStrategy.getAllActionStates()) {
 //                debugOutput.println("strategy(" + m + "): " + firstPlayerStrategy.getExpandedStrategy(m));
 //            }
+            firstPlayerStrategy.recalculateExpandedStrategy();
+            secondPlayerStrategy.recalculateExpandedStrategy();
+
+//            debugOutput.println(firstPlayerStrategy.getExpandedNonZeroStrategy());
+//            debugOutput.println(secondPlayerStrategy.getExpandedNonZeroStrategy());
 
             double currentBRValMax = br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy);
             double currentBRValMin = br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy);

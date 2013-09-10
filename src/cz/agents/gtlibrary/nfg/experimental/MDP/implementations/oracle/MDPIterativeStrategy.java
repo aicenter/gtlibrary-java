@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPExpander;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
+import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.*;
 
@@ -18,14 +19,15 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class MDPIterativeStrategy extends MDPStrategy {
+    final public static boolean USE_EXPST_CACHE = true;
+
     private DefaultStrategyType defaultStrategy = DefaultStrategyType.FirstAction;
 //    private DefaultStrategyType defaultStrategy = DefaultStrategyType.Uniform;
     private Map<MDPState, Set<MDPAction>> actionMap = new HashMap<MDPState, Set<MDPAction>>();
     private Map<MDPStateActionMarginal, Map<MDPState, Double>> successorMap = new HashMap<MDPStateActionMarginal, Map<MDPState, Double>>();
     private Map<MDPState, Map<MDPStateActionMarginal, Double>> predecessorMap = new HashMap<MDPState, Map<MDPStateActionMarginal, Double>>();
 
-//    private Map<MDPState, Map<MDPStateActionMarginal, Double>> defaultUtilityCache = new HashMap<MDPState, Map<MDPStateActionMarginal, Double>>();
-    private Set<MDPStateActionMarginal> defaultMarginalActions = new HashSet<MDPStateActionMarginal>();
+    private Map<MDPStateActionMarginal, Double> expandedNonZeroStrategy = new HashMap<MDPStateActionMarginal, Double>();
 
     private Set<MDPStateActionMarginal> allStatesActions = new HashSet<MDPStateActionMarginal>();
     private MDPStrategy opponentsStrategy = null;
@@ -234,25 +236,31 @@ public class MDPIterativeStrategy extends MDPStrategy {
         Double result = getStrategyProbability(mdpStateActionMarginal);
         if (result != null)
             return result;
-        if (defaultStrategy == DefaultStrategyType.FirstAction) {
-            if (!getAllActions(mdpStateActionMarginal.getState()).get(0).equals(mdpStateActionMarginal.getAction()))
-                return 0; // we have the first-action default strategy, but this action is not the first one in this state according to the expander
-        }
-
-        if (getStates().contains(mdpStateActionMarginal.getState())) // there exists this state, but this action is not in the strategy
-            return 0;
-
-        Map<MDPStateActionMarginal, Double> predecessors = super.getPredecessors(mdpStateActionMarginal.getState());
-        result = 0d;
-        for (MDPStateActionMarginal p : predecessors.keySet()) {
-            result += getExpandedStrategy(p) * predecessors.get(p);
-        }
-        if (defaultStrategy == DefaultStrategyType.FirstAction)
+        if (USE_EXPST_CACHE) {
+            result = expandedNonZeroStrategy.get(mdpStateActionMarginal);
+            if (result == null) result = 0d;
             return result;
-        else if (defaultStrategy == DefaultStrategyType.Uniform)
-            return result/(double)(getActions(mdpStateActionMarginal.getState()).size());
-        else assert false;
-        return Double.NaN;
+        } else {
+            if (defaultStrategy == DefaultStrategyType.FirstAction) {
+                if (!getAllActions(mdpStateActionMarginal.getState()).get(0).equals(mdpStateActionMarginal.getAction()))
+                    return 0; // we have the first-action default strategy, but this action is not the first one in this state according to the expander
+            }
+
+            if (getStates().contains(mdpStateActionMarginal.getState())) // there exists this state, but this action is not in the strategy
+                return 0;
+
+            Map<MDPStateActionMarginal, Double> predecessors = super.getPredecessors(mdpStateActionMarginal.getState());
+            result = 0d;
+            for (MDPStateActionMarginal p : predecessors.keySet()) {
+                result += getExpandedStrategy(p) * predecessors.get(p);
+            }
+            if (defaultStrategy == DefaultStrategyType.FirstAction)
+                return result;
+            else if (defaultStrategy == DefaultStrategyType.Uniform)
+                return result/(double)(getActions(mdpStateActionMarginal.getState()).size());
+            else assert false;
+            return Double.NaN;
+        }
     }
 
 
@@ -295,5 +303,52 @@ public class MDPIterativeStrategy extends MDPStrategy {
         }
 
         return result;
+    }
+
+    public void recalculateExpandedStrategy() {
+        if (!USE_EXPST_CACHE) return;
+        expandedNonZeroStrategy.clear();
+        LinkedList<Pair<MDPState, Double>> queue = new LinkedList<Pair<MDPState, Double>>();
+        queue.add(new Pair<MDPState, Double>(getRootState(),1d));
+        while (!queue.isEmpty()) {
+            Pair<MDPState, Double> item = queue.poll();
+            MDPState state = item.getLeft();
+            double prob = item.getRight();
+            List<MDPAction> actions = getAllActions(state);
+            for (MDPAction a : actions) {
+                double newProb = 0;
+                MDPStateActionMarginal mdpsam = new MDPStateActionMarginal(state, a);
+                if (getStrategyProbability(mdpsam) == null) { // outside RG
+                    if ((defaultStrategy == DefaultStrategyType.FirstAction && !actions.get(0).equals(a)) ||
+                            (getStates().contains(state))) {
+
+                    } else {
+                        if (expandedNonZeroStrategy.get(mdpsam) != null) {
+                            newProb = expandedNonZeroStrategy.get(mdpsam);
+                        }
+                        if (defaultStrategy == DefaultStrategyType.FirstAction) {
+                            // if we are here, we must be in the first action
+                            newProb += prob;
+                        } else if (defaultStrategy == DefaultStrategyType.Uniform) {
+                            newProb += prob/(double)actions.size();
+                        } else {
+                            assert false;
+                        }
+                    }
+                    if (newProb != 0) {
+                        expandedNonZeroStrategy.put(mdpsam, newProb);
+                    }
+                } else {
+                    newProb = getStrategyProbability(mdpsam);
+                }
+                for (Map.Entry<MDPState, Double> e : getAllSuccessors(mdpsam).entrySet()) {
+                    queue.addLast(new Pair<MDPState, Double>(e.getKey(), newProb * e.getValue()));
+                }
+            }
+        }
+    }
+
+    public Map<MDPStateActionMarginal, Double> getExpandedNonZeroStrategy() {
+        return expandedNonZeroStrategy;
     }
 }
