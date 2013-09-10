@@ -120,5 +120,15 @@ public class FullCostPairedMDP {
 
         long endTime = System.nanoTime() - startTime;
         debugOutput.println("Overall Time: " + (endTime / 1000000));
+        debugOutput.println("final size: FirstPlayer Marginal Strategies: " + firstPlayerStrategy.getAllMarginalsInStrategy().size() + " \t SecondPlayer Marginal Strategies: " + secondPlayerStrategy.getAllMarginalsInStrategy().size());
+        debugOutput.println("final result:" + r1);
+
+        try {
+            Runtime.getRuntime().gc();
+            Thread.sleep(500l);
+        } catch (InterruptedException e) {
+        }
+
+        System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
     }
 }

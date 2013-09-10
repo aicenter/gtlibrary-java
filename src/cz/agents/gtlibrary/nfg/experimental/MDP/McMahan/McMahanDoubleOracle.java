@@ -152,6 +152,13 @@ public class McMahanDoubleOracle {
         debugOutput.println("final size: FirstPlayer Pure Strategies: " + maxPlayerStrategySet.size() + " \t SecondPlayer Pure Strategies: " + minPlayerStrategySet.size());
         debugOutput.println("final result:" + resultValue);
 
+        try {
+            Runtime.getRuntime().gc();
+            Thread.sleep(500l);
+        } catch (InterruptedException e) {
+        }
+
+        System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
     }
 
 }
