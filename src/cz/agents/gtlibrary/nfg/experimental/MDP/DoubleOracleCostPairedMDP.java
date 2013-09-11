@@ -63,24 +63,7 @@ public class DoubleOracleCostPairedMDP {
         secondPlayerStrategy = new MDPIterativeStrategy(config.getAllPlayers().get(1),config,expander);
 
         firstPlayerStrategy.initIterativeStrategy(secondPlayerStrategy);
-//        debugOutput.println(firstPlayerStrategy.getDefaultUtilityCache());
         secondPlayerStrategy.initIterativeStrategy(firstPlayerStrategy);
-//        debugOutput.println(secondPlayerStrategy.getDefaultUtilityCache());
-
-//        debugOutput.println(secondPlayerStrategy.getDefaultUtilityCache().get(secondPlayerStrategy.getRootState()));
-//        debugOutput.println(secondPlayerStrategy.getDefaultUtilityCache().get(secondPlayerStrategy.getRootState()));
-
-//        for (MDPState s : firstPlayerStrategy.getStates()) {
-//            debugOutput.println(s.toString() + ":" + s.hashCode());
-//        }
-//
-//        for (MDPState s : secondPlayerStrategy.getStates()) {
-//            debugOutput.println(s.toString() + ":" + s.hashCode());
-//        }
-
-        debugOutput.println(MDPStrategy.getUtilityCache());
-
-
 
         Map<Player, MDPStrategy> playerStrategy = new HashMap<Player, MDPStrategy>();
         playerStrategy.put(config.getAllPlayers().get(0), firstPlayerStrategy);
@@ -100,14 +83,10 @@ public class DoubleOracleCostPairedMDP {
         MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
         MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
 
-//        debugOutput.println(firstPlayerStrategy.getUtility());
-
-//        if (0 == 0) return;
-
         while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon()) {
 //        for (int i=0; i<3; i++) {
 
-            debugOutput.println("*********** Iteration = " + (++iterations) + "   *************");
+            debugOutput.println("*********** Iteration = " + (++iterations) + " Bound Interval = " + Math.abs(UB - LB) + "     *************");
 
             double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
             debugOutput.println("Result: " + r1);
@@ -130,6 +109,7 @@ public class DoubleOracleCostPairedMDP {
 
 //            debugOutput.println(firstPlayerStrategy.getExpandedNonZeroStrategy());
 //            debugOutput.println(secondPlayerStrategy.getExpandedNonZeroStrategy());
+
 
             double currentBRValMax = br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy);
             double currentBRValMin = br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy);
@@ -154,8 +134,6 @@ public class DoubleOracleCostPairedMDP {
             newActions.addAll(newActions2);
 //            debugOutput.println("New Actions = " + newActions);
             lp.setNewActions(newActions);
-//            debugOutput.println(secondPlayerStrategy.getStrategy());
-
         }
 
         long endTime = System.nanoTime() - startTime;

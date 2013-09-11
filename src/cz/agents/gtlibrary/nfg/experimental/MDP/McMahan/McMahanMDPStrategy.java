@@ -22,6 +22,9 @@ import java.util.*;
  */
 public class McMahanMDPStrategy extends MDPStrategy {
 
+    private int hashCode = 0;
+    private boolean changed = true;
+
     private DefaultStrategyType defaultStrategy = DefaultStrategyType.FirstAction;
 //    private DefaultStrategyType defaultStrategy = DefaultStrategyType.Uniform;
 
@@ -140,7 +143,11 @@ public class McMahanMDPStrategy extends MDPStrategy {
 
     @Override
     public int hashCode() {
-        return getStrategy().hashCode();
+        if (changed) {
+            hashCode = getStrategy().hashCode();
+            changed = false;
+        }
+        return hashCode;
     }
 
     @Override
