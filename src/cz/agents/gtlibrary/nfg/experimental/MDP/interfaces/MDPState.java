@@ -14,4 +14,5 @@ public interface MDPState {
     public MDPState performAction(MDPAction action);
     public MDPState copy();
     public boolean isRoot();
+    public boolean isTerminal();
 }

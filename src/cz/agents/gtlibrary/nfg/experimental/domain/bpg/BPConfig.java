@@ -19,7 +19,7 @@ import java.util.List;
 public class BPConfig extends MDPConfigImpl {
 
     final private static int MAX_TIME_STEP = 5;
-    final private static double FLAG_PROB = 0.5;
+    final private static double FLAG_PROB = 0.1;
 
     public BPConfig() {
         allPlayers = new ArrayList<Player>(2);
@@ -68,8 +68,14 @@ public class BPConfig extends MDPConfigImpl {
            )
             result = -1d;
         else if (attAction.getMoves()[0].getToNode() == 16)
-            result = 1d;
+            result = 2d;
         else result = 0d;
+
+        for (int fl : attState.getFlaggedNodes()) {
+            if (defState.getFlaggedNodesObservedByPatroller().contains(fl)) {
+                result = result - 0.1d;
+            }
+        }
 
         return result;
     }

@@ -24,6 +24,6 @@ public abstract class MDPConfigImpl implements MDPConfig {
     }
 
     public static double getEpsilon() {
-        return 0.0000001;
+        return 0.000001;
     }
 }

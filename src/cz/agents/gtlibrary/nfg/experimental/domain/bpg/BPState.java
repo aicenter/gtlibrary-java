@@ -256,4 +256,9 @@ public class BPState extends MDPStateImpl {
             return result + "OFL:" + getFlaggedNodesObservedByPatroller();
         }
     }
+
+    @Override
+    public boolean isTerminal() {
+        return getTimeStep() >= BPConfig.getMaxTimeStep();
+    }
 }

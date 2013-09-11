@@ -132,27 +132,11 @@ public class MDPStrategy implements PureStrategy{
 
 
     public boolean hasStateASuccessor(MDPState state) {
-        List<MDPAction> actions = getActions(state);
-        if (actions == null || actions.isEmpty())
-            return false;
-        for (MDPAction a : actions) {
-            MDPStateActionMarginal map = new MDPStateActionMarginal(state, a);
-            if (!getSuccessors(map).isEmpty())
-                return true;
-        }
-        return false;
+          return !state.isTerminal();
     }
 
     public boolean hasAllStateASuccessor(MDPState state) {
-        List<MDPAction> actions = getAllActions(state);
-        if (actions == null || actions.isEmpty())
-            return false;
-        for (MDPAction a : actions) {
-            MDPStateActionMarginal map = new MDPStateActionMarginal(state, a);
-            if (!getAllSuccessors(map).isEmpty())
-                return true;
-        }
-        return false;
+        return !state.isTerminal();
     }
 
     public void putStrategy(MDPStateActionMarginal map, Double prob) {
@@ -267,6 +251,11 @@ public class MDPStrategy implements PureStrategy{
         @Override
         public String toString() {
             return "MDPRootState:"+getPlayer();
+        }
+
+        @Override
+        public boolean isTerminal() {
+            return false;
         }
     }
 
