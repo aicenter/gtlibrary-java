@@ -321,7 +321,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
                 if (getStrategyProbability(mdpsam) == null) { // outside RG
                     if ((defaultStrategy == DefaultStrategyType.FirstAction && !actions.get(0).equals(a)) ||
                             (getStates().contains(state))) {
-
+                        continue;
                     } else {
                         if (expandedNonZeroStrategy.get(mdpsam) != null) {
                             newProb = expandedNonZeroStrategy.get(mdpsam);
@@ -337,7 +337,13 @@ public class MDPIterativeStrategy extends MDPStrategy {
                     }
                     if (newProb != 0) {
                         expandedNonZeroStrategy.put(mdpsam, newProb);
+                    } else {
+                        if (expandedNonZeroStrategy.containsKey(mdpsam)) { // if it is a zero value and it was stored previously
+                            expandedNonZeroStrategy.remove(mdpsam);
+                        }
+                        continue;
                     }
+
                 } else {
                     newProb = getStrategyProbability(mdpsam);
                 }

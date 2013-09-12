@@ -19,7 +19,8 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class BPExpander extends MDPExpanderImpl {
-    private static int[][] allowedTargetsForDefender = {{4,5,6},{10,11,12}}; // allowed nodes for defender; these must be sorted
+//    private static int[][] allowedTargetsForDefender = {{4,5,6},{10,11,12}}; // allowed nodes for defender; these must be sorted
+    private static int[][] allowedTargetsForDefender = {{3,4,5,6},{11,12,13,14}}; // allowed nodes for defender; these must be sorted
     private static int[][] startingPositions = {{0},{17,18}};
 
     @Override
