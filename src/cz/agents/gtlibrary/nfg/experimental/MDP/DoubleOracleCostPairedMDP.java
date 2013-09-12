@@ -83,7 +83,7 @@ public class DoubleOracleCostPairedMDP {
         MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
         MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
 
-        while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon()) {
+        while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon() && UB > LB) {
 //        for (int i=0; i<3; i++) {
 
             debugOutput.println("*********** Iteration = " + (++iterations) + " Bound Interval = " + Math.abs(UB - LB) + "     *************");
@@ -104,15 +104,22 @@ public class DoubleOracleCostPairedMDP {
 //            for (MDPStateActionMarginal m : firstPlayerStrategy.getAllActionStates()) {
 //                debugOutput.println("strategy(" + m + "): " + firstPlayerStrategy.getExpandedStrategy(m));
 //            }
+            long ExpStart = System.nanoTime();
             firstPlayerStrategy.recalculateExpandedStrategy();
+            debugOutput.println("EXPST(MAX) TIME:" + ((System.nanoTime() - ExpStart)/1000000));
+            ExpStart = System.nanoTime();
             secondPlayerStrategy.recalculateExpandedStrategy();
+            debugOutput.println("EXPST(MIN) TIME:" + ((System.nanoTime() - ExpStart)/1000000));
 
 //            debugOutput.println(firstPlayerStrategy.getExpandedNonZeroStrategy());
 //            debugOutput.println(secondPlayerStrategy.getExpandedNonZeroStrategy());
 
-
+            long brStart = System.nanoTime();
             double currentBRValMax = br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy);
+            debugOutput.println("BR(MAX) TIME:" + ((System.nanoTime() - brStart)/1000000));
+            brStart = System.nanoTime();
             double currentBRValMin = br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy);
+            debugOutput.println("BR(MIN) TIME:" + ((System.nanoTime() - brStart)/1000000));
             UB = Math.min(UB, currentBRValMax);
             LB = Math.max(LB, currentBRValMin);
             debugOutput.println("BR(MAX): " + currentBRValMax + " BR(MIN): " + currentBRValMin);

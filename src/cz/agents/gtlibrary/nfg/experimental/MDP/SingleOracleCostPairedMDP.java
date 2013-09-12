@@ -82,10 +82,10 @@ public class SingleOracleCostPairedMDP {
         int iterations = 0;
 
 
-        while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon()) {
+        while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon() && UB > LB) {
 //        for (int i=0; i<5; i++) {
 
-            debugOutput.println("*********** Iteration = " + (++iterations) + "   *************");
+            debugOutput.println("*********** Iteration = " + (++iterations) + " Bound Interval = " + Math.abs(UB - LB) + "     *************");
 
             double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
             debugOutput.println("Result: " + r1);

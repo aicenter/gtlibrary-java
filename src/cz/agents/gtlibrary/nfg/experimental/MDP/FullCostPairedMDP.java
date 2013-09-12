@@ -92,6 +92,9 @@ public class FullCostPairedMDP {
         double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
         debugOutput.println("Result: " + r1);
 
+        long halfTime = System.nanoTime() - startTime;
+        debugOutput.println("Half Time: " + (halfTime / 1000000));
+
         double r2 = lp.solveForPlayer(config.getAllPlayers().get(1));
         debugOutput.println("Result: " + r2);
 
