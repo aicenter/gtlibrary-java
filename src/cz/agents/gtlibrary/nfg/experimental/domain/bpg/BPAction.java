@@ -28,11 +28,6 @@ public class BPAction extends MDPActionImpl {
     }
 
     @Override
-    public void perform(MDPState state) {
-        state.performAction(this);
-    }
-
-    @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj))
             return false;

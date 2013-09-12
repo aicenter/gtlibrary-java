@@ -20,7 +20,9 @@ public abstract class MDPActionImpl implements MDPAction{
     }
 
     @Override
-    public abstract void perform(MDPState state);
+    public void perform(MDPState state) {
+        state.performAction(this);
+    }
 
     @Override
     public boolean equals(Object obj) {

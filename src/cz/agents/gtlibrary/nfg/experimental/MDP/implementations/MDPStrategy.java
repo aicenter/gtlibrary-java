@@ -117,6 +117,7 @@ public class MDPStrategy implements PureStrategy{
         queue.add(getRootState());
         while (!queue.isEmpty()) {
             MDPState state = queue.poll();
+            if (!state.isRoot() && getStates().contains(state)) continue;
             addStrategyState(state);
             List<MDPAction> actions = getActions(state);
             for (MDPAction a : actions) {

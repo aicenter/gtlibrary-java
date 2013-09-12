@@ -13,6 +13,8 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPExpander;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPExpander;
+import cz.agents.gtlibrary.nfg.experimental.domain.randomgame.RGMDPConfig;
+import cz.agents.gtlibrary.nfg.experimental.domain.randomgame.RGMDPExpander;
 
 import java.io.PrintStream;
 import java.lang.management.ThreadMXBean;
@@ -42,7 +44,7 @@ public class SingleOracleCostPairedMDP {
     private double gameValue = Double.NaN;
 
     public static void main(String[] args) {
-		runBPG();
+		runRG();
     }
 
     public SingleOracleCostPairedMDP(MDPExpander expander, MDPConfig config) {
@@ -53,6 +55,13 @@ public class SingleOracleCostPairedMDP {
     private static void runBPG() {
         MDPExpander expander = new BPExpander();
         MDPConfig config = new BPConfig();
+        SingleOracleCostPairedMDP mdp = new SingleOracleCostPairedMDP(expander, config);
+        mdp.test();
+    }
+
+    private static void runRG() {
+        MDPExpander expander = new RGMDPExpander();
+        MDPConfig config = new RGMDPConfig();
         SingleOracleCostPairedMDP mdp = new SingleOracleCostPairedMDP(expander, config);
         mdp.test();
     }
