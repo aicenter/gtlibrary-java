@@ -11,6 +11,8 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPExpander;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPState;
+import cz.agents.gtlibrary.nfg.experimental.domain.randomgame.RGMDPConfig;
+import cz.agents.gtlibrary.nfg.experimental.domain.randomgame.RGMDPExpander;
 
 import java.io.PrintStream;
 import java.lang.management.ThreadMXBean;
@@ -38,7 +40,8 @@ public class FullCostPairedMDP {
     private double gameValue = Double.NaN;
 
     public static void main(String[] args) {
-		runBPG();
+//		runRG();
+        runBPG();
     }
 
     public FullCostPairedMDP(MDPExpander expander, MDPConfig config) {
@@ -47,9 +50,15 @@ public class FullCostPairedMDP {
     }
 
     private static void runBPG() {
-//        MDPState rootState = new BPState();
         MDPExpander expander = new BPExpander();
         MDPConfig config = new BPConfig();
+        FullCostPairedMDP mdp = new FullCostPairedMDP(expander, config);
+        mdp.test();
+    }
+
+    private static void runRG() {
+        MDPExpander expander = new RGMDPExpander();
+        MDPConfig config = new RGMDPConfig();
         FullCostPairedMDP mdp = new FullCostPairedMDP(expander, config);
         mdp.test();
     }
@@ -61,22 +70,32 @@ public class FullCostPairedMDP {
         secondPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(1),config,expander);
         firstPlayerStrategy.generateCompleteStrategy();
 
+//        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
+//            debugOutput.println(m1 + " sucessors:" + firstPlayerStrategy.getSuccessors(m1));
+//            if (!m1.getState().isRoot()) debugOutput.println("Predecessors:" + firstPlayerStrategy.getPredecessors(m1.getState()));
+//        }
+
 //        for (MDPState s : firstPlayerStrategy.getStates()) {
 //            debugOutput.println(s.toString() + ":" + s.hashCode());
 //            if (!s.isRoot()) debugOutput.println("Predecessors:" + firstPlayerStrategy.getPredecessors(s));
 //        } //*/
         secondPlayerStrategy.generateCompleteStrategy();
 
+//        for (MDPStateActionMarginal m2 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
+//            debugOutput.println(m2 + " sucessors:" + firstPlayerStrategy.getSuccessors(m2));
+//        }
+
 /*        for (MDPState s : secondPlayerStrategy.getStates()) {
             debugOutput.println(s.toString() + ":" + s.hashCode());
             if (!s.isRoot()) debugOutput.println("Predecessors:" + secondPlayerStrategy.getPredecessors(s));
-        }
+        } //*/
 
-/*        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
-            for (MDPStateActionMarginal m2 : secondPlayerStrategy.getStrategy().keySet()) {
+/*        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
+            for (MDPStateActionMarginal m2 : secondPlayerStrategy.getAllMarginalsInStrategy()) {
                 double utility = config.getUtility(m1, m2);
                 if (utility != 0)
                    debugOutput.println("["+m1+","+m2+"] = " + utility);
+                assert (config.getUtility(m1, m2) == config.getUtility(m2, m1));
             }
         } //*/
 
@@ -88,6 +107,7 @@ public class FullCostPairedMDP {
         playerStrategy.put(config.getAllPlayers().get(0), firstPlayerStrategy);
         playerStrategy.put(config.getAllPlayers().get(1), secondPlayerStrategy);
 
+        debugOutput.println("Starting LP Construction.");
         MDPCoreLP lp = new MDPCoreLP(config.getAllPlayers(), playerStrategy, config);
         double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
         debugOutput.println("Result: " + r1);
@@ -111,11 +131,11 @@ public class FullCostPairedMDP {
 //        firstPlayerStrategy.sanityCheck();
 //        secondPlayerStrategy.sanityCheck();
 //
-//        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
+        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
 //        debugOutput.println("BR : " + br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy));
 //        debugOutput.println(br1.extractBestResponse(firstPlayerStrategy));
-//
-//        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
+
+        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
 //        debugOutput.println("BR : " + br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy));
 //        debugOutput.println(br2.extractBestResponse(secondPlayerStrategy));
 

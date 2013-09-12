@@ -124,6 +124,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
             List<MDPAction> actions = getAllActions(state);
             for (MDPAction a : actions) {
                 MDPStateActionMarginal mdpsam = new MDPStateActionMarginal(state, a);
+                if (!state.isRoot() && getAllActionStates().contains(mdpsam)) break;
                 allStatesActions.add(mdpsam);
                 for (Map.Entry<MDPState, Double> e : getAllSuccessors(mdpsam).entrySet()) {
                     queue.addLast(e.getKey());
