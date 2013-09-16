@@ -105,13 +105,7 @@ public class BPState extends MDPStateImpl {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        if (this.hashCode() != obj.hashCode())
+        if (!super.equals(obj))
             return false;
         BPState other = (BPState)obj;
         if (this.UNITS != other.UNITS)

@@ -42,6 +42,13 @@ public class RGMDPConfig extends MDPConfigImpl {
     }
 
     @Override
+    public double getBestUtilityValue(Player player) {
+        if (player.getId() == 0)
+            return MAX_UTILITY;
+        else return -MAX_UTILITY;
+    }
+
+    @Override
     public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction) {
         if (firstPlayerAction.getState().isRoot() || secondPlayerAction.getState().isRoot())
             return 0;

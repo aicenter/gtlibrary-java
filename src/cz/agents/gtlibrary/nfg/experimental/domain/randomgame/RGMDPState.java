@@ -62,13 +62,7 @@ public class RGMDPState extends MDPStateImpl {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        if (this.hashCode() != obj.hashCode())
+        if (!super.equals(obj))
             return false;
         RGMDPState other = (RGMDPState)obj;
         if (!this.getPlayer().equals(other.getPlayer()))

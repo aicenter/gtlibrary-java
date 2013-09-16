@@ -23,7 +23,13 @@ public abstract class MDPConfigImpl implements MDPConfig {
         return allPlayers.get(0).equals(player) ? allPlayers.get(1) : allPlayers.get(0);
     }
 
+    public List<Player> getAllPlayers() {
+        return allPlayers;
+    }
+
     public static double getEpsilon() {
         return 0.000001;
     }
+
+    public abstract double getBestUtilityValue(Player player);
 }

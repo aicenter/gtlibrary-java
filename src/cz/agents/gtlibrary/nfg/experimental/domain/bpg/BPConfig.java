@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class BPConfig extends MDPConfigImpl {
 
-    final private static int MAX_TIME_STEP = 5;
+    final private static int MAX_TIME_STEP = 4;
     final private static double FLAG_PROB = 0.1;
 
     public BPConfig() {
@@ -30,6 +30,15 @@ public class BPConfig extends MDPConfigImpl {
     @Override
     public List<Player> getAllPlayers() {
         return allPlayers;
+    }
+
+    @Override
+    public double getBestUtilityValue(Player player) {
+        if (player.getId() == 0) {
+            return 2d;
+        } else {
+            return -1d - MAX_TIME_STEP*2*(0.1);
+        }
     }
 
     @Override
