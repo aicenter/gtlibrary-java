@@ -14,6 +14,8 @@ import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPExpander;
 import cz.agents.gtlibrary.nfg.experimental.domain.randomgame.RGMDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.randomgame.RGMDPExpander;
+import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGConfig;
+import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGExpander;
 
 import java.io.PrintStream;
 import java.lang.management.ThreadMXBean;
@@ -44,8 +46,10 @@ public class DoubleOracleCostPairedMDP {
 
     public static void main(String[] args) {
 //		runRG();
-        runBPG();
+//        runBPG();
+        runTG();
     }
+
 
     public DoubleOracleCostPairedMDP(MDPExpander expander, MDPConfig config) {
         this.expander = expander;
@@ -53,18 +57,20 @@ public class DoubleOracleCostPairedMDP {
     }
 
     private static void runBPG() {
-        MDPExpander expander = new BPExpander();
-        MDPConfig config = new BPConfig();
-        DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(expander, config);
+        DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(new BPExpander(), new BPConfig());
         mdp.test();
     }
 
     private static void runRG() {
-        MDPExpander expander = new RGMDPExpander();
-        MDPConfig config = new RGMDPConfig();
-        DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(expander, config);
+        DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(new RGMDPExpander(), new RGMDPConfig());
         mdp.test();
     }
+
+    private static void runTG() {
+        DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(new TGExpander(), new TGConfig());
+        mdp.test();
+    }
+
 
     private void test() {
         long startTime = System.nanoTime();

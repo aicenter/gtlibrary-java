@@ -13,8 +13,12 @@ import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPExpander;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPState;
 import cz.agents.gtlibrary.nfg.experimental.domain.randomgame.RGMDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.randomgame.RGMDPExpander;
+import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGConfig;
+import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGExpander;
 
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,12 +40,14 @@ public class FullCostPairedMDP {
     private PrintStream debugOutput = System.out;
     final private static boolean DEBUG = false;
     private ThreadMXBean threadBean ;
+    private MemoryMXBean memoryBean ;
 
     private double gameValue = Double.NaN;
 
     public static void main(String[] args) {
 //		runRG();
-        runBPG();
+//      runBPG();
+        runTG();
     }
 
     public FullCostPairedMDP(MDPExpander expander, MDPConfig config) {
@@ -63,32 +69,39 @@ public class FullCostPairedMDP {
         mdp.test();
     }
 
+    private static void runTG() {
+        MDPExpander expander = new TGExpander();
+        MDPConfig config = new TGConfig();
+        FullCostPairedMDP mdp = new FullCostPairedMDP(expander, config);
+        mdp.test();
+    }
+
     private void test() {
         long startTime = System.nanoTime();
+        threadBean = ManagementFactory.getThreadMXBean();
+        memoryBean = ManagementFactory.getMemoryMXBean();
         debugOutput.println("Testing Full CostPaired MDP.");
         firstPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(0),config,expander);
         secondPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(1),config,expander);
+        long p1StrategyGeneration = System.nanoTime();
         firstPlayerStrategy.generateCompleteStrategy();
+        p1StrategyGeneration = (System.nanoTime() - p1StrategyGeneration)/1000000;
+        debugOutput.println("P1 Strategy generation : " + p1StrategyGeneration);
 
 //        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
 //            debugOutput.println(m1 + " sucessors:" + firstPlayerStrategy.getSuccessors(m1));
 //            if (!m1.getState().isRoot()) debugOutput.println("Predecessors:" + firstPlayerStrategy.getPredecessors(m1.getState()));
 //        }
 
-//        for (MDPState s : firstPlayerStrategy.getStates()) {
-//            debugOutput.println(s.toString() + ":" + s.hashCode());
-//            if (!s.isRoot()) debugOutput.println("Predecessors:" + firstPlayerStrategy.getPredecessors(s));
-//        } //*/
+        long p2StrategyGeneration = System.nanoTime();
         secondPlayerStrategy.generateCompleteStrategy();
+        p2StrategyGeneration = (System.nanoTime() - p2StrategyGeneration)/1000000;
+        debugOutput.println("P2 Strategy generation : " + p2StrategyGeneration);
 
-//        for (MDPStateActionMarginal m2 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
-//            debugOutput.println(m2 + " sucessors:" + firstPlayerStrategy.getSuccessors(m2));
+//        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getAllMarginalsInStrategy()) {
+//            debugOutput.println(m2 + " sucessors:" + secondPlayerStrategy.getSuccessors(m2));
+//            if (!m2.getState().isRoot()) debugOutput.println("Predecessors:" + secondPlayerStrategy.getPredecessors(m2.getState()));
 //        }
-
-/*        for (MDPState s : secondPlayerStrategy.getStates()) {
-            debugOutput.println(s.toString() + ":" + s.hashCode());
-            if (!s.isRoot()) debugOutput.println("Predecessors:" + secondPlayerStrategy.getPredecessors(s));
-        } //*/
 
 /*        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
             for (MDPStateActionMarginal m2 : secondPlayerStrategy.getAllMarginalsInStrategy()) {
@@ -101,7 +114,10 @@ public class FullCostPairedMDP {
 
 //        debugOutput.println(secondPlayerStrategy.getSuccessors(new MDPStateActionMarginal(secondPlayerStrategy.getRootState(), secondPlayerStrategy.getActions(secondPlayerStrategy.getRootState()).get(0))));
 
-        firstPlayerStrategy.storeAllUtilityToCache(firstPlayerStrategy.getAllActionStates(), secondPlayerStrategy.getAllActionStates());
+        long utilityStrategyGeneration = System.nanoTime();
+//        firstPlayerStrategy.storeAllUtilityToCache(firstPlayerStrategy.getAllActionStates(), secondPlayerStrategy.getAllActionStates());
+        utilityStrategyGeneration = (System.nanoTime() - utilityStrategyGeneration)/1000000;
+        debugOutput.println("Utility generation : " + utilityStrategyGeneration);
 
         Map<Player, MDPStrategy> playerStrategy = new HashMap<Player, MDPStrategy>();
         playerStrategy.put(config.getAllPlayers().get(0), firstPlayerStrategy);
@@ -151,7 +167,7 @@ public class FullCostPairedMDP {
             Thread.sleep(500l);
         } catch (InterruptedException e) {
         }
-
+        System.out.println("final memory:" + ((memoryBean.getHeapMemoryUsage().getCommitted() + memoryBean.getNonHeapMemoryUsage().getCommitted()) / 1024 / 1024));
         System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
     }
 }

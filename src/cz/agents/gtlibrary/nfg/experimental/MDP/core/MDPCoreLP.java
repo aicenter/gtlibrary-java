@@ -45,8 +45,8 @@ public class MDPCoreLP {
             try {
 
                 IloCplex cplex = new IloCplex();
-                cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Dual);
-    //            cplex.setOut(null);
+                cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Auto);
+                cplex.setOut(null);
                 IloNumVar obj = createVariableForMDPState(cplex, playerStrategy.get(config.getOtherPlayer(p)).getRootState());
                 if (p.getId() == 0) {
                   cplex.addMaximize(obj);
@@ -69,8 +69,9 @@ public class MDPCoreLP {
         buildLPFromStrategies(player);
 
         try {
-            cplex.exportModel("MDP-LP"+player.getId()+".lp");
+//            cplex.exportModel("MDP-LP"+player.getId()+".lp");
             cplex.solve();
+
             if (cplex.getStatus() != IloCplex.Status.Optimal) {
                 System.out.println(cplex.getStatus());
                 assert false;
@@ -139,7 +140,8 @@ public class MDPCoreLP {
         for (MDPStateActionMarginal myActions : playerStrategy.get(player).getAllMarginalsInStrategy()) {
             IloNumVar x = variables.get(myActions);
             assert (x != null);
-            sumR = cplex.sum(sumR, cplex.prod(x, playerStrategy.get(player).getUtilityFromCache(myActions, opponentsStateAction)));
+//            sumR = cplex.sum(sumR, cplex.prod(x, playerStrategy.get(player).getUtilityFromCache(myActions, opponentsStateAction)));
+            sumR = cplex.sum(sumR, cplex.prod(x, playerStrategy.get(player).getUtility(myActions, opponentsStateAction)));
         }
 
         if (player.getId() == 0) {

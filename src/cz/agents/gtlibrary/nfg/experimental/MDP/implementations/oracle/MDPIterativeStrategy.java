@@ -264,6 +264,14 @@ public class MDPIterativeStrategy extends MDPStrategy {
         }
     }
 
+    @Override
+    public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy) {
+        double result = 0;
+        for (MDPStateActionMarginal mdp : ((MDPIterativeStrategy)secondPlayerStrategy).getExpandedNonZeroStrategy().keySet()) {
+            result += getUtility(firstPlayerAction, mdp) * secondPlayerStrategy.getExpandedStrategy(mdp);
+        }
+        return result;
+    }
 
     private double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction, Map<Set<MDPStateActionMarginal>, Double> defUtilityCache) {
         if (defUtilityCache == null) {
@@ -347,10 +355,15 @@ public class MDPIterativeStrategy extends MDPStrategy {
 
                 } else {
                     newProb = getStrategyProbability(mdpsam);
+                    if (newProb != 0) {
+                        if (expandedNonZeroStrategy.containsKey(mdpsam)) newProb += expandedNonZeroStrategy.get(mdpsam);
+                        expandedNonZeroStrategy.put(mdpsam, newProb);
+                    }
                 }
-                for (Map.Entry<MDPState, Double> e : getAllSuccessors(mdpsam).entrySet()) {
-                    queue.addLast(new Pair<MDPState, Double>(e.getKey(), newProb * e.getValue()));
-                }
+                if (newProb != 0)
+                    for (Map.Entry<MDPState, Double> e : getAllSuccessors(mdpsam).entrySet()) {
+                        queue.addLast(new Pair<MDPState, Double>(e.getKey(), newProb * e.getValue()));
+                    }
             }
         }
     }
