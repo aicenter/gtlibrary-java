@@ -20,4 +20,5 @@ public interface MDPConfig {
 //    public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy);
     public Player getOtherPlayer(Player player);
     public MDPState getDomainRootState(Player player);
+    public double getBestUtilityValue(Player player);
 }

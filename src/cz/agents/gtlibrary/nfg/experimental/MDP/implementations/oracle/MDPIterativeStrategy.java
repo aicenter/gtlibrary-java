@@ -32,6 +32,8 @@ public class MDPIterativeStrategy extends MDPStrategy {
     private Set<MDPStateActionMarginal> allStatesActions = new HashSet<MDPStateActionMarginal>();
     private MDPStrategy opponentsStrategy = null;
 
+//    private Set<MDPState> openStates = new HashSet<MDPState>();
+
     public MDPIterativeStrategy(Player player, MDPConfig config, MDPExpander expander) {
         super(player, config, expander);
         generateAllStateActions();
@@ -150,7 +152,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
             MDPState state = queue.poll();
             Set<MDPStateActionMarginal> actions = bestResponse.get(state);
             if (actions != null && !actions.isEmpty()) {
-                newActions.addAll(addStateAction(state, actions));
+                newActions.addAll(addStateAction(state, actions, bestResponse));
                 if (!state.isRoot()) removeDefaultUtilityValues(state);
                 for (MDPStateActionMarginal m : actions) {
                     for (MDPState s : getAllSuccessors(m).keySet()) {
@@ -168,7 +170,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
      * @param actions
      * @return actions that were not in the strategy before and were actually new
      */
-    private Set<MDPStateActionMarginal> addStateAction(MDPState state, Set<MDPStateActionMarginal> actions) {
+    private Set<MDPStateActionMarginal> addStateAction(MDPState state, Set<MDPStateActionMarginal> actions, Map<MDPState, Set<MDPStateActionMarginal>> bestResponse) {
 
         Set<MDPAction> alreadyActions = actionMap.get(state);
         Set<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
@@ -176,6 +178,17 @@ public class MDPIterativeStrategy extends MDPStrategy {
 
         if (getAllMarginalsInStrategy().containsAll(actions)) {
             return newActions;
+        }
+
+        if (!getStates().contains(state)) {
+            addStrategyState(state);
+//            if (!isNodeClosed(state)) {
+//                openStates.add(state);
+//            }
+//        } else {
+//            if (isNodeClosed(state)) {
+//                openStates.remove(state);
+//            }
         }
 
         for (MDPStateActionMarginal mdpam : actions) {
@@ -186,10 +199,6 @@ public class MDPIterativeStrategy extends MDPStrategy {
             Map<MDPState, Double> successors = getAllSuccessors(mdpam);
             successorMap.put(mdpam, successors);
 
-            if (!getStates().contains(mdpam.getState())) {
-                addStrategyState(mdpam.getState());
-            }
-
             Map<MDPStateActionMarginal, Double> actionUtility = new HashMap<MDPStateActionMarginal, Double>();
 
             for (Map.Entry<MDPState, Double> followingStates : successors.entrySet()) {
@@ -199,8 +208,12 @@ public class MDPIterativeStrategy extends MDPStrategy {
                 p.put(mdpam, followingStates.getValue());
                 predecessorMap.put(followingStates.getKey(), p);
 
+                if (bestResponse.containsKey(followingStates.getKey())) continue;
+
+
                 Map<MDPStateActionMarginal, Double> map = calculateDefaultUtility(followingStates.getKey(), 1, opponentsStrategy.getAllActionStates(), null);
                 map = opponentsStrategy.adaptAccordingToDefaultPolicy(mdpam, map);
+//                Map<MDPStateActionMarginal, Double> map = getUtility()
 
                 for (MDPStateActionMarginal OPm : map.keySet()) {
                     if (!actionUtility.containsKey(OPm)) {
@@ -371,4 +384,16 @@ public class MDPIterativeStrategy extends MDPStrategy {
     public Map<MDPStateActionMarginal, Double> getExpandedNonZeroStrategy() {
         return expandedNonZeroStrategy;
     }
+
+    public boolean hasStateASuccessor(MDPState state) {
+        return actionMap.containsKey(state);
+    }
+
+//    public boolean isNodeClosed(MDPState state) {
+//        Set<MDPAction> alreadyActions = actionMap.get(state);
+//        if (alreadyActions.containsAll(getAllActions(state))) {
+//            return true;
+//        }
+//        return false;
+//    }
 }

@@ -15,4 +15,5 @@ public interface MDPState {
     public MDPState copy();
     public boolean isRoot();
     public boolean isTerminal();
+    public int horizon();
 }

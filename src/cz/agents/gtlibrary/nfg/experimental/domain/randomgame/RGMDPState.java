@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
+import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPConfig;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -98,5 +99,10 @@ public class RGMDPState extends MDPStateImpl {
     @Override
     public String toString() {
         return "RGState_"+getPlayer()+"_ID:"+ID+"_Step:"+step;
+    }
+
+    @Override
+    public int horizon() {
+        return RGMDPConfig.getMaxSteps() - getStep();
     }
 }

@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
+import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPConfig;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.Arrays;
@@ -177,5 +178,10 @@ public class TGState extends MDPStateImpl {
             sb.append("]");
         }
         return sb.toString();
+    }
+
+    @Override
+    public int horizon() {
+        return TGConfig.getMaxTimeStep() - getTimeStep();
     }
 }

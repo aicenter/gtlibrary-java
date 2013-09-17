@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.core.MDPBestResponse;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
+import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPFristBetterResponse;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPIterativeStrategy;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPOracleLP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
@@ -96,13 +97,15 @@ public class DoubleOracleCostPairedMDP {
 
         int iterations = 0;
 
-        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
-        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
+//        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
+//        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
+        MDPFristBetterResponse br1 = new MDPFristBetterResponse(config, config.getAllPlayers().get(0));
+        MDPFristBetterResponse br2 = new MDPFristBetterResponse(config, config.getAllPlayers().get(1));
 
         while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon() && UB > LB) {
 //        for (int i=0; i<3; i++) {
 
-            debugOutput.println("*********** Iteration = " + (++iterations) + " Bound Interval = " + Math.abs(UB - LB) + "     *************");
+            debugOutput.println("*********** Iteration = " + (++iterations) + " Bound Interval = " + Math.abs(UB - LB) + " [ " + LB + ";" + UB +  " ]      *************");
 
             double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
             debugOutput.println("Result: " + r1);
@@ -130,6 +133,9 @@ public class DoubleOracleCostPairedMDP {
 //            debugOutput.println(firstPlayerStrategy.getExpandedNonZeroStrategy());
 //            debugOutput.println(secondPlayerStrategy.getExpandedNonZeroStrategy());
 
+            br1.setBound(UB); br1.setCurrentBest(r1);
+            br2.setBound(LB); br2.setCurrentBest(r2);
+
             long brStart = System.nanoTime();
             double currentBRValMax = br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy);
             debugOutput.println("BR(MAX) TIME:" + ((System.nanoTime() - brStart)/1000000));
@@ -139,6 +145,7 @@ public class DoubleOracleCostPairedMDP {
             UB = Math.min(UB, currentBRValMax);
             LB = Math.max(LB, currentBRValMin);
             debugOutput.println("BR(MAX): " + currentBRValMax + " BR(MIN): " + currentBRValMin);
+
 
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions1 = br1.extractBestResponse(firstPlayerStrategy);
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions2 = br2.extractBestResponse(secondPlayerStrategy);
