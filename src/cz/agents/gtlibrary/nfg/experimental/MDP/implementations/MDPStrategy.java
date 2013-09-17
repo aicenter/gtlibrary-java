@@ -258,6 +258,11 @@ public class MDPStrategy implements PureStrategy{
         public boolean isTerminal() {
             return false;
         }
+
+        @Override
+        public int horizon() {
+            return Short.MAX_VALUE;
+        }
     }
 
     public Map<MDPStateActionMarginal, Double> adaptAccordingToDefaultPolicy(MDPStateActionMarginal opponentsAction, Map<MDPStateActionMarginal, Double> valuesForOpponentsAction) {

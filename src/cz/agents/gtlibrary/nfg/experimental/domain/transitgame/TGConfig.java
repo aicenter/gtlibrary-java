@@ -20,8 +20,11 @@ public class TGConfig extends MDPConfigImpl{
 
 
     final protected static int MAX_TIME_STEP = 20;
-    final protected static int LENGTH_OF_GRID = 15;
+    final protected static int LENGTH_OF_GRID = 16;
     final protected static int WIDTH_OF_GRID = 8;
+//    final protected static int MAX_TIME_STEP = 14;
+//    final protected static int LENGTH_OF_GRID = 8;
+//    final protected static int WIDTH_OF_GRID = 5;
     final protected static int PATROLLERS = 1;
     final protected static int[] PATROLLER_BASES = new int[] {LENGTH_OF_GRID/2};
 
@@ -59,6 +62,7 @@ public class TGConfig extends MDPConfigImpl{
         if (defState.getTimeStep() != attState.getTimeStep())
             result = 0d;
         else if ((attState.getCol()[0] == defState.getCol()[0] && attState.getRow()[0] == defState.getRow()[0]) ||
+                 (attAction.getTargetCol()[0] == defState.getCol()[0] && attAction.getTargetRow()[0] == defState.getRow()[0] && attState.getCol()[0] == defAction.getTargetCol()[0] && attState.getRow()[0] == defAction.getTargetRow()[0]) ||
                  (attAction.getTargetCol()[0] == defAction.getTargetCol()[0] && attAction.getTargetRow()[0] == defAction.getTargetRow()[0])
                 )
             result = -1d;

@@ -255,4 +255,9 @@ public class BPState extends MDPStateImpl {
     public boolean isTerminal() {
         return getTimeStep() >= BPConfig.getMaxTimeStep();
     }
+
+    @Override
+    public int horizon() {
+        return BPConfig.getMaxTimeStep() - getTimeStep();
+    }
 }
