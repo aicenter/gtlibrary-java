@@ -136,6 +136,10 @@ public class DoubleOracleCostPairedMDP {
             br1.setBound(UB); br1.setCurrentBest(r1);
             br2.setBound(LB); br2.setCurrentBest(r2);
 
+//            firstPlayerStrategy.sanityCheck();
+//            secondPlayerStrategy.sanityCheck();
+//            firstPlayerStrategy.testUtility(secondPlayerStrategy, r1);
+
             long brStart = System.nanoTime();
             double currentBRValMax = br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy);
             debugOutput.println("BR(MAX) TIME:" + ((System.nanoTime() - brStart)/1000000));
@@ -151,9 +155,9 @@ public class DoubleOracleCostPairedMDP {
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions2 = br2.extractBestResponse(secondPlayerStrategy);
 
 //            debugOutput.println(bestResponseActions1);
-            newActions1 = firstPlayerStrategy.addBRStrategy(bestResponseActions1);
+            newActions1 = firstPlayerStrategy.addBRStrategy(firstPlayerStrategy.getRootState(), bestResponseActions1);
 //            debugOutput.println(bestResponseActions2);
-            newActions2 = secondPlayerStrategy.addBRStrategy(bestResponseActions2);
+            newActions2 = secondPlayerStrategy.addBRStrategy(secondPlayerStrategy.getRootState(), bestResponseActions2);
 //            debugOutput.println(MDPStrategy.getUtilityCache());
 
 //            debugOutput.println("New Actions MAX: " + newActions1);
@@ -164,6 +168,11 @@ public class DoubleOracleCostPairedMDP {
             newActions.addAll(newActions2);
 //            debugOutput.println("New Actions = " + newActions);
             lp.setNewActions(newActions);
+
+            if (newActions1.isEmpty() && newActions2.isEmpty()) {
+                if (Math.abs(UB - LB) > MDPConfigImpl.getEpsilon()) debugOutput.println("************* ERROR ****************");
+                break;
+            }
         }
 
         long endTime = System.nanoTime() - startTime;

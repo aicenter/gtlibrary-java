@@ -18,6 +18,9 @@ import java.util.List;
  */
 public class TGConfig extends MDPConfigImpl{
 
+//    final protected static int MAX_TIME_STEP = 7;
+//    final protected static int LENGTH_OF_GRID = 6;
+//    final protected static int WIDTH_OF_GRID = 3;
 
     final protected static int MAX_TIME_STEP = 20;
     final protected static int LENGTH_OF_GRID = 16;

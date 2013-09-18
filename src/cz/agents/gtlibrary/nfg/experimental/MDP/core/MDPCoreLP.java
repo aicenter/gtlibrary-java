@@ -45,7 +45,8 @@ public class MDPCoreLP {
             try {
 
                 IloCplex cplex = new IloCplex();
-                cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Primal);
+                cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Dual);
+//                cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Auto);
                 cplex.setParam(IloCplex.IntParam.Threads, 1);
                 cplex.setOut(null);
                 IloNumVar obj = createVariableForMDPState(cplex, playerStrategy.get(config.getOtherPlayer(p)).getRootState());

@@ -114,7 +114,7 @@ public class SingleOracleCostPairedMDP {
             Map<MDPState, Set<MDPStateActionMarginal>> br = br2.extractBestResponse(secondPlayerStrategy);
 
 //            debugOutput.println("BR = " + br);
-            newActions = secondPlayerStrategy.addBRStrategy(br);
+            newActions = secondPlayerStrategy.addBRStrategy(secondPlayerStrategy.getRootState(), br);
 //            debugOutput.println("New Actions = " + newActions);
             lp.setNewActions(newActions);
 //            debugOutput.println(secondPlayerStrategy.getStrategy());
