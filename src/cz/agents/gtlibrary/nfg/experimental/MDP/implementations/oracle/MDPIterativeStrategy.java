@@ -368,8 +368,6 @@ public class MDPIterativeStrategy extends MDPStrategy {
             }
         }
 
-//        LinkedList<Pair<MDPState, Double>> queue = new LinkedList<Pair<MDPState, Double>>();
-//        queue.add(new Pair<MDPState, Double>(getRootState(),1d));
         while (!queue.isEmpty()) {
             Pair<MDPState, Double> item = queue.poll();
             MDPState state = item.getLeft();
@@ -378,30 +376,6 @@ public class MDPIterativeStrategy extends MDPStrategy {
             for (MDPAction a : actions) {
                 double newProb = 0;
                 MDPStateActionMarginal mdpsam = new MDPStateActionMarginal(state, a);
-//                if (!getStates().contains(state)) { // outside RG
-//                    if (defaultStrategy == DefaultStrategyType.FirstAction && !actions.get(0).equals(a)) continue;
-//                    if (expandedNonZeroStrategy.get(mdpsam) != null) {
-//                        newProb = expandedNonZeroStrategy.get(mdpsam);
-//                    }
-//                    if (defaultStrategy == DefaultStrategyType.FirstAction) {
-//                        // if we are here, we must be in the first action
-//                        newProb += prob;
-//                    } else if (defaultStrategy == DefaultStrategyType.Uniform) {
-//                        newProb += prob/(double)actions.size();
-//                    } else {
-//                        assert false;
-//                    }
-//                    if (newProb != 0) {
-//                        expandedNonZeroStrategy.put(mdpsam, newProb);
-//                        for (Map.Entry<MDPState, Double> e : getAllSuccessors(mdpsam).entrySet()) {
-//                            queue.addLast(new Pair<MDPState, Double>(e.getKey(), newProb * e.getValue()));
-//                        }
-//                    }
-//                } else { // we are in RG
-//                    // is there a non-zero continuation
-//                }
-
-
 
                 if (getStrategyProbability(mdpsam) == null) {
                     if ((defaultStrategy == DefaultStrategyType.FirstAction && !actions.get(0).equals(a)) ||
