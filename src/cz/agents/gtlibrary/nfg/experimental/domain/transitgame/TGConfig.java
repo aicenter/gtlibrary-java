@@ -18,16 +18,17 @@ import java.util.List;
  */
 public class TGConfig extends MDPConfigImpl{
 
-//    final protected static int MAX_TIME_STEP = 7;
-//    final protected static int LENGTH_OF_GRID = 6;
-//    final protected static int WIDTH_OF_GRID = 3;
+//    public static int MAX_TIME_STEP = 7;
+//    public static int LENGTH_OF_GRID = 6;
+//    public static int WIDTH_OF_GRID = 3;
 
-    final protected static int MAX_TIME_STEP = 20;
-    final protected static int LENGTH_OF_GRID = 16;
-    final protected static int WIDTH_OF_GRID = 8;
-//    final protected static int MAX_TIME_STEP = 14;
-//    final protected static int LENGTH_OF_GRID = 8;
-//    final protected static int WIDTH_OF_GRID = 5;
+//    public static int MAX_TIME_STEP = 20;
+//    public static int LENGTH_OF_GRID = 16;
+//    public static int WIDTH_OF_GRID = 8;
+    public static int MAX_TIME_STEP = 14;
+    public static int LENGTH_OF_GRID = 8;
+    public static int WIDTH_OF_GRID = 5;
+
     final protected static int PATROLLERS = 1;
     final protected static int[] PATROLLER_BASES = new int[] {LENGTH_OF_GRID/2};
 

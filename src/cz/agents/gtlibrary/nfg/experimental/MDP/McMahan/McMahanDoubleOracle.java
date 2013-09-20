@@ -11,6 +11,8 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPExpander;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPExpander;
+import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGConfig;
+import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGExpander;
 
 import java.io.PrintStream;
 import java.lang.management.ThreadMXBean;
@@ -46,7 +48,8 @@ public class McMahanDoubleOracle {
     private double gameValue = Double.NaN;
 
     public static void main(String[] args) {
-        runBPG();
+//        runBPG();
+        runTG();
     }
 
     public McMahanDoubleOracle(MDPExpander expander, MDPConfig config) {
@@ -57,6 +60,13 @@ public class McMahanDoubleOracle {
     private static void runBPG() {
         MDPExpander expander = new BPExpander();
         MDPConfig config = new BPConfig();
+        McMahanDoubleOracle mdp = new McMahanDoubleOracle(expander, config);
+        mdp.test();
+    }
+
+    private static void runTG() {
+        MDPExpander expander = new TGExpander();
+        MDPConfig config = new TGConfig();
         McMahanDoubleOracle mdp = new McMahanDoubleOracle(expander, config);
         mdp.test();
     }

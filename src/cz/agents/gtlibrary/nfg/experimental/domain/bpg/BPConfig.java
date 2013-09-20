@@ -18,8 +18,8 @@ import java.util.List;
  */
 public class BPConfig extends MDPConfigImpl {
 
-    final private static int MAX_TIME_STEP = 4;
-    final private static double FLAG_PROB = 0.1;
+    public static int MAX_TIME_STEP = 5;
+    public static double FLAG_PROB = 0.1;
 
     public BPConfig() {
         allPlayers = new ArrayList<Player>(2);

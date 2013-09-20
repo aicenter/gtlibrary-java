@@ -131,7 +131,8 @@ public class MDPCoreLP {
     protected void createConstraintForExpValues(IloCplex cplex, Player player, MDPStateActionMarginal opponentsStateAction) throws IloException {
         IloNumExpr sumR = cplex.constant(0);
         IloNumExpr LS = variables.get(opponentsStateAction.getState());
-        assert (LS != null);
+        if (LS == null)
+            assert false;
         Map<MDPState, Double> successors = playerStrategy.get(opponentsStateAction.getPlayer()).getSuccessors(opponentsStateAction);
         for (MDPState s : successors.keySet()) {
             if (variables.containsKey(s)) {
