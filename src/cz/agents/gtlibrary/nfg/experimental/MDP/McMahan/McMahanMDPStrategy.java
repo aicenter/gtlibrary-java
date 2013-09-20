@@ -58,10 +58,11 @@ public class McMahanMDPStrategy extends MDPStrategy {
                     assert false;
                 }
                 putStrategy(mdpsam,newValue + oldValue);
-                Map<MDPState, Double> successors = getSuccessors(mdpsam);
-                for (MDPState s : successors.keySet()) {
-                    queue.addLast(new Pair<MDPState, Double>(s, successors.get(s) * newValue));
-
+                if (newValue + oldValue > 0) {
+                    Map<MDPState, Double> successors = getSuccessors(mdpsam);
+                    for (MDPState s : successors.keySet()) {
+                        queue.addLast(new Pair<MDPState, Double>(s, successors.get(s) * newValue));
+                    }
                 }
             }
         }
@@ -90,12 +91,18 @@ public class McMahanMDPStrategy extends MDPStrategy {
                     value += item.getKey().getStrategyProbability(mdpsam) * item.getValue();
                 }
                 putStrategy(mdpsam,value);
-                for (Map.Entry<MDPState, Double> e : getSuccessors(mdpsam).entrySet()) {
-                    queue.addLast(e.getKey());
-
-                }
+                if (value > 0)
+                    for (Map.Entry<MDPState, Double> e : getSuccessors(mdpsam).entrySet()) {
+                        queue.addLast(e.getKey());
+                    }
             }
         }
+    }
+
+    public Double getStrategyProbability(MDPStateActionMarginal mdpStateActionMarginal) {
+        if (!strategy.containsKey(mdpStateActionMarginal))
+            return 0d;
+        else return strategy.get(mdpStateActionMarginal);
     }
 
     public McMahanMDPStrategy(Player player, MDPConfig config, MDPExpander expander, Map<MDPState, Set<MDPStateActionMarginal>> bestResponse) {
@@ -120,9 +127,11 @@ public class McMahanMDPStrategy extends MDPStrategy {
                 }
                 putStrategy(mdpsam,newValue+oldValue);
 
-                Map<MDPState, Double> successors = getSuccessors(mdpsam);
-                for (MDPState e : successors.keySet()) {
-                    queue.addLast(new Pair<MDPState, Double>(e, successors.get(e) * newValue));
+                if (newValue+oldValue > 0) {
+                    Map<MDPState, Double> successors = getSuccessors(mdpsam);
+                    for (MDPState e : successors.keySet()) {
+                        queue.addLast(new Pair<MDPState, Double>(e, successors.get(e) * newValue));
+                    }
                 }
             }
         }

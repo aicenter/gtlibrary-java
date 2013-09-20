@@ -1,7 +1,6 @@
 package cz.agents.gtlibrary.nfg.experimental.MDP;
 
 import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.nfg.experimental.MDP.core.MDPBestResponse;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
@@ -43,12 +42,16 @@ public class DoubleOracleCostPairedMDP {
     final private static boolean DEBUG = false;
     private ThreadMXBean threadBean ;
 
+    private long BRTIME = 0;
+    private long CPLEXTIME = 0;
+    private long RGCONSTR = 0;
+
     private double gameValue = Double.NaN;
 
     public static void main(String[] args) {
 //		runRG();
-//        runBPG();
-        runTG();
+        runBPG();
+//        runTG();
     }
 
 
@@ -57,17 +60,17 @@ public class DoubleOracleCostPairedMDP {
         this.config = config;
     }
 
-    private static void runBPG() {
+    public static void runBPG() {
         DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(new BPExpander(), new BPConfig());
         mdp.test();
     }
 
-    private static void runRG() {
+    public static void runRG() {
         DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(new RGMDPExpander(), new RGMDPConfig());
         mdp.test();
     }
 
-    private static void runTG() {
+    public static void runTG() {
         DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(new TGExpander(), new TGConfig());
         mdp.test();
     }
@@ -103,18 +106,21 @@ public class DoubleOracleCostPairedMDP {
         MDPFristBetterResponse br2 = new MDPFristBetterResponse(config, config.getAllPlayers().get(1));
 
         while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon() && UB > LB) {
-//        for (int i=0; i<3; i++) {
+//        for (int i=0; i<2; i++) {
 
             debugOutput.println("*********** Iteration = " + (++iterations) + " Bound Interval = " + Math.abs(UB - LB) + " [ " + LB + ";" + UB +  " ]      *************");
 
+            long LpStart = System.nanoTime();
             double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
+            CPLEXTIME += System.nanoTime() - LpStart;
             debugOutput.println("Result: " + r1);
             lp.extractStrategyForPlayer(config.getAllPlayers().get(0));
 //            for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
 //                debugOutput.println(m1 + " = " + firstPlayerStrategy.getStrategy().get(m1));
 //            }
-
+            LpStart = System.nanoTime();
             double r2 = lp.solveForPlayer(config.getAllPlayers().get(1));
+            CPLEXTIME += System.nanoTime() - LpStart;
             debugOutput.println("Result: " + r2);
             lp.extractStrategyForPlayer(config.getAllPlayers().get(1));
 
@@ -123,28 +129,34 @@ public class DoubleOracleCostPairedMDP {
 //            for (MDPStateActionMarginal m : firstPlayerStrategy.getAllActionStates()) {
 //                debugOutput.println("strategy(" + m + "): " + firstPlayerStrategy.getExpandedStrategy(m));
 //            }
-            long ExpStart = System.nanoTime();
+//            long ExpStart = System.nanoTime();
             firstPlayerStrategy.recalculateExpandedStrategy();
-            debugOutput.println("EXPST(MAX) TIME:" + ((System.nanoTime() - ExpStart)/1000000));
-            ExpStart = System.nanoTime();
+//            debugOutput.println("EXPST(MAX) TIME:" + ((System.nanoTime() - ExpStart)/1000000));
+//            ExpStart = System.nanoTime();
             secondPlayerStrategy.recalculateExpandedStrategy();
-            debugOutput.println("EXPST(MIN) TIME:" + ((System.nanoTime() - ExpStart)/1000000));
+//            debugOutput.println("EXPST(MIN) TIME:" + ((System.nanoTime() - ExpStart)/1000000));
 
 //            debugOutput.println(firstPlayerStrategy.getExpandedNonZeroStrategy());
 //            debugOutput.println(secondPlayerStrategy.getExpandedNonZeroStrategy());
 
-            br1.setBound(UB); br1.setCurrentBest(r1);
-            br2.setBound(LB); br2.setCurrentBest(r2);
+            br1.setMDPUpperBound(UB);
+            br1.setMDPLowerBound(LB);
+            br1.setCurrentBest(r1);
+            br2.setMDPUpperBound(LB);
+            br2.setMDPLowerBound(UB);
+            br2.setCurrentBest(r2);
 
 //            firstPlayerStrategy.sanityCheck();
 //            secondPlayerStrategy.sanityCheck();
-//            firstPlayerStrategy.testUtility(secondPlayerStrategy, r1);
+//            secondPlayerStrategy.testUtility(firstPlayerStrategy, r1);
 
             long brStart = System.nanoTime();
             double currentBRValMax = br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy);
+            BRTIME += System.nanoTime() - brStart;
             debugOutput.println("BR(MAX) TIME:" + ((System.nanoTime() - brStart)/1000000));
             brStart = System.nanoTime();
             double currentBRValMin = br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy);
+            BRTIME += System.nanoTime() - brStart;
             debugOutput.println("BR(MIN) TIME:" + ((System.nanoTime() - brStart)/1000000));
             UB = Math.min(UB, currentBRValMax);
             LB = Math.max(LB, currentBRValMin);
@@ -155,9 +167,15 @@ public class DoubleOracleCostPairedMDP {
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions2 = br2.extractBestResponse(secondPlayerStrategy);
 
 //            debugOutput.println(bestResponseActions1);
+            long RGStart = System.nanoTime();
             newActions1 = firstPlayerStrategy.addBRStrategy(firstPlayerStrategy.getRootState(), bestResponseActions1);
+            RGCONSTR += System.nanoTime() - RGStart;
+            debugOutput.println("RG(MAX) TIME:" + ((System.nanoTime() - RGStart)/1000000));
 //            debugOutput.println(bestResponseActions2);
+            RGStart = System.nanoTime();
             newActions2 = secondPlayerStrategy.addBRStrategy(secondPlayerStrategy.getRootState(), bestResponseActions2);
+            RGCONSTR += System.nanoTime() - RGStart;
+            debugOutput.println("RG(MIN) TIME:" + ((System.nanoTime() - RGStart)/1000000));
 //            debugOutput.println(MDPStrategy.getUtilityCache());
 
 //            debugOutput.println("New Actions MAX: " + newActions1);
@@ -177,6 +195,9 @@ public class DoubleOracleCostPairedMDP {
 
         long endTime = System.nanoTime() - startTime;
         debugOutput.println("Overall Time: " + (endTime / 1000000));
+        debugOutput.println("BR Time: " + (BRTIME / 1000000));
+        debugOutput.println("CPLEX Time: " + (CPLEXTIME / 1000000));
+        debugOutput.println("RGConstr Time: " + (RGCONSTR / 1000000));
         debugOutput.println("final size: FirstPlayer Marginal Strategies: " + firstPlayerStrategy.getAllMarginalsInStrategy().size() + " \t SecondPlayer Marginal Strategies: " + secondPlayerStrategy.getAllMarginalsInStrategy().size());
         debugOutput.println("final result:" + UB);
 

@@ -46,8 +46,8 @@ public class FullCostPairedMDP {
 
     public static void main(String[] args) {
 //		runRG();
-//      runBPG();
-        runTG();
+      runBPG();
+//        runTG();
     }
 
     public FullCostPairedMDP(MDPExpander expander, MDPConfig config) {
@@ -55,21 +55,21 @@ public class FullCostPairedMDP {
         this.config = config;
     }
 
-    private static void runBPG() {
+    public static void runBPG() {
         MDPExpander expander = new BPExpander();
         MDPConfig config = new BPConfig();
         FullCostPairedMDP mdp = new FullCostPairedMDP(expander, config);
         mdp.test();
     }
 
-    private static void runRG() {
+    public static void runRG() {
         MDPExpander expander = new RGMDPExpander();
         MDPConfig config = new RGMDPConfig();
         FullCostPairedMDP mdp = new FullCostPairedMDP(expander, config);
         mdp.test();
     }
 
-    private static void runTG() {
+    public static void runTG() {
         MDPExpander expander = new TGExpander();
         MDPConfig config = new TGConfig();
         FullCostPairedMDP mdp = new FullCostPairedMDP(expander, config);

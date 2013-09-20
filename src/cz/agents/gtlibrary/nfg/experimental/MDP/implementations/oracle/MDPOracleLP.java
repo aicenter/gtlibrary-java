@@ -41,7 +41,7 @@ public class MDPOracleLP extends MDPCoreLP {
             updateLPFromStrategies(player, newActions);
         }
         try {
-//            cplex.exportModel("MDP-LP"+player.getId()+".lp");
+            cplex.exportModel("MDP-LP"+player.getId()+".lp");
             cplex.solve();
             if (cplex.getStatus() != IloCplex.Status.Optimal) {
                 System.out.println(cplex.getStatus());

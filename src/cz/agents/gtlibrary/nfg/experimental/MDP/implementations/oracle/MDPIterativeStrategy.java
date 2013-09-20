@@ -30,7 +30,6 @@ public class MDPIterativeStrategy extends MDPStrategy {
     private Map<MDPState, Map<MDPStateActionMarginal, Double>> predecessorMap = new HashMap<MDPState, Map<MDPStateActionMarginal, Double>>();
 
     private Map<MDPStateActionMarginal, Double> expandedNonZeroStrategy = new HashMap<MDPStateActionMarginal, Double>();
-
     private Set<MDPStateActionMarginal> allStatesActions = new HashSet<MDPStateActionMarginal>();
     private MDPStrategy opponentsStrategy = null;
 
@@ -54,40 +53,42 @@ public class MDPIterativeStrategy extends MDPStrategy {
         addBRStrategy(getRootState(), tmp2);
     }
 
+
     private Map<MDPStateActionMarginal, Double> calculateDefaultUtility(MDPState state, double prob, Set<MDPStateActionMarginal> opponentsMarginals, Map<Set<MDPStateActionMarginal>, Double> defUtilityCache) {
         Map<MDPStateActionMarginal, Double> result = new HashMap<MDPStateActionMarginal, Double>();
-        for (MDPStateActionMarginal opAction : opponentsMarginals) {
-            result.put(opAction, 0d);
-        }
 
         if (!hasAllStateASuccessor(state) || getStates().contains(state)) { // terminal state
-//            defaultUtilityCache.put(state, result);
+            for (MDPStateActionMarginal opAction : opponentsMarginals) {
+                result.put(opAction, 0d);
+            }
             return result;
         }
-//        if (defaultUtilityCache.containsKey(state)) {
-//            return defaultUtilityCache.get(state);
-//        }
+
         List<MDPAction> actions = getAllActions(state);
         if (defaultStrategy == DefaultStrategyType.Uniform) {
-            for (MDPAction action : actions) {
-                MDPStateActionMarginal mdp = new MDPStateActionMarginal(state, action);
-                Map<MDPState, Double> successors = getAllSuccessors(mdp);
-                for (MDPState suc : successors.keySet()) {
-                    Map<MDPStateActionMarginal, Double> opSuc = calculateDefaultUtility(suc, successors.get(suc)*prob/actions.size(), opponentsMarginals, defUtilityCache);
-                    for (MDPStateActionMarginal m : opSuc.keySet()) {
-                        double currentActionValue = result.get(m) + opSuc.get(m) + getUtility(mdp, m, defUtilityCache)*successors.get(suc)*prob/actions.size();
-                        result.put(m, currentActionValue);
-                    }
-                }
-            }
+            throw new NotImplementedException();
+//            for (MDPAction action : actions) {
+//                MDPStateActionMarginal mdp = new MDPStateActionMarginal(state, action);
+//                Map<MDPState, Double> successors = getAllSuccessors(mdp);
+//                for (MDPState suc : successors.keySet()) {
+//                    Map<MDPStateActionMarginal, Double> opSuc = calculateDefaultUtility(suc, successors.get(suc)*prob/actions.size(), opponentsMarginals, defUtilityCache);
+//                    for (MDPStateActionMarginal m : opSuc.keySet()) {
+//                        double currentActionValue = result.get(m) + opSuc.get(m)*successors.get(suc) + getUtility(mdp, m, defUtilityCache)*prob/actions.size();
+//                        result.put(m, currentActionValue);
+//                    }
+//                }
+//            }
         } else if (defaultStrategy == DefaultStrategyType.FirstAction) {
             MDPAction action = actions.get(0);
             MDPStateActionMarginal mdp = new MDPStateActionMarginal(state, action);
             Map<MDPState, Double> successors = getAllSuccessors(mdp);
+            for (MDPStateActionMarginal opAction : opponentsMarginals) {
+                result.put(opAction, getUtility(mdp, opAction, defUtilityCache)*prob);
+            }
             for (MDPState suc : successors.keySet()) {
                 Map<MDPStateActionMarginal, Double> opSuc = calculateDefaultUtility(suc, successors.get(suc)*prob, opponentsMarginals, defUtilityCache);
                 for (MDPStateActionMarginal m : opSuc.keySet()) {
-                    double currentActionValue = result.get(m) + opSuc.get(m) + getUtility(mdp, m, defUtilityCache)*successors.get(suc)*prob;
+                    double currentActionValue = result.get(m) + opSuc.get(m);
                     result.put(m, currentActionValue);
                 }
             }
@@ -95,7 +96,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
         }
 
         return result;
-    }
+    }    //*/
 
     @Override
     public List<MDPAction> getActions(MDPState state) {
@@ -138,33 +139,6 @@ public class MDPIterativeStrategy extends MDPStrategy {
     @Override
     public Set<MDPStateActionMarginal> getAllActionStates() {
         return allStatesActions;
-    }
-
-    public Set<MDPStateActionMarginal> addBRStrategy(MDPState startingState, Map<MDPState, Set<MDPStateActionMarginal>> bestResponse) {
-        LinkedList<MDPState> queue = new LinkedList<MDPState>();
-        Set<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
-        queue.add(startingState);
-        while (!queue.isEmpty()) {
-            MDPState state = queue.poll();
-            Set<MDPStateActionMarginal> actions = bestResponse.get(state);
-            if (actions != null && !actions.isEmpty()) {
-                newActions.addAll(addStateAction(state, actions, bestResponse));
-                if (!state.isRoot()) removeDefaultUtilityValues(state);
-                for (MDPStateActionMarginal m : actions) {
-                    for (MDPState s : getAllSuccessors(m).keySet()) {
-                        queue.addLast(s);
-                    }
-                }
-            } else { // there is no continuation in BR
-                if (!hasStateASuccessor(state) && hasAllStateASuccessor(state)) { // we are at the end of RG
-                    Map<MDPState, Set<MDPStateActionMarginal>> tmp = makeMarginalsConvex(state);
-                    if (tmp != null) {
-                        newActions.addAll(addBRStrategy(state, tmp));
-                    }
-                }
-            }
-        }
-        return newActions;
     }
 
     private Map<MDPState, Set<MDPStateActionMarginal>> makeMarginalsConvex(MDPState state) {
@@ -221,50 +195,108 @@ public class MDPIterativeStrategy extends MDPStrategy {
             Map<MDPState, Double> successors = getAllSuccessors(mdpam);
             successorMap.put(mdpam, successors);
 
-            Map<MDPStateActionMarginal, Double> actionUtility = new HashMap<MDPStateActionMarginal, Double>();
-
             for (Map.Entry<MDPState, Double> followingStates : successors.entrySet()) {
                 // adding a new successor to the restricted game
                 Map<MDPStateActionMarginal, Double> p = predecessorMap.get(followingStates.getKey());
                 if (p == null) p = new HashMap<MDPStateActionMarginal, Double>();
                 p.put(mdpam, followingStates.getValue());
                 predecessorMap.put(followingStates.getKey(), p);
-
-                if (bestResponse.containsKey(followingStates.getKey())) continue;
-
-
-                Map<MDPStateActionMarginal, Double> map = calculateDefaultUtility(followingStates.getKey(), 1, opponentsStrategy.getAllActionStates(), null);
-                map = opponentsStrategy.adaptAccordingToDefaultPolicy(mdpam, map);
-//                Map<MDPStateActionMarginal, Double> map = getUtility()
-
-                for (MDPStateActionMarginal OPm : map.keySet()) {
-                    if (!actionUtility.containsKey(OPm)) {
-                        actionUtility.put(OPm, getUtility(mdpam, OPm));
-                    }
-                    double value =  actionUtility.get(OPm) + map.get(OPm);
-                    if (value != 0) {
-                        storeUtilityToCache(mdpam, OPm, value);
-                    }
-                }
             }
-
         }
-
         actionMap.put(state, alreadyActions);
         return newActions;
     }
 
-    private void removeDefaultUtilityValues(MDPState state) {
-        for (Map.Entry<MDPStateActionMarginal, Double> precedingStates : predecessorMap.get(state).entrySet()) {
-            for (MDPStateActionMarginal OPm : opponentsStrategy.getAllMarginalsInStrategy()) {
-                double value = super.getUtility(precedingStates.getKey(), OPm);
-                if (value != 0) {
-                    storeUtilityToCache(precedingStates.getKey(), OPm, value);
-                } else {
-                    removeUtilityFromCache(precedingStates.getKey(), OPm);
+    public Set<MDPStateActionMarginal> addBRStrategy(MDPState startingState, Map<MDPState, Set<MDPStateActionMarginal>> bestResponse) {
+        LinkedList<MDPState> queue = new LinkedList<MDPState>();
+        Set<MDPState> checkStates = new HashSet<MDPState>();
+        Set<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
+        queue.add(startingState);
+        while (!queue.isEmpty()) {
+            MDPState state = queue.poll();
+            Set<MDPStateActionMarginal> actions = bestResponse.get(state);
+            if (actions != null && !actions.isEmpty()) {
+                newActions.addAll(addStateAction(state, actions, bestResponse));
+                for (MDPStateActionMarginal m : actions) {
+                    for (MDPState s : getAllSuccessors(m).keySet()) {
+                        queue.addLast(s);
+                    }
                 }
             }
         }
+        outerloop:
+        for (MDPStateActionMarginal a : new HashSet<MDPStateActionMarginal>(getAllMarginalsInStrategy())) {
+            for (MDPState state : getAllSuccessors(a).keySet()) {
+                if (!hasStateASuccessor(state) && hasAllStateASuccessor(state)) {
+                    Map<MDPState, Set<MDPStateActionMarginal>> tmp = makeMarginalsConvex(state);
+                    if (tmp != null && tmp.size() > 0) {
+                        Set<MDPStateActionMarginal> tmptmp = addBRStrategy(state, tmp);
+                        if (tmptmp != null) {
+                            newActions.addAll(tmptmp);
+                            break outerloop;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (startingState.isRoot()) {
+            for (MDPStateActionMarginal a : getAllMarginalsInStrategy()) {
+                updateUtilityValueForAction(a, opponentsStrategy);
+            }
+        }
+        return newActions;
+    }
+
+    private void updateUtilityValueForAction(MDPStateActionMarginal myAction, MDPStrategy opponentsStrategy) {
+        Map<MDPState, Double> successors = getAllSuccessors(myAction);
+        Map<MDPStateActionMarginal, Double> actionUtility = new HashMap<MDPStateActionMarginal, Double>();
+
+        for (MDPStateActionMarginal OPm : opponentsStrategy.getAllMarginalsInStrategy()) {
+            actionUtility.put(OPm, getUtility(myAction, OPm));
+        }
+
+        for (Map.Entry<MDPState, Double> followingStates : successors.entrySet()) {
+            // adding a new successor to the restricted game
+            Map<MDPStateActionMarginal, Double> p = predecessorMap.get(followingStates.getKey());
+            if (p == null) p = new HashMap<MDPStateActionMarginal, Double>();
+            p.put(myAction, followingStates.getValue());
+            predecessorMap.put(followingStates.getKey(), p);
+
+            if (getStates().contains(followingStates.getKey())) continue;
+
+
+            Map<MDPStateActionMarginal, Double> map = calculateDefaultUtility(followingStates.getKey(), 1, opponentsStrategy.getAllActionStates(), null);
+            map = opponentsStrategy.adaptAccordingToDefaultPolicy(myAction, map);
+
+            for (MDPStateActionMarginal OPm : map.keySet()) {
+                actionUtility.put(OPm, actionUtility.get(OPm) + map.get(OPm)*followingStates.getValue());
+            }
+        }
+
+        for (MDPStateActionMarginal OPm : actionUtility.keySet()) {
+            if (actionUtility.get(OPm) != 0) {
+                storeUtilityToCache(myAction, OPm, actionUtility.get(OPm));
+            } else {
+                removeUtilityFromCache(myAction, OPm);
+            }
+        }
+    }
+
+    private MDPState isThereDefaultStrategyPredecessor(MDPState state, boolean firstCall) {
+        if (state.isRoot()) return null;
+        if (!firstCall && getStates().contains(state)) return state;
+        Map<MDPStateActionMarginal, Double> preds = getAllPredecessors(state);
+        for (MDPStateActionMarginal a : preds.keySet()) {
+            if (!getAllMarginalsInStrategy().contains(a)) { // this action cannot be in RG
+                MDPState predState = a.getState();
+                if (getAllActions(predState).get(0).equals(a)) {
+                    MDPState p = isThereDefaultStrategyPredecessor(predState, false);
+                    if (p != null) return p;
+                }
+            }
+        }
+        return null;
     }
 
     @Override
@@ -302,8 +334,14 @@ public class MDPIterativeStrategy extends MDPStrategy {
     @Override
     public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy) {
         double result = 0;
-        for (MDPStateActionMarginal mdp : ((MDPIterativeStrategy)secondPlayerStrategy).getExpandedNonZeroStrategy().keySet()) {
-            result += getUtility(firstPlayerAction, mdp) * secondPlayerStrategy.getExpandedStrategy(mdp);
+        if (secondPlayerStrategy instanceof MDPIterativeStrategy) {
+            for (MDPStateActionMarginal mdp : ((MDPIterativeStrategy)secondPlayerStrategy).getExpandedNonZeroStrategy().keySet()) {
+                result += getUtility(firstPlayerAction, mdp) * secondPlayerStrategy.getExpandedStrategy(mdp);
+            }
+        } else {
+            for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllMarginalsInStrategy()) {
+                result += getUtility(firstPlayerAction, mdp) * secondPlayerStrategy.getExpandedStrategy(mdp);
+            }
         }
         return result;
     }
@@ -318,6 +356,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
             return defUtilityCache.get(tmp);
         }
     }
+
 
     public Map<MDPStateActionMarginal, Double> adaptAccordingToDefaultPolicy(MDPStateActionMarginal opponentsAction, Map<MDPStateActionMarginal, Double> valuesForOpponentsAction) {
         Map<MDPStateActionMarginal, Double> result = new HashMap<MDPStateActionMarginal, Double>();
@@ -338,7 +377,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
             Map<MDPState, Double> successors = getSuccessors(myActionInStrategy);
             for (MDPState s : successors.keySet()) {
                 if (!hasStateASuccessor(s) && hasAllStateASuccessor(s)) {
-                    value += successors.get(s) * calculateDefaultUtility(s,1,oppActions, tmpUtility).get(opponentsAction);
+                    value += calculateDefaultUtility(s,successors.get(s),oppActions, tmpUtility).get(opponentsAction);
                 } else {
 
                 }
@@ -347,7 +386,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
         }
 
         return result;
-    }
+    }       //*/
 
     public void recalculateExpandedStrategy() {
         if (!USE_EXPST_CACHE) return;
@@ -361,8 +400,9 @@ public class MDPIterativeStrategy extends MDPStrategy {
                 expandedNonZeroStrategy.put(mdpsm, p);
                 Map<MDPState, Double> succ = getSuccessors(mdpsm);
                 for (Map.Entry<MDPState, Double> e : succ.entrySet()) {
-                    if (hasAllStateASuccessor(e.getKey()) && !hasStateASuccessor(e.getKey()))
+                    if (hasAllStateASuccessor(e.getKey()) && !hasStateASuccessor(e.getKey())) {
                         queue.add(new Pair<MDPState, Double>(e.getKey(),p * e.getValue()));
+                    }
                 }
 
             }
@@ -378,12 +418,13 @@ public class MDPIterativeStrategy extends MDPStrategy {
                 MDPStateActionMarginal mdpsam = new MDPStateActionMarginal(state, a);
 
                 if (getStrategyProbability(mdpsam) == null) {
+                    double oldValue = 0d;
                     if ((defaultStrategy == DefaultStrategyType.FirstAction && !actions.get(0).equals(a)) ||
                             (getStates().contains(state))) {
                         continue;
                     } else {
                         if (expandedNonZeroStrategy.get(mdpsam) != null) {
-                            newProb = expandedNonZeroStrategy.get(mdpsam);
+                            oldValue = expandedNonZeroStrategy.get(mdpsam);
                         }
                         if (defaultStrategy == DefaultStrategyType.FirstAction) {
                             // if we are here, we must be in the first action
@@ -395,20 +436,16 @@ public class MDPIterativeStrategy extends MDPStrategy {
                         }
                     }
                     if (newProb != 0) {
-                        expandedNonZeroStrategy.put(mdpsam, newProb);
-                    } else {
-                        if (expandedNonZeroStrategy.containsKey(mdpsam)) { // if it is a zero value and it was stored previously
-                            expandedNonZeroStrategy.remove(mdpsam);
-                        }
-                        continue;
+                        expandedNonZeroStrategy.put(mdpsam, newProb+oldValue);
                     }
 
                 } else {
-                    newProb = getStrategyProbability(mdpsam);
-                    if (newProb != 0) {
-                        if (expandedNonZeroStrategy.containsKey(mdpsam)) newProb += expandedNonZeroStrategy.get(mdpsam);
-                        expandedNonZeroStrategy.put(mdpsam, newProb);
-                    }
+//                    newProb = getStrategyProbability(mdpsam);
+//                    if (newProb != 0) {
+//                        double oldValue = 0d;
+//                        if (expandedNonZeroStrategy.containsKey(mdpsam)) oldValue = expandedNonZeroStrategy.get(mdpsam);
+//                        expandedNonZeroStrategy.put(mdpsam, newProb + oldValue);
+//                    }
                 }
                 if (newProb != 0)
                     for (Map.Entry<MDPState, Double> e : getAllSuccessors(mdpsam).entrySet()) {
@@ -428,6 +465,15 @@ public class MDPIterativeStrategy extends MDPStrategy {
 
     public void sanityCheck() {
         for (MDPStateActionMarginal marginal : getAllActionStates()) {
+            if (getStrategy().containsKey(marginal)) {
+                if (expandedNonZeroStrategy.containsKey(marginal))
+                    assert (Math.abs(getStrategyProbability(marginal) - expandedNonZeroStrategy.get(marginal)) < MDPConfigImpl.getEpsilon());
+                else
+                    assert (getStrategyProbability(marginal) == 0);
+                assert (getStates().contains(marginal.getState()));
+            } else {
+
+            }
             MDPState s = marginal.getState();
             if (s.isRoot()) continue;
             if (!hasAllStateASuccessor(s)) continue;
@@ -437,7 +483,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
             Map<MDPStateActionMarginal, Double> m = getAllPredecessors(s);
             for (MDPStateActionMarginal pred : m.keySet()) {
                 if (expandedNonZeroStrategy.containsKey(pred))
-                    ls += expandedNonZeroStrategy.get(pred);
+                    ls += expandedNonZeroStrategy.get(pred)*m.get(pred);
 
             }
 
@@ -447,17 +493,47 @@ public class MDPIterativeStrategy extends MDPStrategy {
                     rs += expandedNonZeroStrategy.get(suc);
             }
 
-            if (Math.abs(ls - rs) > MDPConfigImpl.getEpsilon())
+            if (Math.abs(ls - rs) > MDPConfigImpl.getEpsilon()) {
+                System.out.println(expandedNonZeroStrategy);
                 assert false;
+            }
         }
     }
 
     public void testUtility(MDPIterativeStrategy otherStrategy, double sol) {
         double utility = 0d;
-        for (MDPStateActionMarginal a1 : expandedNonZeroStrategy.keySet()) {
-            for (MDPStateActionMarginal a2 : otherStrategy.expandedNonZeroStrategy.keySet()) {
-                utility += getUtility(a1,a2)*expandedNonZeroStrategy.get(a1)*otherStrategy.expandedNonZeroStrategy.get(a2);
+        for (MDPStateActionMarginal a1 : getAllMarginalsInStrategy()) {
+            double actionUtility = 0d;
+            for (Map.Entry<MDPState, Double> e : this.getAllSuccessors(a1).entrySet()) {
+                Map<MDPStateActionMarginal, Double> valueMap = null;
+                if (!hasStateASuccessor(e.getKey()) && hasAllStateASuccessor(e.getKey())) {
+                     valueMap = calculateDefaultUtility(e.getKey(), 1d, otherStrategy.expandedNonZeroStrategy.keySet(), null);
+                }
+                if (valueMap != null) {
+                    for (MDPStateActionMarginal a2 : valueMap.keySet()) {
+                        actionUtility += valueMap.get(a2)*otherStrategy.expandedNonZeroStrategy.get(a2)*e.getValue();
+                    }
+                }
             }
+            for (MDPStateActionMarginal a2 : otherStrategy.getAllMarginalsInStrategy()) {
+                if (otherStrategy.expandedNonZeroStrategy.containsKey(a2))
+                    actionUtility += getUtility(a1, a2)*otherStrategy.expandedNonZeroStrategy.get(a2);
+            }
+
+            double actionUtility2 = 0d;
+            for (MDPStateActionMarginal a2 : otherStrategy.getAllMarginalsInStrategy()) {
+                actionUtility2 += getUtilityFromCache(a1, a2)*otherStrategy.getStrategyProbability(a2);
+            }
+            if (Math.abs(actionUtility - actionUtility2) > MDPConfigImpl.getEpsilon()) {
+                assert false;
+            }
+        }
+        for (MDPStateActionMarginal a1 : expandedNonZeroStrategy.keySet()) {
+            double acUt = 0d;
+            for (MDPStateActionMarginal a2 : otherStrategy.expandedNonZeroStrategy.keySet()) {
+                acUt += getUtility(a1,a2)*otherStrategy.expandedNonZeroStrategy.get(a2);
+            }
+            utility += acUt*expandedNonZeroStrategy.get(a1);
         }
         if (Math.abs(utility - sol) > MDPConfigImpl.getEpsilon()) {
             System.out.println(expandedNonZeroStrategy);
@@ -465,4 +541,45 @@ public class MDPIterativeStrategy extends MDPStrategy {
             assert false;
         }
     }
+
+//    public DefaultStrategyType getDefaultStrategy() {
+//        return defaultStrategy;
+//    }
+
+//    public Map<MDPStateActionMarginal, Double> calculateDefaultUtilityFromState(MDPState state, MDPIterativeStrategy opponentsStrategy) {
+//        if (defaultStrategy != DefaultStrategyType.FirstAction) throw new NotImplementedException();
+//        Map<MDPStateActionMarginal, Double> result = new HashMap<MDPStateActionMarginal, Double>();
+//        for (MDPStateActionMarginal opAction : opponentsStrategy.getAllMarginalsInStrategy()) {
+//            result.put(opAction, 0d);
+//        }
+//        if (!hasAllStateASuccessor(state)) { // terminal state
+//            return result;
+//        }
+//        MDPStateActionMarginal mdp = new MDPStateActionMarginal(state, getAllActions(state).get(0));
+//        result = getUtilityForDefault(mdp, opponentsStrategy);
+//        Map<MDPState, Double> successors = getAllSuccessors(mdp);
+//        for (MDPState suc : successors.keySet()) {
+//            Map<MDPStateActionMarginal, Double> map = calculateDefaultUtilityFromState(suc, opponentsStrategy);
+//            for (MDPStateActionMarginal a : result.keySet()) {
+//                result.put(a, result.get(a) + map.get(a)*successors.get(suc));
+//            }
+//        }
+//        return result;
+//    }
+//
+//    public double calculateDefaultUtilityFromMarginal(MDPStateActionMarginal myAction, MDPStateActionMarginal opponentsAction, MDPIterativeStrategy opponentsStrategy) {
+//        double result = getUtility(myAction, opponentsAction) * opponentsStrategy.getExpandedStrategy(opponentsAction);
+//
+//        Map<MDPState, Double> successors = opponentsStrategy.getAllSuccessors(opponentsAction);
+//        for (MDPState suc : successors.keySet()) {
+//            List<MDPAction> actions = opponentsStrategy.getAllActions(suc);
+//            for (MDPAction action : actions) {
+//                MDPStateActionMarginal newAction = new MDPStateActionMarginal(suc, action);
+//                if (opponentsStrategy.expandedNonZeroStrategy.containsKey(newAction))
+//                    result += calculateDefaultUtilityFromMarginal(myAction, newAction, opponentsStrategy);
+//            }
+//        }
+//        return result;
+//    }
+
 }
