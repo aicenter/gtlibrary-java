@@ -55,7 +55,7 @@ public class MDPFristBetterResponse extends MDPBestResponse {
         this.currentBest = currentBest;
     }
 
-    private double calculateBRValue(MDPState state, MDPStrategy myStrategy, MDPStrategy opponentStrategy, double lowerBound, double probability) {
+    private double calculateBRValue(MDPState state, MDPStrategy myStrategy, MDPStrategy opponentStrategy, double alpha, double probability) {
 
         if (!myStrategy.hasAllStateASuccessor(state)) { // terminal state
             return 0;
@@ -81,8 +81,8 @@ public class MDPFristBetterResponse extends MDPBestResponse {
             // evaluating this action
             for (MDPState suc : successors.keySet()) {
                 if (PRUNING) {
-                    if ((getPlayer().getId() == 0 && currentActionValue + thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer()) < Math.max(lowerBound, bestValue)) ||
-                        (getPlayer().getId() == 1 && currentActionValue + thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer()) > Math.min(lowerBound, bestValue))) {
+                    if ((getPlayer().getId() == 0 && currentActionValue + thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer()) < Math.max(alpha, bestValue)) ||
+                        (getPlayer().getId() == 1 && currentActionValue + thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer()) > Math.min(alpha, bestValue))) {
                         // this action cannot be better than best action in this state -- we can skip the remaining successors and proceed with another action
                         currentActionValue = (getPlayer().getId() == 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
                         break;
@@ -91,8 +91,8 @@ public class MDPFristBetterResponse extends MDPBestResponse {
                 thisCNRemProb = thisCNRemProb - successors.get(suc);
                 double currentLB = (getPlayer().getId() == 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
                 if (PRUNING) {
-                    if (getPlayer().getId() == 0) currentLB = Math.max(lowerBound, bestValue) - thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer());
-                    if (getPlayer().getId() == 1) currentLB = Math.min(lowerBound, bestValue) + thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer());
+                    if (getPlayer().getId() == 0) currentLB = Math.max(alpha, bestValue) - thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer());
+                    if (getPlayer().getId() == 1) currentLB = Math.min(alpha, bestValue) + thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer());
                 }
                 currentActionValue += calculateBRValue(suc, myStrategy, opponentStrategy, currentLB, probability * successors.get(suc)) * successors.get(suc);
             }

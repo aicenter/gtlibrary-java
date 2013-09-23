@@ -173,14 +173,15 @@ public class DoubleOracleCostPairedMDP {
             RGCONSTR += System.nanoTime() - RGStart;
             debugOutput.println("RG(MAX) TIME:" + ((System.nanoTime() - RGStart)/1000000));
 //            debugOutput.println(bestResponseActions2);
+//            debugOutput.println(MDPStrategy.getUtilityCache());
             RGStart = System.nanoTime();
             newActions2 = secondPlayerStrategy.addBRStrategy(secondPlayerStrategy.getRootState(), bestResponseActions2);
             RGCONSTR += System.nanoTime() - RGStart;
             debugOutput.println("RG(MIN) TIME:" + ((System.nanoTime() - RGStart)/1000000));
 //            debugOutput.println(MDPStrategy.getUtilityCache());
 
-//            debugOutput.println("New Actions MAX: " + newActions1);
-//            debugOutput.println("New Actions MIN: " + newActions2);
+            debugOutput.println("New Actions MAX: " + newActions1);
+            debugOutput.println("New Actions MIN: " + newActions2);
 
             HashSet<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
             newActions.addAll(newActions1);
