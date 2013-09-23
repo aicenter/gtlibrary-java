@@ -182,6 +182,6 @@ public class TGState extends MDPStateImpl {
 
     @Override
     public int horizon() {
-        return TGConfig.getMaxTimeStep() - getTimeStep();
+        return TGConfig.getMaxTimeStep() - getTimeStep() + 1;
     }
 }

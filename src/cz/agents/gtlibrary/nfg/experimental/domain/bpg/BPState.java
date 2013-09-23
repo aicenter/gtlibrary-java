@@ -258,6 +258,6 @@ public class BPState extends MDPStateImpl {
 
     @Override
     public int horizon() {
-        return BPConfig.getMaxTimeStep() - getTimeStep();
+        return BPConfig.getMaxTimeStep() - getTimeStep() + 1;
     }
 }

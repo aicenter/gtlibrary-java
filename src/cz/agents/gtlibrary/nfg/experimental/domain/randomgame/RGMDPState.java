@@ -103,6 +103,6 @@ public class RGMDPState extends MDPStateImpl {
 
     @Override
     public int horizon() {
-        return RGMDPConfig.getMaxSteps() - getStep();
+        return RGMDPConfig.getMaxSteps() - getStep() + 1;
     }
 }

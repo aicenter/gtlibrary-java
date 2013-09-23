@@ -106,7 +106,7 @@ public class DoubleOracleCostPairedMDP {
         MDPFristBetterResponse br2 = new MDPFristBetterResponse(config, config.getAllPlayers().get(1));
 
         while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon() && UB > LB) {
-//        for (int i=0; i<2; i++) {
+//        for (int i=0; i<8; i++) {
 
             debugOutput.println("*********** Iteration = " + (++iterations) + " Bound Interval = " + Math.abs(UB - LB) + " [ " + LB + ";" + UB +  " ]      *************");
 
@@ -148,7 +148,8 @@ public class DoubleOracleCostPairedMDP {
 
 //            firstPlayerStrategy.sanityCheck();
 //            secondPlayerStrategy.sanityCheck();
-//            secondPlayerStrategy.testUtility(firstPlayerStrategy, r1);
+//            firstPlayerStrategy.testUtility(secondPlayerStrategy, r1);
+//            secondPlayerStrategy.testUtility(firstPlayerStrategy, r2);
 
             long brStart = System.nanoTime();
             double currentBRValMax = br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy);

@@ -26,7 +26,8 @@ public class BPExpander extends MDPExpanderImpl {
     @Override
     public List<MDPAction> getActions(MDPState state) {
         List<MDPAction> result = new ArrayList<MDPAction>();
-
+        if (state.isTerminal())
+            return result;
         if (state.isRoot()) {
             if (state.getPlayer().getId() == 0) {
                 BPAction.UnitMove m = new BPAction.UnitMove(0, -1, -1);
