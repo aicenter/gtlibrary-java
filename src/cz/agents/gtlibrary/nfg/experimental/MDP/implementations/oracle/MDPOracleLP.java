@@ -41,7 +41,7 @@ public class MDPOracleLP extends MDPCoreLP {
             updateLPFromStrategies(player, newActions);
         }
         try {
-            cplex.exportModel("MDP-LP"+player.getId()+".lp");
+//            cplex.exportModel("MDP-LP"+player.getId()+".lp");
             cplex.solve();
             if (cplex.getStatus() != IloCplex.Status.Optimal) {
                 System.out.println(cplex.getStatus());
@@ -169,7 +169,8 @@ public class MDPOracleLP extends MDPCoreLP {
             if (utValue != 0) {
                 sumR = cplex.sum(sumR, cplex.prod(x, utValue));
             }
-            if (playerStrategy.get(player).getSuccessors(myActions) == null && playerStrategy.get(player).hasAllStateASuccessor(myActions.getState())) {
+            if ((playerStrategy.get(player).getSuccessors(myActions) == null || playerStrategy.get(player).getAllSuccessors(myActions).size() > playerStrategy.get(player).getSuccessors(myActions).size()) ||
+                (playerStrategy.get(config.getOtherPlayer(player)).getSuccessors(opponentsStateAction) == null || playerStrategy.get(config.getOtherPlayer(player)).getAllSuccessors(opponentsStateAction).size() > playerStrategy.get(config.getOtherPlayer(player)).getSuccessors(opponentsStateAction).size())) {
                 // we remember only actions that currently do not have a successor, but there is one in the original game
                 rememberThisConstraintForActions.add(myActions);
             }

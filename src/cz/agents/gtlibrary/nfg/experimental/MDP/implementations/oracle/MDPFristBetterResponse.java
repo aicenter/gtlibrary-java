@@ -21,7 +21,7 @@ public class MDPFristBetterResponse extends MDPBestResponse {
 
     public static boolean USE_FIRST_BT = true;
     public static boolean SAVE_DEF = false;
-    public static boolean PRUNING = false;
+    public static boolean PRUNING = true;
 
     private double MDPUpperBound = 0;
     private double MDPLowerBound = 0;

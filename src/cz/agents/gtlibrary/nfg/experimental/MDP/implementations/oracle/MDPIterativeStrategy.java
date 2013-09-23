@@ -241,7 +241,13 @@ public class MDPIterativeStrategy extends MDPStrategy {
         }
 
         if (startingState.isRoot()) {
+//            for (MDPStateActionMarginal a : newActions) {
             for (MDPStateActionMarginal a : getAllMarginalsInStrategy()) {
+//                if (!a.getState().isRoot()) {
+//                    for (MDPStateActionMarginal pa : getPredecessors(a.getState()).keySet()) {
+//                        updateUtilityValueForAction(pa, opponentsStrategy);
+//                    }
+//                }
                 updateUtilityValueForAction(a, opponentsStrategy);
             }
         }
@@ -515,7 +521,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
                     }
                 }
             }
-            for (MDPStateActionMarginal a2 : otherStrategy.getAllMarginalsInStrategy()) {
+            for (MDPStateActionMarginal a2 : otherStrategy.expandedNonZeroStrategy.keySet()) {
                 if (otherStrategy.expandedNonZeroStrategy.containsKey(a2))
                     actionUtility += getUtility(a1, a2)*otherStrategy.expandedNonZeroStrategy.get(a2);
             }
@@ -525,6 +531,11 @@ public class MDPIterativeStrategy extends MDPStrategy {
                 actionUtility2 += getUtilityFromCache(a1, a2)*otherStrategy.getStrategyProbability(a2);
             }
             if (Math.abs(actionUtility - actionUtility2) > MDPConfigImpl.getEpsilon()) {
+                System.out.println(getUtilityCache());
+                System.out.println(expandedNonZeroStrategy);
+                System.out.println(getStrategy());
+                System.out.println(otherStrategy.expandedNonZeroStrategy);
+                System.out.println(otherStrategy.getStrategy());
                 assert false;
             }
         }
@@ -537,7 +548,9 @@ public class MDPIterativeStrategy extends MDPStrategy {
         }
         if (Math.abs(utility - sol) > MDPConfigImpl.getEpsilon()) {
             System.out.println(expandedNonZeroStrategy);
+            System.out.println(getStrategy());
             System.out.println(otherStrategy.expandedNonZeroStrategy);
+            System.out.println(otherStrategy.getStrategy());
             assert false;
         }
     }

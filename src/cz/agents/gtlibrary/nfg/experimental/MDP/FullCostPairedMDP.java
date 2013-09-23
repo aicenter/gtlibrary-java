@@ -91,8 +91,8 @@ public class FullCostPairedMDP {
 //        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
 //            debugOutput.println(m1 + " sucessors:" + firstPlayerStrategy.getSuccessors(m1));
 //            if (!m1.getState().isRoot()) debugOutput.println("Predecessors:" + firstPlayerStrategy.getPredecessors(m1.getState()));
+//
 //        }
-
         long p2StrategyGeneration = System.nanoTime();
         secondPlayerStrategy.generateCompleteStrategy();
         p2StrategyGeneration = (System.nanoTime() - p2StrategyGeneration)/1000000;
@@ -111,6 +111,16 @@ public class FullCostPairedMDP {
                 assert (config.getUtility(m1, m2) == config.getUtility(m2, m1));
             }
         } //*/
+
+//        for (MDPState s : firstPlayerStrategy.getStates()) {
+//            debugOutput.println(s + ": " + s.horizon());
+//        }
+//
+//        for (MDPState s : secondPlayerStrategy.getStates()) {
+//            debugOutput.println(s + ": " + s.horizon());
+//        }
+//
+//        if (1 == 1) return;
 
 //        debugOutput.println(secondPlayerStrategy.getSuccessors(new MDPStateActionMarginal(secondPlayerStrategy.getRootState(), secondPlayerStrategy.getActions(secondPlayerStrategy.getRootState()).get(0))));
 
