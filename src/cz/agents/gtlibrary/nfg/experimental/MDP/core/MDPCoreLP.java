@@ -148,9 +148,9 @@ public class MDPCoreLP {
         }
 
         if (player.getId() == 0) {
-            constraints.put(opponentsStateAction, cplex.addLe(cplex.diff(LS, sumR), 0));
+            constraints.put(opponentsStateAction, cplex.addLe(cplex.diff(LS, sumR), 0, opponentsStateAction.toString()));
         } else {
-            constraints.put(opponentsStateAction, cplex.addGe(cplex.diff(LS, sumR), 0));
+            constraints.put(opponentsStateAction, cplex.addGe(cplex.diff(LS, sumR), 0, opponentsStateAction.toString()));
         }
     }
 
@@ -187,7 +187,7 @@ public class MDPCoreLP {
             assert hasLS;
         }
 
-        constraints.put(state, cplex.addEq(cplex.diff(LS,RS),0));
+        constraints.put(state, cplex.addEq(cplex.diff(LS,RS),0, state.toString()));
     }
 
     public void extractStrategyForPlayer(Player player) {
