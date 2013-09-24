@@ -196,11 +196,26 @@ public class DoubleOracleCostPairedMDP {
         }
 
         long endTime = System.nanoTime() - startTime;
+
+        int p1SupportSize = 0;
+        int p2SupportSize = 0;
+        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
+            if (firstPlayerStrategy.getStrategyProbability(m1) > MDPConfigImpl.getEpsilon())
+                p1SupportSize++;
+        }
+        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getAllMarginalsInStrategy()) {
+            if (secondPlayerStrategy.getStrategyProbability(m2) > MDPConfigImpl.getEpsilon())
+                p2SupportSize++;
+        }
+
         debugOutput.println("Overall Time: " + (endTime / 1000000));
         debugOutput.println("BR Time: " + (BRTIME / 1000000));
         debugOutput.println("CPLEX Time: " + (CPLEXTIME / 1000000));
         debugOutput.println("RGConstr Time: " + (RGCONSTR / 1000000));
+        debugOutput.println("Building LP Time: " + (lp.getBUILDING_LP_TIME()/ 1000000));
+        debugOutput.println("Solving LP Time: " + (lp.getSOLVING_LP_TIME()/ 1000000));
         debugOutput.println("final size: FirstPlayer Marginal Strategies: " + firstPlayerStrategy.getAllMarginalsInStrategy().size() + " \t SecondPlayer Marginal Strategies: " + secondPlayerStrategy.getAllMarginalsInStrategy().size());
+        debugOutput.println("final size: FirstPlayer Support: " + p1SupportSize + " \t SecondPlayer Support: " + p2SupportSize);
         debugOutput.println("final result:" + UB);
 
         try {
