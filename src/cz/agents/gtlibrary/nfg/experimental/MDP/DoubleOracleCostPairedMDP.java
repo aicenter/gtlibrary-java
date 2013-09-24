@@ -50,8 +50,8 @@ public class DoubleOracleCostPairedMDP {
 
     public static void main(String[] args) {
 //		runRG();
-//        runBPG();
-        runTG();
+        runBPG();
+//        runTG();
     }
 
 
