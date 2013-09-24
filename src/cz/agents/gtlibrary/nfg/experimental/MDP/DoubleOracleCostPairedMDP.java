@@ -50,8 +50,8 @@ public class DoubleOracleCostPairedMDP {
 
     public static void main(String[] args) {
 //		runRG();
-        runBPG();
-//        runTG();
+//        runBPG();
+        runTG();
     }
 
 
@@ -180,8 +180,8 @@ public class DoubleOracleCostPairedMDP {
             debugOutput.println("RG(MIN) TIME:" + ((System.nanoTime() - RGStart)/1000000));
 //            debugOutput.println(MDPStrategy.getUtilityCache());
 
-            debugOutput.println("New Actions MAX: " + newActions1);
-            debugOutput.println("New Actions MIN: " + newActions2);
+//            debugOutput.println("New Actions MAX: " + newActions1);
+//            debugOutput.println("New Actions MIN: " + newActions2);
 
             HashSet<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
             newActions.addAll(newActions1);

@@ -46,8 +46,8 @@ public class FullCostPairedMDP {
 
     public static void main(String[] args) {
 //		runRG();
-      runBPG();
-//        runTG();
+//      runBPG();
+        runTG();
     }
 
     public FullCostPairedMDP(MDPExpander expander, MDPConfig config) {
