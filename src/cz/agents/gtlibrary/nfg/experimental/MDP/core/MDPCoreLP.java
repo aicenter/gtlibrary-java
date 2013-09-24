@@ -33,6 +33,8 @@ public class MDPCoreLP {
 
     private Map<Player, IloCplex> lpModels = new HashMap<Player, IloCplex>();
     private Map<Player, IloNumVar> objectives = new HashMap<Player, IloNumVar>();
+    protected long BUILDING_LP_TIME = 0;
+    protected long SOLVING_LP_TIME = 0;
 //    private Collection<Player> allPlayers = null;
 
 
@@ -68,11 +70,14 @@ public class MDPCoreLP {
 
     public double solveForPlayer(Player player) {
         IloCplex cplex = lpModels.get(player);
+        long start = System.nanoTime();
         buildLPFromStrategies(player);
-
+        BUILDING_LP_TIME += System.nanoTime() - start;
         try {
 //            cplex.exportModel("MDP-LP"+player.getId()+".lp");
+            start = System.nanoTime();
             cplex.solve();
+            SOLVING_LP_TIME += System.nanoTime() - start;
 
             if (cplex.getStatus() != IloCplex.Status.Optimal) {
                 System.out.println(cplex.getStatus());
@@ -218,5 +223,13 @@ public class MDPCoreLP {
 
     public void setFinalValue(double finalValue) {
         this.finalValue = finalValue;
+    }
+
+    public long getBUILDING_LP_TIME() {
+        return BUILDING_LP_TIME;
+    }
+
+    public long getSOLVING_LP_TIME() {
+        return SOLVING_LP_TIME;
     }
 }
