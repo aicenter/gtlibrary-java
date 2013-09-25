@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle;
 
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.experimental.MDP.core.MDPBestResponse;
+import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
@@ -31,6 +32,7 @@ public class MDPFristBetterResponse extends MDPBestResponse {
 
     private Map<MDPState, Double> cachedLowerBounds = new HashMap<MDPState, Double>();
     private Map<MDPState, Boolean> cachedIsChange = new HashMap<MDPState, Boolean>();
+    private Map<MDPState, Pair<Double, Double>> cachedValues = new HashMap<MDPState, Pair<Double, Double>>();
 
     public MDPFristBetterResponse(MDPConfig config, Player player) {
         super(config, player);
@@ -41,8 +43,14 @@ public class MDPFristBetterResponse extends MDPBestResponse {
         cachedLowerBounds.clear();
         bestResponseData.clear();
         stopSearch = false;
+        USE_FIRST_BT = USE_FIRST_BT & (Math.abs(currentBest) < Double.POSITIVE_INFINITY);
 //        MDPLowerBound = getLowerBound(myStrategy.getRootState(), myStrategy, opponentStrategy);
-        return calculateBRValue(myStrategy.getRootState(), myStrategy, opponentStrategy, MDPLowerBound, 1d).getLeft();
+        Pair<Pair<Double, Double>, Boolean> result = calculateBRValue(myStrategy.getRootState(), myStrategy, opponentStrategy, MDPLowerBound, 1d);
+        if (stopSearch) {
+            return currentBest;
+        } else {
+            return result.getLeft().getLeft();
+        }
     }
 
     public void setMDPUpperBound(double MDPUpperBound) {
@@ -57,20 +65,22 @@ public class MDPFristBetterResponse extends MDPBestResponse {
         this.currentBest = currentBest;
     }
 
-    private Pair<Double, Boolean> calculateBRValue(MDPState state, MDPStrategy myStrategy, MDPStrategy opponentStrategy, double alpha, double probability) {
+    // returns <<best value, original value (given current strategy; null if not applicable)>, false/true if there is a change from default strategy
+    private Pair<Pair<Double, Double>, Boolean> calculateBRValue(MDPState state, MDPStrategy myStrategy, MDPStrategy opponentStrategy, double alpha, double probability) {
 
         if (!myStrategy.hasAllStateASuccessor(state)) { // terminal state
-            return new Pair<Double, Boolean>(0d, false);
+            return new Pair<Pair<Double, Double>, Boolean>(new Pair<Double, Double>(0d, 0d), false);
         }
 
         if (cachedValues.containsKey(state)) {
-            return new Pair<Double, Boolean>(cachedValues.get(state), cachedIsChange.get(state));
+            return new Pair<Pair<Double, Double>, Boolean>(cachedValues.get(state), cachedIsChange.get(state));
         }
 
-//        if (USE_FIRST_BT && stopSearch) return getLowerBound(state, myStrategy, opponentStrategy);
+        if (USE_FIRST_BT && stopSearch) return new Pair<Pair<Double, Double>, Boolean>(new Pair<Double, Double>(0d,0d), false);
 
         boolean changed = false;
-
+        double outgoingOriginalProbability = 0d;
+        Double originalUtility = 0d;
         MDPAction bestAction = null;
         double bestValue = (getPlayer().getId() == 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
 
@@ -80,6 +90,13 @@ public class MDPFristBetterResponse extends MDPBestResponse {
             double currentActionValue = myStrategy.getUtility(mdp, opponentStrategy);
             Map<MDPState, Double> successors = myStrategy.getAllSuccessors(mdp);
             double thisCNRemProb = 1d;
+
+            if (myStrategy.getExpandedStrategy(mdp) > MDPConfigImpl.getEpsilon()/10)
+                outgoingOriginalProbability += myStrategy.getExpandedStrategy(mdp);
+
+            if (originalUtility != null) {
+                originalUtility += currentActionValue * myStrategy.getExpandedStrategy(mdp);
+            }
 
             // evaluating this action
             for (MDPState suc : successors.keySet()) {
@@ -97,9 +114,23 @@ public class MDPFristBetterResponse extends MDPBestResponse {
                     if (getPlayer().getId() == 0) currentLB = Math.max(alpha, bestValue) - thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer());
                     if (getPlayer().getId() == 1) currentLB = Math.min(alpha, bestValue) + thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer());
                 }
-                Pair<Double, Boolean> recursive = calculateBRValue(suc, myStrategy, opponentStrategy, currentLB, probability * successors.get(suc));
+                Pair<Pair<Double, Double>, Boolean> recursive = calculateBRValue(suc, myStrategy, opponentStrategy, currentLB, probability * successors.get(suc));
+                if (recursive.getLeft().getRight() != null) {
+//                    if (myStrategy.getExpandedStrategy(mdp) > MDPConfigImpl.getEpsilon())
+//                        assert false;
+//                    originalUtility = null;
+//                }
+//                if (originalUtility != null) {
+                    originalUtility += recursive.getLeft().getRight() * myStrategy.getExpandedStrategy(mdp) * successors.get(suc);
+                }
                 changed = changed | recursive.getRight();
-                currentActionValue += recursive.getLeft() * successors.get(suc);
+                currentActionValue += recursive.getLeft().getLeft() * successors.get(suc);
+            }
+
+            if (stopSearch) {
+                bestAction = action;
+                bestValue = currentActionValue;
+                break;
             }
 
             // is this action better?
@@ -110,18 +141,28 @@ public class MDPFristBetterResponse extends MDPBestResponse {
             }
         }
 
+        if (outgoingOriginalProbability < MDPConfigImpl.getEpsilon())
+            originalUtility = null;
+
         if (bestAction != null) {
             if (!SAVE_DEF && !changed && !myStrategy.hasStateASuccessor(state) && bestAction.equals(actions.get(0))) changed = false;
             else changed = true;
             if (changed) {
                 bestResponseData.put(state, bestAction);
             }
+            if (USE_FIRST_BT && originalUtility != null) {
+                if ((getPlayer().getId() == 0 && bestValue > originalUtility) ||
+                    (getPlayer().getId() == 1 && bestValue < originalUtility)) {
+                        stopSearch = true;
+                        currentBest = currentBest - originalUtility + bestValue * outgoingOriginalProbability;
+                }
+            }
         } else {
             bestValue = getLowerBound(state, myStrategy, opponentStrategy);
         }
-        cachedValues.put(state, bestValue);
+        cachedValues.put(state, new Pair<Double, Double>(bestValue, originalUtility));
         cachedIsChange.put(state, changed);
-        return new Pair<Double, Boolean>(bestValue,changed);
+        return new Pair<Pair<Double, Double>, Boolean>(new Pair<Double, Double>(bestValue, originalUtility),changed);
     }
 
     private double getLowerBound(MDPState state, MDPStrategy myStrategy, MDPStrategy opponentStrategy) {

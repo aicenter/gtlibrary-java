@@ -22,6 +22,8 @@ import java.util.Map.Entry;
  */
 public class MDPOracleLP extends MDPCoreLP {
 
+    private static boolean SAVELP = false;
+
 //    protected Map<Object, IloRange> constraints = new HashMap<Object, IloRange>();
 //    protected Map<Object, IloNumVar> variables = new HashMap<Object, IloNumVar>();
     protected Set<MDPStateActionMarginal> newActions = null;
@@ -43,7 +45,7 @@ public class MDPOracleLP extends MDPCoreLP {
         }
         BUILDING_LP_TIME += System.nanoTime() - start;
         try {
-//            cplex.exportModel("MDP-LP"+player.getId()+".lp");
+            if (SAVELP) cplex.exportModel("MDP-LP"+player.getId()+".lp");
             start = System.nanoTime();
             cplex.solve();
             SOLVING_LP_TIME += System.nanoTime() - start;
@@ -164,8 +166,8 @@ public class MDPOracleLP extends MDPCoreLP {
             if (utValue != 0) {
                 sumR = cplex.sum(sumR, cplex.prod(x, utValue));
             }
-            if ((playerStrategy.get(player).getSuccessors(myActions) == null || playerStrategy.get(player).getAllSuccessors(myActions).size() > playerStrategy.get(player).getSuccessors(myActions).size()) ||
-                (playerStrategy.get(config.getOtherPlayer(player)).getSuccessors(opponentsStateAction) == null || playerStrategy.get(config.getOtherPlayer(player)).getAllSuccessors(opponentsStateAction).size() > playerStrategy.get(config.getOtherPlayer(player)).getSuccessors(opponentsStateAction).size())) {
+
+            if (!playerStrategy.get(player).isActionFullyExpandedInRG(myActions) || !playerStrategy.get(config.getOtherPlayer(player)).isActionFullyExpandedInRG(opponentsStateAction)) {
                 // we remember only actions that currently do not have a successor, but there is one in the original game
                 rememberThisConstraintForActions.add(myActions);
             }
