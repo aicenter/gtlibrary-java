@@ -514,6 +514,17 @@ public class MDPIterativeStrategy extends MDPStrategy {
     }
 
     public void testUtility(MDPIterativeStrategy otherStrategy, double sol) {
+//        if (getUtilityCache().size() > getAllMarginalsInStrategy().size() * otherStrategy.getAllMarginalsInStrategy().size())
+//            assert false;
+//        for (MDPStateActionMarginal a1 : getAllMarginalsInStrategy()) {
+//            for (MDPStateActionMarginal a2 : otherStrategy.getAllMarginalsInStrategy()) {
+//                double utility = getUtility(a1, a2);
+//                if (getAllSuccessors(a1).size() == getSuccessors(a1).size() && otherStrategy.getAllSuccessors(a2).size() == otherStrategy.getSuccessors(a2).size())
+//                    assert (utility == getUtilityFromCache(a1, a2));
+//            }
+//        }
+
+
         double utility = 0d;
         for (MDPStateActionMarginal a1 : getAllMarginalsInStrategy()) {
             double actionUtility = 0d;
@@ -563,10 +574,10 @@ public class MDPIterativeStrategy extends MDPStrategy {
     }
 
     public boolean isFullyExpandedInRG(MDPState state) {
-        if (state.isTerminal()) return false;
+        if (state.isTerminal()) return true;
         if (!actionMap.containsKey(state)) {
-            if (hasAllStateASuccessor(state)) return true;
-            else return false;
+            if (hasAllStateASuccessor(state)) return false;
+            else return true;
         } else {
             if (actionMap.get(state).size() < getAllActions(state).size()) return true;
             HashSet<MDPState> succs = new HashSet<MDPState>();
@@ -580,5 +591,28 @@ public class MDPIterativeStrategy extends MDPStrategy {
             }
             return false;
         }
+    }
+
+    public boolean isActionFullyExpandedInRG(MDPStateActionMarginal marginal) {
+        boolean result = true;
+
+        if (getSuccessors(marginal) == null) {
+            if (getAllSuccessors(marginal) == null) result = true;
+            else result = false;
+        } else {
+            if (getSuccessors(marginal).keySet().size() < getAllSuccessors(marginal).size()) result = false;
+            else if (getSuccessors(marginal).keySet().size() > getAllSuccessors(marginal).size())
+                assert false;
+            else {
+                for (MDPState suc : getSuccessors(marginal).keySet()) {
+                    if (!getStates().contains(suc)) {
+                        result = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 }

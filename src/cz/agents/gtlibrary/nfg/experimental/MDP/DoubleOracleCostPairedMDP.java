@@ -141,10 +141,10 @@ public class DoubleOracleCostPairedMDP {
 
             br1.setMDPUpperBound(UB);
             br1.setMDPLowerBound(LB);
-            br1.setCurrentBest(r1);
+            br1.setCurrentBest(UB);
             br2.setMDPUpperBound(LB);
             br2.setMDPLowerBound(UB);
-            br2.setCurrentBest(r2);
+            br2.setCurrentBest(LB);
 
 //            firstPlayerStrategy.sanityCheck();
 //            secondPlayerStrategy.sanityCheck();

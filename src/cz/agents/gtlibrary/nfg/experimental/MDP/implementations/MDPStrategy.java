@@ -268,4 +268,8 @@ public class MDPStrategy implements PureStrategy{
     public Map<MDPStateActionMarginal, Double> adaptAccordingToDefaultPolicy(MDPStateActionMarginal opponentsAction, Map<MDPStateActionMarginal, Double> valuesForOpponentsAction) {
         return valuesForOpponentsAction;
     }
+
+    public boolean isActionFullyExpandedInRG(MDPStateActionMarginal marginal) {
+        return true;
+    }
 }
