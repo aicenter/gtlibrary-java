@@ -43,11 +43,11 @@ public class MDPFristBetterResponse extends MDPBestResponse {
         cachedLowerBounds.clear();
         bestResponseData.clear();
         stopSearch = false;
-        USE_FIRST_BT = USE_FIRST_BT & (Math.abs(currentBest) < Double.POSITIVE_INFINITY);
+        USE_FIRST_BT = USE_FIRST_BT & (Math.abs(MDPUpperBound) < Double.POSITIVE_INFINITY);
 //        MDPLowerBound = getLowerBound(myStrategy.getRootState(), myStrategy, opponentStrategy);
         Pair<Pair<Double, Double>, Boolean> result = calculateBRValue(myStrategy.getRootState(), myStrategy, opponentStrategy, MDPLowerBound, 1d);
         if (stopSearch) {
-            return currentBest;
+            return MDPUpperBound;
         } else {
             return result.getLeft().getLeft();
         }
