@@ -78,15 +78,16 @@ public class FullCostPairedMDP {
     }
 
     private void test() {
-        long startTime = System.nanoTime();
+        threadBean = ManagementFactory.getThreadMXBean();
+        long startTime = threadBean.getCurrentThreadCpuTime();
         threadBean = ManagementFactory.getThreadMXBean();
         memoryBean = ManagementFactory.getMemoryMXBean();
         debugOutput.println("Testing Full CostPaired MDP.");
         firstPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(0),config,expander);
         secondPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(1),config,expander);
-        long p1StrategyGeneration = System.nanoTime();
+        long p1StrategyGeneration = threadBean.getCurrentThreadCpuTime();
         firstPlayerStrategy.generateCompleteStrategy();
-        p1StrategyGeneration = (System.nanoTime() - p1StrategyGeneration)/1000000;
+        p1StrategyGeneration = (threadBean.getCurrentThreadCpuTime() - p1StrategyGeneration)/1000000;
         debugOutput.println("P1 Strategy generation : " + p1StrategyGeneration);
 
 //        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
@@ -94,9 +95,9 @@ public class FullCostPairedMDP {
 //            if (!m1.getState().isRoot()) debugOutput.println("Predecessors:" + firstPlayerStrategy.getPredecessors(m1.getState()));
 //
 //        }
-        long p2StrategyGeneration = System.nanoTime();
+        long p2StrategyGeneration = threadBean.getCurrentThreadCpuTime();
         secondPlayerStrategy.generateCompleteStrategy();
-        p2StrategyGeneration = (System.nanoTime() - p2StrategyGeneration)/1000000;
+        p2StrategyGeneration = (threadBean.getCurrentThreadCpuTime() - p2StrategyGeneration)/1000000;
         debugOutput.println("P2 Strategy generation : " + p2StrategyGeneration);
 
 //        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getAllMarginalsInStrategy()) {
@@ -125,9 +126,9 @@ public class FullCostPairedMDP {
 
 //        debugOutput.println(secondPlayerStrategy.getSuccessors(new MDPStateActionMarginal(secondPlayerStrategy.getRootState(), secondPlayerStrategy.getActions(secondPlayerStrategy.getRootState()).get(0))));
 
-        long utilityStrategyGeneration = System.nanoTime();
+        long utilityStrategyGeneration = threadBean.getCurrentThreadCpuTime();
 //        firstPlayerStrategy.storeAllUtilityToCache(firstPlayerStrategy.getAllActionStates(), secondPlayerStrategy.getAllActionStates());
-        utilityStrategyGeneration = (System.nanoTime() - utilityStrategyGeneration)/1000000;
+        utilityStrategyGeneration = (threadBean.getCurrentThreadCpuTime() - utilityStrategyGeneration)/1000000;
         debugOutput.println("Utility generation : " + utilityStrategyGeneration);
 
         Map<Player, MDPStrategy> playerStrategy = new HashMap<Player, MDPStrategy>();
@@ -139,7 +140,7 @@ public class FullCostPairedMDP {
         double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
         debugOutput.println("Result: " + r1);
 
-        long halfTime = System.nanoTime() - startTime;
+        long halfTime = threadBean.getCurrentThreadCpuTime() - startTime;
         debugOutput.println("Half Time: " + (halfTime / 1000000));
 
         double r2 = lp.solveForPlayer(config.getAllPlayers().get(1));
@@ -167,7 +168,7 @@ public class FullCostPairedMDP {
 //        debugOutput.println(br2.extractBestResponse(secondPlayerStrategy));
 
 //*/
-        long endTime = System.nanoTime() - startTime;
+        long endTime = threadBean.getCurrentThreadCpuTime() - startTime;
 
         int p1SupportSize = 0;
         int p2SupportSize = 0;

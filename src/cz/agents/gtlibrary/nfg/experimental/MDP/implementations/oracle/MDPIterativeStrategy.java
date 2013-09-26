@@ -22,6 +22,7 @@ import java.util.*;
  */
 public class MDPIterativeStrategy extends MDPStrategy {
     final public static boolean USE_EXPST_CACHE = true;
+    final public static boolean REGULARIZE_STRATEGIES = false;
 
     private DefaultStrategyType defaultStrategy = DefaultStrategyType.FirstAction;
 //    private DefaultStrategyType defaultStrategy = DefaultStrategyType.Uniform;
@@ -416,7 +417,6 @@ public class MDPIterativeStrategy extends MDPStrategy {
                         queue.add(new Pair<MDPState, Double>(e.getKey(),p * e.getValue()));
                     }
                 }
-
             }
         }
 

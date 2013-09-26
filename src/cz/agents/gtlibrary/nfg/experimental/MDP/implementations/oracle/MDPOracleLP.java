@@ -190,4 +190,15 @@ public class MDPOracleLP extends MDPCoreLP {
         }
     }
 
+//    @Override
+//    protected IloNumVar createVariableForStateAction(IloCplex cplex, MDPStateActionMarginal action, Player player) throws IloException {
+//        if (variables.containsKey(action)) {
+//            return variables.get(action);
+//        }
+//        String letter = ((player.getId() == 0) ? "x" : "y") + "_";
+//        double bound = action.getState().isRoot() ? 0 : action.getState().horizon()*0.00001;
+//        IloNumVar result = cplex.numVar(bound, 1, IloNumVarType.Float, letter + action.toString());
+//        variables.put(action,result);
+//        return result;
+//    }
 }
