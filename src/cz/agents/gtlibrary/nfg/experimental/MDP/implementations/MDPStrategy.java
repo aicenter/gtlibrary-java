@@ -157,12 +157,22 @@ public class MDPStrategy implements PureStrategy{
     public double getUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy) {
         double result = 0;
 
-//        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllMarginalsInStrategy()) {
-//            result += getUtilityFromCache(firstPlayerAction, mdp) * secondPlayerStrategy.getStrategyProbability(mdp);
-//        }
-
         for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllActionStates()) {
             result += getUtility(firstPlayerAction, mdp) * secondPlayerStrategy.getExpandedStrategy(mdp);
+        }
+
+        return result;
+    }
+
+    public double getWorstUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy) {
+        double result = firstPlayerAction.getPlayer().getId() == 0 ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+
+        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllActionStates()) {
+            double v = getUtility(firstPlayerAction, mdp);
+            if ((firstPlayerAction.getPlayer().getId() == 0 && v < result) ||
+                (firstPlayerAction.getPlayer().getId() == 1 && v > result)) {
+                result = v;
+            }
         }
 
         return result;

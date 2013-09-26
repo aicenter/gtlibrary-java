@@ -9,6 +9,8 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -36,9 +38,12 @@ public class MDPCoreLP {
     protected long BUILDING_LP_TIME = 0;
     protected long SOLVING_LP_TIME = 0;
 //    private Collection<Player> allPlayers = null;
+    protected ThreadMXBean threadBean;
+
 
 
     public MDPCoreLP(Collection<Player> allPlayers, Map<Player, MDPStrategy> playerStrategy, MDPConfig config) {
+        this.threadBean = ManagementFactory.getThreadMXBean();
 //        this.allPlayers = allPlayers;
         this.playerStrategy = playerStrategy;
         this.config = config;
@@ -73,9 +78,9 @@ public class MDPCoreLP {
 
     public double solveForPlayer(Player player) {
         IloCplex cplex = lpModels.get(player);
-        long start = System.nanoTime();
+        long start = threadBean.getCurrentThreadCpuTime();
         buildLPFromStrategies(player);
-        BUILDING_LP_TIME += System.nanoTime() - start;
+        BUILDING_LP_TIME += threadBean.getCurrentThreadCpuTime() - start;
         try {
 //            cplex.exportModel("MDP-LP"+player.getId()+".lp");
             start = System.nanoTime();

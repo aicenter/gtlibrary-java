@@ -57,9 +57,18 @@ public class MDPExperiments {
             } else if (alg.startsWith("DON")) {
                 MDPFristBetterResponse.PRUNING = false;
             } else throw new IllegalArgumentException("Illegal algorithm: " + alg);
+
             if (alg.endsWith("1")) {
                 MDPFristBetterResponse.USE_FIRST_BT = true;
-            } else MDPFristBetterResponse.USE_FIRST_BT = false;
+                if (alg.endsWith("R1")) {
+                    DoubleOracleCostPairedMDP.USE_ROBUST_BR = true;
+                } else DoubleOracleCostPairedMDP.USE_ROBUST_BR = false;
+            } else {
+                MDPFristBetterResponse.USE_FIRST_BT = false;
+                if (alg.endsWith("R")) {
+                    DoubleOracleCostPairedMDP.USE_ROBUST_BR = true;
+                } else DoubleOracleCostPairedMDP.USE_ROBUST_BR = false;
+            }
 
             if (domain.equalsIgnoreCase("BP")) {
                 DoubleOracleCostPairedMDP.runBPG();
