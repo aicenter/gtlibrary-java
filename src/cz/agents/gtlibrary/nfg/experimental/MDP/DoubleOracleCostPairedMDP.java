@@ -50,8 +50,8 @@ public class DoubleOracleCostPairedMDP {
 
     public static void main(String[] args) {
 //		runRG();
-        runBPG();
-//        runTG();
+//        runBPG();
+        runTG();
     }
 
 
@@ -141,10 +141,10 @@ public class DoubleOracleCostPairedMDP {
 
             br1.setMDPUpperBound(UB);
             br1.setMDPLowerBound(LB);
-            br1.setCurrentBest(UB);
+            br1.setCurrentBest(r1);
             br2.setMDPUpperBound(LB);
             br2.setMDPLowerBound(UB);
-            br2.setCurrentBest(LB);
+            br2.setCurrentBest(r2);
 
 //            firstPlayerStrategy.sanityCheck();
 //            secondPlayerStrategy.sanityCheck();
