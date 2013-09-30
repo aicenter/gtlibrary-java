@@ -181,6 +181,10 @@ public class DoubleOracleCostPairedMDP {
             LB = Math.max(LB, currentBRValMin);
             debugOutput.println("BR(MAX): " + currentBRValMax + " BR(MIN): " + currentBRValMin);
 
+            if (USE_ROBUST_BR) {
+                debugOutput.println("BR(MAX) Improved Times: " + ((MDPEpsilonFristBetterResponse)br1).getImprovedBR());
+                debugOutput.println("BR(MIN) Improved Times: " + ((MDPEpsilonFristBetterResponse)br2).getImprovedBR());
+            }
 
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions1 = br1.extractBestResponse(firstPlayerStrategy);
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions2 = br2.extractBestResponse(secondPlayerStrategy);
