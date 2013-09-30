@@ -69,14 +69,14 @@ public class McMahanDoubleOracle {
         this.config = config;
     }
 
-    private static void runBPG() {
+    public static void runBPG() {
         MDPExpander expander = new BPExpander();
         MDPConfig config = new BPConfig();
         McMahanDoubleOracle mdp = new McMahanDoubleOracle(expander, config);
         mdp.test();
     }
 
-    private static void runTG() {
+    public static void runTG() {
         MDPExpander expander = new TGExpander();
         MDPConfig config = new TGConfig();
         McMahanDoubleOracle mdp = new McMahanDoubleOracle(expander, config);

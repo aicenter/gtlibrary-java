@@ -21,9 +21,11 @@ import java.util.*;
  */
 public class MDPFristBetterResponse extends MDPBestResponse {
 
-    public static boolean USE_FIRST_BT = true;
+    public static boolean USE_FIRST_BT = false;
     public static boolean SAVE_DEF = false;
     public static boolean PRUNING = false;
+
+    protected long prunes = 0;
 
     protected double MDPUpperBound = 0;
     protected double MDPLowerBound = 0;
@@ -44,6 +46,7 @@ public class MDPFristBetterResponse extends MDPBestResponse {
         cachedIsChange.clear();
         bestResponseData.clear();
         stopSearch = false;
+        prunes = 0;
         USE_FIRST_BT = USE_FIRST_BT & (Math.abs(MDPUpperBound) < Double.POSITIVE_INFINITY);
 //        MDPLowerBound = getLowerBound(myStrategy.getRootState(), myStrategy, opponentStrategy);
         Pair<Pair<Double, Double>, Boolean> result = calculateBRValue(myStrategy.getRootState(), myStrategy, opponentStrategy, MDPLowerBound, 1d);
@@ -106,6 +109,7 @@ public class MDPFristBetterResponse extends MDPBestResponse {
                         (getPlayer().getId() == 1 && currentActionValue + thisCNRemProb * state.horizon()*getConfig().getBestUtilityValue(getPlayer()) > Math.min(alpha, bestValue))) {
                         // this action cannot be better than best action in this state -- we can skip the remaining successors and proceed with another action
                         currentActionValue = (getPlayer().getId() == 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+                        prunes++;
                         break;
                     }
                 }
@@ -184,5 +188,9 @@ public class MDPFristBetterResponse extends MDPBestResponse {
         cachedLowerBounds.put(state, result);
 
         return result;
+    }
+
+    public long getPrunes() {
+        return prunes;
     }
 }

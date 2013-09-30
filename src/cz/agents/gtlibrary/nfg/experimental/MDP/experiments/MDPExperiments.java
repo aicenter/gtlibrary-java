@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.nfg.experimental.MDP.DoubleOracleCostPairedMDP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.FullCostPairedMDP;
+import cz.agents.gtlibrary.nfg.experimental.MDP.McMahan.McMahanDoubleOracle;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPFristBetterResponse;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGConfig;
@@ -76,6 +77,30 @@ public class MDPExperiments {
             } else if (domain.equalsIgnoreCase("TG")) {
                 DoubleOracleCostPairedMDP.runTG();
             }
+        } else if (alg.startsWith("SO")) {
+            if (alg.startsWith("SOP")) {
+                MDPFristBetterResponse.PRUNING = true;
+            } else if (alg.startsWith("SON")) {
+                MDPFristBetterResponse.PRUNING = false;
+            } else throw new IllegalArgumentException("Illegal algorithm: " + alg);
+
+            if (alg.endsWith("1")) {
+                MDPFristBetterResponse.USE_FIRST_BT = true;
+                if (alg.endsWith("R1")) {
+                    DoubleOracleCostPairedMDP.USE_ROBUST_BR = true;
+                } else DoubleOracleCostPairedMDP.USE_ROBUST_BR = false;
+            } else {
+                MDPFristBetterResponse.USE_FIRST_BT = false;
+                if (alg.endsWith("R")) {
+                    DoubleOracleCostPairedMDP.USE_ROBUST_BR = true;
+                } else DoubleOracleCostPairedMDP.USE_ROBUST_BR = false;
+            }
+
+        } else if (alg.startsWith("MC")) {
+            if (domain.equalsIgnoreCase("BP"))
+                McMahanDoubleOracle.runBPG();
+            else if (domain.equalsIgnoreCase("TG"))
+                McMahanDoubleOracle.runTG();
         } else if (alg.startsWith("LP")) {
             if (domain.equalsIgnoreCase("BP"))
                 FullCostPairedMDP.runBPG();

@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPExpander;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
+import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.*;
 
@@ -22,6 +23,8 @@ public class MDPStrategy implements PureStrategy{
     private MDPConfig config;
     private Player player;
     private MDPExpander expander;
+
+    private Map<MDPStateActionMarginal, Double> expandedNonZeroStrategy = new HashMap<MDPStateActionMarginal, Double>();
 
 //    private Map<Set<MDPStateActionMarginal>, Double> utilityCache = new HashMap<Set<MDPStateActionMarginal>, Double>();
 
@@ -168,6 +171,7 @@ public class MDPStrategy implements PureStrategy{
         double result = firstPlayerAction.getPlayer().getId() == 0 ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
 
         for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllMarginalsInStrategy()) {
+//        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllActionStates()) {
             double v = getUtility(firstPlayerAction, mdp);
             if ((firstPlayerAction.getPlayer().getId() == 0 && v < result) ||
                 (firstPlayerAction.getPlayer().getId() == 1 && v > result)) {
@@ -182,10 +186,10 @@ public class MDPStrategy implements PureStrategy{
         double result = 0;
 
         for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllMarginalsInStrategy()) {
-            result += getUtility(firstPlayerAction, mdp);
+            result += getUtility(firstPlayerAction, mdp)*(getExpandedStrategy(mdp) + 0.0001);
         }
 
-        return result/(double)getAllMarginalsInStrategy().size();
+        return result;///(double)getAllMarginalsInStrategy().size();
     }
 
     public double getUtilityFromCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction) {
@@ -223,7 +227,10 @@ public class MDPStrategy implements PureStrategy{
     }
 
     public double getExpandedStrategy(MDPStateActionMarginal mdpStateActionMarginal) {
-        return strategy.get(mdpStateActionMarginal);
+//        return strategy.get(mdpStateActionMarginal);
+        if (!expandedNonZeroStrategy.containsKey(mdpStateActionMarginal))
+            return 0d;
+        else return expandedNonZeroStrategy.get(mdpStateActionMarginal);
     }
 
     public Set<MDPStateActionMarginal> getAllMarginalsInStrategy() {
@@ -291,5 +298,19 @@ public class MDPStrategy implements PureStrategy{
 
     public boolean isActionFullyExpandedInRG(MDPStateActionMarginal marginal) {
         return true;
+    }
+
+    public void recalculateExpandedStrategy() {
+        recalculateExpandedStrategy(MDPConfigImpl.getEpsilon()/100);
+    }
+
+    public void recalculateExpandedStrategy(double treshold) {
+        expandedNonZeroStrategy.clear();
+        for (MDPStateActionMarginal mdpsm : getAllMarginalsInStrategy()) {
+            double p = getStrategyProbability(mdpsm);
+            if (p > treshold) {
+                expandedNonZeroStrategy.put(mdpsm, p);
+            }
+        }
     }
 }

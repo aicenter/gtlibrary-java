@@ -6,6 +6,8 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.core.MDPCoreLP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
+import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPEpsilonFristBetterResponse;
+import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPFristBetterResponse;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPIterativeStrategy;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPOracleLP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
@@ -19,6 +21,7 @@ import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGExpander;
 
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +37,10 @@ import java.util.Set;
  */
 public class SingleOracleCostPairedMDP {
 
+    public static boolean USE_ROBUST_BR = false;
+    public static boolean USE_NORMAL_BR = false;
+    public static double END_EPSILON = MDPConfigImpl.getEpsilon();
+
     private MDPExpander expander;
     private MDPConfig config;
     private MDPStrategy firstPlayerStrategy;
@@ -45,10 +52,14 @@ public class SingleOracleCostPairedMDP {
 
     private double gameValue = Double.NaN;
 
+    private long BRTIME = 0;
+    private long CPLEXTIME = 0;
+    private long RGCONSTR = 0;
+
     public static void main(String[] args) {
-		runBPG();
+//		runBPG();
 //        runRG();
-//        runTG();
+        runTG();
     }
 
     public SingleOracleCostPairedMDP(MDPExpander expander, MDPConfig config) {
@@ -78,7 +89,8 @@ public class SingleOracleCostPairedMDP {
     }
 
     private void test() {
-        long startTime = System.nanoTime();
+        threadBean = ManagementFactory.getThreadMXBean();
+        long startTime = threadBean.getCurrentThreadCpuTime();
         debugOutput.println("Testing SO CostPaired MDP.");
         firstPlayerStrategy = new MDPStrategy(config.getAllPlayers().get(0),config,expander);
         secondPlayerStrategy = new MDPIterativeStrategy(config.getAllPlayers().get(1),config,expander);
@@ -101,14 +113,29 @@ public class SingleOracleCostPairedMDP {
 
         int iterations = 0;
 
+        MDPBestResponse br2;
+        if (USE_NORMAL_BR) {
+            br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
+        } else {
+            if (USE_ROBUST_BR) {
+                br2 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(1));
+            } else {
+                br2 = new MDPFristBetterResponse(config, config.getAllPlayers().get(1));
+            }
+        }
+
+        double treshold = 0.01;
 
         while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon() && UB > LB) {
 //        for (int i=0; i<5; i++) {
 
             debugOutput.println("*********** Iteration = " + (++iterations) + " Bound Interval = " + Math.abs(UB - LB) + "     *************");
 
+            long LpStart = threadBean.getCurrentThreadCpuTime();
             double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
             debugOutput.println("Result: " + r1);
+            CPLEXTIME += threadBean.getCurrentThreadCpuTime() - LpStart;
+
 
             UB = Math.min(UB, r1);
 
@@ -116,12 +143,21 @@ public class SingleOracleCostPairedMDP {
 //            for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
 //                debugOutput.println(m1 + " = " + firstPlayerStrategy.getStrategy().get(m1));
 //            }
+            firstPlayerStrategy.recalculateExpandedStrategy();
 
-            MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
+            long brStart = threadBean.getCurrentThreadCpuTime();
             double currentBRVal = br2.calculateBR(secondPlayerStrategy, firstPlayerStrategy);
             LB = Math.max(LB, currentBRVal);
             debugOutput.println("BR : " + currentBRVal);
+            BRTIME += threadBean.getCurrentThreadCpuTime() - brStart;
+            debugOutput.println("BR(MIN) TIME:" + ((threadBean.getCurrentThreadCpuTime() - brStart)/1000000l));
 
+            if (USE_ROBUST_BR) {
+                debugOutput.println("BR(MIN) Improved Times: " + ((MDPEpsilonFristBetterResponse)br2).getImprovedBR());
+            }
+            debugOutput.println("BR(MIN) Pruned Times: " + ((MDPFristBetterResponse)br2).getPrunes());
+
+            long RGStart = threadBean.getCurrentThreadCpuTime();
             Map<MDPState, Set<MDPStateActionMarginal>> br = br2.extractBestResponse(secondPlayerStrategy);
 
 //            debugOutput.println("BR = " + br);
@@ -129,12 +165,32 @@ public class SingleOracleCostPairedMDP {
 //            debugOutput.println("New Actions = " + newActions);
             lp.setNewActions(newActions);
 //            debugOutput.println(secondPlayerStrategy.getStrategy());
-
+            RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
+            if (newActions.isEmpty()) {
+                treshold = treshold/10;
+            }
         }
 
-        long endTime = System.nanoTime() - startTime;
-        debugOutput.println("Overall Time: " + (endTime / 1000000));
+        long endTime = threadBean.getCurrentThreadCpuTime() - startTime;
+        int p1SupportSize = 0;
+        int p2SupportSize = 0;
+        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
+            if (firstPlayerStrategy.getStrategyProbability(m1) > MDPConfigImpl.getEpsilon())
+                p1SupportSize++;
+        }
+        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getAllMarginalsInStrategy()) {
+            if (secondPlayerStrategy.getStrategyProbability(m2) > MDPConfigImpl.getEpsilon())
+                p2SupportSize++;
+        }
+
+        debugOutput.println("Overall Time: " + (endTime / 1000000l));
+        debugOutput.println("BR Time: " + (BRTIME / 1000000l));
+        debugOutput.println("CPLEX Time: " + (CPLEXTIME / 1000000l));
+        debugOutput.println("RGConstr Time: " + (RGCONSTR / 1000000l));
+        debugOutput.println("Building LP Time: " + (lp.getBUILDING_LP_TIME()/ 1000000l));
+        debugOutput.println("Solving LP Time: " + (lp.getSOLVING_LP_TIME()/ 1000000l));
         debugOutput.println("final size: FirstPlayer Marginal Strategies: " + firstPlayerStrategy.getAllMarginalsInStrategy().size() + " \t SecondPlayer Marginal Strategies: " + secondPlayerStrategy.getAllMarginalsInStrategy().size());
+        debugOutput.println("final size: FirstPlayer Support: " + p1SupportSize + " \t SecondPlayer Support: " + p2SupportSize);
         debugOutput.println("final result:" + UB);
 
         try {

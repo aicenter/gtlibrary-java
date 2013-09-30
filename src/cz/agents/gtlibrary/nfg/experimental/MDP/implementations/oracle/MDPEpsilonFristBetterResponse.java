@@ -23,8 +23,29 @@ import java.util.Map;
  */
 public class MDPEpsilonFristBetterResponse extends MDPFristBetterResponse {
 
+    private long improvedBR = 0;
+    private double constant = 0.95;
+
     public MDPEpsilonFristBetterResponse(MDPConfig config, Player player) {
         super(config, player);
+    }
+
+    @Override
+    public double calculateBR(MDPStrategy myStrategy, MDPStrategy opponentStrategy) {
+        cachedValues.clear();
+        cachedLowerBounds.clear();
+        cachedIsChange.clear();
+        bestResponseData.clear();
+        stopSearch = false;
+        improvedBR = 0;
+        USE_FIRST_BT = USE_FIRST_BT & (Math.abs(MDPUpperBound) < Double.POSITIVE_INFINITY);
+//        MDPLowerBound = getLowerBound(myStrategy.getRootState(), myStrategy, opponentStrategy);
+        Pair<Pair<Double, Double>, Boolean> result = calculateBRValue(myStrategy.getRootState(), myStrategy, opponentStrategy, MDPLowerBound, 1d);
+        if (stopSearch) {
+            return MDPUpperBound;
+        } else {
+            return result.getLeft().getLeft();
+        }
     }
 
     private Pair<Pair<Double, Double>, Boolean> calculateBRValue(MDPState state, MDPStrategy myStrategy, MDPStrategy opponentStrategy, double alpha, double probability) {
@@ -44,7 +65,7 @@ public class MDPEpsilonFristBetterResponse extends MDPFristBetterResponse {
         Double originalUtility = 0d;
         MDPAction bestAction = null;
         double bestValue = (getPlayer().getId() == 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
-        double worstValue = (getPlayer().getId() == 0) ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+        double worstValue = (getPlayer().getId() == 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
         double avgValue = (getPlayer().getId() == 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
 
         List<MDPAction> actions = myStrategy.getAllActions(state);
@@ -81,11 +102,6 @@ public class MDPEpsilonFristBetterResponse extends MDPFristBetterResponse {
                 }
                 Pair<Pair<Double, Double>, Boolean> recursive = calculateBRValue(suc, myStrategy, opponentStrategy, currentLB, probability * successors.get(suc));
                 if (recursive.getLeft().getRight() != null) {
-//                    if (myStrategy.getExpandedStrategy(mdp) > MDPConfigImpl.getEpsilon())
-//                        assert false;
-//                    originalUtility = null;
-//                }
-//                if (originalUtility != null) {
                     originalUtility += recursive.getLeft().getRight() * myStrategy.getExpandedStrategy(mdp) * successors.get(suc);
                 }
                 changed = changed | recursive.getRight();
@@ -99,10 +115,14 @@ public class MDPEpsilonFristBetterResponse extends MDPFristBetterResponse {
             }
 
             // is this action better?
-//            if ((getPlayer().getId() == 0 && (currentActionValue > bestValue || (currentActionWorstValue > worstValue && currentActionValue == bestValue))) ||
-//                (getPlayer().getId() == 1 && (currentActionValue < bestValue || (currentActionWorstValue < worstValue && currentActionValue == bestValue)))) {
-            if ((getPlayer().getId() == 0 && (currentActionValue > bestValue || (currentActionAvgValue > avgValue && currentActionValue == bestValue))) ||
-                (getPlayer().getId() == 1 && (currentActionValue < bestValue || (currentActionAvgValue < avgValue && currentActionValue == bestValue)))) {
+//            if ((getPlayer().getId() == 0 && (currentActionValue > bestValue || (currentActionWorstValue > worstValue && currentActionValue >= constant*bestValue))) ||
+//                (getPlayer().getId() == 1 && (currentActionValue < bestValue || (currentActionWorstValue < worstValue && currentActionValue <= constant*bestValue)))) {
+            if ((getPlayer().getId() == 0 && (currentActionValue > bestValue || (currentActionAvgValue > avgValue && currentActionValue >= constant*bestValue))) ||
+                (getPlayer().getId() == 1 && (currentActionValue < bestValue || (currentActionAvgValue < avgValue && currentActionValue <= constant*bestValue)))) {
+
+//                if ((getPlayer().getId() == 0 && currentActionWorstValue > worstValue && currentActionValue >= constant*bestValue) ||
+//                        (getPlayer().getId() == 1 && currentActionWorstValue < worstValue && currentActionValue <= constant*bestValue)) improvedBR++;
+//                improvedBR++;
                 bestValue = currentActionValue;
                 bestAction = action;
                 worstValue = currentActionWorstValue;
@@ -134,4 +154,7 @@ public class MDPEpsilonFristBetterResponse extends MDPFristBetterResponse {
         return new Pair<Pair<Double, Double>, Boolean>(new Pair<Double, Double>(bestValue, originalUtility),changed);
     }
 
+    public long getImprovedBR() {
+        return improvedBR;
+    }
 }
