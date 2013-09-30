@@ -167,7 +167,7 @@ public class MDPStrategy implements PureStrategy{
     public double getWorstUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy) {
         double result = firstPlayerAction.getPlayer().getId() == 0 ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
 
-        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllActionStates()) {
+        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllMarginalsInStrategy()) {
             double v = getUtility(firstPlayerAction, mdp);
             if ((firstPlayerAction.getPlayer().getId() == 0 && v < result) ||
                 (firstPlayerAction.getPlayer().getId() == 1 && v > result)) {
@@ -176,6 +176,16 @@ public class MDPStrategy implements PureStrategy{
         }
 
         return result;
+    }
+
+    public double getAverageUtility(MDPStateActionMarginal firstPlayerAction, MDPStrategy secondPlayerStrategy) {
+        double result = 0;
+
+        for (MDPStateActionMarginal mdp : secondPlayerStrategy.getAllMarginalsInStrategy()) {
+            result += getUtility(firstPlayerAction, mdp);
+        }
+
+        return result/(double)getAllMarginalsInStrategy().size();
     }
 
     public double getUtilityFromCache(MDPStateActionMarginal firstPlayerAction, MDPStateActionMarginal secondPlayerAction) {

@@ -30,6 +30,7 @@ public class McMahanMDPStrategy extends MDPStrategy {
 
     public McMahanMDPStrategy(Player player, MDPConfig config, MDPExpander expander) {
         super(player, config, expander);
+        strategy = new LinkedHashMap<MDPStateActionMarginal, Double>();
     }
 
     @Override
@@ -68,6 +69,35 @@ public class McMahanMDPStrategy extends MDPStrategy {
         }
     }
 
+    public McMahanMDPStrategy(Player player, MDPConfig config, MDPExpander expander, Map<McMahanMDPStrategy, Double> weightedStrategy, double weightSum) {
+        this(player, config, expander);
+
+        int strategies = weightedStrategy.size();
+
+        LinkedList<MDPState> queue = new LinkedList<MDPState>();
+        queue.add(getRootState());
+        while (!queue.isEmpty()) {
+            MDPState state = queue.poll();
+            if (!state.isRoot() && getStates().contains(state)) continue;
+            addStrategyState(state);
+            List<MDPAction> actions = getActions(state);
+            for (MDPAction a : actions) {
+                MDPStateActionMarginal mdpsam = new MDPStateActionMarginal(state, a);
+
+                double value = 0d;
+
+                for (Map.Entry<McMahanMDPStrategy, Double> item : weightedStrategy.entrySet()) {
+                    value += item.getKey().getStrategyProbability(mdpsam) * item.getValue()/weightSum;
+                }
+                if (value > 0) {
+                    putStrategy(mdpsam,value);
+                    for (Map.Entry<MDPState, Double> e : getSuccessors(mdpsam).entrySet()) {
+                        queue.addLast(e.getKey());
+                    }
+                }
+            }
+        }
+    }
 
     public McMahanMDPStrategy(Player player, MDPConfig config, MDPExpander expander, MixedStrategy<McMahanMDPStrategy> mixedStrategy) {
         this(player, config, expander);
@@ -78,6 +108,7 @@ public class McMahanMDPStrategy extends MDPStrategy {
         queue.add(getRootState());
         while (!queue.isEmpty()) {
             MDPState state = queue.poll();
+            if (!state.isRoot() && getStates().contains(state)) continue;
             addStrategyState(state);
             List<MDPAction> actions = getActions(state);
             for (MDPAction a : actions) {
@@ -90,11 +121,12 @@ public class McMahanMDPStrategy extends MDPStrategy {
                     Map.Entry<McMahanMDPStrategy, Double> item = i.next();
                     value += item.getKey().getStrategyProbability(mdpsam) * item.getValue();
                 }
-                putStrategy(mdpsam,value);
-                if (value > 0)
+                if (value > 0) {
+                    putStrategy(mdpsam,value);
                     for (Map.Entry<MDPState, Double> e : getSuccessors(mdpsam).entrySet()) {
                         queue.addLast(e.getKey());
                     }
+                }
             }
         }
     }
@@ -103,6 +135,11 @@ public class McMahanMDPStrategy extends MDPStrategy {
         if (!strategy.containsKey(mdpStateActionMarginal))
             return 0d;
         else return strategy.get(mdpStateActionMarginal);
+    }
+
+    @Override
+    public double getExpandedStrategy(MDPStateActionMarginal mdpStateActionMarginal) {
+        return getStrategyProbability(mdpStateActionMarginal);
     }
 
     public McMahanMDPStrategy(Player player, MDPConfig config, MDPExpander expander, Map<MDPState, Set<MDPStateActionMarginal>> bestResponse) {

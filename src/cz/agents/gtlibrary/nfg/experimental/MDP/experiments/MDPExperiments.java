@@ -33,7 +33,7 @@ public class MDPExperiments {
 
     public void handleDomain(String[] args) {
         if (args[1].equalsIgnoreCase("BP")) {  // Border Patrolling
-            if (args.length != 5) {
+            if (args.length < 5) {
                 throw new IllegalArgumentException("Illegal domain arguments count. 3 are required {DEPTH} {GRAPH} {FLAG_PROB}");
             }
             int depth = new Integer(args[2]);
@@ -41,7 +41,7 @@ public class MDPExperiments {
             BPConfig.FLAG_PROB = new Double(args[4]);
             BPConfig.MAX_TIME_STEP = depth;
         } else if (args[1].equalsIgnoreCase("TG")) { // Transit Game
-            if (args.length != 5) {
+            if (args.length < 5) {
                 throw new IllegalArgumentException("Illegal random game domain arguments count. 3 are required {DEPTH} {LENGTH OF THE GRID} {WIDTH OF THE GRID}");
             }
             TGConfig.MAX_TIME_STEP = new Integer(args[2]);
@@ -69,6 +69,7 @@ public class MDPExperiments {
                     DoubleOracleCostPairedMDP.USE_ROBUST_BR = true;
                 } else DoubleOracleCostPairedMDP.USE_ROBUST_BR = false;
             }
+
 
             if (domain.equalsIgnoreCase("BP")) {
                 DoubleOracleCostPairedMDP.runBPG();

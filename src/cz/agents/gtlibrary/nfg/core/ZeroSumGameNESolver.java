@@ -20,4 +20,5 @@ public interface ZeroSumGameNESolver<T extends PureStrategy, U extends PureStrat
 
     public void writeProb(String filename);
 
+    public void clearModel();
 }
