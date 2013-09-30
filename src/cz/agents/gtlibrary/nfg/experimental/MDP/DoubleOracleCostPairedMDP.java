@@ -36,6 +36,7 @@ import java.util.Set;
 public class DoubleOracleCostPairedMDP {
 
     public static boolean USE_ROBUST_BR = true;
+    public static double END_EPSILON = MDPConfigImpl.getEpsilon();
 
     private MDPExpander expander;
     private MDPConfig config;
@@ -119,7 +120,10 @@ public class DoubleOracleCostPairedMDP {
             br2 = new MDPFristBetterResponse(config, config.getAllPlayers().get(1));
         }
 
-        while ( Math.abs(UB - LB) > MDPConfigImpl.getEpsilon() && UB > LB) {
+//        double treshold = 0.1;
+
+        while ( Math.abs(UB - LB) > END_EPSILON && UB > LB) {
+//        while ( ((1-LB/UB) > END_EPSILON || LB/UB < 0 || LB == Double.NEGATIVE_INFINITY || UB == Double.POSITIVE_INFINITY) && UB > LB) {
 //        for (int i=0; i<8; i++) {
 
             debugOutput.println("*********** Iteration = " + (++iterations) + " Bound Interval = " + Math.abs(UB - LB) + " [ " + LB + ";" + UB +  " ]      *************");
@@ -204,8 +208,11 @@ public class DoubleOracleCostPairedMDP {
             lp.setNewActions(newActions);
 
             if (newActions1.isEmpty() && newActions2.isEmpty()) {
-                if (Math.abs(UB - LB) > MDPConfigImpl.getEpsilon()) debugOutput.println("************* ERROR ****************");
-                break;
+//                treshold = treshold / 10;
+//                if (treshold < MDPConfigImpl.getEpsilon()/100) {
+                    if (Math.abs(UB - LB) > END_EPSILON) debugOutput.println("************* ERROR ****************");
+                    break;
+//                }
             }
         }
 

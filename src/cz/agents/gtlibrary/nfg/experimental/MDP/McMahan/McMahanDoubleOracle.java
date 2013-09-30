@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.nfg.experimental.MDP.McMahan;
 
+import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.PlayerStrategySet;
 import cz.agents.gtlibrary.nfg.PureStrategy;
@@ -15,7 +16,9 @@ import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGExpander;
 
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,6 +31,8 @@ public class McMahanDoubleOracle {
 
     private double lowerBound = Double.NEGATIVE_INFINITY;
     private double upperBound = Double.POSITIVE_INFINITY;
+
+    private int strategyCountThreshold = 100;
 
     private MDPExpander expander;
     private MDPConfig config;
@@ -44,6 +49,13 @@ public class McMahanDoubleOracle {
     private PrintStream debugOutput = System.out;
     final private static boolean DEBUG = false;
     private ThreadMXBean threadBean ;
+
+    private long BRTIME = 0;
+    private long CPLEXTIME = 0;
+    private long RGCONSTR = 0;
+
+    private Map<McMahanMDPStrategy, Double> maxStrategyWeights = new HashMap<McMahanMDPStrategy, Double>();
+    private Map<McMahanMDPStrategy, Double> minStrategyWeights = new HashMap<McMahanMDPStrategy, Double>();
 
     private double gameValue = Double.NaN;
 
@@ -73,8 +85,9 @@ public class McMahanDoubleOracle {
 
     private void test() {
         MDPUtilityComputer utilityComputer = new MDPUtilityComputer(config);
+        threadBean = ManagementFactory.getThreadMXBean();
 
-        long startTime = System.nanoTime();
+        long startTime = threadBean.getCurrentThreadCpuTime();
         debugOutput.println("Testing McMahan DO CostPaired MDP.");
 
         McMahanMDPStrategy p1Strategy = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander);
@@ -103,10 +116,11 @@ public class McMahanDoubleOracle {
                 new MDPBestResponse(this.config, this.config.getAllPlayers().get(1)),
         };
 
-
+        McMahanMDPStrategy maxCenterStrategy = p1Strategy;
+        McMahanMDPStrategy minCenterStrategy = p2Strategy;
 
         while (Math.abs(upperBound - lowerBound) > MDPConfigImpl.getEpsilon()) {
-
+//        for (int iii=0; iii<3; iii++) {
             iterations++;
 
 //            Pair<PureStrategy, Double> maxPlayerOracleResult;
@@ -115,50 +129,122 @@ public class McMahanDoubleOracle {
                 McMahanMDPStrategy p1CombinedStrategy = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, maxPlayerMixedStrategy);
                 McMahanMDPStrategy p2CombinedStrategy = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, minPlayerMixedStrategy);
 
-                p1CombinedStrategy.sanityCheck();
-                p2CombinedStrategy.sanityCheck();
+
+                Iterator<Map.Entry<McMahanMDPStrategy, Double>> i = maxPlayerMixedStrategy.iterator();
+                while (i.hasNext()) {
+                    Map.Entry<McMahanMDPStrategy, Double> item = i.next();
+                    Double weight = maxStrategyWeights.get(item.getKey());
+                    if (weight == null) weight = 0d;
+                    weight += item.getValue();
+                    maxStrategyWeights.put(item.getKey(), weight);
+                }
+
+                i = minPlayerMixedStrategy.iterator();
+                while (i.hasNext()) {
+                    Map.Entry<McMahanMDPStrategy, Double> item = i.next();
+                    Double weight = minStrategyWeights.get(item.getKey());
+                    if (weight == null) weight = 0d;
+                    weight += item.getValue();
+                    minStrategyWeights.put(item.getKey(), weight);
+                }
+//                p1CombinedStrategy.sanityCheck();
+//                p2CombinedStrategy.sanityCheck();
 
 //                debugOutput.println("MAX: " + p1CombinedStrategy.strategy);
 //                debugOutput.println("MIN: " + p2CombinedStrategy.strategy);
 
+                long brStart = threadBean.getCurrentThreadCpuTime();
                 double BRMax = brAlgorithms[0].calculateBR(p1CombinedStrategy, p2CombinedStrategy);
                 double BRMin = brAlgorithms[1].calculateBR(p2CombinedStrategy, p1CombinedStrategy);
+                McMahanMDPStrategy brs1 = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, brAlgorithms[0].extractBestResponse(p1CombinedStrategy));
+                McMahanMDPStrategy brs2 = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, brAlgorithms[1].extractBestResponse(p2CombinedStrategy));
+
+                double BRMax2 = brAlgorithms[0].calculateBR(maxCenterStrategy, minCenterStrategy);
+                double BRMin2 =brAlgorithms[1].calculateBR(minCenterStrategy, maxCenterStrategy);
+                McMahanMDPStrategy brCenter1 = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, brAlgorithms[0].extractBestResponse(p1CombinedStrategy));
+                McMahanMDPStrategy brCenter2 = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, brAlgorithms[1].extractBestResponse(p2CombinedStrategy));
+                BRTIME += threadBean.getCurrentThreadCpuTime() - brStart;
+                debugOutput.println("This BR TIME:" + (threadBean.getCurrentThreadCpuTime() - brStart)/ 1000000l);
 
                 debugOutput.println("Current BRMax : " + BRMax);
                 debugOutput.println("Current BRMin : " + BRMin);
 
-                upperBound = Math.min(upperBound, BRMax);
-                McMahanMDPStrategy brs1 = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, brAlgorithms[0].extractBestResponse(p1CombinedStrategy));
+                upperBound = Math.min(upperBound, Math.min(BRMax, BRMax2));
+
+                long RGStart = threadBean.getCurrentThreadCpuTime();
 //                debugOutput.println(brs1);
 //                brs1.sanityCheck();
-                if (maxPlayerStrategySet.add(brs1)) {
+                boolean changed1 = false;
+                Map<McMahanMDPStrategy, Double> maxCenterWeights = new HashMap<McMahanMDPStrategy, Double>();
+                maxCenterWeights.put(maxCenterStrategy, (double)iterations);
+                if (maxCenterWeights.put(brs1, 1d) == null) {
+                    maxCenterStrategy = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, maxCenterWeights, iterations+1);
+                    changed1 |= maxPlayerStrategySet.add(maxCenterStrategy);
+                }
+
+                changed1 |= maxPlayerStrategySet.add(brs1);
+                changed1 |= maxPlayerStrategySet.add(p1CombinedStrategy);
+                changed1 |= maxPlayerStrategySet.add(brCenter1);
+                if (changed1) {
                     coreSolver.addPlayerOneStrategies(maxPlayerStrategySet);
                 }
 
-                lowerBound = Math.max(lowerBound, BRMin);
-                McMahanMDPStrategy brs2 = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, brAlgorithms[1].extractBestResponse(p2CombinedStrategy));
+                lowerBound = Math.max(lowerBound, Math.max(BRMin, BRMin2));
+                boolean changed2 = false;
 //                debugOutput.println(brs2);
 //                brs2.sanityCheck();
-                if (minPlayerStrategySet.add(brs2)) {
+                Map<McMahanMDPStrategy, Double> minCenterWeights = new HashMap<McMahanMDPStrategy, Double>();
+                minCenterWeights.put(minCenterStrategy, (double)iterations);
+                if (minCenterWeights.put(brs2, 1d) == null) {
+                    minCenterStrategy = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, minCenterWeights, iterations+1);
+                    changed2 |= minPlayerStrategySet.add(minCenterStrategy);
+                }
+                changed2 |= minPlayerStrategySet.add(brs2);
+                changed2 |= minPlayerStrategySet.add(p2CombinedStrategy);
+                changed2 |= minPlayerStrategySet.add(brCenter2);
+                if (changed2) {
                     coreSolver.addPlayerTwoStrategies(minPlayerStrategySet);
                 }
+                RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
+//                if (minPlayerStrategySet.size() > strategyCountThreshold || maxPlayerStrategySet.size() > strategyCountThreshold) {
+                if (iterations % 10 == 0) {
+                    coreSolver.clearModel();
+
+//                    if (maxPlayerStrategySet.size() > strategyCountThreshold) {
+                        maxPlayerStrategySet.clear();
+                        maxPlayerStrategySet.add(removeStrategies(config.getAllPlayers().get(0), maxStrategyWeights));
+//                    }
+//                    if (minPlayerStrategySet.size() > strategyCountThreshold) {
+                        minPlayerStrategySet.clear();
+                        minPlayerStrategySet.add(removeStrategies(config.getAllPlayers().get(1), minStrategyWeights));
+//                    }
+                    coreSolver.addPlayerOneStrategies(maxPlayerStrategySet);
+                    coreSolver.addPlayerTwoStrategies(minPlayerStrategySet);
+                }
+//                RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
+                debugOutput.println("This RG TIME:" + (threadBean.getCurrentThreadCpuTime() - RGStart)/1000000l);
 
                 debugOutput.println("Current Max #PS : " + maxPlayerStrategySet.size());
                 debugOutput.println("Current Min #PS : " + minPlayerStrategySet.size());
             }
-
+            long LpStart = threadBean.getCurrentThreadCpuTime();
             coreSolver.computeNashEquilibrium();
+            CPLEXTIME += threadBean.getCurrentThreadCpuTime() - LpStart;
+            debugOutput.println("This CPLEX TIME:" + (threadBean.getCurrentThreadCpuTime() - LpStart)/ 1000000l);
             maxPlayerMixedStrategy = coreSolver.getPlayerOneStrategy();
             minPlayerMixedStrategy = coreSolver.getPlayerTwoStrategy();
 
             resultValue = coreSolver.getGameValue();
             debugOutput.println("RGValue: " + resultValue);
-            debugOutput.println("Iteration: " + iterations + " Bounds size: " + Math.abs(upperBound - lowerBound));
+            debugOutput.println("************** Iteration: " + iterations + " Bounds size: " + Math.abs(upperBound - lowerBound) + " ***************");
         }
 
         debugOutput.println("Finished.");
-        long endTime = System.nanoTime() - startTime;
-        debugOutput.println("Overall Time: " + (endTime / 1000000));
+        long endTime = threadBean.getCurrentThreadCpuTime() - startTime;
+        debugOutput.println("Overall Time: " + (endTime / 1000000l));
+        debugOutput.println("BR Time: " + (BRTIME / 1000000l));
+        debugOutput.println("CPLEX Time: " + (CPLEXTIME / 1000000l));
+        debugOutput.println("RGConstr Time: " + (RGCONSTR / 1000000l));
         debugOutput.println("final size: FirstPlayer Pure Strategies: " + maxPlayerStrategySet.size() + " \t SecondPlayer Pure Strategies: " + minPlayerStrategySet.size());
         debugOutput.println("final result:" + resultValue);
 
@@ -169,6 +255,41 @@ public class McMahanDoubleOracle {
         }
 
         System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
+    }
+
+    private List<PureStrategy> removeStrategies(Player player, final Map<McMahanMDPStrategy, Double> strategyWeights) {
+        List<PureStrategy> strategies = new LinkedList<PureStrategy>(strategyWeights.keySet());
+        Collections.sort(strategies, new Comparator<PureStrategy>() {
+            @Override
+            public int compare(PureStrategy strategy1, PureStrategy strategy2) {
+                double w1 = strategyWeights.get(strategy1);
+                double w2 = strategyWeights.get(strategy2);
+                if (w1 < w2) {
+                    return -1;
+                } else if (w1 > w2) {
+                    return 1;
+                } else
+                    return 0;
+            }
+        });
+        Map<McMahanMDPStrategy, Double> removedStrategies = new HashMap<McMahanMDPStrategy, Double>();
+        double sumWeight = 0;
+        for (int i=Math.max(5, strategyWeights.size()-strategyCountThreshold); i>=0; i--) {
+            PureStrategy s = strategies.remove(i);
+            double w = strategyWeights.get(s);
+            if (removedStrategies.containsKey(s)) {
+                w += removedStrategies.get(s);
+            }
+            sumWeight += w;
+            removedStrategies.put((McMahanMDPStrategy)s, w);
+        }
+        strategyWeights.clear();
+        if (sumWeight > 0) {
+            McMahanMDPStrategy newAggregation = new McMahanMDPStrategy(player, config, expander, removedStrategies, sumWeight);
+//            newAggregation.sanityCheck();
+            strategies.add(newAggregation);
+        }
+        return strategies;
     }
 
 }

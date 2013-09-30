@@ -45,12 +45,14 @@ public class MDPEpsilonFristBetterResponse extends MDPFristBetterResponse {
         MDPAction bestAction = null;
         double bestValue = (getPlayer().getId() == 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
         double worstValue = (getPlayer().getId() == 0) ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+        double avgValue = (getPlayer().getId() == 0) ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
 
         List<MDPAction> actions = myStrategy.getAllActions(state);
         for (MDPAction action : actions) {
             MDPStateActionMarginal mdp = new MDPStateActionMarginal(state, action);
             double currentActionValue = myStrategy.getUtility(mdp, opponentStrategy);
             double currentActionWorstValue = myStrategy.getWorstUtility(mdp, opponentStrategy);
+            double currentActionAvgValue = myStrategy.getAverageUtility(mdp, opponentStrategy);
             Map<MDPState, Double> successors = myStrategy.getAllSuccessors(mdp);
             double thisCNRemProb = 1d;
 
@@ -97,11 +99,14 @@ public class MDPEpsilonFristBetterResponse extends MDPFristBetterResponse {
             }
 
             // is this action better?
-            if ((getPlayer().getId() == 0 && (currentActionValue > bestValue || (currentActionWorstValue > worstValue && currentActionValue == bestValue))) ||
-                (getPlayer().getId() == 1 && (currentActionValue < bestValue || (currentActionWorstValue < worstValue && currentActionValue == bestValue)))) {
+//            if ((getPlayer().getId() == 0 && (currentActionValue > bestValue || (currentActionWorstValue > worstValue && currentActionValue == bestValue))) ||
+//                (getPlayer().getId() == 1 && (currentActionValue < bestValue || (currentActionWorstValue < worstValue && currentActionValue == bestValue)))) {
+            if ((getPlayer().getId() == 0 && (currentActionValue > bestValue || (currentActionAvgValue > avgValue && currentActionValue == bestValue))) ||
+                (getPlayer().getId() == 1 && (currentActionValue < bestValue || (currentActionAvgValue < avgValue && currentActionValue == bestValue)))) {
                 bestValue = currentActionValue;
                 bestAction = action;
                 worstValue = currentActionWorstValue;
+                avgValue = currentActionAvgValue;
             }
         }
 

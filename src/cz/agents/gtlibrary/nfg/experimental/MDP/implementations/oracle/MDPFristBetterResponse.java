@@ -41,6 +41,7 @@ public class MDPFristBetterResponse extends MDPBestResponse {
     public double calculateBR(MDPStrategy myStrategy, MDPStrategy opponentStrategy) {
         cachedValues.clear();
         cachedLowerBounds.clear();
+        cachedIsChange.clear();
         bestResponseData.clear();
         stopSearch = false;
         USE_FIRST_BT = USE_FIRST_BT & (Math.abs(MDPUpperBound) < Double.POSITIVE_INFINITY);
