@@ -51,7 +51,9 @@ public class RGMDPExpander extends MDPExpanderImpl {
             } else {
                 RGMDPAction changedAction = new RGMDPAction(action.getPlayer(), i);
                 MDPState newState = action.getState().copy().performAction(changedAction);
-                result.put(newState, RGMDPConfig.NATURE_PROB[changedActions+1]);
+                if (RGMDPConfig.NATURE_PROB[changedActions+1] > 0) {
+                    result.put(newState, RGMDPConfig.NATURE_PROB[changedActions+1]);
+                }
                 changedActions++;
             }
         }
@@ -75,9 +77,11 @@ public class RGMDPExpander extends MDPExpanderImpl {
             if (i == mainActionID) {
                 result.put(new MDPStateActionMarginal(previousState, new RGMDPAction(s.getPlayer(), i)), RGMDPConfig.NATURE_PROB[0]);
             } else if (i < mainActionID) {
-                result.put(new MDPStateActionMarginal(previousState, new RGMDPAction(s.getPlayer(), i)), RGMDPConfig.NATURE_PROB[mainActionID]);
+                if (RGMDPConfig.NATURE_PROB[mainActionID] > 0)
+                    result.put(new MDPStateActionMarginal(previousState, new RGMDPAction(s.getPlayer(), i)), RGMDPConfig.NATURE_PROB[mainActionID]);
             } else if (i > mainActionID) {
-                result.put(new MDPStateActionMarginal(previousState, new RGMDPAction(s.getPlayer(), i)), RGMDPConfig.NATURE_PROB[mainActionID+1]);
+                if (RGMDPConfig.NATURE_PROB[mainActionID+1] > 0)
+                    result.put(new MDPStateActionMarginal(previousState, new RGMDPAction(s.getPlayer(), i)), RGMDPConfig.NATURE_PROB[mainActionID+1]);
             }
         }
 

@@ -30,7 +30,7 @@ public class McMahanMDPStrategy extends MDPStrategy {
 
     public McMahanMDPStrategy(Player player, MDPConfig config, MDPExpander expander) {
         super(player, config, expander);
-        strategy = new LinkedHashMap<MDPStateActionMarginal, Double>();
+        strategy = new HashMap<MDPStateActionMarginal, Double>();
     }
 
     @Override

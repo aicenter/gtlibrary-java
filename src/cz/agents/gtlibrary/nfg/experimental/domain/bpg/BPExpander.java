@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.nfg.experimental.domain.bpg;
 
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.data.Edge;
 import cz.agents.gtlibrary.domain.bpg.data.Node;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPExpanderImpl;
@@ -19,9 +20,30 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class BPExpander extends MDPExpanderImpl {
-//    private static int[][] allowedTargetsForDefender = {{4,5,6},{10,11,12}}; // allowed nodes for defender; these must be sorted
-    private static int[][] allowedTargetsForDefender = {{3,4,5,6},{11,12,13,14}}; // allowed nodes for defender; these must be sorted
-    private static int[][] startingPositions = {{0},{17,18}};
+    private static int[][] allowedTargetsForDefender;
+    private static int[][] startingPositions;
+    public static int GOALNODE;
+
+    {
+        if (BPGGameInfo.graphFile.startsWith("GridW4")) {
+            allowedTargetsForDefender = new int[][]{{3,4,5,6},{11,12,13,14}};
+            startingPositions = new int[][]{{0},{17,18}};
+            GOALNODE = 16;
+        } else if (BPGGameInfo.graphFile.startsWith("GridW5")) {
+            allowedTargetsForDefender = new int[][]{{2,3,4,5,6},{12,13,14,15,16}};
+            startingPositions = new int[][]{{0},{18,19}};
+            GOALNODE = 17;
+        }
+    }
+
+    //    private static int[][] allowedTargetsForDefender = {{4,5,6},{10,11,12}}; // allowed nodes for defender; these must be sorted
+//    private static int[][] allowedTargetsForDefender = {{3,4,5,6},{11,12,13,14}}; // allowed nodes for defender; these must be sorted
+//    private static int[][] allowedTargetsForDefender = {{2,3,4,5,6},{12,13,14,15,16}}; // allowed nodes for defender; these must be sorted
+//    private static int[][] startingPositions = {{0},{17,18}};
+//    private static int[][] startingPositions = {{0},{18,19}};
+
+//    public static int GOALNODE = 16;
+//    public static int GOALNODE = 17;
 
     @Override
     public List<MDPAction> getActions(MDPState state) {
