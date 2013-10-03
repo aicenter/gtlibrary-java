@@ -253,7 +253,7 @@ public class BPState extends MDPStateImpl {
 
     @Override
     public boolean isTerminal() {
-        return getTimeStep() >= BPConfig.getMaxTimeStep() || (getPlayer().getId() == 0 && unitNodes[0] == 16);
+        return getTimeStep() >= BPConfig.getMaxTimeStep() || (getPlayer().getId() == 0 && unitNodes[0] == BPExpander.GOALNODE);
     }
 
     @Override

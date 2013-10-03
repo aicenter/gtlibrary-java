@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class BPConfig extends MDPConfigImpl {
 
-    public static int MAX_TIME_STEP = 4;
+    public static int MAX_TIME_STEP = 5;
     public static double FLAG_PROB = 0.1;
 
     public BPConfig() {
@@ -76,7 +76,7 @@ public class BPConfig extends MDPConfigImpl {
             (defAction.getMoves()[1].getToNode() == attAction.getMoves()[0].getFromNode() && defAction.getMoves()[1].getFromNode() == attAction.getMoves()[0].getToNode())
            )
             result = -1d;
-        else if (attAction.getMoves()[0].getToNode() == 16)
+        else if (attAction.getMoves()[0].getToNode() == BPExpander.GOALNODE)
             result = 2d;
         else result = 0d;
 

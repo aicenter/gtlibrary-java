@@ -22,10 +22,11 @@ import java.util.Random;
 public class RGMDPConfig extends MDPConfigImpl {
 
     public final static int MAX_UTILITY = 2;
-    public final static int BF_ACTIONS = 4;
-    public final static int STEPS = 4;
-    public final static double[] NATURE_PROB = {0.7,0.15,0.1,0.05};
+    public final static int BF_ACTIONS = 3;
+    public final static int STEPS = 5;
+//    public final static double[] NATURE_PROB = {0.7,0.15,0.1,0.05};
 //    public final static double[] NATURE_PROB = {0.9,0.1};
+    public final static double[] NATURE_PROB = {0.8,0.0,0.2};
     public final static int BF_NATURE = NATURE_PROB.length;
     public final static boolean onlySameStepUtility = true;
     public final static int SHIFT = (int)Math.ceil(Math.log(RGMDPConfig.BF_ACTIONS)/Math.log(2))+1;

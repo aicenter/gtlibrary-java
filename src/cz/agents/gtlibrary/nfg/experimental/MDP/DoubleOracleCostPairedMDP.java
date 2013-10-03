@@ -30,7 +30,7 @@ import java.util.*;
 public class DoubleOracleCostPairedMDP {
 
     public static boolean USE_ROBUST_BR = false;
-    public static boolean USE_REORDER_ACTIONS = true;
+    public static boolean USE_REORDER_ACTIONS = false;
     public static double END_EPSILON = MDPConfigImpl.getEpsilon();
 
     private MDPExpander expander;

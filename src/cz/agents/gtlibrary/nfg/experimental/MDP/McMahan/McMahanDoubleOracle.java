@@ -12,6 +12,8 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPExpander;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPExpander;
+import cz.agents.gtlibrary.nfg.experimental.domain.randomgame.RGMDPConfig;
+import cz.agents.gtlibrary.nfg.experimental.domain.randomgame.RGMDPExpander;
 import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGExpander;
 
@@ -34,7 +36,7 @@ public class McMahanDoubleOracle {
     private double lowerBound = Double.NEGATIVE_INFINITY;
     private double upperBound = Double.POSITIVE_INFINITY;
 
-    private int strategyCountThreshold = 100;
+    private int strategyCountThreshold = 20;
 
     private MDPExpander expander;
     private MDPConfig config;
@@ -64,6 +66,7 @@ public class McMahanDoubleOracle {
     public static void main(String[] args) {
         runBPG();
 //        runTG();
+//        runRG();
     }
 
     public McMahanDoubleOracle(MDPExpander expander, MDPConfig config) {
@@ -81,6 +84,13 @@ public class McMahanDoubleOracle {
     public static void runTG() {
         MDPExpander expander = new TGExpander();
         MDPConfig config = new TGConfig();
+        McMahanDoubleOracle mdp = new McMahanDoubleOracle(expander, config);
+        mdp.test();
+    }
+
+    public static void runRG() {
+        MDPExpander expander = new RGMDPExpander();
+        MDPConfig config = new RGMDPConfig();
         McMahanDoubleOracle mdp = new McMahanDoubleOracle(expander, config);
         mdp.test();
     }
@@ -229,7 +239,7 @@ public class McMahanDoubleOracle {
                 }
                 RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
 //                if (minPlayerStrategySet.size() > strategyCountThreshold || maxPlayerStrategySet.size() > strategyCountThreshold) {
-                if (REMOVE_STRATEGIES && iterations % 10 == 0) {
+                if (REMOVE_STRATEGIES && iterations % 5 == 0) {
                     coreSolver.clearModel();
 
 //                    if (maxPlayerStrategySet.size() > strategyCountThreshold) {
