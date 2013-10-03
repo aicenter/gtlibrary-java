@@ -189,7 +189,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 	}
 
 	@Override
-	public void addPlayerOneStrategies(PlayerStrategySet<T> playerStrategySet) {
+	public void addPlayerOneStrategies(Iterable<T> playerStrategySet) {
 
 		List<T> strategiesToAdd = new ArrayList<T>();
 		if (playerOneStrategySet == null) {
@@ -242,7 +242,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 	}
 
 	@Override
-	public void addPlayerTwoStrategies(PlayerStrategySet<U> playerStrategySet) {
+	public void addPlayerTwoStrategies(Iterable<U> playerStrategySet) {
 		List<U> strategiesToAdd = new ArrayList<U>();
 		if (playerTwoStrategySet == null) {
 			playerTwoStrategySet = new PlayerStrategySet<U>();
