@@ -4,10 +4,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
-import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPEpsilonFristBetterResponse;
-import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPFristBetterResponse;
-import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPIterativeStrategy;
-import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPOracleLP;
+import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.*;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPExpander;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
@@ -21,10 +18,7 @@ import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGExpander;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,7 +29,8 @@ import java.util.Set;
  */
 public class DoubleOracleCostPairedMDP {
 
-    public static boolean USE_ROBUST_BR = true;
+    public static boolean USE_ROBUST_BR = false;
+    public static boolean USE_REORDER_ACTIONS = true;
     public static double END_EPSILON = MDPConfigImpl.getEpsilon();
 
     private MDPExpander expander;
@@ -53,10 +48,13 @@ public class DoubleOracleCostPairedMDP {
 
     private double gameValue = Double.NaN;
 
+    private Map<MDPStateActionMarginal, Integer> debugStrategyMap = new HashMap<MDPStateActionMarginal, Integer>();
+    private ArrayList<Integer> actionsAddedInIteration = new ArrayList<Integer>();
+
     public static void main(String[] args) {
 //		runRG();
-//        runBPG();
-        runTG();
+        runBPG();
+//        runTG();
     }
 
 
@@ -115,18 +113,25 @@ public class DoubleOracleCostPairedMDP {
         if (USE_ROBUST_BR) {
             br1 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(0));
             br2 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(1));
+        } else if (USE_REORDER_ACTIONS) {
+            br1 = new MDPFBRActionOrdering(config, config.getAllPlayers().get(0));
+            br2 = new MDPFBRActionOrdering(config, config.getAllPlayers().get(1));
         } else {
             br1 = new MDPFristBetterResponse(config, config.getAllPlayers().get(0));
             br2 = new MDPFristBetterResponse(config, config.getAllPlayers().get(1));
         }
 
 //        double treshold = 0.1;
+        debugStrategyMap.put(firstPlayerStrategy.getAllMarginalsInStrategy().iterator().next(), 0);
+        debugStrategyMap.put(secondPlayerStrategy.getAllMarginalsInStrategy().iterator().next(), 0);
+        actionsAddedInIteration.add(2);
 
         while ( Math.abs(UB - LB) > END_EPSILON && UB > LB) {
 //        while ( ((1-LB/UB) > END_EPSILON || LB/UB < 0 || LB == Double.NEGATIVE_INFINITY || UB == Double.POSITIVE_INFINITY) && UB > LB) {
 //        for (int i=0; i<8; i++) {
 
-            debugOutput.println("*********** Iteration = " + (++iterations) + " Bound Interval = " + Math.abs(UB - LB) + " [ " + LB + ";" + UB +  " ]      *************");
+            iterations++;
+            debugOutput.println("*********** Iteration = " + (iterations) + " Bound Interval = " + Math.abs(UB - LB) + " [ " + LB + ";" + UB +  " ]      *************");
 
             long LpStart = threadBean.getCurrentThreadCpuTime();
             double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));
@@ -211,6 +216,11 @@ public class DoubleOracleCostPairedMDP {
 //            debugOutput.println("New Actions = " + newActions);
             lp.setNewActions(newActions);
 
+            actionsAddedInIteration.add(newActions.size());
+            for (MDPStateActionMarginal a : newActions) {
+                debugStrategyMap.put(a, iterations);
+            }
+
             if (newActions1.isEmpty() && newActions2.isEmpty()) {
 //                treshold = treshold / 10;
 //                if (treshold < MDPConfigImpl.getEpsilon()/100) {
@@ -249,6 +259,40 @@ public class DoubleOracleCostPairedMDP {
         } catch (InterruptedException e) {
         }
 
+//        for (int i=0; i<actionsAddedInIteration.size(); i++) {
+//            debugOutput.println("Iteration i = " + i + " : " + actionsAddedInIteration.get(i));
+//        }
+
+//        int[] supportIterationsP1 = new int[iterations+1];
+//        int[] supportIterationsP2 = new int[iterations+1];
+//
+//        int dominatedActionsP1 = 0;
+//        int dominatedActionsP2 = 0;
+//
+//        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
+//            if (firstPlayerStrategy.isActionWeaklyDominated(m1, secondPlayerStrategy)) {
+////                debugOutput.println(m1);
+//                dominatedActionsP1++;
+//            }
+//            if (firstPlayerStrategy.getStrategyProbability(m1) > MDPConfigImpl.getEpsilon())
+//                supportIterationsP1[debugStrategyMap.get(m1)]++;
+//        }
+//
+//        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getAllMarginalsInStrategy()) {
+//            if (secondPlayerStrategy.isActionWeaklyDominated(m2, firstPlayerStrategy)) {
+////                debugOutput.println(m2);
+//                dominatedActionsP2++;
+//            }
+//            if (secondPlayerStrategy.getStrategyProbability(m2) > MDPConfigImpl.getEpsilon())
+//                supportIterationsP2[debugStrategyMap.get(m2)]++;
+//        }
+//
+////        debugOutput.println(firstPlayerStrategy.getUtilityCache());
+//
+////        debugOutput.println("Supports P1:"+Arrays.toString(supportIterationsP1));
+////        debugOutput.println("Supports P2:"+Arrays.toString(supportIterationsP2));
+//        debugOutput.println("Dominated Actions P1:"+dominatedActionsP1);
+//        debugOutput.println("Dominated Actions P2:"+dominatedActionsP2);
         System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
     }
 }

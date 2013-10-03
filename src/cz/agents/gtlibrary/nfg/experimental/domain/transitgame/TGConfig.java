@@ -21,7 +21,7 @@ public class TGConfig extends MDPConfigImpl{
       public static int MAX_TIME_STEP = 12;
       public static int LENGTH_OF_GRID = 6;
       public static int WIDTH_OF_GRID = 6;
-
+//
 //    public static int MAX_TIME_STEP = 8;
 //    public static int LENGTH_OF_GRID = 5;
 //    public static int WIDTH_OF_GRID = 4;

@@ -29,6 +29,8 @@ import java.util.*;
  */
 public class McMahanDoubleOracle {
 
+    public static boolean REMOVE_STRATEGIES = false;
+
     private double lowerBound = Double.NEGATIVE_INFINITY;
     private double upperBound = Double.POSITIVE_INFINITY;
 
@@ -60,8 +62,8 @@ public class McMahanDoubleOracle {
     private double gameValue = Double.NaN;
 
     public static void main(String[] args) {
-//        runBPG();
-        runTG();
+        runBPG();
+//        runTG();
     }
 
     public McMahanDoubleOracle(MDPExpander expander, MDPConfig config) {
@@ -119,6 +121,9 @@ public class McMahanDoubleOracle {
         McMahanMDPStrategy maxCenterStrategy = p1Strategy;
         McMahanMDPStrategy minCenterStrategy = p2Strategy;
 
+        int oldSize1 = -1;
+        int oldSize2 = -1;
+
         while (Math.abs(upperBound - lowerBound) > MDPConfigImpl.getEpsilon()) {
 //        for (int iii=0; iii<3; iii++) {
             iterations++;
@@ -126,26 +131,30 @@ public class McMahanDoubleOracle {
 //            Pair<PureStrategy, Double> maxPlayerOracleResult;
 //            Pair<PureStrategy, Double> minPlayerOracleResult;
             if (iterations > 1) {
+                oldSize1 = maxPlayerStrategySet.size();
+                oldSize2 = minPlayerStrategySet.size();
+
                 McMahanMDPStrategy p1CombinedStrategy = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, maxPlayerMixedStrategy);
                 McMahanMDPStrategy p2CombinedStrategy = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, minPlayerMixedStrategy);
 
+                if (REMOVE_STRATEGIES) {
+                    Iterator<Map.Entry<McMahanMDPStrategy, Double>> i = maxPlayerMixedStrategy.iterator();
+                    while (i.hasNext()) {
+                        Map.Entry<McMahanMDPStrategy, Double> item = i.next();
+                        Double weight = maxStrategyWeights.get(item.getKey());
+                        if (weight == null) weight = 0d;
+                        weight += item.getValue();
+                        maxStrategyWeights.put(item.getKey(), weight);
+                    }
 
-                Iterator<Map.Entry<McMahanMDPStrategy, Double>> i = maxPlayerMixedStrategy.iterator();
-                while (i.hasNext()) {
-                    Map.Entry<McMahanMDPStrategy, Double> item = i.next();
-                    Double weight = maxStrategyWeights.get(item.getKey());
-                    if (weight == null) weight = 0d;
-                    weight += item.getValue();
-                    maxStrategyWeights.put(item.getKey(), weight);
-                }
-
-                i = minPlayerMixedStrategy.iterator();
-                while (i.hasNext()) {
-                    Map.Entry<McMahanMDPStrategy, Double> item = i.next();
-                    Double weight = minStrategyWeights.get(item.getKey());
-                    if (weight == null) weight = 0d;
-                    weight += item.getValue();
-                    minStrategyWeights.put(item.getKey(), weight);
+                    i = minPlayerMixedStrategy.iterator();
+                    while (i.hasNext()) {
+                        Map.Entry<McMahanMDPStrategy, Double> item = i.next();
+                        Double weight = minStrategyWeights.get(item.getKey());
+                        if (weight == null) weight = 0d;
+                        weight += item.getValue();
+                        minStrategyWeights.put(item.getKey(), weight);
+                    }
                 }
 //                p1CombinedStrategy.sanityCheck();
 //                p2CombinedStrategy.sanityCheck();
@@ -159,10 +168,16 @@ public class McMahanDoubleOracle {
                 McMahanMDPStrategy brs1 = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, brAlgorithms[0].extractBestResponse(p1CombinedStrategy));
                 McMahanMDPStrategy brs2 = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, brAlgorithms[1].extractBestResponse(p2CombinedStrategy));
 
-                double BRMax2 = brAlgorithms[0].calculateBR(maxCenterStrategy, minCenterStrategy);
-                double BRMin2 =brAlgorithms[1].calculateBR(minCenterStrategy, maxCenterStrategy);
-                McMahanMDPStrategy brCenter1 = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, brAlgorithms[0].extractBestResponse(p1CombinedStrategy));
-                McMahanMDPStrategy brCenter2 = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, brAlgorithms[1].extractBestResponse(p2CombinedStrategy));
+                double BRMax2 = Double.POSITIVE_INFINITY;
+                double BRMin2 = Double.NEGATIVE_INFINITY;
+                McMahanMDPStrategy brCenter1 = null;
+                McMahanMDPStrategy brCenter2 = null;
+                if (REMOVE_STRATEGIES) {
+                    BRMax2 = brAlgorithms[0].calculateBR(maxCenterStrategy, minCenterStrategy);
+                    BRMin2 =brAlgorithms[1].calculateBR(minCenterStrategy, maxCenterStrategy);
+                    brCenter1 = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, brAlgorithms[0].extractBestResponse(p1CombinedStrategy));
+                    brCenter2 = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, brAlgorithms[1].extractBestResponse(p2CombinedStrategy));
+                }
                 BRTIME += threadBean.getCurrentThreadCpuTime() - brStart;
                 debugOutput.println("This BR TIME:" + (threadBean.getCurrentThreadCpuTime() - brStart)/ 1000000l);
 
@@ -175,16 +190,20 @@ public class McMahanDoubleOracle {
 //                debugOutput.println(brs1);
 //                brs1.sanityCheck();
                 boolean changed1 = false;
-                Map<McMahanMDPStrategy, Double> maxCenterWeights = new HashMap<McMahanMDPStrategy, Double>();
-                maxCenterWeights.put(maxCenterStrategy, (double)iterations);
-                if (maxCenterWeights.put(brs1, 1d) == null) {
-                    maxCenterStrategy = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, maxCenterWeights, iterations+1);
-                    changed1 |= maxPlayerStrategySet.add(maxCenterStrategy);
+                changed1 |= maxPlayerStrategySet.add(brs1);
+
+                if (REMOVE_STRATEGIES) {
+                    Map<McMahanMDPStrategy, Double> maxCenterWeights = new HashMap<McMahanMDPStrategy, Double>();
+                    maxCenterWeights.put(maxCenterStrategy, (double)iterations);
+                    if (maxCenterWeights.put(brs1, 1d) == null) {
+                        maxCenterStrategy = new McMahanMDPStrategy(config.getAllPlayers().get(0), config, expander, maxCenterWeights, iterations+1);
+                        changed1 |= maxPlayerStrategySet.add(maxCenterStrategy);
+                    }
+
+                    changed1 |= maxPlayerStrategySet.add(p1CombinedStrategy);
+                    changed1 |= maxPlayerStrategySet.add(brCenter1);
                 }
 
-                changed1 |= maxPlayerStrategySet.add(brs1);
-                changed1 |= maxPlayerStrategySet.add(p1CombinedStrategy);
-                changed1 |= maxPlayerStrategySet.add(brCenter1);
                 if (changed1) {
                     coreSolver.addPlayerOneStrategies(maxPlayerStrategySet);
                 }
@@ -193,21 +212,24 @@ public class McMahanDoubleOracle {
                 boolean changed2 = false;
 //                debugOutput.println(brs2);
 //                brs2.sanityCheck();
-                Map<McMahanMDPStrategy, Double> minCenterWeights = new HashMap<McMahanMDPStrategy, Double>();
-                minCenterWeights.put(minCenterStrategy, (double)iterations);
-                if (minCenterWeights.put(brs2, 1d) == null) {
-                    minCenterStrategy = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, minCenterWeights, iterations+1);
-                    changed2 |= minPlayerStrategySet.add(minCenterStrategy);
-                }
                 changed2 |= minPlayerStrategySet.add(brs2);
-                changed2 |= minPlayerStrategySet.add(p2CombinedStrategy);
-                changed2 |= minPlayerStrategySet.add(brCenter2);
+                if (REMOVE_STRATEGIES) {
+                    Map<McMahanMDPStrategy, Double> minCenterWeights = new HashMap<McMahanMDPStrategy, Double>();
+                    minCenterWeights.put(minCenterStrategy, (double)iterations);
+                    if (minCenterWeights.put(brs2, 1d) == null) {
+                        minCenterStrategy = new McMahanMDPStrategy(config.getAllPlayers().get(1), config, expander, minCenterWeights, iterations+1);
+                        changed2 |= minPlayerStrategySet.add(minCenterStrategy);
+                    }
+
+                    changed2 |= minPlayerStrategySet.add(p2CombinedStrategy);
+                    changed2 |= minPlayerStrategySet.add(brCenter2);
+                }
                 if (changed2) {
                     coreSolver.addPlayerTwoStrategies(minPlayerStrategySet);
                 }
                 RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
 //                if (minPlayerStrategySet.size() > strategyCountThreshold || maxPlayerStrategySet.size() > strategyCountThreshold) {
-                if (iterations % 10 == 0) {
+                if (REMOVE_STRATEGIES && iterations % 10 == 0) {
                     coreSolver.clearModel();
 
 //                    if (maxPlayerStrategySet.size() > strategyCountThreshold) {
@@ -226,6 +248,9 @@ public class McMahanDoubleOracle {
 
                 debugOutput.println("Current Max #PS : " + maxPlayerStrategySet.size());
                 debugOutput.println("Current Min #PS : " + minPlayerStrategySet.size());
+
+                if (!REMOVE_STRATEGIES && oldSize1 == maxPlayerStrategySet.size() && oldSize2 == minPlayerStrategySet.size())
+                    break;
             }
             long LpStart = threadBean.getCurrentThreadCpuTime();
             coreSolver.computeNashEquilibrium();
@@ -236,7 +261,8 @@ public class McMahanDoubleOracle {
 
             resultValue = coreSolver.getGameValue();
             debugOutput.println("RGValue: " + resultValue);
-            debugOutput.println("************** Iteration: " + iterations + " Bounds size: " + Math.abs(upperBound - lowerBound) + " ***************");
+            debugOutput.println("*********** Iteration = " + (iterations) + " Bound Interval = " + Math.abs(upperBound - lowerBound) + " [ " + lowerBound + ";" + upperBound +  " ]      *************");
+//            debugOutput.println("************** Iteration = " + iterations + " Bounds size = " + Math.abs(upperBound - lowerBound) + " ***************");
         }
 
         debugOutput.println("Finished.");

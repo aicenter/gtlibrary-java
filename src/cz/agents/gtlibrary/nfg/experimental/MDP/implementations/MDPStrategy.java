@@ -313,4 +313,21 @@ public class MDPStrategy implements PureStrategy{
             }
         }
     }
+
+    public boolean isActionWeaklyDominated(MDPStateActionMarginal a, MDPStrategy opponentStrategy) {
+        int multiplier = 1;
+        if (a.getPlayer().getId() == 1) multiplier = -1;
+        outerloop:
+        for (MDPAction myActions : getActions(a.getState())) {
+            MDPStateActionMarginal myAction = new MDPStateActionMarginal(a.getState(), myActions);
+            boolean isOnceBetter = false;
+            for (MDPStateActionMarginal oppActions : opponentStrategy.getAllMarginalsInStrategy()) {
+                if (multiplier*getUtility(a, oppActions) > multiplier*getUtility(myAction, oppActions)) continue outerloop;
+                if (multiplier*getUtility(a, oppActions) < multiplier*getUtility(myAction, oppActions)) isOnceBetter = true;
+            }
+            if (isOnceBetter)
+                return true;
+        }
+        return false;
+    }
 }

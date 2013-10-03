@@ -56,9 +56,12 @@ public class MDPCoreLP {
                 cplex.setParam(IloCplex.BooleanParam.PerInd, true);
                 cplex.setParam(IloCplex.IntParam.PerLim, 1000000);
 //                cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Auto);
-                cplex.setParam(IloCplex.IntParam.Threads, 1);
+//                cplex.setParam(IloCplex.IntParam.Threads, 1);
+//                cplex.setParam(IloCplex.IntParam.CraInd, 1);
+//                cplex.setParam(IloCplex.IntParam.ParallelMode, 1);
+//                cplex.setParam(IloCplex.IntParam.AuxRootThreads, -1);
 
-                cplex.setOut(null);
+                        cplex.setOut(null);
                 IloNumVar obj = createVariableForMDPState(cplex, playerStrategy.get(config.getOtherPlayer(p)).getRootState());
                 if (p.getId() == 0) {
                   cplex.addMaximize(obj);
