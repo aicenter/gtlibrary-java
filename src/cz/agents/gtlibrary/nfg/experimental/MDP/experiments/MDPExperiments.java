@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.nfg.experimental.MDP.DoubleOracleCostPairedMDP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.FullCostPairedMDP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.McMahan.McMahanDoubleOracle;
+import cz.agents.gtlibrary.nfg.experimental.MDP.SingleOracleCostPairedMDP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.MDPFristBetterResponse;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPConfig;
 import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGConfig;
@@ -87,16 +88,25 @@ public class MDPExperiments {
             if (alg.endsWith("1")) {
                 MDPFristBetterResponse.USE_FIRST_BT = true;
                 if (alg.endsWith("R1")) {
-                    DoubleOracleCostPairedMDP.USE_ROBUST_BR = true;
-                } else DoubleOracleCostPairedMDP.USE_ROBUST_BR = false;
+                    SingleOracleCostPairedMDP.USE_ROBUST_BR = true;
+                } else SingleOracleCostPairedMDP.USE_ROBUST_BR = false;
             } else {
                 MDPFristBetterResponse.USE_FIRST_BT = false;
                 if (alg.endsWith("R")) {
-                    DoubleOracleCostPairedMDP.USE_ROBUST_BR = true;
-                } else DoubleOracleCostPairedMDP.USE_ROBUST_BR = false;
+                    SingleOracleCostPairedMDP.USE_ROBUST_BR = true;
+                } else SingleOracleCostPairedMDP.USE_ROBUST_BR = false;
             }
-
+            if (domain.equalsIgnoreCase("BP")) {
+                SingleOracleCostPairedMDP.runBPG();
+            } else if (domain.equalsIgnoreCase("TG")) {
+                SingleOracleCostPairedMDP.runTG();
+            }
         } else if (alg.startsWith("MC")) {
+            if (alg.startsWith("MCR")) {
+                McMahanDoubleOracle.REMOVE_STRATEGIES = true;
+            } else {
+                McMahanDoubleOracle.REMOVE_STRATEGIES = false;
+            }
             if (domain.equalsIgnoreCase("BP"))
                 McMahanDoubleOracle.runBPG();
             else if (domain.equalsIgnoreCase("TG"))

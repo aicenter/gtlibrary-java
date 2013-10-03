@@ -67,21 +67,21 @@ public class SingleOracleCostPairedMDP {
         this.config = config;
     }
 
-    private static void runBPG() {
+    public static void runBPG() {
         MDPExpander expander = new BPExpander();
         MDPConfig config = new BPConfig();
         SingleOracleCostPairedMDP mdp = new SingleOracleCostPairedMDP(expander, config);
         mdp.test();
     }
 
-    private static void runRG() {
+    public static void runRG() {
         MDPExpander expander = new RGMDPExpander();
         MDPConfig config = new RGMDPConfig();
         SingleOracleCostPairedMDP mdp = new SingleOracleCostPairedMDP(expander, config);
         mdp.test();
     }
 
-    private static void runTG() {
+    public static void runTG() {
         MDPExpander expander = new TGExpander();
         MDPConfig config = new TGConfig();
         SingleOracleCostPairedMDP mdp = new SingleOracleCostPairedMDP(expander, config);
