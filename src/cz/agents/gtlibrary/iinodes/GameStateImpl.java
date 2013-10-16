@@ -10,7 +10,7 @@ import cz.agents.gtlibrary.utils.Pair;
 public abstract class GameStateImpl implements GameState {
 
 	private static final long serialVersionUID = 7693972683606265891L;
-	
+
 	protected Player[] players;
 	protected History history;
 	protected double natureProbability;
@@ -33,7 +33,7 @@ public abstract class GameStateImpl implements GameState {
 	@Override
 	public GameState performAction(Action action) {
 		GameStateImpl state = (GameStateImpl) this.copy();
-		
+
 		state.performActionModifyingThisState(action);
 		return state;
 	}
@@ -46,7 +46,7 @@ public abstract class GameStateImpl implements GameState {
 			action.perform(this);
 		} else {
 			throw new IllegalStateException("Inconsistent move.");
-	}
+		}
 	}
 
 	private void updateNatureProbabilityFor(Action action) {
@@ -58,7 +58,7 @@ public abstract class GameStateImpl implements GameState {
 		history.addActionOf(action, playerToMove);
 	}
 
-        @Override
+	@Override
 	public boolean checkConsistency(Action action) {
 		if (action == null || action.getInformationSet() == null)
 			return false;
@@ -71,7 +71,7 @@ public abstract class GameStateImpl implements GameState {
 		return history;
 	}
 
-        @Override
+	@Override
 	public Player[] getAllPlayers() {
 		return players;
 	}

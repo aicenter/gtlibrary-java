@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.domain.pursuit;
+package cz.agents.gtlibrary.utils.graph;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -7,19 +7,12 @@ import java.util.Set;
 
 import org.jgrapht.graph.DefaultDirectedGraph;
 
-import cz.agents.gtlibrary.domain.bpg.data.DataLoader;
-import cz.agents.gtlibrary.domain.bpg.data.Edge;
-import cz.agents.gtlibrary.domain.bpg.data.Node;
 
 public class Graph implements Serializable {
-
-	private static final long serialVersionUID = -2699218462541771264L;
-
-	private DefaultDirectedGraph<Node, Edge> graph = new DefaultDirectedGraph<Node, Edge>(Edge.class);
-	private Map<String, Node> allNodes = new HashMap<String, Node>();
-	private Node evaderStart = null;
-	private Node p1Start = null;
-	private Node p2Start = null;
+	
+	private static final long serialVersionUID = -578541448878434086L;
+	protected DefaultDirectedGraph<Node, Edge> graph = new DefaultDirectedGraph<Node, Edge>(Edge.class);
+	protected Map<String, Node> allNodes = new HashMap<String, Node>();
 
 	final protected DataLoader dl;
 
@@ -33,19 +26,13 @@ public class Graph implements Serializable {
 		init();
 	}
 
-	private void init() {
+	protected void init() {
 		double[][] nodeMatrix = dl.getOriginalGraphIncMatrix();
 		int N = dl.getNodesInOriginalGraph();
 		for (int i = 0; i < N; i++) {
 			Node node = new Node("ID" + i, graph);
+			
 			allNodes.put(node.getId(), node);
-			if (i == PursuitGameInfo.evaderStart) {
-				evaderStart = node;
-			} else if (i == PursuitGameInfo.p1Start) {
-				p1Start = node;
-			} else if (i == PursuitGameInfo.p2Start) {
-				p2Start = node;
-			}
 		}
 		for (int i = 0; i < N; i++) {
 			for (int j = 0; j < N; j++) {
@@ -66,20 +53,9 @@ public class Graph implements Serializable {
 	public Map<String, Node> getAllNodes() {
 		return allNodes;
 	}
-
-	public Node getEvaderStart() {
-		return evaderStart;
-	}
-
-	public Node getP1Start() {
-		return p1Start;
-	}
-
-	public Node getP2Start() {
-		return p2Start;
-	}
-
-	public DataLoader getDl() {
+	
+	public DataLoader getDataLoader() {
 		return dl;
 	}
+
 }

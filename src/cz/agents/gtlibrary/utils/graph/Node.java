@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.domain.bpg.data;
+package cz.agents.gtlibrary.utils.graph;
 
 import java.util.ArrayList;
 
@@ -6,6 +6,8 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 
 public class Node {
 
+	public static final Node EMPTY_NODE = new Node("ID-1");
+	
 	final private String id;
 	final private int hash;
 
@@ -61,6 +63,10 @@ public class Node {
 
 	public int getIntID() {
 		return intID;
+	}
+	
+	public boolean isEmptyNode() {
+		return this.equals(EMPTY_NODE);
 	}
 	
 	@Override

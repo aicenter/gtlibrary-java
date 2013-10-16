@@ -8,7 +8,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
-import cz.agents.gtlibrary.utils.Exportable;
+import cz.agents.gtlibrary.utils.io.Exportable;
 
 public class Stats implements Exportable {
 	

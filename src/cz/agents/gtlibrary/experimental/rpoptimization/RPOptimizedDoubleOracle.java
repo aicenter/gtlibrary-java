@@ -19,8 +19,8 @@ import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.utils.FileManager;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import cz.agents.gtlibrary.utils.io.FileManager;
 
 public class RPOptimizedDoubleOracle {
 

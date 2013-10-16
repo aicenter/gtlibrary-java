@@ -7,13 +7,13 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.bpg.AttackerAction.AttackerMovementType;
 import cz.agents.gtlibrary.domain.bpg.data.BorderPatrollingGraph;
-import cz.agents.gtlibrary.domain.bpg.data.Node;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.graph.Node;
 
 public class BPGGameState extends GameStateImpl {
 

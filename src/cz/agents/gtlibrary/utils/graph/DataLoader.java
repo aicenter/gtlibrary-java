@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.domain.bpg.data;
+package cz.agents.gtlibrary.utils.graph;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

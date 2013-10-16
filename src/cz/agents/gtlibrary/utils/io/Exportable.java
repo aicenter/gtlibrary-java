@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.utils;
+package cz.agents.gtlibrary.utils.io;
 
 public interface Exportable {
 	
