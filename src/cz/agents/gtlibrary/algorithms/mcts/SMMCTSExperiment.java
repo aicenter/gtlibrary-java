@@ -4,44 +4,51 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts;
 
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
+import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import cz.agents.gtlibrary.algorithms.mcts.distribution.FrequenceDistribution;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.*;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3MBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3SelectionStrategy;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
-import cz.agents.gtlibrary.domain.goofspiel.GoofSpielAction;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimSystematicGS;
-import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
-import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameInfo;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.io.GambitEFG;
 import cz.agents.gtlibrary.nfg.UtilityMatrix;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolver;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolverImpl;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
-import cz.agents.gtlibrary.utils.FileManager;
-import cz.agents.gtlibrary.utils.HighQualityRandom;
-import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.security.SecureRandom;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.apache.commons.lang3.ArrayUtils;
+import cz.agents.gtlibrary.utils.io.FileManager;
 
 /**
  *
