@@ -5,20 +5,20 @@ import java.util.List;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import cz.agents.gtlibrary.domain.bpg.data.Node;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.graph.Node;
 
 public class PursuitGameState extends GameStateImpl {
 
 	private static final long serialVersionUID = -1158263262570332115L;
 	
 	private List<Action> sequence;
-	private Graph graph;
+	private PursuitGraph graph;
 	private Node evaderPosition;
 	private Node p1Position;
 	private Node p2Position;
@@ -28,7 +28,7 @@ public class PursuitGameState extends GameStateImpl {
 
 	public PursuitGameState() {
 		super(PursuitGameInfo.ALL_PLAYERS);
-		graph = new Graph(PursuitGameInfo.graphFile);
+		graph = new PursuitGraph(PursuitGameInfo.graphFile);
 		currentPlayerIndex = 0;
 		round = 0;
 		evaderPosition = graph.getEvaderStart();
@@ -141,7 +141,7 @@ public class PursuitGameState extends GameStateImpl {
 		return round;
 	}
 
-	public Graph getGraph() {
+	public PursuitGraph getGraph() {
 		return graph;
 	}
 

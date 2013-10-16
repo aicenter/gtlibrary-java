@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.utils;
+package cz.agents.gtlibrary.utils.io;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

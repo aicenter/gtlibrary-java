@@ -1,62 +1,25 @@
 package cz.agents.gtlibrary.domain.bpg.data;
 
-import java.util.HashMap;
-import java.util.Map;
+import cz.agents.gtlibrary.utils.graph.Graph;
+import cz.agents.gtlibrary.utils.graph.Node;
 
-import org.jgrapht.graph.DefaultDirectedGraph;
+public class BorderPatrollingGraph extends Graph {
 
-public class BorderPatrollingGraph {
+	private static final long serialVersionUID = -5572263962229886222L;
+	
+	private Node origin;
+	private Node destination;
+	private Node p1Start;
+	private Node p2Start;
 
-	private DefaultDirectedGraph<Node, Edge> graph = new DefaultDirectedGraph<Node, Edge>(Edge.class);
-	private Map<String, Node> allNodes = new HashMap<String, Node>();
-	private Node origin = null;
-	private Node destination = null;
-	private Node p1Start = null;
-	private Node p2Start = null;
-
-	final protected DataLoader dl;
-
-	public BorderPatrollingGraph() {
-		dl = new DataLoader();
-		init();
-	}
-
-	public BorderPatrollingGraph(String graphFile) {
-		dl = new DataLoader(graphFile);
-		init();
-	}
-
-	private void init() {
-		double[][] nodeMatrix = dl.getOriginalGraphIncMatrix();
+	protected void init() {
+		super.init();
 		int n = dl.getNodesInOriginalGraph();
 
-		for (int i = 0; i < n; i++) {
-			Node node = new Node("ID" + i, graph);
-			allNodes.put(node.getId(), node);
-			if (i == 0) {
-				origin = node;
-			} else if (i == n - 3) {
-				destination = node;
-			} else if (i == n - 2) {
-				p1Start = node;
-			} else if (i == n - 1) {
-				p2Start = node;
-			}
-		}
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < n; j++) {
-				if (nodeMatrix[i][j] == 1)
-					new Edge("E-" + i + "-" + j, allNodes.get("ID" + i), allNodes.get("ID" + j), graph);
-			}
-		}
-	}
-
-	public DefaultDirectedGraph<Node, Edge> getGraph() {
-		return graph;
-	}
-
-	public Map<String, Node> getAllNodes() {
-		return allNodes;
+		origin = allNodes.get("ID0");
+		destination = allNodes.get("ID" + (n - 3));
+		p1Start = allNodes.get("ID" + (n - 2));
+		p2Start = allNodes.get("ID" + (n - 1));
 	}
 
 	public Node getOrigin() {
@@ -74,9 +37,4 @@ public class BorderPatrollingGraph {
 	public Node getP2Start() {
 		return p2Start;
 	}
-
-	public DataLoader getDl() {
-		return dl;
-	}
-
 }

@@ -6,13 +6,13 @@ import java.util.List;
 
 import cz.agents.gtlibrary.domain.bpg.AttackerAction.AttackerMovementType;
 import cz.agents.gtlibrary.domain.bpg.data.BorderPatrollingGraph;
-import cz.agents.gtlibrary.domain.bpg.data.Edge;
-import cz.agents.gtlibrary.domain.bpg.data.Node;
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
+import cz.agents.gtlibrary.utils.graph.Edge;
+import cz.agents.gtlibrary.utils.graph.Node;
 
 public class BPGExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
