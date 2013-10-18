@@ -42,7 +42,7 @@ public class ReducedLPBuilder extends LPBuilder {
 
 	public static void runKuhnPoker() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		LPBuilder lpBuilder = new ReducedLPBuilder(new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KuhnPokerGameState(), algConfig, new KPGameInfo());
+		LPBuilder lpBuilder = new ReducedLPBuilder(new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KuhnPokerGameState(), new KPGameInfo());
 
 		lpBuilder.buildLP();
 		lpBuilder.solve();
@@ -50,7 +50,7 @@ public class ReducedLPBuilder extends LPBuilder {
 
 	public static void runGenericPoker() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		LPBuilder lpBuilder = new ReducedLPBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), algConfig, new GPGameInfo());
+		LPBuilder lpBuilder = new ReducedLPBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState(), new GPGameInfo());
 
 		lpBuilder.buildLP();
 		lpBuilder.solve();
@@ -58,7 +58,7 @@ public class ReducedLPBuilder extends LPBuilder {
 
 	public static void runAoS() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		LPBuilder lpBuilder = new ReducedLPBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState(), algConfig, new AoSGameInfo());
+		LPBuilder lpBuilder = new ReducedLPBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState(), new AoSGameInfo());
 
 		lpBuilder.buildLP();
 		lpBuilder.solve();
@@ -66,14 +66,14 @@ public class ReducedLPBuilder extends LPBuilder {
 
 	public static void runGoofSpiel() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		LPBuilder lpBuilder = new ReducedLPBuilder(new GoofSpielExpander<SequenceInformationSet>(algConfig), new GoofSpielGameState(), algConfig, new GSGameInfo());
+		LPBuilder lpBuilder = new ReducedLPBuilder(new GoofSpielExpander<SequenceInformationSet>(algConfig), new GoofSpielGameState(), new GSGameInfo());
 
 		lpBuilder.buildLP();
 		lpBuilder.solve();
 	}
 
-	public ReducedLPBuilder(Expander<SequenceInformationSet> expander, GameState rootState, AlgorithmConfig<SequenceInformationSet> algConfig, GameInfo info) {
-		super(expander, rootState, algConfig);
+	public ReducedLPBuilder(Expander<SequenceInformationSet> expander, GameState rootState, GameInfo info) {
+		super(expander, rootState);
 		lpFileName = "reducedlp.lp";
 		utilityShift = info.getMaxUtility() + 1;
 	}

@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
+import ilog.cplex.IloCplex.UnknownObjectException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,9 +11,16 @@ import java.util.Map.Entry;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
+import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
+import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.upordown.UDExpander;
 import cz.agents.gtlibrary.domain.upordown.UDGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
@@ -23,11 +31,10 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
-public class SecondNFPBuilder extends TreeVisitor {
+public class InitialPBuilder extends TreeVisitor {
 
 	protected String lpFileName;
 	protected NFPTable lpTable;
-	protected double valueOfGame;
 
 	public static void main(String[] args) {
 //		runAoS();
@@ -39,17 +46,48 @@ public class SecondNFPBuilder extends TreeVisitor {
 
 	private static void runUpOrDown() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		SecondNFPBuilder lpBuilder = new SecondNFPBuilder(new UDExpander<SequenceInformationSet>(algConfig), new UDGameState(), algConfig, 0);
+		InitialPBuilder lpBuilder = new InitialPBuilder(new UDExpander<SequenceInformationSet>(algConfig), new UDGameState());
 
 		lpBuilder.buildLP();
 		lpBuilder.solve();
 	}
 
-	public SecondNFPBuilder(Expander<SequenceInformationSet> expander, GameState rootState, AlgorithmConfig<SequenceInformationSet> algConfig, double valueOfGame) {
-		super(rootState, expander, algConfig);
+	public static void runKuhnPoker() {
+		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		InitialPBuilder lpBuilder = new InitialPBuilder(new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KuhnPokerGameState());
+
+		lpBuilder.buildLP();
+		lpBuilder.solve();
+	}
+
+	public static void runGenericPoker() {
+		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		InitialPBuilder lpBuilder = new InitialPBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState());
+
+		lpBuilder.buildLP();
+		lpBuilder.solve();
+	}
+
+	public static void runAoS() {
+		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		InitialPBuilder lpBuilder = new InitialPBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState());
+
+		lpBuilder.buildLP();
+		lpBuilder.solve();
+	}
+
+	public static void runGoofSpiel() {
+		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		InitialPBuilder lpBuilder = new InitialPBuilder(new GoofSpielExpander<SequenceInformationSet>(algConfig), new GoofSpielGameState());
+
+		lpBuilder.buildLP();
+		lpBuilder.solve();
+	}
+
+	public InitialPBuilder(Expander<SequenceInformationSet> expander, GameState rootState) {
+		super(rootState, expander);
 		this.expander = expander;
-		this.valueOfGame = valueOfGame;
-		lpFileName = "secondNFP.lp";
+		lpFileName = "initialNFP.lp";
 	}
 
 	public void buildLP() {
@@ -57,7 +95,7 @@ public class SecondNFPBuilder extends TreeVisitor {
 		visitTree(rootState);
 	}
 
-	public void solve() {
+	public double solve() {
 		try {
 			LPData lpData = lpTable.toCplex();
 
@@ -65,22 +103,24 @@ public class SecondNFPBuilder extends TreeVisitor {
 			System.out.println(lpData.getSolver().solve());
 			System.out.println(lpData.getSolver().getStatus());
 			System.out.println(lpData.getSolver().getObjValue());
-//			System.out.println(Arrays.toString(lpData.getSolver().getValues(lpData.getVariables())));
+
+//			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
+
 			for (int i = 0; i < lpData.getVariables().length; i++) {
 				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
 			}
-//			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
-//
+
 //			for (Entry<Sequence, Double> entry : p1RealizationPlan.entrySet()) {
-//				if (entry.getValue() > 0)
+//				if(entry.getValue() > 0)
 //					System.out.println(entry);
 //			}
+			return lpData.getSolver().getObjValue();
 		} catch (IloException e) {
 			e.printStackTrace();
 		}
-
+		return Double.NaN;
 	}
-
+	
 	public Map<Sequence, Double> createFirstPlayerStrategy(IloCplex cplex, Map<Object, IloNumVar> watchedPrimalVars) throws IloException {
 		Map<Sequence, Double> p1Strategy = new HashMap<Sequence, Double>();
 
@@ -88,6 +128,15 @@ public class SecondNFPBuilder extends TreeVisitor {
 			p1Strategy.put((Sequence) entry.getKey(), cplex.getValue(entry.getValue()));
 		}
 		return p1Strategy;
+	}
+	
+	protected Map<Sequence, Double> getWatchedSequenceValues(LPData lpData) throws UnknownObjectException, IloException {
+		Map<Sequence, Double> watchedSequenceValues = new HashMap<Sequence, Double>(lpData.getWatchedPrimalVariables().size());
+
+		for (Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
+			watchedSequenceValues.put((Sequence) entry.getKey(), lpData.getSolver().getValue(entry.getValue()));
+		}
+		return watchedSequenceValues;
 	}
 
 //	public Map<Sequence, Double> createSecondPlayerStrategy(IloCplex cplex, Map<Object, IloNumVar> watchedPrimalVars) throws IloException {
@@ -105,22 +154,14 @@ public class SecondNFPBuilder extends TreeVisitor {
 
 		lpTable = new NFPTable();
 
-//		initCost(p2EmptySequence);
+		initObjective(p2EmptySequence);
 		initE(p1EmptySequence);
 		initF(p2EmptySequence);
 		inite();
-		addPreviousItConstraints(p2EmptySequence);
-	}
-
-	private void addPreviousItConstraints(Sequence p2EmptySequence) {
-		lpTable.setConstraint("prevIt", players[1], 1);
-		lpTable.setConstraint("prevIt", "s", -valueOfGame);
-		lpTable.setConstraintType("prevIt", 1);
-		lpTable.setLowerBound("s", 1);
 	}
 
 	public void inite() {
-		lpTable.setConstraint(players[0], "s", -1);//e for root
+		lpTable.setConstant(players[0], 1);//e for root
 	}
 
 	public void initF(Sequence p2EmptySequence) {
@@ -134,7 +175,7 @@ public class SecondNFPBuilder extends TreeVisitor {
 		lpTable.setConstraintType(players[0], 1);
 	}
 
-	public void initCost(Sequence p2EmptySequence) {
+	public void initObjective(Sequence p2EmptySequence) {
 		lpTable.setObjective(players[1], 1);
 	}
 
@@ -171,16 +212,6 @@ public class SecondNFPBuilder extends TreeVisitor {
 		lpTable.setConstraint(eqKey, state.getISKeyForPlayerToMove(), -1);//F
 		lpTable.setConstraintType(eqKey, 0);
 		lpTable.setLowerBound(state.getISKeyForPlayerToMove(), Double.NEGATIVE_INFINITY);
-		addU(eqKey);
-	}
-
-	private void addU(Object eqKey) {
-		Key uKey = new Key("u", eqKey);
-		
-		lpTable.setConstraint(eqKey, uKey, 1);
-		lpTable.setLowerBound(uKey, 0);
-		lpTable.setUpperBound(uKey, 1);
-		lpTable.setObjective(uKey, 1);
 	}
 
 	@Override
@@ -216,7 +247,6 @@ public class SecondNFPBuilder extends TreeVisitor {
 		lpTable.setConstraint(p2Sequence, varKey, 1);//F child
 		lpTable.setConstraintType(p2Sequence, 0);
 		lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-		addU(p2Sequence);
 	}
 
 	protected Object getLastISKey(Sequence sequence) {

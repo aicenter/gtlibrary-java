@@ -17,10 +17,10 @@ public abstract class TreeVisitor {
 	protected AlgorithmConfig<SequenceInformationSet> algConfig;
 	protected Player[] players;
 
-	public TreeVisitor(GameState rootState, Expander<? extends InformationSet> expander, AlgorithmConfig<SequenceInformationSet> algConfig) {
+	public TreeVisitor(GameState rootState, Expander<SequenceInformationSet> expander) {
 		this.rootState = rootState;
 		this.expander = expander;
-		this.algConfig = algConfig;
+		this.algConfig = expander.getAlgorithmConfig();
 		this.players = rootState.getAllPlayers();
 	}
 
