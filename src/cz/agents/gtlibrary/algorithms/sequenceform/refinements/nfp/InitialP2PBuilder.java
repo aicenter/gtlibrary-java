@@ -46,9 +46,9 @@ public class InitialP2PBuilder extends TreeVisitor {
 
 //			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
 
-			for (int i = 0; i < lpData.getVariables().length; i++) {
-				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
-			}
+//			for (int i = 0; i < lpData.getVariables().length; i++) {
+//				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
+//			}
 
 //			for (Entry<Sequence, Double> entry : p1RealizationPlan.entrySet()) {
 //				if(entry.getValue() > 0)

@@ -5,7 +5,6 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -50,9 +49,9 @@ public class InitialP2QBuilder extends TreeVisitor {
 			System.out.println(lpData.getSolver().getStatus());
 			System.out.println(lpData.getSolver().getObjValue());
 //			System.out.println(Arrays.toString(lpData.getSolver().getValues(lpData.getVariables())));
-			for (int i = 0; i < lpData.getVariables().length; i++) {
-				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
-			}
+//			for (int i = 0; i < lpData.getVariables().length; i++) {
+//				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
+//			}
 			return createIterationData(lpData);
 		} catch (IloException e) {
 			e.printStackTrace();

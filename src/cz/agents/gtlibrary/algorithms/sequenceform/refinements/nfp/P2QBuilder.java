@@ -51,7 +51,9 @@ public class P2QBuilder extends InitialP2QBuilder {
 		Map<Sequence, Double> updatedSum = new HashMap<Sequence, Double>(explSeqSum);
 
 		for (Sequence sequence : exploitableSequences) {
-			updatedSum.put(sequence, updatedSum.get(sequence) + valueOfGame);
+			Double oldValue = updatedSum.get(sequence);
+			
+			updatedSum.put(sequence, (oldValue == null?0:oldValue) + valueOfGame);
 		}
 		return updatedSum;
 	}
