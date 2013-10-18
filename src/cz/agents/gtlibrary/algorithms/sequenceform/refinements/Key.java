@@ -19,6 +19,10 @@ public class Key {
 		hashCode = computeHashCode();
 	}
 
+	public Object getObject() {
+		return object;
+	}
+	
 	public int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
