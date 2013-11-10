@@ -64,6 +64,6 @@ public class P2QBuilder extends InitialP2QBuilder {
 		Set<Sequence> exploitableSequences = getExploitableSequences(watchedSequenceValues);
 		Map<Sequence, Double> realizationPlan = getRealizationPlan(lpData);
 		
-		return new IterationData(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, realizationPlan);
+		return new IterationData(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, realizationPlan, getUValues(watchedSequenceValues));
 	}
 }
