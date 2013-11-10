@@ -11,13 +11,15 @@ public class IterationData {
 	private Map<Sequence, Double> explSeqSum;
 	private Set<Sequence> lastItSeq;
 	private Map<Sequence, Double> realizationPlan;
+	private Map<Sequence, Double> uValues;
 
-	public IterationData(double gameValue, Map<Sequence, Double> explSeqSum, Set<Sequence> lastItSeq, Map<Sequence, Double> realizationPlan) {
+	public IterationData(double gameValue, Map<Sequence, Double> explSeqSum, Set<Sequence> lastItSeq, Map<Sequence, Double> realizationPlan, Map<Sequence, Double> uValues) {
 		super();
 		this.gameValue = gameValue;
 		this.explSeqSum = explSeqSum;
 		this.lastItSeq = lastItSeq;
 		this.realizationPlan = realizationPlan;
+		this.uValues = uValues;
 	}
 
 	public Map<Sequence, Double> getExplSeqSum() {
@@ -34,5 +36,9 @@ public class IterationData {
 	
 	public Map<Sequence, Double> getRealizationPlan() {
 		return realizationPlan;
+	}
+	
+	public Map<Sequence, Double> getUValues() {
+		return uValues;
 	}
 }

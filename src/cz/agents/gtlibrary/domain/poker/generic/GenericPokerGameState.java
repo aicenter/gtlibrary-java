@@ -11,16 +11,19 @@ public class GenericPokerGameState extends PokerGameState {
 	
 	private PokerAction table;
 	private int continuousRaiseCount;
+//	private int denominator;
 
 	public GenericPokerGameState() {
 		super(GPGameInfo.ALL_PLAYERS, GPGameInfo.ANTE);
 		continuousRaiseCount = 0;
+//		denominator = 1;
 	}
 
 	public GenericPokerGameState(GenericPokerGameState gameState) {
 		super(gameState);
 		this.table = gameState.table;
 		this.continuousRaiseCount = gameState.continuousRaiseCount;
+//		this.denominator = gameState.denominator;
 	}
 
 	@Override
@@ -155,12 +158,30 @@ public class GenericPokerGameState extends PokerGameState {
 			dealTableCard(action);
 		}
 	}
+	
+//	@Override
+//	protected void dealCardToPlayer(PokerAction action) {
+////		if(playerCards[0] == null)
+////			denominator *= GPGameInfo.MAX_CARD_OF_EACH_TYPE*GPGameInfo.MAX_CARD_TYPES;
+////		else
+////			denominator *= GPGameInfo.MAX_CARD_OF_EACH_TYPE*GPGameInfo.MAX_CARD_TYPES-1;
+//		super.dealCardToPlayer(action);
+//	}
 
 	private void dealTableCard(PokerAction action) {
+//		denominator *= GPGameInfo.MAX_CARD_TYPES*GPGameInfo.MAX_CARD_OF_EACH_TYPE - 2;
 		table = action;
 		addActionToSequence(action);
 		increaseRound();
 		switchPlayers();
+	}
+	
+	public int getDenominator() {
+		return getCardCount()*(getCardCount()-1)*(getCardCount() - 2);
+	}
+
+	private int getCardCount() {
+		return GPGameInfo.MAX_CARD_TYPES*GPGameInfo.MAX_CARD_OF_EACH_TYPE;
 	}
 
 }

@@ -16,6 +16,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.comparators.factory.UpperBoundCompar
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.FullLPFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.LocalCacheDoubleOracleFactory;
+import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.SimABDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.SimABOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.SortingOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
@@ -27,8 +28,8 @@ public class SimAlphaBeta {
 //		runGoofSpielWithNature();
 //		runGoofSpielWithNatureWithLocalCache();
 //		runGoofSpielWithFixedNatureSequence();
-		runGoofSpielWithFixedNatureSequenceWithLocalCache();
-		//		runPursuit();
+//		runGoofSpielWithFixedNatureSequenceWithLocalCache();
+				runPursuit();
 	}
 
 	public static void runGoofSpielWithFixedNatureSequenceWithLocalCache() {

@@ -5,7 +5,9 @@ import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloObjective;
 import ilog.concert.IloRange;
+import ilog.cplex.IloCplex;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -20,6 +22,7 @@ public class RecyclingLPTable extends LPTable {
 	protected Map<Object, Map<Object, Double>> newConstraints;
 	protected Map<Object, Map<Object, Double>> updatedConstraints;
 	protected Set<Object> removedConstraints;
+	protected Map<Object, Double> updatedConstants;
 
 	protected IloObjective lpObj;
 	protected IloRange[] lpConstraints;
@@ -31,6 +34,7 @@ public class RecyclingLPTable extends LPTable {
 		newObjective = new LinkedHashMap<Object, Double>();
 		updatedConstraints = new LinkedHashMap<Object, Map<Object, Double>>();
 		removedConstraints = new HashSet<Object>();
+		updatedConstants = new HashMap<Object, Double>();
 	}
 
 	public RecyclingLPTable(int m, int n) {
@@ -39,6 +43,7 @@ public class RecyclingLPTable extends LPTable {
 		newObjective = new LinkedHashMap<Object, Double>(n);
 		updatedConstraints = new LinkedHashMap<Object, Map<Object, Double>>();
 		removedConstraints = new HashSet<Object>();
+		updatedConstants = new HashMap<Object, Double>();
 	}
 
 	public void setObjective(Object varKey, double value) {
@@ -55,22 +60,42 @@ public class RecyclingLPTable extends LPTable {
 		Map<Object, Double> row = constraints.get(eqKey);
 
 		if (row == null) {
+			assert !varKey.equals("t");
 			row = new LinkedHashMap<Object, Double>();
 			constraints.put(eqKey, row);
+			newConstraints.put(eqKey, row);
+			row.put(varKey, value);
+		} else {
+			if (newConstraints.containsKey(eqKey)) {
+				row.put(varKey, value);
+			} else {
+				Map<Object, Double> rowDiff = new LinkedHashMap<Object, Double>();
+
+				if (row.containsKey(varKey)) {
+					if (Math.abs(value - row.get(varKey)) < 1e-10)
+						return;
+					rowDiff.put(varKey, value - row.get(varKey));
+				} else {
+					rowDiff.put(varKey, value);
+				}
+				updatedConstraints.put(eqKey, rowDiff);
+				row.put(varKey, value);
+			}
 		}
 
-		if (row.put(varKey, value) == null) {
-			Map<Object, Double> newRow = newConstraints.get(eqKey);
-
-			if (newRow == null)
-				newRow = new LinkedHashMap<Object, Double>();
-
-			newRow.put(varKey, value);
-			newConstraints.put(eqKey, newRow);
-//			newConstraints.put(eqKey, row);
-		}
 		updateEquationIndices(eqKey);
 		updateVariableIndices(varKey);
+	}
+	
+	public void setConstraintIfNotPresent(Object eqKey, Object varKey, double value) {
+		if(constraints.get(eqKey).containsKey(varKey))
+			return;
+		setConstraint(eqKey, varKey, value);
+	}
+	
+	@Override
+	public void setConstant(Object eqKey, double value) {
+		updatedConstants.put(eqKey, value);
 	}
 
 	public LPData toCplex() throws IloException {
@@ -78,11 +103,18 @@ public class RecyclingLPTable extends LPTable {
 		double[] lb = getLowerBounds();
 		String[] variableNames = getVariableNames();
 
+		cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
+		cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+		cplex.setParam(IloCplex.DoubleParam.EpMrk, 0.99999);
+		//		cplex.setParam(IloCplex.DoubleParam.BarEpComp, 1e-4);
+		//		System.out.println("BarEpComp: " + cplex.getParam(IloCplex.DoubleParam.BarEpComp));
+		cplex.setParam(IloCplex.BooleanParam.NumericalEmphasis, true);
+		cplex.setOut(null);
 		lpVariables = updateVariables(variableNames, lb, ub);
 		lpConstraints = addConstraints(lpVariables);
 
 		addObjective(lpVariables);
-		return new LPData(cplex, lpVariables, lpConstraints, getWatchedPrimalVars(lpVariables), getWatchedDualVars(lpConstraints));
+		return new LPData(cplex, lpVariables, lpConstraints, getRelaxableConstraints(lpConstraints), getWatchedPrimalVars(lpVariables), getWatchedDualVars(lpConstraints));
 	}
 
 	protected IloNumVar[] updateVariables(String[] variableNames, double[] lb, double[] ub) throws IloException {
@@ -104,10 +136,7 @@ public class RecyclingLPTable extends LPTable {
 		IloRange[] cplexConstraints = createConstraintsFromLastIteration();
 
 		for (Entry<Object, Map<Object, Double>> rowEntry : updatedConstraints.entrySet()) {
-//			int equationIndex = getEquationIndex(eqKey) - 1;
-//
-//			cplex.remove(cplexConstraints[equationIndex]);
-//			createNewConstraint(x, cplexConstraints, eqKey, constraints.get(eqKey), equationIndex);
+			assert rowEntry.getValue().get("t") == null || Math.abs(rowEntry.getValue().get("t")) == 1; 
 			modifyExistingConstraint(x, cplexConstraints, rowEntry, getEquationIndex(rowEntry.getKey()) - 1);
 		}
 		for (Object eqKey : removedConstraints) {
@@ -123,21 +152,67 @@ public class RecyclingLPTable extends LPTable {
 			int equationIndex = getEquationIndex(rowEntry.getKey()) - 1;
 
 			if (cplexConstraints[equationIndex] == null) {
+				assert rowEntry.getValue().get("t") == null || rowEntry.getValue().get("t") == 1; 
 				createNewConstraint(x, cplexConstraints, rowEntry.getKey(), rowEntry.getValue(), equationIndex);
 			} else {
-//				cplex.remove(cplexConstraints[equationIndex]);
-//				createNewConstraint(x, cplexConstraints, rowEntry.getKey(), rowEntry.getValue(), equationIndex);//teï to tady vymažu a nahradim zkusit to ale jenom editací(tzn v setConstr tam enmùžu vkládat celej øádek ale jenom tu zmìnu)
-				modifyExistingConstraint(x, cplexConstraints, rowEntry, equationIndex);
+				//				modifyExistingConstraint(x, cplexConstraints, rowEntry, equationIndex);
+				assert false;
 			}
 		}
+		updateConstants(cplexConstraints);
+		updatedConstants.clear();
 		newConstraints.clear();
 
 		return cplexConstraints;
 	}
 
+	private void updateConstants(IloRange[] cplexConstraints) throws IloException {
+		for (Entry<Object, Double> entry : updatedConstants.entrySet()) {
+			updateConstant(cplexConstraints, entry.getKey(), entry.getValue());
+		}
+	}
+
+	private void updateConstant(IloRange[] cplexConstraints, Object eqKey, Double constant) throws IloException {
+		if (constraintTypes.get(eqKey) == 0)
+			cplexConstraints[getEquationIndex(eqKey) - 1].setUB(constant);
+		else if (constraintTypes.get(eqKey) == 2)
+			cplexConstraints[getEquationIndex(eqKey) - 1].setLB(constant);
+		else
+			cplexConstraints[getEquationIndex(eqKey) - 1].setBounds(constant, constant);
+	}
+
 	protected void modifyExistingConstraint(IloNumVar[] x, IloRange[] cplexConstraints, Entry<Object, Map<Object, Double>> rowEntry, int equationIndex) throws IloException {
 		cplex.addToExpr(cplexConstraints[equationIndex], createRowExpresion(x, rowEntry.getValue()));
 	}
+
+	//	private void updateConstant(IloRange[] cplexConstraints, Entry<Object, Map<Object, Double>> rowEntry, int equationIndex) throws IloException {
+	//		double constant = getConstant(rowEntry.getKey());
+	//		IloNumExpr rowExpr = cplexConstraints[equationIndex].getExpr();
+	//
+	//		cplex.remove(cplexConstraints[equationIndex]);
+	//		switch (constraintTypes.get(rowEntry.getKey())) {
+	//		case 0:
+	//			cplexConstraints[equationIndex] = cplex.addLe(rowExpr, constant);
+	//			break;
+	//		case 1:
+	//			cplexConstraints[equationIndex] = cplex.addEq(rowExpr, constant);
+	//			break;
+	//		case 2:
+	//			cplexConstraints[equationIndex] = cplex.addGe(rowExpr, constant);
+	//			break;
+	//		default:
+	//			break;
+	//		}
+	//
+	//		//		if (cplexConstraints[equationIndex].getLB() != constant && cplexConstraints[equationIndex].getUB() != constant) {
+	//		//			if (constraintTypes.get(rowEntry.getKey()) == 0)
+	//		////								cplexConstraints[equationIndex].setUB(constant);
+	//		//				cplexConstraints[equationIndex].setBounds(Double.NEGATIVE_INFINITY, constant);
+	//		//			else if (constraintTypes.get(rowEntry.getKey()) == 2)
+	//		//				//				cplexConstraints[equationIndex].setLB(constant);
+	//		//				cplexConstraints[equationIndex].setBounds(constant, Double.POSITIVE_INFINITY);
+	//		//		}
+	//	}
 
 	protected void createNewConstraint(IloNumVar[] x, IloRange[] cplexConstraints, Object key, Map<Object, Double> row, int equationIndex) throws IloException {
 		IloLinearNumExpr rowExpr = createRowExpresion(x, row);
@@ -145,13 +220,13 @@ public class RecyclingLPTable extends LPTable {
 
 		switch (constraintType) {
 		case 0:
-			cplexConstraints[equationIndex] = cplex.addLe(rowExpr, getConstant(key));
+			cplexConstraints[equationIndex] = cplex.addLe(rowExpr, 0);
 			break;
 		case 1:
-			cplexConstraints[equationIndex] = cplex.addEq(rowExpr, getConstant(key));
+			cplexConstraints[equationIndex] = cplex.addEq(rowExpr, 0);
 			break;
 		case 2:
-			cplexConstraints[equationIndex] = cplex.addGe(rowExpr, getConstant(key));
+			cplexConstraints[equationIndex] = cplex.addGe(rowExpr, 0);
 			break;
 		default:
 			break;
@@ -178,7 +253,7 @@ public class RecyclingLPTable extends LPTable {
 		IloLinearNumExpr rowExpr = cplex.linearNumExpr();
 
 		for (Entry<Object, Double> memberEntry : row.entrySet()) {
-			rowExpr.addTerm(-memberEntry.getValue().doubleValue(), x[getVariableIndex(memberEntry.getKey()) - 1]);
+			rowExpr.addTerm(memberEntry.getValue().doubleValue(), x[getVariableIndex(memberEntry.getKey()) - 1]);
 		}
 		return rowExpr;
 	}

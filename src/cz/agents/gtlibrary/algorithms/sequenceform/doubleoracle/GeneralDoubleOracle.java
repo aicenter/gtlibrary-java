@@ -66,10 +66,10 @@ public class GeneralDoubleOracle {
     public static PlayerSelection playerSelection = PlayerSelection.SINGLE_IMPROVED;
 
 	public static void main(String[] args) {
-		runAC();
+//		runAC();
 //        runBP();
 //        runGenericPoker();
-//        runKuhnPoker();
+        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
 //		runSimRandomGame();

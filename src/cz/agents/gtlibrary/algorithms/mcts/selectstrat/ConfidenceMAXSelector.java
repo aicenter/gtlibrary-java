@@ -9,7 +9,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import java.util.Map;
-import org.apache.commons.math3.distribution.NormalDistribution;
+//import org.apache.commons.math3.distribution.NormalDistribution;
 
 /**
  *
@@ -45,12 +45,12 @@ public class ConfidenceMAXSelector extends UCTMAXSelectionStrategy {
                     //TODO: properly normalize
                     double diff = (maxValue - values.get(en.getKey()) + epsilon)/2;
                     //TODO: some meaningful estimate of variance;
-                    double value = 1 - (new NormalDistribution(0,2/Math.sqrt(aCount))).cumulativeProbability(diff);
+//                    double value = 1 - (new NormalDistribution(0,2/Math.sqrt(aCount))).cumulativeProbability(diff);
                     
-                    if (value > max) {
-                            max = value;
-                            bestAction = en.getKey();
-                    }
+//                    if (value > max) {
+//                            max = value;
+//                            bestAction = en.getKey();
+//                    }
 		}
 		return bestAction;
     }

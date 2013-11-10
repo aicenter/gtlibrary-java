@@ -6,15 +6,17 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 
 public class LPTable {
-	
-	public int CPLEXALG = IloCplex.Algorithm.Barrier;
+
+	public int CPLEXALG = IloCplex.Algorithm.Network;
 	public int CPLEXTHREADS = 0; // change to 0 to have no restrictions
 
 	protected Map<Object, Double> objective;
@@ -25,11 +27,12 @@ public class LPTable {
 	protected Map<Object, Integer> variableIndices;
 	protected Map<Object, Integer> primalWatch;
 	protected Map<Object, Integer> dualWatch;
-
+	protected Set<Object> relaxableConstraints;
+	
 	protected Map<Object, Integer> constraintTypes;
 	protected Map<Object, Double> lb;
 	protected Map<Object, Double> ub;
-
+	
 	protected IloCplex cplex;
 
 	public LPTable() {
@@ -41,6 +44,7 @@ public class LPTable {
 		variableIndices = new LinkedHashMap<Object, Integer>();
 		primalWatch = new LinkedHashMap<Object, Integer>();
 		dualWatch = new LinkedHashMap<Object, Integer>();
+		relaxableConstraints = new HashSet<Object>();
 
 		constraintTypes = new LinkedHashMap<Object, Integer>();
 		lb = new LinkedHashMap<Object, Double>();
@@ -61,6 +65,7 @@ public class LPTable {
 		variableIndices = new LinkedHashMap<Object, Integer>(n);
 		primalWatch = new LinkedHashMap<Object, Integer>();
 		dualWatch = new LinkedHashMap<Object, Integer>();
+		relaxableConstraints = new HashSet<Object>();
 
 		constraintTypes = new LinkedHashMap<Object, Integer>(m);
 		lb = new LinkedHashMap<Object, Double>(n);
@@ -172,8 +177,12 @@ public class LPTable {
 		cplex.clearModel();
 		cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
 		cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+		cplex.setParam(IloCplex.DoubleParam.EpMrk, 0.99999);
+//		cplex.setParam(IloCplex.DoubleParam.BarEpComp, 1e-4);
+//		System.out.println("BarEpComp: " + cplex.getParam(IloCplex.DoubleParam.BarEpComp));
+		cplex.setParam(IloCplex.BooleanParam.NumericalEmphasis, true);
 		cplex.setOut(null);
-		
+
 		double[] ub = getUpperBounds();
 		double[] lb = getLowerBounds();
 		String[] variableNames = getVariableNames();
@@ -181,7 +190,16 @@ public class LPTable {
 		IloRange[] constraints = addConstraints(cplex, variables);
 
 		addObjective(variables);
-		return new LPData(cplex, variables, constraints, getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
+		return new LPData(cplex, variables, constraints, getRelaxableConstraints(constraints), getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
+	}
+
+	protected Set<IloRange> getRelaxableConstraints(IloRange[] constraints) {
+		Set<IloRange> relaxableConstraints = new HashSet<IloRange>(this.relaxableConstraints.size());
+		
+		for (Object eqKey : this.relaxableConstraints) {
+			relaxableConstraints.add(constraints[getEquationIndex(eqKey) - 1]);
+		}
+		return relaxableConstraints;
 	}
 
 	protected String[] getVariableNames() {
@@ -236,6 +254,7 @@ public class LPTable {
 		IloRange[] cplexConstraints = new IloRange[rowCount()];
 
 		for (Entry<Object, Map<Object, Double>> rowEntry : constraints.entrySet()) {
+			assert rowEntry.getValue().get("t") == null || rowEntry.getValue().get("t") == 1; 
 			IloLinearNumExpr rowExpr = createRowExpresion(cplex, x, rowEntry);
 			Integer constraintType = getConstraintType(rowEntry);
 			int equationIndex = getEquationIndex(rowEntry.getKey()) - 1;
@@ -267,18 +286,26 @@ public class LPTable {
 		IloLinearNumExpr rowExpr = cplex.linearNumExpr();
 
 		for (Entry<Object, Double> memberEntry : rowEntry.getValue().entrySet()) {
-			rowExpr.addTerm(-memberEntry.getValue().doubleValue(), x[getVariableIndex(memberEntry.getKey()) - 1]);
+			rowExpr.addTerm(memberEntry.getValue(), x[getVariableIndex(memberEntry.getKey()) - 1]);
 		}
 		return rowExpr;
 	}
 
 	protected void addObjective(IloNumVar[] x) throws IloException {
-		double[] objCoef = new double[x.length];
+		IloLinearNumExpr objExpr = cplex.linearNumExpr();
 
 		for (Entry<Object, Double> entry : objective.entrySet()) {
-			objCoef[variableIndices.get(entry.getKey())] = entry.getValue().doubleValue();
+			objExpr.addTerm(entry.getValue(), x[variableIndices.get(entry.getKey())]);
 		}
-		cplex.addMaximize(cplex.scalProd(x, objCoef));
+		cplex.addMaximize(objExpr);
+	}
+	
+	/**
+	 * Mark constraint, which might cause infeasibility due to numeric instability
+	 * @param eqKey
+	 */
+	public void markRelaxableConstraint(Object eqKey) {
+		relaxableConstraints.add(eqKey);
 	}
 
 	/**
@@ -337,8 +364,8 @@ public class LPTable {
 
 	public void removeFromConstraint(Object eqKey, Object varKey) {
 		Map<Object, Double> row = constraints.get(eqKey);
-		
-		if(row != null)
+
+		if (row != null)
 			row.remove(varKey);
 	}
 }

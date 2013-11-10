@@ -111,6 +111,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 		try {
 			restoreModel();
 			long time = System.currentTimeMillis();
+//			cplex.exportModel("model.lp");
 			solve();
 			Stats.getInstance().addToLPSolveTime(System.currentTimeMillis() - time);
 			finalValue = cplex.getObjValue();

@@ -37,10 +37,10 @@ public class InitialPBuilder extends TreeVisitor {
 	protected NFPTable lpTable;
 
 	public static void main(String[] args) {
-//		runAoS();
-//		runGoofSpiel();
-//		runKuhnPoker();
-//		runGenericPoker();
+		//		runAoS();
+		//		runGoofSpiel();
+		//		runKuhnPoker();
+		//		runGenericPoker();
 		runUpOrDown();
 	}
 
@@ -98,29 +98,71 @@ public class InitialPBuilder extends TreeVisitor {
 	public double solve() {
 		try {
 			LPData lpData = lpTable.toCplex();
+			boolean solved = false;
 
 			lpData.getSolver().exportModel(lpFileName);
-			System.out.println(lpData.getSolver().solve());
+			for (int algorithm : lpData.getAlgorithms()) {
+				lpData.getSolver().setParam(IloCplex.IntParam.RootAlg, algorithm);
+				if(solved = trySolve(lpData))
+					break;
+			}
+			if(!solved)
+				solveUnfeasibleLP(lpData);
+//			trySolve(lpData);
 			System.out.println(lpData.getSolver().getStatus());
 			System.out.println(lpData.getSolver().getObjValue());
 
-//			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
+			//			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
 
-			for (int i = 0; i < lpData.getVariables().length; i++) {
-				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
-			}
+			//			for (int i = 0; i < lpData.getVariables().length; i++) {
+			//				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
+			//			}
 
-//			for (Entry<Sequence, Double> entry : p1RealizationPlan.entrySet()) {
-//				if(entry.getValue() > 0)
-//					System.out.println(entry);
-//			}
+			//			for (Entry<Sequence, Double> entry : p1RealizationPlan.entrySet()) {
+			//				if(entry.getValue() > 0)
+			//					System.out.println(entry);
+			//			}
 			return lpData.getSolver().getObjValue();
 		} catch (IloException e) {
 			e.printStackTrace();
 		}
 		return Double.NaN;
 	}
-	
+
+	private boolean trySolve(LPData lpData) throws IloException {
+		boolean solved;
+		
+		try {
+			solved = lpData.getSolver().solve();
+		} catch (IloException e) {
+			return false;
+		}
+
+		System.out.println("P: " + solved);
+		return solved;
+	}
+
+	private void solveUnfeasibleLP(LPData lpData) throws IloException {
+		lpData.getSolver().setParam(IloCplex.IntParam.FeasOptMode, IloCplex.Relaxation.OptQuad);
+
+		boolean solved = lpData.getSolver().feasOpt(lpData.getConstraints(), getPreferences(lpData));
+
+		assert solved;
+		System.out.println("Q feas: " + solved);
+	}
+
+	private double[] getPreferences(LPData lpData) {
+		double[] preferences = new double[lpData.getConstraints().length];
+
+		for (int i = 0; i < preferences.length; i++) {
+			if (lpData.getRelaxableConstraints().contains(lpData.getConstraints()[i]))
+				preferences[i] = 1;
+			else
+				preferences[i] = 0.5;
+		}
+		return preferences;
+	}
+
 	public Map<Sequence, Double> createFirstPlayerStrategy(IloCplex cplex, Map<Object, IloNumVar> watchedPrimalVars) throws IloException {
 		Map<Sequence, Double> p1Strategy = new HashMap<Sequence, Double>();
 
@@ -129,7 +171,7 @@ public class InitialPBuilder extends TreeVisitor {
 		}
 		return p1Strategy;
 	}
-	
+
 	protected Map<Sequence, Double> getWatchedSequenceValues(LPData lpData) throws UnknownObjectException, IloException {
 		Map<Sequence, Double> watchedSequenceValues = new HashMap<Sequence, Double>(lpData.getWatchedPrimalVariables().size());
 
@@ -139,14 +181,14 @@ public class InitialPBuilder extends TreeVisitor {
 		return watchedSequenceValues;
 	}
 
-//	public Map<Sequence, Double> createSecondPlayerStrategy(IloCplex cplex, Map<Object, IloNumVar> watchedPrimalVars) throws IloException {
-//		Map<Sequence, Double> p2Strategy = new HashMap<Sequence, Double>();
-//
-//		for (Entry<Object, IloNumVar> entry : watchedPrimalVars.entrySet()) {
-//			p2Strategy.put((Sequence) entry.getKey(), cplex.getValue(entry.getValue()));
-//		}
-//		return p2Strategy;
-//	}
+	//	public Map<Sequence, Double> createSecondPlayerStrategy(IloCplex cplex, Map<Object, IloNumVar> watchedPrimalVars) throws IloException {
+	//		Map<Sequence, Double> p2Strategy = new HashMap<Sequence, Double>();
+	//
+	//		for (Entry<Object, IloNumVar> entry : watchedPrimalVars.entrySet()) {
+	//			p2Strategy.put((Sequence) entry.getKey(), cplex.getValue(entry.getValue()));
+	//		}
+	//		return p2Strategy;
+	//	}
 
 	public void initTable() {
 		Sequence p1EmptySequence = new ArrayListSequenceImpl(players[0]);
@@ -181,8 +223,16 @@ public class InitialPBuilder extends TreeVisitor {
 
 	@Override
 	protected void visitLeaf(GameState state) {
+		assert state.getNatureProbability() > 0;
 		updateParentLinks(state);
-		lpTable.substractFromConstraint(state.getSequenceFor(players[1]), state.getSequenceFor(players[0]), state.getNatureProbability() * state.getUtilities()[0]);
+		if (state instanceof GenericPokerGameState) {
+			double value = ((GenericPokerGameState) state).getDenominator() * state.getNatureProbability() * state.getUtilities()[0];
+
+			assert Math.abs(value - Math.round(value)) < 1e-8;
+			lpTable.substractFromConstraint(state.getSequenceFor(players[1]), state.getSequenceFor(players[0]), Math.round(value));
+		} else {
+			lpTable.substractFromConstraint(state.getSequenceFor(players[1]), state.getSequenceFor(players[0]), state.getNatureProbability() * state.getUtilities()[0]);
+		}
 	}
 
 	@Override

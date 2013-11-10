@@ -33,6 +33,9 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.upordown.UDExpander;
+import cz.agents.gtlibrary.domain.upordown.UDGameInfo;
+import cz.agents.gtlibrary.domain.upordown.UDGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -60,15 +63,25 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-//		runKuhnPoker();
-		runGenericPoker();
+		runKuhnPoker();
+//		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
 //		runPursuit();
+//		runUpOrDown();
 	}
 	
+	private static void runUpOrDown() {
+		GameState rootState = new UDGameState();
+		GameInfo gameInfo = new UDGameInfo();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new UDExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+
+		System.out.println(efg.generate());
+	}
+
 	public static void runAC() {
 		GameState rootState = new ACGameState();
 		GameInfo gameInfo = new ACGameInfo();
@@ -122,7 +135,17 @@ public class FullSequenceEFG {
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 
-		efg.generate();
+		Map<Player, Map<Sequence, Double>> rps = efg.generate();
+		
+		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
+			if(entry.getValue() > 0)
+				System.out.println(entry);
+		}
+		System.out.println("**********");
+		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
+			if(entry.getValue() > 0)
+				System.out.println(entry);
+		}
 	}
 
 	public static void runRandomGame() {
