@@ -8,6 +8,8 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMa
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
+import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGConfig;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 
 import java.util.*;
@@ -99,6 +101,9 @@ public class BPExpander extends MDPExpanderImpl {
             }
         }
 
+        if (BPConfig.SHUFFLE) {
+            Collections.shuffle(result, new HighQualityRandom(BPConfig.SHUFFLE_ID));
+        }
         return result;
     }
 
