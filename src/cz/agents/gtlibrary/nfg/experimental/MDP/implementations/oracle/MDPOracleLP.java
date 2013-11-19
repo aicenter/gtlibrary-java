@@ -37,18 +37,18 @@ public class MDPOracleLP extends MDPCoreLP {
 
     public double solveForPlayer(Player player) {
         IloCplex cplex = getLpModels().get(player);
-        long start = System.nanoTime();
+        long start = threadBean.getCurrentThreadCpuTime();
         if (newActions == null) {
             buildLPFromStrategies(player);
         } else {
             updateLPFromStrategies(player, newActions);
         }
-        BUILDING_LP_TIME += System.nanoTime() - start;
+        BUILDING_LP_TIME += threadBean.getCurrentThreadCpuTime() - start;
         try {
-            if (SAVELP) cplex.exportModel("MDP-LP"+player.getId()+".lp");
-            start = System.nanoTime();
+//            if (SAVELP) cplex.exportModel("MDP-LP"+player.getId()+".lp");
+            start = threadBean.getCurrentThreadCpuTime();
             cplex.solve();
-            SOLVING_LP_TIME += System.nanoTime() - start;
+            SOLVING_LP_TIME += threadBean.getCurrentThreadCpuTime() - start;
             if (cplex.getStatus() != IloCplex.Status.Optimal) {
                 System.out.println(cplex.getStatus());
                 assert false;

@@ -36,7 +36,7 @@ public class McMahanDoubleOracle {
     private double lowerBound = Double.NEGATIVE_INFINITY;
     private double upperBound = Double.POSITIVE_INFINITY;
 
-    private int strategyCountThreshold = 20;
+    private int strategyCountThreshold = 60;
 
     private MDPExpander expander;
     private MDPConfig config;
@@ -134,7 +134,7 @@ public class McMahanDoubleOracle {
         int oldSize1 = -1;
         int oldSize2 = -1;
 
-        while (Math.abs(upperBound - lowerBound) > MDPConfigImpl.getEpsilon()) {
+        while (Math.abs(upperBound - lowerBound) > 1e-3) {
 //        for (int iii=0; iii<3; iii++) {
             iterations++;
 

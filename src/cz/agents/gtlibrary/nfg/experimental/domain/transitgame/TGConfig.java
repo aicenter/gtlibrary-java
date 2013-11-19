@@ -18,13 +18,13 @@ import java.util.List;
  */
 public class TGConfig extends MDPConfigImpl{
 
-      public static int MAX_TIME_STEP = 12;
+      public static int MAX_TIME_STEP = 10;
       public static int LENGTH_OF_GRID = 6;
-      public static int WIDTH_OF_GRID = 6;
+      public static int WIDTH_OF_GRID = 4;
 //
-//    public static int MAX_TIME_STEP = 8;
-//    public static int LENGTH_OF_GRID = 5;
-//    public static int WIDTH_OF_GRID = 4;
+//    public static int MAX_TIME_STEP = 6;
+//    public static int LENGTH_OF_GRID = 4;
+//    public static int WIDTH_OF_GRID = 5;
 //    public static int MAX_TIME_STEP = 18;
 //    public static int LENGTH_OF_GRID = 16;
 //    public static int WIDTH_OF_GRID = 8;
@@ -34,6 +34,10 @@ public class TGConfig extends MDPConfigImpl{
 
     final protected static int PATROLLERS = 1;
     protected static int[] PATROLLER_BASES;
+    public static boolean useUncertainty = true;
+    public static double MOVEMENT_UNCERTAINTY = 0.1;
+    public static boolean SHUFFLE = false;
+    public static int SHUFFLE_ID = 0;
 
     public TGConfig() {
         allPlayers = new ArrayList<Player>(2);

@@ -42,6 +42,12 @@ public class MDPExperiments {
             BPGGameInfo.graphFile = args[3];
             BPConfig.FLAG_PROB = new Double(args[4]);
             BPConfig.MAX_TIME_STEP = depth;
+            if (args.length == 7) {
+                BPConfig.SHUFFLE = new Boolean(args[5]);
+                BPConfig.SHUFFLE_ID = new Integer(args[6]);
+            } else {
+                BPConfig.SHUFFLE = false;
+            }
         } else if (args[1].equalsIgnoreCase("TG")) { // Transit Game
             if (args.length < 5) {
                 throw new IllegalArgumentException("Illegal random game domain arguments count. 3 are required {DEPTH} {LENGTH OF THE GRID} {WIDTH OF THE GRID}");
@@ -49,6 +55,14 @@ public class MDPExperiments {
             TGConfig.MAX_TIME_STEP = new Integer(args[2]);
             TGConfig.LENGTH_OF_GRID = new Integer(args[3]);
             TGConfig.WIDTH_OF_GRID = new Integer(args[4]);
+            if (args.length == 8) {
+                TGConfig.useUncertainty = new Boolean(args[5]);
+                TGConfig.SHUFFLE = new Boolean(args[6]);
+                TGConfig.SHUFFLE_ID = new Integer(args[7]);
+            } else {
+                TGConfig.useUncertainty = false;
+                TGConfig.SHUFFLE = false;
+            }
         } else throw new IllegalArgumentException("Illegal domain: " + args[1]);
     }
 

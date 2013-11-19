@@ -53,8 +53,8 @@ public class DoubleOracleCostPairedMDP {
 
     public static void main(String[] args) {
 //		runRG();
-        runBPG();
-//        runTG();
+//        runBPG();
+        runTG();
     }
 
 
@@ -126,12 +126,13 @@ public class DoubleOracleCostPairedMDP {
         debugStrategyMap.put(secondPlayerStrategy.getAllMarginalsInStrategy().iterator().next(), 0);
         actionsAddedInIteration.add(2);
 
-        while ( Math.abs(UB - LB) > END_EPSILON && UB > LB) {
-//        while ( ((1-LB/UB) > END_EPSILON || LB/UB < 0 || LB == Double.NEGATIVE_INFINITY || UB == Double.POSITIVE_INFINITY) && UB > LB) {
+//        while ( Math.abs(UB - LB) > END_EPSILON && UB > LB) {
+        while ( ((Math.abs(UB-LB)/Math.abs(LB)) > 0.001 || LB/UB < 0 || LB == Double.NEGATIVE_INFINITY || UB == Double.POSITIVE_INFINITY) && UB > LB) {
 //        for (int i=0; i<8; i++) {
 
             iterations++;
             debugOutput.println("*********** Iteration = " + (iterations) + " Bound Interval = " + Math.abs(UB - LB) + " [ " + LB + ";" + UB +  " ]      *************");
+            debugOutput.println("I = " + (iterations) + " Time = " + ((threadBean.getCurrentThreadCpuTime() - startTime)/1000000l));
 
             long LpStart = threadBean.getCurrentThreadCpuTime();
             double r1 = lp.solveForPlayer(config.getAllPlayers().get(0));

@@ -15,14 +15,16 @@ public class RandomGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[] {FIRST_PLAYER, SECOND_PLAYER};
 
     public static int MAX_DEPTH = 2;
-    public static int MAX_BF = 2;
-    public static int MAX_OBSERVATION = 1;
+    public static int MAX_BF = 3;
+    public static int MAX_OBSERVATION = 2;
     public static int MAX_UTILITY = 1;
     public static boolean BINARY_UTILITY = false;
-    public static boolean UTILITY_CORRELATION = false;
-    public static int MAX_CENTER_MODIFICATION = 1;
+    public static boolean UTILITY_CORRELATION = true;
+    public static int MAX_CENTER_MODIFICATION = 5;
+    public static double KEEP_OBS_PROB = 0.9;
+    public static int[] ACTIONS;
 
-    public static long seed = 1;
+    public static long seed = 3;
 
     public static Random rnd = new HighQualityRandom(seed);
 
@@ -34,7 +36,10 @@ public class RandomGameInfo implements GameInfo {
             else
                 MAX_UTILITY = 2*MAX_CENTER_MODIFICATION*MAX_DEPTH;
         }
-
+        ACTIONS = new int[MAX_BF-1];
+        for (int i=0; i<MAX_BF-1; i++) {
+            ACTIONS[i]=i;
+        }
     }
 
     @Override

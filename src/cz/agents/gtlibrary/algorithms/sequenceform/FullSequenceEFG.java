@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -35,6 +37,7 @@ import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.io.GambitEFG;
 
 public class FullSequenceEFG {
 
@@ -57,6 +60,7 @@ public class FullSequenceEFG {
       runRandomGame();
 //      runSimRandomGame();
 //		runPursuit();
+//        runPhantomTTT();
 	}
 
     public static void runPursuit() {
@@ -90,9 +94,12 @@ public class FullSequenceEFG {
         GameState rootState = new RandomGameState();
         GameInfo gameInfo = new RandomGameInfo();
         SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-        FullSequenceEFG efg = new FullSequenceEFG(rootState, new RandomGameExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+        RandomGameExpander<SequenceInformationSet> expander = new RandomGameExpander<SequenceInformationSet>(algConfig);
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 
         efg.generate();
+
+//        GambitEFG.write("randomgame.gbt", rootState, (Expander)expander);
     }
 
 
@@ -122,6 +129,16 @@ public class FullSequenceEFG {
 
 		efg.generate();
 	}
+
+    public static void runPhantomTTT() {
+        GameState rootState = new TTTState();
+        GameInfo gameInfo = new TTTInfo();
+        SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        Expander expander = new TTTExpander<SequenceInformationSet>(algConfig);
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
+        efg.generate();
+//        GeneralDoubleOracle.traverseCompleteGameTree(rootState, expander);
+    }
 
 	public FullSequenceEFG(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo config, SequenceFormConfig<SequenceInformationSet> algConfig) {
 		this.rootState = rootState;
