@@ -20,10 +20,34 @@ public class ActionPureStrategy implements PureStrategy {
 
     @Override
     public String toString() {
-        return (action == null) ? "" : action.toString();
+        return action.toString();
     }
 
     public Action getAction() {
         return action;
     }
+
+	@Override
+	public int hashCode() {
+		return action.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ActionPureStrategy other = (ActionPureStrategy) obj;
+		if (action == null) {
+			if (other.action != null)
+				return false;
+		} else if (!action.equals(other.action))
+			return false;
+		return true;
+	}
+    
+    
 }

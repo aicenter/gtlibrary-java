@@ -1,8 +1,7 @@
 package cz.agents.gtlibrary.nfg.experimental.domain.bpg;
 
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
-import cz.agents.gtlibrary.domain.bpg.data.Edge;
-import cz.agents.gtlibrary.domain.bpg.data.Node;
+
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPExpanderImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
@@ -10,6 +9,8 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
 import cz.agents.gtlibrary.nfg.experimental.domain.transitgame.TGConfig;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import cz.agents.gtlibrary.utils.graph.Edge;
+import cz.agents.gtlibrary.utils.graph.Node;
 
 
 import java.util.*;

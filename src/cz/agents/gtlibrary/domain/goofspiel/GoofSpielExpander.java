@@ -1,7 +1,9 @@
 package cz.agents.gtlibrary.domain.goofspiel;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -20,7 +22,7 @@ public class GoofSpielExpander<I extends InformationSet> extends ExpanderImpl<I>
 	@Override
 	public List<Action> getActions(GameState gameState) {
 		GoofSpielGameState gsState = (GoofSpielGameState) gameState;
-		List<Action> actions = new LinkedList<Action>();
+		List<Action> actions = new ArrayList<Action>();
 
 		if(gsState.isPlayerToMoveNature()) {
 			if(GSGameInfo.useFixedNatureSequence) {
@@ -31,15 +33,13 @@ public class GoofSpielExpander<I extends InformationSet> extends ExpanderImpl<I>
 			return actions;
 		}
 		addCardsForPlayerToMove(gsState, actions);
-//		Collections.shuffle(actions, new Random(GSGameInfo.seed));
+		Collections.shuffle(actions, new Random(GSGameInfo.seed));
 		return actions;
 	}
 
 	public void addCardsForPlayerToMove(GoofSpielGameState gsState, List<Action> actions) {
 		for (Integer actionValue : gsState.getCardsForPlayerToMove()) {
-			GoofSpielAction action = new GoofSpielAction(actionValue, gsState.getPlayerToMove(), getAlgorithmConfig().getInformationSetFor(gsState));
-			
-			actions.add(action);
+			actions.add(new GoofSpielAction(actionValue, gsState.getPlayerToMove(), getAlgorithmConfig().getInformationSetFor(gsState)));
 		}
 	}
 }

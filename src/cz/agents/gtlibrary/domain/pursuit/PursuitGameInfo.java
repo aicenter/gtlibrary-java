@@ -15,7 +15,7 @@ public class PursuitGameInfo implements GameInfo {
 	public static int p1Start = 7;
 	public static int p2Start = 11;
 	public static int depth = 4;
-	public static boolean forceMoves = true;
+	public static boolean forceMoves = false;
 
 	@Override
 	public double getMaxUtility() {

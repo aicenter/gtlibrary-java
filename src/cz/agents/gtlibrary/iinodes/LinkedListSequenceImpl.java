@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.iinodes;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -170,21 +171,11 @@ public class LinkedListSequenceImpl implements Sequence {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		if (hashCode() != obj.hashCode())
-			return false;
-		LinkedListSequenceImpl other = (LinkedListSequenceImpl) obj;
+		Sequence sequence = (Sequence) obj;
 
-        if (!player.equals(other.player))
-            return false;
-        if (actions.size() != other.actions.size())
-            return false;
-		if (!actions.equals(other.actions))
+		if (!player.equals(sequence.getPlayer()))
+			return false;
+		if (!getAsList().equals(sequence.getAsList()))
 			return false;
 		return true;
 	}
@@ -199,5 +190,10 @@ public class LinkedListSequenceImpl implements Sequence {
 		if (size() == 0)
 			return null;
 		return getLast().getInformationSet();
+	}
+	
+	@Override
+	public List<Action> getAsList() {
+		return actions;
 	}
 }

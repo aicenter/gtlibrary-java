@@ -1,14 +1,14 @@
 package cz.agents.gtlibrary.domain.pursuit;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
-import cz.agents.gtlibrary.domain.bpg.data.Edge;
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
+import cz.agents.gtlibrary.utils.graph.Edge;
 
 public class PursuitExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
@@ -26,7 +26,7 @@ public class PursuitExpander<I extends InformationSet> extends ExpanderImpl<I> {
 	}
 
 	private List<Action> getEvaderActions(PursuitGameState state) {
-		List<Action> actions = new LinkedList<Action>();
+		List<Action> actions = new ArrayList<Action>();
 
 		for (Edge edge : state.getGraph().getEdgesOf(state.getEvaderPosition())) {
 			if (edge.getSource().equals(state.getEvaderPosition()))
@@ -39,7 +39,7 @@ public class PursuitExpander<I extends InformationSet> extends ExpanderImpl<I> {
 	}
 
 	private List<Action> getPatrollerActions(PursuitGameState state) {
-		List<Action> actions = new LinkedList<Action>();
+		List<Action> actions = new ArrayList<Action>();
 
 		for (Edge p1Edge : state.getGraph().getEdgesOf(state.getP1Position())) {
 			for (Edge p2Edge : state.getGraph().getEdgesOf(state.getP2Position())) {

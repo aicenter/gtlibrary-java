@@ -244,11 +244,11 @@ public class McMahanDoubleOracle {
 
 //                    if (maxPlayerStrategySet.size() > strategyCountThreshold) {
                         maxPlayerStrategySet.clear();
-                        maxPlayerStrategySet.add(removeStrategies(config.getAllPlayers().get(0), maxStrategyWeights));
+                        maxPlayerStrategySet.addAll(removeStrategies(config.getAllPlayers().get(0), maxStrategyWeights));
 //                    }
 //                    if (minPlayerStrategySet.size() > strategyCountThreshold) {
                         minPlayerStrategySet.clear();
-                        minPlayerStrategySet.add(removeStrategies(config.getAllPlayers().get(1), minStrategyWeights));
+                        minPlayerStrategySet.addAll(removeStrategies(config.getAllPlayers().get(1), minStrategyWeights));
 //                    }
                     coreSolver.addPlayerOneStrategies(maxPlayerStrategySet);
                     coreSolver.addPlayerTwoStrategies(minPlayerStrategySet);

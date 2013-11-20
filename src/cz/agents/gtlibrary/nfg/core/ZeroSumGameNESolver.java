@@ -1,7 +1,6 @@
 package cz.agents.gtlibrary.nfg.core;
 
 import cz.agents.gtlibrary.nfg.MixedStrategy;
-import cz.agents.gtlibrary.nfg.PlayerStrategySet;
 import cz.agents.gtlibrary.nfg.PureStrategy;
 
 public interface ZeroSumGameNESolver<T extends PureStrategy, U extends PureStrategy> {

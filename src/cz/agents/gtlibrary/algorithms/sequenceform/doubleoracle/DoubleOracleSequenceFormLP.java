@@ -61,7 +61,7 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
                     newSequencesSinceLastLPCalculation.get(p).addAll(algConfig.getNewSequences());
             }
             long currentTime = System.currentTimeMillis();
-            setSequencesAndISForGeneratingConstraints(algConfig,players[firstPlayerIndex], players[secondPlayerIndex]);
+            setSequencesAndISForGeneratingConstraints(algConfig, players[firstPlayerIndex], players[secondPlayerIndex]);
             overallGenerationTime += (System.currentTimeMillis()) - currentTime;
             currentTime = System.currentTimeMillis();
 			double v = calculateOnePlStrategy(algConfig, root, players[firstPlayerIndex], players[secondPlayerIndex]);
