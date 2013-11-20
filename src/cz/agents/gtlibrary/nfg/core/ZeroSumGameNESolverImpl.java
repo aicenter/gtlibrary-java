@@ -1,16 +1,18 @@
 package cz.agents.gtlibrary.nfg.core;
 
+import ilog.concert.IloException;
+import ilog.cplex.IloCplex;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.PlayerStrategySet;
 import cz.agents.gtlibrary.nfg.PureStrategy;
 import cz.agents.gtlibrary.nfg.Utility;
-import ilog.concert.IloException;
-import ilog.cplex.IloCplex;
 import cz.agents.gtlibrary.nfg.lplibrary.cplex.MIProblemCplex;
 import cz.agents.gtlibrary.nfg.lplibrary.lpWrapper.AMIProblem;
-
-import java.util.ArrayList;
-import java.util.List;
+import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 /**
  * Basic implementation of the zero-sum game solver searching for a Nash
@@ -27,8 +29,8 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 	private PlayerStrategySet<T> playerOneStrategySet = null;
 	private PlayerStrategySet<U> playerTwoStrategySet = null;
 
-	private MixedStrategy playerOneMixedStrategy = null;
-	private MixedStrategy playerTwoMixedStrategy = null;
+	private MixedStrategy<T> playerOneMixedStrategy = null;
+	private MixedStrategy<U> playerTwoMixedStrategy = null;
 
 	private Utility<T, U> utilityComputer;
 	
@@ -111,6 +113,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 			long time = System.currentTimeMillis();
 //            cplex.exportModel("LP.lp");
 			solve();
+			Stats.getInstance().addToLPSolveTime(System.currentTimeMillis() - time);
 			finalValue = cplex.getObjValue();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -239,7 +242,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 			}
 		}
 
-		playerOneStrategySet.add(strategiesToAdd);
+		playerOneStrategySet.addAll(strategiesToAdd);
 	}
 
 	@Override
@@ -288,7 +291,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 			}
 		}
 
-		playerTwoStrategySet.add(strategiesToAdd);
+		playerTwoStrategySet.addAll(strategiesToAdd);
 	}
 
 //	public void releaseModel() {

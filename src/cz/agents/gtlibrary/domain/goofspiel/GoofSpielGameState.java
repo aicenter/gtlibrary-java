@@ -1,10 +1,15 @@
 package cz.agents.gtlibrary.domain.goofspiel;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-
-import cz.agents.gtlibrary.utils.FixedSizeMap;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import java.util.Random;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
@@ -12,14 +17,15 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
 
 public class GoofSpielGameState extends GameStateImpl {
 
 	private static final long serialVersionUID = -1885375538236725674L;
-	
+
 	private Map<Player, HashSet<Integer>> playerCards;
-	private LinkedList<Action> sequenceForAllPlayers;
+	private List<Action> sequenceForAllPlayers;
 	private GoofSpielAction faceUpCard;
 	private Sequence natureSequence;
 
@@ -33,7 +39,7 @@ public class GoofSpielGameState extends GameStateImpl {
 
 	public GoofSpielGameState() {
 		super(GSGameInfo.ALL_PLAYERS);
-		sequenceForAllPlayers = new LinkedList<Action>();
+		sequenceForAllPlayers = new ArrayList<Action>(GSGameInfo.CARDS_FOR_PLAYER.length*3);
 		playerCards = new FixedSizeMap<Player, HashSet<Integer>>(3);
 		playerScore = new int[2];
 		round = 0;
@@ -45,7 +51,7 @@ public class GoofSpielGameState extends GameStateImpl {
 
 	public GoofSpielGameState(Sequence natureSequence) {
 		super(GSGameInfo.ALL_PLAYERS);
-		sequenceForAllPlayers = new LinkedList<Action>();
+		sequenceForAllPlayers = new ArrayList<Action>(GSGameInfo.CARDS_FOR_PLAYER.length*3);
 		playerCards = new FixedSizeMap<Player, HashSet<Integer>>(3);
 		playerScore = new int[2];
 		round = 0;
@@ -78,9 +84,8 @@ public class GoofSpielGameState extends GameStateImpl {
 		this.currentPlayerIndex = gameState.currentPlayerIndex;
 		this.playerScore = gameState.playerScore.clone();
 		this.playerCards = getDeepCopyOfPlayerCards(gameState.playerCards);
-		if (faceUpCard != null)
-			this.faceUpCard = gameState.faceUpCard;
-		this.sequenceForAllPlayers = new LinkedList<Action>(gameState.sequenceForAllPlayers);
+		this.faceUpCard = gameState.faceUpCard;
+		this.sequenceForAllPlayers = new ArrayList<Action>(gameState.sequenceForAllPlayers);
 		this.natureSequence = new LinkedListSequenceImpl(gameState.natureSequence);
 	}
 
@@ -206,7 +211,7 @@ public class GoofSpielGameState extends GameStateImpl {
 
 	@Override
 	public boolean isGameEnd() {
-		return round == GSGameInfo.CARDS_FOR_PLAYER.length;
+		return round == GSGameInfo.depth;
 	}
 
 	@Override
@@ -222,7 +227,7 @@ public class GoofSpielGameState extends GameStateImpl {
 		return round;
 	}
 
-	public LinkedList<Action> getSequenceForAllPlayers() {
+	public List<Action> getSequenceForAllPlayers() {
 		return sequenceForAllPlayers;
 	}
 
@@ -240,7 +245,7 @@ public class GoofSpielGameState extends GameStateImpl {
 	@Override
 	public int hashCode() {
 		if (hashCode == -1)
-			hashCode = new HashCodeBuilder(17, 31).append(history).toHashCode();
+			hashCode = history.hashCode();
 		return hashCode;
 	}
 

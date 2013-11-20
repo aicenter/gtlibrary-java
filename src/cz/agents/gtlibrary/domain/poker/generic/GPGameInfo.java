@@ -29,8 +29,6 @@ public class GPGameInfo implements GameInfo {
             BETS_FIRST_ROUND[i] = (i + 1) * 2;
     }
 
-
-
     /**
      * represents value which will be added to previous aggressive action
      */
@@ -51,7 +49,7 @@ public class GPGameInfo implements GameInfo {
             CARD_TYPES[i] = i;
     }
 
-    public static int MAX_CARD_OF_EACH_TYPE = 3;
+    public static int MAX_CARD_OF_EACH_TYPE = 2;
     public static int[] DECK;
 
     {

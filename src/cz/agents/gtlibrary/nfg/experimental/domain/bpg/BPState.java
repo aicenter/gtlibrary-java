@@ -1,11 +1,11 @@
 package cz.agents.gtlibrary.nfg.experimental.domain.bpg;
 
 import cz.agents.gtlibrary.domain.bpg.data.BorderPatrollingGraph;
-import cz.agents.gtlibrary.domain.bpg.data.Node;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
+import cz.agents.gtlibrary.utils.graph.Node;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.lang.management.MemoryUsage;

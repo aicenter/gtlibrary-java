@@ -19,7 +19,7 @@ import java.util.Map;
  * Time: 3:01 PM
  * To change this template use File | Settings | File Templates.
  */
-public class NFGBROracle implements NFGOracle{
+public class NFGBROracle implements NFGOracle {
 
     private GameInfo gameInfo;
     private Expander expander;
@@ -28,7 +28,7 @@ public class NFGBROracle implements NFGOracle{
     private GameState root;
     private List<Action> myActions;
 
-    public NFGBROracle(GameInfo gameInfo, GameState root, Expander expander, Player searchingPlayer, Player opponentPlayer) {
+	public NFGBROracle(GameInfo gameInfo, GameState root, Expander expander, Player searchingPlayer, Player opponentPlayer) {
         this.gameInfo = gameInfo;
         this.expander = expander;
         this.searchingPlayer = searchingPlayer;
@@ -50,7 +50,8 @@ public class NFGBROracle implements NFGOracle{
         if (opponentStrategy.size() == 0) {
             resultAction = myActions.get(0);
             resultValue = gameInfo.getMaxUtility();
-            if (searchingPlayer.getId() == 1) resultValue *= -1;
+			if (searchingPlayer.getId() == 1)
+				resultValue *= -1;
             return  new Pair<PureStrategy, Double>(new ActionPureStrategy(resultAction), resultValue);
         }
 

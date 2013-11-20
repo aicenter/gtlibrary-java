@@ -11,9 +11,9 @@ public class BPGGameInfo implements GameInfo {
 
 	public static Player[] ALL_PLAYERS = { ATTACKER, DEFENDER };
 
-	public static int DEPTH = 3;
-	public static boolean SLOW_MOVES = true;
-	public static String graphFile = "GridW5.txt";//"GridW3-almost-connected.txt";//"GridW4.txt";"GridW3-small.txt"
+	public static int DEPTH = 4;
+	public static boolean SLOW_MOVES = false;
+	public static String graphFile = "GridW4.txt";//"GridW3-almost-connected.txt";//"GridW4.txt";"GridW3-small.txt"
 
 	@Override
 	public double getMaxUtility() {

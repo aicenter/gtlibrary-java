@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.iinodes;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -12,7 +13,7 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 public class ArrayListSequenceImpl implements Sequence {
 
 	private static final long serialVersionUID = -2037759537736542277L;
-	
+
 	private ArrayList<Action> actions;
 	private Player player;
 	private int hashCode = -1;
@@ -30,7 +31,7 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	@Override
 	public Iterator<Action> iterator() {
-		hashCode = -1;
+//		hashCode = -1;
 		return actions.iterator();
 	}
 
@@ -170,29 +171,20 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ArrayListSequenceImpl other = (ArrayListSequenceImpl) obj;
-		if (actions == null) {
-			if (other.actions != null)
-				return false;
-		} else if (!actions.equals(other.actions))
+		Sequence sequence = (Sequence) obj;
+
+		if (!player.equals(sequence.getPlayer()))
 			return false;
-		if (player == null) {
-			if (other.player != null)
-				return false;
-		} else if (!player.equals(other.player))
+		if (!getAsList().equals(sequence.getAsList()))
 			return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return actions.toString();
+		return player + ": " + actions.toString();
 	}
 
 	@Override
@@ -200,5 +192,10 @@ public class ArrayListSequenceImpl implements Sequence {
 		if (size() == 0)
 			return null;
 		return getLast().getInformationSet();
+	}
+	
+	@Override
+	public List<Action> getAsList() {
+		return actions;
 	}
 }

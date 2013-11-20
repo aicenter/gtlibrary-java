@@ -1,11 +1,11 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
-
 public class Key {
 
 	private String string;
 	private Object object;
 	private int hashCode;
+	private String represenation;
 
 	public Key(String string, Object object) {
 		this.string = string;
@@ -19,6 +19,10 @@ public class Key {
 		hashCode = computeHashCode();
 	}
 
+	public Object getObject() {
+		return object;
+	}
+	
 	public int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -54,10 +58,12 @@ public class Key {
 	public int hashCode() {
 		return hashCode;
 	}
-	
+
 	@Override
 	public String toString() {
-		return "[" + object + (string.equals("")?"":(", " + string)) + "]";
+		if (represenation == null)
+			represenation = "[" + object + (string.equals("") ? "" : (", " + string)) + "]";
+		return represenation;
 	}
 
 }

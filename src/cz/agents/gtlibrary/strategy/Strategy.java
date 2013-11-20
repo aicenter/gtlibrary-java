@@ -56,7 +56,7 @@ public abstract class Strategy implements Map<Sequence, Double>, Serializable  {
 			sanityCheck(child, expander);
 		}
 		if(!root.isPlayerToMoveNature())
-			if(Math.abs(probability - probabilitySum) > 1e-5 && Math.abs(probabilitySum - 1) > 1e-5)
+			if(Math.abs(probability - probabilitySum) > 1e-2 && Math.abs(probabilitySum - 1) > 1e-2)
 				throw new IllegalStateException("Inconsistent strategy, expected " + probability + " or 1 but was " + probabilitySum);
 	}
 
