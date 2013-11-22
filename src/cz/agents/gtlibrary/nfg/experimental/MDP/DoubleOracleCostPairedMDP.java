@@ -89,6 +89,8 @@ public class DoubleOracleCostPairedMDP {
         firstPlayerStrategy.initIterativeStrategy(secondPlayerStrategy);
         secondPlayerStrategy.initIterativeStrategy(firstPlayerStrategy);
 
+        MDPIterativeStrategy.updateDefaultUtilityValues(firstPlayerStrategy,secondPlayerStrategy);
+
         Map<Player, MDPStrategy> playerStrategy = new HashMap<Player, MDPStrategy>();
         playerStrategy.put(config.getAllPlayers().get(0), firstPlayerStrategy);
         playerStrategy.put(config.getAllPlayers().get(1), secondPlayerStrategy);
@@ -126,8 +128,8 @@ public class DoubleOracleCostPairedMDP {
         debugStrategyMap.put(secondPlayerStrategy.getAllMarginalsInStrategy().iterator().next(), 0);
         actionsAddedInIteration.add(2);
 
-//        while ( Math.abs(UB - LB) > END_EPSILON && UB > LB) {
-        while ( ((Math.abs(UB-LB)/Math.abs(LB)) > 0.001 || LB/UB < 0 || LB == Double.NEGATIVE_INFINITY || UB == Double.POSITIVE_INFINITY) && UB > LB) {
+        while ( Math.abs(UB - LB) > END_EPSILON && UB > LB) {
+//        while ( ((Math.abs(UB-LB)/Math.abs(LB)) > 0.001 || LB/UB < 0 || LB == Double.NEGATIVE_INFINITY || UB == Double.POSITIVE_INFINITY) && UB > LB) {
 //        for (int i=0; i<8; i++) {
 
             iterations++;
@@ -210,6 +212,8 @@ public class DoubleOracleCostPairedMDP {
 
 //            debugOutput.println("New Actions MAX: " + newActions1);
 //            debugOutput.println("New Actions MIN: " + newActions2);
+
+            MDPIterativeStrategy.updateDefaultUtilityValues(firstPlayerStrategy,secondPlayerStrategy);
 
             HashSet<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
             newActions.addAll(newActions1);
