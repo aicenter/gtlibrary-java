@@ -18,13 +18,13 @@ import java.util.List;
  */
 public class TGConfig extends MDPConfigImpl{
 
-      public static int MAX_TIME_STEP = 10;
-      public static int LENGTH_OF_GRID = 6;
-      public static int WIDTH_OF_GRID = 4;
+//      public static int MAX_TIME_STEP = 10;
+//      public static int LENGTH_OF_GRID = 6;
+//      public static int WIDTH_OF_GRID = 4;
 //
-//    public static int MAX_TIME_STEP = 6;
-//    public static int LENGTH_OF_GRID = 4;
-//    public static int WIDTH_OF_GRID = 5;
+    public static int MAX_TIME_STEP = 7;
+    public static int LENGTH_OF_GRID = 3;
+    public static int WIDTH_OF_GRID = 3;
 //    public static int MAX_TIME_STEP = 18;
 //    public static int LENGTH_OF_GRID = 16;
 //    public static int WIDTH_OF_GRID = 8;

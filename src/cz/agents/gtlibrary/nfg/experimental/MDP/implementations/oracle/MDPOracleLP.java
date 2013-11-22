@@ -98,7 +98,7 @@ public class MDPOracleLP extends MDPCoreLP {
                         myStates.add(state);
                     }
                     for (MDPStateActionMarginal opp : playerStrategy.get(opponent).getAllMarginalsInStrategy()) {
-                        if (playerStrategy.get(player).getUtilityFromCache(mdpStateActionMarginal, opp) != 0) {
+                        if (playerStrategy.get(player).getUtility(mdpStateActionMarginal, opp) != 0) {
                             actionMarginalsForOpponent.add(opp);
                         }
                     }
@@ -162,7 +162,7 @@ public class MDPOracleLP extends MDPCoreLP {
         for (MDPStateActionMarginal myActions : playerStrategy.get(player).getAllMarginalsInStrategy()) {
             IloNumVar x = variables.get(myActions);
             assert (x != null);
-            double utValue = playerStrategy.get(player).getUtilityFromCache(myActions, opponentsStateAction);
+            double utValue = playerStrategy.get(player).getUtility(myActions, opponentsStateAction);
             if (utValue != 0) {
                 sumR = cplex.sum(sumR, cplex.prod(x, utValue));
             }
