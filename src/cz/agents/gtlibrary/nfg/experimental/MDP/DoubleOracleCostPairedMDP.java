@@ -177,6 +177,8 @@ public class DoubleOracleCostPairedMDP {
 //            firstPlayerStrategy.testUtility(secondPlayerStrategy, r1);
 //            secondPlayerStrategy.testUtility(firstPlayerStrategy, r2);
 
+            MDPIterativeStrategy.clearRemovedLastActions();
+
             long brStart = threadBean.getCurrentThreadCpuTime();
             double currentBRValMax = br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy);
             BRTIME += threadBean.getCurrentThreadCpuTime() - brStart;
@@ -206,6 +208,7 @@ public class DoubleOracleCostPairedMDP {
 //            debugOutput.println(MDPStrategy.getUtilityCache());
             RGStart = threadBean.getCurrentThreadCpuTime();
             newActions2 = secondPlayerStrategy.addBRStrategy(secondPlayerStrategy.getRootState(), bestResponseActions2);
+            MDPIterativeStrategy.updateDefaultUtilityValues(firstPlayerStrategy,secondPlayerStrategy);
             RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
             debugOutput.println("RG(MIN) TIME:" + ((threadBean.getCurrentThreadCpuTime() - RGStart)/1000000l));
 //            debugOutput.println(MDPStrategy.getUtilityCache());
@@ -213,7 +216,6 @@ public class DoubleOracleCostPairedMDP {
 //            debugOutput.println("New Actions MAX: " + newActions1);
 //            debugOutput.println("New Actions MIN: " + newActions2);
 
-            MDPIterativeStrategy.updateDefaultUtilityValues(firstPlayerStrategy,secondPlayerStrategy);
 
             HashSet<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
             newActions.addAll(newActions1);

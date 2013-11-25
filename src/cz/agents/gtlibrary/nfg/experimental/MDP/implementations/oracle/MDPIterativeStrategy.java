@@ -36,9 +36,11 @@ public class MDPIterativeStrategy extends MDPStrategy {
 
     private static Map<Set<MDPStateActionMarginal>, Double> defaultUtilityValues = null;
     private static Set<MDPStateActionMarginal> lastActions = new HashSet<MDPStateActionMarginal>();
+    private static Map<Player, Set<MDPStateActionMarginal>> removedLastActions = new HashMap<Player, Set<MDPStateActionMarginal>>();
 
     public MDPIterativeStrategy(Player player, MDPConfig config, MDPExpander expander) {
         super(player, config, expander);
+        removedLastActions.put(player, new HashSet<MDPStateActionMarginal>());
         generateAllStateActions();
     }
 
@@ -257,6 +259,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
                         tmp.add(op);
                         defaultUtilityValues.remove(tmp);
                     }
+                    removedLastActions.get(getPlayer()).add(a);
                     lastActions.remove(a);
                 }
             }
@@ -675,5 +678,15 @@ public class MDPIterativeStrategy extends MDPStrategy {
                 s2.updateDefaultUtilityValueForAction(marginal, s1);
             }
         }
+    }
+
+    public static void clearRemovedLastActions() {
+        for (Player p : removedLastActions.keySet()) {
+            removedLastActions.get(p).clear();
+        }
+    }
+
+    public static Set<MDPStateActionMarginal> getRemovedLastActions(Player player) {
+        return removedLastActions.get(player);
     }
 }
