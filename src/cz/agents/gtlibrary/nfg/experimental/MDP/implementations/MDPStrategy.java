@@ -285,4 +285,8 @@ public class MDPStrategy implements PureStrategy{
         }
         return false;
     }
+
+    public Player getPlayer() {
+        return player;
+    }
 }

@@ -4,14 +4,12 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.experimental.MDP.core.MDPCoreLP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
-import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,17 +20,17 @@ import java.util.Map.Entry;
  */
 public class MDPOracleLP extends MDPCoreLP {
 
-    private static boolean SAVELP = false;
+    private static boolean SAVELP = true;
 
 //    protected Map<Object, IloRange> constraints = new HashMap<Object, IloRange>();
 //    protected Map<Object, IloNumVar> variables = new HashMap<Object, IloNumVar>();
     protected Set<MDPStateActionMarginal> newActions = null;
-    protected Map<Player, Map<MDPStateActionMarginal, Map<IloConstraint, MDPStateActionMarginal>>> whereIsMyAction = new HashMap<Player, Map<MDPStateActionMarginal, Map<IloConstraint, MDPStateActionMarginal>>>();
+//    protected Map<Player, Map<MDPStateActionMarginal, Set<MDPStateActionMarginal>>> whereIsMyAction = new HashMap<Player, Map<MDPStateActionMarginal, Set<MDPStateActionMarginal>>>();
 
     public MDPOracleLP(Collection<Player> allPlayers, Map<Player, MDPStrategy> playerStrategy, MDPConfig config) {
         super(allPlayers, playerStrategy, config);
-        whereIsMyAction.put(config.getAllPlayers().get(0), new HashMap<MDPStateActionMarginal, Map<IloConstraint, MDPStateActionMarginal>>());
-        whereIsMyAction.put(config.getAllPlayers().get(1), new HashMap<MDPStateActionMarginal, Map<IloConstraint, MDPStateActionMarginal>>());
+//        whereIsMyAction.put(config.getAllPlayers().get(0), new HashMap<MDPStateActionMarginal, Set<MDPStateActionMarginal>>());
+//        whereIsMyAction.put(config.getAllPlayers().get(1), new HashMap<MDPStateActionMarginal, Set<MDPStateActionMarginal>>());
     }
 
     public double solveForPlayer(Player player) {
@@ -86,7 +84,8 @@ public class MDPOracleLP extends MDPCoreLP {
 
     private void updateLPFromStrategies(Player player, Set<MDPStateActionMarginal> newActions) {
         Player opponent = config.getOtherPlayer(player);
-        HashSet<MDPStateActionMarginal> actionMarginalsForOpponent = new HashSet<MDPStateActionMarginal>();
+        HashSet<MDPStateActionMarginal> opponentMarginalsGenerate = new HashSet<MDPStateActionMarginal>();
+        HashSet<Object[]> opponentMarginalsUpdate = new HashSet<Object[]>();
         HashSet<MDPState> myStates = new HashSet<MDPState>();
         try {
             for (MDPStateActionMarginal mdpStateActionMarginal : newActions) {
@@ -97,26 +96,42 @@ public class MDPOracleLP extends MDPCoreLP {
                         if (!playerStrategy.get(player).hasStateASuccessor(state)) continue;
                         myStates.add(state);
                     }
+
                     for (MDPStateActionMarginal opp : playerStrategy.get(opponent).getAllMarginalsInStrategy()) {
-                        if (playerStrategy.get(player).getUtility(mdpStateActionMarginal, opp) != 0) {
-                            actionMarginalsForOpponent.add(opp);
-                        }
+                           if (constraints.containsKey(opp)) {
+                               double curUtility = playerStrategy.get(player).getUtility(mdpStateActionMarginal, opp);
+                               if (curUtility != 0) {
+                                   opponentMarginalsUpdate.add(new Object[]{mdpStateActionMarginal, opp, curUtility});
+                               }
+//                                    for (MDPStateActionMarginal precedingAction : playerStrategy.get(player).getPredecessors(mdpStateActionMarginal.getState()).keySet()) {
+//                                        opponentMarginalsUpdate.add(new Object[]{precedingAction, opp});
+//                                    }
+                           } else
+                            {
+                                opponentMarginalsGenerate.add(opp);
+                            }
                     }
-                    for (MDPStateActionMarginal precedingAction : playerStrategy.get(player).getPredecessors(mdpStateActionMarginal.getState()).keySet()) {
-                        if (!whereIsMyAction.get(player).containsKey(precedingAction)) continue;
-                        for (IloConstraint c : new HashSet<IloConstraint>(whereIsMyAction.get(player).get(precedingAction).keySet())) {
-                            MDPStateActionMarginal opp = whereIsMyAction.get(player).get(precedingAction).remove(c);
-                            actionMarginalsForOpponent.add(opp);
-                        }
-                    }
+
                 } else { // opponent's new action
                     MDPState s = mdpStateActionMarginal.getState();
                     if (playerStrategy.get(opponent).hasStateASuccessor(s) && !s.isRoot())
                         createVariableForMDPState(getLpModels().get(player), s);
-                    actionMarginalsForOpponent.add(mdpStateActionMarginal);
+                    opponentMarginalsGenerate.add(mdpStateActionMarginal);
 
                     for (MDPStateActionMarginal precedingAction : playerStrategy.get(opponent).getPredecessors(mdpStateActionMarginal.getState()).keySet()) {
-                        actionMarginalsForOpponent.add(precedingAction);
+                        opponentMarginalsGenerate.add(precedingAction);
+                    }
+                }
+            }
+
+            for (MDPStateActionMarginal removedLastAction : MDPIterativeStrategy.getRemovedLastActions(player)) {
+                for (MDPStateActionMarginal opp : playerStrategy.get(opponent).getAllMarginalsInStrategy()) {
+                    if (constraints.containsKey(opp)) {
+                        double curUtility = playerStrategy.get(player).getUtility(removedLastAction, opp);
+                        opponentMarginalsUpdate.add(new Object[]{removedLastAction, opp, curUtility});
+                    } else
+                    {
+                        opponentMarginalsGenerate.add(opp);
                     }
                 }
             }
@@ -128,7 +143,11 @@ public class MDPOracleLP extends MDPCoreLP {
                 createConstraintForStrategy(getLpModels().get(player), player, state);
             }
 
-            for (MDPStateActionMarginal opp : actionMarginalsForOpponent) {
+            for (Object[] pair : opponentMarginalsUpdate) {
+                updateCoefficient((MDPStateActionMarginal)pair[0], (MDPStateActionMarginal)pair[1], (Double)pair[2]);
+            }
+
+            for (MDPStateActionMarginal opp : opponentMarginalsGenerate) {
                 IloConstraint cc = constraints.remove(opp);
                 if (cc != null) {
                     getLpModels().get(player).delete(cc);
@@ -150,7 +169,7 @@ public class MDPOracleLP extends MDPCoreLP {
     protected void createConstraintForExpValues(IloCplex cplex, Player player, MDPStateActionMarginal opponentsStateAction) throws IloException {
         IloNumExpr sumR = cplex.constant(0);
         IloNumExpr LS = variables.get(opponentsStateAction.getState());
-        HashSet<MDPStateActionMarginal> rememberThisConstraintForActions = new HashSet<MDPStateActionMarginal>();
+//        HashSet<MDPStateActionMarginal> rememberThisConstraintForActions = new HashSet<MDPStateActionMarginal>();
         assert (LS != null);
         Map<MDPState, Double> successors = playerStrategy.get(opponentsStateAction.getPlayer()).getSuccessors(opponentsStateAction);
         for (MDPState s : successors.keySet()) {
@@ -167,10 +186,10 @@ public class MDPOracleLP extends MDPCoreLP {
                 sumR = cplex.sum(sumR, cplex.prod(x, utValue));
             }
 
-            if (!playerStrategy.get(player).isActionFullyExpandedInRG(myActions) || !playerStrategy.get(config.getOtherPlayer(player)).isActionFullyExpandedInRG(opponentsStateAction)) {
+//            if (!playerStrategy.get(player).isActionFullyExpandedInRG(myActions) || !playerStrategy.get(config.getOtherPlayer(player)).isActionFullyExpandedInRG(opponentsStateAction)) {
                 // we remember only actions that currently do not have a successor, but there is one in the original game
-                rememberThisConstraintForActions.add(myActions);
-            }
+//                rememberThisConstraintForActions.add(myActions);
+//            }
         }
 
         IloRange c = null;
@@ -182,11 +201,30 @@ public class MDPOracleLP extends MDPCoreLP {
             constraints.put(opponentsStateAction, c);
         }
 
-        for (MDPStateActionMarginal m : rememberThisConstraintForActions) {
-            Map<IloConstraint, MDPStateActionMarginal> tmp = whereIsMyAction.get(player).get(m);
-            if (tmp == null) tmp = new HashMap<IloConstraint, MDPStateActionMarginal>();
-            tmp.put(c, opponentsStateAction);
-            whereIsMyAction.get(player).put(m,tmp);
+//        for (MDPStateActionMarginal m : rememberThisConstraintForActions) {
+//            Set<MDPStateActionMarginal> tmp = whereIsMyAction.get(player).get(m);
+//            if (tmp == null) tmp = new HashSet<MDPStateActionMarginal>();
+//            tmp.add(opponentsStateAction);
+//            whereIsMyAction.get(player).put(m,tmp);
+//        }
+    }
+
+    private void updateCoefficient(MDPStateActionMarginal myAction, MDPStateActionMarginal oppAction, double utility) {
+        MDPIterativeStrategy myStrategy = (MDPIterativeStrategy)playerStrategy.get(myAction.getPlayer());
+        Player player = myAction.getPlayer();
+        IloRange c = constraints.get(oppAction);
+//        assert (whereIsMyAction.get(player).get(myAction).contains(oppAction));
+//        double utility = myStrategy.getUtility(myAction, oppAction);
+        try {
+//            int col = getLpModels().get(player).LPMatrix().getIndex(variables.get(myAction));
+//            int row = getLpModels().get(player).LPMatrix().getIndex(c);
+//            if (col != -1 && row != -1)
+//                getLpModels().get(player).LPMatrix().setNZ(row,col,-utility);
+//            else
+                getLpModels().get(player).setLinearCoef(c, variables.get(myAction), -utility);       // must be "-" because it is on the other side of the inequality
+        } catch (IloException e) {
+            e.printStackTrace();
+            assert false;
         }
     }
 
