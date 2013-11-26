@@ -48,8 +48,8 @@ public class DoubleOracleCostPairedMDP {
 
     private double gameValue = Double.NaN;
 
-    private Map<MDPStateActionMarginal, Integer> debugStrategyMap = new HashMap<MDPStateActionMarginal, Integer>();
-    private ArrayList<Integer> actionsAddedInIteration = new ArrayList<Integer>();
+//    private Map<MDPStateActionMarginal, Integer> debugStrategyMap = new HashMap<MDPStateActionMarginal, Integer>();
+//    private ArrayList<Integer> actionsAddedInIteration = new ArrayList<Integer>();
 
     public static void main(String[] args) {
 //		runRG();
@@ -89,7 +89,7 @@ public class DoubleOracleCostPairedMDP {
         firstPlayerStrategy.initIterativeStrategy(secondPlayerStrategy);
         secondPlayerStrategy.initIterativeStrategy(firstPlayerStrategy);
 
-        MDPIterativeStrategy.updateDefaultUtilityValues(firstPlayerStrategy,secondPlayerStrategy);
+        MDPIterativeStrategy.updateDefaultUtilityValues(MDPIterativeStrategy.getLastActions(), firstPlayerStrategy,secondPlayerStrategy);
 
         Map<Player, MDPStrategy> playerStrategy = new HashMap<Player, MDPStrategy>();
         playerStrategy.put(config.getAllPlayers().get(0), firstPlayerStrategy);
@@ -124,9 +124,9 @@ public class DoubleOracleCostPairedMDP {
         }
 
 //        double treshold = 0.1;
-        debugStrategyMap.put(firstPlayerStrategy.getAllMarginalsInStrategy().iterator().next(), 0);
-        debugStrategyMap.put(secondPlayerStrategy.getAllMarginalsInStrategy().iterator().next(), 0);
-        actionsAddedInIteration.add(2);
+//        debugStrategyMap.put(firstPlayerStrategy.getAllMarginalsInStrategy().iterator().next(), 0);
+//        debugStrategyMap.put(secondPlayerStrategy.getAllMarginalsInStrategy().iterator().next(), 0);
+//        actionsAddedInIteration.add(2);
 
         while ( Math.abs(UB - LB) > END_EPSILON && UB > LB) {
 //        while ( ((Math.abs(UB-LB)/Math.abs(LB)) > 0.001 || LB/UB < 0 || LB == Double.NEGATIVE_INFINITY || UB == Double.POSITIVE_INFINITY) && UB > LB) {
@@ -141,29 +141,15 @@ public class DoubleOracleCostPairedMDP {
             CPLEXTIME += threadBean.getCurrentThreadCpuTime() - LpStart;
             debugOutput.println("Result: " + r1);
             lp.extractStrategyForPlayer(config.getAllPlayers().get(0));
-//            for (MDPStateActionMarginal m1 : firstPlayerStrategy.getStrategy().keySet()) {
-//                debugOutput.println(m1 + " = " + firstPlayerStrategy.getStrategy().get(m1));
-//            }
+
             LpStart = threadBean.getCurrentThreadCpuTime();
             double r2 = lp.solveForPlayer(config.getAllPlayers().get(1));
             CPLEXTIME += threadBean.getCurrentThreadCpuTime() - LpStart;
             debugOutput.println("Result: " + r2);
             lp.extractStrategyForPlayer(config.getAllPlayers().get(1));
 
-//            debugOutput.println("strategy(MAX): " + firstPlayerStrategy.strategy);
-//            debugOutput.println("strategy(MIN): " + secondPlayerStrategy.strategy);
-//            for (MDPStateActionMarginal m : firstPlayerStrategy.getAllActionStates()) {
-//                debugOutput.println("strategy(" + m + "): " + firstPlayerStrategy.getExpandedStrategy(m));
-//            }
-//            long ExpStart = System.nanoTime();
             firstPlayerStrategy.recalculateExpandedStrategy();
-//            debugOutput.println("EXPST(MAX) TIME:" + ((System.nanoTime() - ExpStart)/1000000));
-//            ExpStart = System.nanoTime();
             secondPlayerStrategy.recalculateExpandedStrategy();
-//            debugOutput.println("EXPST(MIN) TIME:" + ((System.nanoTime() - ExpStart)/1000000));
-
-//            debugOutput.println(firstPlayerStrategy.getExpandedNonZeroStrategy());
-//            debugOutput.println(secondPlayerStrategy.getExpandedNonZeroStrategy());
 
             br1.setMDPUpperBound(UB);
             br1.setMDPLowerBound(LB);
@@ -174,6 +160,7 @@ public class DoubleOracleCostPairedMDP {
 
 //            firstPlayerStrategy.sanityCheck();
 //            secondPlayerStrategy.sanityCheck();
+//            firstPlayerStrategy.lastActionsTest();
 //            firstPlayerStrategy.testUtility(secondPlayerStrategy, r1);
 //            secondPlayerStrategy.testUtility(firstPlayerStrategy, r2);
 
@@ -199,19 +186,16 @@ public class DoubleOracleCostPairedMDP {
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions1 = br1.extractBestResponse(firstPlayerStrategy);
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions2 = br2.extractBestResponse(secondPlayerStrategy);
 
-//            debugOutput.println(bestResponseActions1);
             long RGStart = threadBean.getCurrentThreadCpuTime();
             newActions1 = firstPlayerStrategy.addBRStrategy(firstPlayerStrategy.getRootState(), bestResponseActions1);
             RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
             debugOutput.println("RG(MAX) TIME:" + ((threadBean.getCurrentThreadCpuTime() - RGStart)/1000000l));
-//            debugOutput.println(bestResponseActions2);
-//            debugOutput.println(MDPStrategy.getUtilityCache());
+
             RGStart = threadBean.getCurrentThreadCpuTime();
             newActions2 = secondPlayerStrategy.addBRStrategy(secondPlayerStrategy.getRootState(), bestResponseActions2);
-            MDPIterativeStrategy.updateDefaultUtilityValues(firstPlayerStrategy,secondPlayerStrategy);
+
             RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
             debugOutput.println("RG(MIN) TIME:" + ((threadBean.getCurrentThreadCpuTime() - RGStart)/1000000l));
-//            debugOutput.println(MDPStrategy.getUtilityCache());
 
 //            debugOutput.println("New Actions MAX: " + newActions1);
 //            debugOutput.println("New Actions MIN: " + newActions2);
@@ -220,13 +204,16 @@ public class DoubleOracleCostPairedMDP {
             HashSet<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
             newActions.addAll(newActions1);
             newActions.addAll(newActions2);
-//            debugOutput.println("New Actions = " + newActions);
             lp.setNewActions(newActions);
 
-            actionsAddedInIteration.add(newActions.size());
-            for (MDPStateActionMarginal a : newActions) {
-                debugStrategyMap.put(a, iterations);
-            }
+            RGStart = threadBean.getCurrentThreadCpuTime();
+            MDPIterativeStrategy.updateDefaultUtilityValues(newActions, firstPlayerStrategy,secondPlayerStrategy);
+            RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
+
+//            actionsAddedInIteration.add(newActions.size());
+//            for (MDPStateActionMarginal a : newActions) {
+//                debugStrategyMap.put(a, iterations);
+//            }
 
             if (newActions1.isEmpty() && newActions2.isEmpty()) {
 //                treshold = treshold / 10;
@@ -266,40 +253,6 @@ public class DoubleOracleCostPairedMDP {
         } catch (InterruptedException e) {
         }
 
-//        for (int i=0; i<actionsAddedInIteration.size(); i++) {
-//            debugOutput.println("Iteration i = " + i + " : " + actionsAddedInIteration.get(i));
-//        }
-
-//        int[] supportIterationsP1 = new int[iterations+1];
-//        int[] supportIterationsP2 = new int[iterations+1];
-//
-//        int dominatedActionsP1 = 0;
-//        int dominatedActionsP2 = 0;
-//
-//        for (MDPStateActionMarginal m1 : firstPlayerStrategy.getAllMarginalsInStrategy()) {
-//            if (firstPlayerStrategy.isActionWeaklyDominated(m1, secondPlayerStrategy)) {
-////                debugOutput.println(m1);
-//                dominatedActionsP1++;
-//            }
-//            if (firstPlayerStrategy.getStrategyProbability(m1) > MDPConfigImpl.getEpsilon())
-//                supportIterationsP1[debugStrategyMap.get(m1)]++;
-//        }
-//
-//        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getAllMarginalsInStrategy()) {
-//            if (secondPlayerStrategy.isActionWeaklyDominated(m2, firstPlayerStrategy)) {
-////                debugOutput.println(m2);
-//                dominatedActionsP2++;
-//            }
-//            if (secondPlayerStrategy.getStrategyProbability(m2) > MDPConfigImpl.getEpsilon())
-//                supportIterationsP2[debugStrategyMap.get(m2)]++;
-//        }
-//
-////        debugOutput.println(firstPlayerStrategy.getUtilityCache());
-//
-////        debugOutput.println("Supports P1:"+Arrays.toString(supportIterationsP1));
-////        debugOutput.println("Supports P2:"+Arrays.toString(supportIterationsP2));
-//        debugOutput.println("Dominated Actions P1:"+dominatedActionsP1);
-//        debugOutput.println("Dominated Actions P2:"+dominatedActionsP2);
         System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
     }
 }
