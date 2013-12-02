@@ -9,6 +9,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp.DOLPBuilder;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp.RecyclingDOLPBuilder;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.NFPSolver;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DODataBuilder;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
@@ -22,6 +25,9 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.nfptest.TestExpander;
+import cz.agents.gtlibrary.domain.nfptest.TestGameInfo;
+import cz.agents.gtlibrary.domain.nfptest.TestGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
@@ -63,22 +69,33 @@ public class GeneralDoubleOracle {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
 
-    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_IMPROVED;
+    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_ALTERNATING;
 
 	public static void main(String[] args) {
 //		runAC();
-//        runBP();
+        runBP();
 //        runGenericPoker();
-        runKuhnPoker();
+//        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
+//        runTest();
 	}
-	
-	 public static void runAC() {
+
+    private static void runTest() {
+        GameState rootState = new TestGameState();
+        GameInfo gameInfo = new TestGameInfo();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new TestExpander<DoubleOracleInformationSet>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
+        Map<Player, Map<Sequence, Double>> rp = doefg.generate(null);
+        System.out.println(rp);
+    }
+
+    public static void runAC() {
 	        GameState rootState = new ACGameState();
 	        GameInfo gameInfo = new ACGameInfo();
 			DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
@@ -235,7 +252,8 @@ public class GeneralDoubleOracle {
             }
         }
 		int currentPlayerIndex = 0;
-		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
+//		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
+        NFPSolver doRestrictedGameSolver = new NFPSolver(actingPlayers);
 //		DOLPBuilder doRestrictedGameSolver = new DOLPBuilder(actingPlayers);
 //		DOLPBuilder doRestrictedGameSolver = new RecyclingDOLPBuilder(actingPlayers);
 //		ReducedDOLPBuilder doRestrictedGameSolver = new ReducedDOLPBuilder(actingPlayers, gameInfo, rootState, expander);
@@ -430,6 +448,7 @@ public class GeneralDoubleOracle {
         } catch (InterruptedException e) {
         }
 
+        debugOutput.println("iterations: " + iterations);
         debugOutput.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         debugOutput.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
         debugOutput.println("final result:" + doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]));

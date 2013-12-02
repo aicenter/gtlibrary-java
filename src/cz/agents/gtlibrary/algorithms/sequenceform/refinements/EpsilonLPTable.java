@@ -6,7 +6,7 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -179,7 +179,7 @@ public class EpsilonLPTable {
 		IloRange[] constraints = addConstraints(cplex, variables);
 
 		addObjective(cplex, variables);
-		return new LPData(cplex, variables, constraints, new HashSet<IloRange>(), getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
+		return new LPData(cplex, variables, constraints, new HashMap<Object, IloRange>(), getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
 	}
 
 	private String[] getVariableNames() {

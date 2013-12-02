@@ -9,18 +9,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Set;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
-import cz.agents.gtlibrary.domain.upordown.UDExpander;
-import cz.agents.gtlibrary.domain.upordown.UDGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -32,22 +29,6 @@ public class InitialQBuilder extends TreeVisitor {
 	protected String lpFileName;
 	protected RecyclingNFPTable lpTable;
 	protected double initialValue;
-
-	public static void main(String[] args) {
-		//		runAoS();
-		//		runGoofSpiel();
-		//		runKuhnPoker();
-		//		runGenericPoker();
-		runUpOrDown();
-	}
-
-	protected static void runUpOrDown() {
-		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		InitialQBuilder lpBuilder = new InitialQBuilder(new UDExpander<SequenceInformationSet>(algConfig), new UDGameState(), 0);
-
-		lpBuilder.buildLP();
-		lpBuilder.solve();
-	}
 
 	public InitialQBuilder(Expander<SequenceInformationSet> expander, GameState rootState, double initialValue) {
 		super(rootState, expander);
@@ -64,15 +45,17 @@ public class InitialQBuilder extends TreeVisitor {
 	public IterationData solve() {
 		try {
 			LPData lpData = lpTable.toCplex();
+//			System.out.println(lpData.getConstraints()[450]);
+//			new Scanner(System.in).next();
 			boolean solved = false;
 
 			lpData.getSolver().exportModel(lpFileName);
 			for (int algorithm : lpData.getAlgorithms()) {
 				lpData.getSolver().setParam(IloCplex.IntParam.RootAlg, algorithm);
-				if(solved = trySolve(lpData))
+				if (solved = trySolve(lpData))
 					break;
 			}
-			if(!solved)
+			if (!solved)
 				solveUnfeasibleLP(lpData);
 			System.out.println(lpData.getSolver().getStatus());
 			System.out.println(lpData.getSolver().getObjValue());
@@ -87,18 +70,56 @@ public class InitialQBuilder extends TreeVisitor {
 		}
 		return null;
 	}
-	
-	private boolean trySolve(LPData lpData) throws IloException {
-		boolean solved;
-		
+
+	private boolean trySolve(LPData lpData) {
+		boolean solved = false;
+
 		try {
 			solved = lpData.getSolver().solve();
+			System.out.println("Q: " + solved);
+			System.out.println("Status: " + lpData.getSolver().getStatus());
+
 		} catch (IloException e) {
+			e.printStackTrace();
 			return false;
 		}
 
-		System.out.println("Q: " + solved);
+		if (!solved)
+			try {
+				printUnfeasibleConstraints(lpData);
+			} catch (UnknownObjectException e) {
+				e.printStackTrace();
+			} catch (IloException e) {
+				e.printStackTrace();
+			}
 		return solved;
+	}
+
+	private void printUnfeasibleConstraints(LPData lpData) throws UnknownObjectException, IloException {
+		double[] infeasibilities = lpData.getSolver().getInfeasibilities(lpData.getConstraints());
+
+		for (int i = 0; i < lpData.getConstraints().length; i++) {
+			if (infeasibilities[i] > 10) {
+				System.out.println(lpData.getConstraints()[i] + ": " + infeasibilities[i]);
+				System.out.println(i);
+			}
+		}
+		//		double[] preferences = new double[lpData.getConstraints().length];
+		//
+		//		Arrays.fill(preferences, 1);
+		//		boolean refined = lpData.getSolver().refineConflict(lpData.getConstraints(), preferences);
+		//
+		//		System.out.println("Refined conflict: " + refined);
+		//		if (refined) {
+		//			ConflictStatus[] conflicts = lpData.getSolver().getConflict(lpData.getConstraints());
+		//
+		//			for (int i = 0; i < lpData.getConstraints().length; i++) {
+		//				if (conflicts[i] == IloCplex.ConflictStatus.Member)
+		//					System.out.println("Proved member: " + lpData.getConstraints()[i]);
+		//				if (conflicts[i] == IloCplex.ConflictStatus.PossibleMember)
+		//					System.out.println("Possible member: " + lpData.getConstraints()[i]);
+		//			}
+		//		}
 	}
 
 	private void solveUnfeasibleLP(LPData lpData) throws IloException {
@@ -114,7 +135,7 @@ public class InitialQBuilder extends TreeVisitor {
 		double[] preferences = new double[lpData.getConstraints().length];
 
 		for (int i = 0; i < preferences.length; i++) {
-			if (lpData.getRelaxableConstraints().contains(lpData.getConstraints()[i]))
+			if (lpData.getRelaxableConstraints().values().contains(lpData.getConstraints()[i]))
 				preferences[i] = 1;
 			else
 				preferences[i] = 0.5;

@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class RecyclingLPTable extends LPTable {
 
@@ -27,6 +28,8 @@ public class RecyclingLPTable extends LPTable {
 	protected IloObjective lpObj;
 	protected IloRange[] lpConstraints;
 	protected IloNumVar[] lpVariables;
+	
+	public Sequence thatSequence;//smazat
 
 	public RecyclingLPTable() {
 		super();
@@ -57,10 +60,11 @@ public class RecyclingLPTable extends LPTable {
 	public void setConstraint(Object eqKey, Object varKey, double value) {
 		if (Math.abs(value) < Double.MIN_VALUE)
 			return;
+		if(getEquationIndex(eqKey)-1 == 450 && eqKey instanceof Sequence)
+			thatSequence = (Sequence) eqKey;
 		Map<Object, Double> row = constraints.get(eqKey);
 
 		if (row == null) {
-			assert !varKey.equals("t");
 			row = new LinkedHashMap<Object, Double>();
 			constraints.put(eqKey, row);
 			newConstraints.put(eqKey, row);
@@ -252,6 +256,7 @@ public class RecyclingLPTable extends LPTable {
 	protected IloLinearNumExpr createRowExpresion(IloNumVar[] x, Map<Object, Double> row) throws IloException {
 		IloLinearNumExpr rowExpr = cplex.linearNumExpr();
 
+//		cplex.setLinearCoef(rng, val, var);vyměnit
 		for (Entry<Object, Double> memberEntry : row.entrySet()) {
 			rowExpr.addTerm(memberEntry.getValue().doubleValue(), x[getVariableIndex(memberEntry.getKey()) - 1]);
 		}
