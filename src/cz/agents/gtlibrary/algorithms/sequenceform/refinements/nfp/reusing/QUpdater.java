@@ -50,7 +50,7 @@ public class QUpdater extends InitialQBuilder {
 		Double value = explSeqSum.get(p2Sequence);
 
 		if (value != null)
-			lpTable.setConstraint(p2Sequence, "s", explSeqSum.get(p2Sequence));
+			lpTable.setConstraint(p2Sequence, "s", value);
 	}
 	
 	@Override
@@ -70,6 +70,8 @@ public class QUpdater extends InitialQBuilder {
 	protected Map<Sequence, Double> getSum(Set<Sequence> exploitableSequences, Map<Sequence, Double> explSeqSum, double valueOfGame) {
 		Map<Sequence, Double> updatedSum = new HashMap<Sequence, Double>(explSeqSum);
 
+		if(!exploitableSequences.contains(lpTable.thatSequence))
+			System.err.println("Sequence is missing");
 		for (Sequence sequence : exploitableSequences) {
 			Double value = updatedSum.get(sequence);
 			

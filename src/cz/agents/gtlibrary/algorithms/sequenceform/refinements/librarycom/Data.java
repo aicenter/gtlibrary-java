@@ -160,17 +160,17 @@ public class Data {
 
 		printSizes(writer);
 		writer.write("F1: " + E.size());
-		printEntrySet(writer, E);
-		writer.write("F2: " + F.size());
-		printEntrySet(writer, F);
-		writer.write("U1: " + U.size());
-		printUtilityEntrySet(writer, U);
-		writer.write("U2: " + U.size());
-		printUtilityNegatedEntrySet(writer, U);
-		writer.write("M1: " + M1.size());
-		printEntrySet(writer, M1);
-		writer.write("M2: " + M2.size());
-		printEntrySet(writer, M2);
+//		printEntrySet(writer, E);
+//		writer.write("F2: " + F.size());
+//		printEntrySet(writer, F);
+//		writer.write("U1: " + U.size());
+//		printUtilityEntrySet(writer, U);
+//		writer.write("U2: " + U.size());
+//		printUtilityNegatedEntrySet(writer, U);
+//		writer.write("M1: " + M1.size());
+//		printEntrySet(writer, M1);
+//		writer.write("M2: " + M2.size());
+//		printEntrySet(writer, M2);
 		writer.write("x1: " + initStrategy.get(new PlayerImpl(0)).size());
 		printX1(writer);
 		writer.write("x2: " + initStrategy.get(new PlayerImpl(1)).size());
@@ -218,90 +218,90 @@ public class Data {
 		writer.newLine();
 	}
 
-	@SuppressWarnings("unchecked")
-	public void printEntrySet(BufferedWriter writer, Map<Object, ? extends Object> map) throws IOException {
-		writer.newLine();
-		writer.newLine();
-		List<Entry<Pair<Integer, Integer>, ? extends Object>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Object>>();
+//	@SuppressWarnings("unchecked")
+//	public void printEntrySet(BufferedWriter writer, Map<Object, ? extends Object> map) throws IOException {
+//		writer.newLine();
+//		writer.newLine();
+//		List<Entry<Pair<Integer, Integer>, ? extends Object>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Object>>();
+//
+//		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Object>>) map.entrySet());
+//		Collections.sort(entryList, new EntryComparator());
+//		for (Entry<Pair<Integer, Integer>, ? extends Object> entry : entryList) {
+//			writer.write("(");
+//			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getLeft()));
+//			writer.write(",");
+//			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
+//			writer.write(",(");
+//			writer.write(entry.getValue().toString());
+//			writer.write("))");
+//			writer.newLine();
+//		}
+//		writer.newLine();
+//	}
 
-		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Object>>) map.entrySet());
-		Collections.sort(entryList, new EntryComparator());
-		for (Entry<Pair<Integer, Integer>, ? extends Object> entry : entryList) {
-			writer.write("(");
-			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getLeft()));
-			writer.write(",");
-			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
-			writer.write(",(");
-			writer.write(entry.getValue().toString());
-			writer.write("))");
-			writer.newLine();
-		}
-		writer.newLine();
-	}
+//	@SuppressWarnings("unchecked")
+//	public void printUtilityEntrySet(BufferedWriter writer, Map<Object, Double> map) throws IOException {
+//		writer.newLine();
+//		writer.newLine();
+//		List<Entry<Pair<Integer, Integer>, Double>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, Double>>();
+//
+//		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, Double>>) map.entrySet());
+//		Collections.sort(entryList, new EntryComparator());
+//		for (Entry<Pair<Integer, Integer>, Double> entry : entryList) {
+//			writer.write("(");
+//			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getLeft()));
+//			writer.write(",");
+//			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
+//			writer.write(",(");
+//			writer.write(new Integer((new Double(entry.getValue() * UTILITY_COEF).intValue())).toString());
+//			writer.write("))");
+//			writer.newLine();
+//		}
+//		writer.newLine();
+//	}
 
-	@SuppressWarnings("unchecked")
-	public void printUtilityEntrySet(BufferedWriter writer, Map<Object, Double> map) throws IOException {
-		writer.newLine();
-		writer.newLine();
-		List<Entry<Pair<Integer, Integer>, Double>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, Double>>();
+//	@SuppressWarnings("unchecked")
+//	public void printUtilityNegatedEntrySet(BufferedWriter writer, Map<Object, ? extends Number> map) throws IOException {
+//		writer.newLine();
+//		writer.newLine();
+//		List<Entry<Pair<Integer, Integer>, ? extends Number>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Number>>();
+//
+//		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Number>>) map.entrySet());
+//		Collections.sort(entryList, new EntryComparator());
+//		for (Entry<Pair<Integer, Integer>, ? extends Number> entry : entryList) {
+//			writer.write("(");
+//			writer.write(Integer.toString(entry.getKey().getLeft()));
+//			writer.write(",");
+//			writer.write(Integer.toString(entry.getKey().getRight()));
+//			writer.write(",(");
+//			writer.write(new Integer(new Double(-entry.getValue().doubleValue() * UTILITY_COEF).intValue()).toString());
+//			writer.write("))");
+//			writer.newLine();
+//		}
+//		writer.newLine();
+//	}
 
-		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, Double>>) map.entrySet());
-		Collections.sort(entryList, new EntryComparator());
-		for (Entry<Pair<Integer, Integer>, Double> entry : entryList) {
-			writer.write("(");
-			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getLeft()));
-			writer.write(",");
-			writer.write(Integer.toString(((Pair<Integer, Integer>) entry.getKey()).getRight()));
-			writer.write(",(");
-			writer.write(new Integer((new Double(entry.getValue() * UTILITY_COEF).intValue())).toString());
-			writer.write("))");
-			writer.newLine();
-		}
-		writer.newLine();
-	}
-
-	@SuppressWarnings("unchecked")
-	public void printUtilityNegatedEntrySet(BufferedWriter writer, Map<Object, ? extends Number> map) throws IOException {
-		writer.newLine();
-		writer.newLine();
-		List<Entry<Pair<Integer, Integer>, ? extends Number>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Number>>();
-
-		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Number>>) map.entrySet());
-		Collections.sort(entryList, new EntryComparator());
-		for (Entry<Pair<Integer, Integer>, ? extends Number> entry : entryList) {
-			writer.write("(");
-			writer.write(Integer.toString(entry.getKey().getLeft()));
-			writer.write(",");
-			writer.write(Integer.toString(entry.getKey().getRight()));
-			writer.write(",(");
-			writer.write(new Integer(new Double(-entry.getValue().doubleValue() * UTILITY_COEF).intValue()).toString());
-			writer.write("))");
-			writer.newLine();
-		}
-		writer.newLine();
-	}
-
-	@SuppressWarnings("unchecked")
-	public void printNegatedEntrySet(BufferedWriter writer, Map<Object, ? extends Number> map) throws IOException {
-		writer.newLine();
-		writer.newLine();
-
-		List<Entry<Pair<Integer, Integer>, ? extends Number>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Number>>();
-
-		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Number>>) map.entrySet());
-		Collections.sort(entryList, new EntryComparator());
-		for (Entry<Pair<Integer, Integer>, ? extends Number> entry : entryList) {
-			writer.write("(");
-			writer.write(Integer.toString(entry.getKey().getLeft()));
-			writer.write(",");
-			writer.write(Integer.toString(entry.getKey().getRight()));
-			writer.write(",(");
-			writer.write(new Double(-entry.getValue().doubleValue()).toString());
-			writer.write("))");
-			writer.newLine();
-		}
-		writer.newLine();
-	}
+//	@SuppressWarnings("unchecked")
+//	public void printNegatedEntrySet(BufferedWriter writer, Map<Object, ? extends Number> map) throws IOException {
+//		writer.newLine();
+//		writer.newLine();
+//
+//		List<Entry<Pair<Integer, Integer>, ? extends Number>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Number>>();
+//
+//		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Number>>) map.entrySet());
+//		Collections.sort(entryList, new EntryComparator());
+//		for (Entry<Pair<Integer, Integer>, ? extends Number> entry : entryList) {
+//			writer.write("(");
+//			writer.write(Integer.toString(entry.getKey().getLeft()));
+//			writer.write(",");
+//			writer.write(Integer.toString(entry.getKey().getRight()));
+//			writer.write(",(");
+//			writer.write(new Double(-entry.getValue().doubleValue()).toString());
+//			writer.write("))");
+//			writer.newLine();
+//		}
+//		writer.newLine();
+//	}
 
 	public Map<Object, Integer> getColumnIndicesE() {
 		return columnIndicesE;
