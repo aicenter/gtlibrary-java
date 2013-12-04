@@ -13,6 +13,7 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -53,8 +54,8 @@ public class InitialP2PBuilder {
         }
     }
 
-    protected void updateForP1(Sequence p1Sequence) {
-        if (p1Sequence.size() == 0)
+    protected void updateForP1(Sequence p1Sequence) {        //    stačí to na jeden průchod, pokud neni v utilities tak tam dám vstupování pokud je tak jenom 1 a utilitu
+        if (p1Sequence.size() == 0)     // ještě mi stačí updatovat to tak že půjdu po expolitable sequences a dávat tam kde je c současnejch a nebyl v minulejch a odebirat v opačnym případě
             return;
         Object eqKey = getSubsequence(p1Sequence);
         Object varKey = getLastISKey(p1Sequence);
@@ -146,21 +147,28 @@ public class InitialP2PBuilder {
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
 
-            System.out.println("values:");
-            for (int i = 0; i < lpData.getVariables().length; i++) {
-                System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
-            }
+//            System.out.println("values:");
+//            for (int i = 0; i < lpData.getVariables().length; i++) {
+//                System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
+//            }
 
             //			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
 
-            //			for (int i = 0; i < lpData.getVariables().length; i++) {
-            //				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
-            //			}
+//            			for (int i = 0; i < lpData.getVariables().length; i++) {
+//            				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
+//            			}
 
             //			for (Entry<Sequence, Double> entry : p1RealizationPlan.entrySet()) {
             //				if(entry.getValue() > 0)
             //					System.out.println(entry);
             //			}
+//            double objValue = lpData.getSolver().getObjValue();
+//            BigDecimal preciseValue = new BigDecimal(objValue);
+//
+//            preciseValue = preciseValue.movePointRight(16);
+//            preciseValue.subtract(new BigDecimal(1));
+//            objValue = new BigDecimal(preciseValue.toBigInteger()).movePointLeft(16).doubleValue();
+
             return new PResult(createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables()), lpData.getSolver().getObjValue());
         } catch (IloException e) {
             e.printStackTrace();

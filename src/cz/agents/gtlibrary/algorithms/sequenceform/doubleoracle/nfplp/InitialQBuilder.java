@@ -141,7 +141,6 @@ public class InitialQBuilder {
     public QResult solve() {
         try {
             LPData lpData = lpTable.toCplex();
-//			System.out.println(lpData.getConstraints()[450]);
 //			new Scanner(System.in).next();
             boolean solved = false;
 
@@ -157,9 +156,9 @@ public class InitialQBuilder {
             System.out.println(lpData.getSolver().getObjValue());
 
             //			System.out.println(Arrays.toString(lpData.getSolver().getValues(lpData.getVariables())));
-            //			for (int i = 0; i < lpData.getVariables().length; i++) {
-            //				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
-            //			}
+            for (int i = 0; i < lpData.getVariables().length; i++) {
+                System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
+            }
             return createResult(lpData);
         } catch (IloException e) {
             e.printStackTrace();
