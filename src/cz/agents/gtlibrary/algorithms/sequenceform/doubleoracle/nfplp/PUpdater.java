@@ -53,4 +53,7 @@ public class PUpdater extends InitialPBuilder {
             lpTable.setConstant(p2Sequence, -value);
     }
 
+    @Override
+    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
+    }
 }

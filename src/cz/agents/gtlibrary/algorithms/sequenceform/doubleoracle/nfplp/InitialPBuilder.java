@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
@@ -14,6 +13,7 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -145,18 +145,31 @@ public class InitialPBuilder {
                 if (solved = trySolve(lpData))
                     break;
             }
-            if (!solved)
-                solveUnfeasibleLP(lpData);
+//            if(!solved)
+//                return null;
+//            if (!solved)
+//                solveUnfeasibleLP(lpData);
             //			trySolve(lpData);
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
 
-            double[] values = lpData.getSolver().getValues(lpData.getVariables());
 
-            System.out.println("values:");
-            for (int i = 0; i < values.length; i++) {
-                System.out.println(lpData.getVariables()[i] + ": " + values[i]);
-            }
+            double objValue = lpData.getSolver().getObjValue();
+            BigDecimal preciseValue = new BigDecimal(objValue);
+
+            preciseValue = preciseValue.movePointRight(16);
+            if (objValue > 0)
+                preciseValue = preciseValue.subtract(new BigDecimal(1));
+            else if (objValue < 0)
+                preciseValue = preciseValue.add(new BigDecimal(1));
+            objValue = new BigDecimal(preciseValue.toBigInteger()).movePointLeft(16).doubleValue();
+
+//            double[] values = lpData.getSolver().getValues(lpData.getVariables());
+//
+//            System.out.println("values:");
+//            for (int i = 0; i < values.length; i++) {
+//                System.out.println(lpData.getVariables()[i] + ": " + values[i]);
+//            }
 
             //			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
 

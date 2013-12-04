@@ -39,8 +39,8 @@ public class NFPSolver {
 //		runTest();
 
 //				runKuhnPoker();
-				runBPG();
-//				runGenericPoker();
+//				runBPG();
+				runGenericPoker();
 		//		runGoofspiel();
 	}
 
