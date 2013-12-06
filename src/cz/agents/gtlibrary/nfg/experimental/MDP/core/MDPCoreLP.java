@@ -53,7 +53,7 @@ public class MDPCoreLP {
 
                 IloCplex cplex = new IloCplex();
                 cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Primal);
-                cplex.setParam(IloCplex.BooleanParam.PerInd, true);
+//                cplex.setParam(IloCplex.BooleanParam.PerInd, true);
                 cplex.setParam(IloCplex.IntParam.PerLim, 1000000);
 //                cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Auto);
 //                cplex.setParam(IloCplex.IntParam.Threads, 1);
