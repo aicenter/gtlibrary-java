@@ -1,9 +1,12 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.reusing;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -13,33 +16,40 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
-public class InitialP2PBuilder {
+public class InitialP2PBuilderReuse {
 
     protected String lpFileName;
     protected RecyclingNFPTable lpTable;
     protected DoubleOracleConfig<DoubleOracleInformationSet> config;
     protected Player[] players;
 
-    public InitialP2PBuilder(Player[] players, DoubleOracleConfig<DoubleOracleInformationSet> config) {
+    public InitialP2PBuilderReuse(Player[] players) {
         this.players = players;
-        this.config = config;
         lpFileName = "P2DO_P.lp";
+        initTable();
     }
 
-    public void buildLP() {
-        initTable();
-        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
-            updateForP1(p1Sequence);
+    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+        this.config = config;
+        for (Sequence sequence : config.getNewSequences()) {
+            if (sequence.getPlayer().equals(players[0]))
+                updateForP1(sequence);
+            else
+                updateForP2(sequence);
         }
-        for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
-            updateForP2(p2Sequence);
-        }
+        clearUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
         addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
+    }
+
+    private void clearUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
+        for (Sequence p1Sequence : p1Sequences) {
+            for (Sequence p2Sequence : p2Sequences) {
+                 lpTable.removeFromConstraint(p1Sequence, p2Sequence);
+            }
+        }
     }
 
     protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
@@ -54,8 +64,62 @@ public class InitialP2PBuilder {
         }
     }
 
-    protected void updateForP1(Sequence p1Sequence) {        //    stačí to na jeden průchod, pokud neni v utilities tak tam dám vstupování pokud je tak jenom 1 a utilitu
-        if (p1Sequence.size() == 0)     // ještě mi stačí updatovat to tak že půjdu po expolitable sequences a dávat tam kde je c současnejch a nebyl v minulejch a odebirat v opačnym případě
+//    protected void addUtilities(Iterable<Sequence> newSequences) {
+//        Set<Pair<Sequence, Sequence>> blackList = new HashSet<Pair<Sequence, Sequence>>();
+//
+//        for (Sequence newSequence : newSequences) {
+//            if (newSequence.getPlayer().equals(players[0]))
+//                for (Sequence compatibleSequence : config.getCompatibleSequencesFor(newSequence)) {
+//                    Double utility = config.getUtilityFor(newSequence, compatibleSequence);
+//                    Pair<Sequence, Sequence> sequencePair = new Pair<Sequence, Sequence>(newSequence, compatibleSequence);
+//
+//                    if (utility != null)
+//                        if (!blackList.contains(sequencePair)) {
+//                            lpTable.substractFromConstraint(newSequence, compatibleSequence, -utility);
+//                            blackList.add(sequencePair);
+//                        }
+//                    clearForAllP1Prefixes(newSequence);
+//                }
+//            else
+//                for (Sequence compatibleSequence : config.getCompatibleSequencesFor(newSequence)) {
+//                    Double utility = config.getUtilityFor(newSequence, compatibleSequence);
+//                    Pair<Sequence, Sequence> sequencePair = new Pair<Sequence, Sequence>(compatibleSequence, newSequence);
+//
+//                    if (utility != null)
+//                        if (!blackList.contains(sequencePair)) {
+//                            lpTable.substractFromConstraint(compatibleSequence, newSequence, -utility);
+//                            blackList.add(sequencePair);
+//                        }
+//                    clearForAllP2Prefixes(newSequence);
+//                }
+//        }
+//    }
+//
+//    private void clearForAllP1Prefixes(Sequence newSequence, Set<Pair<Sequence, Sequence>> blackList) {
+//        for (Sequence prefix : newSequence.getAllPrefixes()) {
+//            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(prefix)) {
+//                Double utility = config.getUtilityFor(prefix, compatibleSequence);
+//                if (utility == null)
+//                    lpTable.removeFromConstraint(prefix, compatibleSequence);
+//                else
+//
+//            }
+//        }
+//
+//    }
+//
+//    private void clearForAllP2Prefixes(Sequence newSequence) {
+//        for (Sequence prefix : newSequence.getAllPrefixes()) {
+//            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(prefix)) {
+//                if (config.getUtilityFor(prefix, compatibleSequence) == null)
+//                    lpTable.removeFromConstraint(compatibleSequence, prefix);
+//            }
+//        }
+//
+//    }
+
+    protected void updateForP1(Sequence p1Sequence) {
+        if (p1Sequence.size() == 0)
             return;
         Object eqKey = getSubsequence(p1Sequence);
         Object varKey = getLastISKey(p1Sequence);
@@ -63,8 +127,22 @@ public class InitialP2PBuilder {
         lpTable.setConstraint(eqKey, varKey, -1);//F
         lpTable.setConstraintType(eqKey, 0);
         lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-        lpTable.setConstraint(p1Sequence, varKey, 1);//F
-        lpTable.setConstraintType(p1Sequence, 0);
+        addLinksToPrevISForP1(p1Sequence, varKey);
+//        lpTable.setConstraint(p1Sequence, varKey, 1);//F
+//        lpTable.setConstraintType(p1Sequence, 0);
+    }
+
+    public void addLinksToPrevISForP1(Sequence sequence, Object varKey) {
+        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
+
+        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
+            lpTable.setConstraint(outgoingSequence, varKey, 1);//F child
+            lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+            lpTable.setConstraintType(outgoingSequence, 0);
+
+//            lpTable.setConstraint(outgoingSequence, tmpKey, -1);//u (eye)
+//			lpTable.setObjective(tmpKey, 0);//k(\epsilon)
+        }
     }
 
     protected void updateForP2(Sequence p2Sequence) {
@@ -77,15 +155,32 @@ public class InitialP2PBuilder {
         lpTable.setConstraint(eqKey, varKey, -1);//E
         lpTable.setConstraintType(eqKey, 1);
         lpTable.setLowerBound(varKey, 0);
-        lpTable.setConstraint(eqKey, p2Sequence, 1);//E
-        lpTable.setLowerBound(p2Sequence, 0);
+//        lpTable.setConstraint(eqKey, p2Sequence, 1);//E
+//        lpTable.setLowerBound(p2Sequence, 0);
+        addLinksToPrevISForP2(p2Sequence, eqKey);
     }
+
+    protected void addLinksToPrevISForP2(Sequence sequence, Object eqKey) {
+        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
+
+        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
+//            Key tmpKey = new Key("V", outgoingSequence);
+
+            lpTable.setConstraint(eqKey, outgoingSequence, 1);//E child
+            lpTable.setConstraintType(eqKey, 1);
+            lpTable.setLowerBound(outgoingSequence, 0);
+//			lpTable.setConstant(tmpKey, 0);//l(\epsilon)
+        }
+
+    }
+
+
 
     protected Sequence getSubsequence(Sequence sequence) {
         return sequence.getSubSequence(sequence.size() - 1);
     }
 
-    public PResult solve() {
+    public PResultReuse solve() {
         try {
             LPData lpData = lpTable.toCplex();
             boolean solved = false;
@@ -123,7 +218,7 @@ public class InitialP2PBuilder {
 //            preciseValue.subtract(new BigDecimal(1));
 //            objValue = new BigDecimal(preciseValue.toBigInteger()).movePointLeft(16).doubleValue();
 
-            return new PResult(createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables()), lpData.getSolver().getObjValue());
+            return new PResultReuse(createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables()), lpData.getSolver().getObjValue());
         } catch (IloException e) {
             e.printStackTrace();
         }

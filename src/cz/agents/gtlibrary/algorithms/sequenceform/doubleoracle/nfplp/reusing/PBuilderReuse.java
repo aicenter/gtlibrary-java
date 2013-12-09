@@ -1,33 +1,43 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.reusing;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import ilog.concert.IloException;
 
 import java.util.Map;
 import java.util.Set;
 
-public class PBuilder extends InitialPBuilder {
+public class PBuilderReuse extends InitialPBuilderReuse {
 
     private Set<Sequence> lastItSeq;
     private Map<Sequence, Double> explSeqSum;
-    private double initialValueOfGame;
 
-    public PBuilder(Player[] players, DoubleOracleConfig<DoubleOracleInformationSet> config, QResult data, double initialValueOfGame) {
-        super(players, config);
+    public PBuilderReuse(Player[] players) {
+        super(players);
+    }
+
+    public void updateFromLastIteration(QResultReuse data, Double initialValueOfGame) {
         this.lastItSeq = data.getLastItSeq();
         this.explSeqSum = data.getExplSeqSum();
-        this.initialValueOfGame = initialValueOfGame;
+        addPreviousItConstraints(initialValueOfGame);
     }
 
     @Override
-    public void initTable() {
-        super.initTable();
-        addPreviousItConstraints();
+    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+        clearSlacks(config.getSequencesFor(players[1]));
+        super.buildLP(config);
     }
 
-    private void addPreviousItConstraints() {
+    private void clearSlacks(Iterable<Sequence> sequences) {
+        for (Sequence sequence : sequences) {
+            lpTable.removeFromConstraint(sequence, "t");
+            lpTable.removeConstant(sequence);
+        }
+    }
+
+    private void addPreviousItConstraints(double initialValueOfGame) {
         lpTable.setConstraint("prevIt", players[1], 1);
         lpTable.setConstant("prevIt", initialValueOfGame);
         lpTable.setConstraintType("prevIt", 1);
@@ -49,4 +59,11 @@ public class PBuilder extends InitialPBuilder {
             lpTable.setConstant(p2Sequence, -value);
     }
 
+    public void updateSolver() {
+        try {
+            lpTable.toCplex();
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+    }
 }

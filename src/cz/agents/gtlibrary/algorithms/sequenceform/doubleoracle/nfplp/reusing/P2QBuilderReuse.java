@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.reusing;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
@@ -11,13 +11,30 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class P2QBuilder extends InitialP2QBuilder {
+public class P2QBuilderReuse extends InitialP2QBuilderReuse {
 
     private Map<Sequence, Double> explSeqSum;
 
-    public P2QBuilder(Player[] players, DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue, double gameValue, QResult data) {
-        super(players, config, initialValue);
+    public P2QBuilderReuse(Player[] players) {
+        super(players);
+        explSeqSum = new HashMap<Sequence, Double>();
+    }
+
+
+    public void updateSum(double gameValue, QResultReuse data) {
         this.explSeqSum = getSum(data.getLastItSeq(), data.getExplSeqSum(), gameValue);
+    }
+
+    @Override
+    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
+        clearSlacks(config.getSequencesFor(players[0]));
+        super.buildLP(config, initialValue);
+    }
+
+    private void clearSlacks(Iterable<Sequence> sequences) {
+        for (Sequence sequence : sequences) {
+            lpTable.removeFromConstraint(sequence, "s");
+        }
     }
 
     @Override
@@ -42,11 +59,18 @@ public class P2QBuilder extends InitialP2QBuilder {
     }
 
     @Override
-    protected QResult createResult(LPData lpData) throws IloException {
+    protected QResultReuse createResult(LPData lpData) throws IloException {
         Map<Sequence, Double> watchedSequenceValues = getWatchedUSequenceValues(lpData);
         Set<Sequence> exploitableSequences = getExploitableSequences(watchedSequenceValues);
 
-        return new QResult(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, getRealizationPlan(lpData));
+        return new QResultReuse(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, getRealizationPlan(lpData));
     }
 
+    public void updateSolver() {
+        try {
+            lpTable.toCplex();
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+    }
 }
