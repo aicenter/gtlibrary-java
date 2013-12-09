@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.reusing;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
@@ -8,20 +8,20 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import java.util.Map;
 import java.util.Set;
 
-public class PUpdater extends InitialPBuilder {
+public class PUpdaterReuse extends InitialPBuilderReuse {
 
     private Set<Sequence> lastItSeq;
     private Map<Sequence, Double> explSeqSum;
 
-    public PUpdater(Player[] players, DoubleOracleConfig<DoubleOracleInformationSet> config, RecyclingNFPTable table) {
-        super(players, config);
+    public PUpdaterReuse(Player[] players, RecyclingNFPTable table) {
+        super(players);
         lpTable = table;
     }
 
-    public void buildLP(QResult data) {
+    public void buildLP(QResultReuse data, DoubleOracleConfig<DoubleOracleInformationSet> config) {
         this.lastItSeq = data.getLastItSeq();
         this.explSeqSum = data.getExplSeqSum();
-        super.buildLP();
+        super.buildLP(config);
     }
 
     @Override
@@ -35,7 +35,7 @@ public class PUpdater extends InitialPBuilder {
 
     @Override
     protected void updateForP1(Sequence p1Sequence) {
-
+      
     }
 
     @Override

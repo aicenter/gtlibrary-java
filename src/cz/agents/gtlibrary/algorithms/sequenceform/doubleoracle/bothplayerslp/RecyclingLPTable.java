@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
@@ -95,8 +96,10 @@ public class RecyclingLPTable extends LPTable {
                     if (Math.abs(value - row.get(varKey)) < 1e-10)
                         return;
                 }
-                Map<Object, Double> updatedRow = new HashMap<Object, Double>();
+                Map<Object, Double> updatedRow = updatedConstraints.get(eqKey);
 
+                if (updatedRow == null)
+                    updatedRow = new HashMap<Object, Double>();
                 updatedRow.put(varKey, value);
                 updatedConstraints.put(eqKey, updatedRow);
                 row.put(varKey, value);
@@ -111,6 +114,7 @@ public class RecyclingLPTable extends LPTable {
         if (constraints.get(eqKey).containsKey(varKey))
             return;
         setConstraint(eqKey, varKey, value);
+
     }
 
     @Override
@@ -201,7 +205,7 @@ public class RecyclingLPTable extends LPTable {
             cplexConstraints[getEquationIndex(eqKey) - 1].setBounds(constant, constant);
     }
 
-    private void modifyExistingConstraint(IloNumVar[] x, IloRange[] cplexConstraints, Entry<Object,Map<Object, Double>> rowEntry, int equationIndex) throws IloException {
+    private void modifyExistingConstraint(IloNumVar[] x, IloRange[] cplexConstraints, Entry<Object, Map<Object, Double>> rowEntry, int equationIndex) throws IloException {
         for (Entry<Object, Double> update : rowEntry.getValue().entrySet()) {
             cplex.setLinearCoef(cplexConstraints[equationIndex], x[getVariableIndex(update.getKey()) - 1], update.getValue());
         }
@@ -316,6 +320,7 @@ public class RecyclingLPTable extends LPTable {
             if (row.isEmpty()) {
                 constraints.remove(eqKey);
                 removedConstraints.add(eqKey);
+                updatedConstraints.remove(eqKey);
             } else {
                 Map<Object, Double> updatedRow = updatedConstraints.get(eqKey);
 
@@ -326,5 +331,10 @@ public class RecyclingLPTable extends LPTable {
             }
         }
 
+    }
+
+    public void removeConstant(Sequence eqKey) {
+        constants.remove(eqKey);
+        updatedConstants.remove(eqKey);
     }
 }

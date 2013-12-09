@@ -1,5 +1,6 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.reusing;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
@@ -14,13 +15,10 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
-public class InitialP2QBuilder {
+public class InitialP2QBuilderReuse {
 
     protected DoubleOracleConfig<DoubleOracleInformationSet> config;
     protected double initialValue;
@@ -28,21 +26,23 @@ public class InitialP2QBuilder {
     protected RecyclingNFPTable lpTable;
     protected Player[] players;
 
-    public InitialP2QBuilder(Player[] players, DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
-        this.config = config;
+    public InitialP2QBuilderReuse(Player[] players) {
         this.players = players;
-        this.initialValue = initialValue;
         lpFileName = "P2DO_Q.lp";
+        initTable();
     }
 
-    public void buildLP() {
-        initTable();
-        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
-            updateForP1(p1Sequence);
+    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
+        this.config = config;
+        this.initialValue = initialValue;
+        addPreviousItConstraints(initialValue);
+        for (Sequence sequence : config.getNewSequences()) {
+            if (sequence.getPlayer().equals(players[0]))
+                updateForP1(sequence);
+            else
+                updateForP2(sequence);
         }
-        for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
-            updateForP2(p2Sequence);
-        }
+        clearUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
         addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
     }
 
@@ -56,12 +56,26 @@ public class InitialP2QBuilder {
         lpTable.setConstraint(eqKey, varKey, -1);//F
         lpTable.setConstraintType(eqKey, 0);
         lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-        lpTable.setConstraint(p1Sequence, varKey, 1);//F
-        lpTable.setConstraintType(p1Sequence, 0);
+//        lpTable.setConstraint(p1Sequence, varKey, 1);//F
+//        lpTable.setConstraintType(p1Sequence, 0);
+        addLinksToPrevISForP1(p1Sequence, varKey);
+    }
+
+    public void addLinksToPrevISForP1(Sequence sequence, Object varKey) {
+        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
+
+        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
+            lpTable.setConstraint(outgoingSequence, varKey, 1);//F child
+            lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+            lpTable.setConstraintType(outgoingSequence, 0);
+
+//            lpTable.setConstraint(outgoingSequence, tmpKey, -1);//u (eye)
+//			lpTable.setObjective(tmpKey, 0);//k(\epsilon)
+        }
     }
 
     protected void updateForP2(Sequence p2Sequence) {
-        lpTable.watchPrimalVariable(p2Sequence, p2Sequence);
+//        lpTable.watchPrimalVariable(p2Sequence, p2Sequence);
         if (p2Sequence.size() == 0)
             return;
         Object varKey = getSubsequence(p2Sequence);
@@ -70,59 +84,35 @@ public class InitialP2QBuilder {
         lpTable.setConstraint(eqKey, varKey, -1);//E
         lpTable.setConstraintType(eqKey, 1);
         lpTable.setLowerBound(varKey, 0);
-        lpTable.setConstraint(eqKey, p2Sequence, 1);//E
-        lpTable.setLowerBound(p2Sequence, 0);
+//        lpTable.setConstraint(eqKey, p2Sequence, 1);//E
+//        lpTable.setLowerBound(p2Sequence, 0);
+        addLinksToPrevISForP2(p2Sequence, eqKey);
     }
 
-//    protected void updateForP1(Sequence p1Sequence) {
-//        addU(p1Sequence);
-//        if (p1Sequence.size() == 0)
-//            return;
-//        Object eqKey = getSubsequence(p1Sequence);
-//        Object varKey = getLastISKey(p1Sequence);
-//
-//        lpTable.setConstraint(eqKey, varKey, -1);//F
-//        lpTable.setConstraintType(eqKey, 0);
-//        lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-//        addLinksToPrevISForP1(p1Sequence, varKey);
-//    }
-//
-//
-//    public void addLinksToPrevISForP1(Sequence sequence, Object varKey) {
-//        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
-//
-//        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
-//            lpTable.setConstraint(outgoingSequence, varKey, 1);
-//            lpTable.setConstraintType(outgoingSequence, 0);
-//            lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-//        }
-//    }
-//
-//    protected void updateForP2(Sequence p2Sequence) {
-//        if (p2Sequence.size() == 0)
-//            return;
-//        Object varKey = getSubsequence(p2Sequence);
-//        Object eqKey = getLastISKey(p2Sequence);
-//
-//        lpTable.setConstraint(eqKey, varKey, -1);//E
-//        lpTable.setConstraintType(eqKey, 1);
-//        lpTable.setLowerBound(varKey, 0);
-//        lpTable.watchPrimalVariable(p2Sequence, p2Sequence);
-//        addLinksToPrevISForP2(p2Sequence, eqKey);
-//    }
-//
-//    protected void addLinksToPrevISForP2(Sequence sequence, Object eqKey) {
-//        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
-//
-//        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
-//            lpTable.setConstraint(eqKey, outgoingSequence, 1);//E child
-//            lpTable.setLowerBound(outgoingSequence, 0);
-//            lpTable.watchPrimalVariable(outgoingSequence, outgoingSequence);
-//        }
-//    }
+    protected void addLinksToPrevISForP2(Sequence sequence, Object eqKey) {
+        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
+
+        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
+//            Key tmpKey = new Key("V", outgoingSequence);
+
+            lpTable.setConstraint(eqKey, outgoingSequence, 1);//E child
+            lpTable.setConstraintType(eqKey, 1);
+            lpTable.setLowerBound(outgoingSequence, 0);
+//			lpTable.setConstant(tmpKey, 0);//l(\epsilon)
+        }
+
+    }
 
     protected Sequence getSubsequence(Sequence sequence) {
         return sequence.getSubSequence(sequence.size() - 1);
+    }
+
+    private void clearUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
+        for (Sequence p1Sequence : p1Sequences) {
+            for (Sequence p2Sequence : p2Sequences) {
+                lpTable.removeFromConstraint(p1Sequence, p2Sequence);
+            }
+        }
     }
 
     protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
@@ -137,7 +127,58 @@ public class InitialP2QBuilder {
         }
     }
 
-    public QResult solve() {
+//    protected void addUtilities(Iterable<Sequence> newSequences) {
+//        Set<Pair<Sequence, Sequence>> blackList = new HashSet<Pair<Sequence, Sequence>>();
+//
+//        for (Sequence newSequence : newSequences) {
+//            if (newSequence.getPlayer().equals(players[0]))
+//                for (Sequence compatibleSequence : config.getCompatibleSequencesFor(newSequence)) {
+//                    Double utility = config.getUtilityFor(newSequence, compatibleSequence);
+//                    Pair<Sequence, Sequence> sequencePair = new Pair<Sequence, Sequence>(newSequence, compatibleSequence);
+//
+//                    if (utility != null)
+//                        if (!blackList.contains(sequencePair)) {
+//                            lpTable.substractFromConstraint(newSequence, compatibleSequence, -utility);
+//                            blackList.add(sequencePair);
+//                        }
+//                    clearForAllP1Prefixes(newSequence);
+//                }
+//            else
+//                for (Sequence compatibleSequence : config.getCompatibleSequencesFor(newSequence)) {
+//                    Double utility = config.getUtilityFor(newSequence, compatibleSequence);
+//                    Pair<Sequence, Sequence> sequencePair = new Pair<Sequence, Sequence>(compatibleSequence, newSequence);
+//
+//                    if (utility != null)
+//                        if (!blackList.contains(sequencePair)) {
+//                            lpTable.substractFromConstraint(compatibleSequence, newSequence, -utility);
+//                            blackList.add(sequencePair);
+//                        }
+//                    clearForAllP2Prefixes(newSequence);
+//                }
+//        }
+//    }
+//
+//    private void clearForAllP1Prefixes(Sequence newSequence) {
+//        for (Sequence prefix : newSequence.getAllPrefixes()) {
+//            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(prefix)) {
+//                if (config.getUtilityFor(prefix, compatibleSequence) == null)
+//                    lpTable.removeFromConstraint(prefix, compatibleSequence);
+//            }
+//        }
+//
+//    }
+//
+//    private void clearForAllP2Prefixes(Sequence newSequence) {
+//        for (Sequence prefix : newSequence.getAllPrefixes()) {
+//            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(prefix)) {
+//                if (config.getUtilityFor(prefix, compatibleSequence) == null)
+//                    lpTable.removeFromConstraint(compatibleSequence, prefix);
+//            }
+//        }
+//
+//    }
+
+    public QResultReuse solve() {
         try {
             LPData lpData = lpTable.toCplex();
             boolean solved = false;
@@ -163,12 +204,12 @@ public class InitialP2QBuilder {
         return null;
     }
 
-    protected QResult createResult(LPData lpData) throws IloException {
+    protected QResultReuse createResult(LPData lpData) throws IloException {
         Map<Sequence, Double> watchedSequenceValues = getWatchedUSequenceValues(lpData);
         Set<Sequence> exploitableSequences = getExploitableSequences(watchedSequenceValues);
         Map<Sequence, Double> updatedSum = getSum(exploitableSequences, null, initialValue);
 
-        return new QResult(lpData.getSolver().getObjValue(), updatedSum, exploitableSequences, getRealizationPlan(lpData));
+        return new QResultReuse(lpData.getSolver().getObjValue(), updatedSum, exploitableSequences, getRealizationPlan(lpData));
     }
 
     protected boolean trySolve(LPData lpData) throws IloException {
@@ -291,10 +332,9 @@ public class InitialP2QBuilder {
         initE(p1EmptySequence);
         initF(p2EmptySequence);
         initf();
-        addPreviousItConstraints(p2EmptySequence);
     }
 
-    protected void addPreviousItConstraints(Sequence p2EmptySequence) {
+    protected void addPreviousItConstraints(double initialValue) {
         lpTable.setConstraint("prevIt", players[0], 1);
         lpTable.setConstraint("prevIt", "s", -initialValue);
         lpTable.setConstraintType("prevIt", 1);
@@ -306,6 +346,7 @@ public class InitialP2QBuilder {
     }
 
     public void initE(Sequence p1EmptySequence) {
+        addU(p1EmptySequence);
         lpTable.setConstraint(p1EmptySequence, players[0], 1);//F in root (only 1)
         lpTable.setConstraintType(p1EmptySequence, 0);
         lpTable.setLowerBound(players[0], Double.NEGATIVE_INFINITY);
@@ -315,11 +356,6 @@ public class InitialP2QBuilder {
         lpTable.setConstraint(players[1], p2EmptySequence, 1);//E in root (only 1)
         lpTable.setConstraintType(players[1], 1);
     }
-
-    public void initCost(Sequence p1EmptySequence) {
-        lpTable.setObjective(players[0], 1);
-    }
-
 
     protected void addU(Object eqKey) {
         Key uKey = new Key("u", eqKey);
