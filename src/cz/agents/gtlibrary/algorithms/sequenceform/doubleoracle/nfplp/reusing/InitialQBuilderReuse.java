@@ -15,8 +15,11 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class InitialQBuilderReuse {
 
@@ -42,29 +45,48 @@ public class InitialQBuilderReuse {
         for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
             updateForP2(p2Sequence);
         }
-        clearUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
-        addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
+        updateUtilities(config);
+//        addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
     }
 
-    private void clearUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
-        for (Sequence p1Sequence : p1Sequences) {
-            for (Sequence p2Sequence : p2Sequences) {
-                lpTable.removeFromConstraint(p2Sequence, p1Sequence);
-            }
-        }
-    }
-
-    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
-        for (Sequence p1Sequence : p1Sequences) {
-            for (Sequence p2Sequence : p2Sequences) {
+    private void updateUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
+            for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
                 Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
 
-                if (utility != null) {
-                    lpTable.substractFromConstraint(p2Sequence, p1Sequence, utility);
-                }
+                if (utility == null)
+                    lpTable.removeFromConstraint(p2Sequence, p1Sequence);
+                else
+                    lpTable.setConstraint(p2Sequence, p1Sequence, -utility);
             }
         }
     }
+
+
+//    private void clearUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+//        Set<Sequence> newSequences = config.getNewSequences();
+//
+//        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
+//            if (!newSequences.contains(p1Sequence))
+//                for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
+//                    if (!newSequences.contains(p2Sequence))
+//                        lpTable.removeFromConstraint(p2Sequence, p1Sequence);
+//                }
+//        }
+//    }
+//
+//    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
+//        for (Sequence p1Sequence : p1Sequences) {
+//            for (Sequence p2Sequence : p2Sequences) {
+//                Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
+//
+//                if (utility != null) {
+//                    lpTable.substractFromConstraint(p2Sequence, p1Sequence, utility);
+//                }
+//            }
+//        }
+//    }
+
     protected void updateForP1(Sequence p1Sequence) {
         lpTable.watchPrimalVariable(p1Sequence, p1Sequence);
         if (p1Sequence.size() == 0)

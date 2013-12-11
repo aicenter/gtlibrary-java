@@ -3,10 +3,8 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.reusing;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -16,8 +14,10 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class InitialP2PBuilderReuse {
 
@@ -40,29 +40,45 @@ public class InitialP2PBuilderReuse {
             else
                 updateForP2(sequence);
         }
-        clearUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
-        addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
+        updateUtilities(config);
+//        addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
     }
 
-    private void clearUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
-        for (Sequence p1Sequence : p1Sequences) {
-            for (Sequence p2Sequence : p2Sequences) {
-                 lpTable.removeFromConstraint(p1Sequence, p2Sequence);
-            }
-        }
-    }
-
-    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
-        for (Sequence p1Sequence : p1Sequences) {
-            for (Sequence p2Sequence : p2Sequences) {
+    private void updateUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
+            for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
                 Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
 
-                if (utility != null) {
-                    lpTable.substractFromConstraint(p1Sequence, p2Sequence, -utility);
-                }
+                if (utility == null)
+                    lpTable.removeFromConstraint(p1Sequence, p2Sequence);
+                else
+                    lpTable.setConstraint(p1Sequence, p2Sequence, utility);
             }
         }
     }
+//    private void clearUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+//        Set<Sequence> newSequences = config.getNewSequences();
+//
+//        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
+//            if (!newSequences.contains(p1Sequence))
+//                for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
+//                    if (!newSequences.contains(p2Sequence))
+//                        lpTable.removeFromConstraint(p1Sequence, p2Sequence);
+//                }
+//        }
+//    }
+//
+//    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
+//        for (Sequence p1Sequence : p1Sequences) {
+//            for (Sequence p2Sequence : p2Sequences) {
+//                Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
+//
+//                if (utility != null) {
+//                    lpTable.substractFromConstraint(p1Sequence, p2Sequence, -utility);
+//                }
+//            }
+//        }
+//    }
 
 //    protected void addUtilities(Iterable<Sequence> newSequences) {
 //        Set<Pair<Sequence, Sequence>> blackList = new HashSet<Pair<Sequence, Sequence>>();
@@ -173,7 +189,6 @@ public class InitialP2PBuilderReuse {
         }
 
     }
-
 
 
     protected Sequence getSubsequence(Sequence sequence) {

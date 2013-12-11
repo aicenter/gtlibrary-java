@@ -9,10 +9,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp.DOLPBuilder;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.bothplayerslp.RecyclingDOLPBuilder;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.NFPSolver;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DODataBuilder;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.reusing.NFPSolverReuse;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -69,7 +67,7 @@ public class GeneralDoubleOracle {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
 
-    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_ALTERNATING;
+    public static PlayerSelection playerSelection = PlayerSelection.BOTH;
 
 	public static void main(String[] args) {
 //		runAC();
@@ -253,11 +251,12 @@ public class GeneralDoubleOracle {
         }
 		int currentPlayerIndex = 0;
 //		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
-        NFPSolver doRestrictedGameSolver = new NFPSolver(actingPlayers);
+        NFPSolverReuse doRestrictedGameSolver = new NFPSolverReuse(actingPlayers);
+//        NFPSolver doRestrictedGameSolver = new NFPSolver(actingPlayers);
 //		DOLPBuilder doRestrictedGameSolver = new DOLPBuilder(actingPlayers);
 //		DOLPBuilder doRestrictedGameSolver = new RecyclingDOLPBuilder(actingPlayers);
 //		ReducedDOLPBuilder doRestrictedGameSolver = new ReducedDOLPBuilder(actingPlayers, gameInfo, rootState, expander);
-//		DODataBuilder doRestrictedGameSolver = new DODataBuilder(actingPlayers, rootState, expander);
+//		DODataBuilder doRestrict edGameSolver = new DODataBuilder(actingPlayers, rootState, expander);
         doRestrictedGameSolver.setDebugOutput(debugOutput);
 		
 		double p1BoundUtility = gameInfo.getMaxUtility();

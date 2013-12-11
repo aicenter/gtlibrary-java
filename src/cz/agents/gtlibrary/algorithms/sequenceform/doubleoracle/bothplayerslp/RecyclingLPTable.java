@@ -79,8 +79,8 @@ public class RecyclingLPTable extends LPTable {
 //    }
 
     public void setConstraint(Object eqKey, Object varKey, double value) {
-        if (Math.abs(value) < Double.MIN_VALUE)
-            return;
+//        if (Math.abs(value) < Double.MIN_VALUE)
+//            return;
         Map<Object, Double> row = constraints.get(eqKey);
 
         if (row == null) {
@@ -334,7 +334,7 @@ public class RecyclingLPTable extends LPTable {
     }
 
     public void removeConstant(Sequence eqKey) {
-        constants.remove(eqKey);
-        updatedConstants.remove(eqKey);
+        constants.put(eqKey, 0d);
+        updatedConstants.put(eqKey, 0d);
     }
 }

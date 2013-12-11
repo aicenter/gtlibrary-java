@@ -5,7 +5,6 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConf
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -16,7 +15,8 @@ import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class InitialPBuilderReuse {
@@ -41,29 +41,34 @@ public class InitialPBuilderReuse {
             else
                 updateForP2(sequence);
         }
-        clearUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
-        addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
+        updateUtilities(config);
+//        addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
     }
 
-    private void clearUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
-        for (Sequence p1Sequence : p1Sequences) {
-            for (Sequence p2Sequence : p2Sequences) {
-                lpTable.removeFromConstraint(p2Sequence, p1Sequence);
-            }
-        }
-    }
-
-    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
-        for (Sequence p1Sequence : p1Sequences) {
-            for (Sequence p2Sequence : p2Sequences) {
+    private void updateUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
+            for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
                 Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
 
-                if (utility != null) {
-                    lpTable.substractFromConstraint(p2Sequence, p1Sequence, utility);
-                }
+                if (utility == null)
+                    lpTable.removeFromConstraint(p2Sequence, p1Sequence);
+                else
+                    lpTable.setConstraint(p2Sequence, p1Sequence, -utility);
             }
         }
     }
+
+//    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
+//        for (Sequence p1Sequence : p1Sequences) {
+//            for (Sequence p2Sequence : p2Sequences) {
+//                Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
+//
+//                if (utility != null) {
+//                    lpTable.substractFromConstraint(p2Sequence, p1Sequence, utility);
+//                }
+//            }
+//        }
+//    }
 
 //    protected void addUtilities(Iterable<Sequence> newSequences) {
 //        Set<Pair<Sequence, Sequence>> blackList = new HashSet<Pair<Sequence, Sequence>>();

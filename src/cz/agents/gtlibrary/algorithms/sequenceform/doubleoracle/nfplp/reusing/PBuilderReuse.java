@@ -18,17 +18,32 @@ public class PBuilderReuse extends InitialPBuilderReuse {
         super(players);
     }
 
-    public void updateFromLastIteration(QResultReuse data, Double initialValueOfGame) {
+    public void update(QResultReuse data, Double initialValueOfGame, DoubleOracleConfig<DoubleOracleInformationSet> config) {
         this.lastItSeq = data.getLastItSeq();
         this.explSeqSum = data.getExplSeqSum();
         addPreviousItConstraints(initialValueOfGame);
+        clearSlacks(config.getSequencesFor(players[1]));
+        for (Sequence sequence : lastItSeq) {
+            addSlackVariable(sequence);
+        }
+        for (Map.Entry<Sequence, Double> entry : explSeqSum.entrySet()) {
+            addSlackConstant(entry);
+        }
     }
 
-    @Override
-    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config) {
-        clearSlacks(config.getSequencesFor(players[1]));
-        super.buildLP(config);
+    private void addSlackConstant(Map.Entry<Sequence, Double> entry) {
+        lpTable.setConstant(entry.getKey(), -entry.getValue());
     }
+
+    private void addSlackVariable(Sequence sequence) {
+        lpTable.setConstraint(sequence, "t", 1);
+    }
+
+//    @Override
+//    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+//        clearSlacks(config.getSequencesFor(players[1]));
+//        super.buildLP(config);
+//    }
 
     private void clearSlacks(Iterable<Sequence> sequences) {
         for (Sequence sequence : sequences) {
@@ -48,22 +63,22 @@ public class PBuilderReuse extends InitialPBuilderReuse {
         lpTable.setObjective("t", 1);
     }
 
-    @Override
-    protected void updateForP2(Sequence p2Sequence) {
-        super.updateForP2(p2Sequence);
-        if (lastItSeq.contains(p2Sequence))
-            lpTable.setConstraint(p2Sequence, "t", 1);
-        Double value = explSeqSum.get(p2Sequence);
-
-        if (value != null)
-            lpTable.setConstant(p2Sequence, -value);
-    }
-
-    public void updateSolver() {
-        try {
-            lpTable.toCplex();
-        } catch (IloException e) {
-            e.printStackTrace();
-        }
-    }
+//    @Override
+//    protected void updateForP2(Sequence p2Sequence) {
+//        super.updateForP2(p2Sequence);
+//        if (lastItSeq.contains(p2Sequence))
+//            lpTable.setConstraint(p2Sequence, "t", 1);
+//        Double value = explSeqSum.get(p2Sequence);
+//
+//        if (value != null)
+//            lpTable.setConstant(p2Sequence, -value);
+//    }
+//
+//    public void updateSolver() {
+//        try {
+//            lpTable.toCplex();
+//        } catch (IloException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

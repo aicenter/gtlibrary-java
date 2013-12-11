@@ -73,19 +73,20 @@ public class NFPSolverReuse {
         }
         if (pBuilderP1 == null)
             pBuilderP1 = new PBuilderReuse(players);
-        pBuilderP1.updateFromLastIteration(qResult, p1Value);
+//        pBuilderP1.updateFromLastIteration(qResult, p1Value);
         pBuilderP1.buildLP(config);
-        pBuilderP1.updateSolver();
+//        pBuilderP1.updateSolver();
+        pBuilderP1.update(qResult, p1Value, config);
         if (qBuilderP1 == null)
             qBuilderP1 = new QBuilderReuse(players);
 
         qBuilderP1.buildLP(config, p1Value);
-        qBuilderP1.updateSolver();
+//        qBuilderP1.updateSolver();
         if (qResult.getGameValue() > 1e-6) {
             pResult = pBuilderP1.solve();
 
-            qBuilderP1.updateSum(pResult.getGameValue(), qResult);
-            qBuilderP1.buildLP(config, p1Value);
+            qBuilderP1.update(pResult.getGameValue(), qResult, config);
+//            qBuilderP1.buildLP(config, p1Value);
             qResult = qBuilderP1.solve();
 
             System.out.println("Exploitable sequences: ");
@@ -100,10 +101,10 @@ public class NFPSolverReuse {
                 assert !qResult.getLastItSeq().isEmpty();
                 System.out.println("Exploitable seq. count " + qResult.getLastItSeq().size());
 
-                pUpdater.buildLP(qResult, config);
+                pUpdater.update(qResult, config);
                 pResult = pUpdater.solve();
 
-                qUpdater.buildLP(qResult, pResult.getGameValue(), config, p1Value);
+                qUpdater.update(pResult.getGameValue(), qResult, config);
                 qResult = qUpdater.solve();
                 System.out.println("Exploitable sequences: ");
                 for (Sequence exploitableSequence : qResult.getLastItSeq()) {
@@ -152,19 +153,20 @@ public class NFPSolverReuse {
 
         if (pBuilderP2 == null)
             pBuilderP2 = new P2PBuilderReuse(players);
-        pBuilderP2.updateFromLastIteration(qResult, p2Value);
+//        pBuilderP2.updateFromLastIteration(qResult, p2Value);
         pBuilderP2.buildLP(config);
-        pBuilderP2.updateSolver();
+        pBuilderP2.update(qResult, p2Value, config);
+//        pBuilderP2.updateSolver();
         if (qBuilderP2 == null)
             qBuilderP2 = new P2QBuilderReuse(players);
 
         qBuilderP2.buildLP(config, p2Value);
-        qBuilderP2.updateSolver();
+//        qBuilderP2.updateSolver();
         if (qResult.getGameValue() > 1e-6) {
             pResult = pBuilderP2.solve();
 
-            qBuilderP2.updateSum(pResult.getGameValue(), qResult);
-            qBuilderP2.buildLP(config, p2Value);
+//            qBuilderP2.updateSum(pResult.getGameValue(), qResult);
+            qBuilderP2.update(pResult.getGameValue(), qResult, config);
             qResult = qBuilderP2.solve();
 
             System.out.println("Exploitable sequences: ");
@@ -178,10 +180,10 @@ public class NFPSolverReuse {
                 assert !qResult.getLastItSeq().isEmpty();
                 System.out.println("Exploitable seq. count " + qResult.getLastItSeq().size());
 
-                pUpdater.buildLP(qResult, config);
+                pUpdater.update(qResult, config);
                 pResult = pUpdater.solve();
 
-                qUpdater.buildLP(pResult.getGameValue(), qResult, config, p2Value);
+                qUpdater.update(pResult.getGameValue(), qResult, config);
                 qResult = qUpdater.solve();
                 System.out.println("Exploitable sequences: ");
                 for (Sequence exploitableSequence : qResult.getLastItSeq()) {

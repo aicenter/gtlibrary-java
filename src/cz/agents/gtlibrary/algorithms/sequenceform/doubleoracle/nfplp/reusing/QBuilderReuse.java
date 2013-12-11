@@ -20,15 +20,22 @@ public class QBuilderReuse extends InitialQBuilderReuse {
         explSeqSum = new HashMap<Sequence, Double>();
 	}
 
-    public void updateSum(double gameValue, QResultReuse data) {
+    public void update(double gameValue, QResultReuse data, DoubleOracleConfig<DoubleOracleInformationSet> config) {
         this.explSeqSum = getSum(data.getLastItSeq(), data.getExplSeqSum(), gameValue);
+        clearSlacks(config.getSequencesFor(players[1]));
+        for (Map.Entry<Sequence, Double> entry : explSeqSum.entrySet()) {
+            updateSlackVariable(entry);
+        }
     }
 
-    @Override
-    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
-        clearSlacks(config.getSequencesFor(players[1]));
-        super.buildLP(config, initialValue);
+    private void updateSlackVariable(Map.Entry<Sequence, Double> entry) {
+        lpTable.setConstraint(entry.getKey(), "s", entry.getValue());
     }
+//    @Override
+//    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
+//        clearSlacks(config.getSequencesFor(players[1]));
+//        super.buildLP(config, initialValue);
+//    }
 
     private void clearSlacks(Iterable<Sequence> sequences) {
         for (Sequence sequence : sequences) {
@@ -36,14 +43,14 @@ public class QBuilderReuse extends InitialQBuilderReuse {
         }
     }
 
-    @Override
-    protected void updateForP2(Sequence p2Sequence) {
-        super.updateForP2(p2Sequence);
-        Double value = explSeqSum.get(p2Sequence);
-
-        if (value != null)
-            lpTable.setConstraint(p2Sequence, "s", value);
-    }
+//    @Override
+//    protected void updateForP2(Sequence p2Sequence) {
+//        super.updateForP2(p2Sequence);
+//        Double value = explSeqSum.get(p2Sequence);
+//
+//        if (value != null)
+//            lpTable.setConstraint(p2Sequence, "s", value);
+//    }
 
 	@Override
 	protected Map<Sequence, Double> getSum(Set<Sequence> exploitableSequences, Map<Sequence, Double> explSeqSum, double valueOfGame) {
@@ -64,11 +71,12 @@ public class QBuilderReuse extends InitialQBuilderReuse {
         return new QResultReuse(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, getRealizationPlan(lpData));
     }
 
-    public void updateSolver() {
-        try {
-            lpTable.toCplex();
-        } catch (IloException e) {
-            e.printStackTrace();
-        }
-    }
+//    public void updateSolver() {
+//        try {
+//            lpTable.toCplex();
+//        } catch (IloException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
 }

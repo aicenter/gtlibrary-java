@@ -21,15 +21,24 @@ public class P2QBuilderReuse extends InitialP2QBuilderReuse {
     }
 
 
-    public void updateSum(double gameValue, QResultReuse data) {
+    public void update(double gameValue, QResultReuse data, DoubleOracleConfig<DoubleOracleInformationSet> config) {
         this.explSeqSum = getSum(data.getLastItSeq(), data.getExplSeqSum(), gameValue);
+        clearSlacks(config.getSequencesFor(players[0]));
+        for (Map.Entry<Sequence, Double> entry : explSeqSum.entrySet()) {
+            updateSlackVariable(entry);
+        }
+
     }
 
-    @Override
-    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
-        clearSlacks(config.getSequencesFor(players[0]));
-        super.buildLP(config, initialValue);
+    private void updateSlackVariable(Map.Entry<Sequence, Double> entry) {
+        lpTable.setConstraint(entry.getKey(), "s", entry.getValue());
     }
+
+//    @Override
+//    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
+//        clearSlacks(config.getSequencesFor(players[0]));
+//        super.buildLP(config, initialValue);
+//    }
 
     private void clearSlacks(Iterable<Sequence> sequences) {
         for (Sequence sequence : sequences) {
@@ -37,14 +46,14 @@ public class P2QBuilderReuse extends InitialP2QBuilderReuse {
         }
     }
 
-    @Override
-    protected void updateForP1(Sequence p1Sequence) {
-        super.updateForP1(p1Sequence);
-        Double value = explSeqSum.get(p1Sequence);
-
-        if (value != null)
-            lpTable.setConstraint(p1Sequence, "s", explSeqSum.get(p1Sequence));
-    }
+//    @Override
+//    protected void updateForP1(Sequence p1Sequence) {
+//        super.updateForP1(p1Sequence);
+//        Double value = explSeqSum.get(p1Sequence);
+//
+//        if (value != null)
+//            lpTable.setConstraint(p1Sequence, "s", explSeqSum.get(p1Sequence));
+//    }
 
     @Override
     protected Map<Sequence, Double> getSum(Set<Sequence> exploitableSequences, Map<Sequence, Double> explSeqSum, double valueOfGame) {
@@ -66,11 +75,11 @@ public class P2QBuilderReuse extends InitialP2QBuilderReuse {
         return new QResultReuse(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, getRealizationPlan(lpData));
     }
 
-    public void updateSolver() {
-        try {
-            lpTable.toCplex();
-        } catch (IloException e) {
-            e.printStackTrace();
-        }
-    }
+//    public void updateSolver() {
+//        try {
+//            lpTable.toCplex();
+//        } catch (IloException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }

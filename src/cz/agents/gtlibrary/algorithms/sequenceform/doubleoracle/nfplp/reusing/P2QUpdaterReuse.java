@@ -20,30 +20,30 @@ public class P2QUpdaterReuse extends InitialP2QBuilderReuse {
         this.lpTable = table;
     }
 
-    public void buildLP(double gameValue, QResultReuse data, DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
-        this.explSeqSum = getSum(data.getLastItSeq(), data.getExplSeqSum(), gameValue);
-        super.buildLP(config, initialValue);
-    }
+//    public void buildLP(double gameValue, QResultReuse data, DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
+//        this.explSeqSum = getSum(data.getLastItSeq(), data.getExplSeqSum(), gameValue);
+//        super.buildLP(config, initialValue);
+//    }
 
     @Override
     public void initTable() {
     }
 
-    @Override
-    protected void updateForP1(Sequence p1Sequence) {
-        Double value = explSeqSum.get(p1Sequence);
+//    @Override
+//    protected void updateForP1(Sequence p1Sequence) {
+//        Double value = explSeqSum.get(p1Sequence);
+//
+//        if (value != null)
+//            lpTable.setConstraint(p1Sequence, "s", explSeqSum.get(p1Sequence));
+//    }
 
-        if (value != null)
-            lpTable.setConstraint(p1Sequence, "s", explSeqSum.get(p1Sequence));
-    }
-
-    @Override
-    protected void updateForP2(Sequence p2Sequence) {
-    }
-
-    @Override
-    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
-    }
+//    @Override
+//    protected void updateForP2(Sequence p2Sequence) {
+//    }
+//
+//    @Override
+//    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
+//    }
 
     @Override
     protected Map<Sequence, Double> getSum(Set<Sequence> exploitableSequences, Map<Sequence, Double> explSeqSum, double valueOfGame) {
@@ -63,5 +63,16 @@ public class P2QUpdaterReuse extends InitialP2QBuilderReuse {
         Set<Sequence> exploitableSequences = getExploitableSequences(watchedSequenceValues);
 
         return new QResultReuse(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, getRealizationPlan(lpData));
+    }
+
+    public void update(double gameValue, QResultReuse qResult, DoubleOracleConfig<DoubleOracleInformationSet> config) {
+        this.explSeqSum = getSum(qResult.getLastItSeq(), qResult.getExplSeqSum(), gameValue);
+        for (Map.Entry<Sequence, Double> entry : explSeqSum.entrySet()) {
+            updateSlackVariable(entry);
+        }
+    }
+
+    private void updateSlackVariable(Map.Entry<Sequence, Double> entry) {
+        lpTable.setConstraint(entry.getKey(), "s", entry.getValue());
     }
 }
