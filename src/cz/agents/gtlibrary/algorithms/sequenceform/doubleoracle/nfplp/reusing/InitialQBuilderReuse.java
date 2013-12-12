@@ -35,16 +35,22 @@ public class InitialQBuilderReuse {
         initTable();
     }
 
-    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
+    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue, Set<Sequence> sequencesToAdd) {
         this.initialValue = initialValue;
         this.config = config;
         addPreviousItConstraints(initialValue);
-        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
-            updateForP1(p1Sequence);
+        for (Sequence sequence : sequencesToAdd) {
+            if (sequence.getPlayer().equals(players[0]))
+                updateForP1(sequence);
+            else
+                updateForP2(sequence);
         }
-        for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
-            updateForP2(p2Sequence);
-        }
+//        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
+//            updateForP1(p1Sequence);
+//        }
+//        for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
+//            updateForP2(p2Sequence);
+//        }
         updateUtilities(config);
 //        addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
     }
@@ -123,6 +129,7 @@ public class InitialQBuilderReuse {
         Object eqKey = getSubsequence(p2Sequence);
         Object varKey = getLastISKey(p2Sequence);
 
+        addU(eqKey);
         lpTable.setConstraint(eqKey, varKey, -1);//F
         lpTable.setConstraintType(eqKey, 0);
         lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
@@ -211,8 +218,8 @@ public class InitialQBuilderReuse {
             }
             if (!solved)
                 solveUnfeasibleLP(lpData);
-            System.out.println(lpData.getSolver().getStatus());
-            System.out.println(lpData.getSolver().getObjValue());
+//            System.out.println(lpData.getSolver().getStatus());
+//            System.out.println(lpData.getSolver().getObjValue());
 
             //			System.out.println(Arrays.toString(lpData.getSolver().getValues(lpData.getVariables())));
 //            for (int i = 0; i < lpData.getVariables().length; i++) {
@@ -239,8 +246,8 @@ public class InitialQBuilderReuse {
 
         try {
             solved = lpData.getSolver().solve();
-            System.out.println("Q: " + solved);
-            System.out.println("Status: " + lpData.getSolver().getStatus());
+//            System.out.println("Q: " + solved);
+//            System.out.println("Status: " + lpData.getSolver().getStatus());
 
         } catch (IloException e) {
             e.printStackTrace();

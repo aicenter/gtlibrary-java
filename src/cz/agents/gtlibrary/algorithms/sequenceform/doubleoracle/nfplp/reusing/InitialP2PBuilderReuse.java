@@ -32,9 +32,9 @@ public class InitialP2PBuilderReuse {
         initTable();
     }
 
-    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, Set<Sequence> sequencesToAdd) {
         this.config = config;
-        for (Sequence sequence : config.getNewSequences()) {
+        for (Sequence sequence : sequencesToAdd) {
             if (sequence.getPlayer().equals(players[0]))
                 updateForP1(sequence);
             else
@@ -168,6 +168,7 @@ public class InitialP2PBuilderReuse {
         Object varKey = getSubsequence(p2Sequence);
         Object eqKey = getLastISKey(p2Sequence);
 
+        lpTable.watchPrimalVariable(varKey, varKey);
         lpTable.setConstraint(eqKey, varKey, -1);//E
         lpTable.setConstraintType(eqKey, 1);
         lpTable.setLowerBound(varKey, 0);
@@ -208,8 +209,8 @@ public class InitialP2PBuilderReuse {
             }
             if (!solved)
                 solveUnfeasibleLP(lpData);
-            System.out.println(lpData.getSolver().getStatus());
-            System.out.println(lpData.getSolver().getObjValue());
+//            System.out.println(lpData.getSolver().getStatus());
+//            System.out.println(lpData.getSolver().getObjValue());
 
 //            System.out.println("values:");
 //            for (int i = 0; i < lpData.getVariables().length; i++) {
@@ -250,7 +251,7 @@ public class InitialP2PBuilderReuse {
             return false;
         }
 
-        System.out.println("P: " + solved);
+//        System.out.println("P: " + solved);
         return solved;
     }
 
@@ -260,7 +261,7 @@ public class InitialP2PBuilderReuse {
         boolean solved = lpData.getSolver().feasOpt(lpData.getConstraints(), getPreferences(lpData));
 
         assert solved;
-        System.out.println("Q feas: " + solved);
+        System.out.println("P feas: " + solved);
     }
 
     protected double[] getPreferences(LPData lpData) {

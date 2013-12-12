@@ -32,10 +32,10 @@ public class QUpdaterReuse extends InitialQBuilderReuse {
     public void initTable() {
     }
 
-    public void buildLP(QResultReuse data, double gameValue, DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
-        this.explSeqSum = getSum(data.getLastItSeq(), data.getExplSeqSum(), gameValue);
-        super.buildLP(config, initialValue);
-    }
+//    public void buildLP(QResultReuse data, double gameValue, DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
+//        this.explSeqSum = getSum(data.getLastItSeq(), data.getExplSeqSum(), gameValue);
+//        super.buildLP(config, initialValue, p1SequencesToAdd);
+//    }
 
 //    @Override
 //    protected void updateForP1(Sequence p1Sequence) {

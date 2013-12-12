@@ -90,7 +90,7 @@ public class InitialP2PBuilder {
             LPData lpData = lpTable.toCplex();
             boolean solved = false;
 
-            lpData.getSolver().exportModel(lpFileName);
+//            lpData.getSolver().exportModel(lpFileName);
             for (int algorithm : lpData.getAlgorithms()) {
                 lpData.getSolver().setParam(IloCplex.IntParam.RootAlg, algorithm);
                 if (solved = trySolve(lpData))
