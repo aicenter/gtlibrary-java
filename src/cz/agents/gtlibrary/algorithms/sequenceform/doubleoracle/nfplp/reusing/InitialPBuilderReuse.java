@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class InitialPBuilderReuse {
 
@@ -33,9 +34,9 @@ public class InitialPBuilderReuse {
         initTable();
     }
 
-    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, Set<Sequence> sequencesToAdd) {
         this.config = config;
-        for (Sequence sequence : config.getNewSequences()) {
+        for (Sequence sequence : sequencesToAdd) {
             if (sequence.getPlayer().equals(players[0]))
                 updateForP1(sequence);
             else
@@ -126,6 +127,7 @@ public class InitialPBuilderReuse {
         Object varKey = getSubsequence(p1Sequence);
         Object eqKey = getLastISKey(p1Sequence);
 
+        lpTable.watchPrimalVariable(varKey, varKey);
         lpTable.setConstraint(eqKey, varKey, -1);//E
         lpTable.setConstraintType(eqKey, 1);
         lpTable.setLowerBound(varKey, 0);
@@ -195,8 +197,8 @@ public class InitialPBuilderReuse {
 //            if (!solved)
 //                solveUnfeasibleLP(lpData);
             //			trySolve(lpData);
-            System.out.println(lpData.getSolver().getStatus());
-            System.out.println(lpData.getSolver().getObjValue());
+//            System.out.println(lpData.getSolver().getStatus());
+//            System.out.println(lpData.getSolver().getObjValue());
 
 
             double objValue = lpData.getSolver().getObjValue();
@@ -243,7 +245,7 @@ public class InitialPBuilderReuse {
             return false;
         }
 
-        System.out.println("P: " + solved);
+//        System.out.println("P: " + solved);
         return solved;
     }
 
@@ -253,7 +255,7 @@ public class InitialPBuilderReuse {
         boolean solved = lpData.getSolver().feasOpt(lpData.getConstraints(), getPreferences(lpData));
 
         assert solved;
-        System.out.println("Q feas: " + solved);
+        System.out.println("P feas: " + solved);
     }
 
     protected double[] getPreferences(LPData lpData) {

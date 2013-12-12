@@ -52,49 +52,49 @@ public class NFPSolver {
         PResult pResult = initPbuilder.solve();
 
         p1Value = pResult.getGameValue();
-        InitialQBuilder initQBuilder = new InitialQBuilder(players, config, p1Value);
-
-        initQBuilder.buildLP();
-        QResult qResult = initQBuilder.solve();
-
-        System.out.println("Exploitable sequences: ");
-        for (Sequence exploitableSequence : qResult.getLastItSeq()) {
-            System.out.println(exploitableSequence);
-        }
-        if (qResult.getGameValue() > 1e-6) {
-            PBuilder pBuilder = new PBuilder(players, config, qResult, p1Value);
-
-            pBuilder.buildLP();
-            pResult = pBuilder.solve();
-
-            QBuilder qBuilder = new QBuilder(players, config, p1Value, pResult.getGameValue(), qResult);
-
-            qBuilder.buildLP();
-            qResult = qBuilder.solve();
-
-            System.out.println("Exploitable sequences: ");
-            for (Sequence exploitableSequence : qResult.getLastItSeq()) {
-                System.out.println(exploitableSequence);
-            }
-
-            PUpdater pUpdater = new PUpdater(players, config, pBuilder.lpTable);
-            QUpdater qUpdater = new QUpdater(players, config, p1Value, qBuilder.lpTable);
-
-            while (Math.abs(qResult.getGameValue()) > 1e-6) {
-                assert !qResult.getLastItSeq().isEmpty();
-                System.out.println("Exploitable seq. count " + qResult.getLastItSeq().size());
-
-                pUpdater.buildLP(qResult);
-                pResult = pUpdater.solve();
-
-                qUpdater.buildLP(qResult, pResult.getGameValue());
-                qResult = qUpdater.solve();
-                System.out.println("Exploitable sequences: ");
-                for (Sequence exploitableSequence : qResult.getLastItSeq()) {
-                    System.out.println(exploitableSequence);
-                }
-            }
-        }
+//        InitialQBuilder initQBuilder = new InitialQBuilder(players, config, p1Value);
+//
+//        initQBuilder.buildLP();
+//        QResult qResult = initQBuilder.solve();
+//
+//        System.out.println("Exploitable sequences: ");
+//        for (Sequence exploitableSequence : qResult.getLastItSeq()) {
+//            System.out.println(exploitableSequence);
+//        }
+//        if (qResult.getGameValue() > 1e-6) {
+//            PBuilder pBuilder = new PBuilder(players, config, qResult, p1Value);
+//
+//            pBuilder.buildLP();
+//            pResult = pBuilder.solve();
+//
+//            QBuilder qBuilder = new QBuilder(players, config, p1Value, pResult.getGameValue(), qResult);
+//
+//            qBuilder.buildLP();
+//            qResult = qBuilder.solve();
+//
+//            System.out.println("Exploitable sequences: ");
+//            for (Sequence exploitableSequence : qResult.getLastItSeq()) {
+//                System.out.println(exploitableSequence);
+//            }
+//
+//            PUpdater pUpdater = new PUpdater(players, config, pBuilder.lpTable);
+//            QUpdater qUpdater = new QUpdater(players, config, p1Value, qBuilder.lpTable);
+//
+//            while (Math.abs(qResult.getGameValue()) > 1e-6) {
+//                assert !qResult.getLastItSeq().isEmpty();
+//                System.out.println("Exploitable seq. count " + qResult.getLastItSeq().size());
+//
+//                pUpdater.buildLP(qResult);
+//                pResult = pUpdater.solve();
+//
+//                qUpdater.buildLP(qResult, pResult.getGameValue());
+//                qResult = qUpdater.solve();
+//                System.out.println("Exploitable sequences: ");
+//                for (Sequence exploitableSequence : qResult.getLastItSeq()) {
+//                    System.out.println(exploitableSequence);
+//                }
+//            }
+//        }
         return pResult.getRealizationPlan();
 //        return qResult.getRealizationPlan();
     }
@@ -122,49 +122,49 @@ public class NFPSolver {
         PResult pResult = initPbuilder.solve();
 
         p2Value = pResult.getGameValue();
-        InitialP2QBuilder initQBuilder = new InitialP2QBuilder(players, config, p2Value);
-
-        initQBuilder.buildLP();
-        QResult qResult = initQBuilder.solve();
-
-        System.out.println("Exploitable sequences: ");
-        for (Sequence exploitableSequence : qResult.getLastItSeq()) {
-            System.out.println(exploitableSequence);
-        }
-
-        if (qResult.getGameValue() > 1e-6) {
-            P2PBuilder pBuilder = new P2PBuilder(players, config, qResult, p2Value);
-
-            pBuilder.buildLP();
-            pResult = pBuilder.solve();
-
-            P2QBuilder qBuilder = new P2QBuilder(players, config, p2Value, pResult.getGameValue(), qResult);
-
-            qBuilder.buildLP();
-            qResult = qBuilder.solve();
-
-            System.out.println("Exploitable sequences: ");
-            for (Sequence exploitableSequence : qResult.getLastItSeq()) {
-                System.out.println(exploitableSequence);
-            }
-            P2PUpdater pUpdater = new P2PUpdater(players, config, pBuilder.lpTable);
-            P2QUpdater qUpdater = new P2QUpdater(players, config, p2Value, qBuilder.lpTable);
-
-            while (Math.abs(qResult.getGameValue()) > 1e-6) {
-                assert !qResult.getLastItSeq().isEmpty();
-                System.out.println("Exploitable seq. count " + qResult.getLastItSeq().size());
-
-                pUpdater.buildLP(qResult);
-                pResult = pUpdater.solve();
-
-                qUpdater.buildLP(pResult.getGameValue(), qResult);
-                qResult = qUpdater.solve();
-                System.out.println("Exploitable sequences: ");
-                for (Sequence exploitableSequence : qResult.getLastItSeq()) {
-                    System.out.println(exploitableSequence);
-                }
-            }
-        }
+//        InitialP2QBuilder initQBuilder = new InitialP2QBuilder(players, config, p2Value);
+//
+//        initQBuilder.buildLP();
+//        QResult qResult = initQBuilder.solve();
+//
+//        System.out.println("Exploitable sequences: ");
+//        for (Sequence exploitableSequence : qResult.getLastItSeq()) {
+//            System.out.println(exploitableSequence);
+//        }
+//
+//        if (qResult.getGameValue() > 1e-6) {
+//            P2PBuilder pBuilder = new P2PBuilder(players, config, qResult, p2Value);
+//
+//            pBuilder.buildLP();
+//            pResult = pBuilder.solve();
+//
+//            P2QBuilder qBuilder = new P2QBuilder(players, config, p2Value, pResult.getGameValue(), qResult);
+//
+//            qBuilder.buildLP();
+//            qResult = qBuilder.solve();
+//
+//            System.out.println("Exploitable sequences: ");
+//            for (Sequence exploitableSequence : qResult.getLastItSeq()) {
+//                System.out.println(exploitableSequence);
+//            }
+//            P2PUpdater pUpdater = new P2PUpdater(players, config, pBuilder.lpTable);
+//            P2QUpdater qUpdater = new P2QUpdater(players, config, p2Value, qBuilder.lpTable);
+//
+//            while (Math.abs(qResult.getGameValue()) > 1e-6) {
+//                assert !qResult.getLastItSeq().isEmpty();
+//                System.out.println("Exploitable seq. count " + qResult.getLastItSeq().size());
+//
+//                pUpdater.buildLP(qResult);
+//                pResult = pUpdater.solve();
+//
+//                qUpdater.buildLP(pResult.getGameValue(), qResult);
+//                qResult = qUpdater.solve();
+//                System.out.println("Exploitable sequences: ");
+//                for (Sequence exploitableSequence : qResult.getLastItSeq()) {
+//                    System.out.println(exploitableSequence);
+//                }
+//            }
+//        }
         return pResult.getRealizationPlan();
 //        return  qResult.getRealizationPlan();
     }

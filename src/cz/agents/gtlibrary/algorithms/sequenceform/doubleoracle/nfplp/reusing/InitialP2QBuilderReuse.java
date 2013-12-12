@@ -35,11 +35,11 @@ public class InitialP2QBuilderReuse {
         initTable();
     }
 
-    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue) {
+    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config, double initialValue, Set<Sequence> sequencesToAdd) {
         this.config = config;
         this.initialValue = initialValue;
         addPreviousItConstraints(initialValue);
-        for (Sequence sequence : config.getNewSequences()) {
+        for (Sequence sequence : sequencesToAdd) {
             if (sequence.getPlayer().equals(players[0]))
                 updateForP1(sequence);
             else
@@ -55,6 +55,7 @@ public class InitialP2QBuilderReuse {
         Object eqKey = getSubsequence(p1Sequence);
         Object varKey = getLastISKey(p1Sequence);
 
+        addU(eqKey);
         lpTable.setConstraint(eqKey, varKey, -1);//F
         lpTable.setConstraintType(eqKey, 0);
         lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
@@ -241,7 +242,7 @@ public class InitialP2QBuilderReuse {
             return false;
         }
 
-        System.out.println("Q: " + solved);
+//        System.out.println("Q: " + solved);
         return solved;
     }
 
