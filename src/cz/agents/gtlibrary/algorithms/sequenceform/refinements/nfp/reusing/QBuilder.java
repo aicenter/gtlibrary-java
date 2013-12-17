@@ -30,7 +30,7 @@ public class QBuilder extends InitialQBuilder {
 		Double value = explSeqSum.get(p2Sequence);
 
 		if (value != null)
-			lpTable.setConstraint(p2Sequence, "s", explSeqSum.get(p2Sequence));
+			lpTable.setConstraint(p2Sequence, "s", value);
 	}
 
 	@Override

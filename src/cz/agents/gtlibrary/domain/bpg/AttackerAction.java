@@ -56,7 +56,7 @@ public class AttackerAction extends ActionImpl {
 		
 		hashCode = prime * hashCode + ((fromNode == null) ? 0 : fromNode.hashCode());
 		hashCode = prime * hashCode + ((toNode == null) ? 0 : toNode.hashCode());
-		hashCode = prime * hashCode + ((type == null) ? 0 : type.hashCode());
+		hashCode = prime * hashCode + ((type == null) ? 0 : type.ordinal());
 		hashCode = prime * hashCode + ((informationSet == null) ? 0 : informationSet.hashCode());
 		return hashCode;
 	}

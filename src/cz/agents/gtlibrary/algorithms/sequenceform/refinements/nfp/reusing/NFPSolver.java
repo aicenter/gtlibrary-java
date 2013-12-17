@@ -11,6 +11,8 @@ import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.nfptest.TestExpander;
+import cz.agents.gtlibrary.domain.nfptest.TestGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
@@ -24,6 +26,8 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 
+import javax.xml.transform.sax.SAXSource;
+
 public class NFPSolver {
 
 	private GameState root;
@@ -32,14 +36,20 @@ public class NFPSolver {
 	public static void main(String[] args) {
 //		runUpOrDown();
 //				runAceOfSpades();
+//		runTest();
+
 //				runKuhnPoker();
-				runBPG();
-//				runGenericPoker();
+//				runBPG();
+				runGenericPoker();
 		//		runGoofspiel();
 	}
 
 	public static void runGoofspiel() {
 		runNFPSolver(new GoofSpielGameState(), new GoofSpielExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
+	}
+	
+	public static void runTest() {
+		runNFPSolver(new TestGameState(), new TestExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
 	}
 
 	public static void runGenericPoker() {
@@ -101,6 +111,10 @@ public class NFPSolver {
 		initQBuilder.buildLP();
 		IterationData data = initQBuilder.solve();
 
+//		System.out.println("Exploitable sequences: ");
+//		for (Sequence exploitableSequene : data.getLastItSeq()) {
+//			System.out.println(exploitableSequene);
+//		}
 		if (data.getGameValue() > 1e-6) {
 			PBuilder pBuilder = new PBuilder(expander, root, data, initialValue);
 
@@ -112,7 +126,11 @@ public class NFPSolver {
 			qBuilder.buildLP();
 			data = qBuilder.solve();
 
-			PUpdater pUpdater = new PUpdater(expander, root, pBuilder.lpTable);//proč se přeindexuje to t, zkusit najít výskyt toho 2t a zjistit co je jinak v tom faillim p
+//			System.out.println("Exploitable sequences: ");
+//			for (Sequence exploitableSequene : data.getLastItSeq()) {
+//				System.out.println(exploitableSequene);
+//			}
+			PUpdater pUpdater = new PUpdater(expander, root, pBuilder.lpTable);
 			QUpdater qUpdater = new QUpdater(expander, root, initialValue, qBuilder.lpTable);
 
 			while (Math.abs(data.getGameValue()) > 1e-6) {
@@ -124,6 +142,10 @@ public class NFPSolver {
 
 				qUpdater.buildLP(data, currentValue);
 				data = qUpdater.solve();
+//				System.out.println("Exploitable sequences: ");
+//				for (Sequence exploitableSequene : data.getLastItSeq()) {
+//					System.out.println(exploitableSequene);
+//				}
 			}
 		}
 		return data.getRealizationPlan();
@@ -140,6 +162,10 @@ public class NFPSolver {
 		initQBuilder.buildLP();
 		IterationData data = initQBuilder.solve();
 
+//		System.out.println("Exploitable sequences: ");
+//		for (Sequence exploitableSequene : data.getLastItSeq()) {
+//			System.out.println(exploitableSequene);
+//		}
 		if (data.getGameValue() > 1e-6) {
 			P2PBuilder pBuilder = new P2PBuilder(expander, root, data, initialValue);
 
@@ -151,6 +177,10 @@ public class NFPSolver {
 			qBuilder.buildLP();
 			data = qBuilder.solve();
 
+//			System.out.println("Exploitable sequences: ");
+//			for (Sequence exploitableSequene : data.getLastItSeq()) {
+//				System.out.println(exploitableSequene);
+//			}
 			P2PUpdater pUpdater = new P2PUpdater(expander, root, pBuilder.lpTable);
 			P2QUpdater qUpdater = new P2QUpdater(expander, root, initialValue, qBuilder.lpTable);
 
@@ -163,6 +193,10 @@ public class NFPSolver {
 
 				qUpdater.buildLP(currentValue, data);
 				data = qUpdater.solve();
+//				System.out.println("Exploitable sequences: ");
+//				for (Sequence exploitableSequene : data.getLastItSeq()) {
+//					System.out.println(exploitableSequene);
+//				}
 			}
 		}
 		return data.getRealizationPlan();

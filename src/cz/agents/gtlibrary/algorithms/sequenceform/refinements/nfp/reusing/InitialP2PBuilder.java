@@ -44,13 +44,18 @@ public class InitialP2PBuilder extends TreeVisitor {
 			lpData.getSolver().exportModel("recP2pLP.lp");
 			for (int algorithm : lpData.getAlgorithms()) {
 				lpData.getSolver().setParam(IloCplex.IntParam.RootAlg, algorithm);
-				if(solved = trySolve(lpData))
+				if (solved = trySolve(lpData))
 					break;
 			}
-			if(!solved)
+			if (!solved)
 				solveUnfeasibleLP(lpData);
 			System.out.println(lpData.getSolver().getStatus());
 			System.out.println(lpData.getSolver().getObjValue());
+
+//			System.out.println("values:");
+//			for (int i = 0; i < lpData.getVariables().length; i++) {
+//				System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
+//			}
 
 			//			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
 
@@ -68,13 +73,14 @@ public class InitialP2PBuilder extends TreeVisitor {
 		}
 		return Double.NaN;
 	}
-	
+
 	private boolean trySolve(LPData lpData) throws IloException {
 		boolean solved;
-		
+
 		try {
 			solved = lpData.getSolver().solve();
 		} catch (IloException e) {
+			e.printStackTrace();
 			return false;
 		}
 
@@ -95,7 +101,7 @@ public class InitialP2PBuilder extends TreeVisitor {
 		double[] preferences = new double[lpData.getConstraints().length];
 
 		for (int i = 0; i < preferences.length; i++) {
-			if (lpData.getRelaxableConstraints().contains(lpData.getConstraints()[i]))
+			if (lpData.getRelaxableConstraints().values().contains(lpData.getConstraints()[i]))
 				preferences[i] = 1;
 			else
 				preferences[i] = 0.5;
@@ -200,7 +206,7 @@ public class InitialP2PBuilder extends TreeVisitor {
 		lpTable.setConstraint(state.getISKeyForPlayerToMove(), varKey, -1);//F
 		lpTable.setConstraintType(state.getISKeyForPlayerToMove(), 1);
 		lpTable.setLowerBound(varKey, 0);
-		lpTable.watchPrimalVariable(state.getSequenceFor(players[0]), state.getSequenceForPlayerToMove());
+		lpTable.watchPrimalVariable(state.getSequenceForPlayerToMove(), state.getSequenceForPlayerToMove());
 	}
 
 	@Override
