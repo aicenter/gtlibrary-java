@@ -24,8 +24,8 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class SequenceFormLP {
 
-    private long overallConstraintGenerationTime = 0;
-    private long overallConstraintLPSolvingTime = 0;
+    protected long overallConstraintGenerationTime = 0;
+    protected long overallConstraintLPSolvingTime = 0;
 
     public static int CPLEXALG = IloCplex.Algorithm.Barrier;
     public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
@@ -73,10 +73,11 @@ public class SequenceFormLP {
 		}
 	}
 
-    private void resetModel(IloCplex cplex, Player player) throws IloException{
+    protected void resetModel(IloCplex cplex, Player player) throws IloException{
         cplex.clearModel();
         cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
         cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+        if (CPLEXTHREADS == 1) cplex.setParam(IloCplex.IntParam.AuxRootThreads, -1);
         IloNumVar v0 = cplex.numVar(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, IloNumVarType.Float, "v0");
         cplex.setOut(null);
         cplex.addMinimize(v0);

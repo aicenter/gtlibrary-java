@@ -54,4 +54,8 @@ public class PlayerStrategySet<T extends PureStrategy> implements Iterable<T> {
     public int size() {
         return strategies.size();
     }
+
+    public void clear() {
+        strategies.clear();
+    }
 }

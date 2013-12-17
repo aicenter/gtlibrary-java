@@ -37,4 +37,7 @@ public class BorderPatrollingGraph extends Graph {
 	public Node getP2Start() {
 		return p2Start;
 	}
+    public Node getNodeByID(int ID) {
+        return allNodes.get("ID" + ID);
+    }
 }

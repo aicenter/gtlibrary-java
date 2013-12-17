@@ -142,7 +142,7 @@ public class SimDoubleOracle extends DoubleOracle {
 	protected MixedStrategy<ActionPureStrategy> getInitMixedStrategy(ActionPureStrategy p1BestResponse) {
 		MixedStrategy<ActionPureStrategy> p1MixedStrategy = new MixedStrategy<ActionPureStrategy>();
 		
-		p1MixedStrategy.add(p1BestResponse, 1.0);
+		p1MixedStrategy.put(p1BestResponse, 1.0);
 		return p1MixedStrategy;
 	}
 

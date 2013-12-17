@@ -14,7 +14,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	protected Map<Map<Player, Sequence>, Double> natureProbabilityForSequenceCombination = new HashMap<Map<Player, Sequence>, Double>();
 	protected Map<Sequence, Set<Sequence>> compatibleSequences = new HashMap<Sequence, Set<Sequence>>();
 	protected Map<Player, Set<Sequence>> playerSequences = new HashMap<Player, Set<Sequence>>();
-	protected Map<Map<Player, Sequence>, Double> allUtilitiesForSeqComb = new HashMap<Map<Player, Sequence>, Double>();;
+	protected Map<Map<Player, Sequence>, Double> allUtilitiesForSeqComb = new HashMap<Map<Player, Sequence>, Double>();
 
 	public void addStateToSequenceForm(GameState state) {
 		if (state.isPlayerToMoveNature())
