@@ -57,13 +57,23 @@ public class InitialQBuilderReuse {
 
     private void updateUtilities(DoubleOracleConfig<DoubleOracleInformationSet> config) {
         for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
-            for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
-                Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
+            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(p1Sequence)) {
+                Double utility = config.getUtilityFor(p1Sequence, compatibleSequence);
 
                 if (utility == null)
-                    lpTable.removeFromConstraint(p2Sequence, p1Sequence);
+                    lpTable.removeFromConstraint(compatibleSequence, p1Sequence);
                 else
-                    lpTable.setConstraint(p2Sequence, p1Sequence, -utility);
+                    lpTable.setConstraint(compatibleSequence, p1Sequence, -utility);
+            }
+        }
+        for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
+            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(p2Sequence)) {
+                Double utility = config.getUtilityFor(compatibleSequence, p2Sequence);
+
+                if (utility == null)
+                    lpTable.removeFromConstraint(p2Sequence, compatibleSequence);
+                else
+                    lpTable.setConstraint(p2Sequence, compatibleSequence, -utility);
             }
         }
     }
@@ -95,61 +105,101 @@ public class InitialQBuilderReuse {
 
     protected void updateForP1(Sequence p1Sequence) {
         lpTable.watchPrimalVariable(p1Sequence, p1Sequence);
-        if (p1Sequence.size() == 0)
+        if(config.getReachableSets(p1Sequence) == null)
             return;
-        Object varKey = getSubsequence(p1Sequence);
-        Object eqKey = getLastISKey(p1Sequence);
+        for (DoubleOracleInformationSet informationSet : config.getReachableSets(p1Sequence)) {
+            for (Sequence outgoingSequence : informationSet.getOutgoingSequences()) {
+                Object eqKey = getKey(informationSet);
 
-        lpTable.setConstraint(eqKey, varKey, -1);//E
-        lpTable.setConstraintType(eqKey, 1);
-        lpTable.setLowerBound(varKey, 0);
-//        lpTable.setConstraint(eqKey, p1Sequence, 1);//E
-//        lpTable.setLowerBound(p1Sequence, 0);
-        addLinksToPrevISForP1(p1Sequence, eqKey);
-    }
-
-    protected void addLinksToPrevISForP1(Sequence sequence, Object eqKey) {
-        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
-
-        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
-//            Key tmpKey = new Key("V", outgoingSequence);
-
-            lpTable.setConstraint(eqKey, outgoingSequence, 1);//E child
-            lpTable.setConstraintType(eqKey, 1);
-            lpTable.setLowerBound(outgoingSequence, 0);
-//			lpTable.setConstant(tmpKey, 0);//l(\epsilon)
+                lpTable.watchPrimalVariable(outgoingSequence, outgoingSequence);
+                lpTable.setConstraint(eqKey, p1Sequence, -1);//E
+                lpTable.setConstraintType(eqKey, 1);
+                lpTable.setLowerBound(p1Sequence, 0);
+                lpTable.setConstraint(eqKey, outgoingSequence, 1);//E
+                lpTable.setLowerBound(outgoingSequence, 0);
+            }
         }
-
     }
 
     protected void updateForP2(Sequence p2Sequence) {
         addU(p2Sequence);
-        if (p2Sequence.size() == 0)
+        if(config.getReachableSets(p2Sequence) == null)
             return;
-        Object eqKey = getSubsequence(p2Sequence);
-        Object varKey = getLastISKey(p2Sequence);
+        for (DoubleOracleInformationSet informationSet : config.getReachableSets(p2Sequence)) {
+            for (Sequence outgoingSequence : informationSet.getOutgoingSequences()) {
+                Object varKey = getKey(informationSet);
 
-        addU(eqKey);
-        lpTable.setConstraint(eqKey, varKey, -1);//F
-        lpTable.setConstraintType(eqKey, 0);
-        lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-//        lpTable.setConstraint(p2Sequence, varKey, 1);//F
-//        lpTable.setConstraintType(p2Sequence, 0);
-        addLinksToPrevISForP2(p2Sequence, varKey);
-    }
-
-    public void addLinksToPrevISForP2(Sequence sequence, Object varKey) {
-        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
-
-        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
-            lpTable.setConstraint(outgoingSequence, varKey, 1);//F child
-            lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-            lpTable.setConstraintType(outgoingSequence, 0);
-
-//            lpTable.setConstraint(outgoingSequence, tmpKey, -1);//u (eye)
-//			lpTable.setObjective(tmpKey, 0);//k(\epsilon)
+                addU(outgoingSequence);
+                lpTable.setConstraint(p2Sequence, varKey, -1);//F
+                lpTable.setConstraintType(p2Sequence, 0);
+                lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+                lpTable.setConstraint(outgoingSequence, varKey, 1);//F
+                lpTable.setConstraintType(outgoingSequence, 0);
+            }
         }
     }
+
+    private Object getKey(DoubleOracleInformationSet informationSet) {
+        return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+    }
+
+//    protected void updateForP1(Sequence p1Sequence) {
+//        lpTable.watchPrimalVariable(p1Sequence, p1Sequence);
+//        if (p1Sequence.size() == 0)
+//            return;
+//        Object varKey = getSubsequence(p1Sequence);
+//        Object eqKey = getLastISKey(p1Sequence);
+//
+//        lpTable.setConstraint(eqKey, varKey, -1);//E
+//        lpTable.setConstraintType(eqKey, 1);
+//        lpTable.setLowerBound(varKey, 0);
+////        lpTable.setConstraint(eqKey, p1Sequence, 1);//E
+////        lpTable.setLowerBound(p1Sequence, 0);
+//        addLinksToPrevISForP1(p1Sequence, eqKey);
+//    }
+//
+//    protected void addLinksToPrevISForP1(Sequence sequence, Object eqKey) {
+//        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
+//
+//        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
+////            Key tmpKey = new Key("V", outgoingSequence);
+//
+//            lpTable.setConstraint(eqKey, outgoingSequence, 1);//E child
+//            lpTable.setConstraintType(eqKey, 1);
+//            lpTable.setLowerBound(outgoingSequence, 0);
+////			lpTable.setConstant(tmpKey, 0);//l(\epsilon)
+//        }
+//
+//    }
+//
+//    protected void updateForP2(Sequence p2Sequence) {
+//        addU(p2Sequence);
+//        if (p2Sequence.size() == 0)
+//            return;
+//        Object eqKey = getSubsequence(p2Sequence);
+//        Object varKey = getLastISKey(p2Sequence);
+//
+//        addU(eqKey);
+//        lpTable.setConstraint(eqKey, varKey, -1);//F
+//        lpTable.setConstraintType(eqKey, 0);
+//        lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+////        lpTable.setConstraint(p2Sequence, varKey, 1);//F
+////        lpTable.setConstraintType(p2Sequence, 0);
+//        addLinksToPrevISForP2(p2Sequence, varKey);
+//    }
+//
+//    public void addLinksToPrevISForP2(Sequence sequence, Object varKey) {
+//        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
+//
+//        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
+//            lpTable.setConstraint(outgoingSequence, varKey, 1);//F child
+//            lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+//            lpTable.setConstraintType(outgoingSequence, 0);
+//
+////            lpTable.setConstraint(outgoingSequence, tmpKey, -1);//u (eye)
+////			lpTable.setObjective(tmpKey, 0);//k(\epsilon)
+//        }
+//    }
 
 //    protected void addUtilities(Iterable<Sequence> newSequences) {
 //        Set<Pair<Sequence, Sequence>> blackList = new HashSet<Pair<Sequence, Sequence>>();
@@ -246,7 +296,7 @@ public class InitialQBuilderReuse {
 
         try {
             solved = lpData.getSolver().solve();
-//            System.out.println("Q: " + solved);
+            System.out.println("Q: " + solved);
 //            System.out.println("Status: " + lpData.getSolver().getStatus());
 
         } catch (IloException e) {

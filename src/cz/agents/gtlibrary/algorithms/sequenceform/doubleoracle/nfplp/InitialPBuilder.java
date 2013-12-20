@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
@@ -20,13 +22,13 @@ import java.util.Map.Entry;
 
 public class InitialPBuilder {
 
-    protected DoubleOracleConfig<DoubleOracleInformationSet> config;
+    protected SequenceFormConfig<? extends SequenceInformationSet> config;
     protected Player[] players;
     protected RecyclingNFPTable lpTable;
     protected String lpFileName;
 
 
-    public InitialPBuilder(Player[] players, DoubleOracleConfig<DoubleOracleInformationSet> config) {
+    public InitialPBuilder(Player[] players, SequenceFormConfig<? extends SequenceInformationSet> config) {
         this.config = config;
         this.players = players;
         lpFileName = "P1DO_P.lp";
@@ -57,30 +59,68 @@ public class InitialPBuilder {
 
     protected void updateForP1(Sequence p1Sequence) {
         lpTable.watchPrimalVariable(p1Sequence, p1Sequence);
-        if (p1Sequence.size() == 0)
+        if(config.getReachableSets(p1Sequence) == null)
             return;
-        Object varKey = getSubsequence(p1Sequence);
-        Object eqKey = getLastISKey(p1Sequence);
+        for (SequenceInformationSet informationSet : config.getReachableSets(p1Sequence)) {
+            for (Sequence outgoingSequence : informationSet.getOutgoingSequences()) {
+                Object eqKey = getKey(informationSet);
 
-        lpTable.setConstraint(eqKey, varKey, -1);//E
-        lpTable.setConstraintType(eqKey, 1);
-        lpTable.setLowerBound(varKey, 0);
-        lpTable.setConstraint(eqKey, p1Sequence, 1);//E
-        lpTable.setLowerBound(p1Sequence, 0);
+                lpTable.watchPrimalVariable(outgoingSequence, outgoingSequence);
+                lpTable.setConstraint(eqKey, p1Sequence, -1);//E
+                lpTable.setConstraintType(eqKey, 1);
+                lpTable.setLowerBound(p1Sequence, 0);
+                lpTable.setConstraint(eqKey, outgoingSequence, 1);//E
+                lpTable.setLowerBound(outgoingSequence, 0);
+            }
+        }
     }
 
     protected void updateForP2(Sequence p2Sequence) {
-        if (p2Sequence.size() == 0)
+        if(config.getReachableSets(p2Sequence) == null)
             return;
-        Object eqKey = getSubsequence(p2Sequence);
-        Object varKey = getLastISKey(p2Sequence);
+        for (SequenceInformationSet informationSet : config.getReachableSets(p2Sequence)) {
+            for (Sequence outgoingSequence : informationSet.getOutgoingSequences()) {
+                Object varKey = getKey(informationSet);
 
-        lpTable.setConstraint(eqKey, varKey, -1);//F
-        lpTable.setConstraintType(eqKey, 0);
-        lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-        lpTable.setConstraint(p2Sequence, varKey, 1);//F
-        lpTable.setConstraintType(p2Sequence, 0);
+                lpTable.setConstraint(p2Sequence, varKey, -1);//F
+                lpTable.setConstraintType(p2Sequence, 0);
+                lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+                lpTable.setConstraint(outgoingSequence, varKey, 1);//F
+                lpTable.setConstraintType(outgoingSequence, 0);
+            }
+        }
     }
+
+    private Object getKey(SequenceInformationSet informationSet) {
+        return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+    }
+
+//    protected void updateForP1(Sequence p1Sequence) {
+//        lpTable.watchPrimalVariable(p1Sequence, p1Sequence);
+//        if (p1Sequence.size() == 0)
+//            return;
+//        Object varKey = getSubsequence(p1Sequence);
+//        Object eqKey = getLastISKey(p1Sequence);
+//
+//        lpTable.setConstraint(eqKey, varKey, -1);//E
+//        lpTable.setConstraintType(eqKey, 1);
+//        lpTable.setLowerBound(varKey, 0);
+//        lpTable.setConstraint(eqKey, p1Sequence, 1);//E
+//        lpTable.setLowerBound(p1Sequence, 0);
+//    }
+//
+//    protected void updateForP2(Sequence p2Sequence) {
+//        if (p2Sequence.size() == 0)
+//            return;
+//        Object eqKey = getSubsequence(p2Sequence);
+//        Object varKey = getLastISKey(p2Sequence);
+//
+//        lpTable.setConstraint(eqKey, varKey, -1);//F
+//        lpTable.setConstraintType(eqKey, 0);
+//        lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+//        lpTable.setConstraint(p2Sequence, varKey, 1);//F
+//        lpTable.setConstraintType(p2Sequence, 0);
+//    }
 
 //    protected void updateForP1(Sequence p1Sequence) {
 //        if (p1Sequence.size() == 0)
@@ -139,7 +179,7 @@ public class InitialPBuilder {
             LPData lpData = lpTable.toCplex();
             boolean solved = false;
 
-//            lpData.getSolver().exportModel(lpFileName);
+            lpData.getSolver().exportModel(lpFileName);
             for (int algorithm : lpData.getAlgorithms()) {
                 lpData.getSolver().setParam(IloCplex.IntParam.RootAlg, algorithm);
                 if (solved = trySolve(lpData))
