@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -36,7 +38,7 @@ public class NFPSolver {
         return player.equals(players[0]) ? p1RealizationPlan : p2RealizationPlan;
     }
 
-    public void calculateStrategyForPlayer(int playerIndex, GameState root, DoubleOracleConfig<DoubleOracleInformationSet> config, double currentBoundSize) {
+    public void calculateStrategyForPlayer(int playerIndex, GameState root, SequenceFormConfig<? extends SequenceInformationSet> config, double currentBoundSize) {
         long startTime = System.currentTimeMillis();
 
         if (playerIndex == 0)
@@ -45,13 +47,14 @@ public class NFPSolver {
             p2RealizationPlan = solveForP2(config);
     }
 
-    public Map<Sequence, Double> solveForP1(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+    public Map<Sequence, Double> solveForP1(SequenceFormConfig<? extends SequenceInformationSet> config) {
         InitialPBuilder initPbuilder = new InitialPBuilder(players, config);
 
         initPbuilder.buildLP();
         PResult pResult = initPbuilder.solve();
 
         p1Value = pResult.getGameValue();
+        p2Value = -p1Value;
 //        InitialQBuilder initQBuilder = new InitialQBuilder(players, config, p1Value);
 //
 //        initQBuilder.buildLP();
@@ -115,13 +118,14 @@ public class NFPSolver {
         return 0;
     }
 
-    public Map<Sequence, Double> solveForP2(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+    public Map<Sequence, Double> solveForP2(SequenceFormConfig<? extends SequenceInformationSet> config) {
         InitialP2PBuilder initPbuilder = new InitialP2PBuilder(players, config);
 
         initPbuilder.buildLP();
         PResult pResult = initPbuilder.solve();
 
         p2Value = pResult.getGameValue();
+        p1Value = -p2Value;
 //        InitialP2QBuilder initQBuilder = new InitialP2QBuilder(players, config, p2Value);
 //
 //        initQBuilder.buildLP();
@@ -169,4 +173,9 @@ public class NFPSolver {
 //        return  qResult.getRealizationPlan();
     }
 
+    public void calculateBothPlStrategy(GameState rootState, SequenceFormConfig<SequenceInformationSet> algConfig) {
+        solveForP1(algConfig);
+        solveForP2(algConfig);
+
+    }
 }

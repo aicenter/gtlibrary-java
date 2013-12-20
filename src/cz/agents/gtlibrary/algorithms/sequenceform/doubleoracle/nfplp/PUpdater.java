@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -13,7 +15,7 @@ public class PUpdater extends InitialPBuilder {
     private Set<Sequence> lastItSeq;
     private Map<Sequence, Double> explSeqSum;
 
-    public PUpdater(Player[] players, DoubleOracleConfig<DoubleOracleInformationSet> config, RecyclingNFPTable table) {
+    public PUpdater(Player[] players, SequenceFormConfig<SequenceInformationSet> config, RecyclingNFPTable table) {
         super(players, config);
         lpTable = table;
     }
