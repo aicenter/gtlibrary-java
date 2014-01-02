@@ -18,7 +18,7 @@ import java.util.*;
  */
 public class TGExpander extends MDPExpanderImpl {
 
-    public boolean sparseUncertainty = false;
+    public boolean sparseUncertainty = true;
 
     @Override
     public List<MDPAction> getActions(MDPState state) {
@@ -41,15 +41,15 @@ public class TGExpander extends MDPExpanderImpl {
             }
             for (int u=0; u<s.getUNITS(); u++) {
                 if (s.getCol()[u] >= 0 && s.getRow()[u] >= 0) {
-                    for (int c=s.getCol()[u]-1; (c<=s.getCol()[u]+1) && (c<=TGConfig.LENGTH_OF_GRID); c++)
-                        for (int r=s.getRow()[u]-1; (r<=s.getRow()[u]+1) && (r<=TGConfig.WIDTH_OF_GRID); r++) {
+                    for (int c=s.getCol()[u]-1; (c<=s.getCol()[u]+1) && (c<TGConfig.LENGTH_OF_GRID); c++)
+                        for (int r=s.getRow()[u]-1; (r<=s.getRow()[u]+1) && (r<TGConfig.WIDTH_OF_GRID); r++) {
                             if (c < 0 || r < 0) continue;
                             TGAction a = new TGAction(s.getPlayer(), new int[]{c}, new int[]{r});
                             result.add(a);
                         }
                 } else {
                     if (s.getPlayer().getId() == 0) {
-                        for (int r=0; r<=TGConfig.WIDTH_OF_GRID; r++) {
+                        for (int r=0; r<TGConfig.WIDTH_OF_GRID; r++) {
                             TGAction a = new TGAction(s.getPlayer(), new int[]{0}, new int[]{r});
                             result.add(a);
                         }
@@ -68,7 +68,7 @@ public class TGExpander extends MDPExpanderImpl {
 
     @Override
     public Map<MDPState, Double> getSuccessors(MDPStateActionMarginal action) {
-        if (!TGConfig.useUncertainty || action.getState().isRoot() || ((TGState)action.getState()).getTimeStep() <= 0) {
+        if (!TGConfig.useUncertainty || action.getState().isRoot() || ((TGState)action.getState()).getTimeStep() <= 0 || !isUncertaintyInThisState((TGState)action.getState())) {
             Map<MDPState, Double> result = new HashMap<MDPState, Double>();
 
             MDPState state = action.getState().copy().performAction(action.getAction());
@@ -113,7 +113,7 @@ public class TGExpander extends MDPExpanderImpl {
             }
         } else if (s.getTimeStep() == 1) {
             if (s.getPlayer().getId() == 0)
-                for (int r=s.getRow()[0]-1; (r<=s.getRow()[0]+1) && (r<=TGConfig.WIDTH_OF_GRID); r++) {
+                for (int r=s.getRow()[0]-1; (r<=s.getRow()[0]+1) && (r<TGConfig.WIDTH_OF_GRID); r++) {
                     if (r < 0) continue;
                     TGState p = new TGState(s.getPlayer(), 0, new int[]{0}, new int[]{r});
                     TGAction a = new TGAction(s.getPlayer(), new int[] {s.getCol()[0]}, new int[] {s.getRow()[0]});
@@ -126,9 +126,9 @@ public class TGExpander extends MDPExpanderImpl {
             }
         } else {
             if (!TGConfig.useUncertainty) { // || ((s.getPlayer().getId() == 0 && s.getCol()[0] >= s.getTimeStep()) || (s.getPlayer().getId() == 1 && s.getRow()[0] >= s.getTimeStep()))
-                for (int c=s.getCol()[0]-1; (c<=s.getCol()[0]+1) && (c<=TGConfig.LENGTH_OF_GRID); c++) {
+                for (int c=s.getCol()[0]-1; (c<=s.getCol()[0]+1) && (c<TGConfig.LENGTH_OF_GRID); c++) {
                     if (s.getPlayer().getId() == 0 && c > (s.getTimeStep() - 1)) continue;
-                    for (int r=s.getRow()[0]-1; (r<=s.getRow()[0]+1) && (r<=TGConfig.WIDTH_OF_GRID); r++) {
+                    for (int r=s.getRow()[0]-1; (r<=s.getRow()[0]+1) && (r<TGConfig.WIDTH_OF_GRID); r++) {
                         if (c < 0 || r < 0) continue;
                         TGState p = new TGState(s.getPlayer(), s.getTimeStep()-1, new int[]{c}, new int[]{r});
                         TGAction a = new TGAction(s.getPlayer(), new int[] {s.getCol()[0]}, new int[] {s.getRow()[0]});
@@ -136,19 +136,24 @@ public class TGExpander extends MDPExpanderImpl {
                     }
                 }
             } else {
-                for (int c=s.getCol()[0]-1; (c<=s.getCol()[0]+1) && (c<=TGConfig.LENGTH_OF_GRID); c++) {
+                for (int c=s.getCol()[0]-1; (c<=s.getCol()[0]+1) && (c<TGConfig.LENGTH_OF_GRID); c++) {
                     if (s.getPlayer().getId() == 0 && c > (s.getTimeStep() - 1)) continue;
-                    for (int r=s.getRow()[0]-1; (r<=s.getRow()[0]+1) && (r<=TGConfig.WIDTH_OF_GRID); r++) {
+                    for (int r=s.getRow()[0]-1; (r<=s.getRow()[0]+1) && (r<TGConfig.WIDTH_OF_GRID); r++) {
                         if (c < 0 || r < 0) continue;
                         TGState p = new TGState(s.getPlayer(), s.getTimeStep()-1, new int[]{c}, new int[]{r});
                         TGAction a = new TGAction(s.getPlayer(), new int[] {s.getCol()[0]}, new int[] {s.getRow()[0]});
-                        result.put(new MDPStateActionMarginal(p, a),1d - TGConfig.MOVEMENT_UNCERTAINTY);
+                        if (isUncertaintyInThisState(p)){
+                            result.put(new MDPStateActionMarginal(p, a),1d - TGConfig.MOVEMENT_UNCERTAINTY);
+                        } else {
+                            result.put(new MDPStateActionMarginal(p, a),1d);
+                        }
                     }
                 }
-                for (int c=s.getCol()[0]-1; (c<=s.getCol()[0]+1) && (c<=TGConfig.LENGTH_OF_GRID); c++) {
+                for (int c=s.getCol()[0]-1; (c<=s.getCol()[0]+1) && (c<TGConfig.LENGTH_OF_GRID); c++) {
 //                    if (s.getPlayer().getId() == 0 && c > (s.getTimeStep() - 1)) continue;
-                    for (int r=s.getRow()[0]-1; (r<=s.getRow()[0]+1) && (r<=TGConfig.WIDTH_OF_GRID); r++) {
+                    for (int r=s.getRow()[0]-1; (r<=s.getRow()[0]+1) && (r<TGConfig.WIDTH_OF_GRID); r++) {
                         if (c < 0 || r < 0) continue;
+                        if (!isUncertaintyInThisState(c,r)) continue;
                         TGState p = new TGState(s.getPlayer(), s.getTimeStep()-1, new int[] {s.getCol()[0]}, new int[] {s.getRow()[0]});
                         TGAction a = new TGAction(s.getPlayer(), new int[]{c}, new int[]{r});
                         MDPStateActionMarginal marginal = new MDPStateActionMarginal(p, a);
@@ -165,10 +170,14 @@ public class TGExpander extends MDPExpanderImpl {
     }
 
     private boolean isUncertaintyInThisState(TGState state) {
+        return isUncertaintyInThisState(state.getCol()[0],state.getRow()[0]);
+    }
+
+    private boolean isUncertaintyInThisState(int col, int row) {
         if (!sparseUncertainty) return TGConfig.useUncertainty;
         int allNodes = TGConfig.LENGTH_OF_GRID*TGConfig.WIDTH_OF_GRID;
-        int currentID = state.getCol()[0]*TGConfig.WIDTH_OF_GRID + state.getRow()[0];
-        if (currentID % (allNodes / 10) == 0) return true;
+        int currentID = col*TGConfig.WIDTH_OF_GRID + row;
+        if (currentID % ((allNodes / 5) + 1) == 0) return true;
         else return false;
     }
 }

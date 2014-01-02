@@ -22,7 +22,7 @@ public class Commitment {
 		this.nodeIdx = node.getIntID();
 		this.nodeCount = nodeCount;
 //		distribution = new int[nodeCount];
-//		children = new Commitment[nodeCount];
+//		children = new CommitmentGenerator[nodeCount];
 	}
 
 	public Commitment(int nodeIdx, double ratio, int nodeCount) {
@@ -30,7 +30,7 @@ public class Commitment {
 		this.nodeIdx = nodeIdx;
 		this.nodeCount = nodeCount;
 //		distribution = new int[nodeCount];
-//		children = new Commitment[nodeCount];
+//		children = new CommitmentGenerator[nodeCount];
 	}
 
 	public Commitment(Commitment commitment) {
@@ -256,7 +256,7 @@ public class Commitment {
 //			return false;
 //		if (getClass() != obj.getClass())
 //			return false;
-//		Commitment other = (Commitment) obj;
+//		CommitmentGenerator other = (CommitmentGenerator) obj;
 //		if (children == null) {
 //			if (other.children != null)
 //				return false;
@@ -339,7 +339,7 @@ public class Commitment {
 	}
 
 //	private void updateChildren() {
-//		for (Entry<Node, Commitment> entry : children.entrySet()) {
+//		for (Entry<Node, CommitmentGenerator> entry : children.entrySet()) {
 //			entry.getValue().ratio = getCurrentProbability(entry.getKey()) / (entry.getValue().getIntSum(entry.getValue().distribution) * ExperimentInfo.epsilon);
 //			entry.getValue().updateChildren();
 //		}

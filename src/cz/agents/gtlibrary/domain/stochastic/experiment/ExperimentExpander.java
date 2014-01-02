@@ -265,13 +265,13 @@ public class ExperimentExpander implements StochasticExpander {
 		endingPoints.addFirst(currentEndingPoint);
 	}
 
-//	private Iterable<Commitment> getExpandedCommitments(Graph graph, Commitment currentEndingPoint, Commitment commitment) {
-//		List<Commitment> commitments = new ArrayList<Commitment>();
+//	private Iterable<CommitmentGenerator> getExpandedCommitments(Graph graph, CommitmentGenerator currentEndingPoint, CommitmentGenerator commitment) {
+//		List<CommitmentGenerator> commitments = new ArrayList<CommitmentGenerator>();
 //
 //		for (Edge edge1 : graph.getEdgesOf(currentEndingPoint.node)) {
 //			if(edge1.getTarget().equals(currentEndingPoint.node))
 //				continue;
-//			Commitment commitmentCopy = commitment.copy();
+//			CommitmentGenerator commitmentCopy = commitment.copy();
 //			Map<Node, Double> distribution = new LinkedHashMap<Node, Double>();
 //
 //			for (Edge edge2 : graph.getEdgesOf(currentEndingPoint.node)) {

@@ -86,7 +86,7 @@ public class TGState extends MDPStateImpl {
     @Override
     public boolean isTerminal() {
         return (timeStep >= TGConfig.getMaxTimeStep() ||
-            (getPlayer().getId()== 0 && getCol()[0] == TGConfig.LENGTH_OF_GRID));
+            (getPlayer().getId()== 0 && getCol()[0] == TGConfig.LENGTH_OF_GRID-1));
     }
 
     @Override

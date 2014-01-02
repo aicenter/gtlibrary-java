@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle.*;
+import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPExpander;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
@@ -47,6 +48,8 @@ public class DoubleOracleCostPairedMDP {
     private long RGCONSTR = 0;
 
     private double gameValue = Double.NaN;
+
+    public static Map<MDPState, Map<ArrayList<Integer>, Integer>> behavioralStrategies = new HashMap<MDPState, Map<ArrayList<Integer>, Integer>>();
 
 //    private Map<MDPStateActionMarginal, Integer> debugStrategyMap = new HashMap<MDPStateActionMarginal, Integer>();
 //    private ArrayList<Integer> actionsAddedInIteration = new ArrayList<Integer>();
@@ -151,6 +154,9 @@ public class DoubleOracleCostPairedMDP {
             firstPlayerStrategy.recalculateExpandedStrategy();
             secondPlayerStrategy.recalculateExpandedStrategy();
 
+//            rememberBehavioralStrategies(firstPlayerStrategy, iterations);
+//            rememberBehavioralStrategies(secondPlayerStrategy, iterations);
+
             br1.setMDPUpperBound(UB);
             br1.setMDPLowerBound(LB);
             br1.setCurrentBest(r1);
@@ -254,5 +260,52 @@ public class DoubleOracleCostPairedMDP {
         }
 
         System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
+//        printIterations(iterations);
+    }
+
+    private void rememberBehavioralStrategies(MDPStrategy strategy, int currentIteration) {
+        for (MDPState s : strategy.getStates()) {
+            ArrayList<Integer> currentStrategy = new ArrayList<Integer>();
+            double probOfState = 0;
+            if (s.isRoot()) {
+                probOfState = 1;
+            } else {
+                Map<MDPStateActionMarginal, Double> preds = strategy.getPredecessors(s);
+                for (MDPStateActionMarginal m : preds.keySet()) {
+                    probOfState += strategy.getExpandedStrategy(m) * preds.get(m);
+                }
+            }
+            for (MDPAction a : strategy.getAllActions(s)) {
+                double v = strategy.getExpandedStrategy(new MDPStateActionMarginal(s, a))/probOfState;
+                int vv = new Double(v*1e6).intValue();
+                currentStrategy.add(vv);
+            }
+            Map<ArrayList<Integer>, Integer> storedBS = behavioralStrategies.get(s);
+            if (storedBS == null || !storedBS.containsKey(currentStrategy)) {
+                if (storedBS != null) {
+                    if (currentIteration - storedBS.values().iterator().next() > 10)
+                        System.out.println("Removing stored strategy fixed for " + (currentIteration - storedBS.values().iterator().next()) + " iterations.");
+                }
+                Map<ArrayList<Integer>, Integer> tmp = new HashMap<ArrayList<Integer>, Integer>();
+                tmp.put(currentStrategy, currentIteration);
+                behavioralStrategies.put(s, tmp);
+            }
+        }
+    }
+
+    private void printIterations(int finalIterations) {
+        System.out.println("Number of Behavioral Strategies Determined in Iterations");
+        int[] amounts = new int[finalIterations];
+        for (MDPState s : behavioralStrategies.keySet())
+            for (ArrayList<Integer> actions : behavioralStrategies.get(s).keySet()) {
+//                System.out.println(behavioralStrategies.get(s).get(actions) + " in state " + s);
+                amounts[behavioralStrategies.get(s).get(actions)-1]++;
+            }
+
+        for (int i=0; i<finalIterations; i++) {
+            if (amounts[i] == 0) continue;
+            System.out.println((i+1) + ". iteration -> " + amounts[i] + " strategies");
+        }
+
     }
 }
