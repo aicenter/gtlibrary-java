@@ -13,6 +13,10 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.SelectionStrategy;
 import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MCTSInformationSet extends InformationSetImpl {
 
@@ -20,12 +24,19 @@ public class MCTSInformationSet extends InformationSetImpl {
 	transient public SelectionStrategy selectionStrategy;
         transient private Map<Action, BasicStats> actionStats;
 	transient private BasicStats informationSetStats;
+//        transient static private PrintStream log;
+//        
+//        static {
+//            try {
+//                    log = new PrintStream("selections.txt");
+//                } catch (FileNotFoundException ex) {}
+//        }
 
 	public MCTSInformationSet(GameState state) {
 		super(state);
 		allNodes = new HashSet<InnerNode>();
 		informationSetStats = new BasicStats();
-		actionStats = new LinkedHashMap<Action, BasicStats>();
+		actionStats = new LinkedHashMap<Action, BasicStats>();      
 	}
 
 	public void addNode(InnerNode node) {
@@ -37,6 +48,10 @@ public class MCTSInformationSet extends InformationSetImpl {
 	}
         
         public double backPropagate(InnerNode node, Action action, double value){
+//            if (this.playerHistory.size()==0) log.println(this.getPlayer().toString() + ";" 
+//                    //+ this.playerHistory.size() + ";" 
+//                    + (informationSetStats.getNbSamples()+1) + ";"
+//                    +  action.toString() + ";" + value);
             informationSetStats.onBackPropagate(value);
             actionStats.get(action).onBackPropagate(value);
             return selectionStrategy.onBackPropagate(node, action, value);

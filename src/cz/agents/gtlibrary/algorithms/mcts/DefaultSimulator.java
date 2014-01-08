@@ -14,17 +14,18 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
-public class Simulator {
+public class DefaultSimulator implements Simulator {
 	final private Random rnd;
 
-        public Simulator() {
+        public DefaultSimulator() {
 		this.rnd = new HighQualityRandom();
 	}
         
-	public Simulator(long seed) {
+	public DefaultSimulator(long seed) {
 		this.rnd = new HighQualityRandom(seed);
 	}
 
+    @Override
 	public double[] simulate(GameState gameState, Expander<MCTSInformationSet> expander) {
 		GameStateImpl state = (GameStateImpl) gameState.copy();
 
@@ -76,7 +77,7 @@ public class Simulator {
 		return getRandActionFromContInRealPlan(possibleActions, oppValueOfThisState, contInRealPlan);
 	}
 
-	public Double getValueOfThisState(Sequence sequence, Map<Sequence, Double> opponentRealizationPlan) {
+	private Double getValueOfThisState(Sequence sequence, Map<Sequence, Double> opponentRealizationPlan) {
 		if(sequence.size() == 0) 
 			return 1d;
 		return opponentRealizationPlan.get(sequence);

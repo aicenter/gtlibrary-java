@@ -52,7 +52,7 @@ public class ConvergenceExperiment {
     static double gamma = 0.1;
     public static void runMCTS() throws Exception {
         //MCTSConfig mctsConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
-        MCTSConfig mctsConfig = new MCTSConfig(new Simulator(1), new Exp3BackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma), new UniformStrategyForMissingSequences.Factory(), null);
+        MCTSConfig mctsConfig = new MCTSConfig(new DefaultSimulator(1), new Exp3BackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma), new UniformStrategyForMissingSequences.Factory(), null);
         Expander<MCTSInformationSet> expander = new RandomGameExpander<MCTSInformationSet> (mctsConfig);
         MCTSRunner runner = new MCTSRunner(mctsConfig, rootState, expander);
 

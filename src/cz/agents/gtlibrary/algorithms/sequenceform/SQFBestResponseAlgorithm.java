@@ -180,13 +180,13 @@ public class SQFBestResponseAlgorithm {
             for (GameState currentNode : alternativeNodes) { // storing the results based on the action
                 if (sel.actionRealValues.get(currentNode) == null) {
                     if (currentNode.equals(gameState)) {
-                        returnValue = -MAX_UTILITY_VALUE;
+                        returnValue = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
                     }
                     continue;
                 }
                 double v;
                 if (resultAction == null) {
-                    v = -MAX_UTILITY_VALUE;
+                    v = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
                 } else {
                     v = sel.actionRealValues.get(currentNode).get(resultAction);
                 }
