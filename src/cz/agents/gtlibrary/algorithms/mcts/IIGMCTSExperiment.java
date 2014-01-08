@@ -111,6 +111,7 @@ public class IIGMCTSExperiment {
             }
             out.println("\n");
             out.println("P0BRs: " + outLine + "\n");
+            out.println();
             //out.println(strategy0.toString() + "\n");
             //out.println(strategy1.toString());
             
