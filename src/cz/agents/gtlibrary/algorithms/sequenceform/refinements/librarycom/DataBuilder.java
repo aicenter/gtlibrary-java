@@ -38,11 +38,11 @@ public class DataBuilder extends TreeVisitor {
 	protected Data data;
 
 	public static void main(String[] args) {
-		runAC();
+//		runAC();
 //		runAoS();
 //		runGoofSpiel();
 //		runKuhnPoker();
-//		runGenericPoker();
+		runGenericPoker();
 //		runBPG();
 	}
 	
@@ -83,7 +83,7 @@ public class DataBuilder extends TreeVisitor {
 	}
 
 	public static void runDataBuilder(GameState rootState, Expander<SequenceInformationSet> expander, AlgorithmConfig<SequenceInformationSet> algConfig, String inputFileName, String outputFileName) {
-		DataBuilder lpBuilder = new DataBuilder(expander, rootState, algConfig, inputFileName);
+		DataBuilder lpBuilder = new DataBuilder(expander, rootState, inputFileName);
 
 		lpBuilder.build();
 		try {
@@ -122,8 +122,8 @@ public class DataBuilder extends TreeVisitor {
 		System.out.println(calculator1.computeUtility(p1Strategy, p2Strategy));
 	}
 
-	public DataBuilder(Expander<SequenceInformationSet> expander, GameState rootState, AlgorithmConfig<SequenceInformationSet> algConfig, String fileName) {
-		super(rootState, expander, algConfig);
+	public DataBuilder(Expander<SequenceInformationSet> expander, GameState rootState, String fileName) {
+		super(rootState, expander);
 		this.fileName = fileName;
 	}
 

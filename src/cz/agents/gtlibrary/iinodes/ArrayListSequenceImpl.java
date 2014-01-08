@@ -171,6 +171,7 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (!(obj instanceof Sequence)) return false;
 		Sequence sequence = (Sequence) obj;
 
 		if (!player.equals(sequence.getPlayer()))
@@ -182,7 +183,7 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	@Override
 	public String toString() {
-		return actions.toString();
+		return player + ": " + actions.toString();
 	}
 
 	@Override

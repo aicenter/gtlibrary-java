@@ -66,8 +66,8 @@ public class GeneralDoubleOracle {
     public static PlayerSelection playerSelection = PlayerSelection.SINGLE_IMPROVED;
 
 	public static void main(String[] args) {
-		runAC();
-//        runBP();
+//		runAC();
+        runBP();
 //        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
@@ -84,8 +84,7 @@ public class GeneralDoubleOracle {
 			DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
 	        Expander<DoubleOracleInformationSet> expander = new ACExpander<DoubleOracleInformationSet>(algConfig);
 			GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
-	        Map<Player, Map<Sequence, Double>> rp = doefg.generate(null);
-	        System.out.println(rp);
+	        doefg.generate(null);
 	    }
 
     public static void runPhantomTTT() {
@@ -104,8 +103,7 @@ public class GeneralDoubleOracle {
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new AoSExpander<DoubleOracleInformationSet>(algConfig);
 		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
-        Map<Player, Map<Sequence, Double>> rp = doefg.generate(null);
-        System.out.println(rp);
+        doefg.generate(null);
     }
 
 
@@ -124,8 +122,7 @@ public class GeneralDoubleOracle {
 		DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new KuhnPokerExpander<DoubleOracleInformationSet>(algConfig);
 		GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
-		 Map<Player, Map<Sequence, Double>> rp = doefg.generate(null);
-        System.out.println(rp);
+		doefg.generate(null);
     }
 
     public static void runRandomGame() {
@@ -156,7 +153,6 @@ public class GeneralDoubleOracle {
 //        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpanderDomain<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
-        System.out.println();
     }
 
     public static void runBP() {

@@ -84,7 +84,9 @@ public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet
                     else return false;
                 case 4:
                     if (s.getSymbol(1) == c && s.getSymbol(7) == c
-                            || s.getSymbol(3) == c && s.getSymbol(5) == c) return true;
+                            || s.getSymbol(3) == c && s.getSymbol(5) == c
+                            || s.getSymbol(0) == c && s.getSymbol(8) == c
+                            || s.getSymbol(2) == c && s.getSymbol(6) == c) return true;
                     else return false;
                 case 5:
                     if (s.getSymbol(2) == c && s.getSymbol(8) == c

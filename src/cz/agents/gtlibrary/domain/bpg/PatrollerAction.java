@@ -2,10 +2,10 @@ package cz.agents.gtlibrary.domain.bpg;
 
 import java.util.Set;
 
-import cz.agents.gtlibrary.domain.bpg.data.Node;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
+import cz.agents.gtlibrary.utils.graph.Node;
 
 public class PatrollerAction extends ActionImpl {
 

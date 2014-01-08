@@ -111,6 +111,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 		try {
 			restoreModel();
 			long time = System.currentTimeMillis();
+//            cplex.exportModel("LP.lp");
 			solve();
 			Stats.getInstance().addToLPSolveTime(System.currentTimeMillis() - time);
 			finalValue = cplex.getObjValue();
@@ -301,34 +302,52 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 //		}		
 //		end();
 //	}
+
+    public void clearModel() {
+        try {
+            constraints.clear();
+            variableStatuses = null;
+            constraintStatuses = null;
+            variables.clear();
+            playerOneMixedStrategy.clear();
+            playerOneStrategySet.clear();
+            playerTwoMixedStrategy.clear();
+            playerTwoStrategySet.clear();
+            cplex.clearModel();
+            numCols = 0;
+            numRows = 0;
+            matrixBackup.clear();
+            initProblem();
+        } catch (IloException e) {
+            e.printStackTrace();
+    //    		assert false;
+        }
+    }
 	
     public void restoreModel() {
-    	try {
-	        constraints.clear();
-	        variableStatuses = null;
-	        constraintStatuses = null;
-	        variables.clear();
-	        cplex.clearModel();
-	        numCols = 0;
-	        numRows = 0;
-	        initProblem();
-    		
-    		for (StoreObject o : matrixBackup) {
-    			if (o instanceof StoreVariable) {
-    				StoreVariable v = (StoreVariable)o;
-    				addAndSetVariable(v.name, v.varType, v.objCoeff, v.lowerBound, v.upperBound, v.indices, v.values);
-    			} else if (o instanceof StoreConstraint) {
-    				StoreConstraint c = (StoreConstraint)o;
-    				addAndSetConstraint(c.name, c.boundType, c.bound, c.indices, c.values);
-    			}
-    		}
-    			    		
-    			
-    	} catch (IloException e) {
-    		e.printStackTrace();
-//    		assert false;
-    	}
-    	
+        try {
+            constraints.clear();
+            variableStatuses = null;
+            constraintStatuses = null;
+            variables.clear();
+            cplex.clearModel();
+            numCols = 0;
+            numRows = 0;
+            initProblem();
+        } catch (IloException e) {
+            e.printStackTrace();
+            //    		assert false;
+        }
+
+        for (StoreObject o : matrixBackup) {
+            if (o instanceof StoreVariable) {
+                StoreVariable v = (StoreVariable)o;
+                addAndSetVariable(v.name, v.varType, v.objCoeff, v.lowerBound, v.upperBound, v.indices, v.values);
+            } else if (o instanceof StoreConstraint) {
+                StoreConstraint c = (StoreConstraint)o;
+                addAndSetConstraint(c.name, c.boundType, c.bound, c.indices, c.values);
+            }
+        }
     }
 
 }

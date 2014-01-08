@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes.br;
 
+import cz.agents.gtlibrary.algorithms.mcts.DefaultSimulator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,7 +51,7 @@ public class BRInnerNode extends InnerNode {
 
 	@Override
 	public double[] simulate() {
-		return algConfig.getSimulator().simulateForRealPlan(gameState, opponentRealizationPlan, opponent, expander);
+		return ((DefaultSimulator)algConfig.getSimulator()).simulateForRealPlan(gameState, opponentRealizationPlan, opponent, expander);
 	}
 
 	@Override

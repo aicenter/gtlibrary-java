@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.CombinationGenerator;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
@@ -61,8 +62,37 @@ public class RandomGameState extends GameStateImpl {
     
     protected void generateObservations(int newID, RandomGameAction action){
         switchPlayers();
-        int newObservation = new Random(newID).nextInt(RandomGameInfo.MAX_OBSERVATION);
+
+        int newObservation = -1;
+        if (RandomGameInfo.MAX_OBSERVATION == 1) {
+            newObservation = 0;
+        } else {
+            int observationCombinationID = new HighQualityRandom(ID).nextInt(CombinationGenerator.binomCoef(RandomGameInfo.MAX_BF-1, RandomGameInfo.MAX_OBSERVATION-1));
+            int[] tmp = CombinationGenerator.generateCombinationWithoutRepeating(RandomGameInfo.ACTIONS, RandomGameInfo.MAX_OBSERVATION-1, observationCombinationID);
+            assert (tmp != null);
+            if (action.getOrder() <= tmp[0]) {
+                newObservation = 0;
+            } else {
+                for (int obs=1; obs<RandomGameInfo.MAX_OBSERVATION-1; obs++) {
+                    if (action.getOrder() > tmp[obs-1] && action.getOrder() <= tmp[obs]) {
+                        newObservation = obs;
+                        break;
+                    }
+                }
+                if (newObservation < 0) newObservation = RandomGameInfo.MAX_OBSERVATION-1;
+            }
+//            System.out.println(this.ID + "|" + action + " = " + Arrays.toString(tmp) + " | " + newObservation);
+//            assert (newObservation >= 0);
+        }
         observations.get(getPlayerToMove()).add(newObservation);
+
+//        int newObservation;
+//        if (new HighQualityRandom(newID).nextDouble() < RandomGameInfo.KEEP_OBS_PROB) {
+//            newObservation = action.getOrder() % RandomGameInfo.MAX_OBSERVATION;
+//        } else {
+//            newObservation = new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_OBSERVATION);
+//        }
+//        observations.get(getPlayerToMove()).add(newObservation);
     }
 
     @Override

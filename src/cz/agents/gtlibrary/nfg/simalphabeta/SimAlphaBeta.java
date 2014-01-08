@@ -20,7 +20,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.SimABDoubleOrac
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.SimABOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.SortingOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
-import cz.agents.gtlibrary.utils.CSVExporter;
+import cz.agents.gtlibrary.utils.io.CSVExporter;
 
 public class SimAlphaBeta {
 
@@ -28,8 +28,8 @@ public class SimAlphaBeta {
 //		runGoofSpielWithNature();
 //		runGoofSpielWithNatureWithLocalCache();
 //		runGoofSpielWithFixedNatureSequence();
-		runGoofSpielWithFixedNatureSequenceWithLocalCache();
-		//		runPursuit();
+//		runGoofSpielWithFixedNatureSequenceWithLocalCache();
+				runPursuit();
 	}
 
 	public static void runGoofSpielWithFixedNatureSequenceWithLocalCache() {

@@ -224,7 +224,8 @@ public class Data {
 		writer.newLine();
 		List<Entry<Pair<Integer, Integer>, ? extends Object>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Object>>();
 
-		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Object>>) map.entrySet());
+        //TODO fix the following line
+//		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Object>>) map.entrySet());
 		Collections.sort(entryList, new EntryComparator());
 		for (Entry<Pair<Integer, Integer>, ? extends Object> entry : entryList) {
 			writer.write("(");
@@ -239,13 +240,15 @@ public class Data {
 		writer.newLine();
 	}
 
+
 	@SuppressWarnings("unchecked")
 	public void printUtilityEntrySet(BufferedWriter writer, Map<Object, Double> map) throws IOException {
 		writer.newLine();
 		writer.newLine();
 		List<Entry<Pair<Integer, Integer>, Double>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, Double>>();
 
-		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, Double>>) map.entrySet());
+        //TODO fix the following line
+//		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, Double>>) map.entrySet());
 		Collections.sort(entryList, new EntryComparator());
 		for (Entry<Pair<Integer, Integer>, Double> entry : entryList) {
 			writer.write("(");
@@ -266,7 +269,8 @@ public class Data {
 		writer.newLine();
 		List<Entry<Pair<Integer, Integer>, ? extends Number>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Number>>();
 
-		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Number>>) map.entrySet());
+        //TODO fix the following line
+//		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Number>>) map.entrySet());
 		Collections.sort(entryList, new EntryComparator());
 		for (Entry<Pair<Integer, Integer>, ? extends Number> entry : entryList) {
 			writer.write("(");
@@ -288,7 +292,8 @@ public class Data {
 
 		List<Entry<Pair<Integer, Integer>, ? extends Number>> entryList = new LinkedList<Entry<Pair<Integer, Integer>, ? extends Number>>();
 
-		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Number>>) map.entrySet());
+        //TODO fix the following line
+//		entryList.addAll((Collection<? extends Entry<Pair<Integer, Integer>, ? extends Number>>) map.entrySet());
 		Collections.sort(entryList, new EntryComparator());
 		for (Entry<Pair<Integer, Integer>, ? extends Number> entry : entryList) {
 			writer.write("(");

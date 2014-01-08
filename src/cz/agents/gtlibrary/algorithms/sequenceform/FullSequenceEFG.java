@@ -20,6 +20,9 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -33,6 +36,9 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.upordown.UDExpander;
+import cz.agents.gtlibrary.domain.upordown.UDGameInfo;
+import cz.agents.gtlibrary.domain.upordown.UDGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -41,6 +47,7 @@ import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 
@@ -61,14 +68,25 @@ public class FullSequenceEFG {
 //		runAC();
 //		runAoS();
 //		runKuhnPoker();
-		runGenericPoker();
-//		runBPG();
+//		runGenericPoker();
+		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
 //		runPursuit();
+//      runPhantomTTT();
+//		runUpOrDown();
 	}
 	
+	private static void runUpOrDown() {
+		GameState rootState = new UDGameState();
+		GameInfo gameInfo = new UDGameInfo();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new UDExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+
+		System.out.println(efg.generate());
+	}
+
 	public static void runAC() {
 		GameState rootState = new ACGameState();
 		GameInfo gameInfo = new ACGameInfo();
@@ -122,16 +140,29 @@ public class FullSequenceEFG {
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 
-		efg.generate();
+		Map<Player, Map<Sequence, Double>> rps = efg.generate();
+		
+//		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
+//			if(entry.getValue() > 0)
+//				System.out.println(entry);
+//		}
+//		System.out.println("**********");
+//		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
+//			if(entry.getValue() > 0)
+//				System.out.println(entry);
+//		}
 	}
 
 	public static void runRandomGame() {
 		GameState rootState = new RandomGameState();
 		GameInfo gameInfo = new RandomGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		FullSequenceEFG efg = new FullSequenceEFG(rootState, new RandomGameExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+        RandomGameExpander<SequenceInformationSet> expander = new RandomGameExpander<SequenceInformationSet>(algConfig);
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 
 		efg.generate();
+
+//        GambitEFG.write("randomgame.gbt", rootState, (Expander)expander);
 	}
 
 	public static void runGoofSpiel() {
@@ -149,18 +180,18 @@ public class FullSequenceEFG {
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
 		Map<Player, Map<Sequence, Double>> rps = efg.generate();
-		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
-
-			if (entry.getValue() > 0)
-				System.out.println(entry);
-		}
-		UtilityCalculator calculator = new UtilityCalculator(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig));
-		Strategy p1Strategy = new UniformStrategyForMissingSequences();
-		Strategy p2Strategy = new UniformStrategyForMissingSequences();
-		
-		p1Strategy.putAll(rps.get(new PlayerImpl(0)));
-		p2Strategy.putAll(rps.get(new PlayerImpl(1)));
-		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
+//		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
+//
+//			if (entry.getValue() > 0)
+//				System.out.println(entry);
+//		}
+//		UtilityCalculator calculator = new UtilityCalculator(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig));
+//		Strategy p1Strategy = new UniformStrategyForMissingSequences();
+//		Strategy p2Strategy = new UniformStrategyForMissingSequences();
+//
+//		p1Strategy.putAll(rps.get(new PlayerImpl(0)));
+//		p2Strategy.putAll(rps.get(new PlayerImpl(1)));
+//		System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
 	}
 
 	public static void runBPG() {
@@ -168,13 +199,18 @@ public class FullSequenceEFG {
 		BPGGameInfo gameInfo = new BPGGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new BPGExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
-
-		for (Entry<Sequence, Double> entry : efg.generate().get(rootState.getAllPlayers()[1]).entrySet()) {
-
-			if (entry.getValue() > 0)
-				System.out.println(entry);
-		}
+        efg.generate();
 	}
+
+    public static void runPhantomTTT() {
+        GameState rootState = new TTTState();
+        GameInfo gameInfo = new TTTInfo();
+        SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        Expander expander = new TTTExpander<SequenceInformationSet>(algConfig);
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
+        efg.generate();
+//        GeneralDoubleOracle.traverseCompleteGameTree(rootState, expander);
+    }
 
 	public FullSequenceEFG(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo config, SequenceFormConfig<SequenceInformationSet> algConfig) {
 		this.rootState = rootState;
