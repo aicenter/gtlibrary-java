@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -14,7 +16,7 @@ public class P2PBuilder extends InitialP2PBuilder {
     private Map<Sequence, Double> explSeqSum;
     private double initialValueOfGame;
 
-    public P2PBuilder(Player[] players, DoubleOracleConfig<DoubleOracleInformationSet> config, QResult data, double initialValueOfGame) {
+    public P2PBuilder(Player[] players, SequenceFormConfig<SequenceInformationSet> config, QResult data, double initialValueOfGame) {
         super(players, config);
         this.lastItSeq = data.getLastItSeq();
         this.explSeqSum = data.getExplSeqSum();
