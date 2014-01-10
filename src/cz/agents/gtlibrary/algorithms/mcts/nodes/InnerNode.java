@@ -111,12 +111,15 @@ public class InnerNode extends NodeImpl {
 		return informationSet.selectionStrategy.select();
 	}
 
-	@Override
-	public Node selectRecursively() {
-		if (children == null)
-			return this;
-		return selectChild().selectRecursively();
-	}
+        @Override
+        public Node selectRecursively() {
+                if (children == null) {
+                    expand();
+                    if (!algConfig.EXPAND_INFORMATION_SET) return this;
+                }
+                if (informationSet.getInformationSetStats().getNbSamples()==0) return this;
+                return selectChild().selectRecursively();
+        }
 
 	public Node selectRecursively(int fixedDepth) {
 		if (fixedDepth > 0)
