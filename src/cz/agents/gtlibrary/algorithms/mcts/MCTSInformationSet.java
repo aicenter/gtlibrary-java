@@ -85,8 +85,8 @@ public class MCTSInformationSet extends InformationSetImpl {
 			for (Action action : actions) {
 				actionStats.put(action, new BasicStats());
 			}
+                        selectionStrategy = backPropagationStrategyFactory.createForIS(this);
 		}
-                selectionStrategy = backPropagationStrategyFactory.createForIS(this);
 	}
 
 	public Map<Action, BasicStats> getActionStats() {

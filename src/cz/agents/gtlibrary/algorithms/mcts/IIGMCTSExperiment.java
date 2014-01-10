@@ -30,8 +30,8 @@ import java.util.*;
  * @author vilo
  */
 public class IIGMCTSExperiment {
-        private static final int MCTS_ITERATIONS_PER_CALL = (int)1000000;
-        private static final int MCTS_CALLS = 100;
+        private static final int MCTS_ITERATIONS_PER_CALL = (int)100000;
+        private static final int MCTS_CALLS = 10;
 	private static PrintStream out = System.out;
     
         
@@ -70,10 +70,7 @@ public class IIGMCTSExperiment {
             sfExpander = new RandomGameExpander<SequenceInformationSet>(sfAlgConfig);
             expander = new RandomGameExpander<MCTSInformationSet> (firstMCTSConfig);
             efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
-            //optStrategies = efg.generate();
-            efg.generateCompleteGame();
-            brAlg0 = new SQFBestResponseAlgorithm(sfExpander, 0, new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] }, sfAlgConfig, gameInfo);
-            brAlg1 = new SQFBestResponseAlgorithm(sfExpander, 1, new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] }, sfAlgConfig, gameInfo);
+            optStrategies = efg.generate();
             GambitEFG.write("RND" + RandomGameInfo.MAX_BF + RandomGameInfo.MAX_DEPTH + "_" +seed+".efg", rootState, sfExpander);
         }
         
@@ -95,12 +92,12 @@ public class IIGMCTSExperiment {
                 strategy0 = runner.runMCTS(MCTS_ITERATIONS_PER_CALL, gameInfo.getAllPlayers()[0], new MeanStratDist());
                 strategy1 = runner.getCurrentStrategyFor(gameInfo.getAllPlayers()[1], new MeanStratDist());
                 
-                out.println("Strategy 0 size = " + strategy0.size());
-                out.println("Strategy 1 size = " + strategy1.size());
+//                out.println("Strategy 0 size = " + strategy0.size());
+//                out.println("Strategy 1 size = " + strategy1.size());
                 filterLow(strategy0);
                 filterLow(strategy1);
-                out.println("Strategy 0 size = " + strategy0.size());
-                out.println("Strategy 1 size = " + strategy1.size());
+//                out.println("Strategy 0 size = " + strategy0.size());
+//                out.println("Strategy 1 size = " + strategy1.size());
                 
                 SQFBestResponseAlgorithm mctsBR0 = new SQFBestResponseAlgorithm(expander, 0, new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] }, firstMCTSConfig, gameInfo);
                 SQFBestResponseAlgorithm mctsBR1 = new SQFBestResponseAlgorithm(expander, 1, new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] }, firstMCTSConfig, gameInfo);
@@ -127,8 +124,8 @@ public class IIGMCTSExperiment {
         }
         
         public static void main(String[] args) throws Exception{
-            //setupRnd(325432);
-            setupPTTT();
+            setupRnd(325432);
+            //setupPTTT();
             runMCTS();
         }
  }
