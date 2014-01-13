@@ -20,7 +20,7 @@ import java.util.*;
  */
 public class MDPOracleLP extends MDPCoreLP {
 
-    private static boolean SAVELP = true;
+    private static boolean SAVELP = false;
 
 //    protected Map<Object, IloRange> constraints = new HashMap<Object, IloRange>();
 //    protected Map<Object, IloNumVar> variables = new HashMap<Object, IloNumVar>();
@@ -43,7 +43,7 @@ public class MDPOracleLP extends MDPCoreLP {
         }
         BUILDING_LP_TIME += threadBean.getCurrentThreadCpuTime() - start;
         try {
-//            if (SAVELP) cplex.exportModel("MDP-LP"+player.getId()+".lp");
+            if (SAVELP) cplex.exportModel("MDP-LP"+player.getId()+".lp");
             start = threadBean.getCurrentThreadCpuTime();
             cplex.solve();
             SOLVING_LP_TIME += threadBean.getCurrentThreadCpuTime() - start;
@@ -82,7 +82,7 @@ public class MDPOracleLP extends MDPCoreLP {
         }
     }
 
-    private void updateLPFromStrategies(Player player, Set<MDPStateActionMarginal> newActions) {
+    protected void updateLPFromStrategies(Player player, Set<MDPStateActionMarginal> newActions) {
         Player opponent = config.getOtherPlayer(player);
         HashSet<MDPStateActionMarginal> opponentMarginalsGenerate = new HashSet<MDPStateActionMarginal>();
         HashSet<Object[]> opponentMarginalsUpdate = new HashSet<Object[]>();
@@ -125,6 +125,7 @@ public class MDPOracleLP extends MDPCoreLP {
             }
 
             for (MDPStateActionMarginal removedLastAction : MDPIterativeStrategy.getRemovedLastActions(player)) {
+                if (!variables.containsKey(removedLastAction)) continue;
                 for (MDPStateActionMarginal opp : playerStrategy.get(opponent).getAllMarginalsInStrategy()) {
                     if (constraints.containsKey(opp)) {
                         double curUtility = playerStrategy.get(player).getUtility(removedLastAction, opp);
