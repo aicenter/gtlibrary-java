@@ -31,13 +31,14 @@ import java.util.*;
 public class DoubleOracleCostPairedMDP {
 
     public static boolean USE_ROBUST_BR = false;
+    public static boolean CONTRACTING = false;
     public static boolean USE_REORDER_ACTIONS = false;
     public static double END_EPSILON = MDPConfigImpl.getEpsilon();
 
     private MDPExpander expander;
     private MDPConfig config;
-    private MDPIterativeStrategy firstPlayerStrategy;
-    private MDPIterativeStrategy secondPlayerStrategy;
+    private MDPContractingStrategy firstPlayerStrategy;
+    private MDPContractingStrategy secondPlayerStrategy;
 
     private PrintStream debugOutput = System.out;
     final private static boolean DEBUG = false;
@@ -86,8 +87,11 @@ public class DoubleOracleCostPairedMDP {
         threadBean = ManagementFactory.getThreadMXBean();
         long startTime = threadBean.getCurrentThreadCpuTime();
         debugOutput.println("Testing DO CostPaired MDP.");
-        firstPlayerStrategy = new MDPIterativeStrategy(config.getAllPlayers().get(0),config,expander);
-        secondPlayerStrategy = new MDPIterativeStrategy(config.getAllPlayers().get(1),config,expander);
+        firstPlayerStrategy = new MDPContractingStrategy(config.getAllPlayers().get(0),config,expander);
+        secondPlayerStrategy = new MDPContractingStrategy(config.getAllPlayers().get(1),config,expander);
+
+        firstPlayerStrategy.generateAllStateActions();
+        secondPlayerStrategy.generateAllStateActions();
 
         firstPlayerStrategy.initIterativeStrategy(secondPlayerStrategy);
         secondPlayerStrategy.initIterativeStrategy(firstPlayerStrategy);
@@ -98,7 +102,7 @@ public class DoubleOracleCostPairedMDP {
         playerStrategy.put(config.getAllPlayers().get(0), firstPlayerStrategy);
         playerStrategy.put(config.getAllPlayers().get(1), secondPlayerStrategy);
 
-        MDPOracleLP lp = new MDPOracleLP(config.getAllPlayers(), playerStrategy, config);
+        MDPContractingLP lp = new MDPContractingLP(config.getAllPlayers(), playerStrategy, config);
 
         double LB = Double.NEGATIVE_INFINITY;
         double UB = Double.POSITIVE_INFINITY;
@@ -109,27 +113,35 @@ public class DoubleOracleCostPairedMDP {
 
         int iterations = 0;
 
-        MDPFristBetterResponse br1 = null;
-        MDPFristBetterResponse br2 = null;
+        MDPContractingBR br1 = null;
+        MDPContractingBR br2 = null;
 
 //        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
 //        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
 
-        if (USE_ROBUST_BR) {
-            br1 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(0));
-            br2 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(1));
-        } else if (USE_REORDER_ACTIONS) {
-            br1 = new MDPFBRActionOrdering(config, config.getAllPlayers().get(0));
-            br2 = new MDPFBRActionOrdering(config, config.getAllPlayers().get(1));
-        } else {
-            br1 = new MDPFristBetterResponse(config, config.getAllPlayers().get(0));
-            br2 = new MDPFristBetterResponse(config, config.getAllPlayers().get(1));
-        }
+//        if (USE_ROBUST_BR) {
+//            br1 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(0));
+//            br2 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(1));
+//        } else if (USE_REORDER_ACTIONS) {
+//            br1 = new MDPFBRActionOrdering(config, config.getAllPlayers().get(0));
+//            br2 = new MDPFBRActionOrdering(config, config.getAllPlayers().get(1));
+//        } else {
+//            br1 = new MDPFristBetterResponse(config, config.getAllPlayers().get(0));
+//            br2 = new MDPFristBetterResponse(config, config.getAllPlayers().get(1));
+            br1 = new MDPContractingBR(config, config.getAllPlayers().get(0));
+            br2 = new MDPContractingBR(config, config.getAllPlayers().get(1));
+//        }
 
 //        double treshold = 0.1;
 //        debugStrategyMap.put(firstPlayerStrategy.getAllMarginalsInStrategy().iterator().next(), 0);
 //        debugStrategyMap.put(secondPlayerStrategy.getAllMarginalsInStrategy().iterator().next(), 0);
 //        actionsAddedInIteration.add(2);
+
+        Set<MDPState> statesToContract1 = new HashSet<MDPState>();
+        Set<MDPState> statesToContract2 = new HashSet<MDPState>();
+        Set<MDPState> statesToExpand1 = new HashSet<MDPState>();
+        Set<MDPState> statesToExpand2 = new HashSet<MDPState>();
+
 
         while ( Math.abs(UB - LB) > END_EPSILON && UB > LB) {
 //        while ( ((Math.abs(UB-LB)/Math.abs(LB)) > 0.001 || LB/UB < 0 || LB == Double.NEGATIVE_INFINITY || UB == Double.POSITIVE_INFINITY) && UB > LB) {
@@ -157,12 +169,12 @@ public class DoubleOracleCostPairedMDP {
 //            rememberBehavioralStrategies(firstPlayerStrategy, iterations);
 //            rememberBehavioralStrategies(secondPlayerStrategy, iterations);
 
-            br1.setMDPUpperBound(UB);
-            br1.setMDPLowerBound(LB);
-            br1.setCurrentBest(r1);
-            br2.setMDPUpperBound(LB);
-            br2.setMDPLowerBound(UB);
-            br2.setCurrentBest(r2);
+//            br1.setMDPUpperBound(UB);
+//            br1.setMDPLowerBound(LB);
+//            br1.setCurrentBest(r1);
+//            br2.setMDPUpperBound(LB);
+//            br2.setMDPLowerBound(UB);
+//            br2.setCurrentBest(r2);
 
 //            firstPlayerStrategy.sanityCheck();
 //            secondPlayerStrategy.sanityCheck();
@@ -171,6 +183,8 @@ public class DoubleOracleCostPairedMDP {
 //            secondPlayerStrategy.testUtility(firstPlayerStrategy, r2);
 
             MDPIterativeStrategy.clearRemovedLastActions();
+            firstPlayerStrategy.clearActionMarginalsToRemove();
+            secondPlayerStrategy.clearActionMarginalsToRemove();
 
             long brStart = threadBean.getCurrentThreadCpuTime();
             double currentBRValMax = br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy);
@@ -184,33 +198,85 @@ public class DoubleOracleCostPairedMDP {
             LB = Math.max(LB, currentBRValMin);
             debugOutput.println("BR(MAX): " + currentBRValMax + " BR(MIN): " + currentBRValMin);
 
-            if (USE_ROBUST_BR) {
-                debugOutput.println("BR(MAX) Improved Times: " + ((MDPEpsilonFristBetterResponse)br1).getImprovedBR());
-                debugOutput.println("BR(MIN) Improved Times: " + ((MDPEpsilonFristBetterResponse)br2).getImprovedBR());
-            }
+//            if (USE_ROBUST_BR) {
+//                debugOutput.println("BR(MAX) Improved Times: " + ((MDPEpsilonFristBetterResponse)br1).getImprovedBR());
+//                debugOutput.println("BR(MIN) Improved Times: " + ((MDPEpsilonFristBetterResponse)br2).getImprovedBR());
+//            }
 
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions1 = br1.extractBestResponse(firstPlayerStrategy);
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions2 = br2.extractBestResponse(secondPlayerStrategy);
 
+            statesToContract1.clear();
+            statesToContract2.clear();
+            statesToContract1.addAll(br1.getStatesToContract());
+            statesToContract2.addAll(br2.getStatesToContract());
+
+            statesToExpand1.clear();
+            statesToExpand2.clear();
+            statesToExpand1.addAll(br1.getStatesToExpand());
+            statesToExpand2.addAll(br2.getStatesToExpand());
+
+            HashSet<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
+            HashSet<MDPStateActionMarginal> actionsToRemove = new HashSet<MDPStateActionMarginal>();
+            newActions1.clear();
+            newActions2.clear();
+
             long RGStart = threadBean.getCurrentThreadCpuTime();
-            newActions1 = firstPlayerStrategy.addBRStrategy(firstPlayerStrategy.getRootState(), bestResponseActions1);
+            if (CONTRACTING) {
+                if (statesToExpand1.size() > 0) {
+//                    debugOutput.println("Expanding States MAX: " + statesToExpand1);
+                    newActions1.addAll(firstPlayerStrategy.expandStates(statesToExpand1));
+                }
+                if (statesToExpand2.size() > 0) {
+//                    debugOutput.println("Expanding States MIN: " + statesToExpand2);
+                    newActions2.addAll(secondPlayerStrategy.expandStates(statesToExpand2));
+                }
+            }
+            RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
+
+            RGStart = threadBean.getCurrentThreadCpuTime();
+            newActions1.addAll(firstPlayerStrategy.addBRStrategy(firstPlayerStrategy.getRootState(), bestResponseActions1));
             RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
             debugOutput.println("RG(MAX) TIME:" + ((threadBean.getCurrentThreadCpuTime() - RGStart)/1000000l));
 
             RGStart = threadBean.getCurrentThreadCpuTime();
-            newActions2 = secondPlayerStrategy.addBRStrategy(secondPlayerStrategy.getRootState(), bestResponseActions2);
+            newActions2.addAll(secondPlayerStrategy.addBRStrategy(secondPlayerStrategy.getRootState(), bestResponseActions2));
 
             RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
             debugOutput.println("RG(MIN) TIME:" + ((threadBean.getCurrentThreadCpuTime() - RGStart)/1000000l));
 
-//            debugOutput.println("New Actions MAX: " + newActions1);
-//            debugOutput.println("New Actions MIN: " + newActions2);
+            RGStart = threadBean.getCurrentThreadCpuTime();
+            if (CONTRACTING) {
+                if (statesToContract1.size() > 0) {
+//                    debugOutput.println("Contracting States MAX: " + statesToContract1);
+                    newActions1.addAll(firstPlayerStrategy.concractStates(statesToContract1));
+                }
+                if (statesToContract2.size() > 0) {
+//                    debugOutput.println("Contracting States MIN: " + statesToContract2);
+                    newActions2.addAll(secondPlayerStrategy.concractStates(statesToContract2));
+                }
 
+                actionsToRemove.addAll(firstPlayerStrategy.getActionMarginalsToRemove());
+                actionsToRemove.addAll(secondPlayerStrategy.getActionMarginalsToRemove());
 
-            HashSet<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
+//                debugOutput.println("Removing Actions: " + actionsToRemove);
+
+                firstPlayerStrategy.removeMaringalsFromStrategy();
+                secondPlayerStrategy.removeMaringalsFromStrategy();
+
+//                firstPlayerStrategy.lastActionsSanity();
+//                secondPlayerStrategy.lastActionsSanity();
+            }
+            RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
+
             newActions.addAll(newActions1);
             newActions.addAll(newActions2);
+            newActions.removeAll(actionsToRemove);
             lp.setNewActions(newActions);
+            lp.setActionsToRemove(actionsToRemove);
+
+//            debugOutput.println("New Actions MAX: " + newActions1);
+//            debugOutput.println("New Actions MIN: " + newActions2);
 
             RGStart = threadBean.getCurrentThreadCpuTime();
             MDPIterativeStrategy.updateDefaultUtilityValues(newActions, firstPlayerStrategy,secondPlayerStrategy);
@@ -252,6 +318,11 @@ public class DoubleOracleCostPairedMDP {
         debugOutput.println("final size: FirstPlayer Marginal Strategies: " + firstPlayerStrategy.getAllMarginalsInStrategy().size() + " \t SecondPlayer Marginal Strategies: " + secondPlayerStrategy.getAllMarginalsInStrategy().size());
         debugOutput.println("final size: FirstPlayer Support: " + p1SupportSize + " \t SecondPlayer Support: " + p2SupportSize);
         debugOutput.println("final result:" + UB);
+
+        if (CONTRACTING) {
+            debugOutput.println("Contracted States MAX: " + firstPlayerStrategy.getFixedBehavioralStrategiesSize());
+            debugOutput.println("Contracted States MIN: " + secondPlayerStrategy.getFixedBehavioralStrategiesSize());
+        }
 
         try {
             Runtime.getRuntime().gc();

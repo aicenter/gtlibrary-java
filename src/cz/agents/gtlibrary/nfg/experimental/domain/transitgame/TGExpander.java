@@ -18,7 +18,7 @@ import java.util.*;
  */
 public class TGExpander extends MDPExpanderImpl {
 
-    public boolean sparseUncertainty = true;
+    public static boolean sparseUncertainty = true;
 
     @Override
     public List<MDPAction> getActions(MDPState state) {
@@ -153,7 +153,7 @@ public class TGExpander extends MDPExpanderImpl {
 //                    if (s.getPlayer().getId() == 0 && c > (s.getTimeStep() - 1)) continue;
                     for (int r=s.getRow()[0]-1; (r<=s.getRow()[0]+1) && (r<TGConfig.WIDTH_OF_GRID); r++) {
                         if (c < 0 || r < 0) continue;
-                        if (!isUncertaintyInThisState(c,r)) continue;
+                        if (!isUncertaintyInThisState(s.getCol()[0],s.getRow()[0])) continue;
                         TGState p = new TGState(s.getPlayer(), s.getTimeStep()-1, new int[] {s.getCol()[0]}, new int[] {s.getRow()[0]});
                         TGAction a = new TGAction(s.getPlayer(), new int[]{c}, new int[]{r});
                         MDPStateActionMarginal marginal = new MDPStateActionMarginal(p, a);
@@ -173,11 +173,19 @@ public class TGExpander extends MDPExpanderImpl {
         return isUncertaintyInThisState(state.getCol()[0],state.getRow()[0]);
     }
 
-    private boolean isUncertaintyInThisState(int col, int row) {
+    private static boolean isUncertaintyInThisState(int col, int row) {
         if (!sparseUncertainty) return TGConfig.useUncertainty;
         int allNodes = TGConfig.LENGTH_OF_GRID*TGConfig.WIDTH_OF_GRID;
         int currentID = col*TGConfig.WIDTH_OF_GRID + row;
         if (currentID % ((allNodes / 5) + 1) == 0) return true;
         else return false;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(isUncertaintyInThisState(0,0));
+        System.out.println(isUncertaintyInThisState(0,1));
+        System.out.println(isUncertaintyInThisState(1,0));
+        System.out.println(isUncertaintyInThisState(1,1));
+        System.out.println(isUncertaintyInThisState(2,0));
     }
 }

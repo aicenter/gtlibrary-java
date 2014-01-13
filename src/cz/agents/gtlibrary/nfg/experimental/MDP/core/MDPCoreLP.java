@@ -193,7 +193,7 @@ public class MDPCoreLP {
             boolean hasLS = false;
             for (Entry<MDPStateActionMarginal, Double> e : strategy.getPredecessors(state).entrySet()) {
                 if (variables.containsKey(e.getKey())) {
-                    assert (e.getValue() > 0);
+//                    assert (e.getValue() > 0);
                     hasLS = true;
                     LS = cplex.sum(LS, cplex.prod(e.getValue(), variables.get(e.getKey())));
                 } else {
@@ -212,6 +212,7 @@ public class MDPCoreLP {
             if (variables.containsKey(map)) {
                 try {
                     v = lpModels.get(player).getValue(variables.get(map));
+                    if (v < 1e-8) v =0;
                 } catch (IloException e) {
                     v = 0;
                 }
