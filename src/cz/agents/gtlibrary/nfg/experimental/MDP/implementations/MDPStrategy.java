@@ -288,4 +288,8 @@ public class MDPStrategy implements PureStrategy{
     public Player getPlayer() {
         return player;
     }
+
+    public Set<MDPStateActionMarginal> getES() {
+        return getAllActionStates();
+    }
 }

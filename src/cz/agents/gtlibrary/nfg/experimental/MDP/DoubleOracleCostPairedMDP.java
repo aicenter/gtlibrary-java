@@ -31,7 +31,7 @@ import java.util.*;
 public class DoubleOracleCostPairedMDP {
 
     public static boolean USE_ROBUST_BR = false;
-    public static boolean CONTRACTING = true;
+    public static boolean CONTRACTING = false;
     public static boolean USE_REORDER_ACTIONS = false;
     public static double END_EPSILON = MDPConfigImpl.getEpsilon();
 
@@ -101,8 +101,10 @@ public class DoubleOracleCostPairedMDP {
         firstPlayerStrategy = new MDPContractingStrategy(config.getAllPlayers().get(0),config,expander);
         secondPlayerStrategy = new MDPContractingStrategy(config.getAllPlayers().get(1),config,expander);
 
-        firstPlayerStrategy.generateAllStateActions();
-        secondPlayerStrategy.generateAllStateActions();
+//        firstPlayerStrategy.generateAllStateActions();
+//        secondPlayerStrategy.generateAllStateActions();
+
+        debugOutput.println("Strategies generated.");
 
         firstPlayerStrategy.initIterativeStrategy(secondPlayerStrategy);
         secondPlayerStrategy.initIterativeStrategy(firstPlayerStrategy);
@@ -301,8 +303,11 @@ public class DoubleOracleCostPairedMDP {
 //            debugOutput.println("New Actions MIN: " + newActions2);
 
             RGStart = threadBean.getCurrentThreadCpuTime();
+            firstPlayerStrategy.completeStrategy();
+            secondPlayerStrategy.completeStrategy();
             MDPIterativeStrategy.updateDefaultUtilityValues(newActions, firstPlayerStrategy,secondPlayerStrategy);
             RGCONSTR += threadBean.getCurrentThreadCpuTime() - RGStart;
+            debugOutput.println("RG DEFUPDATE TIME:" + ((threadBean.getCurrentThreadCpuTime() - RGStart)/1000000l));
 
 //            actionsAddedInIteration.add(newActions.size());
 //            for (MDPStateActionMarginal a : newActions) {

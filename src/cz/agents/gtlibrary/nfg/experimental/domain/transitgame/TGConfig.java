@@ -5,8 +5,10 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
+import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -24,9 +26,9 @@ public class TGConfig extends MDPConfigImpl{
 
     public static boolean rememberHistory = true;
 //
-    public static int MAX_TIME_STEP = 6;
-    public static int LENGTH_OF_GRID = 4;
-    public static int WIDTH_OF_GRID = 2;
+    public static int MAX_TIME_STEP = 7;
+    public static int LENGTH_OF_GRID = 5;
+    public static int WIDTH_OF_GRID = 3;
 //    public static int MAX_TIME_STEP = 18;
 //    public static int LENGTH_OF_GRID = 16;
 //    public static int WIDTH_OF_GRID = 8;
@@ -71,6 +73,41 @@ public class TGConfig extends MDPConfigImpl{
             defState = (TGState)firstPlayerAction.getState();
             attAction = (TGAction)secondPlayerAction.getAction();
             attState = (TGState)secondPlayerAction.getState();
+        }
+
+        if (rememberHistory) {
+            if (defState.getTimeStep() != attState.getTimeStep() || attState.getTimeStep()+1 < MAX_TIME_STEP)
+                result = 0d;
+            else {
+                if ((attState.getCol()[0] == defState.getCol()[0] && attState.getRow()[0] == defState.getRow()[0]) ||
+                        (attAction.getTargetCol()[0] == defState.getCol()[0] && attAction.getTargetRow()[0] == defState.getRow()[0] && attState.getCol()[0] == defAction.getTargetCol()[0] && attState.getRow()[0] == defAction.getTargetRow()[0]) ||
+                        (attAction.getTargetCol()[0] == defAction.getTargetCol()[0] && attAction.getTargetRow()[0] == defAction.getTargetRow()[0])
+                        ) {
+                    result = -1d;
+                } else {
+                    Pair<int[], int[]> defPosTp1 = new Pair<int[], int[]>(defState.getCol(), defState.getRow());
+                    Pair<int[], int[]> attPosTp1 = new Pair<int[], int[]>(attState.getCol(), attState.getRow());
+                    for (int t=defState.getTimeStep()-1; t>=0; t--) {
+                        Pair<int[], int[]> defPosT = defState.getHistory().get(t);
+                        Pair<int[], int[]> attPosT = attState.getHistory().get(t+1);
+                        if (Arrays.equals(defPosT.getLeft(), attPosT.getLeft()) && Arrays.equals(defPosT.getRight(), attPosT.getRight())) {
+                            result = -1d;
+                            break;
+                        } else if (Arrays.equals(defPosT.getLeft(), attPosTp1.getLeft()) && Arrays.equals(defPosT.getRight(), attPosTp1.getRight()) &&
+                                   Arrays.equals(defPosTp1.getLeft(), attPosT.getLeft()) && Arrays.equals(defPosTp1.getRight(), attPosT.getRight())) {
+                            result = -1d;
+                            break;
+                        }
+                        defPosTp1 = defPosT;
+                        attPosTp1 = attPosT;
+                    }
+                }
+                if (result > -1d && attAction.getTargetCol()[0] == TGConfig.LENGTH_OF_GRID - 1) {
+                    result = 1d;
+                    result = result - attState.getTimeStep() * 0.01;
+                }
+            }
+            return result;
         }
 
         if (defState.getTimeStep() != attState.getTimeStep())
