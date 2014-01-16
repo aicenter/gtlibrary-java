@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPState;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.*;
 
@@ -68,10 +69,11 @@ public class TGExpander extends MDPExpanderImpl {
 
     @Override
     public Map<MDPState, Double> getSuccessors(MDPStateActionMarginal action) {
-        if (!TGConfig.useUncertainty || action.getState().isRoot() || ((TGState)action.getState()).getTimeStep() <= 0 || !isUncertaintyInThisState((TGState)action.getState())) {
+        MDPState currentState = action.getState();
+        if (!TGConfig.useUncertainty || currentState.isRoot() || ((TGState)currentState).getTimeStep() <= 0 || !isUncertaintyInThisState((TGState)currentState)) {
             Map<MDPState, Double> result = new HashMap<MDPState, Double>();
 
-            MDPState state = action.getState().copy().performAction(action.getAction());
+            MDPState state = currentState.performAction(action.getAction());
             if (state != null) {
                 result.put(state,1d);
             }
@@ -79,15 +81,17 @@ public class TGExpander extends MDPExpanderImpl {
         } else {
             Map<MDPState, Double> result = new HashMap<MDPState, Double>();
 
-            MDPState state = action.getState().copy().performAction(action.getAction());
-            if (state != null) {
-                result.put(state,1d - TGConfig.MOVEMENT_UNCERTAINTY);
+            MDPState newState = currentState.performAction(action.getAction());
+            if (newState != null) {
+                result.put(newState,1d - TGConfig.MOVEMENT_UNCERTAINTY);
             }
 
-            MDPState failState = action.getState().copy();
-            ((TGState)failState).incTimeStep();
+//            MDPState failState = action.getState();
+//            ((TGState)failState).incTimeStep();
+            MDPState failState = action.getState().performAction(new TGAction(currentState.getPlayer(), new int[] {((TGState)currentState).getCol()[0]}, new int[] {((TGState)currentState).getRow()[0]}));
+
             if (!result.isEmpty()) {
-                if (state.equals(failState)) {
+                if (newState.equals(failState)) {
                     result.put(failState,1d);
                 } else {
                     result.put(failState,TGConfig.MOVEMENT_UNCERTAINTY);
@@ -101,6 +105,58 @@ public class TGExpander extends MDPExpanderImpl {
     public Map<MDPStateActionMarginal, Double> getPredecessors(MDPState state) {
         TGState s = (TGState)state;
         Map<MDPStateActionMarginal, Double> result = new HashMap<MDPStateActionMarginal, Double>();
+
+        if (TGConfig.rememberHistory) {
+            double prob = 1;
+
+            if (s.getCol()[0] == -1 && s.getRow()[0] == -1)
+                return null;
+
+            if (s.getTimeStep() == 0) {
+                if (s.getPlayer().getId() == 0) {
+                    Pair<int[], int[]> lastCoord = s.getHistory().get(s.getHistory().size()-1);
+                    List<Pair<int[], int[]>> lastHistory = s.getHistory().subList(0,s.getHistory().size()-1);
+                    TGState previousState = new TGState(s.getPlayer(), s.getTimeStep() - 1, lastCoord.getLeft(), lastCoord.getRight(), lastHistory);
+                    TGAction a = new TGAction(s.getPlayer(), new int[] {s.getCol()[0]}, new int[] {s.getRow()[0]});
+                    result.put(new MDPStateActionMarginal(previousState, a),1d);
+                    return result;
+                } else {
+                    return null;
+                }
+            }
+            Pair<int[], int[]> lastCoord = s.getHistory().get(s.getHistory().size()-1);
+            List<Pair<int[], int[]>> lastHistory = s.getHistory().subList(0,s.getHistory().size()-1);
+            TGState previousState = new TGState(s.getPlayer(), s.getTimeStep() - 1, lastCoord.getLeft(), lastCoord.getRight(), lastHistory);
+            if (s.getTimeStep() > 1 && TGConfig.useUncertainty && isUncertaintyInThisState(previousState)) {
+                if (previousState.getCol()[0] == s.getCol()[0] && previousState.getRow()[0] == s.getRow()[0]) {
+                    TGAction a = new TGAction(s.getPlayer(), new int[] {s.getCol()[0]}, new int[] {s.getRow()[0]});
+                    result.put(new MDPStateActionMarginal(previousState, a), 1d);
+
+                    for (int c=s.getCol()[0]-1; (c<=s.getCol()[0]+1) && (c<TGConfig.LENGTH_OF_GRID); c++) {
+//                    if (s.getPlayer().getId() == 0 && c > (s.getTimeStep() - 1)) continue;
+                        for (int r=s.getRow()[0]-1; (r<=s.getRow()[0]+1) && (r<TGConfig.WIDTH_OF_GRID); r++) {
+                            if (c < 0 || r < 0) continue;
+                            if (!isUncertaintyInThisState(s.getCol()[0],s.getRow()[0])) continue;
+                            TGAction a2 = new TGAction(s.getPlayer(), new int[]{c}, new int[]{r});
+                            MDPStateActionMarginal marginal = new MDPStateActionMarginal(previousState, a2);
+                            if (result.containsKey(marginal)) {
+                                result.put(marginal,1d);
+                            } else {
+                                result.put(marginal,TGConfig.MOVEMENT_UNCERTAINTY);
+                            }
+                        }
+                    }
+                } else {
+                    TGAction a = new TGAction(s.getPlayer(), new int[] {s.getCol()[0]}, new int[] {s.getRow()[0]});
+                    result.put(new MDPStateActionMarginal(previousState, a), 1d - TGConfig.MOVEMENT_UNCERTAINTY);
+                }
+            } else {
+                TGAction a = new TGAction(s.getPlayer(), new int[] {s.getCol()[0]}, new int[] {s.getRow()[0]});
+                result.put(new MDPStateActionMarginal(previousState, a), prob);
+            }
+            return result;
+        }
+
         if (s.getCol()[0] == -1 && s.getRow()[0] == -1)
             return null;
         if (s.getTimeStep() == 0) {

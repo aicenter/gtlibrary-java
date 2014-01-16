@@ -23,6 +23,7 @@ import java.util.*;
 public class MDPContractingBR extends MDPBestResponse {
 
     public static boolean PRUNING = false;
+    public static int ITERATIONS = 20;
 
     protected long prunes = 0;
 
@@ -34,6 +35,7 @@ public class MDPContractingBR extends MDPBestResponse {
     protected Set<MDPState> statesToExpand = new HashSet<MDPState>();
 
     protected Map<MDPState, Pair<Map<MDPAction, Integer>, Integer>> behavioralStrategies = new HashMap<MDPState, Pair<Map<MDPAction, Integer>, Integer>>();
+    protected Map<MDPState, Double> statesProbs = null;
 
     public MDPContractingBR(MDPConfig config, Player player) {
         super(config, player);
@@ -150,14 +152,15 @@ public class MDPContractingBR extends MDPBestResponse {
                     behavioralStrategies.remove(state);
                 }
             }  else {
-                if (myStrategy.getActions(state) != null && myStrategy.getExpandedStrategy(new MDPStateActionMarginal(state, bestAction)) > 0) {
-                    Map<MDPAction, Integer> currentBSMapping = myStrategy.createBehavioralStrategyMapping(state);
+                Double probOfState = statesProbs.get(state);
+                if (probOfState != null && probOfState > 1e-8) {
+                    Map<MDPAction, Integer> currentBSMapping = myStrategy.createBehavioralStrategyMapping(state, probOfState);
                     int newIterationsValue = 1;
                     if (behavioralStrategies.containsKey(state)) {
                         Map<MDPAction, Integer> storedBSMapping = behavioralStrategies.get(state).getLeft();
 
                         if (currentBSMapping.equals(storedBSMapping)) {
-                            if (behavioralStrategies.get(state).getRight() > 30 && currentBSMapping.size() > 1) {
+                            if (behavioralStrategies.get(state).getRight() > ITERATIONS && currentBSMapping.size() > 1) {
                                 statesToContract.add(state);
                             }
                             newIterationsValue += behavioralStrategies.get(state).getRight();
@@ -215,5 +218,9 @@ public class MDPContractingBR extends MDPBestResponse {
 
     public Set<MDPState> getStatesToExpand() {
         return statesToExpand;
+    }
+
+    public void setStatesProbs(Map<MDPState, Double> statesProbs) {
+        this.statesProbs = statesProbs;
     }
 }

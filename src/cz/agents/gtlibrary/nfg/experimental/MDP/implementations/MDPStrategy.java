@@ -121,7 +121,6 @@ public class MDPStrategy implements PureStrategy{
                 putStrategy(mdpsam,0d);
                 for (Map.Entry<MDPState, Double> e : getSuccessors(mdpsam).entrySet()) {
                     queue.addLast(e.getKey());
-
                 }
             }
         }

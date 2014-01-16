@@ -1,15 +1,16 @@
 package cz.agents.gtlibrary.nfg.experimental.MDP.implementations.oracle;
 
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.nfg.experimental.MDP.DoubleOracleCostPairedMDP;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStrategy;
+import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPConfig;
-import ilog.concert.IloException;
-import ilog.concert.IloNumVar;
+import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
+import ilog.concert.*;
+import ilog.cplex.IloCplex;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by bosansky on 1/7/14.
@@ -17,6 +18,9 @@ import java.util.Set;
 public class MDPContractingLP extends MDPOracleLP {
 
     protected Set<MDPStateActionMarginal> actionsToRemove = null;
+    private Map<MDPState, IloNumVar> fVariables = new HashMap<MDPState, IloNumVar>();
+    private Map<MDPState, IloRange> fConstraints = new HashMap<MDPState, IloRange>();
+    private Map<MDPState, Double> fValues = new HashMap<MDPState, Double>();
 
     public MDPContractingLP(Collection<Player> allPlayers, Map<Player, MDPStrategy> playerStrategy, MDPConfig config) {
         super(allPlayers, playerStrategy, config);
@@ -47,5 +51,75 @@ public class MDPContractingLP extends MDPOracleLP {
             }
         }
         super.updateLPFromStrategies(player, newActions);
+    }
+
+    protected void createConstraintForStrategy(IloCplex cplex, Player player, MDPState state) throws IloException {
+        IloNumExpr LS = cplex.constant(0);
+        IloNumExpr RS = cplex.constant(0);
+
+        MDPStrategy strategy = playerStrategy.get(player);
+        boolean hasSuccessors = false;
+
+        for (MDPAction a : strategy.getActions(state)) {
+            MDPStateActionMarginal am = new MDPStateActionMarginal(state,a);
+            if (variables.containsKey(am)) {
+                hasSuccessors = true;
+                RS = cplex.sum(RS, variables.get(am));
+            }
+        }
+
+        if (!hasSuccessors) return;
+
+        if (state.equals(strategy.getRootState())) {
+            LS = cplex.constant(1);
+        } else {
+            boolean hasLS = false;
+            for (Map.Entry<MDPStateActionMarginal, Double> e : strategy.getPredecessors(state).entrySet()) {
+                if (variables.containsKey(e.getKey())) {
+//                    assert (e.getValue() > 0);
+                    hasLS = true;
+                    LS = cplex.sum(LS, cplex.prod(e.getValue(), variables.get(e.getKey())));
+                } else {
+                    assert true;
+                }
+            }
+            assert hasLS;
+        }
+
+        constraints.put(state, cplex.addEq(cplex.diff(LS,RS),0, state.toString()));
+
+        if (DoubleOracleCostPairedMDP.CONTRACTING) {
+            IloNumVar fV = null;
+            if (fVariables.containsKey(state)) {
+                fV = fVariables.get(state);
+                cplex.delete(fConstraints.get(state));
+            } else {
+                fV = cplex.numVar(0,1, IloNumVarType.Float, "f" + state.toString());
+            }
+
+            fVariables.put(state, fV);
+            fConstraints.put(state, cplex.addEq(cplex.diff(fV,RS),0));
+        }
+    }
+
+    public void extractStrategyForPlayer(Player player) {
+        super.extractStrategyForPlayer(player);
+        for (MDPState state : playerStrategy.get(player).getStates()) {
+            IloNumVar fV = fVariables.get(state);
+            double v = 0;
+            if (fV != null) {
+                try {
+                    v = getLpModels().get(player).getValue(fV);
+                    if (v < 1e-8) v =0;
+                } catch (IloException e) {
+                    v = 0;
+                }
+            }
+            fValues.put(state, v);
+        }
+    }
+
+    public Map<MDPState, Double> getfValues() {
+        return fValues;
     }
 }

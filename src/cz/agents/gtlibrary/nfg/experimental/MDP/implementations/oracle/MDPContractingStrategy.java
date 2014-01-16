@@ -50,13 +50,13 @@ public class MDPContractingStrategy extends MDPIterativeStrategy {
         else return false;
     }
 
-    public Set<MDPStateActionMarginal> concractStates(Set<MDPState> states) {
+    public Set<MDPStateActionMarginal> concractStates(Set<MDPState> states, Map<MDPState, Double> probsMap) {
 //        predsSanity();
         Set<MDPStateActionMarginal> result = new HashSet<MDPStateActionMarginal>();
 
         for (MDPState s : states) {
             double contractedProb = 0d;
-            MDPStateActionMarginal m = contractStateToActualStrategy(s);
+            MDPStateActionMarginal m = contractStateToActualStrategy(s, probsMap.get(s));
             for (Map.Entry<MDPAction, Integer> a : ((ContractedDefaultAction)m.getAction()).getContractedActions().entrySet()) {
                 contractedProb += getExpandedStrategy(new MDPStateActionMarginal(s, a.getKey()));
             }
@@ -131,12 +131,12 @@ public class MDPContractingStrategy extends MDPIterativeStrategy {
         return expandedActions.keySet();
     }
 
-    private MDPStateActionMarginal contractStateToActualStrategy(MDPState state) {
+    private MDPStateActionMarginal contractStateToActualStrategy(MDPState state, double probOfState) {
         boolean isLastAction = false;
         assert (!fixedBehavioralStrategies.containsKey(state));
 
         //create artificial default action -> should be identified by the fixed behavioral strategy
-        Map<MDPAction, Integer> behavioralStrategyMapping = createBehavioralStrategyMapping(state);
+        Map<MDPAction, Integer> behavioralStrategyMapping = createBehavioralStrategyMapping(state, probOfState);
 
         MDPAction newDefaultAction = new ContractedDefaultAction(behavioralStrategyMapping);
         MDPStateActionMarginal newDefaultMarginalAction = new MDPStateActionMarginal(state, newDefaultAction);
@@ -302,24 +302,24 @@ public class MDPContractingStrategy extends MDPIterativeStrategy {
         return contractedDefaultActions.get(state).getAction();
     }
 
-    public Map<MDPAction, Integer> createBehavioralStrategyMapping(MDPState state) {
+    public Map<MDPAction, Integer> createBehavioralStrategyMapping(MDPState state, Double probOfState) {
         Map<MDPAction, Integer> result = new HashMap<MDPAction, Integer>();
-        double probOfState = 0d;
-        if (state.isRoot()) {
-            probOfState = 1d;
-        } else {
-            Map<MDPStateActionMarginal, Double> preds = getPredecessors(state);
-            for (MDPStateActionMarginal m : preds.keySet()) {
-                probOfState += getExpandedStrategy(m) * preds.get(m);
-            }
-        }
-        if (probOfState < 1e-10) {
-            for (MDPAction a : getActions(state)) {
-                result.put(a, 0);
-            }
-            result.put(getActions(state).get(0), new Double(1 / PRECISION).intValue());
-            return result;
-        }
+//        double probOfState = 0d;
+//        if (state.isRoot()) {
+//            probOfState = 1d;
+//        } else {
+//            Map<MDPStateActionMarginal, Double> preds = getPredecessors(state);
+//            for (MDPStateActionMarginal m : preds.keySet()) {
+//                probOfState += getExpandedStrategy(m) * preds.get(m);
+//            }
+//        }
+//        if (probOfState < 1e-10) {
+//            for (MDPAction a : getActions(state)) {
+//                result.put(a, 0);
+//            }
+//            result.put(getActions(state).get(0), new Double(1 / PRECISION).intValue());
+//            return result;
+//        }
         double checkSum = 0d;
         for (MDPAction a : getActions(state)) {
             double v = getExpandedStrategy(new MDPStateActionMarginal(state, a))/probOfState;

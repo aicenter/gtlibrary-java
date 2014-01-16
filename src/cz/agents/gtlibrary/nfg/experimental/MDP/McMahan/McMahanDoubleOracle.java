@@ -64,8 +64,8 @@ public class McMahanDoubleOracle {
     private double gameValue = Double.NaN;
 
     public static void main(String[] args) {
-        runBPG();
-//        runTG();
+//        runBPG();
+        runTG();
 //        runRG();
     }
 
