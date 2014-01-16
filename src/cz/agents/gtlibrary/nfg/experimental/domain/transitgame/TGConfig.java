@@ -21,16 +21,18 @@ public class TGConfig extends MDPConfigImpl{
 //      public static int MAX_TIME_STEP = 10;
 //      public static int LENGTH_OF_GRID = 6;
 //      public static int WIDTH_OF_GRID = 4;
+
+    public static boolean rememberHistory = true;
 //
-//    public static int MAX_TIME_STEP = 8;
-//    public static int LENGTH_OF_GRID = 4;
-//    public static int WIDTH_OF_GRID = 3;
+    public static int MAX_TIME_STEP = 6;
+    public static int LENGTH_OF_GRID = 4;
+    public static int WIDTH_OF_GRID = 2;
 //    public static int MAX_TIME_STEP = 18;
 //    public static int LENGTH_OF_GRID = 16;
 //    public static int WIDTH_OF_GRID = 8;
-    public static int MAX_TIME_STEP = 14;
-    public static int LENGTH_OF_GRID = 8;
-    public static int WIDTH_OF_GRID = 6;
+//    public static int MAX_TIME_STEP = 16;
+//    public static int LENGTH_OF_GRID = 12;
+//    public static int WIDTH_OF_GRID = 7;
 
     final protected static int PATROLLERS = 1;
     protected static int[] PATROLLER_BASES;

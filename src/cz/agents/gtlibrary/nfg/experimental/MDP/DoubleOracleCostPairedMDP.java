@@ -31,7 +31,7 @@ import java.util.*;
 public class DoubleOracleCostPairedMDP {
 
     public static boolean USE_ROBUST_BR = false;
-    public static boolean CONTRACTING = false;
+    public static boolean CONTRACTING = true;
     public static boolean USE_REORDER_ACTIONS = false;
     public static double END_EPSILON = MDPConfigImpl.getEpsilon();
 
@@ -47,6 +47,11 @@ public class DoubleOracleCostPairedMDP {
     private long BRTIME = 0;
     private long CPLEXTIME = 0;
     private long RGCONSTR = 0;
+
+    private int CONTRACTED_STATES_P1 = 0;
+    private int CONTRACTED_STATES_P2 = 0;
+    private int EXPANDED_STATES_P1 = 0;
+    private int EXPANDED_STATES_P2 = 0;
 
     private double gameValue = Double.NaN;
 
@@ -84,6 +89,12 @@ public class DoubleOracleCostPairedMDP {
 
 
     private void test() {
+//        try {
+//            System.in.read();
+//        } catch ( Exception e ) {
+//            e.printStackTrace();
+//        }
+
         threadBean = ManagementFactory.getThreadMXBean();
         long startTime = threadBean.getCurrentThreadCpuTime();
         debugOutput.println("Testing DO CostPaired MDP.");
@@ -166,6 +177,11 @@ public class DoubleOracleCostPairedMDP {
             firstPlayerStrategy.recalculateExpandedStrategy();
             secondPlayerStrategy.recalculateExpandedStrategy();
 
+            if (CONTRACTING) {
+                br1.setStatesProbs(lp.getfValues());
+                br2.setStatesProbs(lp.getfValues());
+            }
+
 //            rememberBehavioralStrategies(firstPlayerStrategy, iterations);
 //            rememberBehavioralStrategies(secondPlayerStrategy, iterations);
 
@@ -225,10 +241,12 @@ public class DoubleOracleCostPairedMDP {
             if (CONTRACTING) {
                 if (statesToExpand1.size() > 0) {
 //                    debugOutput.println("Expanding States MAX: " + statesToExpand1);
+                    EXPANDED_STATES_P1 += statesToExpand1.size();
                     newActions1.addAll(firstPlayerStrategy.expandStates(statesToExpand1));
                 }
                 if (statesToExpand2.size() > 0) {
 //                    debugOutput.println("Expanding States MIN: " + statesToExpand2);
+                    EXPANDED_STATES_P2 += statesToExpand2.size();
                     newActions2.addAll(secondPlayerStrategy.expandStates(statesToExpand2));
                 }
             }
@@ -247,13 +265,17 @@ public class DoubleOracleCostPairedMDP {
 
             RGStart = threadBean.getCurrentThreadCpuTime();
             if (CONTRACTING) {
+
+
                 if (statesToContract1.size() > 0) {
 //                    debugOutput.println("Contracting States MAX: " + statesToContract1);
-                    newActions1.addAll(firstPlayerStrategy.concractStates(statesToContract1));
+                    CONTRACTED_STATES_P1 += statesToContract1.size();
+                    newActions1.addAll(firstPlayerStrategy.concractStates(statesToContract1, lp.getfValues()));
                 }
                 if (statesToContract2.size() > 0) {
 //                    debugOutput.println("Contracting States MIN: " + statesToContract2);
-                    newActions2.addAll(secondPlayerStrategy.concractStates(statesToContract2));
+                    CONTRACTED_STATES_P2 += statesToContract2.size();
+                    newActions2.addAll(secondPlayerStrategy.concractStates(statesToContract2, lp.getfValues()));
                 }
 
                 actionsToRemove.addAll(firstPlayerStrategy.getActionMarginalsToRemove());
@@ -286,7 +308,7 @@ public class DoubleOracleCostPairedMDP {
 //            for (MDPStateActionMarginal a : newActions) {
 //                debugStrategyMap.put(a, iterations);
 //            }
-
+//            if (Math.abs(UB - LB) < 1e-2) CONTRACTING = true;
             if (newActions1.isEmpty() && newActions2.isEmpty()) {
 //                treshold = treshold / 10;
 //                if (treshold < MDPConfigImpl.getEpsilon()/100) {
@@ -320,8 +342,13 @@ public class DoubleOracleCostPairedMDP {
         debugOutput.println("final result:" + UB);
 
         if (CONTRACTING) {
-            debugOutput.println("Contracted States MAX: " + firstPlayerStrategy.getFixedBehavioralStrategiesSize());
-            debugOutput.println("Contracted States MIN: " + secondPlayerStrategy.getFixedBehavioralStrategiesSize());
+            debugOutput.println("Overall Contracted States MAX: " + CONTRACTED_STATES_P1);
+            debugOutput.println("Overall Contracted States MIN: " + CONTRACTED_STATES_P2);
+            debugOutput.println("Overall Expanded States MAX: " + EXPANDED_STATES_P1);
+            debugOutput.println("Overall Expanded States MIN: " + EXPANDED_STATES_P2);
+
+            debugOutput.println("Current Contracted States MAX: " + firstPlayerStrategy.getFixedBehavioralStrategiesSize());
+            debugOutput.println("Current Contracted States MIN: " + secondPlayerStrategy.getFixedBehavioralStrategiesSize());
         }
 
         try {

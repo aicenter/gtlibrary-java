@@ -5,9 +5,12 @@ import cz.agents.gtlibrary.nfg.experimental.MDP.implementations.MDPStateImpl;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.experimental.MDP.interfaces.MDPState;
 import cz.agents.gtlibrary.nfg.experimental.domain.bpg.BPConfig;
+import cz.agents.gtlibrary.utils.Pair;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,6 +28,8 @@ public class TGState extends MDPStateImpl {
     private int hash;
     private boolean changed = true;
 
+    private List<Pair<int[], int[]>> history = new ArrayList<Pair<int[], int[]>>();
+
     public TGState(Player player) {
         super(player);
         assert (UNITS == 1);
@@ -37,6 +42,10 @@ public class TGState extends MDPStateImpl {
             col[0] = TGConfig.PATROLLER_BASES[0];
             row[0] = 0;
         }
+
+        if (TGConfig.rememberHistory) {
+            history = new ArrayList<Pair<int[], int[]>>();
+        }
     }
 
 
@@ -48,6 +57,16 @@ public class TGState extends MDPStateImpl {
         this.row = row;
     }
 
+    public TGState(Player player, int timeStep, int[] col, int[] row, List<Pair<int[], int[]>> history) {
+        super(player);
+        this.timeStep = timeStep;
+        this.col = col;
+        this.row = row;
+        for (Pair<int[], int[]> h : history) {
+            this.history.add(new Pair<int[], int[]>(h.getLeft(), h.getRight()));
+        }
+    }
+
     public TGState(TGState state) {
         super(state.getPlayer());
         this.UNITS = state.UNITS;
@@ -57,6 +76,11 @@ public class TGState extends MDPStateImpl {
         for (int u=0; u<UNITS; u++) {
             col[u] = state.col[u];
             row[u] = state.row[u];
+        }
+        if (TGConfig.rememberHistory) {
+            for (Pair<int[], int[]> h : state.history) {
+                this.history.add(new Pair<int[], int[]>(h.getLeft(), h.getRight()));
+            }
         }
     }
 
@@ -71,6 +95,11 @@ public class TGState extends MDPStateImpl {
 
         if (newState.moveUnit(0, a.getTargetCol()[0], a.getTargetRow()[0])) {
             newState.incTimeStep();
+
+            if (TGConfig.rememberHistory) {
+                newState.history.add(new Pair<int[], int[]>(this.col, this.row));
+            }
+
             return newState;
         }
         return null;
@@ -104,6 +133,15 @@ public class TGState extends MDPStateImpl {
             if (this.col[u] != other.col[u]) return false;
             if (this.row[u] != other.row[u]) return false;
         }
+        if (TGConfig.rememberHistory) {
+            if (this.history.size() != other.history.size()) return false;
+            for (int h=0; h< history.size(); h++) {
+                for (int u=0; u<UNITS; u++) {
+                    if (history.get(h).getLeft()[u] != other.history.get(h).getLeft()[u]) return false;
+                    if (history.get(h).getRight()[u] != other.history.get(h).getRight()[u]) return false;
+                }
+            }
+        }
         return true;
     }
 
@@ -117,6 +155,14 @@ public class TGState extends MDPStateImpl {
             for (int u=0; u<UNITS; u++) {
                 hb.append(col[u]);
                 hb.append(row[u]);
+            }
+            if (TGConfig.rememberHistory) {
+                for (Pair<int[],int[]> p : history) {
+                    for (int u=0; u<UNITS; u++) {
+                        hb.append(p.getLeft()[u]);
+                        hb.append(p.getLeft()[u]);
+                    }
+                }
             }
             hash = hb.toHashCode();
             changed = false;
@@ -170,6 +216,17 @@ public class TGState extends MDPStateImpl {
     @Override
     public String toString() {StringBuilder sb = new StringBuilder();
         sb.append("TGState:"+getPlayer()+":T="+getTimeStep());
+        if (TGConfig.rememberHistory) {
+            sb.append(":H={");
+            for (Pair<int[], int[]> h : history) {
+                sb.append(" <");
+                sb.append(Arrays.toString(h.getLeft()));
+                sb.append(",");
+                sb.append(Arrays.toString(h.getRight()));
+                sb.append(">");
+            }
+            sb.append("}");
+        }
         for (int i=0; i<col.length; i++) {
             sb.append("[");
             sb.append(row[i]);
@@ -183,5 +240,10 @@ public class TGState extends MDPStateImpl {
     @Override
     public int horizon() {
         return TGConfig.getMaxTimeStep() - getTimeStep() + 1;
+    }
+
+    public List<Pair<int[], int[]>> getHistory() {
+        assert TGConfig.rememberHistory;
+        return history;
     }
 }

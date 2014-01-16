@@ -156,8 +156,8 @@ public class FullCostPairedMDP {
 //            debugOutput.println(m2 + " = " + secondPlayerStrategy.getStrategy().get(m2));
 //        }
 
-//        firstPlayerStrategy.sanityCheck();
-//        secondPlayerStrategy.sanityCheck();
+        firstPlayerStrategy.sanityCheck();
+        secondPlayerStrategy.sanityCheck();
 //
 //        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
 //        debugOutput.println("BR : " + br1.calculateBR(firstPlayerStrategy,  secondPlayerStrategy));
