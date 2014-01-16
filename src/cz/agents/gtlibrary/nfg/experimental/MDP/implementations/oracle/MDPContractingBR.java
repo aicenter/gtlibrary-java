@@ -27,6 +27,8 @@ public class MDPContractingBR extends MDPBestResponse {
 
     protected long prunes = 0;
 
+    protected Map<MDPState, Double> upperBounds = new HashMap<MDPState, Double>();
+
     protected Map<MDPState, Double> cachedLowerBounds = new HashMap<MDPState, Double>();
     protected Map<MDPState, Boolean> cachedIsChange = new HashMap<MDPState, Boolean>();
     protected Map<MDPState, Pair<Double, Double>> cachedValues = new HashMap<MDPState, Pair<Double, Double>>();

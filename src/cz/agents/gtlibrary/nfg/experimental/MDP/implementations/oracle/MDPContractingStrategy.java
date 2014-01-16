@@ -63,7 +63,7 @@ public class MDPContractingStrategy extends MDPIterativeStrategy {
             strategy.put(m, contractedProb);
             result.add(m);
         }
-        getAllActionStates().addAll(result);
+//        getAllActionStates().addAll(result);
 //        lastActionsSanity();
 //        predsSanity();
 //        removeMaringalsFromStrategy();
@@ -87,7 +87,7 @@ public class MDPContractingStrategy extends MDPIterativeStrategy {
                     getLastActions().add(m);
             }
         }
-        getAllActionStates().addAll(result);
+//        getAllActionStates().addAll(result);
 //        predsSanity();
 //        removeMaringalsFromStrategy();
         return result;
@@ -400,7 +400,7 @@ public class MDPContractingStrategy extends MDPIterativeStrategy {
                 getRemovedLastActions(m.getPlayer()).add(m);
             }
             strategy.remove(m);
-            getAllActionStates().remove(m);
+//            getAllActionStates().remove(m);
         }
 //        clearActionMarginalsToRemove();
     }
