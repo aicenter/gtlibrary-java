@@ -15,16 +15,15 @@ import cz.agents.gtlibrary.interfaces.GameState;
  * @author vilo
  */
 public class OOSLeafNode extends LeafNode {
-    public static OOSBackPropFactory fact;
-
     public OOSLeafNode(InnerNode parent, GameState gameState, Action lastAction) {
         super(parent, gameState, lastAction);
     }
 
     @Override
     public double[] simulate() {
+        OOSBackPropFactory fact = (OOSBackPropFactory) algConfig.getBackPropagationStrategyFactory();
         fact.x = 1;
-        fact.l = fact.s;
+        fact.l = (fact.bs == 1 && fact.us == 1 ? fact.s : fact.delta*fact.bs + (1-fact.delta)*fact.us);
         return super.simulate();
     }
 }

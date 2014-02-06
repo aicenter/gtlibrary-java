@@ -23,10 +23,10 @@ public abstract class Strategy implements Map<Sequence, Double>, Serializable  {
 	
 	public abstract String fancyToString(GameState root, Expander<? extends InformationSet> expander, Player player);
 
-	public static interface Factory {
+	public static interface Factory  extends Serializable {
 		public Strategy create();
 	}
-
+        
 	public double maxDifferenceFrom(Strategy other) {
 		double max = -Double.MAX_VALUE;
 		for (Map.Entry<Sequence, Double> en : entrySet()) {

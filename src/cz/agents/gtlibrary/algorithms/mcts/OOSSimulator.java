@@ -32,7 +32,7 @@ public class OOSSimulator extends DefaultSimulator {
 
     @Override
     public double[] simulate(GameState gameState, Expander<MCTSInformationSet> expander) {
-        fact.l = fact.s;
+        fact.l = (fact.bs == 1 && fact.us == 1 ? fact.s : fact.delta*fact.bs + (1-fact.delta)*fact.us);
         fact.x = 1;
 
         GameStateImpl state = (GameStateImpl) gameState.copy();

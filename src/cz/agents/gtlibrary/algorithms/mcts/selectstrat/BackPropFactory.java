@@ -7,12 +7,13 @@ package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import java.io.Serializable;
 
 /**
  *
  * @author Vilo
  */
-public interface BackPropFactory {
+public interface BackPropFactory extends Serializable {
         SelectionStrategy createForIS(MCTSInformationSet infSet);
         SelectionStrategy createForNode(Node node);
 }

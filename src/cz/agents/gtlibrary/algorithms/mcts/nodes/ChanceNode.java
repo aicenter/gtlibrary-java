@@ -62,7 +62,7 @@ public class ChanceNode extends InnerNode {
         	@Override
 	public void backPropagate(Action action, double[] values) {
                 for (int i=0; i < nodeStats.length; i++) nodeStats[i].onBackPropagate(values[i]);
-		if (parent != null && !parent.isLocked()) {
+		if (parent != null) {
 			parent.backPropagate(lastAction, values);
 		}
 	}

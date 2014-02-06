@@ -13,10 +13,17 @@ public class HighestValueAction implements Distribution {
 
 	@Override
 	public Map<Action, Double> getDistributionFor(MCTSInformationSet infSet) {
-		Map<Action, Double> distribution = new FixedSizeMap<Action, Double>(infSet.getActionStats().size());
-                final Action maxAction = ((UCTMAXSelectionStrategy)infSet.selectionStrategy).getMaxValueAction();
-		distribution.put(maxAction, 1d);
-		return distribution;
-	}
+            Map<Action, Double> distribution = new FixedSizeMap<Action, Double>(infSet.getActionStats().size());
+            Action out = infSet.getActionStats().keySet().iterator().next();
+            double max = -Double.MAX_VALUE;
+            for (Map.Entry<Action, BasicStats> en : infSet.getActionStats().entrySet()) {
+                if (max < en.getValue().getEV()) {
+                    max = en.getValue().getEV();
+                    out = en.getKey();
+                }
+            }
 
+            distribution.put(out, 1d);
+            return distribution;
+    }
 }

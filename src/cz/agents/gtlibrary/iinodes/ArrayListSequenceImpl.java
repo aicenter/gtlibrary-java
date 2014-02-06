@@ -25,7 +25,7 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	public ArrayListSequenceImpl(Sequence sequence) {
 		player = sequence.getPlayer();
-		actions = new ArrayList<Action>();
+		actions = new ArrayList<Action>(sequence.size()+1);
 		addAllAsLast(sequence);
 	}
 

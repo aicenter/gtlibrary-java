@@ -15,15 +15,16 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MCTSInformationSet extends InformationSetImpl {
 
 	private Set<InnerNode> allNodes;
-	transient public SelectionStrategy selectionStrategy;
-        transient private Map<Action, BasicStats> actionStats;
-	transient private BasicStats informationSetStats;
+	public SelectionStrategy selectionStrategy;
+        private Map<Action, BasicStats> actionStats;
+	private BasicStats informationSetStats;
 //        transient static private PrintStream log;
 //        
 //        static {
@@ -53,6 +54,10 @@ public class MCTSInformationSet extends InformationSetImpl {
 //                    + (informationSetStats.getNbSamples()+1) + ";"
 //                    +  action.toString() + ";" + value);
             informationSetStats.onBackPropagate(value);
+            if (!actionStats.containsKey(action)){
+                System.out.println("WARNING: Rebuilding HashMap!!!");
+                actionStats = new LinkedHashMap(actionStats);
+            }
             actionStats.get(action).onBackPropagate(value);
             return selectionStrategy.onBackPropagate(node, action, value);
         }
@@ -85,7 +90,7 @@ public class MCTSInformationSet extends InformationSetImpl {
 			for (Action action : actions) {
 				actionStats.put(action, new BasicStats());
 			}
-                        selectionStrategy = backPropagationStrategyFactory.createForIS(this);
+                        if (this.getPlayer().getId() < 2) selectionStrategy = backPropagationStrategyFactory.createForIS(this);
 		}
 	}
 

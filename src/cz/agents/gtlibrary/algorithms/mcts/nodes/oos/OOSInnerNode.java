@@ -6,9 +6,7 @@ package cz.agents.gtlibrary.algorithms.mcts.nodes.oos;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
@@ -36,8 +34,7 @@ public class OOSInnerNode extends InnerNode {
                     return new OOSLeafNode(this, nextState, action);
             }
             if (nextState.isPlayerToMoveNature()) {
-                    assert false; //need to implement OOSChanceNode
-                    return new ChanceNode(this, nextState, action);
+                    return new OOSChanceNode(this, nextState, action);
             }
             return new OOSInnerNode(this, nextState, action);
     }

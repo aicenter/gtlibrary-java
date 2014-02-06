@@ -7,8 +7,10 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.Pair;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -161,8 +163,11 @@ public abstract class StrategyImpl extends Strategy {
 		return strategy.toString();
 	}
 
+        private static boolean briefFancyTostring=true;
+        private HashSet<Pair> printed = new HashSet<Pair>();
 	@Override
 	public String fancyToString(GameState root, Expander<? extends InformationSet> expander, Player player) {
+                if (briefFancyTostring) printed.clear();
 		LinkedList<GameState> queue = new LinkedList<GameState>();
 		StringBuilder builder = new StringBuilder();
 		
@@ -174,7 +179,8 @@ public abstract class StrategyImpl extends Strategy {
 			for (Action action : expander.getActions(currentState)) {
 				GameState child = currentState.performAction(action);
 				
-				if(currentState.getPlayerToMove().equals(player)) {
+				if(currentState.getPlayerToMove().equals(player) 
+                                        && (!briefFancyTostring || get(child.getSequenceFor(player)) > 0 && !printed.contains(currentState.getISKeyForPlayerToMove()))) {
 					builder.append(child.getSequenceFor(player));
 					builder.append(": ");
 					builder.append(get(child.getSequenceFor(player)));
@@ -183,7 +189,7 @@ public abstract class StrategyImpl extends Strategy {
 				if(!child.isGameEnd())
 					queue.addLast(child);
 			}
-			
+			if (briefFancyTostring) printed.add(currentState.getISKeyForPlayerToMove());
 		}
 		return builder.toString();
 	}

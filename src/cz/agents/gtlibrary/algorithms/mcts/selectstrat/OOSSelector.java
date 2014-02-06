@@ -41,38 +41,76 @@ public class OOSSelector implements SelectionStrategy, MeanStrategyProvider {
         if (R <= 0){
             Arrays.fill(p,1.0/K);
         } else {
-            for (int i=0; i<p.length; i++) p[i] = Math.max(0,r[i])/R;
+            for (int i=0; i<p.length; i++) p[i] = 0.99*Math.max(0,r[i])/R + 0.01/K;
         }
     }
     
-    double pa;
     int ai;
-    @Override
+    @Override   
     public Action select(){
         updateProb();
         fact.putPIs();
+        fact.putSs();
+        //on biassed path
         int iexp = fact.root.getNbSamples() % 2;
-
-        double rand = fact.random.nextDouble();
-        
-        for (int i=0; i<p.length; i++) {
-            
-            //exploring player
-            if (iexp == is.getPlayer().getId()){
-                pa = (1-fact.gamma)*p[i] + fact.gamma/actions.size();
+        int inBiasActions=0;
+        double biasedSum=0;
+        //still on path to current IS
+        if (fact.bs > 0 && !fact.underTargetIs) {
+            if (fact.getCurrentIS().equals(is)){
+                fact.underTargetIs = true;
+            } else if (fact.getCurrentIS().getPlayer().equals(is.getPlayer())){
+                //this IS is above the current IS, returning the action from the history
+                if (fact.getCurrentIS().getPlayersHistory().size() > is.getPlayersHistory().size()){
+                    ai = actions.indexOf(fact.getCurrentIS().getPlayersHistory().get(is.getPlayersHistory().size()));
+                    biasedSum += p[ai];
+                    p[ai]*=-1;//na;egative values at p represent the actions to bias to
+                    inBiasActions=1;
+                }
             } else {
-                pa = p[i];
-            }
-            if (rand > pa) {
-                rand -= pa;
-            } else {
-                fact.pi[is.getPlayer().getId()] *= p[i];
-                fact.s *= pa;
-                ai = i;
-                return actions.get(i);
+                if (is.getPlayersHistory().size() < fact.opponentMaxSequenceLength){
+                    int i=0;
+                    for (Action a : actions){
+                        if (fact.opponentAllowedActions.contains(a)){
+                            biasedSum += p[i];
+                            p[i] *= -1; //negative prob. indicates action to bias towards
+                            inBiasActions++;
+                        }
+                        i++;
+                    }
+                }
             }
         }
         
+        double bpa, upa, pa;
+        double rand = fact.random.nextDouble();
+        for (int i=0; i<p.length; i++) {
+            //exploring player
+            if (iexp == is.getPlayer().getId()){
+                if (Double.compare(p[i],0.0) != -1) bpa=0;
+                else if (biasedSum > 0) bpa = (1-fact.gamma)*-1*p[i]/biasedSum + fact.gamma/inBiasActions;
+                else bpa=1.0/inBiasActions;
+                upa = (1-fact.gamma)*Math.abs(p[i]) + fact.gamma/actions.size();
+            } else {
+                if (Double.compare(p[i],0.0) != -1) bpa=0;
+                else if (biasedSum > 0) bpa = -1*p[i]/biasedSum;
+                else bpa=1.0/inBiasActions;
+                upa = Math.abs(p[i]);
+            }
+            if (fact.underTargetIs) bpa=upa;
+            pa = (fact.isBiasedIteration() ? bpa : upa);
+            if (rand > pa) {
+                rand -= pa;
+            } else {
+                ai = i;
+                for (i=0; i<p.length; i++) if (Double.compare(p[i],0.0) == -1) p[i]*=-1;
+                Action a = actions.get(ai);
+                fact.pi[is.getPlayer().getId()] *= p[ai];
+                fact.bs *= bpa;
+                fact.us *= upa;
+                return a;
+            }
+        }
         assert false;
         return null;
     }
@@ -80,12 +118,13 @@ public class OOSSelector implements SelectionStrategy, MeanStrategyProvider {
     @Override
     public double onBackPropagate(InnerNode node, Action action, double value) {
         fact.popPIs();
+        fact.popSs();
+        double s = fact.delta*fact.bs + (1-fact.delta)*fact.us;
         int curPlayerID = is.getPlayer().getId();
         double c = fact.x;
         fact.x *= p[ai];
         
         //exploring player
-        fact.s /= pa;
         if (fact.root.getNbSamples() % 2 == curPlayerID){
             double W = value*fact.pi[1-curPlayerID]/fact.l;
             for (int i=0; i<r.length; i++){
@@ -93,13 +132,20 @@ public class OOSSelector implements SelectionStrategy, MeanStrategyProvider {
                 else r[i] += -fact.x*W;
             }
         } else {
-            for (int i=0; i<p.length; i++) mp[i] += p[i]*fact.pi[curPlayerID]/fact.s;
+            for (int i=0; i<p.length; i++) mp[i] += p[i]*fact.pi[curPlayerID]/s;
         }
         
         if (node==fact.root){
+            if (fact.root.getNbSamples() % 2 == 0) fact.biassedSample = fact.random.nextDouble() < fact.delta;
+            fact.underTargetIs = false;
             assert Math.abs(fact.s-1) < 1e-6;
+            assert Math.abs(fact.bs-1) < 1e-6;
+            assert Math.abs(fact.us-1) < 1e-6;
             assert Math.abs(fact.pi[0]-1) < 1e-6;
             assert Math.abs(fact.pi[1]-1) < 1e-6;
+            assert fact.pis[0].isEmpty();
+            assert fact.pis[1].isEmpty();
+            assert fact.ss.isEmpty();
         }
         return value;
     }

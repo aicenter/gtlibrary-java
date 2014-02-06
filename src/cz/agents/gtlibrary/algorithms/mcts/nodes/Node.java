@@ -6,8 +6,9 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.strategy.Strategy;
+import java.io.Serializable;
 
-public interface Node {
+public interface Node extends Serializable {
 
 	public Node selectRecursively();
 

@@ -5,6 +5,8 @@
 package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSLeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.*;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
@@ -30,8 +32,8 @@ import java.util.*;
  * @author vilo
  */
 public class IIGMCTSExperiment {
-        private static final int MCTS_ITERATIONS_PER_CALL = (int)100000;
-        private static final int MCTS_CALLS = 10;
+        private static final int MCTS_ITERATIONS_PER_CALL = (int)10000;
+        private static final int MCTS_CALLS = 3;
 	private static PrintStream out = System.out;
     
         
@@ -76,7 +78,6 @@ public class IIGMCTSExperiment {
         
         static final double gamma = 0.6;
         static final OOSBackPropFactory fact = new OOSBackPropFactory(gamma);
-        static {OOSLeafNode.fact = fact;}
         static MCTSConfig firstMCTSConfig = new MCTSConfig(new OOSSimulator(fact), fact, new UniformStrategyForMissingSequences.Factory(), null);
         //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(), new UCTBackPropFactory(gamma*gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
         
@@ -105,6 +106,7 @@ public class IIGMCTSExperiment {
                 //out.print((brAlg1.calculateBR(rootState, strategy0) /*+ efg.getGameValue()*/) + " ");
                 out.print((mctsBR0.calculateBR(rootState, strategy1) /*+ efg.getGameValue()*/) + " ");
                 outLine += (mctsBR1.calculateBR(rootState, strategy0) /* - efg.getGameValue()*/) + " ";
+                maxVisitsMaxActionUpdateCurrentIS();
             }
             out.println("\n");
             out.println("P0BRs: " + outLine + "\n");
@@ -114,6 +116,26 @@ public class IIGMCTSExperiment {
             
             
             
+        }
+        
+        public static void maxVisitsMaxActionUpdateCurrentIS(){
+            MCTSInformationSet is = fact.getCurrentIS();
+
+            for (int i=0; i<2; i++){
+                Node maxNode = is.getAllNodes().iterator().next();
+                for (Node n : is.getAllNodes()){
+                    if (n.getNbSamples() > maxNode.getNbSamples()) maxNode=n;
+                }
+                Action maxAction = is.getActionStats().keySet().iterator().next();
+                for (Map.Entry<Action, BasicStats> en : is.getActionStats().entrySet()){
+                    if (en.getValue().getNbSamples() > is.getActionStats().get(maxAction).getNbSamples()) maxAction = en.getKey();
+                }
+                if (maxNode instanceof InnerNode
+                    && ((InnerNode)maxNode).getChildOrNull(maxAction) instanceof InnerNode)
+                    is = ((InnerNode)((InnerNode)maxNode).getChildOrNull(maxAction)).getInformationSet();
+                else out.println("No progress possible!!!");
+            }
+            fact.setCurrentIS(is);
         }
         
         public static Strategy filterLow(Strategy s){

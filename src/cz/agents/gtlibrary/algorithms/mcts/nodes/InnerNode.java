@@ -4,7 +4,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
-import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
@@ -22,12 +22,9 @@ public class InnerNode extends NodeImpl {
 	protected MCTSInformationSet informationSet;
         protected BasicStats[] nodeStats;
 
-	protected boolean isLocked;
-
 	public InnerNode(InnerNode parent, GameState gameState, Action lastAction) {
 		super(parent, lastAction, gameState);
 		currentPlayer = gameState.getPlayerToMove();
-		isLocked = false;
 		this.expander = parent.expander;
 		attendInformationSet();
 		actions = expander.getActions(gameState);
@@ -36,7 +33,6 @@ public class InnerNode extends NodeImpl {
 	public InnerNode(Expander<MCTSInformationSet> expander, MCTSConfig config, GameState gameState) {
 		super(config, gameState);
 		currentPlayer = gameState.getPlayerToMove();
-		isLocked = false;
 		this.expander = expander;
 		attendInformationSet();
 		actions = expander.getActions(gameState);
@@ -82,7 +78,7 @@ public class InnerNode extends NodeImpl {
                     values[1-currentPlayer.getId()] = -values[currentPlayer.getId()];
                 }
                 for (int i=0; i < nodeStats.length; i++) nodeStats[i].onBackPropagate(values[i]);
-		if (parent != null && !parent.isLocked()) {
+		if (parent != null) {
 			parent.backPropagate(lastAction, values);
 		}
 	}
@@ -117,22 +113,17 @@ public class InnerNode extends NodeImpl {
                     expand();
                     if (!algConfig.EXPAND_INFORMATION_SET) return this;
                 }
-                if (informationSet.getInformationSetStats().getNbSamples()==0) return this;
+                if (informationSet.getInformationSetStats().getNbSamples()==0 
+                        && informationSet.getPlayer().getId()<2) return this;
                 return selectChild().selectRecursively();
         }
 
 	public Node selectRecursively(int fixedDepth) {
-		if (fixedDepth > 0)
-			isLocked = true;
 		if (children == null)
 			return this;
 		Node child = selectChild();
 
-		return child instanceof LeafNode ? child : ((InnerNode) child).selectRecursively(fixedDepth - 1);
-	}
-
-	public boolean isLocked() {
-		return isLocked;
+		return child instanceof InnerNode ? ((InnerNode) child).selectRecursively(fixedDepth - 1) : child;
 	}
 
 	@Override
@@ -194,13 +185,13 @@ public class InnerNode extends NodeImpl {
 	}
 
 	protected Sequence createSequenceForStrategy() {
-		return new LinkedListSequenceImpl(gameState.getSequenceForPlayerToMove());
+		return new ArrayListSequenceImpl(gameState.getSequenceForPlayerToMove());
 	}
 
         
         @Override
 	public Strategy getStrategyFor(Player player, Distribution distribution, int cutOffDepth) {
-            if (children == null)
+            if (children == null || informationSet.getInformationSetStats().getNbSamples()< 10)
                     return algConfig.getEmptyStrategy();
             Strategy strategy = algConfig.getEmptyStrategy();
             Map<Action, Double> actionDistribution = distribution.getDistributionFor(informationSet);
@@ -208,11 +199,11 @@ public class InnerNode extends NodeImpl {
             for (Entry<Action, Double> actionEn : actionDistribution.entrySet()) {
                 if (player.equals(currentPlayer)) {
                     if (actionEn.getValue() > 0) {
-                        Sequence sequence = new LinkedListSequenceImpl(currentPlayer);
+                        Sequence sequence = new ArrayListSequenceImpl(currentPlayer);
                         sequence.addLast(actionEn.getKey());
                         strategy.put(sequence, actionEn.getValue());
                         for (Map.Entry<Sequence, Double> seqEn : getStrategyFor(children.get(actionEn.getKey()), player, distribution, cutOffDepth-1).entrySet()) {
-                            sequence = new LinkedListSequenceImpl(seqEn.getKey());
+                            sequence = new ArrayListSequenceImpl(seqEn.getKey());
                             sequence.addFirst(actionEn.getKey());
                             strategy.put(sequence, actionEn.getValue() * seqEn.getValue());
                         }

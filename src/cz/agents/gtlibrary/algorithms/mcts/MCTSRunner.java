@@ -7,40 +7,57 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
+import java.io.*;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.Map;
 
-public class MCTSRunner {
-
+public class MCTSRunner implements Serializable{
+        protected ThreadMXBean threadBean;
 	private final int MCTS_ITERATIONS_PER_CALL = 1000;
 	private final int SAME_STRATEGY_CHECK_COUNT = 20;
 
-	protected InnerNode rootNode;
 	protected MCTSConfig algConfig;
 	protected GameState gameState;
 	protected Expander<MCTSInformationSet> expander;
+        protected InnerNode rootNode;
 
 	public MCTSRunner(MCTSConfig algConfig, GameState gameState, Expander<MCTSInformationSet> expander) {
 		this.algConfig = algConfig;
 		this.gameState = gameState;
 		this.expander = expander;
+                threadBean = ManagementFactory.getThreadMXBean();
 	}
+        
+        public void runMCTStime(int miliseconds, Player player){
+            if (rootNode == null)
+                    rootNode = createRootNode(gameState, expander, algConfig);
+            long start = threadBean.getCurrentThreadCpuTime();
+            for (;(threadBean.getCurrentThreadCpuTime()-start)/1e6 < miliseconds;) {
+                    iteration();
+            }
+        }
+        
         
         public void runMCTS(int iterations, Player player){
             if (rootNode == null)
-			rootNode = createRootNode(gameState, expander, algConfig);
-		Node selectedLeaf = rootNode;
-
-		for (int i = 0; i < iterations; i++) {
-                        //includes expansion
-                        selectedLeaf = rootNode.selectRecursively();
-                        Action a = null;
-                        Node child = selectedLeaf;
-                        if (selectedLeaf instanceof InnerNode) {
-                            child = ((InnerNode)selectedLeaf).selectChild();
-                            a = child.getLastAction();
-                        }
-                        selectedLeaf.backPropagate(a, child.simulate());
-		}
+                    rootNode = createRootNode(gameState, expander, algConfig);
+            for (int i = 0; i < iterations; i++) {
+                    iteration();
+            }
+        }
+        
+        private void iteration(){
+            //includes expansion
+            Node selectedLeaf = rootNode;
+            selectedLeaf = rootNode.selectRecursively();
+            Action a = null;
+            Node child = selectedLeaf;
+            if (selectedLeaf instanceof InnerNode) {
+                child = ((InnerNode)selectedLeaf).selectChild();
+                a = child.getLastAction();
+            }
+            selectedLeaf.backPropagate(a, child.simulate());
         }
 
 	public Strategy runMCTS(int iterations, Player player, Distribution distribution) {
@@ -155,5 +172,26 @@ public class MCTSRunner {
         return rootNode;
     }
 
+    public void saveToFile(String fileName) throws Exception{
+        FileOutputStream file = new FileOutputStream(fileName);
+        ObjectOutputStream stream = new ObjectOutputStream(file);
+        stream.writeObject(this);
+        stream.close();
+        file.close();
+    }
+    
+    public static MCTSRunner loadFromFile(String fileName) throws Exception {
+        FileInputStream file = new FileInputStream(fileName);
+        ObjectInputStream stream = new ObjectInputStream(file);
+        MCTSRunner runner = (MCTSRunner) stream.readObject();
+        stream.close();
+        file.close();
+        return runner;
+    }
+    
+    public void setCurrentIS(MCTSInformationSet currentIS) {
+           assert false; //not implemented
+    }
         
 }
+    
