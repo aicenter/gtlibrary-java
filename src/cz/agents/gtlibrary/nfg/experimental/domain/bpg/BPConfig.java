@@ -18,6 +18,8 @@ import java.util.List;
  */
 public class BPConfig extends MDPConfigImpl {
 
+    public static String graphFile = "GridW4-connected.txt";
+
     public static int MAX_TIME_STEP = 6;
     public static double FLAG_PROB = 0.1;
 
