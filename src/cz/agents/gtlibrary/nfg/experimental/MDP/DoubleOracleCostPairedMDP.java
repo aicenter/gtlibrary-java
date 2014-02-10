@@ -352,8 +352,8 @@ public class DoubleOracleCostPairedMDP {
             debugOutput.println("Overall Expanded States MAX: " + EXPANDED_STATES_P1);
             debugOutput.println("Overall Expanded States MIN: " + EXPANDED_STATES_P2);
 
-            debugOutput.println("Current Contracted States MAX: " + firstPlayerStrategy.getFixedBehavioralStrategiesSize());
-            debugOutput.println("Current Contracted States MIN: " + secondPlayerStrategy.getFixedBehavioralStrategiesSize());
+            debugOutput.println("Current Contracted States MAX: " + firstPlayerStrategy.getFixedBehavioralStrategiesSize() + " out of " + firstPlayerStrategy.getStates().size());
+            debugOutput.println("Current Contracted States MIN: " + secondPlayerStrategy.getFixedBehavioralStrategiesSize()+ " out of " + secondPlayerStrategy.getStates().size());
         }
 
         try {

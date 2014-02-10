@@ -68,6 +68,17 @@ public class MixedStrategy<T extends PureStrategy> implements Iterable<Map.Entry
         if (Math.abs(sum - 1.0) > EPS) {
             throw new RuntimeException("Mixed strategy " + this + " is ill-formed!");
         }
+    }
 
+    public int getSupportSize() {
+        int result = 0;
+
+        for (Map.Entry<T, Double> entry : mixedStrategy.entrySet()) {
+            if (entry.getValue() > 0.00001) {
+                result++;
+            }
+        }
+
+        return result;
     }
 }

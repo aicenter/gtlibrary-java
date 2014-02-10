@@ -100,6 +100,10 @@ public class FullCostPairedMDP {
         p2StrategyGeneration = (threadBean.getCurrentThreadCpuTime() - p2StrategyGeneration)/1000000;
         debugOutput.println("P2 Strategy generation : " + p2StrategyGeneration);
 
+//        debugOutput.println("final size: FirstPlayer Marginal Strategies: " + firstPlayerStrategy.getAllMarginalsInStrategy().size() + " \t SecondPlayer Marginal Strategies: " + secondPlayerStrategy.getAllMarginalsInStrategy().size());
+//
+//        if (2 + 2 < 5) return;
+
 //        for (MDPStateActionMarginal m2 : secondPlayerStrategy.getAllMarginalsInStrategy()) {
 //            debugOutput.println(m2 + " sucessors:" + secondPlayerStrategy.getSuccessors(m2));
 //            if (!m2.getState().isRoot()) debugOutput.println("Predecessors:" + secondPlayerStrategy.getPredecessors(m2.getState()));
