@@ -34,7 +34,7 @@ public class BPState extends MDPStateImpl {
     public BPState(Player player) {
         super(player);
 
-        graph = new BorderPatrollingGraph();
+        graph = new BorderPatrollingGraph(BPConfig.graphFile);
         flaggedNodesObservedByPatroller = new TreeSet<Integer>();
         flaggedNodes = new TreeSet<Integer>();
 

@@ -40,7 +40,7 @@ public class BPGGameState extends GameStateImpl {
 		super(BPGGameInfo.ALL_PLAYERS);
 		slowAttackerMovement = false;
 		playerToMove = BPGGameInfo.ATTACKER;
-		graph = new BorderPatrollingGraph();
+		graph = new BorderPatrollingGraph(BPGGameInfo.graphFile);
 		flaggedNodesObservedByPatroller = new HashSet<Node>();
 		flaggedNodes = new HashSet<Node>();
 		attackerPosition = graph.getOrigin();

@@ -39,7 +39,7 @@ public class MDPExperiments {
                 throw new IllegalArgumentException("Illegal domain arguments count. 3 are required {DEPTH} {GRAPH} {FLAG_PROB}");
             }
             int depth = new Integer(args[2]);
-            BPGGameInfo.graphFile = args[3];
+            BPConfig.graphFile = args[3];
             BPConfig.FLAG_PROB = new Double(args[4]);
             BPConfig.MAX_TIME_STEP = depth;
             if (args.length == 7) {

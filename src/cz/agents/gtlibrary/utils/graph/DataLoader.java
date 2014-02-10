@@ -12,6 +12,7 @@ public class DataLoader {
 	private int nodesInOriginalGraph;
 	public static String graphFile = BPGGameInfo.graphFile;
 
+    @Deprecated
 	public DataLoader() {
 		readGraphFromFile(graphFile);
 	}

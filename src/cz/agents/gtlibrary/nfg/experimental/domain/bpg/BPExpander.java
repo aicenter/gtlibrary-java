@@ -28,14 +28,16 @@ public class BPExpander extends MDPExpanderImpl {
     public static int GOALNODE;
 
     {
-        if (BPGGameInfo.graphFile.startsWith("GridW4")) {
+        if (BPConfig.graphFile.startsWith("GridW4")) {
             allowedTargetsForDefender = new int[][]{{3,4,5,6},{11,12,13,14}};
             startingPositions = new int[][]{{0},{17,18}};
             GOALNODE = 16;
-        } else if (BPGGameInfo.graphFile.startsWith("GridW5")) {
+        } else if (BPConfig.graphFile.startsWith("GridW5")) {
             allowedTargetsForDefender = new int[][]{{2,3,4,5,6},{12,13,14,15,16}};
             startingPositions = new int[][]{{0},{18,19}};
             GOALNODE = 17;
+        } else {
+            assert false;
         }
     }
 
