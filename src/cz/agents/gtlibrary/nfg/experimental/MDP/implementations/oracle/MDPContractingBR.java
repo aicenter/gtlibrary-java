@@ -23,11 +23,9 @@ import java.util.*;
 public class MDPContractingBR extends MDPBestResponse {
 
     public static boolean PRUNING = false;
-    public static int ITERATIONS = 20;
+    public static int ITERATIONS = 10;
 
     protected long prunes = 0;
-
-    protected Map<MDPState, Double> upperBounds = new HashMap<MDPState, Double>();
 
     protected Map<MDPState, Double> cachedLowerBounds = new HashMap<MDPState, Double>();
     protected Map<MDPState, Boolean> cachedIsChange = new HashMap<MDPState, Boolean>();

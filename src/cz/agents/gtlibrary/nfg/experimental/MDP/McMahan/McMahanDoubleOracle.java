@@ -282,6 +282,7 @@ public class McMahanDoubleOracle {
         debugOutput.println("CPLEX Time: " + (CPLEXTIME / 1000000l));
         debugOutput.println("RGConstr Time: " + (RGCONSTR / 1000000l));
         debugOutput.println("final size: FirstPlayer Pure Strategies: " + maxPlayerStrategySet.size() + " \t SecondPlayer Pure Strategies: " + minPlayerStrategySet.size());
+        debugOutput.println("final size: FirstPlayer Support: " + maxPlayerMixedStrategy.getSupportSize() + " \t SecondPlayer Support: " + minPlayerMixedStrategy.getSupportSize());
         debugOutput.println("final result:" + resultValue);
 
         try {

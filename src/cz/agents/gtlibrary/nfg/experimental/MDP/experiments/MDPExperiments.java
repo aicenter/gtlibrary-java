@@ -55,10 +55,13 @@ public class MDPExperiments {
             TGConfig.MAX_TIME_STEP = new Integer(args[2]);
             TGConfig.LENGTH_OF_GRID = new Integer(args[3]);
             TGConfig.WIDTH_OF_GRID = new Integer(args[4]);
-            if (args.length == 8) {
+            if (args.length >= 8) {
                 TGConfig.useUncertainty = new Boolean(args[5]);
                 TGConfig.SHUFFLE = new Boolean(args[6]);
                 TGConfig.SHUFFLE_ID = new Integer(args[7]);
+                if (args.length == 9) {
+                    TGConfig.UTILITY_MULTIPLIER = new Double(args[8]);
+                }
             } else {
                 TGConfig.useUncertainty = false;
                 TGConfig.SHUFFLE = false;
