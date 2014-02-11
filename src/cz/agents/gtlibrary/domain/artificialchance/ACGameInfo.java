@@ -43,7 +43,7 @@ public class ACGameInfo implements GameInfo {
 
 	@Override
 	public String getInfo() {
-		return "AC experimental";
+		return "AC characteristics";
 	}
 
 	@Override
