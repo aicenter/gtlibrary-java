@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.io;
+package cz.agents.gtlibrary.utils.io;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;

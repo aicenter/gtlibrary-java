@@ -25,7 +25,7 @@ import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimSystematicGS;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.io.GambitEFG;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.nfg.UtilityMatrix;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolver;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolverImpl;

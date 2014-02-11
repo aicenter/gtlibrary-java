@@ -12,7 +12,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInfo
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.io.GambitEFG;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.utils.Pair;
 import java.io.PrintStream;
 import java.util.*;
