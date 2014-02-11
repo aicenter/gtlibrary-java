@@ -47,7 +47,7 @@ import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.io.GambitEFG;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 
