@@ -15,11 +15,11 @@ import java.util.List;
  */
 public class GambitEFG {
     private static boolean wActionLabels = false;
-    
+
     public static void write(String filename, GameState root, Expander<SequenceInformationSet> expander) {
         write(filename, root, expander, Integer.MAX_VALUE);
     }
-    
+
     public static void write(String filename, GameState root, Expander<SequenceInformationSet> expander, int cut_off_depth) {
         try {
             PrintStream out = new PrintStream(filename);
@@ -32,26 +32,28 @@ public class GambitEFG {
             }
             out.println("}");
             nextOutcome = 1;
+            nextChance = 1;
             writeRec(out, root, expander, cut_off_depth);
         } catch (Exception ex){
             ex.printStackTrace();
         }
     }
-    
+
     static int nextOutcome = 1;
-    
+    static int nextChance = 1;
+
     private static void writeRec(PrintStream out, GameState node, Expander<SequenceInformationSet> expander, int cut_off_depth){
         if (node.isGameEnd() || cut_off_depth == 0){
             out.print("t \"" + node.toString() + "\" " + nextOutcome++ + " \"\" { ");
             double[] u = node.getUtilities();
-            for (int i=0; i<u.length; i++){
+            for (int i=0; i<2; i++){
                 out.print((i==0 ? "" : ", ") + u[i]);
             }
             out.println("}");
         } else {
             List<Action> actions = expander.getActions(node);
             if (node.isPlayerToMoveNature()){
-                out.print("c \"" + node.toString() + "\" " + 0 + " \"\" { ");
+                out.print("c \"" + node.toString() + "\" " + nextChance++ + " \"\" { ");
                 for (Action a : actions){
                     out.print("\"" + (wActionLabels ? a.toString() : "")  + "\" " + node.getProbabilityOfNatureFor(a) + " ");
                 }
@@ -69,5 +71,6 @@ public class GambitEFG {
             }
         }
     }
-    
+
 }
+
