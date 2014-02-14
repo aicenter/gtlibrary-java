@@ -67,8 +67,8 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-//		runKuhnPoker();
-		runGenericPoker();
+		runKuhnPoker();
+//		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();

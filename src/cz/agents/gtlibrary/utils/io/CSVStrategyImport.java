@@ -4,10 +4,14 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
 import org.apache.wicket.util.file.File;
 
 import java.io.*;
@@ -47,8 +51,12 @@ public class CSVStrategyImport {
 
             for (String x = reader.readLine(); x != null ; x = reader.readLine()) {
                 Map<Sequence, Double> strategy = new HashMap<Sequence, Double>();
+                strategy.put(root.getSequenceFor(root.getAllPlayers()[0]),1d);
+                strategy.put(root.getSequenceFor(root.getAllPlayers()[1]),1d);
                 String[] strategyInString = x.split(",");
-                assert (sequences.size() + 1 == strategyInString.length);
+                if (sequences.size() + 1 != strategyInString.length) {
+                    assert false;
+                }
                 for (int i=1; i<strategyInString.length; i++) {
                     Double d = new Double(strategyInString[i]);
                     Sequence thisSequence = sequences.get(i-1);
@@ -58,6 +66,8 @@ public class CSVStrategyImport {
                     }
                     strategy.put(thisSequence,d);
                 }
+                NoMissingSeqStrategy tmp = new NoMissingSeqStrategy(strategy);
+                tmp.sanityCheck(root,expander);
                 result.add(strategy);
             }
 
@@ -85,7 +95,9 @@ public class CSVStrategyImport {
             if (currentState.isGameEnd()) {
                 continue;
             }
-            for (Action action : expander.getActions(currentState)) {
+            List<Action> l = expander.getActions(currentState);
+            ArrayList<GameState> newStates = new ArrayList<GameState>();
+            for (Action action : l) {
                 GameState newState = currentState.performAction(action);
                 Sequence p1Sequence = newState.getHistory().getSequenceOf(root.getAllPlayers()[0]);
                 Sequence p2Sequence = newState.getHistory().getSequenceOf(root.getAllPlayers()[1]);
@@ -97,8 +109,10 @@ public class CSVStrategyImport {
                     visited.add(p2Sequence);
                     if (p2Sequence.size() > 0) p2.add(p2Sequence);
                 }
-                queue.add(newState);
+                newStates.add(newState);
             }
+            Collections.reverse(newStates);
+            queue.addAll(newStates);
         }
 
         result.addAll(p2);
@@ -111,6 +125,11 @@ public class CSVStrategyImport {
         GameInfo gameInfo = new KPGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander expander = new KuhnPokerExpander<DoubleOracleInformationSet>(algConfig);
+
+//        GameState rootState = new GenericPokerGameState();
+//        GPGameInfo gameInfo = new GPGameInfo();
+//        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+//        Expander expander = new GenericPokerExpander<DoubleOracleInformationSet>(algConfig);
 
 //        ArrayList<Sequence> sequences = prepareStrategyFromEfg(rootState,expander);
 //        System.out.println(sequences);
