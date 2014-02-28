@@ -32,8 +32,8 @@ public class NFPSolver {
 	public static void main(String[] args) {
 //		runUpOrDown();
 //		runAceOfSpades();
-//		runKuhnPoker();
-		runBPG();
+		runKuhnPoker();
+//		runBPG();
 //		runGenericPoker();
 //		runGoofspiel();
 	}

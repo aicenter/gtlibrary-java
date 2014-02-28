@@ -103,14 +103,21 @@ public class InitialPBuilder extends TreeVisitor {
 			lpData.getSolver().exportModel(lpFileName);
 			for (int algorithm : lpData.getAlgorithms()) {
 				lpData.getSolver().setParam(IloCplex.IntParam.RootAlg, algorithm);
-				if(solved = trySolve(lpData))
+				if (solved = trySolve(lpData))
 					break;
 			}
-			if(!solved)
+			if (!solved)
 				solveUnfeasibleLP(lpData);
-//			trySolve(lpData);
+			//			trySolve(lpData);
 			System.out.println(lpData.getSolver().getStatus());
 			System.out.println(lpData.getSolver().getObjValue());
+
+			double[] values = lpData.getSolver().getValues(lpData.getVariables());
+
+//			System.out.println("values:");
+//			for (int i = 0; i < values.length; i++) {
+//				System.out.println(lpData.getVariables()[i] + ": " + values[i]);
+//			}
 
 			//			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
 
@@ -131,10 +138,11 @@ public class InitialPBuilder extends TreeVisitor {
 
 	private boolean trySolve(LPData lpData) throws IloException {
 		boolean solved;
-		
+
 		try {
 			solved = lpData.getSolver().solve();
 		} catch (IloException e) {
+			e.printStackTrace();
 			return false;
 		}
 
@@ -155,7 +163,7 @@ public class InitialPBuilder extends TreeVisitor {
 		double[] preferences = new double[lpData.getConstraints().length];
 
 		for (int i = 0; i < preferences.length; i++) {
-			if (lpData.getRelaxableConstraints().contains(lpData.getConstraints()[i]))
+			if (lpData.getRelaxableConstraints().values().contains(lpData.getConstraints()[i]))
 				preferences[i] = 1;
 			else
 				preferences[i] = 0.5;

@@ -8,6 +8,8 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.strategy.Strategy;
 
 public class MCTSConfig extends ConfigImpl<MCTSInformationSet> {
+        /** Flag indicating whether to expand one information set or one node in each simulation*/
+        public boolean EXPAND_INFORMATION_SET = false;
 	
 	private Simulator simulator;
 	private BackPropFactory backPropagationStrategyFactory;

@@ -240,6 +240,7 @@ public class Data {
 		writer.newLine();
 	}
 
+
 	@SuppressWarnings("unchecked")
 	public void printUtilityEntrySet(BufferedWriter writer, Map<Object, Double> map) throws IOException {
 		writer.newLine();

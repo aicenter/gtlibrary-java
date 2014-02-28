@@ -6,6 +6,7 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -147,11 +148,11 @@ public class LPTable {
 		return variableIndices.size();
 	}
 
-	protected int getEquationIndex(Object eqKey) {
+	public int getEquationIndex(Object eqKey) {
 		return getIndex(eqKey, equationIndices);
 	}
 
-	protected int getVariableIndex(Object varKey) {
+	public int getVariableIndex(Object varKey) {
 		return getIndex(varKey, variableIndices);
 	}
 
@@ -193,11 +194,11 @@ public class LPTable {
 		return new LPData(cplex, variables, constraints, getRelaxableConstraints(constraints), getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
 	}
 
-	protected Set<IloRange> getRelaxableConstraints(IloRange[] constraints) {
-		Set<IloRange> relaxableConstraints = new HashSet<IloRange>(this.relaxableConstraints.size());
+	protected Map<Object, IloRange> getRelaxableConstraints(IloRange[] constraints) {
+		Map<Object, IloRange> relaxableConstraints = new HashMap<Object, IloRange>(this.relaxableConstraints.size());
 		
 		for (Object eqKey : this.relaxableConstraints) {
-			relaxableConstraints.add(constraints[getEquationIndex(eqKey) - 1]);
+			relaxableConstraints.put(eqKey, constraints[getEquationIndex(eqKey) - 1]);
 		}
 		return relaxableConstraints;
 	}
@@ -306,6 +307,14 @@ public class LPTable {
 	 */
 	public void markRelaxableConstraint(Object eqKey) {
 		relaxableConstraints.add(eqKey);
+	}
+	
+	/**
+	 * Remove constraint from relaxable constraints
+	 * @param eqKey
+	 */
+	public void unmarkRelaxableConstraint(Object eqKey) {
+		relaxableConstraints.remove(eqKey);
 	}
 
 	/**

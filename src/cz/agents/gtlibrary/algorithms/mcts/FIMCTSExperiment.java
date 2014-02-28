@@ -68,7 +68,7 @@ public class FIMCTSExperiment {
         private static double[] means;
         public static void runFIMCTS() throws Exception {
             //compute the probability that the selected action is sub-optional over time/iterations
-            MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(), new UCTBackPropFactory(gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
+            MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(), new UCTBackPropFactory(gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
             Expander<MCTSInformationSet> expander = new RandomGameExpander<MCTSInformationSet> (firstMCTSConfig);
             MCTSRunner runner = new MCTSRunner(firstMCTSConfig, rootState, expander);
             Distribution dist =  new MostFrequentAction();

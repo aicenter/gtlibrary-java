@@ -45,15 +45,18 @@ public class OOSSelector implements SelectionStrategy, MeanStrategyProvider {
         }
     }
     
+    double pa;
+    int ai;
     @Override
     public Action select(){
         updateProb();
+        fact.putPIs();
         int iexp = fact.root.getNbSamples() % 2;
 
         double rand = fact.random.nextDouble();
         
         for (int i=0; i<p.length; i++) {
-            double pa;
+            
             //exploring player
             if (iexp == is.getPlayer().getId()){
                 pa = (1-fact.gamma)*p[i] + fact.gamma/actions.size();
@@ -63,8 +66,9 @@ public class OOSSelector implements SelectionStrategy, MeanStrategyProvider {
             if (rand > pa) {
                 rand -= pa;
             } else {
-                fact.pis.add(fact.pi);
-                if (iexp == is.getPlayer().getId()) fact.pi *= pa;
+                fact.pi[is.getPlayer().getId()] *= p[i];
+                fact.s *= pa;
+                ai = i;
                 return actions.get(i);
             }
         }
@@ -75,30 +79,28 @@ public class OOSSelector implements SelectionStrategy, MeanStrategyProvider {
 
     @Override
     public double onBackPropagate(InnerNode node, Action action, double value) {
+        fact.popPIs();
+        int curPlayerID = is.getPlayer().getId();
+        double c = fact.x;
+        fact.x *= p[ai];
+        
         //exploring player
-        if (fact.root.getNbSamples() % 2 == is.getPlayer().getId()){
-            double vsum = 0;
-            double[] v  = new double[p.length];
-            int i=0;
-            for (Action a : actions){
-                if (a.equals(action)){
-                    v[i] = value;
-                } else {
-                    v[i] = valueEstimate(a, node);
-                }
-                vsum += p[i]*v[i];
-                i++;
-            }
-            
-            double pi = fact.pis.removeLast();
-            for (i=0; i<r.length; i++){
-                r[i] += (v[i] - vsum)/pi;
+        fact.s /= pa;
+        if (fact.root.getNbSamples() % 2 == curPlayerID){
+            double W = value*fact.pi[1-curPlayerID]/fact.l;
+            for (int i=0; i<r.length; i++){
+                if (action.equals(actions.get(i))) r[i] += (c-fact.x)*W;
+                else r[i] += -fact.x*W;
             }
         } else {
-            double pi = fact.pis.removeLast();
-            for (int i=0; i<p.length; i++) mp[i] += pi*p[i];
+            for (int i=0; i<p.length; i++) mp[i] += p[i]*fact.pi[curPlayerID]/fact.s;
         }
-        if (fact.pis.isEmpty()) fact.pi = 1;
+        
+        if (node==fact.root){
+            assert Math.abs(fact.s-1) < 1e-6;
+            assert Math.abs(fact.pi[0]-1) < 1e-6;
+            assert Math.abs(fact.pi[1]-1) < 1e-6;
+        }
         return value;
     }
 
@@ -110,32 +112,5 @@ public class OOSSelector implements SelectionStrategy, MeanStrategyProvider {
     @Override
     public double[] getMp() {
         return mp;
-    }
-    
-    private double valueEstimate(Action exp, InnerNode node){
-        double out = 0;
-        try {
-             if (node.getInformationSet().getPlayer().getId() == 0){
-                assert node.getInformationSet().getAllNodes().size() == 1;
-                InnerNode child = (InnerNode) node.getChildOrNull(exp);
-                double[] p = ((OOSSelector) child.getInformationSet().selectionStrategy).p;
-                int i=0;
-                for (Action a : child.getActions()){
-                    out += p[i++] * ((InnerNode)child.getChildOrNull(a)).getEV()[node.getInformationSet().getPlayer().getId()];
-                }
-            } else {
-                InnerNode parent = (InnerNode) node.getParent();
-                double[] p = ((OOSSelector) parent.getInformationSet().selectionStrategy).p;
-                int i=0;
-                for (Action a : parent.getActions()){
-                    out += p[i++] * ((InnerNode)parent.getChildOrNull(a)).getChildOrNull(exp).getEV()[node.getInformationSet().getPlayer().getId()];
-                }
-            }
-        } catch (NullPointerException ex){
-            return 0;
-        }
-        return out;
-    }
-    
-    
+    }    
 }

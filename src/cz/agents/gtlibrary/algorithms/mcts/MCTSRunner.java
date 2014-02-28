@@ -5,10 +5,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import java.util.Map;
 
@@ -17,10 +14,10 @@ public class MCTSRunner {
 	private final int MCTS_ITERATIONS_PER_CALL = 1000;
 	private final int SAME_STRATEGY_CHECK_COUNT = 20;
 
-	private InnerNode rootNode;
-	private MCTSConfig algConfig;
-	private GameState gameState;
-	private Expander<MCTSInformationSet> expander;
+	protected InnerNode rootNode;
+	protected MCTSConfig algConfig;
+	protected GameState gameState;
+	protected Expander<MCTSInformationSet> expander;
 
 	public MCTSRunner(MCTSConfig algConfig, GameState gameState, Expander<MCTSInformationSet> expander) {
 		this.algConfig = algConfig;
@@ -34,9 +31,15 @@ public class MCTSRunner {
 		Node selectedLeaf = rootNode;
 
 		for (int i = 0; i < iterations; i++) {
-			selectedLeaf = rootNode.selectRecursively();
-			selectedLeaf.expand();
-			selectedLeaf.backPropagate(null, selectedLeaf.simulate());
+                        //includes expansion
+                        selectedLeaf = rootNode.selectRecursively();
+                        Action a = null;
+                        Node child = selectedLeaf;
+                        if (selectedLeaf instanceof InnerNode) {
+                            child = ((InnerNode)selectedLeaf).selectChild();
+                            a = child.getLastAction();
+                        }
+                        selectedLeaf.backPropagate(a, child.simulate());
 		}
         }
 

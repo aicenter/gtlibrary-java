@@ -5,6 +5,7 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -111,6 +112,12 @@ public class InitialPBuilder extends TreeVisitor {
 //			trySolve(lpData);
 			System.out.println(lpData.getSolver().getStatus());
 			System.out.println(lpData.getSolver().getObjValue());
+			double[] values = lpData.getSolver().getValues(lpData.getVariables());
+			
+			System.out.println("values:");
+			for (int i = 0; i < values.length; i++) {
+				System.out.println(lpData.getVariables()[i] + ": " + values[i]);
+			}
 
 			//			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
 
@@ -155,7 +162,7 @@ public class InitialPBuilder extends TreeVisitor {
 		double[] preferences = new double[lpData.getConstraints().length];
 
 		for (int i = 0; i < preferences.length; i++) {
-			if (lpData.getRelaxableConstraints().contains(lpData.getConstraints()[i]))
+			if (lpData.getRelaxableConstraints().values().contains(lpData.getConstraints()[i]))
 				preferences[i] = 1;
 			else
 				preferences[i] = 0.5;
