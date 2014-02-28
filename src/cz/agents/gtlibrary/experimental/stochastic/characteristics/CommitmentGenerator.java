@@ -132,7 +132,7 @@ public class CommitmentGenerator  implements Iterator<Map<Path,int[]>> {
     }
 
     static public void main(String[] args) {
-        CommitmentGenerator test = new CommitmentGenerator(2,2,3,0);
+        CommitmentGenerator test = new CommitmentGenerator(2,5,3,0);
 
 //        for (Path p : test.currentCommitment.keySet()) {
 //            System.out.println(p);

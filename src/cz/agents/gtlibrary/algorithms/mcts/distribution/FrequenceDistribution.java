@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.io.GambitEFG;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 public class FrequenceDistribution implements Distribution {
