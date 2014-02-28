@@ -73,6 +73,7 @@ public class InitialP2QBuilder extends TreeVisitor {
 		try {
 			solved = lpData.getSolver().solve();
 		} catch (IloException e) {
+			e.printStackTrace();
 			return false;
 		}
 
@@ -93,7 +94,7 @@ public class InitialP2QBuilder extends TreeVisitor {
 		double[] preferences = new double[lpData.getConstraints().length];
 
 		for (int i = 0; i < preferences.length; i++) {
-			if (lpData.getRelaxableConstraints().contains(lpData.getConstraints()[i]))
+			if (lpData.getRelaxableConstraints().values().contains(lpData.getConstraints()[i]))
 				preferences[i] = 1;
 			else
 				preferences[i] = 0.5;

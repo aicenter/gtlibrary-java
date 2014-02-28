@@ -101,7 +101,7 @@ public class SMMCTSExperiment {
         }
         
         static double gamma = 0.05;
-        static MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
+        static MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
         //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new OOSBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
         //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(gamma*gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
         //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new Exp3BackPropFactory(-maxCFValue, maxCFValue, gamma), new UniformStrategyForMissingSequences.Factory(), null);
@@ -161,7 +161,7 @@ public class SMMCTSExperiment {
         static int end = (int)1e6;
         public static void runSMMCTS_Exponential() throws Exception {
             //firstMCTSConfig = new MCTSConfig(new Simulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
-            firstMCTSConfig = new MCTSConfig(new Simulator(), new Exp3MBackPropFactory(0,1,gamma), new UniformStrategyForMissingSequences.Factory(), null);
+            firstMCTSConfig = new MCTSConfig(new DefaultSimulator(), new Exp3MBackPropFactory(0,1,gamma), new UniformStrategyForMissingSequences.Factory(), null);
             Expander<MCTSInformationSet> expander = new RandomGameExpander<MCTSInformationSet> (firstMCTSConfig);
             MCTSRunner runner = new MCTSRunner(firstMCTSConfig, rootState, expander);
 
@@ -199,7 +199,7 @@ public class SMMCTSExperiment {
             //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
             //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new OOSBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
             //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(gamma*gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
-            MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new Exp3BackPropFactory(-maxCFValue, maxCFValue, gamma), new UniformStrategyForMissingSequences.Factory(), null);
+            MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new Exp3BackPropFactory(-maxCFValue, maxCFValue, gamma), new UniformStrategyForMissingSequences.Factory(), null);
 
             Expander<MCTSInformationSet> expander = new GoofSpielExpander<MCTSInformationSet> (firstMCTSConfig);
             //Expander<MCTSInformationSet> expander = new RandomGameExpander<MCTSInformationSet> (firstMCTSConfig);
@@ -257,7 +257,7 @@ public class SMMCTSExperiment {
             //double maxCFValue = 1e2;
             double maxCFValue = gameInfo.getMaxUtility();
             //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new OOSBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
-            MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(), new UCTBackPropFactory(gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
+            MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(), new UCTBackPropFactory(gameInfo.getMaxUtility()), new UniformStrategyForMissingSequences.Factory(), null);
             //MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new Exp3BackPropFactory(-maxCFValue, maxCFValue, gamma), new UniformStrategyForMissingSequences.Factory(), null);
 //		MCTSRunner runner = new MCTSRunner(firstMCTSConfig, new KuhnPokerGameState(), new KuhnPokerExpander<MCTSInformationSet>(firstMCTSConfig));
 //                Map<Sequence, Double> pureStrategy = runner.runMCTS(KPGameInfo.FIRST_PLAYER, new FrequenceDistribution());
@@ -357,7 +357,7 @@ public class SMMCTSExperiment {
             System.setOut(out);
             out.println("Gamma=" + gamma + "; " + SMMCTSExperiment.firstMCTSConfig.getBackPropagationStrategyFactory().getClass());
             for (int game = Integer.parseInt(args[1]); game <= Integer.parseInt(args[2]); game++){
-                firstMCTSConfig = new MCTSConfig(new Simulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
+                firstMCTSConfig = new MCTSConfig(new DefaultSimulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
                 out.println("GAME: " + game);
                 setupRnd(game);
                 for (int i = 0; i < 50; i++) {
@@ -375,7 +375,7 @@ public class SMMCTSExperiment {
                     System.setOut(out);
                     out.println("Gamma=" + gamma + "; " + SMMCTSExperiment.firstMCTSConfig.getBackPropagationStrategyFactory().getClass());
                     for (int game = 0; game < 100; game++){
-                        firstMCTSConfig = new MCTSConfig(new Simulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
+                        firstMCTSConfig = new MCTSConfig(new DefaultSimulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
                         expander = new RandomGameExpander<MCTSInformationSet> (firstMCTSConfig);
                         out.println("GAME: " + game);
                         RandomGameInfo.seed = game;
@@ -383,7 +383,7 @@ public class SMMCTSExperiment {
                         rootState = new SimRandomGameState();
                         Map<Action,Map<Action, Double>> rootMatrix = getRootMatrix(rootState);
                         for (int run = 0; run < 100; run++) {
-                            firstMCTSConfig = new MCTSConfig(new Simulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
+                            firstMCTSConfig = new MCTSConfig(new DefaultSimulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
                             MCTSRunner runner = new MCTSRunner(firstMCTSConfig, rootState, expander);
                             Strategy strategy1 = null;
                             out.print("P0BRs: ");
@@ -421,7 +421,7 @@ public class SMMCTSExperiment {
                 int numRuns = 100;
                 double[] runResults = new double[10];
                 for (int run = 0; run < numRuns; run++){
-                    firstMCTSConfig = new MCTSConfig(new Simulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
+                    firstMCTSConfig = new MCTSConfig(new DefaultSimulator(), new RMBackPropFactory(gamma), new UniformStrategyForMissingSequences.Factory(), null);
                     Expander<MCTSInformationSet> expander = new RandomGameExpander<MCTSInformationSet> (firstMCTSConfig);
                     MCTSRunner runner = new MCTSRunner(firstMCTSConfig, rootState, expander);
                     Strategy strategy0 = null;

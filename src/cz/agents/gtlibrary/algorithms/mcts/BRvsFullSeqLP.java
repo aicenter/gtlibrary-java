@@ -52,8 +52,8 @@ public class BRvsFullSeqLP {
 		GameState rootState = new PursuitGameState();
 		GameInfo gameInfo = new PursuitGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig secondMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
 		Expander<MCTSInformationSet> firstMCTSExpander = new PursuitExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new PursuitExpander<MCTSInformationSet>(secondMCTSConfig);
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new PursuitExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
@@ -65,8 +65,8 @@ public class BRvsFullSeqLP {
 		GameState rootState = new KuhnPokerGameState();
 		KPGameInfo gameInfo = new KPGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig secondMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
 		Expander<MCTSInformationSet> firstMCTSExpander = new KuhnPokerExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new KuhnPokerExpander<MCTSInformationSet>(secondMCTSConfig);
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
@@ -78,8 +78,8 @@ public class BRvsFullSeqLP {
 		GameState rootState = new RandomGameState();
 		GameInfo gameInfo = new RandomGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig secondMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
 		Expander<MCTSInformationSet> firstMCTSExpander = new RandomGameExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new RandomGameExpander<MCTSInformationSet>(secondMCTSConfig);
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new RandomGameExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
@@ -91,8 +91,8 @@ public class BRvsFullSeqLP {
 		GameState rootState = new SimRandomGameState();
 		GameInfo gameInfo = new RandomGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig secondMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
 		Expander<MCTSInformationSet> firstMCTSExpander = new RandomGameExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new RandomGameExpander<MCTSInformationSet>(secondMCTSConfig);
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new RandomGameExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
@@ -104,8 +104,8 @@ public class BRvsFullSeqLP {
 		GameState rootState = new GoofSpielGameState();
 		GSGameInfo gameInfo = new GSGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig secondMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
 		Expander<MCTSInformationSet> firstMCTSExpander = new GoofSpielExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new GoofSpielExpander<MCTSInformationSet>(secondMCTSConfig);
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new GoofSpielExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
@@ -117,8 +117,8 @@ public class BRvsFullSeqLP {
 		GameState rootState = new GenericPokerGameState();
 		GPGameInfo gameInfo = new GPGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig secondMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
 		Expander<MCTSInformationSet> firstMCTSExpander = new GenericPokerExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new GenericPokerExpander<MCTSInformationSet>(secondMCTSConfig);
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
@@ -130,8 +130,8 @@ public class BRvsFullSeqLP {
 		GameState rootState = new BPGGameState();
 		BPGGameInfo gameInfo = new BPGGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		MCTSConfig firstMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
-		MCTSConfig secondMCTSConfig = new MCTSConfig(new Simulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig firstMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
+		MCTSConfig secondMCTSConfig = new MCTSConfig(new DefaultSimulator(1), new UCTBackPropFactory(getC(gameInfo.getMaxUtility())), new UniformStrategyForMissingSequences.Factory(), null);
 		Expander<MCTSInformationSet> firstMCTSExpander = new BPGExpander<MCTSInformationSet>(firstMCTSConfig);
 		Expander<MCTSInformationSet> secondMCTSExpander = new BPGExpander<MCTSInformationSet>(secondMCTSConfig);
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new BPGExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);

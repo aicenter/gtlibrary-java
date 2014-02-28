@@ -171,8 +171,7 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (getClass() != obj.getClass())
-			return false;
+		if (!(obj instanceof Sequence)) return false;
 		Sequence sequence = (Sequence) obj;
 
 		if (!player.equals(sequence.getPlayer()))
