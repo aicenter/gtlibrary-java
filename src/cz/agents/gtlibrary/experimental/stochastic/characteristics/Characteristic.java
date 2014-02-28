@@ -1,8 +1,6 @@
 package cz.agents.gtlibrary.experimental.stochastic.characteristics;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -92,5 +90,62 @@ public class Characteristic {
                 ", nodes=" + nodes +
                 ", probabilities=" + (probabilities == null ? null : Arrays.deepToString(probabilities)) +
                 '}';
+    }
+
+    public static  Map<Characteristic,Set<Characteristic>> isClosed(Set<Characteristic> characteristicSet) {
+        boolean result = false;
+
+
+        Set<Characteristic> toRemove = new HashSet<Characteristic>();
+        Map<Characteristic,Set<Characteristic>> support = new HashMap<Characteristic, Set<Characteristic>>();
+        for (Characteristic c : characteristicSet)
+            support.put(c, new HashSet<Characteristic>());
+
+        Iterator<Characteristic> i = support.keySet().iterator();
+        while (i.hasNext()) {
+            Characteristic currentChar = i.next();
+            for (Characteristic c : support.keySet()) {
+                if (c.isPrefixOf(currentChar) && !toRemove.contains(c)) {
+                    support.get(currentChar).add(c);
+                }
+            }
+            if (support.get(currentChar).isEmpty())
+                toRemove.add(currentChar);
+        }
+
+        for (Characteristic c : toRemove) {
+            support.remove(c);
+        }
+
+
+        boolean change = true;
+        while (change) {
+            change = false;
+            toRemove.clear();
+            for (Characteristic c : support.keySet()) {
+                Set<Characteristic> thisCharSupport = support.get(c);
+                for (Characteristic cc : new HashSet<Characteristic>(thisCharSupport)) {
+                    if (!support.containsKey(cc))
+                        thisCharSupport.remove(cc);
+                }
+                if (thisCharSupport.isEmpty()) {
+                    toRemove.add(c);
+                    change = true;
+                }
+            }
+            for (Characteristic c : toRemove) {
+                support.remove(c);
+            }
+        }
+
+        return support;
+    }
+
+    public boolean isPrefixOf(Characteristic otherCharacteristic) {
+        for (int l = 1; l<otherCharacteristic.probabilities.length; l++) {
+            if (!Arrays.equals(this.probabilities[l-1], otherCharacteristic.probabilities[l]))
+                return false;
+        }
+        return true;
     }
 }

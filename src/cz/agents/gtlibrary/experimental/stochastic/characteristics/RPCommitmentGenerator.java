@@ -1,5 +1,11 @@
 package cz.agents.gtlibrary.experimental.stochastic.characteristics;
 
+import cz.agents.gtlibrary.utils.Pair;
+import org.jacop.constraints.Sum;
+import org.jacop.core.IntVar;
+import org.jacop.core.Store;
+import org.jacop.search.*;
+
 import java.util.*;
 
 /**
@@ -112,18 +118,199 @@ public class RPCommitmentGenerator implements Iterator<Map<Path,Integer>> {
         return currentCommitment;
     }
 
+    private boolean generateCSP(Characteristic c, int currentStep, ArrayList<Map<Path, Set<Integer>>> possiblePlans) {
+        if (currentStep == c.probabilities.length) return true;
+        Set<Path> toCheck = new HashSet<Path>();
+        Set<Path>[] constraints = new HashSet[nodes];
+        if (possiblePlans.size() == currentStep) {
+            Map<Path, Set<Integer>> currentStepMap = new HashMap<Path, Set<Integer>>();
+            for (Map.Entry<Path, Set<Integer>> e : possiblePlans.get(currentStep-1).entrySet()) {
+                for (int i=0; i<nodes; i++) {
+                    List<Integer> history = new ArrayList<Integer>(e.getKey().getHistory());
+                    Path p = null;
+                    if (!history.contains(i)) {
+                        history.add(i);
+                        p = new Path(history);
+                        Set<Path> csSet = constraints[i];
+                        if (csSet == null) csSet = new HashSet<Path>();
+                        csSet.add(p);
+                        constraints[i] = csSet;
+                    } else {
+                        history.add(i);
+                        p = new Path(history);
+                    }
+
+                    Set<Integer> newPlans = new HashSet<Integer>();
+                    for (int possibleStrategy = 0; possibleStrategy<Collections.max(e.getValue()); possibleStrategy++) {
+                        newPlans.add(possibleStrategy);
+                    }
+                    currentStepMap.put(p,newPlans);
+                    toCheck.add(p);
+                }
+            }
+        }  else assert false;
+
+        while (!toCheck.isEmpty()) {
+           toCheck.iterator().next();
+        }
+
+
+        return true;
+    }
+
+    private void generateCSP(Characteristic c) {
+        Map<Path, Variable> allVariables = new HashMap<Path, Variable>();
+        Map<Path, SumConstraint> realizationPlanConstraints = new HashMap<Path, SumConstraint>();
+        Map<Pair<Integer, Integer>, SumConstraint> characteristicsConstraints = new HashMap<Pair<Integer, Integer>, SumConstraint>();
+        Map<Variable, Set<SumConstraint>> varToConstMap = new HashMap<Variable, Set<SumConstraint>>();
+
+        ArrayList<Path> queue = new ArrayList<Path>();
+        for (int n=0; n<nodes; n++) {
+            Path root = new Path(new int[] {n});
+            queue.add(root);
+        }
+        while (!queue.isEmpty()) {
+            Path currentPath = queue.remove(queue.size()-1);
+            int historySize = currentPath.getHistory().size();
+            int lastNode = currentPath.getHistory().get(historySize-1);
+
+            boolean isFirstVisitToThisNode = currentPath.getHistory().indexOf(lastNode) == historySize-1;
+            Variable currentVar;
+
+            Set<SumConstraint> varConstraints;
+
+            if (historySize == 1) {
+//                if (c.startingNode == lastNode) {
+//                    isFirstVisitToThisNode = false;
+//                    int loopValue = discretizations;
+//                    for (int vv : c.probabilities[0]) {
+//                        loopValue = loopValue - vv;
+//                    }
+//                    assert loopValue >= 0;
+//                    ArrayList<Integer> allowedValues = new ArrayList<Integer>(1);
+//                    allowedValues.add(loopValue);
+//                    currentVar = new Variable(currentPath, allowedValues);
+//                } else {
+                    ArrayList<Integer> allowedValues = new ArrayList<Integer>(1);
+                    allowedValues.add(c.probabilities[0][lastNode]);
+                    currentVar = new Variable(currentPath, allowedValues);
+
+                    varConstraints = varToConstMap.get(currentVar);
+                    if (varConstraints == null) varConstraints = new HashSet<SumConstraint>();
+//                }
+            }  else {
+                Path parent = new Path(currentPath.getHistory().subList(0,historySize-1));
+                Variable parentVar = allVariables.get(parent);
+                ArrayList<Integer> allowedValues = new ArrayList<Integer>();
+                for (int v=0; v<=Math.min(discretizations, Collections.max(parentVar.getDomain())); v++) {
+                    allowedValues.add(v);
+                }
+                currentVar = new Variable(currentPath, allowedValues);
+                SumConstraint rpConst = realizationPlanConstraints.get(parent);
+                if (rpConst == null) {
+                    rpConst = new SumConstraint(new ArrayList<Variable>(), new ArrayList<Variable>());
+                    rpConst.addToLeftSide(parentVar);
+                }
+                rpConst.addToRightSide(currentVar);
+                realizationPlanConstraints.put(parent, rpConst);
+
+                varConstraints = varToConstMap.get(currentVar);
+                if (varConstraints == null) varConstraints = new HashSet<SumConstraint>();
+                varConstraints.add(rpConst);
+
+                if (characteristicsConstraints.containsKey(new Pair<Integer, Integer>(parent.getHistory().get(historySize-2), historySize-1))) {
+                    SumConstraint chConst = characteristicsConstraints.get(new Pair<Integer, Integer>(parent.getHistory().get(historySize-2), historySize-1));
+                    chConst.addToRightSide(currentVar);
+                    characteristicsConstraints.put(new Pair<Integer, Integer>(parent.getHistory().get(historySize-2), historySize-1),chConst);
+                    varConstraints.add(chConst);
+                }
+            }
+
+            if (isFirstVisitToThisNode) {
+                SumConstraint chConst = characteristicsConstraints.get(new Pair<Integer, Integer>(lastNode, historySize));
+                if (chConst == null) {
+                    chConst = new SumConstraint(new ArrayList<Variable>(), new ArrayList<Variable>(), c.probabilities[historySize-1][lastNode]);
+                }
+                chConst.addToLeftSide(currentVar);
+                characteristicsConstraints.put(new Pair<Integer, Integer>(lastNode, historySize), chConst);
+                varConstraints.add(chConst);
+            }
+
+            allVariables.put(currentPath, currentVar);
+            varToConstMap.put(currentVar, varConstraints);
+
+            if (currentPath.getHistory().size() < DEPTH) {
+                for (int i=0; i<nodes; i++) {
+                    List newNodeHist = new ArrayList(currentPath.getHistory());
+                    newNodeHist.add(i);
+                    Path newPath = new Path(newNodeHist);
+                    queue.add(newPath);
+                }
+            }
+        }
+
+        ArrayList<SumConstraint> allConstraints = new ArrayList<SumConstraint>();
+        allConstraints.addAll(realizationPlanConstraints.values());
+        allConstraints.addAll(characteristicsConstraints.values());
+
+        ArrayList<Variable> allVars = new ArrayList<Variable>();
+        allVars.addAll(allVariables.values());
+
+        Store store = new Store();
+        IntVar[] cspVariables = new IntVar[allVars.size()];
+        for (int i=0; i<cspVariables.length; i++) {
+            cspVariables[i] = new IntVar(store, "v"+i, Collections.min(allVars.get(i).getDomain()), Collections.max(allVars.get(i).getDomain()));
+        }
+        for (SumConstraint s : allConstraints) {
+            IntVar[] ls = new IntVar[s.getLeftSide().size()];
+            for (int l=0; l<ls.length; l++) {
+                ls[l] = cspVariables[allVars.indexOf(s.getLeftSide().get(l))];
+            }
+            IntVar[] rs = new IntVar[s.getRightSide().size()];
+            for (int l=0; l<rs.length; l++) {
+                rs[l] = cspVariables[allVars.indexOf(s.getRightSide().get(l))];
+            }
+            if (s.getSumValue() != null) {
+                IntVar charValue = new IntVar(store, "c"+s.hashCode(), s.getSumValue(), s.getSumValue());
+                store.impose(new Sum(ls, charValue));
+                if (rs.length > 0)
+                    store.impose(new Sum(rs, charValue));
+            } else {
+                assert (ls.length == 1 && rs.length > 0);
+                store.impose(new Sum(rs, ls[0]));
+            }
+        }
+
+        Search<IntVar> search = new DepthFirstSearch<IntVar>();
+        SelectChoicePoint<IntVar> select = new InputOrderSelect<IntVar>(store, cspVariables, new IndomainMin<IntVar>());
+        search.getSolutionListener().searchAll(true);
+        search.getSolutionListener().recordSolutions(true);
+        search.setSolutionListener(new PrintOutListener<IntVar>());
+        boolean result = search.labeling(store, select);
+
+        if ( result )
+            System.out.println("Yes");
+        else
+            System.out.println("No");
+
+    }
+
+
     @Override
     public void remove() {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     static public void main(String[] args) {
-        RPCommitmentGenerator test = new RPCommitmentGenerator(2,5,3,0);
-        HashSet<Characteristic> chars = new HashSet<Characteristic>();
+        RPCommitmentGenerator test = new RPCommitmentGenerator(2,10,3,0);
+//        HashSet<Characteristic> chars = new HashSet<Characteristic>();
+
+        HashMap<Integer, Set<Characteristic>> chars = new HashMap<Integer, Set<Characteristic>>();
+
 //        for (Path p : test.currentCommitment.keySet()) {
 //            System.out.println(p);
 //        }
-        int commitments = 0;
+        long commitments = 0;
 
         int[] charValues = new int[test.discretizations+1];
 
@@ -131,13 +318,16 @@ public class RPCommitmentGenerator implements Iterator<Map<Path,Integer>> {
 //            System.out.println("****************************************");
             Map<Path, Integer> map = test.next();
             commitments++;
+            if (commitments % 1e7 == 0) System.out.println("Commitments: " + commitments);
             Characteristic c = new Characteristic(test.startingNode, test.discretizations, test.DEPTH, test.nodes, map);
-            if (chars.add(c)) {
+            int value = c.getValue();
+
+            Set<Characteristic> ch = chars.get(value);
+            if (ch == null) ch = new HashSet<Characteristic>();
+            if (ch.add(c)) {
                 charValues[c.getValue()]++;
-                if (chars.size() % 100000 == 0) System.out.println("Characteristics : " + chars.size());
-                if (c.getValue() == 3)
-                    System.out.println(c);
             }
+            chars.put(value, ch);
 
 //            System.out.println(c);
 //            for (Path p : map.keySet()) {
@@ -149,6 +339,31 @@ public class RPCommitmentGenerator implements Iterator<Map<Path,Integer>> {
 //                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 //            }
         }
+
+        for (int value = test.discretizations; value >= 0; value--) {
+            if (chars.get(value) == null) continue;
+            for (Characteristic c : chars.get(value)) {
+                System.out.println("Characteristics: " + c);
+                test.generateCSP(c);
+                System.out.println("*****************");
+            }
+            break;
+//            System.out.print("Testing set for value " + value + " ..... " );
+//            Map<Characteristic,Set<Characteristic>> evidence = Characteristic.isClosed(chars.get(value));
+//            if (!evidence.isEmpty()) {
+//                System.out.println("closed");
+//
+//                for (Map.Entry<Characteristic, Set<Characteristic>> e : evidence.entrySet()) {
+//                    System.out.println(e);
+//                }
+//
+//                break;
+//            } else {
+//                System.out.println("open");
+//            }
+        }
+
+
         System.out.println("Commitments : " + commitments);
         System.out.println("Characteristics : " + chars.size());
         System.out.println("Char Values : " + Arrays.toString(charValues));
