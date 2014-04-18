@@ -12,7 +12,11 @@ public class BorderPatrollingGraph extends Graph {
 	private Node p1Start;
 	private Node p2Start;
 
-	protected void init() {
+    public BorderPatrollingGraph(String graphFile) {
+        super(graphFile);
+    }
+
+    protected void init() {
 		super.init();
 		int n = dl.getNodesInOriginalGraph();
 

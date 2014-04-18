@@ -47,7 +47,7 @@ import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.io.GambitEFG;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 
@@ -67,9 +67,9 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
-		runBPG();
+//		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
@@ -138,10 +138,12 @@ public class FullSequenceEFG {
 		GameState rootState = new KuhnPokerGameState();
 		KPGameInfo gameInfo = new KPGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		FullSequenceEFG efg = new FullSequenceEFG(rootState, new KuhnPokerExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+        Expander expander = new KuhnPokerExpander<SequenceInformationSet>(algConfig);
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 
 		Map<Player, Map<Sequence, Double>> rps = efg.generate();
-		
+        GambitEFG.write("GP.gbt", rootState, expander);
+
 //		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
 //			if(entry.getValue() > 0)
 //				System.out.println(entry);
@@ -178,8 +180,11 @@ public class FullSequenceEFG {
 		GameState rootState = new GenericPokerGameState();
 		GPGameInfo gameInfo = new GPGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		FullSequenceEFG efg = new FullSequenceEFG(rootState, new GenericPokerExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+        Expander expander = new GenericPokerExpander<SequenceInformationSet>(algConfig);
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 		Map<Player, Map<Sequence, Double>> rps = efg.generate();
+
+        GambitEFG.write("GP.gbt", rootState, expander);
 //		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
 //
 //			if (entry.getValue() > 0)

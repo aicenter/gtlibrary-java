@@ -33,7 +33,7 @@ public class GoofSpielExpander<I extends InformationSet> extends ExpanderImpl<I>
 			return actions;
 		}
 		addCardsForPlayerToMove(gsState, actions);
-		//Collections.shuffle(actions, new Random(GSGameInfo.seed));
+		Collections.shuffle(actions, new Random(GSGameInfo.seed));
 		return actions;
 	}
 

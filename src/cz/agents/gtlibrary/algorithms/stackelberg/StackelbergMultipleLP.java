@@ -9,7 +9,7 @@ import cz.agents.gtlibrary.domain.simpleGeneralSum.SimpleGSExpander;
 import cz.agents.gtlibrary.domain.simpleGeneralSum.SimpleGSInfo;
 import cz.agents.gtlibrary.domain.simpleGeneralSum.SimpleGSState;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.io.GambitEFG;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;

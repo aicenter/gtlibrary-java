@@ -1,199 +1,205 @@
 package cz.agents.gtlibrary.strategy;
 
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 
 public abstract class StrategyImpl extends Strategy {
 
-	private Map<Sequence, Double> strategy;
+    private Map<Sequence, Double> strategy;
 
-	public StrategyImpl() {
-		strategy = new HashMap<Sequence, Double>();
-	}
+    public StrategyImpl() {
+        strategy = new HashMap<Sequence, Double>();
+    }
 
-	@Override
-	public int size() {
-		return strategy.size();
-	}
+    public StrategyImpl(Map<Sequence, Double> realizationPlan) {
+        strategy = new HashMap<Sequence, Double>(realizationPlan);
+    }
 
-	@Override
-	public boolean isEmpty() {
-		return strategy.isEmpty();
-	}
+    @Override
+    public int size() {
+        return strategy.size();
+    }
 
-	@Override
-	public boolean containsKey(Object key) {
-		return strategy.containsKey(key);
-	}
+    @Override
+    public boolean isEmpty() {
+        return strategy.isEmpty();
+    }
 
-	@Override
-	public boolean containsValue(Object value) {
-		return strategy.containsValue(value);
-	}
+    @Override
+    public boolean containsKey(Object key) {
+        return strategy.containsKey(key);
+    }
 
-	@Override
-	public Double get(Object key) {
-		Double value = strategy.get(key);
+    @Override
+    public boolean containsValue(Object value) {
+        return strategy.containsValue(value);
+    }
 
-		if (value == null) {
-			return 0d;
-		}
-		return value;
-	}
+    @Override
+    public Double get(Object key) {
+        Double value = strategy.get(key);
 
-	@Override
-	public Double put(Sequence key, Double value) {
-		if (value == 0)
-			return null;
-		return strategy.put(key, value);
-	}
+        if (value == null) {
+            return 0d;
+        }
+        return value;
+    }
 
-	@Override
-	public Double remove(Object key) {
-		return strategy.remove(key);
-	}
+    @Override
+    public Double put(Sequence key, Double value) {
+        if (value == 0)
+            return null;
+        return strategy.put(key, value);
+    }
 
-	@Override
-	public void putAll(Map<? extends Sequence, ? extends Double> map) {
-		for (Entry<? extends Sequence, ? extends Double> entry : map.entrySet()) {
-			put(entry.getKey(), entry.getValue());
-		}
-	}
+    @Override
+    public Double remove(Object key) {
+        return strategy.remove(key);
+    }
 
-	@Override
-	public void clear() {
-		strategy.clear();
-	}
+    @Override
+    public void putAll(Map<? extends Sequence, ? extends Double> map) {
+        for (Entry<? extends Sequence, ? extends Double> entry : map.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
+    }
 
-	@Override
-	public Set<Sequence> keySet() {
-		return strategy.keySet();
-	}
+    @Override
+    public void clear() {
+        strategy.clear();
+    }
 
-	@Override
-	public Collection<Double> values() {
-		return strategy.values();
-	}
+    @Override
+    public Set<Sequence> keySet() {
+        return strategy.keySet();
+    }
 
-	@Override
-	public Set<Entry<Sequence, Double>> entrySet() {
-		return strategy.entrySet();
-	}
+    @Override
+    public Collection<Double> values() {
+        return strategy.values();
+    }
 
-	@Override
-	public Map<Action, Double> getDistributionOfContinuationOf(Sequence sequence, Collection<Action> actions) {
-		if (get(sequence) == 0)
-			return getMissingSeqDistribution(actions);
-		Map<Action, Double> distribution = new HashMap<Action, Double>();
+    @Override
+    public Set<Entry<Sequence, Double>> entrySet() {
+        return strategy.entrySet();
+    }
 
-		for (Action action : actions) {
-			distribution.put(action, get(getContinuationSequence(sequence, action)));
-		}
-		distribution = normalize(distribution);
-		return distribution;
-	}
+    @Override
+    public Map<Action, Double> getDistributionOfContinuationOf(Sequence sequence, Collection<Action> actions) {
+        if (get(sequence) == 0)
+            return getMissingSeqDistribution(actions);
+        Map<Action, Double> distribution = new HashMap<Action, Double>();
+        double sum = 0;
 
-	public Sequence getContinuationSequence(Sequence sequence, Action action) {
-		Sequence continuationSequence = new LinkedListSequenceImpl(sequence);
+        for (Action action : actions) {
+            Double probability = get(getContinuationSequence(sequence, action));
 
-		continuationSequence.addLast(action);
-		return continuationSequence;
-	}
+            sum += probability;
+            if (probability > 0)
+                distribution.put(action, get(getContinuationSequence(sequence, action)));
+        }
+        if(sum == 0)
+            return getMissingSeqDistribution(actions);
+        distribution = normalize(distribution);
+        return distribution;
+    }
 
-	private Map<Action, Double> normalize(Map<Action, Double> distribution) {
-		double sum = getSum(distribution);
+    public Sequence getContinuationSequence(Sequence sequence, Action action) {
+        Sequence continuationSequence = new LinkedListSequenceImpl(sequence);
 
-		if (sum == 0)
-			return getMissingSeqDistribution(distribution.keySet());
-		for (Entry<Action, Double> entry : distribution.entrySet()) {
-			distribution.put(entry.getKey(), entry.getValue() / sum);
-		}
-		return distribution;
-	}
+        continuationSequence.addLast(action);
+        return continuationSequence;
+    }
 
-	private double getSum(Map<Action, Double> distribution) {
-		double sum = 0;
+    private Map<Action, Double> normalize(Map<Action, Double> distribution) {
+        if (distribution.isEmpty())
+            return distribution;
+        double sum = getSum(distribution);
 
-		for (Double value : distribution.values()) {
-			sum += value;
-		}
-		return sum;
-	}
+        if (sum == 0)
+            return getMissingSeqDistribution(distribution.keySet());
+        for (Entry<Action, Double> entry : distribution.entrySet()) {
+            distribution.put(entry.getKey(), entry.getValue() / sum);
+        }
+        return distribution;
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
+    private double getSum(Map<Action, Double> distribution) {
+        double sum = 0;
 
-		result = prime * result + ((strategy == null) ? 0 : strategy.hashCode());
-		return result;
-	}
+        for (Double value : distribution.values()) {
+            sum += value;
+        }
+        return sum;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		StrategyImpl other = (StrategyImpl) obj;
-		if (strategy == null) {
-			if (other.strategy != null)
-				return false;
-		} else if (!strategy.equals(other.strategy))
-			return false;
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        StrategyImpl other = (StrategyImpl) obj;
+        if (strategy == null) {
+            if (other.strategy != null)
+                return false;
+        } else if (!strategy.equals(other.strategy))
+            return false;
+        return true;
+    }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
 
-	@Override
-	public String toString() {
-		return strategy.toString();
-	}
+        result = prime * result + ((strategy == null) ? 0 : strategy.hashCode());
+        return result;
+    }
 
-        private static boolean briefFancyTostring=true;
-        private HashSet<Pair> printed = new HashSet<Pair>();
-	@Override
-	public String fancyToString(GameState root, Expander<? extends InformationSet> expander, Player player) {
-                if (briefFancyTostring) printed.clear();
-		LinkedList<GameState> queue = new LinkedList<GameState>();
-		StringBuilder builder = new StringBuilder();
-		
-		queue.add(root);
-		
-		while(!queue.isEmpty()) {
-			GameState currentState = queue.removeFirst();
-			
-			for (Action action : expander.getActions(currentState)) {
-				GameState child = currentState.performAction(action);
-				
-				if(currentState.getPlayerToMove().equals(player) 
-                                        && (!briefFancyTostring || get(child.getSequenceFor(player)) > 0 && !printed.contains(currentState.getISKeyForPlayerToMove()))) {
-					builder.append(child.getSequenceFor(player));
-					builder.append(": ");
-					builder.append(get(child.getSequenceFor(player)));
-					builder.append("\n");
-				}
-				if(!child.isGameEnd())
-					queue.addLast(child);
-			}
-			if (briefFancyTostring) printed.add(currentState.getISKeyForPlayerToMove());
-		}
-		return builder.toString();
-	}
+        
 
-	protected abstract Map<Action, Double> getMissingSeqDistribution(Collection<Action> actions);
+    @Override
+    public String toString() {
+        return strategy.toString();
+    }
+
+    private static boolean briefFancyTostring=true;
+    private HashSet<Pair> printed = new HashSet<Pair>();
+    @Override
+    public String fancyToString(GameState root, Expander<? extends InformationSet> expander, Player player) {
+            if (briefFancyTostring) printed.clear();
+            LinkedList<GameState> queue = new LinkedList<GameState>();
+            StringBuilder builder = new StringBuilder();
+
+            queue.add(root);
+
+            while(!queue.isEmpty()) {
+                    GameState currentState = queue.removeFirst();
+
+                    for (Action action : expander.getActions(currentState)) {
+                            GameState child = currentState.performAction(action);
+
+                            if(currentState.getPlayerToMove().equals(player) 
+                                    && (!briefFancyTostring || get(child.getSequenceFor(player)) > 0 && !printed.contains(currentState.getISKeyForPlayerToMove()))) {
+                                    builder.append(child.getSequenceFor(player));
+                                    builder.append(": ");
+                                    builder.append(get(child.getSequenceFor(player)));
+                                    builder.append("\n");
+                            }
+                            if(!child.isGameEnd())
+                                    queue.addLast(child);
+                    }
+                    if (briefFancyTostring) printed.add(currentState.getISKeyForPlayerToMove());
+            }
+            return builder.toString();
+    }
+
+    protected abstract Map<Action, Double> getMissingSeqDistribution(Collection<Action> actions);
 
 }

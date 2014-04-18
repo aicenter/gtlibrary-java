@@ -16,6 +16,7 @@ public class Graph implements Serializable {
 
 	final protected DataLoader dl;
 
+    @Deprecated
 	public Graph() {
 		dl = new DataLoader();
 		init();

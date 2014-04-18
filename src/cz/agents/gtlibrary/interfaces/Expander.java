@@ -25,7 +25,7 @@ public interface Expander<I extends InformationSet> extends Serializable {
 	
 	/**
 	 * 
-	 * @param gameState
+	 * @param informationSet
 	 * @return list of actions available in given information set, actions must include information set
 	 */
 	public List<Action> getActions(I informationSet);

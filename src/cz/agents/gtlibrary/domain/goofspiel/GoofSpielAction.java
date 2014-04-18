@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.domain.goofspiel;
 
-import cz.agents.gtlibrary.domain.randomgame.FIRandomGameState;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
