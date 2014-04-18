@@ -18,23 +18,25 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
+import java.util.Collections;
 
 public class GoofSpielGameState extends GameStateImpl {
 
 	private static final long serialVersionUID = -1885375538236725674L;
 
 	private Map<Player, HashSet<Integer>> playerCards;
-	private List<Action> sequenceForAllPlayers;
+	protected List<Action> sequenceForAllPlayers;
 	private GoofSpielAction faceUpCard;
 	private Sequence natureSequence;
 
-	private int[] playerScore;
+	protected int[] playerScore;
 
-	private int round;
+	protected int round;
 	private int currentPlayerIndex;
 
-	private Pair<Integer, Sequence> key;
+	protected Pair<Integer, Sequence> key;
 	private int hashCode = -1;
 
 	public GoofSpielGameState() {
@@ -62,19 +64,13 @@ public class GoofSpielGameState extends GameStateImpl {
 	}
 
 	private Sequence createRandomSequence() {
-		List<Integer> indices = new LinkedList<Integer>();
-		Sequence natureSequence = new LinkedListSequenceImpl(GSGameInfo.NATURE);
-
-		for (int i = 0; i < GSGameInfo.CARDS_FOR_PLAYER.length; i++) {
-			indices.add(i);
-		}
-		Random random = new Random(GSGameInfo.seed);
-
-		while (!indices.isEmpty()) {
-			int randomIndex = indices.remove(random.nextInt(indices.size()));
-
-			natureSequence.addLast(new GoofSpielAction(GSGameInfo.CARDS_FOR_PLAYER[randomIndex], GSGameInfo.NATURE, null));
-		}
+                ArrayList<Action> actions = new ArrayList(GSGameInfo.CARDS_FOR_PLAYER.length);
+                for (int card : GSGameInfo.CARDS_FOR_PLAYER) 
+                    actions.add(new GoofSpielAction(card, GSGameInfo.NATURE, null));
+                if (GSGameInfo.useFixedNatureSequence && GSGameInfo.seed==1) Collections.reverse(actions);
+                else Collections.shuffle(actions, new HighQualityRandom(GSGameInfo.seed));
+                Sequence natureSequence = new LinkedListSequenceImpl(GSGameInfo.NATURE);
+                natureSequence.addAllAsLast(actions);
 		return natureSequence;
 	}
 

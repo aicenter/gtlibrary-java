@@ -1,30 +1,31 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
+import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.strategy.Strategy;
 
 public abstract class NodeImpl implements Node {
     
 	protected InnerNode parent;
 	protected GameState gameState;
 	protected Action lastAction;
-	protected MCTSConfig algConfig;
+	protected Expander<MCTSInformationSet> expander;
 	protected int depth;
+        protected AlgorithmData algorithmData;
 
 	public NodeImpl(InnerNode parent, Action lastAction, GameState gameState) {
 		this.parent = parent;
 		this.lastAction = lastAction;
 		this.gameState = gameState;
-		this.algConfig = parent.algConfig;
+		this.expander = parent.expander;
 		depth = parent.depth + 1;
 	}
 
-	public NodeImpl(MCTSConfig algConfig, GameState gameState) {
-		this.algConfig = algConfig;
+	public NodeImpl(Expander<MCTSInformationSet> expander, GameState gameState) {
+		this.expander = expander;
 		this.gameState = gameState;
 		depth = 0;
 	}
@@ -53,15 +54,24 @@ public abstract class NodeImpl implements Node {
 	public GameState getGameState() {
 		return gameState;
 	}
-	
-        @Override
-	public Strategy getStrategyFor(Player player, Distribution distribution) {
-            return getStrategyFor(player, distribution, Integer.MAX_VALUE);
-        }
         
 	@Override
 	public String toString() {
 		return "Node: " + gameState;
 	}
+
+        public MCTSConfig getAlgConfig() {
+            return (MCTSConfig) expander.getAlgorithmConfig();
+        }
+        
+        public Expander<MCTSInformationSet> getExpander(){
+            return expander;
+        }
+
+        public AlgorithmData getAlgorithmData() {
+            return algorithmData;
+        }
+        
+        
 
 }

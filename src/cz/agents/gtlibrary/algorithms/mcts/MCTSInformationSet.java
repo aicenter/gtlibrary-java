@@ -15,28 +15,18 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MCTSInformationSet extends InformationSetImpl {
 
 	private Set<InnerNode> allNodes;
-	transient public SelectionStrategy selectionStrategy;
-        transient private Map<Action, BasicStats> actionStats;
-	transient private BasicStats informationSetStats;
-//        transient static private PrintStream log;
-//        
-//        static {
-//            try {
-//                    log = new PrintStream("selections.txt");
-//                } catch (FileNotFoundException ex) {}
-//        }
+        private AlgorithmData algorithmData;
 
 	public MCTSInformationSet(GameState state) {
 		super(state);
 		allNodes = new HashSet<InnerNode>();
-		informationSetStats = new BasicStats();
-		actionStats = new LinkedHashMap<Action, BasicStats>();      
 	}
 
 	public void addNode(InnerNode node) {
@@ -47,55 +37,12 @@ public class MCTSInformationSet extends InformationSetImpl {
 		return allNodes;
 	}
         
-        public double backPropagate(InnerNode node, Action action, double value){
-//            if (this.playerHistory.size()==0) log.println(this.getPlayer().toString() + ";" 
-//                    //+ this.playerHistory.size() + ";" 
-//                    + (informationSetStats.getNbSamples()+1) + ";"
-//                    +  action.toString() + ";" + value);
-            informationSetStats.onBackPropagate(value);
-            actionStats.get(action).onBackPropagate(value);
-            return selectionStrategy.onBackPropagate(node, action, value);
+        public AlgorithmData getAlgorithmData() {
+            return algorithmData;
         }
 
-        
-        
-        public static boolean oos = false;
-        
-	public void updateActionStatsFor(Action action, double[] values) {
-            if (oos) {
-                //make sure the sum is propagated up and the EV is still what it is supposed to be
-//                double sum = 0;
-//                for (Map.Entry<Action, BasicStats> en : actionStats.entrySet()) {
-//                    OOSActionBPStrategy stra = (OOSActionBPStrategy) en.getValue();
-//                    if (en.getClass().equals(action)){
-//                        sum += stra.p * values[getPlayer().getId()];
-//                    } else {
-//                        sum += stra.p * stra.getEV();
-//                    }
-//                }
-//                ((OOSActionBPStrategy)actionStats.get(action)).r += values[getPlayer().getId()] - sum;
-                
-            } else {
-		actionStats.get(action).onBackPropagate(values[player.getId()]);
-            }
-	}
-
-	public void initStats(List<Action> actions, BackPropFactory backPropagationStrategyFactory) {
-		if (actionStats.isEmpty()) {
-			for (Action action : actions) {
-				actionStats.put(action, new BasicStats());
-			}
-                        selectionStrategy = backPropagationStrategyFactory.createForIS(this);
-		}
-	}
-
-	public Map<Action, BasicStats> getActionStats() {
-		return actionStats;
-	}
-
-    public BasicStats getInformationSetStats() {
-        return informationSetStats;
-    }
-
+        public void setAlgorithmData(AlgorithmData algorithmData) {
+            this.algorithmData = algorithmData;
+        }
 
 }

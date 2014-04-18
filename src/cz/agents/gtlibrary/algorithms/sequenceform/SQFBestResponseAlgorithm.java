@@ -1,8 +1,11 @@
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.strategy.FirstActionStrategyForMissingSequences;
+import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.ValueComparator;
@@ -578,5 +581,16 @@ public class SQFBestResponseAlgorithm {
 
     public Double getCachedValueForState(GameState state) {
         return cachedValuesForNodes.get(state);
+    }
+    
+    public Strategy getBRStategy(){
+        Strategy out= new FirstActionStrategyForMissingSequences();
+        out.put(new ArrayListSequenceImpl(players[searchingPlayerIndex]), 1.0);
+        for (HashSet<Sequence> col : BRresult.values()){
+            for (Sequence seq : col){
+                out.put(seq, 1.0);
+            }
+        }
+        return out;
     }
 }

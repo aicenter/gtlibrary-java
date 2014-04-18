@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.strategy;
 
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.*;
 
@@ -136,15 +137,6 @@ public abstract class StrategyImpl extends Strategy {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-
-        result = prime * result + ((strategy == null) ? 0 : strategy.hashCode());
-        return result;
-    }
-
-    @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
@@ -160,37 +152,52 @@ public abstract class StrategyImpl extends Strategy {
             return false;
         return true;
     }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+
+        result = prime * result + ((strategy == null) ? 0 : strategy.hashCode());
+        return result;
+    }
+
+        
 
     @Override
     public String toString() {
         return strategy.toString();
     }
 
+    private static boolean briefFancyTostring=true;
+    private HashSet<Pair> printed = new HashSet<Pair>();
     @Override
     public String fancyToString(GameState root, Expander<? extends InformationSet> expander, Player player) {
-        LinkedList<GameState> queue = new LinkedList<GameState>();
-        StringBuilder builder = new StringBuilder();
+            if (briefFancyTostring) printed.clear();
+            LinkedList<GameState> queue = new LinkedList<GameState>();
+            StringBuilder builder = new StringBuilder();
 
-        queue.add(root);
+            queue.add(root);
 
-        while (!queue.isEmpty()) {
-            GameState currentState = queue.removeFirst();
+            while(!queue.isEmpty()) {
+                    GameState currentState = queue.removeFirst();
 
-            for (Action action : expander.getActions(currentState)) {
-                GameState child = currentState.performAction(action);
+                    for (Action action : expander.getActions(currentState)) {
+                            GameState child = currentState.performAction(action);
 
-                if (currentState.getPlayerToMove().equals(player)) {
-                    builder.append(child.getSequenceFor(player));
-                    builder.append(": ");
-                    builder.append(get(child.getSequenceFor(player)));
-                    builder.append("\n");
-                }
-                if (!child.isGameEnd())
-                    queue.addLast(child);
+                            if(currentState.getPlayerToMove().equals(player) 
+                                    && (!briefFancyTostring || get(child.getSequenceFor(player)) > 0 && !printed.contains(currentState.getISKeyForPlayerToMove()))) {
+                                    builder.append(child.getSequenceFor(player));
+                                    builder.append(": ");
+                                    builder.append(get(child.getSequenceFor(player)));
+                                    builder.append("\n");
+                            }
+                            if(!child.isGameEnd())
+                                    queue.addLast(child);
+                    }
+                    if (briefFancyTostring) printed.add(currentState.getISKeyForPlayerToMove());
             }
-
-        }
-        return builder.toString();
+            return builder.toString();
     }
 
     protected abstract Map<Action, Double> getMissingSeqDistribution(Collection<Action> actions);

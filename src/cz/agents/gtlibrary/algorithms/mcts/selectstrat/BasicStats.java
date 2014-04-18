@@ -5,11 +5,13 @@
 
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
+import java.io.Serializable;
+
 /**
  * 
  * @author Vilo
  */
-public class BasicStats {
+public class BasicStats implements Serializable {
 	private int n = 0;
 	private double oldM;
 	private double newM;

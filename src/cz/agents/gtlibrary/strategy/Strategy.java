@@ -10,6 +10,7 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import java.io.Serializable;
+import java.util.Random;
 
 /**
  * Strategy holds mapping of sequences to their probability of occurrence,
@@ -22,9 +23,20 @@ public abstract class Strategy implements Map<Sequence, Double>, Serializable  {
     public abstract Map<Action, Double> getDistributionOfContinuationOf(Sequence sequence, Collection<Action> actions);
 
     public abstract String fancyToString(GameState root, Expander<? extends InformationSet> expander, Player player);
+    
+    public static interface Factory  extends Serializable {
+            public Strategy create();
+    }
 
-    public static interface Factory {
-        public Strategy create();
+    public static Action selectAction(Map<Action, Double> distribution, Random rnd){
+        double r = rnd.nextDouble();
+        for(Map.Entry<Action, Double> en : distribution.entrySet()){
+            assert en.getValue() <= 1.0;
+            if (en.getValue() > r) return en.getKey();
+            else r -= en.getValue();
+        }
+        assert false;
+        return null;
     }
 
     public double maxDifferenceFrom(Strategy other) {

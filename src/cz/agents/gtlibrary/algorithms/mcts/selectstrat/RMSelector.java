@@ -15,9 +15,9 @@ import java.util.List;
  *
  * @author vilo
  */
-public class RMSelector implements SelectionStrategy, MeanStrategyProvider {
-    RMBackPropFactory fact;
-    List<Action> actions;
+public class RMSelector implements Selector, MeanStrategyProvider {
+    private RMBackPropFactory fact;
+    private List<Action> actions;
     MCTSInformationSet is;
     Action lastSelected = null;
     /** Current probability of playing this action. */
@@ -25,17 +25,21 @@ public class RMSelector implements SelectionStrategy, MeanStrategyProvider {
     double[] mp;
     /** Cumulative regret. */
     double[] r;
-    public RMSelector(RMBackPropFactory fact, MCTSInformationSet is){
+    public RMSelector(List<Action> actions, RMBackPropFactory fact){
+        this(actions.size(), fact);
+        this.actions = actions;
+    }
+    
+    public RMSelector(int N, RMBackPropFactory fact){
         this.fact = fact;
-        this.is = is;
-        actions = is.getAllNodes().iterator().next().getActions();
-        p = new double[actions.size()];
-        mp = new double[actions.size()];
-        r = new double[actions.size()];
+        p = new double[N];
+        mp = new double[N];
+        r = new double[N];
+        
     }
     
     protected void updateProb() {
-        final int K = actions.size();
+        final int K = r.length;
         double R = 0;
         for (double ri : r) R += Math.max(0,ri);
         
@@ -48,51 +52,27 @@ public class RMSelector implements SelectionStrategy, MeanStrategyProvider {
     }
     
     @Override
-    public Action select(){
+    public int select(){
         updateProb();
 
         double rand = fact.random.nextDouble();
         for (int i=0; i<p.length; i++) {
-            double pa = (1-fact.gamma)*p[i] + fact.gamma/actions.size();
+            double pa = (1-fact.gamma)*p[i] + fact.gamma/p.length;
             
             if (rand > pa) {
                 rand -= pa;
             } else {
-                lastSelected = actions.get(i);
-                return lastSelected;
+                return i;
             }
         }
         assert false;
-        return null;
+        return -1;
     }
 
     @Override
-    public double onBackPropagate(InnerNode node, Action action, double value) {
-        try {
-            if (node.getInformationSet().getPlayer().getId() == 0){
-                assert node.getInformationSet().getAllNodes().size() == 1;
-                InnerNode child = (InnerNode) node.getChildOrNull(action);
-                Action oppAct = ((RMSelector) child.getInformationSet().selectionStrategy).lastSelected;
-                
-                int i=0;
-                for (Action a : node.getActions()){
-                    if (!a.equals(action)){
-                        r[i] += ((InnerNode)node.getChildOrNull(a)).getChildOrNull(oppAct).getEV()[node.getInformationSet().getPlayer().getId()] - value;
-                    }
-                    i++;
-                }
-            } else {
-                int i=0;
-                for (Action a : node.getActions()){
-                    if (!a.equals(action)) r[i] += node.getChildOrNull(a).getEV()[node.getInformationSet().getPlayer().getId()] - value;
-                    i++;
-                }
-            }
-        } catch (NullPointerException ex){
-            //intentionally empty
-        }
-        
-        return value;
+    public void update(int selection, double value) {
+        double pa = (1-fact.gamma)*p[selection] + fact.gamma/p.length;
+        r[selection] += (1-p[selection])*fact.normalizeValue(value)/pa;
     }
 
     @Override
@@ -107,25 +87,6 @@ public class RMSelector implements SelectionStrategy, MeanStrategyProvider {
     
     private double valueEstimate(Action exp, InnerNode node){
         double out = 0;
-        try {
-            if (node.getInformationSet().getAllNodes().size() == 1){
-                InnerNode child = (InnerNode) node.getChildOrNull(exp);
-                double[] p = ((RMSelector) child.getInformationSet().selectionStrategy).p;
-                int i=0;
-                for (Action a : child.getActions()){
-                    out += p[i++] * ((InnerNode)child.getChildOrNull(a)).getEV()[node.getInformationSet().getPlayer().getId()];
-                }
-            } else {
-                InnerNode parent = (InnerNode) node.getParent();
-                double[] p = ((RMSelector) parent.getInformationSet().selectionStrategy).p;
-                int i=0;
-                for (Action a : parent.getActions()){
-                    out += p[i++] * ((InnerNode)parent.getChildOrNull(a)).getChildOrNull(exp).getEV()[node.getInformationSet().getPlayer().getId()];
-                }
-            }
-        } catch (NullPointerException ex){
-            return 0;
-        }
         return out;
     }
     
