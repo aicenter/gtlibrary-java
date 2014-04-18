@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.algorithms.mcts.distribution;
 
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import java.util.Map;
@@ -8,8 +8,9 @@ import java.util.Map;
 public class MeanStratDist implements Distribution {
     
 	@Override
-	public Map<Action, Double> getDistributionFor(MCTSInformationSet infSet) {
-                MeanStrategyProvider stat = (MeanStrategyProvider) infSet.selectionStrategy;
+	public Map<Action, Double> getDistributionFor(AlgorithmData data) {
+                MeanStrategyProvider stat = (MeanStrategyProvider) data;
+                if (stat == null) return null;
                 final double[] mp = stat.getMp();
                 double sum = 0;
                 for (double d : mp) sum += d;

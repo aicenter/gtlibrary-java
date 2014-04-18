@@ -80,8 +80,16 @@ public class GoofSpielAction extends ActionImpl implements Comparable<GoofSpielA
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
+                String descIS="";
+                try {
+                    GoofSpielGameState fistState = (GoofSpielGameState) informationSet.getAllStates().iterator().next();
+                    //descIS += fistState.getISKeyForPlayerToMove().getLeft() + ", ";
+                    descIS += fistState.getPlayerScore()[0] + "-" + fistState.getPlayerScore()[1];
+                } catch (NullPointerException ex){
+                    //intentionally empty
+                }
 
-		builder.append("[" + value + ", " + player);
+		builder.append("[" + value + ", " + descIS + ", " + player);
 		builder.append("]");
 		return builder.toString();
 	}

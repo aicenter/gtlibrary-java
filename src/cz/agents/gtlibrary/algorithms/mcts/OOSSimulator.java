@@ -4,44 +4,48 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts;
 
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.OOSBackPropFactory;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
-import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /**
  *
  * @author vilo
  */
-public class OOSSimulator extends DefaultSimulator {
-    private OOSBackPropFactory fact;
+public class OOSSimulator implements Simulator {
     final private Random rnd;
+    final private Expander expander;
 
-    public OOSSimulator(OOSBackPropFactory fact, long seed) {
+    public OOSSimulator(Expander expander, long seed) {
         rnd = new HighQualityRandom(seed);
-        this.fact = fact;
+        this.expander = expander;
     }
 
-    public OOSSimulator(OOSBackPropFactory fact) {
+    public OOSSimulator(Expander expander) {
          rnd = new HighQualityRandom();
-        this.fact = fact;
+        this.expander = expander;
     }
 
+    public double playOutProb;
+    public double playersProb;
+    
     @Override
-    public double[] simulate(GameState gameState, Expander<MCTSInformationSet> expander) {
-        fact.l = fact.s;
-        fact.x = 1;
+    public double[] simulate(GameState gameState) {
+        //fact.l = (fact.bs == 1 && fact.us == 1 ? fact.s : fact.delta*fact.bs + (1-fact.delta)*fact.us);
+        playOutProb = 1;
+        playersProb = 1;
 
         GameStateImpl state = (GameStateImpl) gameState.copy();
         
         while (!state.isGameEnd()) {
                 List<Action> actions = expander.getActions(new MCTSInformationSet(state));
-                fact.l *= 1.0/actions.size();
+                playOutProb *= 1.0/actions.size();
                 if (!state.isPlayerToMoveNature()) {
-                        fact.x *= 1.0/actions.size();
+                        playersProb *= 1.0/actions.size();
                 }
                 state.performActionModifyingThisState(actions.get(rnd.nextInt(actions.size())));
         }

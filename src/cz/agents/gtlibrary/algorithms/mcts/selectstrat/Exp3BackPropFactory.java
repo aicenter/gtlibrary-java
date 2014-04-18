@@ -6,7 +6,9 @@ package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.interfaces.Action;
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -42,14 +44,12 @@ public class Exp3BackPropFactory implements BackPropFactory  {
     }
 
     @Override
-    public SelectionStrategy createForIS(MCTSInformationSet infSet) {
-        return new Exp3SelectionStrategy(this, infSet);
+    public Selector createSelector(List<Action> actions) {
+        return new Exp3MSelector(actions,this);
     }
-
+    
     @Override
-    public SelectionStrategy createForNode(Node node) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public Selector createSelector(int N) {
+        return new Exp3MSelector(N,this);
     }
-    
-    
 }

@@ -1,6 +1,8 @@
 package cz.agents.gtlibrary.interfaces;
 
-public interface AlgorithmConfig<I extends InformationSet> {
+import java.io.Serializable;
+
+public interface AlgorithmConfig<I extends InformationSet> extends Serializable {
 	
 	public I getInformationSetFor(GameState gameState);
 
