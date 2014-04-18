@@ -1,30 +1,30 @@
 package cz.agents.gtlibrary.algorithms.mcts.distribution;
 
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import java.util.List;
+import java.util.Map;
 
 public class MostFrequentAction implements Distribution {
 
-	@Override
-	public Map<Action, Double> getDistributionFor(MCTSInformationSet infSet) {
-		Map<Action, Double> distribution = new FixedSizeMap<Action, Double>(infSet.getActionStats().size());
-		Action mostFrequentAction = null;
-		int count = Integer.MIN_VALUE;
+        @Override
+        public Map<Action, Double> getDistributionFor(AlgorithmData data) {
+                ActionFrequencyProvider afp = (ActionFrequencyProvider) data;
+                Map<Action, Double> distribution = new FixedSizeMap<Action, Double>(afp.getActions().size());
+		int best = 0;
+                List<Action> actions = afp.getActions();
+                double[] freqs = afp.getActionFreq();
 		
-		for (Entry<Action, BasicStats> entry : infSet.getActionStats().entrySet()) {
-			if(entry.getValue().getNbSamples() > count) {
-				mostFrequentAction = entry.getKey();
-				count = entry.getValue().getNbSamples();
-			}				
-			distribution.put(entry.getKey(), 0d);
+                int i=0;
+		for (Action a : actions) {
+			if(freqs[i] > freqs[best]) best=i;
+			distribution.put(a, 0d);
+                        i++;
 		}
-		distribution.put(mostFrequentAction, 1d);
+		distribution.put(actions.get(best), 1d);
 		return distribution;
-	}
+        }
 
+            
 }
