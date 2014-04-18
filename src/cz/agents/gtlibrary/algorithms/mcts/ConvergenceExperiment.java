@@ -81,13 +81,14 @@ public class ConvergenceExperiment {
     }
     
     public static void setupPoker(){
-        gameInfo = new GPGameInfo();
-        rootState = new GenericPokerGameState();
+
         GPGameInfo.MAX_RAISES_IN_ROW = 2;
         GPGameInfo.MAX_DIFFERENT_BETS = 3;
         GPGameInfo.MAX_DIFFERENT_RAISES = GPGameInfo.MAX_DIFFERENT_BETS;
         GPGameInfo.MAX_CARD_TYPES = 4;
         GPGameInfo.MAX_CARD_OF_EACH_TYPE = 3;
+        gameInfo = new GPGameInfo();
+        rootState = new GenericPokerGameState();
         expander = new GenericPokerExpander<MCTSInformationSet>(new MCTSConfig());
         //sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         //sfExpander = new GenericPokerExpander<SequenceInformationSet>(sfAlgConfig);
