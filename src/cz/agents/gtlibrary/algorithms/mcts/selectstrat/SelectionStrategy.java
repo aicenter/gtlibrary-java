@@ -18,8 +18,9 @@ package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
+import java.io.Serializable;
 
-public interface SelectionStrategy {
+public interface SelectionStrategy extends Serializable {
 
     /**
      * Returns selected action.

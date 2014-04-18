@@ -1,45 +1,43 @@
 package cz.agents.gtlibrary.algorithms.mcts;
 
+import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
+import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import cz.agents.gtlibrary.iinodes.GameStateImpl;
-import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.utils.HighQualityRandom;
-
 public class DefaultSimulator implements Simulator {
 	final private Random rnd;
+        final private Expander expander;
 
-        public DefaultSimulator() {
+        public DefaultSimulator(Expander expander) {
 		this.rnd = new HighQualityRandom();
+                this.expander = expander;
 	}
         
-	public DefaultSimulator(long seed) {
+	public DefaultSimulator(Expander expander, long seed) {
 		this.rnd = new HighQualityRandom(seed);
+                this.expander = expander;
 	}
 
     @Override
-	public double[] simulate(GameState gameState, Expander<MCTSInformationSet> expander) {
+	public double[] simulate(GameState gameState) {
 		GameStateImpl state = (GameStateImpl) gameState.copy();
 
 		while (!state.isGameEnd()) {
 			if (state.isPlayerToMoveNature()) {
-				state.performActionModifyingThisState(getActionForNature(state, expander));
+				state.performActionModifyingThisState(getActionForNature(state));
 			} else {
-				state.performActionModifyingThisState(getActionForRegularPlayer(state, expander));
+				state.performActionModifyingThisState(getActionForRegularPlayer(state));
 			}
 		}
 		return state.getUtilities();
 	}
 
-	private Action getActionForNature(GameStateImpl state, Expander<MCTSInformationSet> expander) {
+	private Action getActionForNature(GameStateImpl state) {
 		List<Action> actions = expander.getActions(new MCTSInformationSet(state));
 		double move = rnd.nextDouble();
 
@@ -52,21 +50,21 @@ public class DefaultSimulator implements Simulator {
 		return actions.get(actions.size() - 1);
 	}
 
-	private Action getAction(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent, Expander<MCTSInformationSet> expander) {
+	private Action getAction(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent) {
 		if (state.isPlayerToMoveNature())
-			return getActionForNature(state, expander);
+			return getActionForNature(state);
 		if (state.getPlayerToMove().equals(opponent))
-			return getActionForOpponent(state, opponentRealizationPlan, opponent, expander);
-		return getActionForRegularPlayer(state, expander);
+			return getActionForOpponent(state, opponentRealizationPlan, opponent);
+		return getActionForRegularPlayer(state);
 	}
 
-	private Action getActionForRegularPlayer(GameStateImpl state, Expander<MCTSInformationSet> expander) {
+	private Action getActionForRegularPlayer(GameStateImpl state) {
 		List<Action> possibleActions = expander.getActions(new MCTSInformationSet(state));
 
 		return possibleActions.get(rnd.nextInt(possibleActions.size()));
 	}
 
-	private Action getActionForOpponent(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent, Expander<MCTSInformationSet> expander) {
+	private Action getActionForOpponent(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent) {
 		List<Action> possibleActions = expander.getActions(new MCTSInformationSet(state));
 		Double oppValueOfThisState = getValueOfThisState(state.getSequenceFor(opponent), opponentRealizationPlan);
 		Map<Action, Double> contInRealPlan = getContinuationOfRP(state, possibleActions, opponentRealizationPlan, opponent);
@@ -99,7 +97,7 @@ public class DefaultSimulator implements Simulator {
 		GameStateImpl state = (GameStateImpl) gameState.copy();
 
 		while (!state.isGameEnd()) {
-			state.performActionModifyingThisState(getAction(state, opponentRealizationPlan, opponent, expander));
+			state.performActionModifyingThisState(getAction(state, opponentRealizationPlan, opponent));
 		}
 		return state.getUtilities();
 	}

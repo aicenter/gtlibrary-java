@@ -97,9 +97,17 @@ public class TTTState extends GameStateImpl {
 
     private static double[] xWin = new double[]{1.0,-1.0};
     private static double[] oWin = new double[]{-1.0,1.0};
+    private static double[] xLargeWin = new double[]{3.0,-3.0};
+    private static double[] oLargeWin = new double[]{-3.0,3.0};
+    public static boolean skewed=false;
     
     @Override
     public double[] getUtilities() {
+        if (skewed && ((getSymbol(0) == getSymbol(1) && getSymbol(1) == getSymbol(2))
+            || (getSymbol(1) == getSymbol(4) && getSymbol(4) == getSymbol(7)))){
+            if (getSymbol(1) == 'x') return xLargeWin;
+            if (getSymbol(1) == 'o') return oLargeWin;
+        }
         if ((getSymbol(0) == getSymbol(1) && getSymbol(1) == getSymbol(2))
             || (getSymbol(0) == getSymbol(3) && getSymbol(3) == getSymbol(6))
             || (getSymbol(0) == getSymbol(4) && getSymbol(4) == getSymbol(8))){
