@@ -10,6 +10,7 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import java.io.Serializable;
+import java.util.Random;
 
 /**
  * Strategy holds mapping of sequences to their probability of occurrence,
@@ -59,5 +60,16 @@ public abstract class Strategy implements Map<Sequence, Double>, Serializable  {
 			if(Math.abs(probability - probabilitySum) > 1e-2 && Math.abs(probabilitySum - 1) > 1e-2)
 				throw new IllegalStateException("Inconsistent strategy, expected " + probability + " or 1 but was " + probabilitySum);
 	}
+        
+        public static Action selectAction(Map<Action, Double> distribution, Random rnd){
+            double r = rnd.nextDouble();
+            for(Map.Entry<Action, Double> en : distribution.entrySet()){
+                assert en.getValue() <= 1.0;
+                if (en.getValue() > r) return en.getKey();
+                else r -= en.getValue();
+            }
+            assert false;
+            return null;
+        }
 
 }

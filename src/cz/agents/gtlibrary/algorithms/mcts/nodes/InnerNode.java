@@ -1,64 +1,46 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
-import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.strategy.Strategy;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 public class InnerNode extends NodeImpl {
 
 	protected Map<Action, Node> children;
 	protected List<Action> actions;
-	protected Player currentPlayer;
-	protected Expander<MCTSInformationSet> expander;
 	protected MCTSInformationSet informationSet;
-        protected BasicStats[] nodeStats;
 
 	public InnerNode(InnerNode parent, GameState gameState, Action lastAction) {
 		super(parent, lastAction, gameState);
-		currentPlayer = gameState.getPlayerToMove();
-		this.expander = parent.expander;
 		attendInformationSet();
-		actions = expander.getActions(gameState);
+		actions = getExpander().getActions(gameState);
+                children = new FixedSizeMap<Action, Node>(actions.size());
 	}
 
-	public InnerNode(Expander<MCTSInformationSet> expander, MCTSConfig config, GameState gameState) {
-		super(config, gameState);
-		currentPlayer = gameState.getPlayerToMove();
-		this.expander = expander;
+	public InnerNode(Expander<MCTSInformationSet> expander, GameState gameState) {
+		super(expander, gameState);
 		attendInformationSet();
-		actions = expander.getActions(gameState);
+		actions = getExpander().getActions(gameState);
+                children = new FixedSizeMap<Action, Node>(actions.size());
 	}
 
 	private void attendInformationSet() {
-		informationSet = algConfig.getInformationSetFor(gameState);
+		informationSet = getAlgConfig().getInformationSetFor(gameState);
 
                 //adding a new information set to the config
 		if (informationSet.getAllNodes().isEmpty()) {
-			algConfig.addInformationSetFor(gameState, informationSet);
+			getAlgConfig().addInformationSetFor(gameState, informationSet);
 		}
 		informationSet.addNode(this);
 		informationSet.addStateToIS(gameState);
 	}
 
-	@Override
-	public double[] simulate() {
-		return algConfig.getSimulator().simulate(gameState, expander);
-	}
-
-	public Node selectChild() {
-		return getChildFor(getActionFromDecisionStrategy(currentPlayer.getId()));
-	}
-
-	public Node getNewChildAfter(Action action) {
+	protected Node getNewChildAfter(Action action) {
+                assert children.get(action)==null;
 		GameState nextState = gameState.performAction(action);
 
 		if (nextState.isGameEnd()) {
@@ -69,25 +51,12 @@ public class InnerNode extends NodeImpl {
 		}
 		return new InnerNode(this, nextState, action);
 	}
-
-	@Override
-	public void backPropagate(Action action, double[] values) {
-                //happens only in the current leaf node
-                if (action != null && currentPlayer.getId() < 2) {
-                    values[currentPlayer.getId()] =  informationSet.backPropagate(this, action, values[currentPlayer.getId()]);
-                    values[1-currentPlayer.getId()] = -values[currentPlayer.getId()];
-                }
-                for (int i=0; i < nodeStats.length; i++) nodeStats[i].onBackPropagate(values[i]);
-		if (parent != null) {
-			parent.backPropagate(lastAction, values);
-		}
-	}
         
         public Node getChildOrNull(Action action){
             return children.get(action);
         }
 
-	protected Node getChildFor(Action action) {
+	public Node getChildFor(Action action) {
 		Node selected = children.get(action);
 
 		if (selected == null) {
@@ -103,29 +72,6 @@ public class InnerNode extends NodeImpl {
 		return child;
 	}
 
-	protected Action getActionFromDecisionStrategy(int playerIndex) {
-		return informationSet.selectionStrategy.select();
-	}
-
-        @Override
-        public Node selectRecursively() {
-                if (children == null) {
-                    expand();
-                    if (!algConfig.EXPAND_INFORMATION_SET) return this;
-                }
-                if (informationSet.getInformationSetStats().getNbSamples()==0 
-                        && informationSet.getPlayer().getId()<2) return this;
-                return selectChild().selectRecursively();
-        }
-
-	public Node selectRecursively(int fixedDepth) {
-		if (children == null)
-			return this;
-		Node child = selectChild();
-
-		return child instanceof InnerNode ? ((InnerNode) child).selectRecursively(fixedDepth - 1) : child;
-	}
-
 	@Override
 	public int hashCode() {
 		return gameState.getHistory().hashCode();
@@ -135,7 +81,7 @@ public class InnerNode extends NodeImpl {
 	public boolean equals(Object obj) {
 		if (!(obj instanceof InnerNode))
 			return false;
-		return this.hashCode() == obj.hashCode();
+		return gameState.getHistory().equals(((InnerNode)obj).getGameState().getHistory());
 	}
 
         public List<Action> getActions() {
@@ -146,86 +92,10 @@ public class InnerNode extends NodeImpl {
             return informationSet;
         }
 
-	@Override
-	public void expand() {
-		if (children != null) {
-			return;
-		}
-                nodeStats =  new BasicStats[gameState.getAllPlayers().length];
-                for (int i = 0; i < nodeStats.length; i++) {
-                        nodeStats[i] = new BasicStats();
-                }
-		children = new FixedSizeMap<Action, Node>(actions.size());
-		informationSet.initStats(actions, algConfig.getBackPropagationStrategyFactory());
-	}
 
-	@Override
-	public double[] getEV() {
-		double[] ev = new double[gameState.getAllPlayers().length];
-
-		for (int i = 0; i < ev.length; i++)
-			ev[i] = nodeStats[i].getEV();
-		return ev;
-	}
-
-	@Override
-	public int getNbSamples() {
-		return nodeStats[0].getNbSamples();
-	}
-
-        protected Strategy getStrategyFor(Node node, Player player, Distribution distribution){
-            return getStrategyFor(node, player, distribution, Integer.MAX_VALUE);
+        public Map<Action, Node> getChildren() {
+            return children;
         }
-
-	protected Strategy getStrategyFor(Node node, Player player, Distribution distribution, int cutOffDepth) {
-		if (node == null || cutOffDepth == 0) {
-			return algConfig.getEmptyStrategy();
-		}
-		return node.getStrategyFor(player, distribution, cutOffDepth);
-	}
-
-	protected Sequence createSequenceForStrategy() {
-		return new ArrayListSequenceImpl(gameState.getSequenceForPlayerToMove());
-	}
-
-        
-        @Override
-	public Strategy getStrategyFor(Player player, Distribution distribution, int cutOffDepth) {
-            if (children == null || informationSet.getInformationSetStats().getNbSamples()< 10)
-                    return algConfig.getEmptyStrategy();
-            Strategy strategy = algConfig.getEmptyStrategy();
-            Map<Action, Double> actionDistribution = distribution.getDistributionFor(informationSet);
-
-            for (Entry<Action, Double> actionEn : actionDistribution.entrySet()) {
-                if (player.equals(currentPlayer)) {
-                    if (actionEn.getValue() > 0) {
-                        Sequence sequence = new ArrayListSequenceImpl(currentPlayer);
-                        sequence.addLast(actionEn.getKey());
-                        strategy.put(sequence, actionEn.getValue());
-                        for (Map.Entry<Sequence, Double> seqEn : getStrategyFor(children.get(actionEn.getKey()), player, distribution, cutOffDepth-1).entrySet()) {
-                            sequence = new ArrayListSequenceImpl(seqEn.getKey());
-                            sequence.addFirst(actionEn.getKey());
-                            strategy.put(sequence, actionEn.getValue() * seqEn.getValue());
-                        }
-                    }
-                } else {
-                    for (Map.Entry<Sequence, Double> seqEn : getStrategyFor(children.get(actionEn.getKey()), player, distribution, cutOffDepth-1).entrySet()) {
-//                        Double prob = strategy.get(seqEn.getKey());
-//                        if (prob != null) {
-//                            assert seqEn.getValue() == prob;
-//                        } else {
-                            strategy.put(seqEn.getKey(),seqEn.getValue());
-//                        }
-                        
-                    }
-                }
-            }
-            return strategy;
-	}
-
-    public Map<Action, Node> getChildren() {
-        return children;
-    }
 
         
 }

@@ -4,12 +4,9 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.SelectionStrategy;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelectionStrategy;
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -23,17 +20,16 @@ public class UCTBackPropFactory implements BackPropFactory {
     public UCTBackPropFactory(double C) {
         this.C = C;
     }
-    
-    @Override
-    public SelectionStrategy createForIS(MCTSInformationSet infSet) {
-        //return new UCTMAXSelectionStrategy(this, infSet);
-        return new UCTSelectionStrategy(this, infSet);
-        //return new ConfidenceMAXSelector(this, infSet);
-    }
 
     @Override
-    public SelectionStrategy createForNode(Node node) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public Selector createSelector(List<Action> actions) {
+        return new UCTSelector(actions, this);
     }
+    
+    @Override
+    public Selector createSelector(int N) {
+        return new UCTSelector(N, this);
+    }
+    
     
 }
