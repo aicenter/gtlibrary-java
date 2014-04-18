@@ -20,4 +20,6 @@ public interface History extends Serializable {
 	public History copy();
 
 	public void addActionOf(Action action, Player player);
+
+    public int getLength();
 }

@@ -122,9 +122,13 @@ public class SQFBestResponseAlgorithm {
                 if (!alternativeNodes.contains(gameState)) {
                     alternativeNodes.add(gameState);
                 }
+                if (alternativeNodes.size() == 1 && !nonZeroOppRP) {
+                    alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
+                }
             } // if we do not have alternative nodes stored in the currentIS, there is no RP leading to these nodes --> we do not need to consider them
             else {
-                alternativeNodes.add(gameState);
+//                alternativeNodes.add(gameState);
+                alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
             }
 
             assert (alternativeNodes.contains(gameState));
@@ -170,8 +174,12 @@ public class SQFBestResponseAlgorithm {
                 if (sel.allNodesProbability < EPS_CONSTANT) {
                     break;
                 }
-                if ((sel.getResult().getRight() + sel.allNodesProbability * MAX_UTILITY_VALUE) < lowerBound) { // 
-                    break;
+//                if ((sel.getResult().getRight() + sel.allNodesProbability * MAX_UTILITY_VALUE) < lowerBound) { //
+//                    break;
+//                }
+                if (currentNode.equals(gameState)) {
+                    if (Collections.max(sel.actionRealValues.get(currentNode).values()) < lowerBound)
+                        break;
                 }
             }
 
@@ -579,4 +587,92 @@ public class SQFBestResponseAlgorithm {
     public Double getCachedValueForState(GameState state) {
         return cachedValuesForNodes.get(state);
     }
+
+    public List<GameState> getAlternativeNodesOutsideRG(GameState state) {
+        List<GameState> alternativeNodes = new ArrayList<GameState>();
+        Queue<GameState> queue = new ArrayDeque<GameState>();
+        queue.add(gameTreeRoot);
+
+        Player mainPlayer = state.getPlayerToMove();
+        int length = state.getHistory().getLength();
+
+        while (!queue.isEmpty()) {
+            GameState currentState = queue.poll();
+            if (currentState.getHistory().getLength() == length) {
+                if (currentState.getISKeyForPlayerToMove().equals(state.getISKeyForPlayerToMove())) {
+                    alternativeNodes.add(currentState);
+                }
+                continue;
+            }
+
+            if (!currentState.getPlayerToMove().equals(mainPlayer)) {
+                List<Action> tmp = expander.getActions(currentState);
+                for (Action a : tmp) {
+                    GameState newState = currentState.performAction(a);
+                    if (newState != null) {
+                        queue.add(newState);
+                    }
+                }
+            } else {
+                Player toMove = currentState.getPlayerToMove();
+                int whichAction = currentState.getSequenceFor(toMove).size();
+                if (whichAction < state.getSequenceFor(toMove).size()) {
+                    Action actionToExecute = state.getSequenceFor(toMove).get(whichAction);
+                    if (currentState.checkConsistency(actionToExecute)) {
+                        GameState newState = currentState.performAction(actionToExecute);
+                        queue.add(newState);
+                    }
+                }
+            }
+
+        }
+        return alternativeNodes;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
