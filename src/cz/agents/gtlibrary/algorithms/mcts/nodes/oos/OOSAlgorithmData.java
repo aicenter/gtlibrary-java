@@ -15,6 +15,7 @@ import java.util.List;
  * @author vilo
  */
 public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider {
+    public static boolean useEpsilonRM = false; 
     List<Action> actions;
     /** Mean strategy. */
     double[] mp;
@@ -35,14 +36,26 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider {
         if (R <= 0){
             Arrays.fill(output,0,K,1.0/K);
         } else {
-            for (int i=0; i<r.length; i++) output[i] = 0.99*Math.max(0,r[i])/R + 0.01/K;
+            for (int i=0; i<r.length; i++) output[i] = useEpsilonRM ? 0.99*Math.max(0,r[i])/R + 0.01/K : Math.max(0,r[i])/R;
         }
+    }
+    
+    public double[] getRMStrategy(){
+        double[] out = new double[r.length];
+        getRMStrategy(out);
+        return out;
     }
     
     public void updateRegret(int ai, double W, double c, double x){
         for (int i=0; i<r.length; i++){
             if (i==ai) r[i] += (c-x)*W;
             else r[i] += -x*W;
+        }
+    }
+    
+    public void updateAllRegrets(double[] Vs, double meanV){
+        for (int i=0; i<r.length; i++){
+            r[i] += Vs[i]-meanV;
         }
     }
 
