@@ -50,8 +50,17 @@ public class HistoryImpl implements History {
 		sequencesOfPlayers.get(player).addLast(action);
 		hashCode = -1;
 	}
-	
-	@Override
+
+    @Override
+    public int getLength() {
+        int result = 0;
+        for (Player p : players) {
+            result += sequencesOfPlayers.get(p).size();
+        }
+        return result;
+    }
+
+    @Override
 	public Map<Player, Sequence> getSequencesOfPlayers() {
 		return sequencesOfPlayers;
 	}
