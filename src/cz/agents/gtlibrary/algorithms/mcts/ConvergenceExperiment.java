@@ -31,7 +31,7 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
-import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.iinodes.ConfigImpl; 
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
@@ -59,6 +59,9 @@ public class ConvergenceExperiment {
     static Expander<MCTSInformationSet> expander;
 
     public static void setupRnd(long seed) {
+        RandomGameInfo.MAX_DEPTH = 1;
+        RandomGameInfo.MAX_BF = 2;
+        RandomGameInfo.BINARY_UTILITY = true;
         RandomGameInfo.seed = seed;
         gameInfo = new RandomGameInfo();
         rootState = new RandomGameState();
@@ -81,13 +84,13 @@ public class ConvergenceExperiment {
     }
     
     public static void setupPoker(){
-        gameInfo = new GPGameInfo();
-        rootState = new GenericPokerGameState();
         GPGameInfo.MAX_RAISES_IN_ROW = 2;
         GPGameInfo.MAX_DIFFERENT_BETS = 3;
         GPGameInfo.MAX_DIFFERENT_RAISES = GPGameInfo.MAX_DIFFERENT_BETS;
         GPGameInfo.MAX_CARD_TYPES = 4;
         GPGameInfo.MAX_CARD_OF_EACH_TYPE = 3;
+        gameInfo = new GPGameInfo();
+        rootState = new GenericPokerGameState();
         expander = new GenericPokerExpander<MCTSInformationSet>(new MCTSConfig());
         //sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         //sfExpander = new GenericPokerExpander<SequenceInformationSet>(sfAlgConfig);
@@ -133,10 +136,15 @@ public class ConvergenceExperiment {
     public static void runMCTS() throws Exception {
         
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
-        OOSAlgorithm alg = new OOSAlgorithm(
+        
+        CFRAlgorithm alg = new CFRAlgorithm(
                 rootState.getAllPlayers()[0],
-                new OOSSimulator(expander),
-                rootState, expander, 0, gamma);
+                rootState, expander);
+        
+//        OOSAlgorithm alg = new OOSAlgorithm(
+//                rootState.getAllPlayers()[0],
+//                new OOSSimulator(expander),
+//                rootState, expander, 0, gamma);
         Distribution dist = new MeanStratDist();
 
 //        ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
@@ -163,7 +171,7 @@ public class ConvergenceExperiment {
         System.out.print("P1BRs: ");
 
         for (int i = 0; i < 500; i++) {
-            alg.runMiliseconds(60*1000);
+            alg.runMiliseconds(1000);
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
@@ -182,7 +190,8 @@ public class ConvergenceExperiment {
     
     public static void main(String[] args) throws Exception {
         //setupIIGoofSpielExpl();
-        setupPoker();
+        //setupPoker();
+        setupRnd(2);
         for (;;) runMCTS();
     }
 }
