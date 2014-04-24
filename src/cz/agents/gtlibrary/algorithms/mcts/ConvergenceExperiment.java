@@ -10,6 +10,7 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.CFRAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
@@ -84,11 +85,11 @@ public class ConvergenceExperiment {
     }
     
     public static void setupPoker(){
-        GPGameInfo.MAX_RAISES_IN_ROW = 2;
-        GPGameInfo.MAX_DIFFERENT_BETS = 3;
+        GPGameInfo.MAX_RAISES_IN_ROW = 1;
+        GPGameInfo.MAX_DIFFERENT_BETS = 1;
         GPGameInfo.MAX_DIFFERENT_RAISES = GPGameInfo.MAX_DIFFERENT_BETS;
-        GPGameInfo.MAX_CARD_TYPES = 4;
-        GPGameInfo.MAX_CARD_OF_EACH_TYPE = 3;
+        GPGameInfo.MAX_CARD_TYPES = 3;
+        GPGameInfo.MAX_CARD_OF_EACH_TYPE = 2;
         gameInfo = new GPGameInfo();
         rootState = new GenericPokerGameState();
         expander = new GenericPokerExpander<MCTSInformationSet>(new MCTSConfig());
@@ -119,7 +120,7 @@ public class ConvergenceExperiment {
             MCTSInformationSet is = n.getInformationSet();
             if (is.getAlgorithmData() == null) {
                 infosets++;
-                is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+                is.setAlgorithmData(new CFRAlgorithmData(n.getActions()));
             }
             for (Action a : n.getActions()){
                 Node ch = n.getChildFor(a);
@@ -190,8 +191,8 @@ public class ConvergenceExperiment {
     
     public static void main(String[] args) throws Exception {
         //setupIIGoofSpielExpl();
-        //setupPoker();
-        setupRnd(2);
+        setupPoker();
+//        setupRnd(2);
         for (;;) runMCTS();
     }
 }
