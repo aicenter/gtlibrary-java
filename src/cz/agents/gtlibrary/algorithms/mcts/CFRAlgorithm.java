@@ -40,9 +40,9 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         int iters=0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (;(threadBean.getCurrentThreadCpuTime()-start)/1e6 < miliseconds;) {
-            iteration(rootNode,1,rootNode.getGameState().getAllPlayers()[0]);
+            iteration(rootNode,1,1,rootNode.getGameState().getAllPlayers()[0]);
             iters++;
-            iteration(rootNode,1,rootNode.getGameState().getAllPlayers()[1]);
+            iteration(rootNode,1,1,rootNode.getGameState().getAllPlayers()[1]);
             iters++;
         }
         System.out.println();
@@ -53,20 +53,22 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
     /** 
      * The main function for CFR iteration.
      * @param node current node
-     * @param pi_ probability with which the opponent of the searching player and chance want to reach the current node
+     * @param pi_MP probability with which the opponent of the searching player and chance want to reach the current node
      * @param expPlayer the exploring player for this iteration
      * @return iteration game value is actually returned. Other return values are in global x and l
      */
-    protected double iteration(Node node, double pi_, Player expPlayer){
+    protected double iteration(Node node, double pi_MP, double pi_nMP, Player expPlayer){
         if (node instanceof LeafNode) {
-            return ((LeafNode)node).getUtilities()[searchingPlayer.getId()];
+            return (expPlayer.equals(searchingPlayer)?1:-1)*((LeafNode)node).getUtilities()[searchingPlayer.getId()];
         } 
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode)node;
             double ev=0;
             for (Action ai : cn.getActions()){
                 final double p = cn.getGameState().getProbabilityOfNatureFor(ai);
-                ev += p*iteration(cn.getChildFor(ai), p*pi_, expPlayer);
+                double new_p1 = (expPlayer.equals(expPlayer)) ? pi_MP * p : pi_MP;
+                double new_p2 = (!expPlayer.equals(expPlayer)) ? pi_nMP * p : pi_nMP;
+                ev += p*iteration(cn.getChildFor(ai), new_p1, new_p2, expPlayer);
             }
             return ev;
         }
@@ -75,27 +77,25 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         CFRAlgorithmData data = (CFRAlgorithmData) is.getAlgorithmData();
 
         double[] rmProbs = data.getRMStrategy();
-        
+
         double ev=0;
         if (is.getPlayer().equals(expPlayer)){
             double[] tmpV = new double[rmProbs.length];
             int i=-1;
             for (Action ai : in.getActions()){
                 i++;
-                tmpV[i]=(expPlayer.equals(searchingPlayer)?1:-1)*iteration(in.getChildFor(ai), pi_, expPlayer);
+                tmpV[i]=pi_nMP*iteration(in.getChildFor(ai), pi_MP * rmProbs[i], pi_nMP, expPlayer);
                 ev += rmProbs[i]*tmpV[i];
-                
             }
             data.updateAllRegrets(tmpV, ev);
-            if (!expPlayer.equals(searchingPlayer)) ev*=-1;
-            
+            data.updateMeanStrategy(rmProbs,pi_MP);
+            ev = ev / pi_nMP;
         } else {
             int i=-1;
             for (Action ai : in.getActions()){
                 i++;
-                ev += rmProbs[i]*iteration(in.getChildFor(ai), rmProbs[i]*pi_, expPlayer);
+                ev += rmProbs[i]*iteration(in.getChildFor(ai), pi_MP, rmProbs[i]*pi_nMP, expPlayer);
             }
-            data.updateMeanStrategy(rmProbs, 1);
         }
         return ev;
     }

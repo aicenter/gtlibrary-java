@@ -11,6 +11,7 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.CFRAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
@@ -110,7 +111,7 @@ public class SMConvergenceExperiment {
             MCTSInformationSet is = n.getInformationSet();
             if (is.getAlgorithmData() == null) {
                 infosets++;
-                is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+                is.setAlgorithmData(new CFRAlgorithmData(n.getActions()));
             }
             for (Action a : n.getActions()){
                 Node ch = n.getChildFor(a);

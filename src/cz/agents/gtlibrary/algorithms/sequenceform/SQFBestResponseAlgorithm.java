@@ -9,6 +9,8 @@ import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.ValueComparator;
+import org.apache.wicket.util.collections.ArrayListStack;
+
 import java.util.*;
 
 /**
@@ -604,14 +606,15 @@ public class SQFBestResponseAlgorithm {
 
     public List<GameState> getAlternativeNodesOutsideRG(GameState state) {
         List<GameState> alternativeNodes = new ArrayList<GameState>();
-        Queue<GameState> queue = new ArrayDeque<GameState>();
+        Stack<GameState> queue = new Stack<GameState>();
         queue.add(gameTreeRoot);
 
         Player mainPlayer = state.getPlayerToMove();
         int length = state.getHistory().getLength();
+        boolean neverCheckOppAgain = false;
 
         while (!queue.isEmpty()) {
-            GameState currentState = queue.poll();
+            GameState currentState = queue.pop();
             if (currentState.getHistory().getLength() == length) {
                 if (currentState.getISKeyForPlayerToMove().equals(state.getISKeyForPlayerToMove()) && !currentState.equals(state)) {
                     alternativeNodes.add(currentState);
@@ -619,12 +622,34 @@ public class SQFBestResponseAlgorithm {
                 continue;
             }
 
-            if (!currentState.getPlayerToMove().equals(mainPlayer)) {
+            if (currentState.isPlayerToMoveNature()) {
                 List<Action> tmp = expander.getActions(currentState);
                 for (Action a : tmp) {
                     GameState newState = currentState.performAction(a);
                     if (newState != null) {
-                        queue.add(newState);
+                        queue.push(newState);
+                    }
+                }
+            } else if (!currentState.getPlayerToMove().equals(mainPlayer)) {
+                List<Action> tmp = expander.getActions(currentState);
+                if (!neverCheckOppAgain && opponentRealizationPlan.containsKey(currentState.getSequenceForPlayerToMove())) {
+                    Sequence s = new ArrayListSequenceImpl(currentState.getSequenceForPlayerToMove());
+                    for (Action a : tmp) {
+                        s.addLast(a);
+                        Double d = opponentRealizationPlan.get(s);
+                        if (d != null && d > 0) {
+                            GameState newState = currentState.performAction(a);
+                            if (newState != null) {
+                                queue.push(newState);
+                            }
+                        }
+                        s.removeLast();
+                    }
+                } else {
+                    neverCheckOppAgain = true;
+                    GameState newState = currentState.performAction(tmp.get(0));
+                    if (newState != null) {
+                        queue.push(newState);
                     }
                 }
             } else {
@@ -634,7 +659,7 @@ public class SQFBestResponseAlgorithm {
                     Action actionToExecute = state.getSequenceFor(toMove).get(whichAction);
                     if (currentState.checkConsistency(actionToExecute)) {
                         GameState newState = currentState.performAction(actionToExecute);
-                        queue.add(newState);
+                        queue.push(newState);
                     }
                 }
             }
