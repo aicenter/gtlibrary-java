@@ -53,9 +53,9 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider {
         }
     }
     
-    public void updateAllRegrets(double[] Vs, double meanV){
+    public void updateAllRegrets(double[] Vs, double meanV, double w){
         for (int i=0; i<r.length; i++){
-            r[i] += Vs[i]-meanV;
+            r[i] += w*(Vs[i]-meanV);
         }
     }
 

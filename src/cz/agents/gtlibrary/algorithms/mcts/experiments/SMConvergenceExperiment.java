@@ -6,16 +6,12 @@ package cz.agents.gtlibrary.algorithms.mcts.experiments;
 
 import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.FrequenceDistribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.CFRAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -26,25 +22,14 @@ import cz.agents.gtlibrary.domain.antiMCTS.AntiMCTSState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
-import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
-import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
-import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
-import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
-import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.iinodes.ConfigImpl; 
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
-import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Deque;
 import java.util.Map;
 
 /**
@@ -111,7 +96,7 @@ public class SMConvergenceExperiment {
             MCTSInformationSet is = n.getInformationSet();
             if (is.getAlgorithmData() == null) {
                 infosets++;
-                is.setAlgorithmData(new CFRAlgorithmData(n.getActions()));
+                is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
             }
             for (Action a : n.getActions()){
                 Node ch = n.getChildFor(a);
