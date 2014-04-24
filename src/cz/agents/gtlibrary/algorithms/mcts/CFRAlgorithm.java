@@ -57,6 +57,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
      * @return iteration game value is actually returned. Other return values are in global x and l
      */
     protected double iteration(Node node, double pi1, double pi2, Player expPlayer){
+        if (pi1==0 && pi2==0) return 0;
         if (node instanceof LeafNode) {
             return ((LeafNode)node).getUtilities()[expPlayer.getId()];
         } 
