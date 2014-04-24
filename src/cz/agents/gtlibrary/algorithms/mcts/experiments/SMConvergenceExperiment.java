@@ -2,8 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.agents.gtlibrary.algorithms.mcts;
+package cz.agents.gtlibrary.algorithms.mcts.experiments;
 
+import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.FrequenceDistribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
@@ -18,6 +19,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.antiMCTS.AntiMCTSExpander;
+import cz.agents.gtlibrary.domain.antiMCTS.AntiMCTSInfo;
+import cz.agents.gtlibrary.domain.antiMCTS.AntiMCTSState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
@@ -31,6 +35,7 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.iinodes.ConfigImpl; 
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -45,9 +50,9 @@ import java.util.Map;
  *
  * @author vilo
  */
-public class ConvergenceExperiment {
+public class SMConvergenceExperiment {
 
-    static boolean buildCompleteTree = true;
+    static boolean buildCompleteTree = false;
     static GameInfo gameInfo;
     static GameState rootState;
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
@@ -64,7 +69,7 @@ public class ConvergenceExperiment {
         RandomGameInfo.BINARY_UTILITY = true;
         RandomGameInfo.seed = seed;
         gameInfo = new RandomGameInfo();
-        rootState = new RandomGameState();
+        rootState = new SimRandomGameState();
         expander = new RandomGameExpander<MCTSInformationSet> (new MCTSConfig());
         sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         sfExpander = new RandomGameExpander<SequenceInformationSet>(sfAlgConfig);
@@ -73,39 +78,25 @@ public class ConvergenceExperiment {
         GambitEFG.write("RND" + RandomGameInfo.MAX_BF + RandomGameInfo.MAX_DEPTH + "_" +seed+".efg", rootState, sfExpander);
     }
     
-    public static void setupIIGoofSpielExpl(){
+    public static void setupGoofSpiel(){
         gameInfo = new GSGameInfo();
         rootState = new GoofSpielGameState();
         expander = new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig());
+//        sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+//        sfExpander = new GoofSpielExpander<SequenceInformationSet>(sfAlgConfig);
+//        efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
+//        efg.generateCompleteGame();
+    }
+    
+    public static void setupAntiMCTS(){
+        gameInfo = new AntiMCTSInfo();
+        rootState = new AntiMCTSState();
+        expander = new AntiMCTSExpander<MCTSInformationSet>(new MCTSConfig());
         sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-        sfExpander = new GoofSpielExpander<SequenceInformationSet>(sfAlgConfig);
+        sfExpander = new AntiMCTSExpander<SequenceInformationSet>(sfAlgConfig);
         efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
         efg.generateCompleteGame();
-    }
-    
-    public static void setupPoker(){
-        GPGameInfo.MAX_RAISES_IN_ROW = 2;
-        GPGameInfo.MAX_DIFFERENT_BETS = 3;
-        GPGameInfo.MAX_DIFFERENT_RAISES = GPGameInfo.MAX_DIFFERENT_BETS;
-        GPGameInfo.MAX_CARD_TYPES = 4;
-        GPGameInfo.MAX_CARD_OF_EACH_TYPE = 3;
-        gameInfo = new GPGameInfo();
-        rootState = new GenericPokerGameState();
-        expander = new GenericPokerExpander<MCTSInformationSet>(new MCTSConfig());
-//        sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-//        sfExpander = new GenericPokerExpander<SequenceInformationSet>(sfAlgConfig);
-//        efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
-//        efg.generate();
-    }
-    
-    public static void setupPTTT(){
-        gameInfo = new TTTInfo();
-        rootState = new TTTState();
-        expander = new TTTExpander<MCTSInformationSet>(new MCTSConfig());
-        //sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-        //sfExpander = new GenericPokerExpander<SequenceInformationSet>(sfAlgConfig);
-        //efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
-        //efg.generateCompleteGame();
+        GambitEFG.write("AntiMCTS" + AntiMCTSInfo.gameDepth + ".efg", rootState, sfExpander);
     }
     
     public static void buildCompleteTree(InnerNode r){
@@ -135,31 +126,27 @@ public class ConvergenceExperiment {
     static double gamma = 0.6;
     public static void runMCTS() throws Exception {
         
-        expander.getAlgorithmConfig().createInformationSetFor(rootState);
+       expander.getAlgorithmConfig().createInformationSetFor(rootState);
         
-//        CFRAlgorithm alg = new CFRAlgorithm(
+//        OOSAlgorithm alg = new OOSAlgorithm(
 //                rootState.getAllPlayers()[0],
-//                rootState, expander);
-        
-        OOSAlgorithm alg = new OOSAlgorithm(
-                rootState.getAllPlayers()[0],
-                new OOSSimulator(expander),
-                rootState, expander, 0, gamma);
+//                new OOSSimulator(expander),
+//                rootState, expander, 0, gamma);
         Distribution dist = new MeanStratDist();
 
-//        ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
-//                    rootState.getAllPlayers()[0],
-//                    new DefaultSimulator(expander),
-//                    //new UCTBackPropFactory(2),
-//                    new Exp3BackPropFactory(-1, 1, 0.05),
-//                    //new RMBackPropFactory(-1,1,0.4),
-//                    rootState, expander);
-        //alg.returnMeanValue=true;
+        ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
+                    rootState.getAllPlayers()[0],
+                    new DefaultSimulator(expander),
+                    //new UCTBackPropFactory(2),
+                    new Exp3BackPropFactory(-1, 1, 0.4),
+                    //new RMBackPropFactory(-1,1,0.4),
+                    rootState, expander);
+        alg.returnMeanValue=true;
         //Distribution dist = new FrequenceDistribution();
 
         if (buildCompleteTree) buildCompleteTree(alg.getRootNode());
         
-        alg.runMiliseconds(100);
+        alg.runIterations(2);
         
         brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
         brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
@@ -170,8 +157,8 @@ public class ConvergenceExperiment {
         String outLine = "";
         System.out.print("P1BRs: ");
 
-        for (int i = 0; i < 500; i++) {
-            alg.runMiliseconds(60*1000);
+        for (int i = 0; i < 100; i++) {
+            alg.runIterations(1000);
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
@@ -189,9 +176,11 @@ public class ConvergenceExperiment {
     }
     
     public static void main(String[] args) throws Exception {
-        //setupIIGoofSpielExpl();
-        setupPoker();
         //setupRnd(2);
-        for (;;) runMCTS();
+        for (int j=0;j<100;j++) {
+            setupGoofSpiel();
+            //setupAntiMCTS();
+            runMCTS();
+        }
     }
 }

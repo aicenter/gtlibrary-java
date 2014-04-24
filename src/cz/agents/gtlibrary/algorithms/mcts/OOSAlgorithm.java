@@ -66,12 +66,26 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[1]);
             iters++;
         }
-        System.out.println();
-        System.out.println("Iters: " + iters);
+//        System.out.println();
+//        System.out.println("Iters: " + iters);
         if (!curIS.getPlayer().equals(searchingPlayer)) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
         return Strategy.selectAction(distribution, rnd);
     }
+    
+    public Action runIterations(int iterations){
+        for (int i=0;i<iterations/2;i++) {
+            if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<delta);
+            underTargetIS = false;
+            iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[0]);
+            underTargetIS = false;
+            iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[1]);
+        }
+        if (!curIS.getPlayer().equals(searchingPlayer)) return null;
+        Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
+        return Strategy.selectAction(distribution, rnd);
+    }
+    
     
     private boolean biasedIteration = false;
     private boolean underTargetIS = false;
@@ -120,7 +134,6 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         OOSAlgorithmData data;
         Action selectedA; double u=0; int ai=-1; double pai=-1;
         if (is.getAlgorithmData() == null){//this is a new Information Set
-            assert false;
             data = new OOSAlgorithmData(in.getActions());
             is.setAlgorithmData(data);
             ai = rnd.nextInt(in.getActions().size());

@@ -64,6 +64,17 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         return Strategy.selectAction(distribution, rnd);
     }
     
+    public Action runIterations(int iterations){
+        for (int i=0;i<iterations;i++) {
+            InnerNode n = curISArray[rnd.nextInt(curISArray.length)];
+            iteration(n);
+        }
+        if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
+        MCTSInformationSet is = curISArray[0].getInformationSet();
+        Map<Action, Double> distribution = (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData());
+        return Strategy.selectAction(distribution, rnd);
+    }
+    
     protected double iteration(Node node){
         if (node instanceof LeafNode) return ((LeafNode)node).getUtilities()[searchingPlayer.getId()];
         else {
