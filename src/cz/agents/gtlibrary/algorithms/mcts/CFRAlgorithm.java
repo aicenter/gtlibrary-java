@@ -8,7 +8,6 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.CFRAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.interfaces.*;
@@ -51,52 +50,50 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
     }
     
     /** 
-     * The main function for CFR iteration.
+     * The main function for CFR iteration. Implementation based on Algorithm 1 in M. Lanctot PhD thesis.
      * @param node current node
-     * @param pi_MP probability with which the opponent of the searching player and chance want to reach the current node
+     * @param pi1 probability with which the opponent of the searching player and chance want to reach the current node
      * @param expPlayer the exploring player for this iteration
      * @return iteration game value is actually returned. Other return values are in global x and l
      */
-    protected double iteration(Node node, double pi_MP, double pi_nMP, Player expPlayer){
+    protected double iteration(Node node, double pi1, double pi2, Player expPlayer){
         if (node instanceof LeafNode) {
-            return (expPlayer.equals(searchingPlayer)?1:-1)*((LeafNode)node).getUtilities()[searchingPlayer.getId()];
+            return ((LeafNode)node).getUtilities()[expPlayer.getId()];
         } 
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode)node;
             double ev=0;
             for (Action ai : cn.getActions()){
                 final double p = cn.getGameState().getProbabilityOfNatureFor(ai);
-                double new_p1 = (expPlayer.equals(expPlayer)) ? pi_MP * p : pi_MP;
-                double new_p2 = (!expPlayer.equals(expPlayer)) ? pi_nMP * p : pi_nMP;
+                double new_p1 = expPlayer.getId()==0 ? pi1 * p : pi1;
+                double new_p2 = expPlayer.getId()==1 ? pi2 * p : pi2;
                 ev += p*iteration(cn.getChildFor(ai), new_p1, new_p2, expPlayer);
             }
             return ev;
         }
         InnerNode in = (InnerNode) node;
         MCTSInformationSet is = in.getInformationSet();
-        CFRAlgorithmData data = (CFRAlgorithmData) is.getAlgorithmData();
+        OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
 
         double[] rmProbs = data.getRMStrategy();
-
+        double[] tmpV = new double[rmProbs.length];
         double ev=0;
-        if (is.getPlayer().equals(expPlayer)){
-            double[] tmpV = new double[rmProbs.length];
-            int i=-1;
-            for (Action ai : in.getActions()){
-                i++;
-                tmpV[i]=pi_nMP*iteration(in.getChildFor(ai), pi_MP * rmProbs[i], pi_nMP, expPlayer);
-                ev += rmProbs[i]*tmpV[i];
+        
+        int i=-1;
+        for (Action ai : in.getActions()){
+            i++;
+            if (is.getPlayer().getId()==0){
+                tmpV[i]=iteration(in.getChildFor(ai), pi1 * rmProbs[i], pi2, expPlayer);
+            }  else {
+                tmpV[i]=iteration(in.getChildFor(ai), pi1, rmProbs[i]*pi2, expPlayer);
             }
-            data.updateAllRegrets(tmpV, ev);
-            data.updateMeanStrategy(rmProbs,pi_MP);
-            ev = ev / pi_nMP;
-        } else {
-            int i=-1;
-            for (Action ai : in.getActions()){
-                i++;
-                ev += rmProbs[i]*iteration(in.getChildFor(ai), pi_MP, rmProbs[i]*pi_nMP, expPlayer);
-            }
+            ev += rmProbs[i]*tmpV[i];
         }
+        if (is.getPlayer().equals(expPlayer)){
+            data.updateAllRegrets(tmpV, ev, (expPlayer.getId()==0 ? pi2 : pi1));
+            data.updateMeanStrategy(rmProbs, (expPlayer.getId()==0 ? pi1 : pi2));
+        }
+        
         return ev;
     }
     
