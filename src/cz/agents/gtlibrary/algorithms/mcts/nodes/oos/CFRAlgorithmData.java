@@ -6,7 +6,11 @@
 
 package cz.agents.gtlibrary.algorithms.mcts.nodes.oos;
 
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
+
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -14,14 +18,21 @@ import java.util.List;
  * @author vilo
  */
 public class CFRAlgorithmData extends OOSAlgorithmData{
-    public int counter=0;
+    public int counter=-1;
     public double[] vi;
     public double v;
-    
+
     public CFRAlgorithmData(List<Action> actions) {
         super(actions);
         vi = new double[r.length];
     }
-    
-    
+
+    public int getCounter() {
+        return counter;
+    }
+
+    public void setCounter(int counter) {
+        this.counter = counter;
+    }
+
 }

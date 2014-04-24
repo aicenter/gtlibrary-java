@@ -67,8 +67,8 @@ public class GeneralDoubleOracle {
 
 	public static void main(String[] args) {
 //		runAC();
-//        runBP();
-        runGenericPoker();
+        runBP();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
@@ -197,6 +197,8 @@ public class GeneralDoubleOracle {
                 new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameInfo),
                 new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameInfo)};
         Map<Player, Map<Sequence, Double>> realizationPlans = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
+
+//        calculateSequences();
 
         if (initializationRG == null || initializationRG.isEmpty()) {
             GameState firstState = findFirstNonNatureState(rootState, expander);
@@ -476,6 +478,31 @@ public class GeneralDoubleOracle {
         }
 
         System.out.println("Nodes: " + nodes);
+    }
+
+    public void calculateSequences() {
+        LinkedList<GameState> queue = new LinkedList<GameState>();
+        HashMap<Player, HashSet<Sequence>> sequences = new HashMap<Player, HashSet<Sequence>>();
+
+        for (Player p : rootState.getAllPlayers())
+            sequences.put(p, new HashSet<Sequence>());
+
+        queue.add(rootState);
+
+        while (queue.size() > 0) {
+            GameState currentState = queue.removeLast();
+
+//            for (Player p : rootState.getAllPlayers())
+            Player p = rootState.getAllPlayers()[1];
+            if (currentState.isGameEnd()) // || !currentState.getPlayerToMove().equals(p))
+                sequences.get(p).add(currentState.getSequenceFor(p));
+
+            for (Action action : expander.getActions(currentState)) {
+                queue.add(currentState.performAction(action));
+            }
+        }
+        System.out.println("final size: FirstPlayer Sequences: " + sequences.get(rootState.getAllPlayers()[0]).size() + " \t SecondPlayer Sequences : " + sequences.get(rootState.getAllPlayers()[1]).size());
+        System.exit(0);
     }
 
     public void setDebugOutput(PrintStream debugOutput) {

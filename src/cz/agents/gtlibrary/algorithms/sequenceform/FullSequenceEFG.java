@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,12 +42,7 @@ import cz.agents.gtlibrary.domain.upordown.UDGameInfo;
 import cz.agents.gtlibrary.domain.upordown.UDGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameInfo;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
@@ -68,13 +64,13 @@ public class FullSequenceEFG {
 //		runAC();
 //		runAoS();
 //		runKuhnPoker();
-		runGenericPoker();
+//		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
 //		runPursuit();
-//      runPhantomTTT();
+      runPhantomTTT();
 //		runUpOrDown();
 	}
 	
@@ -142,7 +138,7 @@ public class FullSequenceEFG {
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 
 		Map<Player, Map<Sequence, Double>> rps = efg.generate();
-        GambitEFG.write("GP.gbt", rootState, expander);
+//        GambitEFG.write("GP.gbt", rootState, expander);
 
 //		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
 //			if(entry.getValue() > 0)
@@ -184,7 +180,7 @@ public class FullSequenceEFG {
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 		Map<Player, Map<Sequence, Double>> rps = efg.generate();
 
-        GambitEFG.write("GP.gbt", rootState, expander);
+//        GambitEFG.write("GP.gbt", rootState, expander);
 //		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
 //
 //			if (entry.getValue() > 0)
