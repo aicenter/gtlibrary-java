@@ -75,7 +75,7 @@ public class ConvergenceExperiment {
     
     public static void setupIIGoofSpielExpl(){
         gameInfo = new GSGameInfo();
-        rootState = new GoofSpielGameState();
+        rootState = new IIGoofSpielGameState();
         expander = new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig());
         sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         sfExpander = new GoofSpielExpander<SequenceInformationSet>(sfAlgConfig);
@@ -84,18 +84,18 @@ public class ConvergenceExperiment {
     }
     
     public static void setupPoker(){
-        GPGameInfo.MAX_RAISES_IN_ROW = 2;
-        GPGameInfo.MAX_DIFFERENT_BETS = 3;
+        GPGameInfo.MAX_RAISES_IN_ROW = 1;
+        GPGameInfo.MAX_DIFFERENT_BETS = 1;
         GPGameInfo.MAX_DIFFERENT_RAISES = GPGameInfo.MAX_DIFFERENT_BETS;
-        GPGameInfo.MAX_CARD_TYPES = 4;
-        GPGameInfo.MAX_CARD_OF_EACH_TYPE = 3;
+        GPGameInfo.MAX_CARD_TYPES = 3;
+        GPGameInfo.MAX_CARD_OF_EACH_TYPE = 2;
         gameInfo = new GPGameInfo();
         rootState = new GenericPokerGameState();
         expander = new GenericPokerExpander<MCTSInformationSet>(new MCTSConfig());
-//        sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-//        sfExpander = new GenericPokerExpander<SequenceInformationSet>(sfAlgConfig);
-//        efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
-//        efg.generate();
+        sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+        sfExpander = new GenericPokerExpander<SequenceInformationSet>(sfAlgConfig);
+        efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
+        efg.generate();
     }
     
     public static void setupPTTT(){
@@ -171,7 +171,7 @@ public class ConvergenceExperiment {
         System.out.print("P1BRs: ");
 
         for (int i = 0; i < 500; i++) {
-            alg.runMiliseconds(60*1000);
+            alg.runMiliseconds(5*1000);
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
@@ -179,7 +179,7 @@ public class ConvergenceExperiment {
             System.out.flush();
             outLine += brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1)) + " ";
 
-            //System.out.println("Strat: " + strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
+            System.out.println("Strat: " + strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
             //System.out.println("BR: " + brAlg.getFullBRSequences());
         }
         System.out.println();
