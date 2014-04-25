@@ -54,7 +54,7 @@ public class GeneralDoubleOracle {
 
 	private PrintStream debugOutput = System.out;
 	
-	final private double EPS = 0.00001;
+	final private double EPS = 0.00000001;
     final private static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
     private ThreadMXBean threadBean ;
@@ -67,8 +67,8 @@ public class GeneralDoubleOracle {
 
 	public static void main(String[] args) {
 //		runAC();
-        runBP();
-//        runGenericPoker();
+//        runBP();
+        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
@@ -259,10 +259,10 @@ public class GeneralDoubleOracle {
             debugOutput.println("Current Size: " + algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]));
 			oldSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]);
 
-//            if (diffSize[0] == 0 && diffSize[1] == 0) {
-//                System.out.println("ERROR : NOT CONVERGED");
-//                break;
-//            }
+            if (diffSize[0] == 0 && diffSize[1] == 0) {
+                System.out.println("ERROR : NOT CONVERGED");
+                break;
+            }
 
 			int opponentPlayerIndex = ( currentPlayerIndex + 1 ) % 2;
 			
