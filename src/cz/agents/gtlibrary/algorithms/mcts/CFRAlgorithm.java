@@ -66,8 +66,8 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
             double ev=0;
             for (Action ai : cn.getActions()){
                 final double p = cn.getGameState().getProbabilityOfNatureFor(ai);
-                double new_p1 = expPlayer.getId()==0 ? pi1 * p : pi1;
-                double new_p2 = expPlayer.getId()==1 ? pi2 * p : pi2;
+                double new_p1 = expPlayer.getId()==1 ? pi1 * p : pi1;
+                double new_p2 = expPlayer.getId()==0 ? pi2 * p : pi2;
                 ev += p*iteration(cn.getChildFor(ai), new_p1, new_p2, expPlayer);
             }
             return ev;

@@ -193,13 +193,15 @@ public class SQFBestResponseAlgorithm {
             for (GameState currentNode : alternativeNodes) { // storing the results based on the action
                 if (sel.actionRealValues.get(currentNode) == null) {
                     if (currentNode.equals(gameState)) {
-                        returnValue = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
+//                        returnValue = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
+                        returnValue = Double.NEGATIVE_INFINITY;
                     }
                     continue;
                 }
                 double v;
                 if (resultAction == null) {
-                    v = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
+//                    v = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
+                    v = Double.NEGATIVE_INFINITY;
                 } else {
                     v = sel.actionRealValues.get(currentNode).get(resultAction);
                 }
@@ -253,7 +255,7 @@ public class SQFBestResponseAlgorithm {
         }
 
         assert (returnValue != null);
-        assert (returnValue <= MAX_UTILITY_VALUE*(1.5));
+        assert (returnValue <= MAX_UTILITY_VALUE*(1.01));
         return returnValue;
     }
 
