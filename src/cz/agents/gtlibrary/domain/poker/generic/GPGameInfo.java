@@ -40,7 +40,7 @@ public class GPGameInfo implements GameInfo {
             RAISES_FIRST_ROUND[i] = (i + 1) * 2;
     }
 
-    public static int MAX_CARD_TYPES = 4;
+    public static int MAX_CARD_TYPES = 3;
     public static int[] CARD_TYPES;
 
     {
@@ -49,7 +49,7 @@ public class GPGameInfo implements GameInfo {
             CARD_TYPES[i] = i;
     }
 
-    public static int MAX_CARD_OF_EACH_TYPE = 3;
+    public static int MAX_CARD_OF_EACH_TYPE = 2;
     public static int[] DECK;
 
     {
