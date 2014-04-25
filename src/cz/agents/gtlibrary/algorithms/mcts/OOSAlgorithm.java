@@ -36,7 +36,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     private double epsilon = 0.6;
     
     private MCTSInformationSet curIS;
-    private Random rnd = new Random();
+    private Random rnd = new HighQualityRandom();
 
     public OOSAlgorithm(Player searchingPlayer, OOSSimulator simulator, GameState rootState, Expander expander) {
         this(searchingPlayer, simulator, rootState, expander, 0.9, 0.6);
@@ -58,7 +58,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         int iters=0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (;(threadBean.getCurrentThreadCpuTime()-start)/1e6 < miliseconds;) {
-            if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<delta);
+            //if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<delta);
+            biasedIteration = false;
             underTargetIS = false;
             iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[0]);
             iters++;
@@ -66,8 +67,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[1]);
             iters++;
         }
-//        System.out.println();
-//        System.out.println("Iters: " + iters);
+        System.out.println();
+        System.out.println("Iters: " + iters);
         if (!curIS.getPlayer().equals(searchingPlayer)) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
         return Strategy.selectAction(distribution, rnd);
@@ -106,7 +107,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     protected double iteration(Node node, double pi, double pi_, double bs, double us, Player expPlayer){
         if (node instanceof LeafNode) {
             x=1; l=delta*bs+(1-delta)*us;
-            return ((LeafNode)node).getUtilities()[searchingPlayer.getId()];
+            return ((LeafNode)node).getUtilities()[expPlayer.getId()];
         } 
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode)node;
@@ -127,7 +128,9 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 p = cn.getGameState().getProbabilityOfNatureFor(a);
             }
             if (curIS.equals(cn.getInformationSet())) underTargetIS = true;
-            return iteration(cn.getChildFor(a), pi, p*pi_, p*bs, cn.getGameState().getProbabilityOfNatureFor(a)*us, expPlayer);
+            double u=iteration(cn.getChildFor(a), pi, p*pi_, p*bs, cn.getGameState().getProbabilityOfNatureFor(a)*us, expPlayer);
+            x *= p;
+            return u;
         }
         InnerNode in = (InnerNode) node;
         MCTSInformationSet is = in.getInformationSet();
@@ -140,7 +143,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             pai=1.0/in.getActions().size();
             selectedA = in.getActions().get(ai);
             Node child = in.getChildFor(selectedA);
-            u = simulator.simulate(child.getGameState())[searchingPlayer.getId()];
+            u = simulator.simulate(child.getGameState())[expPlayer.getId()];
             x = simulator.playersProb*(1.0/in.getActions().size());
             l = (delta*bs+(1-delta)*us)*simulator.playOutProb*(1.0/in.getActions().size());
         } else {
@@ -204,16 +207,16 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 
                 pai=rmProbs[ai];
                 u = iteration(in.getChildFor(in.getActions().get(ai)),
-                        pi*rmProbs[ai], pi_, 
+                        pi*pai, pi_, 
                         //the following is zero for banned actions and the correct probability for allowed
                         bs*((Double.compare(biasedProbs[ai],0.0) == -1 ? 0 : (1-epsilon)*biasedProbs[ai]/biasedSum + (epsilon/inBiasActions))),
-                        us*((1-epsilon)*rmProbs[ai] + (epsilon/in.getActions().size())), expPlayer);
+                        us*((1-epsilon)*pai + (epsilon/in.getActions().size())), expPlayer);
             } else {
                 if (biasedIteration) ai = randomChoice(biasedProbs, biasedSum);
                 else ai = randomChoice(rmProbs, 1);
                 pai=rmProbs[ai];
                 u = iteration(in.getChildFor(in.getActions().get(ai)),
-                        pi, pi_*rmProbs[ai], bs*biasedProbs[ai]/biasedSum, us*rmProbs[ai], expPlayer);
+                        pi, pi_*pai, bs*biasedProbs[ai]/biasedSum, us*pai, expPlayer);
             }
         }
         
@@ -223,7 +226,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         x *= pai;
         
         if (is.getPlayer().equals(expPlayer)){
-            data.updateRegret(ai, (expPlayer.equals(searchingPlayer)?1:-1)*u*pi_/l, c, x);
+            data.updateRegret(ai, u*pi_/l, c, x);
         } else {
             data.getRMStrategy(rmProbs);
             data.updateMeanStrategy(rmProbs, pi_/s);
