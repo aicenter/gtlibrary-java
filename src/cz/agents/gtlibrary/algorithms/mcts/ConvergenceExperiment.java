@@ -8,6 +8,7 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.FrequenceDistribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
@@ -36,6 +37,9 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
@@ -47,7 +51,7 @@ import java.util.Map;
  */
 public class ConvergenceExperiment {
 
-    static boolean buildCompleteTree = true;
+    static boolean buildCompleteTree = false;
     static GameInfo gameInfo;
     static GameState rootState;
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
@@ -57,6 +61,8 @@ public class ConvergenceExperiment {
     static SQFBestResponseAlgorithm brAlg0;
     static SQFBestResponseAlgorithm brAlg1;
     static Expander<MCTSInformationSet> expander;
+
+
 
     public static void setupRnd(long seed) {
         RandomGameInfo.MAX_DEPTH = 4;
@@ -84,11 +90,15 @@ public class ConvergenceExperiment {
     }
     
     public static void setupPoker(){
-        GPGameInfo.MAX_RAISES_IN_ROW = 2;
-        GPGameInfo.MAX_DIFFERENT_BETS = 3;
+        setupPoker(1,1,3,2);
+    }
+
+    public static void setupPoker(int row, int bets, int types, int cards){
+        GPGameInfo.MAX_RAISES_IN_ROW = row;
+        GPGameInfo.MAX_DIFFERENT_BETS = bets;
         GPGameInfo.MAX_DIFFERENT_RAISES = GPGameInfo.MAX_DIFFERENT_BETS;
-        GPGameInfo.MAX_CARD_TYPES = 4;
-        GPGameInfo.MAX_CARD_OF_EACH_TYPE = 3;
+        GPGameInfo.MAX_CARD_TYPES = types;
+        GPGameInfo.MAX_CARD_OF_EACH_TYPE = cards;
         gameInfo = new GPGameInfo();
         rootState = new GenericPokerGameState();
         expander = new GenericPokerExpander<MCTSInformationSet>(new MCTSConfig());
@@ -130,21 +140,26 @@ public class ConvergenceExperiment {
         }
         System.out.println("Created nodes: " + nodes +"; infosets: " +infosets);
     }
-    
-    
+
     static double gamma = 0.6;
     public static void runMCTS() throws Exception {
-        
-        expander.getAlgorithmConfig().createInformationSetFor(rootState);
-        
-//        CFRAlgorithm alg = new CFRAlgorithm(
-//                rootState.getAllPlayers()[0],
-//                rootState, expander);
 
-        OOSAlgorithm alg = new OOSAlgorithm(
+        int secondsIteration = 5;
+
+        expander.getAlgorithmConfig().createInformationSetFor(rootState);
+
+        CFRAlgorithm alg = new CFRAlgorithm(
                 rootState.getAllPlayers()[0],
-                new OOSSimulator(expander),
-                rootState, expander, 0, gamma);
+                rootState, expander);
+//
+        CFRISAlgorithm algIS = new CFRISAlgorithm(
+                rootState.getAllPlayers()[0],
+                rootState, expander);
+
+//        OOSAlgorithm alg = new OOSAlgorithm(
+//                rootState.getAllPlayers()[0],
+//                new OOSSimulator(expander),
+//                rootState, expander, 0, gamma);
         Distribution dist = new MeanStratDist();
 
 //        ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
@@ -157,10 +172,14 @@ public class ConvergenceExperiment {
         //alg.returnMeanValue=true;
         //Distribution dist = new FrequenceDistribution();
 
-        if (buildCompleteTree) buildCompleteTree(alg.getRootNode());
-        
-        alg.runMiliseconds(100);
-        
+        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+        long start = threadBean.getCurrentThreadCpuTime();
+        if (buildCompleteTree) { buildCompleteTree(alg.getRootNode()); System.out.println("Building GT: " + ((threadBean.getCurrentThreadCpuTime() - start)/1000000)); }
+
+        if (buildCompleteTree)
+            alg.runMiliseconds(100);
+        else algIS.runMiliseconds(100);
+
         brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
         brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
 
@@ -170,10 +189,20 @@ public class ConvergenceExperiment {
         String outLine = "";
         System.out.print("P1BRs: ");
 
-        for (int i = 0; i < 500; i++) {
-            alg.runMiliseconds(60*1000);
-            strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
-            strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
+        for (int i = 0; i < 100; i++) {
+            if (buildCompleteTree)
+                alg.runMiliseconds(secondsIteration*1000);
+            else
+                algIS.runMiliseconds(secondsIteration*1000);
+            System.out.println("Cumulative Time: "+(secondsIteration*1000*(i+1)));
+            if (buildCompleteTree) {
+                strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
+                strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
+            } else {
+                strategy0 = StrategyCollector.getStrategyFor(rootState, rootState.getAllPlayers()[0], dist, algIS.getInformationSets(), expander);
+                strategy1 = StrategyCollector.getStrategyFor(rootState, rootState.getAllPlayers()[1], dist, algIS.getInformationSets(), expander);
+            }
+//            checkCompleteTree(alg2.getRootNode(), alg);
 
             System.out.print(brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0)) + " ");
             System.out.flush();
@@ -189,9 +218,19 @@ public class ConvergenceExperiment {
     }
     
     public static void main(String[] args) throws Exception {
-        //setupIIGoofSpielExpl();
-        setupPoker();
-//        setupRnd(13);
-        runMCTS();
+        final String GP = "GP";
+
+        if (args.length > 0) {
+            if (args[2].equals(GP)) {
+               setupPoker(new Integer(args[3]),new Integer(args[4]),new Integer(args[5]),new Integer(args[6]));
+            }
+            buildCompleteTree = new Boolean(args[1]);
+            runMCTS();
+        } else {
+            //setupIIGoofSpielExpl();
+            setupPoker();
+    //        setupRnd(13);
+            runMCTS();
+        }
     }
 }

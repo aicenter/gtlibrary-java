@@ -7,14 +7,16 @@ package cz.agents.gtlibrary.algorithms.mcts.distribution;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
+import cz.agents.gtlibrary.utils.Pair;
+
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,7 +40,7 @@ public class StrategyCollector {
                 InnerNode curNode = q.removeFirst();
                 MCTSInformationSet curNodeIS = curNode.getInformationSet();
  
-                if (curNodeIS.getPlayer().equals(player) && !processed.contains(curNode.getInformationSet())){
+                if (curNodeIS.getPlayer().equals(player) && !processed.contains(curNodeIS)){
                     Map<Action, Double> actionDistribution = distribution.getDistributionFor(curNodeIS.getAlgorithmData());
                     double prefix = strategy.get(curNodeIS.getPlayersHistory());
                     if (actionDistribution == null || !(prefix>0)) continue; //unreachable/unreached state
@@ -58,4 +60,38 @@ public class StrategyCollector {
             }
             return strategy;
         }
+
+    static public Strategy getStrategyFor(GameState rootState, Player player, Distribution distribution, Map<Pair<Integer, Sequence>, MCTSInformationSet> informationSets, Expander expander) {
+        Strategy strategy = new UniformStrategyForMissingSequences();
+        strategy.put(new ArrayListSequenceImpl(player),1.0);
+        HashSet<MCTSInformationSet> processed = new HashSet();
+        ArrayDeque<GameState> q = new ArrayDeque();
+        q.add(rootState);
+        while (!q.isEmpty()){
+            GameState curNode = q.removeFirst();
+            MCTSInformationSet curNodeIS = informationSets.get(curNode.getISKeyForPlayerToMove());
+
+            if (curNode.getPlayerToMove().equals(player) && !processed.contains(curNodeIS)){
+                Map<Action, Double> actionDistribution = distribution.getDistributionFor(curNodeIS.getAlgorithmData());
+                double prefix = strategy.get(curNodeIS.getPlayersHistory());
+                if (actionDistribution == null || !(prefix>0)) continue; //unreachable/unreached state
+                for (Map.Entry<Action, Double> en : actionDistribution.entrySet()){
+                    if (en.getValue()>0){
+                        Sequence sq = new ArrayListSequenceImpl(curNodeIS.getPlayersHistory());
+                        sq.addLast(en.getKey());
+                        strategy.put(sq, en.getValue()*prefix);
+                    }
+                }
+                processed.add(curNodeIS);
+            }
+
+            List<Action> tmp = (curNodeIS != null) ? ((OOSAlgorithmData)curNodeIS.getAlgorithmData()).getActions() : expander.getActions(curNode);
+            for(Action a : tmp) {
+                GameState newState = curNode.performAction(a);
+                if (!newState.isGameEnd()) q.addLast(newState);
+            }
+        }
+        return strategy;
+    }
+
 }
