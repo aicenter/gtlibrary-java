@@ -5,23 +5,17 @@
 package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.FrequenceDistribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
-import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
@@ -36,13 +30,10 @@ import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
-import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Deque;
 import java.util.Map;
 
 /**
@@ -51,7 +42,7 @@ import java.util.Map;
  */
 public class ConvergenceExperiment {
 
-    static boolean buildCompleteTree = false;
+    static boolean buildCompleteTree = true;
     static GameInfo gameInfo;
     static GameState rootState;
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
@@ -78,7 +69,7 @@ public class ConvergenceExperiment {
         optStrategies = efg.generate();
         GambitEFG.write("RND" + RandomGameInfo.MAX_BF + RandomGameInfo.MAX_DEPTH + "_" +seed+".efg", rootState, sfExpander);
     }
-    
+
     public static void setupIIGoofSpielExpl(){
         gameInfo = new GSGameInfo();
         rootState = new IIGoofSpielGameState();
@@ -90,7 +81,7 @@ public class ConvergenceExperiment {
     }
     
     public static void setupPoker(){
-        setupPoker(1,1,3,2);
+        setupPoker(1,3,5,4);
     }
 
     public static void setupPoker(int row, int bets, int types, int cards){
@@ -148,18 +139,18 @@ public class ConvergenceExperiment {
 
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
 
-        CFRAlgorithm alg = new CFRAlgorithm(
-                rootState.getAllPlayers()[0],
-                rootState, expander);
-//
+//        CFRAlgorithm alg = new CFRAlgorithm(
+//                rootState.getAllPlayers()[0],
+//                rootState, expander);
+
         CFRISAlgorithm algIS = new CFRISAlgorithm(
                 rootState.getAllPlayers()[0],
                 rootState, expander);
 
-//        OOSAlgorithm alg = new OOSAlgorithm(
-//                rootState.getAllPlayers()[0],
-//                new OOSSimulator(expander),
-//                rootState, expander, 0, gamma);
+        OOSAlgorithm alg = new OOSAlgorithm(
+                rootState.getAllPlayers()[0],
+                new OOSSimulator(expander),
+                rootState, expander, 0, gamma);
         Distribution dist = new MeanStratDist();
 
 //        ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
@@ -193,7 +184,7 @@ public class ConvergenceExperiment {
             if (buildCompleteTree)
                 alg.runMiliseconds(secondsIteration*1000);
             else
-                algIS.runMiliseconds(secondsIteration*1000);
+                algIS.runMiliseconds(secondsIteration * 1000);
             System.out.println("Cumulative Time: "+(secondsIteration*1000*(i+1)));
             if (buildCompleteTree) {
                 strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
@@ -219,10 +210,13 @@ public class ConvergenceExperiment {
     
     public static void main(String[] args) throws Exception {
         final String GP = "GP";
+        final String RG = "RG";
 
         if (args.length > 0) {
             if (args[2].equals(GP)) {
                setupPoker(new Integer(args[3]),new Integer(args[4]),new Integer(args[5]),new Integer(args[6]));
+            } else if (args[2].equals(RG)) {
+
             }
             buildCompleteTree = new Boolean(args[1]);
             runMCTS();

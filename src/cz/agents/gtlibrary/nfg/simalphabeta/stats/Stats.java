@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.stats;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -49,7 +51,7 @@ public class Stats implements Exportable {
 	private int LPinvocations = 0;
 	private long overallTime;
 	
-	
+	private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 	
 	private Stats() {
 	}
@@ -255,11 +257,11 @@ public class Stats implements Exportable {
 	}
 	
 	public void startTime() {
-		time = System.currentTimeMillis();
+		time = threadMXBean.getCurrentThreadCpuTime()/1000000l;
 	}
 	
 	public void stopTime() {
-		time = System.currentTimeMillis() - time;
+		time = threadMXBean.getCurrentThreadCpuTime()/1000000l - time;
 		overallTime += time;
 	}
 

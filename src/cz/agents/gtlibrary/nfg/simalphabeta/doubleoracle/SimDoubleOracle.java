@@ -28,6 +28,8 @@ public class SimDoubleOracle extends DoubleOracle {
 	protected SimUtility p1Utility;
 	protected DOCache cache = new DOCacheImpl();
 
+    final protected boolean isRoot;
+
 	public SimDoubleOracle(SimUtility utility, double alpha, double beta, Data data, GameState state, DOCache cache) {
 		super(state, data);
 		this.p1Oracle = data.getP1Oracle(state, utility, data.cache);
@@ -39,7 +41,8 @@ public class SimDoubleOracle extends DoubleOracle {
 		this.p1Utility = utility;
 		this.coreSolver = new ZeroSumGameNESolverImpl<ActionPureStrategy, ActionPureStrategy>(utility);
 		this.cache = cache;
-	}
+        this.isRoot = (state.getHistory().getSequenceOf(state.getAllPlayers()[0]).size() == 0) && (state.getHistory().getSequenceOf(state.getAllPlayers()[1]).size() == 0);
+    }
 
 	public double getGameValue() {
 		return gameValue;
@@ -66,7 +69,16 @@ public class SimDoubleOracle extends DoubleOracle {
 		p1StrategySet.add(initialStrategy);
 		Stats.getInstance().incrementP1StrategyCount();
 		coreSolver.addPlayerOneStrategies(p1StrategySet);
+        int iters = -1;
+
 		while (true) {
+            iters++;
+            if (isRoot) {
+                System.out.print("Iterations in root: " + iters);
+                System.out.println(" interval size: " + (beta - alpha));
+            }
+
+
 			Pair<ActionPureStrategy, Double> p2BestResponse = p2Oracle.getBestResponse(getP1MixedStrategy(initialStrategy), alpha, beta);
 			
 			if (-p2BestResponse.getRight() > alpha)

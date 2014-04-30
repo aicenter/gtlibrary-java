@@ -9,8 +9,6 @@ import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
-import java.util.Random;
-
 /**
  * Created with IntelliJ IDEA.
  * User: bosansky

@@ -115,7 +115,13 @@ public class DOUtilityCalculator implements UtilityCalculator {
 	public double getUtility(GameState state, ActionPureStrategy s1, ActionPureStrategy s2) {
 		Double utility = data.cache.getUtilityFor(s1, s2);
 
-		return utility == null ? Double.NaN : utility;
+        if (utility != null)
+            return utility;
+        if (state.isPlayerToMoveNature())
+            return computeUtilityForNature(state, s1, s2, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        return computeUtilityOf(state, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+
+//		return utility == null ? Double.NaN : utility;
 	}
 
 	@Override
