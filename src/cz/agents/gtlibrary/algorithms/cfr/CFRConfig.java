@@ -7,6 +7,11 @@ import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.History;
 
+/**
+ * This class will be removed, the implementation of CFR and OOS is obsolete.
+ * Use cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm/CFRISAlgorithm instead.
+ */
+@Deprecated
 public abstract class CFRConfig<I extends CFRInformationSet> extends ConfigImpl<I> {
 	private GameState rootState;
 	private int iterations;

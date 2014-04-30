@@ -41,7 +41,7 @@ public class SimAlphaBeta {
 //		runGoofSpielWithFixedNatureSequence(true, true);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
 //				runPursuit();
-        runSimRandomGame(true, true);
+        runSimRandomGame(true, false);
 	}
 
 	public static void runGoofSpielWithFixedNatureSequenceWithLocalCache(boolean alphaBetaBounds, boolean doubleOracle) {
