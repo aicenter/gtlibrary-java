@@ -344,7 +344,7 @@ public abstract class MIProblemCplex extends AMIProblem {
         try {
             this.updateObjective();
             this.loadBasisStatus();
-            cplex.exportModel("NFGDO.lp");
+//            cplex.exportModel("NFGDO.lp");
             boolean retval = cplex.solve();
             // MANISH DEBUG PRINT
             //cplex.getCplexStatus().equals(CplexStatus.Optimal)
