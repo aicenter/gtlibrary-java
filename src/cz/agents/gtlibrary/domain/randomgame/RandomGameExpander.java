@@ -32,7 +32,11 @@ public class RandomGameExpander<I extends InformationSet> extends ExpanderImpl<I
         if (gsState.getHistory().getSequenceOf(gameState.getPlayerToMove()).size() > 0)
             newVal = ((RandomGameAction)gsState.getHistory().getSequenceOf(gameState.getPlayerToMove()).getLast()).getValue();
 
-        for (int i=0; i<RandomGameInfo.MAX_BF; i++) {
+        int MOVES = RandomGameInfo.MAX_BF;
+        if (!RandomGameInfo.FIXED_SIZE_BF) {
+            MOVES = new HighQualityRandom(gsState.getISKeyForPlayerToMove().getLeft()).nextInt(RandomGameInfo.MAX_BF-1)+2;
+        }
+        for (int i=0; i<MOVES; i++) {
             RandomGameAction action = new RandomGameAction(informationSet, newVal + "_" + i, i);
             actions.add(action);
         }

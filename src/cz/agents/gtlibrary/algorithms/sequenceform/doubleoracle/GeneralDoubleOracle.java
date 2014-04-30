@@ -45,6 +45,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 public class GeneralDoubleOracle {
 	private GameState rootState;
@@ -68,11 +69,11 @@ public class GeneralDoubleOracle {
 	public static void main(String[] args) {
 //		runAC();
 //        runBP();
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
-//		runSimRandomGame();
+		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
@@ -133,7 +134,7 @@ public class GeneralDoubleOracle {
 //        Expander<DoubleOracleInformationSet> expander = new RandomGameExpanderWithMoveOrdering<DoubleOracleInformationSet>(algConfig, new int[] {1, 2, 0});
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
         doefg.generate(null);
-//        GambitEFG.write("randomgame.gbt", rootState, (Expander)expander);
+//        GambitEFG.write("randomgame.gbt", rootState, (Expander) expander);
     }
     
     public static void runSimRandomGame() {
@@ -143,6 +144,7 @@ public class GeneralDoubleOracle {
         Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
         doefg.generate(null);
+//        GambitEFG.write("randomgame.gbt", rootState, (Expander) expander);
     }
 
     public static void runGenericPoker() {
@@ -246,6 +248,8 @@ public class GeneralDoubleOracle {
 		int[] oldSize = new int[] {-1,-1};
         int[] diffSize = new int[] {-1, -1};
         double[] lastBRValue = new double[] {-1.0, -1.0};
+
+        boolean[] newSeqs = new boolean[] {true, true};
 		
 		while ((Math.abs(p1BoundUtility + p2BoundUtility) > EPS) ||
                 Math.abs(doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]) + doRestrictedGameSolver.getResultForPlayer(actingPlayers[1])) > EPS){
@@ -253,16 +257,17 @@ public class GeneralDoubleOracle {
 			iterations++;
             debugOutput.println("Iteration " + iterations + ": Cumulative Time from Beginning:" + ((threadBean.getCurrentThreadCpuTime() - start)/1000000l));
 
-            diffSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex];
+//            diffSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex];
 
 			debugOutput.println("Last difference: " + (algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex]));
             debugOutput.println("Current Size: " + algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]));
 			oldSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]);
 
-            if (diffSize[0] == 0 && diffSize[1] == 0) {
-                System.out.println("ERROR : NOT CONVERGED");
-                break;
-            }
+//            if (diffSize[0] == 0 && diffSize[1] == 0) {
+//                System.out.println("ERROR : NOT CONVERGED");
+//                break;
+//            }
+
 
 			int opponentPlayerIndex = ( currentPlayerIndex + 1 ) % 2;
 			
@@ -293,6 +298,10 @@ public class GeneralDoubleOracle {
                 if (DEBUG) debugOutput.println("New Full BR Sequences: " + newFullBRSequences);
                 algConfig.createValidRestrictedGame(actingPlayers[currentPlayerIndex], newFullBRSequences, brAlgorithms, expander);
                 algConfig.addFullBRSequences(actingPlayers[currentPlayerIndex], newFullBRSequences);
+                newSeqs[0] = true;
+                newSeqs[1] = true;
+            } else {
+                newSeqs[currentPlayerIndex] = false;
             }
             long thisRGB = (threadBean.getCurrentThreadCpuTime() - startRGB)/1000000l;
             overallRGBuilding += thisRGB;
@@ -307,10 +316,10 @@ public class GeneralDoubleOracle {
 
             if (DEBUG) debugOutput.println(algConfig.getNewSequences());
 
-
             switch (playerSelection) {
                 case BOTH:
                     if (currentPlayerIndex != 0) {
+
                         long startCPLEX = threadBean.getCurrentThreadCpuTime();
                         doRestrictedGameSolver.calculateStrategyForPlayer(currentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
                         doRestrictedGameSolver.calculateStrategyForPlayer(opponentPlayerIndex, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
@@ -366,8 +375,6 @@ public class GeneralDoubleOracle {
 
                     }
 
-
-
                     opponentPlayerIndex = (1+currentPlayerIndex)%2;
 
                     startCPLEX = threadBean.getCurrentThreadCpuTime();
@@ -402,7 +409,13 @@ public class GeneralDoubleOracle {
             if (DEBUG)
                 algConfig.validateRestrictedGameStructure(expander, brAlgorithms);
 
+            if (!playerSelection.equals(PlayerSelection.BOTH) && !newSeqs[0] && !newSeqs[1]) {
+                System.out.println("ERROR : NOT CONVERGED");
+                break;
+            }
 		}
+
+
 
         debugOutput.println("done.");
         long finishTime = (threadBean.getCurrentThreadCpuTime() - start)/1000000l;
