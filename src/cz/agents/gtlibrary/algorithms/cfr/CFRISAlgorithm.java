@@ -135,4 +135,9 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
     public HashMap<Pair<Integer, Sequence>, MCTSInformationSet> getInformationSets() {
         return informationSets;
     }
+
+    @Override
+    public InnerNode getRootNode() {
+        return null;
+    }
 }

@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.pursuit;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class PursuitGameState extends GameStateImpl {
 		evaderPosition = graph.getEvaderStart();
 		p1Position = graph.getP1Start();
 		p2Position = graph.getP2Start();
-		sequence = new LinkedList<Action>();
+		sequence = new ArrayList<Action>();
 	}
 
 	public PursuitGameState(PursuitGameState gameState) {
@@ -45,7 +46,8 @@ public class PursuitGameState extends GameStateImpl {
 		this.currentPlayerIndex = gameState.currentPlayerIndex;
 		this.round = gameState.round;
 		this.graph = gameState.graph;
-		this.sequence = new LinkedList<Action>(gameState.sequence);
+		this.sequence = new ArrayList<Action>(gameState.sequence.size()+1);
+        this.sequence.addAll(gameState.sequence);
 	}
 
 	public void executePatrollerAction(PatrollerPursuitAction action) {

@@ -4,6 +4,8 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts;
 
+import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
+import cz.agents.gtlibrary.algorithms.cfr.CFRISAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
@@ -14,6 +16,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.bpg.BPGExpander;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
@@ -42,7 +47,7 @@ import java.util.Map;
  */
 public class ConvergenceExperiment {
 
-    static boolean buildCompleteTree = true;
+    static boolean buildCompleteTree = false;
     static GameInfo gameInfo;
     static GameState rootState;
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
@@ -98,7 +103,13 @@ public class ConvergenceExperiment {
 //        efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
 //        efg.generate();
     }
-    
+
+    public static void setupBP(){
+        gameInfo = new BPGGameInfo();
+        rootState = new BPGGameState();
+        expander = new BPGExpander<MCTSInformationSet>(new MCTSConfig());
+    }
+
     public static void setupPTTT(){
         gameInfo = new TTTInfo();
         rootState = new TTTState();
@@ -139,18 +150,18 @@ public class ConvergenceExperiment {
 
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
 
-//        CFRAlgorithm alg = new CFRAlgorithm(
-//                rootState.getAllPlayers()[0],
-//                rootState, expander);
+        CFRAlgorithm alg = new CFRAlgorithm(
+                rootState.getAllPlayers()[0],
+                rootState, expander);
 
         CFRISAlgorithm algIS = new CFRISAlgorithm(
                 rootState.getAllPlayers()[0],
                 rootState, expander);
 
-        OOSAlgorithm alg = new OOSAlgorithm(
-                rootState.getAllPlayers()[0],
-                new OOSSimulator(expander),
-                rootState, expander, 0, gamma);
+//        OOSAlgorithm alg = new OOSAlgorithm(
+//                rootState.getAllPlayers()[0],
+//                new OOSSimulator(expander),
+//                rootState, expander, 0, gamma);
         Distribution dist = new MeanStratDist();
 
 //        ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
@@ -221,9 +232,10 @@ public class ConvergenceExperiment {
             buildCompleteTree = new Boolean(args[1]);
             runMCTS();
         } else {
-            //setupIIGoofSpielExpl();
-            setupPoker();
-    //        setupRnd(13);
+//          setupIIGoofSpielExpl();
+//          setupPoker();
+//          setupRnd(13);
+            setupBP();
             runMCTS();
         }
     }
