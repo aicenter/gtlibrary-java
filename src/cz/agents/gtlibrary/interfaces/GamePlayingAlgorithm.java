@@ -4,6 +4,8 @@
  */
 package cz.agents.gtlibrary.interfaces;
 
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+
 /**
  *
  * @author vilo
@@ -11,4 +13,5 @@ package cz.agents.gtlibrary.interfaces;
 public interface GamePlayingAlgorithm {
     public Action runMiliseconds(int miliseconds);
     public void setCurrentIS(InformationSet currentIS);
+    public InnerNode getRootNode();
 }

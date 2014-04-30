@@ -40,8 +40,8 @@ public class SimAlphaBeta {
 //		runGoofSpielWithNatureWithLocalCache();
 //		runGoofSpielWithFixedNatureSequence(true, true);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
-//				runPursuit();
-        runSimRandomGame(true, false);
+	    runPursuit(true,true);
+//        runSimRandomGame(true, false);
 	}
 
 	public static void runGoofSpielWithFixedNatureSequenceWithLocalCache(boolean alphaBetaBounds, boolean doubleOracle) {
@@ -74,10 +74,11 @@ public class SimAlphaBeta {
 		Stats.getInstance().startTime();
 		GSGameInfo.useFixedNatureSequence = true;
 		SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
+        GameInfo gameInfo = new GSGameInfo();
 		GoofSpielGameState root = new GoofSpielGameState();
 		
 		System.out.println(root.getNatureSequence());
-		simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, new GSGameInfo());
+		simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, gameInfo);
 		Stats.getInstance().stopTime();
 		Stats.getInstance().printOverallInfo();
 //		CSVExporter.export(Stats.getInstance(), "FixedGoofspielStats.csv", "Full LP");
@@ -98,8 +99,8 @@ public class SimAlphaBeta {
 	public static void runPursuit(boolean alphaBetaBounds, boolean doubleOracle) {
 		Stats.getInstance().startTime();
 		SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
-		
-		simAlphaBeta.runSimAlpabeta(new PursuitGameState(), new PursuitExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, new PursuitGameInfo());
+        GameInfo gameInfo = new PursuitGameInfo();
+		simAlphaBeta.runSimAlpabeta(new PursuitGameState(), new PursuitExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, gameInfo);
 		Stats.getInstance().stopTime();
 		Stats.getInstance().printOverallInfo();
 //		CSVExporter.export(Stats.getInstance(), "NatureGoofspielStats.csv",  "Full LP");
@@ -108,8 +109,8 @@ public class SimAlphaBeta {
     public static void runSimRandomGame(boolean alphaBetaBounds, boolean doubleOracle) {
         Stats.getInstance().startTime();
         SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
-
-        simAlphaBeta.runSimAlpabeta(new SimRandomGameState(), new RandomGameExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, new RandomGameInfo());
+        GameInfo gameInfo = new RandomGameInfo();
+        simAlphaBeta.runSimAlpabeta(new SimRandomGameState(), new RandomGameExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, gameInfo);
         Stats.getInstance().stopTime();
         Stats.getInstance().printOverallInfo();
     }
@@ -128,11 +129,12 @@ public class SimAlphaBeta {
                     new DOCacheImpl(),
                     new NatureCacheImpl(),
                     new LowerBoundComparatorFactory());
-			DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
+            System.out.println(data.gameInfo.getInfo());
+            DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
 
 			oracle.generate();
 			System.out.println("****************");
-			System.out.println("root state: " + rootState);
+//			System.out.println("root state: " + rootState);
 			System.out.println("game value: " + oracle.getGameValue());
 		}
 	}
@@ -143,10 +145,13 @@ public class SimAlphaBeta {
 				runSimAlpabetaWithLocalCache(rootState.performAction(action), expander);
 			}
 		} else {
+
 			long time = System.currentTimeMillis();
 			Data data = new Data(new NoCacheAlphaBetaFactory(), new GSGameInfo(), expander, 
 					new LocalCacheDoubleOracleFactory(), new SortingOracleFactory(), new DOCacheImpl(), new NatureCacheImpl(), new UpperBoundComparatorFactory());
-			DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
+
+            System.out.println(data.gameInfo.getInfo());
+            DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
 
 			oracle.generate();
 			System.out.println("****************");

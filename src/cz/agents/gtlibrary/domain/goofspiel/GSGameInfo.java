@@ -13,12 +13,23 @@ public class GSGameInfo implements GameInfo {
 	public static final Player NATURE = new PlayerImpl(2);
 
 	public static final Player[] ALL_PLAYERS = { FIRST_PLAYER, SECOND_PLAYER, NATURE };
-	public static final int[] CARDS_FOR_PLAYER = new int[] { 1, 2, 3, 4, 5, 6/*, 7, 8, 9, 10, 11, 12, 13*/};
-	public static final long seed = 1;
+	public static int[] CARDS_FOR_PLAYER = new int[] { 1, 2, 3, 4, 5, 6/*, 7, 8, 9, 10, 11, 12, 13*/};
+	public static long seed = 1;
 	public static boolean useFixedNatureSequence = true;
-	public static final int depth = CARDS_FOR_PLAYER.length;
+    public static boolean regenerateCards = false;
+	public static int depth = CARDS_FOR_PLAYER.length;
 
-	@Override
+
+    public GSGameInfo() {
+        if (regenerateCards) {
+            CARDS_FOR_PLAYER = new int[depth];
+            for (int i=0; i<depth; i++) {
+                CARDS_FOR_PLAYER[i]=i;
+            }
+        }
+    }
+
+    @Override
 	public double getMaxUtility() {
 //		double value = 0;
 //		
