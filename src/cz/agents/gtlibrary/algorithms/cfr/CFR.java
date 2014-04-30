@@ -7,6 +7,11 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 
+/**
+ * This class will be removed, the implementation of CFR and OOS is obsolete.
+ * Use cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm/CFRISAlgorithm instead.
+ */
+@Deprecated
 public abstract class CFR<I extends CFRInformationSet> {
 	protected CFRConfig<I> config;
 

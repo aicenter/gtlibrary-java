@@ -23,6 +23,11 @@ import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
+/**
+ * This class will be removed, the implementation of CFR and OOS is obsolete.
+ * Use cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm/CFRISAlgorithm instead.
+ */
+@Deprecated
 public class VanillaCFR extends CFR<VanillaInformationSet> {
 
 	public static void main(String[] args) {
