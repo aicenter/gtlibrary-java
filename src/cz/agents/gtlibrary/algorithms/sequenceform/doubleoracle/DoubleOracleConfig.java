@@ -180,8 +180,8 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 
 					} // if the sequence is not consistent, we simply do not continue ...
 					else {
-						System.err.print("");
-						currentState.checkConsistency(action);
+//						System.err.print("");
+//						currentState.checkConsistency(action);
 					}
 				}
 
@@ -214,6 +214,9 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 			} else
 				assert false;
 		}
+//        if (1 == (3 / (2 + 1))) {
+//            System.out.println("AAA");
+//        }
 	}
 
 	private void addToTempLeafsForSeqComb(GameState currentState) {

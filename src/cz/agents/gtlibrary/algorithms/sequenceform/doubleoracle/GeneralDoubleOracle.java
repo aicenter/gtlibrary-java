@@ -64,15 +64,15 @@ public class GeneralDoubleOracle {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
 
-    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_IMPROVED;
+    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_ALTERNATING;
 
 	public static void main(String[] args) {
 //		runAC();
-        runBP();
+//        runBP();
 //        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-//        runRandomGame();
+        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
@@ -246,11 +246,12 @@ public class GeneralDoubleOracle {
 		double p2BoundUtility = gameInfo.getMaxUtility();
 		
 		int[] oldSize = new int[] {-1,-1};
-        int[] diffSize = new int[] {-1, -1};
+//        int[] diffSize = new int[] {-1, -1};
         double[] lastBRValue = new double[] {-1.0, -1.0};
 
-        boolean[] newSeqs = new boolean[] {true, true};
-		
+//        boolean[] newSeqs = new boolean[] {true, true};
+
+        mainloop:
 		while ((Math.abs(p1BoundUtility + p2BoundUtility) > EPS) ||
                 Math.abs(doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]) + doRestrictedGameSolver.getResultForPlayer(actingPlayers[1])) > EPS){
 
@@ -298,10 +299,10 @@ public class GeneralDoubleOracle {
                 if (DEBUG) debugOutput.println("New Full BR Sequences: " + newFullBRSequences);
                 algConfig.createValidRestrictedGame(actingPlayers[currentPlayerIndex], newFullBRSequences, brAlgorithms, expander);
                 algConfig.addFullBRSequences(actingPlayers[currentPlayerIndex], newFullBRSequences);
-                newSeqs[0] = true;
-                newSeqs[1] = true;
-            } else {
-                newSeqs[currentPlayerIndex] = false;
+//                newSeqs[0] = true;
+//                newSeqs[1] = true;
+//            } else {
+//                newSeqs[currentPlayerIndex] = false;
             }
             long thisRGB = (threadBean.getCurrentThreadCpuTime() - startRGB)/1000000l;
             overallRGBuilding += thisRGB;
@@ -315,6 +316,12 @@ public class GeneralDoubleOracle {
             debugOutput.println("Iteration " + iterations + ": Bounds Interval Size :" + (p1BoundUtility + p2BoundUtility));
 
             if (DEBUG) debugOutput.println(algConfig.getNewSequences());
+
+            if (algConfig.getNewSequences().isEmpty() && doRestrictedGameSolver.newSequencesSinceLastLPCalculation.get(actingPlayers[0]).isEmpty()
+                    && doRestrictedGameSolver.newSequencesSinceLastLPCalculation.get(actingPlayers[1]).isEmpty()) {
+                System.out.println("ERROR : NOT CONVERGED");
+                break;
+            }
 
             switch (playerSelection) {
                 case BOTH:
@@ -344,6 +351,7 @@ public class GeneralDoubleOracle {
                     debugOutput.println("LP Value " + actingPlayers[opponentPlayerIndex] + " : " + doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]));
 
                     currentPlayerIndex = opponentPlayerIndex;
+
                     algConfig.clearNewSequences();
                     break;
 
@@ -393,9 +401,12 @@ public class GeneralDoubleOracle {
                     assert false;
                     break;
             }
+            opponentPlayerIndex = (1+currentPlayerIndex)%2;
 
-            realizationPlans.put(actingPlayers[currentPlayerIndex], doRestrictedGameSolver.getResultStrategiesForPlayer(actingPlayers[currentPlayerIndex]));
-            realizationPlans.put(actingPlayers[opponentPlayerIndex], doRestrictedGameSolver.getResultStrategiesForPlayer(actingPlayers[opponentPlayerIndex]));
+            Map<Sequence, Double> tmp = doRestrictedGameSolver.getResultStrategiesForPlayer(actingPlayers[currentPlayerIndex]);
+            realizationPlans.put(actingPlayers[currentPlayerIndex], tmp);
+            Map<Sequence, Double> tmp2 = doRestrictedGameSolver.getResultStrategiesForPlayer(actingPlayers[opponentPlayerIndex]);
+            realizationPlans.put(actingPlayers[opponentPlayerIndex], tmp2);
 
             if (DEBUG)
                 for (Player player : actingPlayers) {
@@ -409,10 +420,10 @@ public class GeneralDoubleOracle {
             if (DEBUG)
                 algConfig.validateRestrictedGameStructure(expander, brAlgorithms);
 
-            if (!playerSelection.equals(PlayerSelection.BOTH) && !newSeqs[0] && !newSeqs[1]) {
-                System.out.println("ERROR : NOT CONVERGED");
-                break;
-            }
+//            if (!playerSelection.equals(PlayerSelection.BOTH) && !newSeqs[0] && !newSeqs[1]) {
+//                System.out.println("ERROR : NOT CONVERGED");
+//                break;
+//            }
 		}
 
 

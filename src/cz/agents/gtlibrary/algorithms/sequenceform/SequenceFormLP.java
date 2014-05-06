@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
@@ -119,7 +120,7 @@ public class SequenceFormLP {
             debugOutput.println("phase 2 done");
             overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
 
-//			cplex.exportModel("gt-lib-sqf-rnd-" + firstPlayer + ".lp"); // uncomment for model export
+			cplex.exportModel("gt-lib-sqf-rnd-" + firstPlayer + ".lp"); // uncomment for model export
             startTime = System.currentTimeMillis();
             debugOutput.println("Solving");
 			cplex.solve();
@@ -193,8 +194,8 @@ public class SequenceFormLP {
 	public Map<Player, Sequence> createActions(Sequence firstPlayerSequence, Sequence secondPlayerSequence) {
 		Map<Player, Sequence> actions = new HashMap<Player, Sequence>();
 
-		actions.put(firstPlayerSequence.getPlayer(), new LinkedListSequenceImpl(firstPlayerSequence));
-		actions.put(secondPlayerSequence.getPlayer(), new LinkedListSequenceImpl(secondPlayerSequence));
+		actions.put(firstPlayerSequence.getPlayer(), new ArrayListSequenceImpl(firstPlayerSequence));
+		actions.put(secondPlayerSequence.getPlayer(), new ArrayListSequenceImpl(secondPlayerSequence));
 		return actions;
 	}
 

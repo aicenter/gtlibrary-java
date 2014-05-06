@@ -121,7 +121,7 @@ public class BestMinmaxValueOracle extends SQFBestResponseAlgorithm {
 
 //            for (GameState currentNode : alternativeNodes) {
 //                sel.setCurrentNode(currentNode);
-                selectAction(alternativeNodes.get(0), sel, lowerBound);
+                selectAction(alternativeNodes.get(0), sel, expander.getActions(gameState));
 //                sel.abandonCurrentNode();
 //                if (sel.allNodesProbability < EPS_CONSTANT) {
 //                    break;
@@ -174,7 +174,7 @@ public class BestMinmaxValueOracle extends SQFBestResponseAlgorithm {
             double nodeProbability = gameState.getNatureProbability();
             boolean nonZeroORP = false;
             BRFirstActionSelection sel = new BRFirstActionSelection(lowerBound);
-            selectAction(gameState, sel, lowerBound);
+            selectAction(gameState, sel, expander.getActions(gameState));
             returnValue = sel.getResult().getRight();
         }
 
