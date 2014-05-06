@@ -172,9 +172,12 @@ public class SQFBestResponseAlgorithm {
             BRSrchSelection sel = new BRSrchSelection(lowerBound, ISProbability, alternativeNodesProbs, nonZeroOppRP);
             Collections.sort(alternativeNodes, comparator);
 
+            List<Action> actionsToExplore = expander.getActions(gameState);
+            actionsToExplore = sel.sortActions(gameState, actionsToExplore);
+
             for (GameState currentNode : alternativeNodes) {
                 sel.setCurrentNode(currentNode);
-                selectAction(currentNode, sel, lowerBound);
+                selectAction(currentNode, sel, actionsToExplore);
                 sel.abandonCurrentNode();
                 if (sel.allNodesProbability < EPS_CONSTANT) {
                     break;
@@ -217,7 +220,7 @@ public class SQFBestResponseAlgorithm {
 //            }
             assert (returnValue != null);
 
-            Sequence resultSequence = new LinkedListSequenceImpl(currentHistory.get(players[searchingPlayerIndex]));
+            Sequence resultSequence = new ArrayListSequenceImpl(currentHistory.get(players[searchingPlayerIndex]));
             resultSequence.addLast(resultAction);
 
             HashSet<Sequence> tmpBRSet = BRresult.get(currentHistory.get(players[searchingPlayerIndex]));
@@ -246,7 +249,9 @@ public class SQFBestResponseAlgorithm {
                 }
             } else {
                 BROppSelection sel = new BROppSelection(lowerBound, nodeProbability, nonZeroORP);
-                selectAction(gameState, sel, lowerBound);
+                List<Action> actionsToExplore = expander.getActions(gameState);
+                actionsToExplore = sel.sortActions(gameState, actionsToExplore);
+                selectAction(gameState, sel, actionsToExplore);
                 returnValue = sel.getResult().getRight();
                 if (nonZeroORP && !sel.nonZeroContinuation) {
                     returnValue *= currentOppRealizationPlan;
@@ -259,9 +264,9 @@ public class SQFBestResponseAlgorithm {
         return returnValue;
     }
 
-    public void selectAction(GameState state, BRActionSelection selection, double lowerBound) {
-        List<Action> actionsToExplore = expander.getActions(state);
-        actionsToExplore = selection.sortActions(state, actionsToExplore);
+    public void selectAction(GameState state, BRActionSelection selection, List<Action> actionsToExplore) {
+//        List<Action> actionsToExplore = expander.getActions(state);
+//        actionsToExplore = selection.sortActions(state, actionsToExplore);
         for (Action act : actionsToExplore) {
             Action action = act;
 
@@ -386,7 +391,7 @@ public class SQFBestResponseAlgorithm {
                 Sequence currentSequence = state.getSequenceFor(players[opponentPlayerIndex]);
                 Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
                 for (Action a : actions) {
-                    Sequence newSeq = new LinkedListSequenceImpl(currentSequence);
+                    Sequence newSeq = new ArrayListSequenceImpl(currentSequence);
                     newSeq.addLast(a);
                     Double prob = getOpponentRealizationPlan().get(newSeq);
                     if (prob == null) {
@@ -501,7 +506,7 @@ public class SQFBestResponseAlgorithm {
             Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
             boolean hasPositiveProb = false;
             for (Action a : actions) {
-                Sequence newSeq = new LinkedListSequenceImpl(currentSequence);
+                Sequence newSeq = new ArrayListSequenceImpl(currentSequence);
                 newSeq.addLast(a);
                 Double prob = myRealizationPlan.get(newSeq);
                 if (prob == null) {
@@ -532,7 +537,7 @@ public class SQFBestResponseAlgorithm {
         }
         HashSet<Sequence> result = new HashSet<Sequence>();
         LinkedList<Sequence> queue = new LinkedList<Sequence>();
-        queue.add(new LinkedListSequenceImpl(this.players[searchingPlayerIndex]));
+        queue.add(new ArrayListSequenceImpl(this.players[searchingPlayerIndex]));
         result.addAll(queue);
 
         while (queue.size() > 0) {
