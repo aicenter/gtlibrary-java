@@ -24,6 +24,7 @@ public class MDPBestResponse {
     protected Map<MDPState, Double> cachedValues = new HashMap<MDPState, Double>();
     protected Map<MDPState, MDPAction> bestResponseData = new HashMap<MDPState, MDPAction>();
 
+
     public MDPBestResponse(MDPConfig config, Player player) {
         this.config = config;
         this.player = player;

@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.nfg.MDP;
 
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.nfg.MDP.core.MDPBestResponse;
 import cz.agents.gtlibrary.nfg.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.MDP.implementations.MDPStrategy;
@@ -126,23 +127,23 @@ public class DoubleOracleCostPairedMDP {
 
         int iterations = 0;
 
-        MDPContractingBR br1 = null;
-        MDPContractingBR br2 = null;
+//        MDPContractingBR br1 = null;
+//        MDPContractingBR br2 = null;
 
 //        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
 //        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
 
 //        if (USE_ROBUST_BR) {
-//            br1 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(0));
-//            br2 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(1));
+        MDPEpsilonFristBetterResponse br1 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(0));
+        MDPEpsilonFristBetterResponse br2 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(1));
 //        } else if (USE_REORDER_ACTIONS) {
 //            br1 = new MDPFBRActionOrdering(config, config.getAllPlayers().get(0));
 //            br2 = new MDPFBRActionOrdering(config, config.getAllPlayers().get(1));
 //        } else {
 //            br1 = new MDPFristBetterResponse(config, config.getAllPlayers().get(0));
 //            br2 = new MDPFristBetterResponse(config, config.getAllPlayers().get(1));
-            br1 = new MDPContractingBR(config, config.getAllPlayers().get(0));
-            br2 = new MDPContractingBR(config, config.getAllPlayers().get(1));
+//            br1 = new MDPContractingBR(config, config.getAllPlayers().get(0));
+//            br2 = new MDPContractingBR(config, config.getAllPlayers().get(1));
 //        }
 
 //        double treshold = 0.1;
@@ -179,20 +180,20 @@ public class DoubleOracleCostPairedMDP {
             firstPlayerStrategy.recalculateExpandedStrategy();
             secondPlayerStrategy.recalculateExpandedStrategy();
 
-            if (CONTRACTING) {
-                br1.setStatesProbs(lp.getfValues());
-                br2.setStatesProbs(lp.getfValues());
-            }
+//            if (CONTRACTING) {
+//                br1.setStatesProbs(lp.getfValues());
+//                br2.setStatesProbs(lp.getfValues());
+//            }
 
 //            rememberBehavioralStrategies(firstPlayerStrategy, iterations);
 //            rememberBehavioralStrategies(secondPlayerStrategy, iterations);
 
 //            br1.setMDPUpperBound(UB);
 //            br1.setMDPLowerBound(LB);
-//            br1.setCurrentBest(r1);
+            ((MDPEpsilonFristBetterResponse)br1).setCurrentBest(r1);
 //            br2.setMDPUpperBound(LB);
 //            br2.setMDPLowerBound(UB);
-//            br2.setCurrentBest(r2);
+            ((MDPEpsilonFristBetterResponse)br2).setCurrentBest(r2);
 
 //            firstPlayerStrategy.sanityCheck();
 //            secondPlayerStrategy.sanityCheck();
@@ -224,15 +225,15 @@ public class DoubleOracleCostPairedMDP {
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions1 = br1.extractBestResponse(firstPlayerStrategy);
             Map<MDPState, Set<MDPStateActionMarginal>> bestResponseActions2 = br2.extractBestResponse(secondPlayerStrategy);
 
-            statesToContract1.clear();
-            statesToContract2.clear();
-            statesToContract1.addAll(br1.getStatesToContract());
-            statesToContract2.addAll(br2.getStatesToContract());
-
-            statesToExpand1.clear();
-            statesToExpand2.clear();
-            statesToExpand1.addAll(br1.getStatesToExpand());
-            statesToExpand2.addAll(br2.getStatesToExpand());
+//            statesToContract1.clear();
+//            statesToContract2.clear();
+//            statesToContract1.addAll(br1.getStatesToContract());
+//            statesToContract2.addAll(br2.getStatesToContract());
+//
+//            statesToExpand1.clear();
+//            statesToExpand2.clear();
+//            statesToExpand1.addAll(br1.getStatesToExpand());
+//            statesToExpand2.addAll(br2.getStatesToExpand());
 
             HashSet<MDPStateActionMarginal> newActions = new HashSet<MDPStateActionMarginal>();
             HashSet<MDPStateActionMarginal> actionsToRemove = new HashSet<MDPStateActionMarginal>();
