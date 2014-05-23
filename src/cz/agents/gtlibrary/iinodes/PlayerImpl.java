@@ -8,7 +8,7 @@ public class PlayerImpl implements Player {
 	
 	private int id;
 	private int hashCode;
-        private String name;
+    private String name;
 	
 	public PlayerImpl(int id) {
 		this.id = id;
@@ -56,4 +56,9 @@ public class PlayerImpl implements Player {
 	public String toString() {
 		return name == null ? "Pl" + id : name;
 	}
+
+    @Override
+    public String getName() {
+        return name;
+    }
 }
