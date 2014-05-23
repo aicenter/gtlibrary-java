@@ -4,9 +4,15 @@
  */
 package cz.agents.gtlibrary.domain.phantomTTT;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
+
+import java.util.HashSet;
+import java.util.LinkedList;
 
 
 /**
@@ -52,5 +58,43 @@ public class TTTInfo implements GameInfo{
     public Player[] getAllPlayers() {
         return players;
     }
-    
+
+    public static void calculateSequences(TTTState rootState, TTTExpander<SequenceInformationSet> expander) {
+        LinkedList<TTTState> queue = new LinkedList<TTTState>();
+        HashSet<Long> sequences = new HashSet<Long>();
+
+        queue.add(rootState);
+
+        while (queue.size() > 0) {
+            TTTState currentState = queue.removeLast();
+
+//            for (Player p : rootState.getAllPlayers())
+            Player p = rootState.getAllPlayers()[0];
+            if (currentState.isGameEnd() || !currentState.getPlayerToMove().equals(p)) {
+                Sequence s = currentState.getSequenceFor(p);
+
+                long hash = 1;//creates a bitmap of successful actions
+                for (Action a : s.getAsList()){
+                    hash <<= 1;
+                    hash |= currentState.getSymbol(((TTTAction)a).fieldID) == p.getName().charAt(0) ? 1 : 0;
+                }
+                hash >>= 3;
+                for (Action a : s.getAsList()){
+                    hash <<= 4;
+                    hash |= ((TTTAction)a).fieldID;
+                }
+
+                if (sequences.add(hash))
+                    if (sequences.size() % 100000 == 0)
+                        System.out.println("Current Size:"+sequences.size());
+            }
+
+            for (Action action : expander.getActions(currentState)) {
+                queue.add((TTTState)currentState.performAction(action));
+            }
+        }
+
+        System.out.println("final size: Second Player Sequences: " + sequences.size());
+        System.exit(0);
+    }
 }

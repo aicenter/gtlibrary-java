@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DODataBuilder;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
@@ -22,6 +23,7 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTAction;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
@@ -54,9 +56,10 @@ public class GeneralDoubleOracle {
 	private DoubleOracleConfig<DoubleOracleInformationSet> algConfig;
 
 	private PrintStream debugOutput = System.out;
+    private long finishTime;
 	
 	final private double EPS = 0.00000001;
-    final private static boolean DEBUG = false;
+    final public static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
     private ThreadMXBean threadBean ;
 
@@ -64,7 +67,7 @@ public class GeneralDoubleOracle {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
 
-    public static PlayerSelection playerSelection = PlayerSelection.SINGLE_ALTERNATING;
+    public static PlayerSelection playerSelection = PlayerSelection.BOTH;
 
 	public static void main(String[] args) {
 //		runAC();
@@ -72,10 +75,10 @@ public class GeneralDoubleOracle {
 //        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-        runRandomGame();
+//        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
-//        runPhantomTTT();
+        runPhantomTTT();
 //		runAoS();
 	}
 	
@@ -200,8 +203,6 @@ public class GeneralDoubleOracle {
                 new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameInfo)};
         Map<Player, Map<Sequence, Double>> realizationPlans = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
 
-//        calculateSequences();
-
         if (initializationRG == null || initializationRG.isEmpty()) {
             GameState firstState = findFirstNonNatureState(rootState, expander);
 
@@ -317,9 +318,11 @@ public class GeneralDoubleOracle {
 
             if (DEBUG) debugOutput.println(algConfig.getNewSequences());
 
-            if (algConfig.getNewSequences().isEmpty() && doRestrictedGameSolver.newSequencesSinceLastLPCalculation.get(actingPlayers[0]).isEmpty()
+            if (algConfig.getNewSequences().isEmpty()
+                    && (Math.abs(p1BoundUtility + p2BoundUtility) > EPS)
+                    && doRestrictedGameSolver.newSequencesSinceLastLPCalculation.get(actingPlayers[0]).isEmpty()
                     && doRestrictedGameSolver.newSequencesSinceLastLPCalculation.get(actingPlayers[1]).isEmpty()) {
-                System.out.println("ERROR : NOT CONVERGED");
+                debugOutput.println("ERROR : NOT CONVERGED");
                 break;
             }
 
@@ -429,7 +432,7 @@ public class GeneralDoubleOracle {
 
 
         debugOutput.println("done.");
-        long finishTime = (threadBean.getCurrentThreadCpuTime() - start)/1000000l;
+        finishTime = (threadBean.getCurrentThreadCpuTime() - start)/1000000l;
 
         doRestrictedGameSolver.calculateStrategyForPlayer(1, rootState, algConfig, (p1BoundUtility + p2BoundUtility));
 
@@ -446,11 +449,11 @@ public class GeneralDoubleOracle {
 			}
 		}
 
-        try {
-            Runtime.getRuntime().gc();
-            Thread.currentThread().sleep(500l);
-        } catch (InterruptedException e) {
-        }
+//        try {
+//            Runtime.getRuntime().gc();
+//            Thread.currentThread().sleep(500l);
+//        } catch (InterruptedException e) {
+//        }
 
         debugOutput.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         debugOutput.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
@@ -504,32 +507,11 @@ public class GeneralDoubleOracle {
         System.out.println("Nodes: " + nodes);
     }
 
-    public void calculateSequences() {
-        LinkedList<GameState> queue = new LinkedList<GameState>();
-        HashMap<Player, HashSet<Sequence>> sequences = new HashMap<Player, HashSet<Sequence>>();
-
-        for (Player p : rootState.getAllPlayers())
-            sequences.put(p, new HashSet<Sequence>());
-
-        queue.add(rootState);
-
-        while (queue.size() > 0) {
-            GameState currentState = queue.removeLast();
-
-//            for (Player p : rootState.getAllPlayers())
-            Player p = rootState.getAllPlayers()[1];
-            if (currentState.isGameEnd()) // || !currentState.getPlayerToMove().equals(p))
-                sequences.get(p).add(currentState.getSequenceFor(p));
-
-            for (Action action : expander.getActions(currentState)) {
-                queue.add(currentState.performAction(action));
-            }
-        }
-        System.out.println("final size: FirstPlayer Sequences: " + sequences.get(rootState.getAllPlayers()[0]).size() + " \t SecondPlayer Sequences : " + sequences.get(rootState.getAllPlayers()[1]).size());
-        System.exit(0);
-    }
-
     public void setDebugOutput(PrintStream debugOutput) {
         this.debugOutput = debugOutput;
+    }
+
+    public long getFinishTime() {
+        return finishTime;
     }
 }

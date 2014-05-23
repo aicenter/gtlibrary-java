@@ -1,13 +1,48 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
+import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
+import cz.agents.gtlibrary.algorithms.cfr.CFRISAlgorithm;
+import cz.agents.gtlibrary.algorithms.mcts.*;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.improvedBR.DoubleOracleWithBestMinmaxImprovement;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.unprunning.UnprunningDoubleOracle;
+import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
+import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.ArrayDeque;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,6 +53,12 @@ import cz.agents.gtlibrary.utils.HighQualityRandom;
  */
 public class DoubleOracleExperiments {
 
+    static GameInfo gameInfo;
+    static GameState rootState;
+    static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
+    static SQFBestResponseAlgorithm brAlg0;
+    static SQFBestResponseAlgorithm brAlg1;
+    static Expander<MCTSInformationSet> expander;
 
 
     public static void main(String[] args) {
@@ -98,6 +139,112 @@ public class DoubleOracleExperiments {
                 FullSequenceEFG.runGenericPoker();
             else if (domain.equalsIgnoreCase("RG"))
                 FullSequenceEFG.runRandomGame();
+        } else if (alg.startsWith("CFR")) {
+            boolean buildTree = alg.equals("CFR-TRUE");
+            if (domain.equals("BP")) {
+                gameInfo = new BPGGameInfo();
+                rootState = new BPGGameState();
+                expander = new BPGExpander<MCTSInformationSet>(new MCTSConfig());
+                sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+            } else if (domain.equals("GP")) {
+                gameInfo = new GPGameInfo();
+                rootState = new GenericPokerGameState();
+                expander = new GenericPokerExpander<MCTSInformationSet>(new MCTSConfig());
+                sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+            } else if (domain.equals("RG")) {
+                gameInfo = new RandomGameInfo();
+                rootState = new RandomGameState();
+                expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
+                sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+            } else if (domain.equals("PTTT")) {
+                gameInfo = new TTTInfo();
+                rootState = new TTTState();
+                expander = new TTTExpander<MCTSInformationSet>(new MCTSConfig());
+                sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+            }
+            runCFR(buildTree);
         } else throw new IllegalArgumentException("Illegal algorithm: " + alg);
     }
+
+    public void runCFR(boolean buildTree) {
+
+        double secondsIteration = 0.1;
+
+        expander.getAlgorithmConfig().createInformationSetFor(rootState);
+
+        GamePlayingAlgorithm alg = (buildTree) ? new CFRAlgorithm(
+                rootState.getAllPlayers()[0],
+                rootState, expander) : new CFRISAlgorithm(
+                rootState.getAllPlayers()[0],
+                rootState, expander);
+
+        Distribution dist = new MeanStratDist();
+
+        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+        if (buildTree) {
+            long start = threadBean.getCurrentThreadCpuTime();
+            buildCompleteTree(alg.getRootNode());
+            System.out.println("Building GT: " + ((threadBean.getCurrentThreadCpuTime() - start)/1000000));
+        }
+
+
+        alg.runMiliseconds(100);
+
+        brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+
+
+        Strategy strategy0 = null;
+        Strategy strategy1 = null;
+        System.out.print("P1BRs: ");
+
+        double br1Val = Double.POSITIVE_INFINITY;
+        double br0Val = Double.POSITIVE_INFINITY;
+        double cumulativeTime = 0;
+
+        for (int i = 0; cumulativeTime < 1800000 && (br0Val + br1Val > 0.005); i++) {
+            alg.runMiliseconds((int)(secondsIteration*1000));
+            cumulativeTime += secondsIteration*1000;
+            System.out.println("Cumulative Time: "+(cumulativeTime));
+            if (buildTree) {
+                strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
+                strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
+            } else {
+                strategy0 = StrategyCollector.getStrategyFor(rootState, rootState.getAllPlayers()[0], dist, ((CFRISAlgorithm)alg).getInformationSets(), expander);
+                strategy1 = StrategyCollector.getStrategyFor(rootState, rootState.getAllPlayers()[1], dist, ((CFRISAlgorithm)alg).getInformationSets(), expander);
+            }
+
+            br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
+            br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
+//            System.out.println("BR1: " + br1Val);
+//            System.out.println("BR0: " + br0Val);
+            System.out.println("Precision: " + (br0Val + br1Val));
+            System.out.flush();
+            secondsIteration *= 2;
+        }
+    }
+
+    public static void buildCompleteTree(InnerNode r){
+        System.out.println("Building complete tree.");
+        int nodes=0, infosets=0;
+        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
+        q.add(r);
+        while (!q.isEmpty()){
+            nodes++;
+            InnerNode n = q.removeFirst();
+            MCTSInformationSet is = n.getInformationSet();
+            if (is.getAlgorithmData() == null) {
+                infosets++;
+                is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+            }
+            for (Action a : n.getActions()){
+                Node ch = n.getChildFor(a);
+                if (ch instanceof InnerNode) {
+                    q.add((InnerNode)ch);
+                }
+            }
+        }
+        System.out.println("Created nodes: " + nodes +"; infosets: " +infosets);
+    }
+
 }

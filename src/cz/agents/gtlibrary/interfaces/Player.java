@@ -4,4 +4,5 @@ import java.io.Serializable;
 
 public interface Player extends Serializable {
 	public int getId();
+    public String getName();
 }
