@@ -20,13 +20,13 @@ public class P1Oracle extends SimOracleImpl {
 	public Pair<ActionPureStrategy, Double> getBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta) {
 		Collection<ActionPureStrategy> possibleActions = getActions();
 		ActionPureStrategy bestStrategy = null;
-		double bestValue = alpha;
+		double bestValue = alpha - 1e-8;
 
 		for (ActionPureStrategy strategy : possibleActions) {
 			double utilityValue = getValueForAction(mixedStrategy, bestValue, strategy);
 
 			if (bestStrategy == null) {
-				if (utilityValue > bestValue - 1e-8) {
+				if (utilityValue > bestValue ) {
 					bestValue = utilityValue;
 					bestStrategy = strategy;
 				}
@@ -42,14 +42,13 @@ public class P1Oracle extends SimOracleImpl {
 
 	protected double getValueForAction(MixedStrategy<ActionPureStrategy> mixedStrategy, double bestValue, ActionPureStrategy strategy) {
 		double utilityValue = 0;
-		int index = 0;
 
 		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) {
 			if (entry.getValue() > 1e-8) {
 				Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(strategy, entry.getKey());
 				Double cacheValue = getValueFromCache(strategyPair);
 				double cacheWindow = getLowerBoundFromCache(strategyPair);
-				double windowValue = Math.max(cacheWindow, getWindowValue(utilityValue, bestValue, entry.getValue(), mixedStrategy, strategy, index));
+				double windowValue = Math.max(cacheWindow, getWindowValue(bestValue, entry.getValue(), mixedStrategy, strategy, entry.getKey()));
 
 				if (cacheValue == null) {
 					if (getOptimisticValueFromCache(strategyPair) < windowValue) {
@@ -67,7 +66,6 @@ public class P1Oracle extends SimOracleImpl {
 					return Double.NEGATIVE_INFINITY;
 				utilityValue += util * entry.getValue();
 			}
-			index++;
 		}
 		return utilityValue;
 	}
@@ -97,14 +95,12 @@ public class P1Oracle extends SimOracleImpl {
 		}
 	}
 
-	protected double getWindowValue(double utilityValue, double bestValue, double currProbability, MixedStrategy<ActionPureStrategy> mixedStrategy, ActionPureStrategy strategy, int index) {
-		int currentIndex = 0;
-		double utility = utilityValue;
+	protected double getWindowValue(double bestValue, double currProbability, MixedStrategy<ActionPureStrategy> mixedStrategy, ActionPureStrategy strategy, ActionPureStrategy excludeStrategy) {
+		double utility = 0;
 
 		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) {
-			if (currentIndex > index)
-				utility += getOptimisticValueFromCache(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy, entry.getKey())) * entry.getValue();
-			currentIndex++;
+            if (entry.getKey().equals(excludeStrategy)) continue;
+			utility += getOptimisticValueFromCache(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy, entry.getKey())) * entry.getValue();
 		}
 		return (bestValue - utility) / currProbability;
 	}
