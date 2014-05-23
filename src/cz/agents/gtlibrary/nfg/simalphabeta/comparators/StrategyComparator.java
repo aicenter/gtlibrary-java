@@ -8,7 +8,10 @@ public abstract class StrategyComparator implements Comparator<ActionPureStrateg
 	
 	@Override
 	public int compare(ActionPureStrategy s1, ActionPureStrategy s2) {
-		return Double.compare(getValue(s2), getValue(s1));
+		int result = Double.compare(getValue(s2), getValue(s1));
+        if (result == 0)
+            result = Integer.compare(s1.hashCode(), s2.hashCode());
+        return result;
 	}
 
 	protected abstract double getValue(ActionPureStrategy strategy);
