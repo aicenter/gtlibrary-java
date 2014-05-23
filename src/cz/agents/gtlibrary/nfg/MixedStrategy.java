@@ -1,8 +1,6 @@
 package cz.agents.gtlibrary.nfg;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Representation of a mixed strategy.
@@ -13,9 +11,12 @@ import java.util.Map;
 public class MixedStrategy<T extends PureStrategy> implements Iterable<Map.Entry<T, Double>> {
 
     private Map<T, Double> mixedStrategy = new HashMap<T, Double>();
+    private boolean reSort = true;
+    private List<T> sortedStrategies = new ArrayList<T>();
 
     public void put(T strategy, double probability) {
         mixedStrategy.put(strategy, probability);
+        reSort = true;
     }
 
     /**
@@ -39,6 +40,16 @@ public class MixedStrategy<T extends PureStrategy> implements Iterable<Map.Entry
     @Override
     public Iterator<Map.Entry<T, Double>> iterator() {
         return mixedStrategy.entrySet().iterator();
+    }
+
+    public List<T> sortStrategies() {
+        if (reSort) {
+            sortedStrategies.clear();
+            sortedStrategies.addAll(mixedStrategy.keySet());
+            Collections.sort(sortedStrategies, new StrategyProbabilityComparator());
+            reSort = false;
+        }
+        return sortedStrategies;
     }
 
     public int size() {
@@ -80,5 +91,21 @@ public class MixedStrategy<T extends PureStrategy> implements Iterable<Map.Entry
         }
 
         return result;
+    }
+
+    public class StrategyProbabilityComparator implements Comparator<T> {
+
+        @Override
+        public int compare(T arg0, T arg1) {
+            Double or0 = (mixedStrategy.get(arg0) == null) ? Double.NEGATIVE_INFINITY : mixedStrategy.get(arg0);
+            Double or1 = (mixedStrategy.get(arg1) == null) ? Double.NEGATIVE_INFINITY : mixedStrategy.get(arg1);
+            if (or0 < or1) {
+                return 1;
+            }
+            if (or0 > or1) {
+                return -1;
+            }
+            return 0;
+        }
     }
 }
