@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
@@ -46,6 +47,7 @@ public class SequenceFormLP {
 
 	public SequenceFormLP(Player[] players) {
 		for (Player player : players) {
+            resultValues.put(player, Double.POSITIVE_INFINITY);
 			if (!resultStrategies.containsKey(player))
 				resultStrategies.put(player, new HashMap<Sequence, Double>());
             try {
@@ -120,7 +122,7 @@ public class SequenceFormLP {
             debugOutput.println("phase 2 done");
             overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
 
-			cplex.exportModel("gt-lib-sqf-rnd-" + firstPlayer + ".lp"); // uncomment for model export
+			if (GeneralDoubleOracle.DEBUG) cplex.exportModel("gt-lib-sqf-rnd-" + firstPlayer + ".lp"); // uncomment for model export
             startTime = System.currentTimeMillis();
             debugOutput.println("Solving");
 			cplex.solve();

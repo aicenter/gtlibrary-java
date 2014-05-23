@@ -54,6 +54,8 @@ public class FullSequenceEFG {
 	private GameInfo gameConfig;
 	private SequenceFormConfig<SequenceInformationSet> algConfig;
 
+    private long finishTime;
+
 	private PrintStream debugOutput = System.out;
 	final private static boolean DEBUG = false;
 	private ThreadMXBean threadBean;
@@ -232,14 +234,15 @@ public class FullSequenceEFG {
 		long startGeneration = threadBean.getCurrentThreadCpuTime();
 
 		generateCompleteGame();
-		System.out.println("Game tree built...");
-		System.out.println("Information set count: " + algConfig.getAllInformationSets().size());
+        debugOutput.println("Game tree built...");
+        debugOutput.println("Information set count: " + algConfig.getAllInformationSets().size());
 		overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
 
 		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
 		long startCPLEX = threadBean.getCurrentThreadCpuTime();
 		SequenceFormLP sequenceFormLP = new SequenceFormLP(actingPlayers);
 
+        sequenceFormLP.setDebugOutput(debugOutput);
 		sequenceFormLP.calculateBothPlStrategy(rootState, algConfig);
 
 		long thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX) / 1000000l;
@@ -250,8 +253,8 @@ public class FullSequenceEFG {
 			realizationPlans.put(player, sequenceFormLP.getResultStrategiesForPlayer(player));
 		}
 
-		System.out.println("done.");
-		long finishTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
+        debugOutput.println("done.");
+		finishTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
 
 		int[] support_size = new int[] { 0, 0 };
 		for (Player player : actingPlayers) {
@@ -264,30 +267,30 @@ public class FullSequenceEFG {
 			}
 		}
 
-		try {
-			Runtime.getRuntime().gc();
-			Thread.sleep(500l);
-		} catch (InterruptedException e) {
-		}
+//		try {
+//			Runtime.getRuntime().gc();
+//			Thread.sleep(500l);
+//		} catch (InterruptedException e) {
+//		}
 
 		gameValue = sequenceFormLP.getResultForPlayer(actingPlayers[0]);
-		System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
-		System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
-		System.out.println("final result:" + gameValue);
-		System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
-		System.out.println("final time: " + finishTime);
-		System.out.println("final CPLEX time: " + overallCPLEX);
-		System.out.println("final BR time: " + 0);
-		System.out.println("final RGB time: " + 0);
-		System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
+        debugOutput.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
+        debugOutput.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
+        debugOutput.println("final result:" + gameValue);
+        debugOutput.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
+        debugOutput.println("final time: " + finishTime);
+        debugOutput.println("final CPLEX time: " + overallCPLEX);
+        debugOutput.println("final BR time: " + 0);
+        debugOutput.println("final RGB time: " + 0);
+        debugOutput.println("final StrategyGenerating time: " + overallSequenceGeneration);
 
 		if (DEBUG) {
 			// sanity check -> calculation of Full BR on the solution of SQF LP
 			SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
-			System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+            debugOutput.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
 
 			SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
-			System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+            debugOutput.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
 
 			algConfig.validateGameStructure(rootState, expander);
 		}
@@ -316,4 +319,13 @@ public class FullSequenceEFG {
 	public double getGameValue() {
 		return gameValue;
 	}
+
+    public long getFinishTime() {
+        return finishTime;
+    }
+
+    public void setDebugOutput(PrintStream debugOutput) {
+        this.debugOutput = debugOutput;
+    }
+
 }
