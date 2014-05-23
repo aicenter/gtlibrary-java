@@ -292,4 +292,12 @@ public class MDPStrategy implements PureStrategy{
     public Set<MDPStateActionMarginal> getES() {
         return getAllActionStates();
     }
+
+    public MDPExpander getExpander() {
+        return expander;
+    }
+
+    public MDPConfig getConfig() {
+        return config;
+    }
 }

@@ -153,7 +153,7 @@ public class SingleOracleCostPairedMDP {
             debugOutput.println("BR(MIN) TIME:" + ((threadBean.getCurrentThreadCpuTime() - brStart)/1000000l));
 
             if (USE_ROBUST_BR) {
-                debugOutput.println("BR(MIN) Improved Times: " + ((MDPEpsilonFristBetterResponse)br2).getImprovedBR());
+//                debugOutput.println("BR(MIN) Improved Times: " + ((MDPEpsilonFristBetterResponse)br2).getImprovedBR());
             }
             debugOutput.println("BR(MIN) Pruned Times: " + ((MDPFristBetterResponse)br2).getPrunes());
 

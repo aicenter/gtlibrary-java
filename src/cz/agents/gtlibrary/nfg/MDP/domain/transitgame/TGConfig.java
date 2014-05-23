@@ -26,17 +26,17 @@ public class TGConfig extends MDPConfigImpl{
 
     public static boolean rememberHistory = false;
 
-    public static double UTILITY_MULTIPLIER = 0;
+    public static double UTILITY_MULTIPLIER = 1;
 //
 //    public static int MAX_TIME_STEP = 7;
 //    public static int LENGTH_OF_GRID = 5;
 //    public static int WIDTH_OF_GRID = 3;
-//    public static int MAX_TIME_STEP = 18;
-//    public static int LENGTH_OF_GRID = 16;
-//    public static int WIDTH_OF_GRID = 8;
-    public static int MAX_TIME_STEP = 24;
-    public static int LENGTH_OF_GRID = 22;
-    public static int WIDTH_OF_GRID = 11;
+    public static int MAX_TIME_STEP = 14;
+    public static int LENGTH_OF_GRID = 10;
+    public static int WIDTH_OF_GRID = 6;
+//    public static int MAX_TIME_STEP = 24;
+//    public static int LENGTH_OF_GRID = 22;
+//    public static int WIDTH_OF_GRID = 11;
 
     final protected static int PATROLLERS = 1;
     protected static int[] PATROLLER_BASES;
@@ -125,7 +125,7 @@ public class TGConfig extends MDPConfigImpl{
 //            result = 1d;
 //            result = result - attState.getTimeStep() * 0.01;
             result = UTILITY_MULTIPLIER+1d;
-            result = result - attState.getTimeStep() * (0.01 + UTILITY_MULTIPLIER/10d);
+            result = result - attState.getTimeStep() * (0.01 + UTILITY_MULTIPLIER/100d);
         }
         else if (defState.getTimeStep()+1 == getMaxTimeStep() && !((defState.getRow()[0] == 0 && defState.getCol()[0] != TGConfig.PATROLLER_BASES[0]) || (defAction.getTargetCol()[0] == TGConfig.PATROLLER_BASES[0] && defAction.getTargetRow()[0] == 0))) {
             result = 1000d;
