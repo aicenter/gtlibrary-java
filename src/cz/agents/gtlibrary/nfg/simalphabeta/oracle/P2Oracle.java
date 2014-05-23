@@ -44,12 +44,13 @@ public class P2Oracle extends SimOracleImpl {
 	protected double getValueForAction(MixedStrategy<ActionPureStrategy> mixedStrategy, ActionPureStrategy strategy, double bestValue) {
 		double utilityValue = 0;
 
-		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) {
-			if (entry.getValue() > 1e-8) {
-				Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(entry.getKey(), strategy);
+		for (ActionPureStrategy action : mixedStrategy.sortStrategies()) {
+            double actionProb = mixedStrategy.getProbability(action);
+			if (actionProb > 1e-8) {
+				Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(action, strategy);
 				Double cacheValue = getValueFromCache(strategyPair);
 				double cacheWindow = getLowerBoundFromCache(strategyPair);
-				double windowValue = Math.max(cacheWindow, getWindowValue(bestValue, entry.getValue(), mixedStrategy, strategy, entry.getKey()));
+				double windowValue = Math.max(cacheWindow, getWindowValue(bestValue, actionProb, mixedStrategy, strategy, action));
 
 				if (cacheValue == null) {
 					if (getPesimisticValueFromCache(strategyPair) < windowValue) {
@@ -61,11 +62,11 @@ public class P2Oracle extends SimOracleImpl {
 					Stats.getInstance().incrementCacheCuts();
 					return Double.NEGATIVE_INFINITY;
 				}
-				Double util = utility.getUtility(strategy, entry.getKey());
+				Double util = utility.getUtility(strategy, action);
 
 				if (util.isNaN())
 					return Double.NEGATIVE_INFINITY;
-				utilityValue += util * entry.getValue();
+				utilityValue += util * actionProb;
 			}
 		}
 		return utilityValue;
