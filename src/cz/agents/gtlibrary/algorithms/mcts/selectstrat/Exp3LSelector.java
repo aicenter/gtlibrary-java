@@ -13,49 +13,51 @@ import java.util.List;
  *
  * @author vilo
  */
-public class Exp3Selector implements Selector, AlgorithmData, MeanStrategyProvider {
+public class Exp3LSelector implements Selector, AlgorithmData, MeanStrategyProvider {
     private Exp3BackPropFactory fact;
     private List<Action> actions;
     /** Current probability of playing this action. */
     public double[] p;
     /** Cumulative reward. */
-    double[] r;
+    double[] l;
     /** Mean strategy. */
     double[] mp;
+    /** Current iteration */
+    int n=0;
 
-    public Exp3Selector(List<Action> actions, Exp3BackPropFactory fact) {
+    public Exp3LSelector(List<Action> actions, Exp3BackPropFactory fact) {
         this(actions.size(), fact);
         this.actions = actions;
     }
     
-    
-    public Exp3Selector(int N, Exp3BackPropFactory fact) {
+    final int K;
+    final double lnK;
+    public Exp3LSelector(int N, Exp3BackPropFactory fact) {
         this.fact = fact;
         p = new double[N];
-        r = new double[N];
+        l = new double[N];
         mp = new double[N];
+        K = l.length;
+        lnK = Math.log(K);
+        for (int i=0; i<K;i++) p[i]=1.0/K;
     }
     
     protected void updateProb() {
-        final int K = r.length;
-        final double gamma = fact.gamma;
-
-        for (int i=0; i < r.length; i++) {
+        for (int i=0; i < l.length; i++) {
             double denom = 1;
-            for (int j=0 ; j < r.length; j++) {
-                if (i != j) denom += Math.exp((gamma / K) * (r[j] - r[i]));
+            for (int j=0 ; j < l.length; j++) {
+                if (i != j) denom += Math.exp(-Math.sqrt(lnK / (n*K)) * (l[j] - l[i]));
             }
             final double cp = (1 / denom);
-            p[i] = (1 - gamma) * cp + gamma / K;
-            if (fact.storeExploration) mp[i]+=p[i];
-            else mp[i]+=cp;
+            p[i] = cp;
+            mp[i]+=cp;
         }
     }
     
     
     @Override
     public int select(){
-        updateProb();
+        if (n>0) updateProb();
 
         double rand = fact.random.nextDouble();
         
@@ -73,7 +75,8 @@ public class Exp3Selector implements Selector, AlgorithmData, MeanStrategyProvid
     
     @Override
     public void update(int ai, double value) {
-        r[ai] += fact.normalizeValue(value) / p[ai];
+        l[ai] += (1 - fact.normalizeValue(value)) / p[ai];
+        n++;
     }
 
     @Override

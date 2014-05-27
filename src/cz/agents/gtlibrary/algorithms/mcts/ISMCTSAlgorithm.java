@@ -45,6 +45,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         else this.rootNode = new InnerNode(expander, rootState);
         threadBean = ManagementFactory.getThreadMXBean();
         curISArray = new InnerNode[]{rootNode};
+        rootNode.getInformationSet().setAlgorithmData(fact.createSelector(rootNode.getActions()));
     }
     
     @Override
@@ -71,8 +72,9 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
-        Map<Action, Double> distribution = (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData());
-        return Strategy.selectAction(distribution, rnd);
+        //Map<Action, Double> distribution = (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData());
+        //return Strategy.selectAction(distribution, rnd);
+        return null;
     }
     
     protected double iteration(Node node){

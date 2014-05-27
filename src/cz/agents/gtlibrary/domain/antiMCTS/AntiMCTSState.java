@@ -50,7 +50,10 @@ public class AntiMCTSState extends GameStateImpl {
         assert isGameEnd();
         if (utilities != null) return utilities;
         utilities = new double[2];
-        utilities[0] = ((AntiMCTSAction) getSequenceFor(AntiMCTSInfo.realPlayer).getLast()).right ? 1 : 1/Math.pow(2, curDepth);
+        if (AntiMCTSInfo.exponentialRewards)
+            utilities[0] = ((AntiMCTSAction) getSequenceFor(AntiMCTSInfo.realPlayer).getLast()).right ? 1 : 1/Math.pow(2, curDepth);
+        else 
+            utilities[0] = ((AntiMCTSAction) getSequenceFor(AntiMCTSInfo.realPlayer).getLast()).right ? 1 : (AntiMCTSInfo.gameDepth-curDepth)/(2.0*(AntiMCTSInfo.gameDepth-1));
         utilities[1] = -utilities[0];
         return utilities;
     }
