@@ -22,7 +22,7 @@ public class P2SortingOracle extends P2Oracle {
 		List<ActionPureStrategy> possibleActions = getActions();
 		double bestValue = -beta;
 		
-		Collections.sort(possibleActions, data.getP2Comparator(mixedStrategy, rootState));
+		Collections.sort(possibleActions, data.getP2Comparator(mixedStrategy, rootState, utility.getUtilityCache()));
 		
 		for (ActionPureStrategy strategy : possibleActions) {
 			double utilityValue = getValueForAction(mixedStrategy, strategy, bestValue);

@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.utility;
 
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 
 public class NegativeSimUtility extends SimUtility {
 
@@ -25,4 +26,8 @@ public class NegativeSimUtility extends SimUtility {
 		return -utility.getUtilityForIncreasedBounds(s2, s1, alpha, beta);
 	}
 
+    @Override
+    public DOCache getUtilityCache() {
+        return utility.getUtilityCache();
+    }
 }

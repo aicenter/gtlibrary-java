@@ -6,12 +6,13 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 public class P1UpperBoundComparator extends BoundComparator {
 	
-	public P1UpperBoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data) {
-		super(mixedStrategy, state, data);
+	public P1UpperBoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data, DOCache cache) {
+		super(mixedStrategy, state, data, cache);
 	}
 
 	@Override

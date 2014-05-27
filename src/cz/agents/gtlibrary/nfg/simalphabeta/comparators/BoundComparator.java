@@ -15,9 +15,9 @@ public abstract class BoundComparator extends StrategyComparator {
 	protected AlphaBeta p1AlphaBeta;
 	protected AlphaBeta p2AlphaBeta;
 	
-	public BoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data) {
+	public BoundComparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, Data data, DOCache cache) {
 		super();
-		this.cache = data.cache;
+		this.cache = cache;
 		this.mixedStrategy = mixedStrategy;
 		this.state = state;
 		p1AlphaBeta = data.alphaBetas[0];

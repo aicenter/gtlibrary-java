@@ -42,7 +42,7 @@ public class SimAlphaBeta {
 //		runGoofSpielWithFixedNatureSequence(true, true);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
 //	    runPursuit(true,true);
-        runSimRandomGame(false, false, false);
+        runSimRandomGame(false, true, false);
 	}
 
 	public static void runGoofSpielWithFixedNatureSequenceWithLocalCache(boolean alphaBetaBounds, boolean doubleOracle) {
@@ -123,7 +123,7 @@ public class SimAlphaBeta {
 			}
 		} else {
             AlphaBetaFactory abFactory = (alphaBetaBounds) ? new NoCacheAlphaBetaFactory() : new NullAlphaBetaFactory();
-            DoubleOracleFactory doFactory = (doubleOracle) ? new SimABDoubleOracleFactory() : new FullLPFactory();
+            DoubleOracleFactory doFactory = (doubleOracle) ? new LocalCacheDoubleOracleFactory() : new FullLPFactory();
             OracleFactory oracleFactory = (sortingOwnActions) ? new SortingOracleFactory() : new SimABOracleFactory();
 			Data data = new Data(abFactory, gameInfo, expander,
 					doFactory,

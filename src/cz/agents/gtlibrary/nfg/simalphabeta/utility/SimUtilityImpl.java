@@ -2,15 +2,18 @@ package cz.agents.gtlibrary.nfg.simalphabeta.utility;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 
 public class SimUtilityImpl extends SimUtility {
 
 	protected GameState state;
 	protected UtilityCalculator calculator;
+    protected DOCache cache;
 
-	public SimUtilityImpl(GameState state, UtilityCalculator calculator) {
+	public SimUtilityImpl(GameState state, UtilityCalculator calculator, DOCache cache) {
 		this.state = state.copy();
 		this.calculator = calculator;
+        this.cache = cache;
 	}
 
 	public double getUtility(ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
@@ -44,4 +47,8 @@ public class SimUtilityImpl extends SimUtility {
 			return newState.getUtilities()[0];
 		return calculator.getUtilitiesForIncreasedBounds(newState, s1, s2, alpha, beta);
 	}
+
+    public DOCache getUtilityCache() {
+        return cache;
+    }
 }

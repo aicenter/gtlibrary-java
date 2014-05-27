@@ -20,7 +20,7 @@ public class RandomGameState extends GameStateImpl {
 	private int ID;
     private double center;
     private Player playerToMove;
-    protected Map<Player, LinkedList<Integer>> observations = new FixedSizeMap<Player, LinkedList<Integer>>(2);
+    protected Map<Player, ArrayList<Integer>> observations = new FixedSizeMap<Player, ArrayList<Integer>>(2);
 
     private int hash = 0;
     protected Pair<Integer, Sequence> ISKey = null;
@@ -30,8 +30,8 @@ public class RandomGameState extends GameStateImpl {
         super(RandomGameInfo.ALL_PLAYERS);
         ID = RandomGameInfo.rnd.nextInt();
         playerToMove = RandomGameInfo.FIRST_PLAYER;
-        observations.put(players[0], new LinkedList<Integer>());
-        observations.put(players[1], new LinkedList<Integer>());
+        observations.put(players[0], new ArrayList<Integer>());
+        observations.put(players[1], new ArrayList<Integer>());
         center = 0;
     }
 
@@ -39,8 +39,8 @@ public class RandomGameState extends GameStateImpl {
         super(gameState);
         this.ID = gameState.ID;
         this.playerToMove = gameState.playerToMove;
-        observations.put(players[0], new LinkedList<Integer>(gameState.observations.get(players[0])));
-        observations.put(players[1], new LinkedList<Integer>(gameState.observations.get(players[1])));
+        observations.put(players[0], new ArrayList<Integer>(gameState.observations.get(players[0])));
+        observations.put(players[1], new ArrayList<Integer>(gameState.observations.get(players[1])));
         center = gameState.center;
     }
 
