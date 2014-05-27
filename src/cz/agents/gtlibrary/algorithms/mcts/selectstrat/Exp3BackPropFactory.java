@@ -18,6 +18,7 @@ import java.util.Random;
 public class Exp3BackPropFactory implements BackPropFactory  {
     public double gamma = 0.05;
     public boolean useCFRValues = false;
+    public boolean storeExploration = false;
     Random random = new Random();
     /** Each player's contribution to the probability of being in current IS. */
     double[] pi = new double[]{1,1,1};
@@ -26,6 +27,11 @@ public class Exp3BackPropFactory implements BackPropFactory  {
     private double minUtility;
     private double maxUtility;
 
+    public Exp3BackPropFactory(double minUtility, double maxUtility, double gamma, boolean storeExploration) {
+        this(minUtility, maxUtility, gamma);
+        this.storeExploration = storeExploration;
+    }
+    
     public Exp3BackPropFactory(double minUtility, double maxUtility, double gamma) {
         this.minUtility = minUtility;
         this.maxUtility = maxUtility;
