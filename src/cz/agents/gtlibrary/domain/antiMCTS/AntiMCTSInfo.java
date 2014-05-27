@@ -18,7 +18,8 @@ import cz.agents.gtlibrary.interfaces.Player;
 public class AntiMCTSInfo implements GameInfo{
     public static final Player realPlayer = new PlayerImpl(0);
     public static final Player noopPlayer = new PlayerImpl(1);
-    public static final int gameDepth=5;
+    public static int gameDepth=5;
+    public static boolean exponentialRewards=true;//otherwice linear
     
     public static Player[] players = new Player[] { realPlayer, noopPlayer};
     
