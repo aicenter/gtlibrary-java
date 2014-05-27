@@ -27,6 +27,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.DoubleOracleFac
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.FullLPFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.LocalCacheDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.SimABDoubleOracleFactory;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.OracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.SimABOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.SortingOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
@@ -41,7 +42,7 @@ public class SimAlphaBeta {
 //		runGoofSpielWithFixedNatureSequence(true, true);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
 //	    runPursuit(true,true);
-        runSimRandomGame(true, true);
+        runSimRandomGame(false, false, false);
 	}
 
 	public static void runGoofSpielWithFixedNatureSequenceWithLocalCache(boolean alphaBetaBounds, boolean doubleOracle) {
@@ -70,7 +71,7 @@ public class SimAlphaBeta {
 		
 	}
 
-	public static void runGoofSpielWithFixedNatureSequence(boolean alphaBetaBounds, boolean doubleOracle) {
+	public static void runGoofSpielWithFixedNatureSequence(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions) {
 		Stats.getInstance().startTime();
 		GSGameInfo.useFixedNatureSequence = true;
 		SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
@@ -78,54 +79,55 @@ public class SimAlphaBeta {
 		GoofSpielGameState root = new GoofSpielGameState();
 		
 		System.out.println(root.getNatureSequence());
-		simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, gameInfo);
+		simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, gameInfo);
 		Stats.getInstance().stopTime();
 		Stats.getInstance().printOverallInfo();
 //		CSVExporter.export(Stats.getInstance(), "FixedGoofspielStats.csv", "Full LP");
 	}
 	
-	public static void runGoofSpielWithNature(boolean alphaBetaBounds, boolean doubleOracle) {
+	public static void runGoofSpielWithNature(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions) {
 		Stats.getInstance().startTime();
 		GSGameInfo.useFixedNatureSequence = false;
 		SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
 		GoofSpielGameState root = new GoofSpielGameState();
 		
-		simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, new GSGameInfo());
+		simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, new GSGameInfo());
 		Stats.getInstance().stopTime();
 		Stats.getInstance().printOverallInfo();
 //		CSVExporter.export(Stats.getInstance(), "NatureGoofspielStats.csv",  "Full LP");
 	}
 	
-	public static void runPursuit(boolean alphaBetaBounds, boolean doubleOracle) {
+	public static void runPursuit(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions) {
 		Stats.getInstance().startTime();
 		SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         GameInfo gameInfo = new PursuitGameInfo();
-		simAlphaBeta.runSimAlpabeta(new PursuitGameState(), new PursuitExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, gameInfo);
+		simAlphaBeta.runSimAlpabeta(new PursuitGameState(), new PursuitExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, gameInfo);
 		Stats.getInstance().stopTime();
 		Stats.getInstance().printOverallInfo();
 //		CSVExporter.export(Stats.getInstance(), "NatureGoofspielStats.csv",  "Full LP");
 	}
 
-    public static void runSimRandomGame(boolean alphaBetaBounds, boolean doubleOracle) {
+    public static void runSimRandomGame(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions) {
         Stats.getInstance().startTime();
         SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         GameInfo gameInfo = new RandomGameInfo();
-        simAlphaBeta.runSimAlpabeta(new SimRandomGameState(), new RandomGameExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, gameInfo);
+        simAlphaBeta.runSimAlpabeta(new SimRandomGameState(), new RandomGameExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, gameInfo);
         Stats.getInstance().stopTime();
         Stats.getInstance().printOverallInfo();
     }
 
-	public void runSimAlpabeta(GameState rootState, Expander<SimABInformationSet> expander, boolean alphaBetaBounds, boolean doubleOracle, GameInfo gameInfo) {
+	public void runSimAlpabeta(GameState rootState, Expander<SimABInformationSet> expander, boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, GameInfo gameInfo) {
 		if (rootState.isPlayerToMoveNature()) {
 			for (Action action : expander.getActions(rootState)) {
-				runSimAlpabeta(rootState.performAction(action), expander, alphaBetaBounds, doubleOracle, gameInfo);
+				runSimAlpabeta(rootState.performAction(action), expander, alphaBetaBounds, doubleOracle, sortingOwnActions, gameInfo);
 			}
 		} else {
             AlphaBetaFactory abFactory = (alphaBetaBounds) ? new NoCacheAlphaBetaFactory() : new NullAlphaBetaFactory();
             DoubleOracleFactory doFactory = (doubleOracle) ? new SimABDoubleOracleFactory() : new FullLPFactory();
+            OracleFactory oracleFactory = (sortingOwnActions) ? new SortingOracleFactory() : new SimABOracleFactory();
 			Data data = new Data(abFactory, gameInfo, expander,
 					doFactory,
-                    new SimABOracleFactory(),
+                    oracleFactory,
                     new DOCacheImpl(),
                     new NatureCacheImpl(),
                     new LowerBoundComparatorFactory());

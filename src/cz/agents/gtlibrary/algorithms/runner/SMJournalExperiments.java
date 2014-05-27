@@ -115,18 +115,19 @@ public class SMJournalExperiments {
         } else { // backward induction algorithms
             boolean AB = alg.endsWith("AB");
             boolean DO = alg.startsWith("DO");
+            boolean SORT = alg.startsWith("DOS");
             if (domain.equals("GS"))
-                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB,DO);
+                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB,DO,SORT);
             else if (domain.equals("PE"))
-                SimAlphaBeta.runPursuit(AB, DO);
+                SimAlphaBeta.runPursuit(AB, DO, SORT);
             else if (domain.equals("RG"))
-                SimAlphaBeta.runSimRandomGame(AB, DO);
+                SimAlphaBeta.runSimRandomGame(AB, DO, SORT);
        } 
     }
 
     public void runCFR(boolean OOS) {
 
-        int secondsIteration = 1;
+        double secondsIteration = 0.1;
 
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
 
@@ -151,19 +152,24 @@ public class SMJournalExperiments {
 
         double br1Val = Double.POSITIVE_INFINITY;
         double br0Val = Double.POSITIVE_INFINITY;
+        double cumulativeTime = 0;
 
-        for (int i = 0; i < 1000 && (br0Val + br1Val > gameInfo.getMaxUtility()*0.001); i++) {
-            alg.runMiliseconds(secondsIteration*1000);
-            System.out.println("Cumulative Time: "+(secondsIteration*1000*(i+1)));
+        for (int i = 0; cumulativeTime < 1800000 && (br0Val + br1Val > 0.005); i++) {
+            alg.runMiliseconds((int)(secondsIteration*1000));
+            cumulativeTime += secondsIteration*1000;
+
+            System.out.println("Cumulative Time: "+(cumulativeTime));
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
             br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
             br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
-            System.out.println("BR1: " + br1Val);
-            System.out.println("BR0: " + br0Val);
+//            System.out.println("BR1: " + br1Val);
+//            System.out.println("BR0: " + br0Val);
+            System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-       }
+            secondsIteration *= 2;
+        }
     }
 
     public static void buildCompleteTree(InnerNode r){

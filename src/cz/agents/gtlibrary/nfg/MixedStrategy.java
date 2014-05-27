@@ -14,6 +14,7 @@ public class MixedStrategy<T extends PureStrategy> implements Iterable<Map.Entry
     private boolean reSort = true;
     private List<T> sortedStrategies = new ArrayList<T>();
 
+
     public void put(T strategy, double probability) {
         mixedStrategy.put(strategy, probability);
         reSort = true;
@@ -107,5 +108,9 @@ public class MixedStrategy<T extends PureStrategy> implements Iterable<Map.Entry
             }
             return 0;
         }
+    }
+
+    public Collection<T> getPureStrategies() {
+        return mixedStrategy.keySet();
     }
 }
