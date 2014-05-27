@@ -4,25 +4,29 @@ import java.util.List;
 import java.util.ListIterator;
 
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 public class DOUtilityCalculator implements UtilityCalculator {
 
-	protected Data data;
+	protected DOCache cache;
 	protected NatureCache natureCache;
+    protected Data data;
 
-	public DOUtilityCalculator(Data data, NatureCache natureCache) {
+	public DOUtilityCalculator(Data data, NatureCache natureCache, DOCache cache) {
 		this.data = data;
+        this.cache = cache;
 		this.natureCache = natureCache;
 	}
 
 	public double getUtilities(GameState state, ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
-		Double utility = data.cache.getUtilityFor(s1, s2);
+		Double utility = cache.getUtilityFor(s1, s2);
 
 		if (utility != null)
 			return utility;
@@ -45,7 +49,7 @@ public class DOUtilityCalculator implements UtilityCalculator {
 
 			if(Double.isNaN(currentUtility))
 				return Double.NaN;
-			data.natureCache.updateBothFor(nextState, currentUtility);
+			natureCache.updateBothFor(nextState, currentUtility);
 			utilityValue += state.getProbabilityOfNatureFor(action) * currentUtility;
 		}
 		return utilityValue;
@@ -80,27 +84,27 @@ public class DOUtilityCalculator implements UtilityCalculator {
 	}
 
 	protected double getPesimisticValue(GameState state) {
-		Double pesimistic = data.natureCache.getPesimisticFor(state);
+		Double pesimistic = natureCache.getPesimisticFor(state);
 
 		if (pesimistic == null) {
 			long time = System.currentTimeMillis();
 			
 			pesimistic = -data.alphaBetas[1].getUnboundedValue(state);
 			Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
-			data.natureCache.updatePesimisticFor(state, pesimistic);
+			natureCache.updatePesimisticFor(state, pesimistic);
 		}
 		return pesimistic;
 	}
 
 	protected double getOptimisticValue(GameState state) {
-		Double optimistic = data.natureCache.getOptimisticFor(state);
+		Double optimistic = natureCache.getOptimisticFor(state);
 
 		if (optimistic == null) {
 			long time = System.currentTimeMillis();
 			
 			optimistic = data.alphaBetas[0].getUnboundedValue(state);
 			Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
-			data.natureCache.updateOptimisticFor(state, optimistic);
+			natureCache.updateOptimisticFor(state, optimistic);
 		}
 		return optimistic;
 	}
@@ -113,7 +117,7 @@ public class DOUtilityCalculator implements UtilityCalculator {
 	}
 
 	public double getUtility(GameState state, ActionPureStrategy s1, ActionPureStrategy s2) {
-		Double utility = data.cache.getUtilityFor(s1, s2);
+		Double utility = cache.getUtilityFor(s1, s2);
 
 //        if (utility != null)
 //            return utility;
@@ -126,7 +130,7 @@ public class DOUtilityCalculator implements UtilityCalculator {
 
 	@Override
 	public double getUtilitiesForIncreasedBounds(GameState state, ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
-		Double utility = data.cache.getUtilityFor(s1, s2);
+		Double utility = cache.getUtilityFor(s1, s2);
 
 		if (utility != null)
 			return utility;
@@ -149,7 +153,7 @@ public class DOUtilityCalculator implements UtilityCalculator {
 
 			if(Double.isNaN(currentUtility))
 				return Double.NaN;
-			data.natureCache.updateBothFor(nextState, currentUtility);
+			natureCache.updateBothFor(nextState, currentUtility);
 			utilityValue += state.getProbabilityOfNatureFor(action) * currentUtility;
 		}
 		return utilityValue;

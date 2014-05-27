@@ -34,7 +34,7 @@ public abstract class SimOracleImpl implements SimOracle {
 		this.player = player;
 		this.utility = utility;
 		this.alphaBeta = data.getAlphaBetaFor(player);
-		this.cache = data.cache;
+		this.cache = utility.getUtilityCache();
 		this.oppAlphaBeta = data.getAlphaBetaFor(data.gameInfo.getOpponent(player));
 		this.data = data;
 	}

@@ -22,7 +22,7 @@ public class P1SortingOracle extends P1Oracle {
 		ActionPureStrategy bestStrategy = null;
 		double bestValue = alpha;
 
-		Collections.sort(possibleActions, data.getP1Comparator(mixedStrategy, rootState));
+		Collections.sort(possibleActions, data.getP1Comparator(mixedStrategy, rootState, utility.getUtilityCache()));
 		for (ActionPureStrategy strategy : possibleActions) {
 			double utilityValue = getValueForAction(mixedStrategy, bestValue, strategy);
 

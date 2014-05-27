@@ -23,20 +23,20 @@ public class SimDoubleOracle extends DoubleOracle {
 	protected double alpha;
 	protected double beta;
 	protected double gameValue;
-	protected GameState state;
+//	protected GameState state;
 	protected Data data;
 	protected SimUtility p1Utility;
-	protected DOCache cache = new DOCacheImpl();
+	protected DOCache cache = null;
 
     final protected boolean isRoot;
 
 	public SimDoubleOracle(SimUtility utility, double alpha, double beta, Data data, GameState state, DOCache cache) {
 		super(state, data);
-		this.p1Oracle = data.getP1Oracle(state, utility, data.cache);
-		this.p2Oracle = data.getP2Oracle(state, utility, data.cache);
+		this.p1Oracle = data.getP1Oracle(state, utility, cache);
+		this.p2Oracle = data.getP2Oracle(state, utility, cache);
 		this.alpha = alpha;
 		this.beta = beta;
-		this.state = state;
+//		this.state = state;
 		this.data = data;
 		this.p1Utility = utility;
 		this.coreSolver = new ZeroSumGameNESolverImpl<ActionPureStrategy, ActionPureStrategy>(utility);
@@ -163,7 +163,7 @@ public class SimDoubleOracle extends DoubleOracle {
 			for (ActionPureStrategy p2Strategy : p2StrategySet) {
 				Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(p1Strategy, p2Strategy);
 				
-				if (data.cache.getOptimisticUtilityFor(strategyPair) == null || data.cache.getPesimisticUtilityFor(strategyPair) == null)
+				if (cache.getOptimisticUtilityFor(strategyPair) == null || cache.getPesimisticUtilityFor(strategyPair) == null)
 					updateCacheFromAlphaBeta(strategyPair);
 				updateCacheFromRecursion(strategyPair);
 			}
@@ -171,14 +171,14 @@ public class SimDoubleOracle extends DoubleOracle {
 	}
 
 	protected void updateCacheFromRecursion(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
-		double pesimisticUtility = data.cache.getPesimisticUtilityFor(strategyPair);
-		double optimisticUtility = data.cache.getOptimisticUtilityFor(strategyPair);
+		double pesimisticUtility = cache.getPesimisticUtilityFor(strategyPair);
+		double optimisticUtility = cache.getOptimisticUtilityFor(strategyPair);
 
 		if (optimisticUtility - pesimisticUtility > 1e-14) {
 			Double utility = p1Utility.getUtility(strategyPair.getLeft(), strategyPair.getRight(), pesimisticUtility, optimisticUtility);
 
 			if (!utility.isNaN())
-				data.cache.setPesAndOptValueFor(strategyPair, utility);
+				cache.setPesAndOptValueFor(strategyPair, utility);
 		}
 	}
 
@@ -189,11 +189,11 @@ public class SimDoubleOracle extends DoubleOracle {
 		double optimisticUtility = data.getAlphaBetaFor(tempState.getAllPlayers()[0]).getUnboundedValue(tempState);
 
 		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
-		data.cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
+		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 	}
 
 	protected GameState getStateAfter(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
-		GameState tempState = state.performAction(strategyPair.getLeft().getAction());
+		GameState tempState = rootState.performAction(strategyPair.getLeft().getAction());
 
 		tempState.performActionModifyingThisState(strategyPair.getRight().getAction());
 		return tempState;

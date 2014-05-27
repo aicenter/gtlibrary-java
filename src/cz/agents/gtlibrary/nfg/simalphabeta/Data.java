@@ -26,8 +26,8 @@ public class Data {
 	public GameInfo gameInfo;
 	public Expander<SimABInformationSet> expander;
 	public AlgorithmConfig<SimABInformationSet> config;
-	public DOCache cache;
-	public NatureCache natureCache;
+	private DOCache cache;
+	private NatureCache natureCache;
 	private DoubleOracleFactory doubleOracleFactory;
 	private OracleFactory oracleFactory;
 	private ComparatorFactory comparatorFactory;
@@ -58,15 +58,23 @@ public class Data {
 		return oracleFactory.getP2Oracle(state, this, utility);
 	}
 	
-	public StrategyComparator getP1Comparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state) {
-		return comparatorFactory.getP1Comparator(mixedStrategy, state, this);
+	public StrategyComparator getP1Comparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, DOCache cache) {
+		return comparatorFactory.getP1Comparator(mixedStrategy, state, this, cache);
 	}
 	
-	public StrategyComparator getP2Comparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state) {
-		return comparatorFactory.getP2Comparator(mixedStrategy, state, this);
+	public StrategyComparator getP2Comparator(MixedStrategy<ActionPureStrategy> mixedStrategy, GameState state, DOCache cache) {
+		return comparatorFactory.getP2Comparator(mixedStrategy, state, this, cache);
 	}
 	
 	public DoubleOracle getDoubleOracle(GameState state, double alpha, double beta) {
 		return doubleOracleFactory.getDoubleOracle(state, this, alpha, beta);
 	}
+
+    public DOCache getCache() {
+        return cache;
+    }
+
+    public NatureCache getNatureCache() {
+        return natureCache;
+    }
 }
