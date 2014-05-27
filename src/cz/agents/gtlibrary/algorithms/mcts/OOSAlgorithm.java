@@ -58,8 +58,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         int iters=0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (;(threadBean.getCurrentThreadCpuTime()-start)/1e6 < miliseconds;) {
-            //if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<delta);
-            biasedIteration = false;
+            if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<delta);
             underTargetIS = false;
             iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[0]);
             iters++;
