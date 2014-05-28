@@ -160,6 +160,7 @@ public class SMConvergenceExperiment {
         assert algorithm.equals("Exp3");
         
         Distribution dist = new MeanStratDist();
+
         ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
                     rootState.getAllPlayers()[0],
                     new DefaultSimulator(expander),
@@ -193,6 +194,9 @@ public class SMConvergenceExperiment {
             //System.out.println("BR: " + brAlg.getFullBRSequences());
         }
         System.out.println();
+        System.out.println("P0BRs: " + outLine);
+        //System.out.println("Strat: " + strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
+        //System.out.println("Strat: " + strategy1.fancyToString(rootState, expander, rootState.getAllPlayers()[1]));
     }
     
     

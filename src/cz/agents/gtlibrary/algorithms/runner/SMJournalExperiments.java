@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -53,7 +54,7 @@ public class SMJournalExperiments {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: SMJournalExperiments {BI|BIAB|DO|DOAB|CFR|OOS} {GS|PE|RG} [domain parameters].");
+            System.err.println("Missing Arguments: SMJournalExperiments {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {GS|PE|RG} [domain parameters].");
             System.exit(-1);
         }
         String alg = args[0];
@@ -94,7 +95,7 @@ public class SMJournalExperiments {
     }
 
     public void runAlgorithm(String alg, String domain) {
-        if (alg.equals("CFR") || alg.equals("OOS")) {
+        if (alg.equals("CFR") || alg.equals("OOS") || alg.equals("MCTS")) {
             if (domain.equals("GS")) {
                 gameInfo = new GSGameInfo();
                 rootState = new GoofSpielGameState();
@@ -111,7 +112,9 @@ public class SMJournalExperiments {
                 expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
                 sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
             }
-            runCFR(alg.equals("OOS"));
+            if (alg.equals("MCTS"))
+                runMCTS();
+            else runCFR(alg.equals("OOS"));
         } else { // backward induction algorithms
             boolean AB = alg.endsWith("AB");
             boolean DO = alg.startsWith("DO");
@@ -193,6 +196,53 @@ public class SMJournalExperiments {
             }
         }
         System.out.println("Created nodes: " + nodes +"; infosets: " +infosets);
+    }
+
+    public void runMCTS() {
+        double secondsIteration = 0.1;
+
+        expander.getAlgorithmConfig().createInformationSetFor(rootState);
+
+        Distribution dist = new MeanStratDist();
+
+        ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
+                rootState.getAllPlayers()[0],
+                new DefaultSimulator(expander),
+                //new UCTBackPropFactory(2),
+                new Exp3BackPropFactory(-1, 1, 0.2),
+                //new RMBackPropFactory(-1,1,0.4),
+                rootState, expander);
+        alg.returnMeanValue=false;
+
+        alg.runIterations(2);
+
+        brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+
+        Strategy strategy0 = null;
+        Strategy strategy1 = null;
+        System.out.print("P1BRs: ");
+
+        double br1Val = Double.POSITIVE_INFINITY;
+        double br0Val = Double.POSITIVE_INFINITY;
+        double cumulativeTime = 0;
+
+        for (int i = 0; cumulativeTime < 1800000 && (br0Val + br1Val > 0.005); i++) {
+            alg.runMiliseconds((int)(secondsIteration*1000));
+            cumulativeTime += secondsIteration*1000;
+
+            System.out.println("Cumulative Time: "+(cumulativeTime));
+            strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
+            strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
+
+            br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
+            br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
+//            System.out.println("BR1: " + br1Val);
+//            System.out.println("BR0: " + br0Val);
+            System.out.println("Precision: " + (br0Val + br1Val));
+            System.out.flush();
+            secondsIteration *= 2;
+        }
     }
 
 }
