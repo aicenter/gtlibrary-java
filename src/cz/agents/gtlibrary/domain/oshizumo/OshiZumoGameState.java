@@ -132,8 +132,8 @@ public class OshiZumoGameState extends GameStateImpl {
 
         // check game end
         round++;
-        if (isGameEnd())
-            currentPlayerIndex = 0;
+//        if (isGameEnd())
+//            currentPlayerIndex = 0;
     }
 
     public void performNatureAction(OshiZumoAction action) {
@@ -179,7 +179,7 @@ public class OshiZumoGameState extends GameStateImpl {
 
     @Override
     public boolean isGameEnd() {
-        return ((p1Bid == 0 && p2Bid == 0) || wrestlerLoc < 0 || wrestlerLoc >= 2 * OZGameInfo.locK || (p1Coins < OZGameInfo.minBid && p2Coins < OZGameInfo.minBid));
+        return ((p1Bid == 0 && p2Bid == 0) || wrestlerLoc < 0 || wrestlerLoc >= (2 * OZGameInfo.locK + 1) || (p1Coins < OZGameInfo.minBid && p2Coins < OZGameInfo.minBid));
     }
 
     @Override
