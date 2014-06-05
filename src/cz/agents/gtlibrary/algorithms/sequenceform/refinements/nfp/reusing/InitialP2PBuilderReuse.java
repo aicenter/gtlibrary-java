@@ -1,10 +1,11 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominatedsolver;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp.reusing;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp.reusing.RecyclingNFPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -19,17 +20,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class InitialP2Builder {
+public class InitialP2PBuilderReuse {
 
     protected String lpFileName;
-    protected RecyclingNFPTable lpTable;
+    public RecyclingNFPTable lpTable;
     protected SequenceFormConfig<? extends SequenceInformationSet> config;
     protected Player[] players;
-    private long time;
+    protected GameInfo info;
 
-    public InitialP2Builder(Player[] players) {
+    public InitialP2PBuilderReuse(Player[] players, GameInfo info) {
         this.players = players;
-        lpFileName = "UndominatedP21.lp";
+        this.info = info;
+        lpFileName = "P2DO_P.lp";
         initTable();
     }
 
@@ -64,8 +66,10 @@ public class InitialP2Builder {
 
                 if (utility == null)
                     lpTable.removeFromConstraint(p1Sequence, compatibleSequence);
+                else if (info instanceof GPGameInfo)
+                    lpTable.setConstraint(p1Sequence, compatibleSequence, Math.round(info.getUtilityStabilizer() * utility));
                 else
-                    lpTable.setConstraint(p1Sequence, compatibleSequence, utility);
+                    lpTable.setConstraint(p1Sequence, compatibleSequence, info.getUtilityStabilizer() * utility);
             }
         }
         for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
@@ -74,8 +78,10 @@ public class InitialP2Builder {
 
                 if (utility == null)
                     lpTable.removeFromConstraint(compatibleSequence, p2Sequence);
+                else if (info instanceof GPGameInfo)
+                    lpTable.setConstraint(compatibleSequence, p2Sequence, Math.round(info.getUtilityStabilizer() * utility));
                 else
-                    lpTable.setConstraint(compatibleSequence, p2Sequence, utility);
+                    lpTable.setConstraint(compatibleSequence, p2Sequence, info.getUtilityStabilizer() * utility);
             }
         }
     }
@@ -258,7 +264,7 @@ public class InitialP2Builder {
         return sequence.getSubSequence(sequence.size() - 1);
     }
 
-    public BuilderResult solve() {
+    public PResultReuse solve() {
         try {
             LPData lpData = lpTable.toCplex();
             boolean solved = false;
@@ -296,7 +302,7 @@ public class InitialP2Builder {
 //            preciseValue.subtract(new BigDecimal(1));
 //            objValue = new BigDecimal(preciseValue.toBigInteger()).movePointLeft(16).doubleValue();
 
-            return new BuilderResult(lpData.getSolver().getObjValue(), createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables()), time);
+            return new PResultReuse(createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables()), lpData.getSolver().getObjValue());
         } catch (IloException e) {
             e.printStackTrace();
         }
@@ -307,15 +313,14 @@ public class InitialP2Builder {
         boolean solved;
 
         try {
-            time = System.currentTimeMillis();
             solved = lpData.getSolver().solve();
-            time = System.currentTimeMillis() - time;
         } catch (IloException e) {
             e.printStackTrace();
             return false;
         }
 
-//        System.out.println("P: " + solved);
+        System.out.println("P: " + solved);
+        System.out.println(lpData.getSolver().getObjValue());
         return solved;
     }
 
