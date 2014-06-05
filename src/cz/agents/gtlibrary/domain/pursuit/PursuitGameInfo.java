@@ -15,7 +15,7 @@ public class PursuitGameInfo implements GameInfo {
 	public static int p1Start = 7;
 	public static int p2Start = 11;
 	public static int depth = 3;
-	public static boolean forceMoves = false;
+	public static boolean forceMoves = true;
     public static boolean randomizeStartPositions = true;
 
     @Override
