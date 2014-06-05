@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.poker.generic;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.PokerGameState;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -67,6 +68,14 @@ public class GenericPokerGameState extends PokerGameState {
 	public double getProbabilityOfNatureFor(Action action) {
 		return (double) (getInitialCountOf(action) - getOccurrenceCountOf(action)) / (GPGameInfo.DECK.length - getDealtCardCount());
 	}
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        Rational exactProbability = new Rational(getInitialCountOf(action) - getOccurrenceCountOf(action), GPGameInfo.DECK.length - getDealtCardCount());
+
+        assert Math.abs(exactProbability.doubleValue() - getProbabilityOfNatureFor(action)) < 1e-8;
+        return exactProbability;
+    }
 
 	private int getInitialCountOf(Action action) {
 		int count = 0;

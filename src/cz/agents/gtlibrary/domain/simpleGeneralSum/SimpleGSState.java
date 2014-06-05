@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.domain.simpleGeneralSum;
 
-import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -73,8 +73,19 @@ public class SimpleGSState extends GameStateImpl {
     }
 
     @Override
+    public Rational[] getExactUtilities() {
+        throw new UnsupportedOperationException("Not supported...");
+    }
+
+    @Override
     public double getProbabilityOfNatureFor(Action action) {
         return 1;
+    }
+
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        throw new UnsupportedOperationException("Not supported...");
     }
 
     @Override

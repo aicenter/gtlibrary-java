@@ -5,12 +5,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -205,6 +204,15 @@ public class GoofSpielGameState extends GameStateImpl {
 		return new double[] { 0, 0, 0 };
 	}
 
+    @Override
+    public Rational[] getExactUtilities() {
+        if (playerScore[0] > playerScore[1])
+            return new Rational[] { Rational.ONE, Rational.ONE.negate(), Rational.ZERO };
+        if (playerScore[0] < playerScore[1])
+            return new Rational[] { Rational.ONE.negate(), Rational.ONE, Rational.ZERO };
+        return new Rational[] { Rational.ZERO, Rational.ZERO, Rational.ZERO };
+    }
+
 	@Override
 	public boolean isGameEnd() {
 		return round == GSGameInfo.depth;
@@ -237,6 +245,13 @@ public class GoofSpielGameState extends GameStateImpl {
 			return 1;
 		return 1. / playerCards.get(GSGameInfo.NATURE).size();
 	}
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        if (GSGameInfo.useFixedNatureSequence)
+            return Rational.ONE;
+        return new Rational(1, playerCards.get(GSGameInfo.NATURE).size());
+    }
 
 	@Override
 	public int hashCode() {

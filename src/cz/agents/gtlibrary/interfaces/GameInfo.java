@@ -12,4 +12,6 @@ public interface GameInfo {
 	public int getMaxDepth();
 
 	public Player[] getAllPlayers();
+
+    public double getUtilityStabilizer();
 }

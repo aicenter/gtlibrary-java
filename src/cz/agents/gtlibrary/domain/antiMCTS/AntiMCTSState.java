@@ -6,6 +6,7 @@
 
 package cz.agents.gtlibrary.domain.antiMCTS;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -59,6 +60,11 @@ public class AntiMCTSState extends GameStateImpl {
     }
 
     @Override
+    public Rational[] getExactUtilities() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
     public boolean isGameEnd() {
         return gameEnded;
     }
@@ -94,6 +100,11 @@ public class AntiMCTSState extends GameStateImpl {
     @Override
     public double getProbabilityOfNatureFor(Action action) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override

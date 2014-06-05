@@ -97,4 +97,9 @@ public class TTTInfo implements GameInfo{
         System.out.println("final size: Second Player Sequences: " + sequences.size());
         System.exit(0);
     }
+
+    @Override
+    public double getUtilityStabilizer() {
+        return 1;
+    }
 }

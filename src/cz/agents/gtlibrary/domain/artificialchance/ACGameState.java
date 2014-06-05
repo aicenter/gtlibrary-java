@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.artificialchance.ACAction.ActionType;
@@ -63,6 +64,12 @@ public class ACGameState extends GameStateImpl {
 		return 1. / 3;
 	}
 
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        assert currentPlayerIndex == 2;
+        return new Rational(1, 3);
+    }
+
 	@Override
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
 		if (cachedISKey != null)
@@ -107,6 +114,19 @@ public class ACGameState extends GameStateImpl {
 			return new double[] { gainForFirstPlayer - pot, pot - gainForFirstPlayer, 0 };
 		return new double[] { 0, 0, 0 };
 	}
+
+    @Override
+    public Rational[] getExactUtilities() {
+        if (!isGameEnd())
+            return new Rational[] { Rational.ZERO };
+        if (folded)
+            return new Rational[] { new Rational(gainForFirstPlayer), new Rational(-gainForFirstPlayer), Rational.ZERO };
+        if (playerCards[0].equals(table))
+            return new Rational[] { new Rational(gainForFirstPlayer), new Rational(-gainForFirstPlayer), Rational.ZERO };
+        if (playerCards[1].equals(table))
+            return new Rational[] { new Rational(gainForFirstPlayer - pot), new Rational(pot - gainForFirstPlayer), Rational.ZERO };
+        return new Rational[] { Rational.ZERO, Rational.ZERO, Rational.ZERO };
+    }
 
 	@Override
 	public boolean isGameEnd() {
@@ -231,7 +251,7 @@ public class ACGameState extends GameStateImpl {
 	}
 
 	@Override
-	public String toString() {//nevadìj teï ty plný hashCody?
+	public String toString() {//nevadï¿½j teï¿½ ty plnï¿½ hashCody?
 		return history.toString();
 	}
 
