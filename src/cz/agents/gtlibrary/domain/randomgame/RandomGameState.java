@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.domain.randomgame;
 
 
+import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -18,7 +19,7 @@ public class RandomGameState extends GameStateImpl {
 	private static final long serialVersionUID = 6086530572992658181L;
 	
 	private int ID;
-    private double center;
+    private int center;
     private Player playerToMove;
     protected Map<Player, ArrayList<Integer>> observations = new FixedSizeMap<Player, ArrayList<Integer>>(2);
 
@@ -96,8 +97,40 @@ public class RandomGameState extends GameStateImpl {
     }
 
     @Override
+    public Rational[] getExactUtilities() {
+        if (!isGameEnd())
+            return new Rational[]{Rational.ZERO, Rational.ZERO};
+
+        Rational rndValue;
+
+        if (RandomGameInfo.UTILITY_CORRELATION) {
+            if (RandomGameInfo.BINARY_UTILITY) {
+                rndValue = new Rational((int) Math.signum(center)); // P-game binary
+            } else {
+                rndValue = new Rational(center); // P-game integer
+            }
+        } else {
+            if (RandomGameInfo.BINARY_UTILITY) {
+                rndValue = new Rational(new HighQualityRandom(ID).nextInt(RandomGameInfo.MAX_UTILITY + 1)); // totally random binary
+            } else {
+                double doubleValue = new HighQualityRandom(ID).nextDouble() * RandomGameInfo.MAX_UTILITY;
+
+                rndValue = new Rational(1).fromDouble(doubleValue); // totally random
+                assert Math.abs(doubleValue - rndValue.doubleValue()) < 1e-10;
+            }
+        }
+
+        return new Rational[]{rndValue, rndValue.negate()};
+    }
+
+    @Override
     public double getProbabilityOfNatureFor(Action action) {
         return 0;
+    }
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        return Rational.ZERO;
     }
 
     @Override

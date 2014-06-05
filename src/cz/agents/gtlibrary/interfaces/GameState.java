@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.interfaces;
 
 import java.io.Serializable;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
 import cz.agents.gtlibrary.utils.Pair;
 
 public interface GameState extends Serializable {
@@ -21,13 +22,19 @@ public interface GameState extends Serializable {
 
 	public double[] getUtilities();
 
+    public Rational[] getExactUtilities();
+
 	public double getProbabilityOfNatureFor(Action action);
+
+    public Rational getExactProbabilityOfNatureFor(Action action);
 
 	public boolean isGameEnd();
 
 	public boolean isPlayerToMoveNature();
 
 	public double getNatureProbability();
+
+    public Rational getExactNatureProbability();
 
 	public void performActionModifyingThisState(Action action);
 

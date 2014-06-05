@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.domain.bpg;
 import java.util.HashSet;
 import java.util.Set;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.bpg.AttackerAction.AttackerMovementType;
@@ -121,6 +122,22 @@ public class BPGGameState extends GameStateImpl {
 		return new double[] { OPEN_POSITION, OPEN_POSITION };
 	}
 
+    @Override
+    public Rational[] getExactUtilities() {
+        if (getPlayerToMove().equals(BPGGameInfo.ATTACKER)) {
+            PatrollerAction patrollerAction = (PatrollerAction) history.getSequenceOf(BPGGameInfo.DEFENDER).getLast();
+            AttackerAction attackerAction = (AttackerAction) history.getSequenceOf(BPGGameInfo.ATTACKER).getLast();
+
+            if (isCaught(patrollerAction, attackerAction)) {
+                return new Rational[] { new Rational(-ATTACKER_WINS), new Rational(ATTACKER_WINS) };
+            }
+        }
+        if (attackerPosition.equals(graph.getDestination())) {
+            return new Rational[] { new Rational(ATTACKER_WINS), new Rational(-ATTACKER_WINS) };
+        }
+        return new Rational[] { new Rational(OPEN_POSITION), new Rational(OPEN_POSITION) };
+    }
+
 	private boolean caughtOnEdgeByP1(PatrollerAction patrollerAction, AttackerAction attackerAction) {
 		return patrollerAction.getFromNodeForP1().equals(attackerAction.getToNode()) && patrollerAction.getToNodeForP1().equals(attackerAction.getFromNode());
 	}
@@ -192,6 +209,11 @@ public class BPGGameState extends GameStateImpl {
 	public double getProbabilityOfNatureFor(Action action) {
 		return 0;
 	}
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        return Rational.ZERO;
+    }
 
 	@Override
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {

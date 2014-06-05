@@ -52,4 +52,9 @@ public class SimpleGSInfo implements GameInfo {
     public Player[] getAllPlayers() {
         return new Player[] {PL0, PL1};
     }
+
+    @Override
+    public double getUtilityStabilizer() {
+        return 1;
+    }
 }

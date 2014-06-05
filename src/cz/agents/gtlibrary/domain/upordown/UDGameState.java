@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.upordown;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
@@ -29,6 +30,11 @@ public class UDGameState extends GameStateImpl {
 	public double getProbabilityOfNatureFor(Action action) {
 		return 0;
 	}
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        return Rational.ZERO;
+    }
 
 	@Override
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
@@ -70,6 +76,24 @@ public class UDGameState extends GameStateImpl {
 		}
 		throw new UnsupportedOperationException();
 	}
+
+    @Override
+    public Rational[] getExactUtilities() {
+        if (p1Action.getType().equals("U")) {
+            if (p2Action.getType().equals("l"))
+                return new Rational[] { Rational.ZERO, Rational.ZERO };
+            if (p2Action.getType().equals("r"))
+                return new Rational[] { Rational.ONE, Rational.ONE.negate() };
+            throw new UnsupportedOperationException();
+        } else if (p1Action.getType().equals("D")) {
+            if (p2Action.getType().equals("l'"))
+                return new Rational[] { Rational.ZERO, Rational.ZERO };
+            if (p2Action.getType().equals("r'"))
+                return new Rational[] { new Rational(2), new Rational(-2) };
+            throw new UnsupportedOperationException();
+        }
+        throw new UnsupportedOperationException();
+    }
 
 	@Override
 	public boolean isGameEnd() {

@@ -45,4 +45,8 @@ public class BPGGameInfo implements GameInfo {
 		return ALL_PLAYERS;
 	}
 
+    @Override
+    public double getUtilityStabilizer() {
+        return 1;
+    }
 }
