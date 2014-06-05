@@ -2,7 +2,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominatedsolv
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.reusing.RecyclingNFPTable;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp.reusing.RecyclingNFPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.InformationSet;
