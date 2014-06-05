@@ -151,6 +151,8 @@ public class SMJournalExperiments {
                 SimAlphaBeta.runPursuit(AB, DO, SORT, CACHE);
             else if (domain.equals("RG"))
                 SimAlphaBeta.runSimRandomGame(AB, DO, SORT, CACHE);
+            else if (domain.equals("OZ"))
+                SimAlphaBeta.runOshiZumo(AB, DO, SORT, CACHE);
        } 
     }
 
