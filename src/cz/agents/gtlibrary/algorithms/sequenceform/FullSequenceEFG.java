@@ -21,6 +21,9 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
@@ -72,8 +75,9 @@ public class FullSequenceEFG {
 //      runRandomGame();
 //      runSimRandomGame();
 //		runPursuit();
-      runPhantomTTT();
+//      runPhantomTTT();
 //		runUpOrDown();
+        runOshiZumo();
 	}
 	
 	private static void runUpOrDown() {
@@ -103,6 +107,18 @@ public class FullSequenceEFG {
 				System.out.println(entry);
 		}
 	}
+
+    public static void runOshiZumo() {
+        GameState rootState = new OshiZumoGameState();
+        GameInfo gameInfo = new OZGameInfo();
+        SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        Expander expander = new OshiZumoExpander<>(algConfig);
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
+
+        efg.generate();
+//        efg.generateCompleteGame();
+//        GambitEFG.write("OZ.gbt", rootState, expander);
+    }
 
 
 	public static void runPursuit() {

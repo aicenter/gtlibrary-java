@@ -59,10 +59,12 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
         System.out.println();
         System.out.println("Iters: " + iters);
-        if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
-        MCTSInformationSet is = curISArray[0].getInformationSet();
-        Map<Action, Double> distribution = (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData());
-        return Strategy.selectAction(distribution, rnd);
+        return null;
+        //TODO temporary hack because IS-MCTS was throwing exceptions when the first action is not by nature
+//        if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
+//        MCTSInformationSet is = curISArray[0].getInformationSet();
+//        Map<Action, Double> distribution = (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData());
+//        return Strategy.selectAction(distribution, rnd);
     }
     
     public Action runIterations(int iterations){

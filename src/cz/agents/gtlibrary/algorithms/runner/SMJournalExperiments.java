@@ -17,6 +17,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
@@ -33,7 +36,9 @@ import cz.agents.gtlibrary.utils.HighQualityRandom;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Created with IntelliJ IDEA.
@@ -73,6 +78,14 @@ public class SMJournalExperiments {
             int depth = new Integer(args[3]);
             GSGameInfo.depth = depth;
             GSGameInfo.regenerateCards = true;
+        } else if (args[1].equalsIgnoreCase("OZ")) { // Oshi Zumo
+            if (args.length != 6) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {COINS} {LOC_K} {MIN_BID}");
+            }
+            OZGameInfo.seed = new Integer(args[2]);
+            OZGameInfo.startingCoins = new Integer(args[3]);
+            OZGameInfo.locK = new Integer(args[4]);
+            OZGameInfo.minBid = new Integer(args[5]);
         } else if (args[1].equalsIgnoreCase("PE")) { // Generic Poker
             if (args.length != 5) {
                 throw new IllegalArgumentException("Illegal poker domain arguments count: 3 parameters are required {SEED} {DEPTH} {GRAPH}");
@@ -94,38 +107,80 @@ public class SMJournalExperiments {
         } else throw new IllegalArgumentException("Illegal domain: " + args[1]);
     }
 
+    public void loadGame(String domain) {
+        if (domain.equals("GS")) {
+            gameInfo = new GSGameInfo();
+            rootState = new GoofSpielGameState();
+            expander = new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig());
+            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+        } else if (domain.equals("PE")) {
+            gameInfo = new PursuitGameInfo();
+            rootState = new PursuitGameState();
+            expander = new PursuitExpander<MCTSInformationSet>(new MCTSConfig());
+            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+        } else if (domain.equals("OZ")) {
+            gameInfo = new OZGameInfo();
+            rootState = new OshiZumoGameState();
+            expander = new OshiZumoExpander<MCTSInformationSet>(new MCTSConfig());
+            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+        } else if (domain.equals("RG")) {
+            gameInfo = new RandomGameInfo();
+            rootState = new SimRandomGameState();
+            expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
+            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+        }
+    }
+
     public void runAlgorithm(String alg, String domain) {
-        if (alg.equals("CFR") || alg.equals("OOS") || alg.equals("MCTS")) {
-            if (domain.equals("GS")) {
-                gameInfo = new GSGameInfo();
-                rootState = new GoofSpielGameState();
-                expander = new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig());
-                sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-            } else if (domain.equals("PE")) {
-                gameInfo = new PursuitGameInfo();
-                rootState = new PursuitGameState();
-                expander = new PursuitExpander<MCTSInformationSet>(new MCTSConfig());
-                sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-            } else if (domain.equals("RG")) {
-                gameInfo = new RandomGameInfo();
-                rootState = new SimRandomGameState();
-                expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
-                sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-            }
+        if (alg.equals("CFR") || alg.equals("OOS") || alg.equals("MCTS") || alg.equals("RS")) {
+            loadGame(domain);
             if (alg.equals("MCTS"))
                 runMCTS();
             else runCFR(alg.equals("OOS"));
         } else { // backward induction algorithms
             boolean AB = alg.endsWith("AB");
-            boolean DO = alg.startsWith("DO");
-            boolean SORT = alg.startsWith("DOS");
+            boolean DO = alg.contains("DO");
+            boolean SORT = alg.contains("DOS");
+            boolean CACHE = alg.startsWith("CDO");
+            if (!DO && (SORT || CACHE)) {
+                throw new IllegalArgumentException("Illegal Argument Combination for Algorithm");
+            }
             if (domain.equals("GS"))
-                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB,DO,SORT);
+                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB,DO,SORT, CACHE);
             else if (domain.equals("PE"))
-                SimAlphaBeta.runPursuit(AB, DO, SORT);
+                SimAlphaBeta.runPursuit(AB, DO, SORT, CACHE);
             else if (domain.equals("RG"))
-                SimAlphaBeta.runSimRandomGame(AB, DO, SORT);
+                SimAlphaBeta.runSimRandomGame(AB, DO, SORT, CACHE);
+            else if (domain.equals("OZ"))
+                SimAlphaBeta.runOshiZumo(AB, DO, SORT, CACHE);
        } 
+    }
+
+    // for testing
+    public void runRandomSim() {
+        GameState gs = rootState;
+        Random rng = new Random();
+
+        System.out.println(gameInfo.getInfo());
+
+        while (!gs.isGameEnd()) {
+            System.out.println(gs);
+            System.out.println("");
+
+            List<Action> list = expander.getActions(gs);
+            int idx = rng.nextInt(list.size());
+            Action a = list.get(idx);
+
+            System.out.println("Random action: " + a);
+
+            gs = gs.performAction(a);
+        }
+
+        System.out.println(gs);
+        System.out.println("");
+
+        double[] utilities = gs.getUtilities();
+        System.out.println("util: " + utilities[0] + " " + utilities[1]);
     }
 
     public void runCFR(boolean OOS) {
