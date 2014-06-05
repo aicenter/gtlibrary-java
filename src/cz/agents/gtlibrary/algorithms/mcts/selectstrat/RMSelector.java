@@ -12,19 +12,20 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- *
+ * Regret matching in unknown game setting based on Hart and Mas-Colell 2001.
  * @author vilo
  */
 public class RMSelector implements Selector, MeanStrategyProvider {
     private RMBackPropFactory fact;
     private List<Action> actions;
-    MCTSInformationSet is;
-    Action lastSelected = null;
     /** Current probability of playing this action. */
     double[] p;
     double[] mp;
-    /** Cumulative regret. */
+    /** Cumulative regret estimate. */
     double[] r;
+    /** Current time step. */
+    int t=1;
+    double d_t;
     public RMSelector(List<Action> actions, RMBackPropFactory fact){
         this(actions.size(), fact);
         this.actions = actions;
@@ -35,7 +36,7 @@ public class RMSelector implements Selector, MeanStrategyProvider {
         p = new double[N];
         mp = new double[N];
         r = new double[N];
-        
+        d_t = fact.gamma;
     }
     
     protected void updateProb() {
@@ -54,10 +55,10 @@ public class RMSelector implements Selector, MeanStrategyProvider {
     @Override
     public int select(){
         updateProb();
-
+        //d_t=fact.gamma/Math.sqrt(t);//does not work
         double rand = fact.random.nextDouble();
         for (int i=0; i<p.length; i++) {
-            double pa = (1-fact.gamma)*p[i] + fact.gamma/p.length;
+            double pa = (1-d_t)*p[i] + d_t/p.length;
             
             if (rand > pa) {
                 rand -= pa;
@@ -71,8 +72,13 @@ public class RMSelector implements Selector, MeanStrategyProvider {
 
     @Override
     public void update(int selection, double value) {
-        double pa = (1-fact.gamma)*p[selection] + fact.gamma/p.length;
-        r[selection] += (1-p[selection])*fact.normalizeValue(value)/pa;
+        final double v = fact.normalizeValue(value);
+        final double pa = (1-d_t)*p[selection] + d_t/p.length;
+        r[selection] += v/pa;
+        for (int i=0; i<r.length; i++){
+            r[i] -= v;
+        }
+        t++;
     }
 
     @Override
@@ -84,11 +90,4 @@ public class RMSelector implements Selector, MeanStrategyProvider {
     public double[] getMp() {
         return mp;
     }
-    
-    private double valueEstimate(Action exp, InnerNode node){
-        double out = 0;
-        return out;
-    }
-    
-    
 }
