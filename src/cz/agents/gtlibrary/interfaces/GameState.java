@@ -43,4 +43,6 @@ public interface GameState extends Serializable {
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove();
 
 	public boolean checkConsistency(Action action);
+
+    public double[] evaluate();
 }
