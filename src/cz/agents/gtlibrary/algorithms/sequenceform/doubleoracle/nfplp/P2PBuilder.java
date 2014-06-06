@@ -2,8 +2,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
@@ -14,25 +13,49 @@ public class P2PBuilder extends InitialP2PBuilder {
 
     private Set<Sequence> lastItSeq;
     private Map<Sequence, Double> explSeqSum;
-    private double initialValueOfGame;
 
-    public P2PBuilder(Player[] players, SequenceFormConfig<SequenceInformationSet> config, QResult data, double initialValueOfGame) {
-        super(players, config);
+    public P2PBuilder(Player[] players, GameInfo info) {
+        super(players, info);
+    }
+
+    public void update(QResult data, double initialValueOfGame, SequenceFormConfig<? extends SequenceInformationSet> config) {
         this.lastItSeq = data.getLastItSeq();
         this.explSeqSum = data.getExplSeqSum();
-        this.initialValueOfGame = initialValueOfGame;
+        addPreviousItConstraints(initialValueOfGame);
+        clearSlacks(config.getSequencesFor(players[0]));
+        for (Sequence sequence : lastItSeq) {
+            addSlackVariable(sequence);
+        }
+        for (Map.Entry<Sequence, Double> entry : explSeqSum.entrySet()) {
+            addSlackConstant(entry);
+        }
     }
 
-    @Override
-    public void initTable() {
-        super.initTable();
-        addPreviousItConstraints();
+    private void addSlackConstant(Map.Entry<Sequence, Double> entry) {
+        lpTable.setConstant(entry.getKey(), -entry.getValue());
     }
 
-    private void addPreviousItConstraints() {
+    private void addSlackVariable(Sequence sequence) {
+        lpTable.setConstraint(sequence, "t", 1);
+    }
+
+    private void addPreviousItConstraints(double initialValueOfGame) {
         lpTable.setConstraint("prevIt", players[0], 1);
         lpTable.setConstant("prevIt", initialValueOfGame);
         lpTable.setConstraintType("prevIt", 1);
+    }
+
+//    @Override
+//    public void buildLP(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+//        clearSlacks(config.getSequencesFor(players[0]));
+//        super.buildLP(config);
+//    }
+
+    private void clearSlacks(Iterable<Sequence> sequences) {
+        for (Sequence sequence : sequences) {
+            lpTable.removeFromConstraint(sequence, "t");
+            lpTable.removeConstant(sequence);
+        }
     }
 
     @Override
@@ -40,15 +63,24 @@ public class P2PBuilder extends InitialP2PBuilder {
         lpTable.setObjective("t", 1);
     }
 
-    @Override
-    protected void updateForP1(Sequence p1Sequence) {
-        super.updateForP1(p1Sequence);
+//    @Override
+//    protected void updateForP1(Sequence p1Sequence) {
+//        super.updateForP1(p1Sequence);
+//
+//        if (lastItSeq.contains(p1Sequence))
+//            lpTable.setConstraint(p1Sequence, "t", 1);
+//        Double value = explSeqSum.get(p1Sequence);
+//
+//        if (value != null)
+//            lpTable.setConstant(p1Sequence, -value);
+//    }
 
-        if (lastItSeq.contains(p1Sequence))
-            lpTable.setConstraint(p1Sequence, "t", 1);
-        Double value = explSeqSum.get(p1Sequence);
+//    public void updateSolver() {
+//        try {
+//            lpTable.toCplex();
+//        } catch (IloException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
-        if (value != null)
-            lpTable.setConstant(p1Sequence, -value);
-    }
 }

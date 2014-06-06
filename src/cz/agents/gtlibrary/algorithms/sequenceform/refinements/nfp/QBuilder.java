@@ -1,5 +1,11 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameInfo;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import ilog.concert.IloException;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
@@ -7,18 +13,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Sequence;
-
 public class QBuilder extends InitialQBuilder {
 
 	private Map<Sequence, Double> explSeqSum;
 
-	public QBuilder(Expander<SequenceInformationSet> expander, GameState rootState, double initialValue, double gameValue, IterationData data) {
-		super(expander, rootState, initialValue);
+	public QBuilder(Expander<SequenceInformationSet> expander, GameState rootState, GameInfo info, double initialValue, double gameValue, IterationData data) {
+		super(expander, rootState, info, initialValue);
 		this.explSeqSum = getSum(data.getLastItSeq(), data.getExplSeqSum(), gameValue);
 		lpFileName = "qLP.lp";
 	}

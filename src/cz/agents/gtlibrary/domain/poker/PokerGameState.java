@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
@@ -85,7 +86,30 @@ public abstract class PokerGameState extends GameStateImpl {
 		return new double[] { 0 };
 	}
 
-	@Override
+    @Override
+    public Rational[] getExactUtilities() {
+        if (isGameEnd()) {
+            Rational[] exactUtilities;
+            int result = hasPlayerOneWon();
+
+            if (result > 0)
+                exactUtilities = new Rational[] { new Rational(gainForFirstPlayer), new Rational(-gainForFirstPlayer), Rational.ZERO };
+            else if (result == 0)
+                exactUtilities = new Rational[] { Rational.ZERO, Rational.ZERO, Rational.ZERO };
+            else
+                exactUtilities = new Rational[] { new Rational(gainForFirstPlayer - pot), new Rational(pot - gainForFirstPlayer), Rational.ZERO };
+            double[] utilities = getUtilities();
+
+            for (int i = 0; i < exactUtilities.length; i++) {
+                assert Math.abs(exactUtilities[i].doubleValue() - utilities[i]) < 1e-8;
+            }
+            return exactUtilities;
+        }
+        return new Rational[] { Rational.ZERO };
+    }
+
+
+    @Override
 	public Player getPlayerToMove() {
 		return players[currentPlayerIndex];
 	}

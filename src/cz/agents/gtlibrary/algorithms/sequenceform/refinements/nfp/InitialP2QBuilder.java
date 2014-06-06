@@ -1,5 +1,13 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
@@ -11,26 +19,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
-import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.utils.Pair;
-
 public class InitialP2QBuilder extends TreeVisitor {
 
 	protected String lpFileName;
 	protected NFPTable lpTable;
+    protected GameInfo info;
 	protected double initialValue;
 
-	public InitialP2QBuilder(Expander<SequenceInformationSet> expander, GameState rootState, double initialValue) {
+	public InitialP2QBuilder(Expander<SequenceInformationSet> expander, GameState rootState, GameInfo info, double initialValue) {
 		super(rootState, expander);
+        this.info = info;
 		this.expander = expander;
 		this.initialValue = initialValue;
 		lpFileName = "initialP2Q.lp";
@@ -227,14 +225,8 @@ public class InitialP2QBuilder extends TreeVisitor {
 	@Override
 	protected void visitLeaf(GameState state) {
 		updateParentLinks(state);
-		if (state instanceof GenericPokerGameState) {
-			double value = ((GenericPokerGameState) state).getDenominator() * state.getNatureProbability() * state.getUtilities()[1];
 
-			assert Math.abs(value - Math.round(value)) < 1e-8;
-			lpTable.substractFromConstraint(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), Math.round(value));
-		} else {
-			lpTable.substractFromConstraint(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), state.getNatureProbability() * state.getUtilities()[1]);
-		}
+		lpTable.substractFromConstraint(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), info.getUtilityStabilizer() * state.getNatureProbability() * state.getUtilities()[1]);
 	}
 
 	@Override

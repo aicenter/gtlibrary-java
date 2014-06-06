@@ -52,5 +52,9 @@ public class AntiMCTSInfo implements GameInfo{
     public Player[] getAllPlayers() {
         return players;
     }
-    
+
+    @Override
+    public double getUtilityStabilizer() {
+        return 1;
+    }
 }

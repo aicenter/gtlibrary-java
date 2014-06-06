@@ -9,6 +9,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.FullNFPSolver;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominated.FullUndominatedSolver;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.QuasiPerfectBuilder;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -68,7 +71,7 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
@@ -256,7 +259,11 @@ public class FullSequenceEFG {
 
 		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
 		long startCPLEX = threadBean.getCurrentThreadCpuTime();
-		SequenceFormLP sequenceFormLP = new SequenceFormLP(actingPlayers);
+		FullSequenceFormLP sequenceFormLP = new SequenceFormLP(actingPlayers);
+//        FullSequenceFormLP sequenceFormLP = new FullUndominatedSolver(actingPlayers);
+//        FullSequenceFormLP sequenceFormLP = new FullNFPSolver(actingPlayers, gameConfig);
+
+
 
         sequenceFormLP.setDebugOutput(debugOutput);
 		sequenceFormLP.calculateBothPlStrategy(rootState, algConfig);

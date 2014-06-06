@@ -1,9 +1,9 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom;
 
+import cz.agents.gtlibrary.utils.Pair;
+
 import java.util.Comparator;
 import java.util.Map.Entry;
-
-import cz.agents.gtlibrary.utils.Pair;
 
 public class EntryComparator implements Comparator<Entry<Pair<Integer, Integer>, ? extends Object>> {
 

@@ -1,9 +1,9 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp;
 
+import cz.agents.gtlibrary.interfaces.Sequence;
+
 import java.util.Map;
 import java.util.Set;
-
-import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class IterationData {
 

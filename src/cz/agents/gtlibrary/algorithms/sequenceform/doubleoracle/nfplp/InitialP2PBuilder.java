@@ -2,10 +2,10 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -15,46 +15,153 @@ import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.UnknownObjectException;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class InitialP2PBuilder {
 
     protected String lpFileName;
-    protected RecyclingNFPTable lpTable;
-    protected SequenceFormConfig<? extends SequenceInformationSet>config;
+    public RecyclingNFPTable lpTable;
+    protected SequenceFormConfig<? extends SequenceInformationSet> config;
     protected Player[] players;
+    protected GameInfo info;
 
-    public InitialP2PBuilder(Player[] players, SequenceFormConfig<? extends SequenceInformationSet> config) {
+    public InitialP2PBuilder(Player[] players, GameInfo info) {
         this.players = players;
-        this.config = config;
+        this.info = info;
         lpFileName = "P2DO_P.lp";
+        initTable();
     }
 
-    public void buildLP() {
-        initTable();
+    public void buildLP(SequenceFormConfig<? extends SequenceInformationSet> config, Set<Sequence> sequencesToAdd) {
+        this.config = config;
+        for (Sequence sequence : sequencesToAdd) {
+            if (sequence.getPlayer().equals(players[0]))
+                updateForP1(sequence);
+            else
+                updateForP2(sequence);
+        }
+        updateUtilities(config);
+//        addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
+    }
+
+    //    private void updateUtilities(SequenceFormConfig<? extends SequenceInformationSet> config) {
+//        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
+//            for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
+//                Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
+//
+//                if (utility == null)
+//                    lpTable.removeFromConstraint(p1Sequence, p2Sequence);
+//                else
+//                    lpTable.setConstraint(p1Sequence, p2Sequence, utility);
+//            }
+//        }
+//    }
+    private void updateUtilities(SequenceFormConfig<? extends SequenceInformationSet> config) {
         for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
-            updateForP1(p1Sequence);
+            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(p1Sequence)) {
+                Double utility = config.getUtilityFor(p1Sequence, compatibleSequence);
+
+                if (utility == null)
+                    lpTable.removeFromConstraint(p1Sequence, compatibleSequence);
+                else if (info instanceof GPGameInfo)
+                    lpTable.setConstraint(p1Sequence, compatibleSequence, Math.round(info.getUtilityStabilizer() * utility));
+                else
+                    lpTable.setConstraint(p1Sequence, compatibleSequence, info.getUtilityStabilizer() * utility);
+            }
         }
         for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
-            updateForP2(p2Sequence);
-        }
-        addUtilities(config.getSequencesFor(players[0]), config.getSequencesFor(players[1]));
-    }
+            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(p2Sequence)) {
+                Double utility = config.getUtilityFor(compatibleSequence, p2Sequence);
 
-    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
-        for (Sequence p1Sequence : p1Sequences) {
-            for (Sequence p2Sequence : p2Sequences) {
-                Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
-
-                if (utility != null) {
-                    lpTable.substractFromConstraint(p1Sequence, p2Sequence, -utility);
-                }
+                if (utility == null)
+                    lpTable.removeFromConstraint(compatibleSequence, p2Sequence);
+                else if (info instanceof GPGameInfo)
+                    lpTable.setConstraint(compatibleSequence, p2Sequence, Math.round(info.getUtilityStabilizer() * utility));
+                else
+                    lpTable.setConstraint(compatibleSequence, p2Sequence, info.getUtilityStabilizer() * utility);
             }
         }
     }
+//    private void clearUtilities(SequenceFormConfig<? extends SequenceInformationSet> config) {
+//        Set<Sequence> newSequences = config.getNewSequences();
+//
+//        for (Sequence p1Sequence : config.getSequencesFor(players[0])) {
+//            if (!newSequences.contains(p1Sequence))
+//                for (Sequence p2Sequence : config.getSequencesFor(players[1])) {
+//                    if (!newSequences.contains(p2Sequence))
+//                        lpTable.removeFromConstraint(p1Sequence, p2Sequence);
+//                }
+//        }
+//    }
+//
+//    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
+//        for (Sequence p1Sequence : p1Sequences) {
+//            for (Sequence p2Sequence : p2Sequences) {
+//                Double utility = config.getUtilityFor(p1Sequence, p2Sequence);
+//
+//                if (utility != null) {
+//                    lpTable.substractFromConstraint(p1Sequence, p2Sequence, -utility);
+//                }
+//            }
+//        }
+//    }
+
+//    protected void addUtilities(Iterable<Sequence> newSequences) {
+//        Set<Pair<Sequence, Sequence>> blackList = new HashSet<Pair<Sequence, Sequence>>();
+//
+//        for (Sequence newSequence : newSequences) {
+//            if (newSequence.getPlayer().equals(players[0]))
+//                for (Sequence compatibleSequence : config.getCompatibleSequencesFor(newSequence)) {
+//                    Double utility = config.getUtilityFor(newSequence, compatibleSequence);
+//                    Pair<Sequence, Sequence> sequencePair = new Pair<Sequence, Sequence>(newSequence, compatibleSequence);
+//
+//                    if (utility != null)
+//                        if (!blackList.contains(sequencePair)) {
+//                            lpTable.substractFromConstraint(newSequence, compatibleSequence, -utility);
+//                            blackList.add(sequencePair);
+//                        }
+//                    clearForAllP1Prefixes(newSequence);
+//                }
+//            else
+//                for (Sequence compatibleSequence : config.getCompatibleSequencesFor(newSequence)) {
+//                    Double utility = config.getUtilityFor(newSequence, compatibleSequence);
+//                    Pair<Sequence, Sequence> sequencePair = new Pair<Sequence, Sequence>(compatibleSequence, newSequence);
+//
+//                    if (utility != null)
+//                        if (!blackList.contains(sequencePair)) {
+//                            lpTable.substractFromConstraint(compatibleSequence, newSequence, -utility);
+//                            blackList.add(sequencePair);
+//                        }
+//                    clearForAllP2Prefixes(newSequence);
+//                }
+//        }
+//    }
+//
+//    private void clearForAllP1Prefixes(Sequence newSequence, Set<Pair<Sequence, Sequence>> blackList) {
+//        for (Sequence prefix : newSequence.getAllPrefixes()) {
+//            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(prefix)) {
+//                Double utility = config.getUtilityFor(prefix, compatibleSequence);
+//                if (utility == null)
+//                    lpTable.removeFromConstraint(prefix, compatibleSequence);
+//                else
+//
+//            }
+//        }
+//
+//    }
+//
+//    private void clearForAllP2Prefixes(Sequence newSequence) {
+//        for (Sequence prefix : newSequence.getAllPrefixes()) {
+//            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(prefix)) {
+//                if (config.getUtilityFor(prefix, compatibleSequence) == null)
+//                    lpTable.removeFromConstraint(compatibleSequence, prefix);
+//            }
+//        }
+//
+//    }
 
     protected void updateForP1(Sequence p1Sequence) {
         if (config.getReachableSets(p1Sequence) == null)
@@ -94,6 +201,7 @@ public class InitialP2PBuilder {
         return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
     }
 
+
 //    protected void updateForP1(Sequence p1Sequence) {
 //        if (p1Sequence.size() == 0)
 //            return;
@@ -103,8 +211,22 @@ public class InitialP2PBuilder {
 //        lpTable.setConstraint(eqKey, varKey, -1);//F
 //        lpTable.setConstraintType(eqKey, 0);
 //        lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-//        lpTable.setConstraint(p1Sequence, varKey, 1);//F
-//        lpTable.setConstraintType(p1Sequence, 0);
+//        addLinksToPrevISForP1(p1Sequence, varKey);
+////        lpTable.setConstraint(p1Sequence, varKey, 1);//F
+////        lpTable.setConstraintType(p1Sequence, 0);
+//    }
+//
+//    public void addLinksToPrevISForP1(Sequence sequence, Object varKey) {
+//        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
+//
+//        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
+//            lpTable.setConstraint(outgoingSequence, varKey, 1);//F child
+//            lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+//            lpTable.setConstraintType(outgoingSequence, 0);
+//
+////            lpTable.setConstraint(outgoingSequence, tmpKey, -1);//u (eye)
+////			lpTable.setObjective(tmpKey, 0);//k(\epsilon)
+//        }
 //    }
 //
 //    protected void updateForP2(Sequence p2Sequence) {
@@ -114,12 +236,29 @@ public class InitialP2PBuilder {
 //        Object varKey = getSubsequence(p2Sequence);
 //        Object eqKey = getLastISKey(p2Sequence);
 //
+//        lpTable.watchPrimalVariable(varKey, varKey);
 //        lpTable.setConstraint(eqKey, varKey, -1);//E
 //        lpTable.setConstraintType(eqKey, 1);
 //        lpTable.setLowerBound(varKey, 0);
-//        lpTable.setConstraint(eqKey, p2Sequence, 1);//E
-//        lpTable.setLowerBound(p2Sequence, 0);
+////        lpTable.setConstraint(eqKey, p2Sequence, 1);//E
+////        lpTable.setLowerBound(p2Sequence, 0);
+//        addLinksToPrevISForP2(p2Sequence, eqKey);
 //    }
+//
+//    protected void addLinksToPrevISForP2(Sequence sequence, Object eqKey) {
+//        SequenceInformationSet set = (SequenceInformationSet) sequence.getLastInformationSet();
+//
+//        for (Sequence outgoingSequence : set.getOutgoingSequences()) {
+////            Key tmpKey = new Key("V", outgoingSequence);
+//
+//            lpTable.setConstraint(eqKey, outgoingSequence, 1);//E child
+//            lpTable.setConstraintType(eqKey, 1);
+//            lpTable.setLowerBound(outgoingSequence, 0);
+////			lpTable.setConstant(tmpKey, 0);//l(\epsilon)
+//        }
+//
+//    }
+
 
     protected Sequence getSubsequence(Sequence sequence) {
         return sequence.getSubSequence(sequence.size() - 1);
@@ -130,7 +269,7 @@ public class InitialP2PBuilder {
             LPData lpData = lpTable.toCplex();
             boolean solved = false;
 
-            lpData.getSolver().exportModel(lpFileName);
+//            lpData.getSolver().exportModel(lpFileName);
             for (int algorithm : lpData.getAlgorithms()) {
                 lpData.getSolver().setParam(IloCplex.IntParam.RootAlg, algorithm);
                 if (solved = trySolve(lpData))
@@ -138,8 +277,8 @@ public class InitialP2PBuilder {
             }
             if (!solved)
                 solveUnfeasibleLP(lpData);
-            System.out.println(lpData.getSolver().getStatus());
-            System.out.println(lpData.getSolver().getObjValue());
+//            System.out.println(lpData.getSolver().getStatus());
+//            System.out.println(lpData.getSolver().getObjValue());
 
 //            System.out.println("values:");
 //            for (int i = 0; i < lpData.getVariables().length; i++) {
@@ -181,6 +320,7 @@ public class InitialP2PBuilder {
         }
 
         System.out.println("P: " + solved);
+        System.out.println(lpData.getSolver().getObjValue());
         return solved;
     }
 
@@ -190,7 +330,7 @@ public class InitialP2PBuilder {
         boolean solved = lpData.getSolver().feasOpt(lpData.getConstraints(), getPreferences(lpData));
 
         assert solved;
-        System.out.println("Q feas: " + solved);
+        System.out.println("P feas: " + solved);
     }
 
     protected double[] getPreferences(LPData lpData) {

@@ -1,18 +1,9 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
-import ilog.concert.IloException;
-import ilog.concert.IloNumVar;
-import ilog.concert.IloRange;
-import ilog.cplex.IloCplex;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.numbers.Epsilon;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.numbers.EpsilonPolynom;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Epsilon;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.EpsilonPolynom;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
@@ -29,12 +20,20 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
+import ilog.concert.IloException;
+import ilog.concert.IloNumVar;
+import ilog.concert.IloRange;
+import ilog.cplex.IloCplex;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class LPBuilder extends TreeVisitor {
 
 	protected String lpFileName;
 	protected EpsilonLPTable lpTable;
-	protected Epsilon epsilon;
+	public Epsilon epsilon;
 
 	public static void main(String[] args) {
 //		runAoS();

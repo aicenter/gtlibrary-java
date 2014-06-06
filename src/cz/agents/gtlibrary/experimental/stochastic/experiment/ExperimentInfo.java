@@ -48,4 +48,8 @@ public class ExperimentInfo implements GameInfo {
 		return ALL_PLAYERS;
 	}
 
+    @Override
+    public double getUtilityStabilizer() {
+        return 1;
+    }
 }

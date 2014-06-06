@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.experimental.stochastic;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -27,4 +28,14 @@ public abstract class StochasticGameState extends GameStateImpl {
 	public boolean checkConsistency(Action action) {
 		return true;
 	}
+
+    @Override
+    public Rational[] getExactUtilities() {
+        throw new UnsupportedOperationException("Not supported...");
+    }
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        throw new UnsupportedOperationException("Not supported...");
+    }
 }

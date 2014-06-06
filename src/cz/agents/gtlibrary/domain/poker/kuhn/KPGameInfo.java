@@ -45,4 +45,9 @@ public class KPGameInfo implements GameInfo {
 	public Player[] getAllPlayers() {		
 		return ALL_PLAYERS;
 	}
+
+    @Override
+    public double getUtilityStabilizer() {
+        return 1;
+    }
 }

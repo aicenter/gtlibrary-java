@@ -1,11 +1,11 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom;
 
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class GameValueCalculator {
 

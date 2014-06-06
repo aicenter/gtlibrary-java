@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominated.UndominatedSolver;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DODataBuilder;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
@@ -73,12 +74,12 @@ public class GeneralDoubleOracle {
 //		runAC();
 //        runBP();
 //        runGenericPoker();
-//        runKuhnPoker();
+        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
-        runPhantomTTT();
+//        runPhantomTTT();
 //		runAoS();
 	}
 	
@@ -236,11 +237,8 @@ public class GeneralDoubleOracle {
             }
         }
 		int currentPlayerIndex = 0;
-		DoubleOracleSequenceFormLP doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
-//		DOLPBuilder doRestrictedGameSolver = new DOLPBuilder(actingPlayers);
-//		DOLPBuilder doRestrictedGameSolver = new RecyclingDOLPBuilder(actingPlayers);
-//		ReducedDOLPBuilder doRestrictedGameSolver = new ReducedDOLPBuilder(actingPlayers, gameInfo, rootState, expander);
-//		DODataBuilder doRestrictedGameSolver = new DODataBuilder(actingPlayers, rootState, expander);
+//		DoubleOracleLPSolver doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
+        DoubleOracleLPSolver doRestrictedGameSolver = new UndominatedSolver(actingPlayers);
         doRestrictedGameSolver.setDebugOutput(debugOutput);
 		
 		double p1BoundUtility = gameInfo.getMaxUtility();
@@ -320,8 +318,8 @@ public class GeneralDoubleOracle {
 
             if (algConfig.getNewSequences().isEmpty()
                     && (Math.abs(p1BoundUtility + p2BoundUtility) > EPS)
-                    && doRestrictedGameSolver.newSequencesSinceLastLPCalculation.get(actingPlayers[0]).isEmpty()
-                    && doRestrictedGameSolver.newSequencesSinceLastLPCalculation.get(actingPlayers[1]).isEmpty()) {
+                    && doRestrictedGameSolver.getNewSequencesSinceLastLPCalc(actingPlayers[0]).isEmpty()
+                    && doRestrictedGameSolver.getNewSequencesSinceLastLPCalc(actingPlayers[1]).isEmpty()) {
                 debugOutput.println("ERROR : NOT CONVERGED");
                 break;
             }

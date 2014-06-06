@@ -72,7 +72,7 @@ public class ConvergenceExperiment {
         sfExpander = new RandomGameExpander<SequenceInformationSet>(sfAlgConfig);
         efg = new FullSequenceEFG(rootState, sfExpander, gameInfo, sfAlgConfig);
         optStrategies = efg.generate();
-        GambitEFG.write("RND" + RandomGameInfo.MAX_BF + RandomGameInfo.MAX_DEPTH + "_" +seed+".efg", rootState, sfExpander);
+        new GambitEFG().write("RND" + RandomGameInfo.MAX_BF + RandomGameInfo.MAX_DEPTH + "_" +seed+".efg", rootState, sfExpander);
     }
 
     public static void setupIIGoofSpielExpl(){

@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.poker.generic;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.PokerGameState;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -11,19 +12,16 @@ public class GenericPokerGameState extends PokerGameState {
 	
 	private PokerAction table;
 	private int continuousRaiseCount;
-//	private int denominator;
 
 	public GenericPokerGameState() {
 		super(GPGameInfo.ALL_PLAYERS, GPGameInfo.ANTE);
 		continuousRaiseCount = 0;
-//		denominator = 1;
 	}
 
 	public GenericPokerGameState(GenericPokerGameState gameState) {
 		super(gameState);
 		this.table = gameState.table;
 		this.continuousRaiseCount = gameState.continuousRaiseCount;
-//		this.denominator = gameState.denominator;
 	}
 
 	@Override
@@ -67,6 +65,14 @@ public class GenericPokerGameState extends PokerGameState {
 	public double getProbabilityOfNatureFor(Action action) {
 		return (double) (getInitialCountOf(action) - getOccurrenceCountOf(action)) / (GPGameInfo.DECK.length - getDealtCardCount());
 	}
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        Rational exactProbability = new Rational(getInitialCountOf(action) - getOccurrenceCountOf(action), GPGameInfo.DECK.length - getDealtCardCount());
+
+        assert Math.abs(exactProbability.doubleValue() - getProbabilityOfNatureFor(action)) < 1e-8;
+        return exactProbability;
+    }
 
 	private int getInitialCountOf(Action action) {
 		int count = 0;
@@ -176,10 +182,6 @@ public class GenericPokerGameState extends PokerGameState {
 		switchPlayers();
 	}
 	
-	public int getDenominator() {
-		return getCardCount()*(getCardCount()-1)*(getCardCount() - 2);
-	}
-
 	private int getCardCount() {
 		return GPGameInfo.MAX_CARD_TYPES*GPGameInfo.MAX_CARD_OF_EACH_TYPE;
 	}

@@ -1,44 +1,62 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleLPSolver;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-public class NFPSolver {
+public class NFPSolver implements DoubleOracleLPSolver {
 
-    private Double p1Value;
-    private Double p2Value;
-    private Player[] players;
-    private Map<Sequence, Double> p1RealizationPlan;
-    private Map<Sequence, Double> p2RealizationPlan;
+    protected Double p1Value;
+    protected Double p2Value;
+    protected Player[] players;
+    protected InitialPBuilder initPBuilderP1;
+    protected InitialQBuilder initQBuilderP1;
+    protected PBuilder pBuilderP1;
+    protected QBuilder qBuilderP1;
+    protected InitialP2PBuilder initPBuilderP2;
+    protected InitialP2QBuilder initQBuilderP2;
+    protected P2PBuilder pBuilderP2;
+    protected P2QBuilder qBuilderP2;
+    protected Map<Sequence, Double> p1RealizationPlan;
+    protected Map<Sequence, Double> p2RealizationPlan;
+    protected Set<Sequence> p1SequencesToAdd;
+    protected Set<Sequence> p2SequencesToAdd;
+    protected GameInfo info;
 
-    public NFPSolver(Player[] players) {
+    public NFPSolver(Player[] players, GameInfo info) {
         this.players = players;
+        this.info = info;
         p1Value = null;
         p2Value = null;
         p1RealizationPlan = new HashMap<Sequence, Double>();
         p2RealizationPlan = new HashMap<Sequence, Double>();
+        p1SequencesToAdd = new HashSet<Sequence>();
+        p2SequencesToAdd = new HashSet<Sequence>();
     }
 
 
     public Double getResultForPlayer(Player player) {
 //        assert !Double.isNaN(p1Value);
-        return player.equals(players[0]) ? p1Value : p2Value;
+        Double value = player.equals(players[0]) ? p1Value : p2Value;
+
+        return value == null ? null : value / info.getUtilityStabilizer();
     }
 
     public Map<Sequence, Double> getResultStrategiesForPlayer(Player player) {
         return player.equals(players[0]) ? p1RealizationPlan : p2RealizationPlan;
     }
 
-    public void calculateStrategyForPlayer(int playerIndex, GameState root, SequenceFormConfig<? extends SequenceInformationSet> config, double currentBoundSize) {
+    public void calculateStrategyForPlayer(int playerIndex, GameState root, DoubleOracleConfig config, double currentBoundSize) {
         long startTime = System.currentTimeMillis();
 
         if (playerIndex == 0)
@@ -47,59 +65,90 @@ public class NFPSolver {
             p2RealizationPlan = solveForP2(config);
     }
 
-    public Map<Sequence, Double> solveForP1(SequenceFormConfig<? extends SequenceInformationSet> config) {
-        InitialPBuilder initPbuilder = new InitialPBuilder(players, config);
+    public Map<Sequence, Double> solveForP1(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+        updateP1Sequences(config);
+        updateP2Sequences(config);
+        if (initPBuilderP1 == null)
+            initPBuilderP1 = new InitialPBuilder(players, info);
 
-        initPbuilder.buildLP();
-        PResult pResult = initPbuilder.solve();
+        initPBuilderP1.buildLP(config, p1SequencesToAdd);
+        PResult pResult = initPBuilderP1.solve();
 
-        p1Value = pResult.getGameValue();
-        p2Value = -p1Value;
-//        InitialQBuilder initQBuilder = new InitialQBuilder(players, config, p1Value);
-//
-//        initQBuilder.buildLP();
-//        QResult qResult = initQBuilder.solve();
-//
+        p2Value = -pResult.getGameValue();
+
+
+        if (initQBuilderP1 == null)
+            initQBuilderP1 = new InitialQBuilder(players, info);
+
+        initQBuilderP1.buildLP(config, -p2Value, p1SequencesToAdd);
+        QResult qResult = initQBuilderP1.solve();
+
 //        System.out.println("Exploitable sequences: ");
 //        for (Sequence exploitableSequence : qResult.getLastItSeq()) {
 //            System.out.println(exploitableSequence);
 //        }
-//        if (qResult.getGameValue() > 1e-6) {
-//            PBuilder pBuilder = new PBuilder(players, config, qResult, p1Value);
-//
-//            pBuilder.buildLP();
-//            pResult = pBuilder.solve();
-//
-//            QBuilder qBuilder = new QBuilder(players, config, p1Value, pResult.getGameValue(), qResult);
-//
-//            qBuilder.buildLP();
-//            qResult = qBuilder.solve();
-//
+        if (pBuilderP1 == null)
+            pBuilderP1 = new PBuilder(players, info);
+//        pBuilderP1.updateFromLastIteration(qResult, p1Value);
+        pBuilderP1.buildLP(config, p1SequencesToAdd);
+//        pBuilderP1.updateSolver();
+        pBuilderP1.update(qResult, -p2Value, config);
+        if (qBuilderP1 == null)
+            qBuilderP1 = new QBuilder(players, info);
+
+        qBuilderP1.buildLP(config, -p2Value, p1SequencesToAdd);
+//        qBuilderP1.updateSolver();
+        if (qResult.getGameValue() > 1e-6) {
+            pResult = pBuilderP1.solve();
+
+            qBuilderP1.update(pResult.getGameValue(), qResult, config);
+//            qBuilderP1.buildLP(config, p1Value);
+            qResult = qBuilderP1.solve();
+
 //            System.out.println("Exploitable sequences: ");
 //            for (Sequence exploitableSequence : qResult.getLastItSeq()) {
 //                System.out.println(exploitableSequence);
 //            }
-//
-//            PUpdater pUpdater = new PUpdater(players, config, pBuilder.lpTable);
-//            QUpdater qUpdater = new QUpdater(players, config, p1Value, qBuilder.lpTable);
-//
-//            while (Math.abs(qResult.getGameValue()) > 1e-6) {
-//                assert !qResult.getLastItSeq().isEmpty();
+
+            PUpdater pUpdater = new PUpdater(players, pBuilderP1.lpTable, info);
+            QUpdater qUpdater = new QUpdater(players, qBuilderP1.lpTable, info);
+
+            while (Math.abs(qResult.getGameValue()) > 1e-6) {
+                assert !qResult.getLastItSeq().isEmpty();
 //                System.out.println("Exploitable seq. count " + qResult.getLastItSeq().size());
-//
-//                pUpdater.buildLP(qResult);
-//                pResult = pUpdater.solve();
-//
-//                qUpdater.buildLP(qResult, pResult.getGameValue());
-//                qResult = qUpdater.solve();
+
+                pUpdater.update(qResult, config);
+                pResult = pUpdater.solve();
+
+                qUpdater.update(pResult.getGameValue(), qResult, config);
+                qResult = qUpdater.solve();
 //                System.out.println("Exploitable sequences: ");
 //                for (Sequence exploitableSequence : qResult.getLastItSeq()) {
 //                    System.out.println(exploitableSequence);
 //                }
-//            }
-//        }
+            }
+        }
+
+
+        p1SequencesToAdd.clear();
         return pResult.getRealizationPlan();
 //        return qResult.getRealizationPlan();
+    }
+
+    protected void updateP2Sequences(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+        p2SequencesToAdd.addAll(config.getNewSequences());
+        for (Sequence sequence : config.getNewSequences()) {
+            p2SequencesToAdd.addAll(config.getCompatibleSequencesFor(sequence));
+            p2SequencesToAdd.add(sequence.getSubSequence(sequence.size() - 1));
+        }
+    }
+
+    protected void updateP1Sequences(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+        p1SequencesToAdd.addAll(config.getNewSequences());
+        for (Sequence sequence : config.getNewSequences()) {
+            p1SequencesToAdd.addAll(config.getCompatibleSequencesFor(sequence));
+            p1SequencesToAdd.add(sequence.getSubSequence(sequence.size() - 1));
+        }
     }
 
     public void setDebugOutput(PrintStream debugOutput) {
@@ -118,64 +167,78 @@ public class NFPSolver {
         return 0;
     }
 
-    public Map<Sequence, Double> solveForP2(SequenceFormConfig<? extends SequenceInformationSet> config) {
-        InitialP2PBuilder initPbuilder = new InitialP2PBuilder(players, config);
+    @Override
+    public Set<Sequence> getNewSequencesSinceLastLPCalc(Player player) {
+        throw new UnsupportedOperationException("Not yet implemented...");
+    }
 
-        initPbuilder.buildLP();
-        PResult pResult = initPbuilder.solve();
+    public Map<Sequence, Double> solveForP2(DoubleOracleConfig<DoubleOracleInformationSet> config) {
+        updateP1Sequences(config);
+        updateP2Sequences(config);
+        if (initPBuilderP2 == null)
+            initPBuilderP2 = new InitialP2PBuilder(players, info);
 
-        p2Value = pResult.getGameValue();
-        p1Value = -p2Value;
-//        InitialP2QBuilder initQBuilder = new InitialP2QBuilder(players, config, p2Value);
-//
-//        initQBuilder.buildLP();
-//        QResult qResult = initQBuilder.solve();
-//
+        initPBuilderP2.buildLP(config, p2SequencesToAdd);
+        PResult pResult = initPBuilderP2.solve();
+
+        p1Value = -pResult.getGameValue();
+
+        if (initQBuilderP2 == null)
+            initQBuilderP2 = new InitialP2QBuilder(players, info);
+
+        initQBuilderP2.buildLP(config, -p1Value, p2SequencesToAdd);
+        QResult qResult = initQBuilderP2.solve();
+
 //        System.out.println("Exploitable sequences: ");
 //        for (Sequence exploitableSequence : qResult.getLastItSeq()) {
 //            System.out.println(exploitableSequence);
 //        }
-//
-//        if (qResult.getGameValue() > 1e-6) {
-//            P2PBuilder pBuilder = new P2PBuilder(players, config, qResult, p2Value);
-//
-//            pBuilder.buildLP();
-//            pResult = pBuilder.solve();
-//
-//            P2QBuilder qBuilder = new P2QBuilder(players, config, p2Value, pResult.getGameValue(), qResult);
-//
-//            qBuilder.buildLP();
-//            qResult = qBuilder.solve();
-//
+
+        if (pBuilderP2 == null)
+            pBuilderP2 = new P2PBuilder(players, info);
+//        pBuilderP2.updateFromLastIteration(qResult, p2Value);
+        pBuilderP2.buildLP(config, p2SequencesToAdd);
+        pBuilderP2.update(qResult, -p1Value, config);
+//        pBuilderP2.updateSolver();
+        if (qBuilderP2 == null)
+            qBuilderP2 = new P2QBuilder(players, info);
+
+        qBuilderP2.buildLP(config, -p1Value, p2SequencesToAdd);
+//        qBuilderP2.updateSolver();
+        if (qResult.getGameValue() > 1e-6) {
+            pResult = pBuilderP2.solve();
+
+//            qBuilderP2.updateSum(pResult.getGameValue(), qResult);
+            qBuilderP2.update(pResult.getGameValue(), qResult, config);
+            qResult = qBuilderP2.solve();
+
 //            System.out.println("Exploitable sequences: ");
 //            for (Sequence exploitableSequence : qResult.getLastItSeq()) {
 //                System.out.println(exploitableSequence);
 //            }
-//            P2PUpdater pUpdater = new P2PUpdater(players, config, pBuilder.lpTable);
-//            P2QUpdater qUpdater = new P2QUpdater(players, config, p2Value, qBuilder.lpTable);
-//
-//            while (Math.abs(qResult.getGameValue()) > 1e-6) {
-//                assert !qResult.getLastItSeq().isEmpty();
+            P2PUpdater pUpdater = new P2PUpdater(players, pBuilderP2.lpTable, info);
+            P2QUpdater qUpdater = new P2QUpdater(players, qBuilderP2.lpTable, info);
+
+            while (Math.abs(qResult.getGameValue()) > 1e-6) {
+                assert !qResult.getLastItSeq().isEmpty();
 //                System.out.println("Exploitable seq. count " + qResult.getLastItSeq().size());
-//
-//                pUpdater.buildLP(qResult);
-//                pResult = pUpdater.solve();
-//
-//                qUpdater.buildLP(pResult.getGameValue(), qResult);
-//                qResult = qUpdater.solve();
+
+                pUpdater.update(qResult, config);
+                pResult = pUpdater.solve();
+
+                qUpdater.update(pResult.getGameValue(), qResult, config);
+                qResult = qUpdater.solve();
 //                System.out.println("Exploitable sequences: ");
 //                for (Sequence exploitableSequence : qResult.getLastItSeq()) {
 //                    System.out.println(exploitableSequence);
 //                }
-//            }
-//        }
+            }
+        }
+
+
+        p2SequencesToAdd.clear();
         return pResult.getRealizationPlan();
 //        return  qResult.getRealizationPlan();
     }
 
-    public void calculateBothPlStrategy(GameState rootState, SequenceFormConfig<SequenceInformationSet> algConfig) {
-        solveForP1(algConfig);
-        solveForP2(algConfig);
-
-    }
 }

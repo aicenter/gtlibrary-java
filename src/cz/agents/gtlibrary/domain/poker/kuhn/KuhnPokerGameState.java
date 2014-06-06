@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.poker.kuhn;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.PokerGameState;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -58,6 +59,17 @@ public class KuhnPokerGameState extends PokerGameState {
 		}
 		return 1./3;
 	}
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        if (!isPlayerToMoveNature()) {
+            return Rational.ZERO;
+        }
+        if (playerCards[0] != null) {
+            return new Rational(1, 2);
+        }
+        return new Rational(1, 3);
+    }
 	
 	@Override
 	public void raise(PokerAction action) {

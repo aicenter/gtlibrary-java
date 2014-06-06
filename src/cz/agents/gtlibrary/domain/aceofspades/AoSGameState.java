@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.aceofspades;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
@@ -45,8 +46,16 @@ public class AoSGameState extends GameStateImpl {
 		if (((NatureAoSAction) action).isAceOfSpades())
 			return 1. / 52;
 		return 51. / 52;
-
 	}
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        if (!isPlayerToMoveNature())
+            throw new UnsupportedOperationException("Nature is not on the move...");
+        if (((NatureAoSAction) action).isAceOfSpades())
+            return new Rational(1, 52);
+        return new Rational(51, 52);
+    }
 
 	public void calculateISKeyFor(Player player) {
 		playerISKeys[player.getId()] = new Pair<Integer, Sequence>(0, getSequenceFor(player));
@@ -81,6 +90,15 @@ public class AoSGameState extends GameStateImpl {
 			return new double[] { -1, 1, 0 };
 		return new double[] { 0, 0, 0 };
 	}
+
+    @Override
+    public Rational[] getExactUtilities() {
+        if (!((FirstPlayerAoSAction) history.getSequenceOf(players[0]).getLast()).wantsToContinue())
+            return new Rational[] { Rational.ZERO, Rational.ZERO, Rational.ZERO };
+        if (guessedCorrectly())
+            return new Rational[] { Rational.ONE.negate(), Rational.ONE, Rational.ZERO };
+        return new Rational[] { Rational.ZERO, Rational.ZERO, Rational.ZERO };
+    }
 
 	private boolean guessedCorrectly() {
 		return card.isAceOfSpades() == ((SecondPlayerAoSAction) history.getSequenceOf(players[1]).getLast()).guessedAceOfSpades();

@@ -1,13 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 
 public abstract class TreeVisitor {
@@ -27,7 +21,9 @@ public abstract class TreeVisitor {
 	public void visitTree(GameState root) {
 		if (algConfig.getInformationSetFor(root) == null)
 			algConfig.addInformationSetFor(root, new SequenceInformationSet(root));
-		algConfig.getInformationSetFor(root).addStateToIS(root);
+
+        if(!algConfig.getInformationSetFor(root).getAllStates().contains(root))
+            algConfig.getInformationSetFor(root).addStateToIS(root);
 		if (root.isGameEnd()) {
 			visitLeaf(root);
 		} else if (root.isPlayerToMoveNature()) {

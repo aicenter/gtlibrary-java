@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.nfptest;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -51,6 +52,11 @@ public class TestGameState extends GameStateImpl {
 		return 0;
 	}
 
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        return Rational.ZERO;
+    }
+
 	@Override
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
 		return new Pair<Integer, Sequence>(history.hashCode(), getSequenceForPlayerToMove());
@@ -80,6 +86,21 @@ public class TestGameState extends GameStateImpl {
 			return new double[] { 2, -2 };
 		return new double[] { -1, 1 };
 	}
+
+    @Override
+    public Rational[] getExactUtilities() {
+        if (!isGameEnd())
+            return new Rational[] { Rational.ZERO };
+        if (getLastActionOfP1().getActionType().equals("L"))
+            return new Rational[] { new Rational(-2), new Rational(2) };
+        if (getLastActionOfP1().getActionType().equals("R"))
+            return new Rational[] { new Rational(-1), Rational.ONE };
+        if (getLastActionOfP1().getActionType().equals("L'"))
+            return new Rational[] { Rational.ONE, new Rational(-1) };
+        if (getLastActionOfP1().getActionType().equals("R'"))
+            return new Rational[] { new Rational(2), new Rational(-2) };
+        return new Rational[] { new Rational(-1), Rational.ONE };
+    }
 
 	@Override
 	public boolean isGameEnd() {

@@ -1,9 +1,9 @@
 package cz.agents.gtlibrary.domain.pursuit;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
@@ -134,6 +134,15 @@ public class PursuitGameState extends GameStateImpl {
 		return new double[] { 1, -1 };
 	}
 
+    @Override
+    public Rational[] getExactUtilities() {
+        if (!isGameEnd())
+            return new Rational[] { Rational.ZERO };
+        if (isCaughtInNode() || isCaughtOnEdge())
+            return new Rational[] { Rational.ONE.negate(), Rational.ONE };
+        return new Rational[] { Rational.ONE, Rational.ONE.negate() };
+    }
+
 	@Override
 	public boolean isGameEnd() {
 		return round == PursuitGameInfo.depth;
@@ -218,6 +227,11 @@ public class PursuitGameState extends GameStateImpl {
 	public double getProbabilityOfNatureFor(Action action) {
 		return 1;
 	}
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        return Rational.ONE;
+    }
 
 	@Override
 	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {

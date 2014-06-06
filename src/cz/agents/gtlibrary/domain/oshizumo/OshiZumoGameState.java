@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -178,6 +179,11 @@ public class OshiZumoGameState extends GameStateImpl {
     }
 
     @Override
+    public Rational[] getExactUtilities() {
+        throw new UnsupportedOperationException("Not implemented yet...");
+    }
+
+    @Override
     public boolean isGameEnd() {
         return ((p1Bid == 0 && p2Bid == 0) || wrestlerLoc < 0 || wrestlerLoc >= (2 * OZGameInfo.locK + 1) || (p1Coins < OZGameInfo.minBid && p2Coins < OZGameInfo.minBid));
     }
@@ -198,6 +204,11 @@ public class OshiZumoGameState extends GameStateImpl {
     @Override
     public double getProbabilityOfNatureFor(Action action) {
         return 1;
+    }
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        return Rational.ONE;
     }
 
     @Override

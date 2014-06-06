@@ -1,12 +1,13 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp;
 
-import java.util.Map;
-import java.util.Set;
-
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
+
+import java.util.Map;
+import java.util.Set;
 
 public class P2PBuilder extends InitialP2PBuilder {
 	
@@ -14,8 +15,8 @@ public class P2PBuilder extends InitialP2PBuilder {
 	private Map<Sequence, Double> explSeqSum;
 	private double initialValueOfGame;
 
-	public P2PBuilder(Expander<SequenceInformationSet> expander, GameState rootState, IterationData data, double initialValueOfGame) {
-		super(expander, rootState);
+	public P2PBuilder(Expander<SequenceInformationSet> expander, GameState rootState, IterationData data, GameInfo info, double initialValueOfGame) {
+		super(expander, rootState, info);
 		this.lastItSeq = data.getLastItSeq();
 		this.explSeqSum = data.getExplSeqSum();
 		this.initialValueOfGame = initialValueOfGame;

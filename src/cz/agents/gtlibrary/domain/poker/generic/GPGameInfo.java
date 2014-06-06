@@ -128,4 +128,8 @@ public class GPGameInfo implements GameInfo {
         return ALL_PLAYERS;
     }
 
+    @Override
+    public double getUtilityStabilizer() {
+        return 120;
+    }
 }

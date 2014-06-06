@@ -1,15 +1,11 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import cz.agents.gtlibrary.interfaces.Sequence;
+
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
-
-import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class ResultParser {
 	

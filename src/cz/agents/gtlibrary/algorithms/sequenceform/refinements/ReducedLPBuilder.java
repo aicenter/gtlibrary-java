@@ -1,16 +1,8 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
-import ilog.concert.IloException;
-import ilog.concert.IloRange;
-import ilog.cplex.IloCplex;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.numbers.EpsilonPolynom;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.EpsilonPolynom;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -23,11 +15,14 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
-import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameInfo;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
+import ilog.concert.IloException;
+import ilog.concert.IloRange;
+import ilog.cplex.IloCplex;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class ReducedLPBuilder extends LPBuilder {
 
