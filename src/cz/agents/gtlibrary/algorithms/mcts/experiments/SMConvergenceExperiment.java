@@ -15,6 +15,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -25,6 +26,9 @@ import cz.agents.gtlibrary.domain.antiMCTS.AntiMCTSState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
@@ -95,6 +99,14 @@ public class SMConvergenceExperiment {
 //        efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
 //        efg.generate();
 //        GambitEFG.write("AntiMCTS" + AntiMCTSInfo.gameDepth + ".efg", rootState, sfExpander);
+    }
+    
+    public static void setupOshiZumo(int coins, int locs){
+        OZGameInfo.startingCoins = coins;
+        OZGameInfo.locK = locs;
+        gameInfo = new OZGameInfo();
+        rootState = new OshiZumoGameState();
+        expander = new OshiZumoExpander<>(new MCTSConfig());
     }
     
     public static void buildCompleteTree(InnerNode r){
@@ -170,13 +182,50 @@ public class SMConvergenceExperiment {
                     rootState, expander);
         alg.returnMeanValue=propagateMeans;
 
-        if (buildCompleteTree) buildCompleteTree(alg.getRootNode());
+        assert !buildCompleteTree;
         
         alg.runIterations(2);
         
         brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
         brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
 
+
+        Strategy strategy0 = null;
+        Strategy strategy1 = null;
+        String outLine = "";
+        System.out.print("P1BRs: ");
+
+        for (int i = 0; i < 100; i++) {
+            alg.runIterations(iterations);
+            strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
+            strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
+
+            System.out.print(brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0)) + " ");
+            System.out.flush();
+            outLine += brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1)) + " ";
+
+            //System.out.println("Strat: " + strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
+            //System.out.println("BR: " + brAlg.getFullBRSequences());
+        }
+        System.out.println();
+        System.out.println("P0BRs: " + outLine);
+        //System.out.println("Strat: " + strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
+        //System.out.println("Strat: " + strategy1.fancyToString(rootState, expander, rootState.getAllPlayers()[1]));
+    }
+    
+    public static void runSMMCTS_RM() throws Exception {        
+        Distribution dist = new MeanStratDist();
+
+        SMMCTSAlgorithm alg = new SMMCTSAlgorithm(
+                    rootState.getAllPlayers()[0],
+                    new DefaultSimulator(expander),
+                    new SMRMBackPropFactory(gamma),
+                    rootState, expander);
+
+        assert !buildCompleteTree;
+        
+        brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
 
         Strategy strategy0 = null;
         Strategy strategy1 = null;
@@ -209,7 +258,7 @@ public class SMConvergenceExperiment {
     private static String algorithm = "Exp3";
     private static boolean keepExploration = false;
     private static boolean propagateMeans = false;
-    public static void main(String[] args) throws Exception {
+    public static void batchMain(String[] args) throws Exception {
         //System.setOut(new PrintStream("experiments/SMMCTS/" + StringUtils.join(args)));
         switch(args[1].substring(0, 3)){
             case "OOS":
@@ -247,5 +296,13 @@ public class SMConvergenceExperiment {
             }
             
         }
+    }
+    
+    public static void main(String[] args) throws Exception {
+        //batchMain(args);
+        //setupGoofSpiel(6);
+        setupOshiZumo(8, 2);
+        gamma=0.1;
+        runSMMCTS_RM();
     }
 }
