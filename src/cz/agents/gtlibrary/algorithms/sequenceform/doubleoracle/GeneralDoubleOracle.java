@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.NFPSolver;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominated.UndominatedSolver;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DODataBuilder;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
@@ -238,7 +239,9 @@ public class GeneralDoubleOracle {
         }
 		int currentPlayerIndex = 0;
 //		DoubleOracleLPSolver doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
-        DoubleOracleLPSolver doRestrictedGameSolver = new UndominatedSolver(actingPlayers);
+//        DoubleOracleLPSolver doRestrictedGameSolver = new UndominatedSolver(actingPlayers);
+        DoubleOracleLPSolver doRestrictedGameSolver = new NFPSolver(actingPlayers, gameInfo);
+
         doRestrictedGameSolver.setDebugOutput(debugOutput);
 		
 		double p1BoundUtility = gameInfo.getMaxUtility();
