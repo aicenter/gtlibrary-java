@@ -238,9 +238,9 @@ public class GeneralDoubleOracle {
             }
         }
 		int currentPlayerIndex = 0;
-//		DoubleOracleLPSolver doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
+		DoubleOracleLPSolver doRestrictedGameSolver = new DoubleOracleSequenceFormLP(actingPlayers);
 //        DoubleOracleLPSolver doRestrictedGameSolver = new UndominatedSolver(actingPlayers);
-        DoubleOracleLPSolver doRestrictedGameSolver = new NFPSolver(actingPlayers, gameInfo);
+//        DoubleOracleLPSolver doRestrictedGameSolver = new NFPSolver(actingPlayers, gameInfo);
 
         doRestrictedGameSolver.setDebugOutput(debugOutput);
 		
