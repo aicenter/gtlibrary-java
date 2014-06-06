@@ -68,7 +68,7 @@ public class StackelbergMultipleLP {
 
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
         smlp.generate();
-        GambitEFG.write("simpleGSG.gbt", rootState, expander);
+        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
     }
 
     private Map<Player, Map<Sequence, Double>> generate() {
