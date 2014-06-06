@@ -12,11 +12,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class P2QUpdaterReuse extends InitialP2QBuilderReuse {
+public class P2QUpdater extends InitialP2QBuilder {
 
     private Map<Sequence, Double> explSeqSum;
 
-    public P2QUpdaterReuse(Player[] players, RecyclingNFPTable table, GameInfo info) {
+    public P2QUpdater(Player[] players, RecyclingNFPTable table, GameInfo info) {
         super(players, info);
         this.lpTable = table;
     }
@@ -59,14 +59,14 @@ public class P2QUpdaterReuse extends InitialP2QBuilderReuse {
     }
 
     @Override
-    protected QResultReuse createResult(LPData lpData) throws IloException {
+    protected QResult createResult(LPData lpData) throws IloException {
         Map<Sequence, Double> watchedSequenceValues = getWatchedUSequenceValues(lpData);
         Set<Sequence> exploitableSequences = getExploitableSequences(watchedSequenceValues);
 
-        return new QResultReuse(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, getRealizationPlan(lpData));
+        return new QResult(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, getRealizationPlan(lpData));
     }
 
-    public void update(double gameValue, QResultReuse qResult, SequenceFormConfig<? extends SequenceInformationSet> config) {
+    public void update(double gameValue, QResult qResult, SequenceFormConfig<? extends SequenceInformationSet> config) {
         this.explSeqSum = getSum(qResult.getLastItSeq(), qResult.getExplSeqSum(), gameValue);
         for (Map.Entry<Sequence, Double> entry : explSeqSum.entrySet()) {
             updateSlackVariable(entry);

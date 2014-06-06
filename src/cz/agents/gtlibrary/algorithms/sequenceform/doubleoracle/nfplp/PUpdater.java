@@ -9,17 +9,17 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import java.util.Map;
 import java.util.Set;
 
-public class PUpdaterReuse extends InitialPBuilderReuse {
+public class PUpdater extends InitialPBuilder {
 
     private Set<Sequence> lastItSeq;
     private Map<Sequence, Double> explSeqSum;
 
-    public PUpdaterReuse(Player[] players, RecyclingNFPTable table, GameInfo info) {
+    public PUpdater(Player[] players, RecyclingNFPTable table, GameInfo info) {
         super(players, info);
         lpTable = table;
     }
 
-    public void update(QResultReuse qResult, SequenceFormConfig<? extends SequenceInformationSet> config) {
+    public void update(QResult qResult, SequenceFormConfig<? extends SequenceInformationSet> config) {
         removeSlackVariables(config.getSequencesFor(players[1]));
         for (Sequence sequence : qResult.getLastItSeq()) {
             addSlackVariable(sequence);

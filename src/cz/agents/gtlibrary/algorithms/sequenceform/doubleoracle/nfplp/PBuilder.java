@@ -9,16 +9,16 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import java.util.Map;
 import java.util.Set;
 
-public class PBuilderReuse extends InitialPBuilderReuse {
+public class PBuilder extends InitialPBuilder {
 
     private Set<Sequence> lastItSeq;
     private Map<Sequence, Double> explSeqSum;
 
-    public PBuilderReuse(Player[] players, GameInfo info) {
+    public PBuilder(Player[] players, GameInfo info) {
         super(players, info);
     }
 
-    public void update(QResultReuse data, Double initialValueOfGame, SequenceFormConfig<? extends SequenceInformationSet> config) {
+    public void update(QResult data, Double initialValueOfGame, SequenceFormConfig<? extends SequenceInformationSet> config) {
         this.lastItSeq = data.getLastItSeq();
         this.explSeqSum = data.getExplSeqSum();
         addPreviousItConstraints(initialValueOfGame);

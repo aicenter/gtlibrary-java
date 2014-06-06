@@ -20,14 +20,14 @@ public class FullNFPSolver implements FullSequenceFormLP {
     private Double p1Value;
     private Double p2Value;
     private Player[] players;
-    private InitialPBuilderReuse initPBuilderP1;
-    private InitialQBuilderReuse initQBuilderP1;
-    private PBuilderReuse pBuilderP1;
-    private QBuilderReuse qBuilderP1;
-    private InitialP2PBuilderReuse initPBuilderP2;
-    private InitialP2QBuilderReuse initQBuilderP2;
-    private P2PBuilderReuse pBuilderP2;
-    private P2QBuilderReuse qBuilderP2;
+    private InitialPBuilder initPBuilderP1;
+    private InitialQBuilder initQBuilderP1;
+    private PBuilder pBuilderP1;
+    private QBuilder qBuilderP1;
+    private InitialP2PBuilder initPBuilderP2;
+    private InitialP2QBuilder initQBuilderP2;
+    private P2PBuilder pBuilderP2;
+    private P2QBuilder qBuilderP2;
     private Map<Sequence, Double> p1RealizationPlan;
     private Map<Sequence, Double> p2RealizationPlan;
     private Set<Sequence> p1SequencesToAdd;
@@ -70,32 +70,32 @@ public class FullNFPSolver implements FullSequenceFormLP {
         updateP1Sequences(config);
         updateP2Sequences(config);
         if (initPBuilderP1 == null)
-            initPBuilderP1 = new InitialPBuilderReuse(players, info);
+            initPBuilderP1 = new InitialPBuilder(players, info);
 
         initPBuilderP1.buildLP(config, p1SequencesToAdd);
-        PResultReuse pResult = initPBuilderP1.solve();
+        PResult pResult = initPBuilderP1.solve();
 
         p2Value = -pResult.getGameValue();
 
 
         if (initQBuilderP1 == null)
-            initQBuilderP1 = new InitialQBuilderReuse(players, info);
+            initQBuilderP1 = new InitialQBuilder(players, info);
 
         initQBuilderP1.buildLP(config, -p2Value, p1SequencesToAdd);
-        QResultReuse qResult = initQBuilderP1.solve();
+        QResult qResult = initQBuilderP1.solve();
 
 //        System.out.println("Exploitable sequences: ");
 //        for (Sequence exploitableSequence : qResult.getLastItSeq()) {
 //            System.out.println(exploitableSequence);
 //        }
         if (pBuilderP1 == null)
-            pBuilderP1 = new PBuilderReuse(players, info);
+            pBuilderP1 = new PBuilder(players, info);
 //        pBuilderP1.updateFromLastIteration(qResult, p1Value);
         pBuilderP1.buildLP(config, p1SequencesToAdd);
 //        pBuilderP1.updateSolver();
         pBuilderP1.update(qResult, -p2Value, config);
         if (qBuilderP1 == null)
-            qBuilderP1 = new QBuilderReuse(players, info);
+            qBuilderP1 = new QBuilder(players, info);
 
         qBuilderP1.buildLP(config, -p2Value, p1SequencesToAdd);
 //        qBuilderP1.updateSolver();
@@ -111,8 +111,8 @@ public class FullNFPSolver implements FullSequenceFormLP {
 //                System.out.println(exploitableSequence);
 //            }
 
-            PUpdaterReuse pUpdater = new PUpdaterReuse(players, pBuilderP1.lpTable, info);
-            QUpdaterReuse qUpdater = new QUpdaterReuse(players, qBuilderP1.lpTable, info);
+            PUpdater pUpdater = new PUpdater(players, pBuilderP1.lpTable, info);
+            QUpdater qUpdater = new QUpdater(players, qBuilderP1.lpTable, info);
 
             while (Math.abs(qResult.getGameValue()) > 1e-6) {
                 assert !qResult.getLastItSeq().isEmpty();
@@ -170,18 +170,18 @@ public class FullNFPSolver implements FullSequenceFormLP {
         updateP1Sequences(config);
         updateP2Sequences(config);
         if (initPBuilderP2 == null)
-            initPBuilderP2 = new InitialP2PBuilderReuse(players, info);
+            initPBuilderP2 = new InitialP2PBuilder(players, info);
 
         initPBuilderP2.buildLP(config, p2SequencesToAdd);
-        PResultReuse pResult = initPBuilderP2.solve();
+        PResult pResult = initPBuilderP2.solve();
 
         p1Value = -pResult.getGameValue();
 
         if (initQBuilderP2 == null)
-            initQBuilderP2 = new InitialP2QBuilderReuse(players, info);
+            initQBuilderP2 = new InitialP2QBuilder(players, info);
 
         initQBuilderP2.buildLP(config, -p1Value, p2SequencesToAdd);
-        QResultReuse qResult = initQBuilderP2.solve();
+        QResult qResult = initQBuilderP2.solve();
 
 //        System.out.println("Exploitable sequences: ");
 //        for (Sequence exploitableSequence : qResult.getLastItSeq()) {
@@ -189,13 +189,13 @@ public class FullNFPSolver implements FullSequenceFormLP {
 //        }
 
         if (pBuilderP2 == null)
-            pBuilderP2 = new P2PBuilderReuse(players, info);
+            pBuilderP2 = new P2PBuilder(players, info);
 //        pBuilderP2.updateFromLastIteration(qResult, p2Value);
         pBuilderP2.buildLP(config, p2SequencesToAdd);
         pBuilderP2.update(qResult, -p1Value, config);
 //        pBuilderP2.updateSolver();
         if (qBuilderP2 == null)
-            qBuilderP2 = new P2QBuilderReuse(players, info);
+            qBuilderP2 = new P2QBuilder(players, info);
 
         qBuilderP2.buildLP(config, -p1Value, p2SequencesToAdd);
 //        qBuilderP2.updateSolver();
@@ -210,8 +210,8 @@ public class FullNFPSolver implements FullSequenceFormLP {
 //            for (Sequence exploitableSequence : qResult.getLastItSeq()) {
 //                System.out.println(exploitableSequence);
 //            }
-            P2PUpdaterReuse pUpdater = new P2PUpdaterReuse(players, pBuilderP2.lpTable, info);
-            P2QUpdaterReuse qUpdater = new P2QUpdaterReuse(players, qBuilderP2.lpTable, info);
+            P2PUpdater pUpdater = new P2PUpdater(players, pBuilderP2.lpTable, info);
+            P2QUpdater qUpdater = new P2QUpdater(players, qBuilderP2.lpTable, info);
 
             while (Math.abs(qResult.getGameValue()) > 1e-6) {
                 assert !qResult.getLastItSeq().isEmpty();
