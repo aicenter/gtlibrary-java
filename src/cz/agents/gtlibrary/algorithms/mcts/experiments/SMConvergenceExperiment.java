@@ -13,6 +13,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
@@ -165,6 +166,7 @@ public class SMConvergenceExperiment {
                     rootState.getAllPlayers()[0],
                     new DefaultSimulator(expander),
                     new Exp3BackPropFactory(-1, 1, gamma, keepExploration),
+                    //new RMBackPropFactory(-1, 1, gamma),
                     rootState, expander);
         alg.returnMeanValue=propagateMeans;
 
