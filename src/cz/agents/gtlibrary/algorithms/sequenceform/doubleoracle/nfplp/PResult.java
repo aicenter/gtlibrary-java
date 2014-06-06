@@ -5,11 +5,11 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 
 import java.util.Map;
 
-public class PResultReuse {
+public class PResult {
     private Map<Sequence, Double> realizationPlan;
     private double gameValue;
 
-    public PResultReuse(Map<Sequence, Double> realizationPlan, double gameValue) {
+    public PResult(Map<Sequence, Double> realizationPlan, double gameValue) {
         this.realizationPlan = realizationPlan;
         this.gameValue = gameValue;
     }

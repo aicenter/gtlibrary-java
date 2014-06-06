@@ -9,16 +9,16 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import java.util.Map;
 import java.util.Set;
 
-public class P2PBuilderReuse extends InitialP2PBuilderReuse {
+public class P2PBuilder extends InitialP2PBuilder {
 
     private Set<Sequence> lastItSeq;
     private Map<Sequence, Double> explSeqSum;
 
-    public P2PBuilderReuse(Player[] players, GameInfo info) {
+    public P2PBuilder(Player[] players, GameInfo info) {
         super(players, info);
     }
 
-    public void update(QResultReuse data, double initialValueOfGame, SequenceFormConfig<? extends SequenceInformationSet> config) {
+    public void update(QResult data, double initialValueOfGame, SequenceFormConfig<? extends SequenceInformationSet> config) {
         this.lastItSeq = data.getLastItSeq();
         this.explSeqSum = data.getExplSeqSum();
         addPreviousItConstraints(initialValueOfGame);

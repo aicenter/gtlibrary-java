@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class InitialPBuilderReuse {
+public class InitialPBuilder {
 
     protected SequenceFormConfig<? extends SequenceInformationSet> config;
     protected Player[] players;
@@ -30,7 +30,7 @@ public class InitialPBuilderReuse {
     protected GameInfo info;
 
 
-    public InitialPBuilderReuse(Player[] players, GameInfo info) {
+    public InitialPBuilder(Player[] players, GameInfo info) {
         this.players = players;
         lpFileName = "P1DO_P.lp";
         this.info = info;
@@ -236,7 +236,7 @@ public class InitialPBuilderReuse {
         return sequence.getSubSequence(sequence.size() - 1);
     }
 
-    public PResultReuse solve() {
+    public PResult solve() {
         try {
             LPData lpData = lpTable.toCplex();
             boolean solved = false;
@@ -283,7 +283,7 @@ public class InitialPBuilderReuse {
             //				if(entry.getValue() > 0)
             //					System.out.println(entry);
             //			}
-            return new PResultReuse(createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables()), lpData.getSolver().getObjValue());
+            return new PResult(createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables()), lpData.getSolver().getObjValue());
         } catch (IloException e) {
             e.printStackTrace();
         }

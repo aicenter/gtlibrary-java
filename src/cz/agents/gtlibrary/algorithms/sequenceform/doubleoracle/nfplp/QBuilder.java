@@ -12,16 +12,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class QBuilderReuse extends InitialQBuilderReuse {
+public class QBuilder extends InitialQBuilder {
 
 	private Map<Sequence, Double> explSeqSum;
 
-	public QBuilderReuse(Player[] players, GameInfo info) {
+	public QBuilder(Player[] players, GameInfo info) {
 		super(players, info);
         explSeqSum = new HashMap<Sequence, Double>();
 	}
 
-    public void update(double gameValue, QResultReuse data, SequenceFormConfig<? extends SequenceInformationSet> config) {
+    public void update(double gameValue, QResult data, SequenceFormConfig<? extends SequenceInformationSet> config) {
         this.explSeqSum = getSum(data.getLastItSeq(), data.getExplSeqSum(), gameValue);
         clearSlacks(config.getSequencesFor(players[1]));
         for (Map.Entry<Sequence, Double> entry : explSeqSum.entrySet()) {
@@ -65,11 +65,11 @@ public class QBuilderReuse extends InitialQBuilderReuse {
 	}
 
     @Override
-    protected QResultReuse createResult(LPData lpData) throws IloException {
+    protected QResult createResult(LPData lpData) throws IloException {
         Map<Sequence, Double> watchedSequenceValues = getWatchedUSequenceValues(lpData);
         Set<Sequence> exploitableSequences = getExploitableSequences(watchedSequenceValues);
 
-        return new QResultReuse(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, getRealizationPlan(lpData));
+        return new QResult(lpData.getSolver().getObjValue(), explSeqSum, exploitableSequences, getRealizationPlan(lpData));
     }
 
 //    public void updateSolver() {

@@ -9,12 +9,12 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import java.util.Map;
 import java.util.Set;
 
-public class P2PUpdaterReuse extends InitialP2PBuilderReuse {
+public class P2PUpdater extends InitialP2PBuilder {
 
     private Set<Sequence> lastItSeq;
     private Map<Sequence, Double> explSeqSum;
 
-    public P2PUpdaterReuse(Player[] players, RecyclingNFPTable table, GameInfo info) {
+    public P2PUpdater(Player[] players, RecyclingNFPTable table, GameInfo info) {
         super(players, info);
         lpTable = table;
     }
@@ -50,7 +50,7 @@ public class P2PUpdaterReuse extends InitialP2PBuilderReuse {
 //    protected void addUtilities(Iterable<Sequence> p1Sequences, Iterable<Sequence> p2Sequences) {
 //    }
 
-    public void update(QResultReuse qResult, SequenceFormConfig<? extends SequenceInformationSet> config) {
+    public void update(QResult qResult, SequenceFormConfig<? extends SequenceInformationSet> config) {
         removeSlackVariables(config.getSequencesFor(players[0]));
         for (Sequence sequence : qResult.getLastItSeq()) {
             addSlackVariable(sequence);

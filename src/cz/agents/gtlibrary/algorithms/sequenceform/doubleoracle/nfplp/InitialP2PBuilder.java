@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class InitialP2PBuilderReuse {
+public class InitialP2PBuilder {
 
     protected String lpFileName;
     public RecyclingNFPTable lpTable;
@@ -28,7 +28,7 @@ public class InitialP2PBuilderReuse {
     protected Player[] players;
     protected GameInfo info;
 
-    public InitialP2PBuilderReuse(Player[] players, GameInfo info) {
+    public InitialP2PBuilder(Player[] players, GameInfo info) {
         this.players = players;
         this.info = info;
         lpFileName = "P2DO_P.lp";
@@ -264,7 +264,7 @@ public class InitialP2PBuilderReuse {
         return sequence.getSubSequence(sequence.size() - 1);
     }
 
-    public PResultReuse solve() {
+    public PResult solve() {
         try {
             LPData lpData = lpTable.toCplex();
             boolean solved = false;
@@ -302,7 +302,7 @@ public class InitialP2PBuilderReuse {
 //            preciseValue.subtract(new BigDecimal(1));
 //            objValue = new BigDecimal(preciseValue.toBigInteger()).movePointLeft(16).doubleValue();
 
-            return new PResultReuse(createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables()), lpData.getSolver().getObjValue());
+            return new PResult(createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables()), lpData.getSolver().getObjValue());
         } catch (IloException e) {
             e.printStackTrace();
         }
