@@ -1,9 +1,8 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominatedsolver;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominated;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominatedsolver.*;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;

@@ -24,7 +24,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
-public class SequenceFormLP {
+public class SequenceFormLP implements FullSequenceFormLP{
 
     protected long overallConstraintGenerationTime = 0;
     protected long overallConstraintLPSolvingTime = 0;
@@ -65,14 +65,13 @@ public class SequenceFormLP {
 		}
 	}
 
-	public Double calculateBothPlStrategy(GameState root, SequenceFormConfig<SequenceInformationSet> algConfig) {
+	public void calculateBothPlStrategy(GameState root, SequenceFormConfig<SequenceInformationSet> algConfig) {
 		try {
 			createVariables(algConfig, root.getAllPlayers());
 			calculateOnePlStrategy(algConfig, root, root.getAllPlayers()[1], root.getAllPlayers()[0]);
-			return calculateOnePlStrategy(algConfig, root, root.getAllPlayers()[0], root.getAllPlayers()[1]);
+			calculateOnePlStrategy(algConfig, root, root.getAllPlayers()[0], root.getAllPlayers()[1]);
 		} catch (IloException e) {
 			e.printStackTrace();
-			return null;
 		}
 	}
 
