@@ -73,6 +73,11 @@ public abstract class GameStateImpl implements GameState {
     }
 
     @Override
+    public double[] evaluate() {
+        throw new UnsupportedOperationException("Evaluation function not implemented for this domain...");
+    }
+
+    @Override
     public History getHistory() {
         return history;
     }

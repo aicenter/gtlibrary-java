@@ -80,7 +80,7 @@ public class FullSequenceEFG {
 //		runPursuit();
 //      runPhantomTTT();
 //		runUpOrDown();
-        runOshiZumo();
+//        runOshiZumo();
 	}
 	
 	private static void runUpOrDown() {
