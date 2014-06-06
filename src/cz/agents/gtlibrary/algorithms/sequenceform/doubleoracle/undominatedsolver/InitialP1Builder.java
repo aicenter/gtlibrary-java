@@ -2,8 +2,8 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominatedsolv
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp.reusing.RecyclingNFPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -23,7 +23,7 @@ public class InitialP1Builder {
 
     protected SequenceFormConfig<? extends SequenceInformationSet> config;
     protected Player[] players;
-    protected RecyclingNFPTable lpTable;
+    protected RecyclingLPTable lpTable;
     protected String lpFileName;
     private long time;
 
@@ -341,7 +341,7 @@ public class InitialP1Builder {
         Sequence p1EmptySequence = new ArrayListSequenceImpl(players[0]);
         Sequence p2EmptySequence = new ArrayListSequenceImpl(players[1]);
 
-        lpTable = new RecyclingNFPTable();
+        lpTable = new RecyclingLPTable();
 
         initObjective(p2EmptySequence);
         initE(p1EmptySequence);

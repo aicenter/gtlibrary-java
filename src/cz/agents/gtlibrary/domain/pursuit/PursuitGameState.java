@@ -3,7 +3,7 @@ package cz.agents.gtlibrary.domain.pursuit;
 import java.util.ArrayList;
 import java.util.List;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;

@@ -3,7 +3,7 @@ package cz.agents.gtlibrary.domain.bpg;
 import java.util.HashSet;
 import java.util.Set;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.bpg.AttackerAction.AttackerMovementType;

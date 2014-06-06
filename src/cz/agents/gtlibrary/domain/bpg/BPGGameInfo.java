@@ -13,7 +13,7 @@ public class BPGGameInfo implements GameInfo {
 
 	public static int DEPTH = 6;
 	public static boolean SLOW_MOVES = true;
-	public static String graphFile = "GridW3.txt";//"GridW3-almost-connected.txt";//"GridW4.txt";"GridW3-small.txt"
+	public static String graphFile = "GridW3-almost-connected.txt";//"GridW4.txt";"GridW3-small.txt"
 
 	@Override
 	public double getMaxUtility() {

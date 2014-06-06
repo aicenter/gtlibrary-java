@@ -2,7 +2,7 @@ package cz.agents.gtlibrary.interfaces;
 
 import java.io.Serializable;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.utils.Pair;
 
 public interface GameState extends Serializable {

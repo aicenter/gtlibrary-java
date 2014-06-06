@@ -17,7 +17,7 @@
 |* Free Software Foundation, Inc., 59 Temple Place - Suite 330,         *|
 |* Boston, MA 02111-1307, USA.                                          *|
 \************************************************************************/
-package cz.agents.gtlibrary.algorithms.sequenceform.lp;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.lp;
 
 /** A PivotPair instance holds a row and a column of an 
  * {@link LPDictionary LPDictionary}.

@@ -1,7 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.quasiperfect;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.EpsilonReal;
-import cz.agents.gtlibrary.algorithms.sequenceform.quasiperfect.EpsilonLPTable;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.EpsilonReal;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.EpsilonLPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import ilog.concert.*;

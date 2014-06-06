@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
@@ -14,8 +15,8 @@ public class PBuilder extends InitialPBuilder {
 	private Map<Sequence, Double> explSeqSum;
 	private double initialValueOfGame;
 
-	public PBuilder(Expander<SequenceInformationSet> expander, GameState rootState, IterationData data, double initialValueOfGame) {
-		super(expander, rootState);
+	public PBuilder(Expander<SequenceInformationSet> expander, GameState rootState, IterationData data, GameInfo info, double initialValueOfGame) {
+		super(expander, rootState, info);
 		this.lastItSeq = data.getLastItSeq();
 		this.explSeqSum = data.getExplSeqSum();
 		this.initialValueOfGame = initialValueOfGame;
