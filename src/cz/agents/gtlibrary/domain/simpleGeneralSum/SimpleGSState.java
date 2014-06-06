@@ -73,19 +73,8 @@ public class SimpleGSState extends GameStateImpl {
     }
 
     @Override
-    public Rational[] getExactUtilities() {
-        throw new UnsupportedOperationException("Not supported...");
-    }
-
-    @Override
     public double getProbabilityOfNatureFor(Action action) {
         return 1;
-    }
-
-
-    @Override
-    public Rational getExactProbabilityOfNatureFor(Action action) {
-        throw new UnsupportedOperationException("Not supported...");
     }
 
     @Override

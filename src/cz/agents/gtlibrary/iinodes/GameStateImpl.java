@@ -78,6 +78,16 @@ public abstract class GameStateImpl implements GameState {
     }
 
     @Override
+    public Rational[] getExactUtilities() {
+        throw new UnsupportedOperationException("Exact utility not implemented for this domain...");
+    }
+
+    @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        throw new UnsupportedOperationException("Exact probability for action not implemented for this domain...");
+    }
+
+    @Override
     public History getHistory() {
         return history;
     }

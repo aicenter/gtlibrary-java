@@ -135,11 +135,6 @@ public class TTTState extends GameStateImpl {
     }
 
     @Override
-    public Rational[] getExactUtilities() {
-        throw new UnsupportedOperationException("Not implemented...");
-    }
-
-    @Override
     public boolean isGameEnd() {
         double[] u = getUtilities();
         //is finished already
@@ -158,11 +153,6 @@ public class TTTState extends GameStateImpl {
     public double getProbabilityOfNatureFor(Action action) {
         assert false;
         return -1;
-    }
-
-    @Override
-    public Rational getExactProbabilityOfNatureFor(Action action) {
-        throw new UnsupportedOperationException("Not implemented...");
     }
 
     @Override
