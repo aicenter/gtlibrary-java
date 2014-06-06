@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominatedsolver;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominated;
 
 import cz.agents.gtlibrary.interfaces.Sequence;
 

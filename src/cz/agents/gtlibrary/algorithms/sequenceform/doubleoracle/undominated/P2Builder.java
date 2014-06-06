@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominatedsolver;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominated;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
@@ -11,7 +11,6 @@ import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
-import ilog.cplex.IloCplex.UnknownObjectException;
 
 import java.util.HashMap;
 import java.util.Map;

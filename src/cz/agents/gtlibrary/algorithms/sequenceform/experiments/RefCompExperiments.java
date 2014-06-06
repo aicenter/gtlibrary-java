@@ -9,7 +9,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.experiments;
 //import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 //import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 //import cz.agents.gtlibrary.algorithms.sequenceform.*;
-//import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominatedsolver.UndominatedSolver;
+//import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominated.UndominatedSolver;
 //import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 //import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 //import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;

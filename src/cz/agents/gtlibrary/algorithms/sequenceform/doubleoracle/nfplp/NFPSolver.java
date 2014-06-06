@@ -167,6 +167,11 @@ public class NFPSolver implements DoubleOracleLPSolver {
         return 0;
     }
 
+    @Override
+    public Set<Sequence> getNewSequencesSinceLastLPCalc(Player player) {
+        throw new UnsupportedOperationException("Not yet implemented...");
+    }
+
     public Map<Sequence, Double> solveForP2(DoubleOracleConfig<DoubleOracleInformationSet> config) {
         updateP1Sequences(config);
         updateP2Sequences(config);

@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class DoubleOracleSequenceFormLP extends SequenceFormLP {
+public class DoubleOracleSequenceFormLP extends SequenceFormLP implements DoubleOracleLPSolver {
 
     protected Map<Player, Set<Sequence>> newSequencesSinceLastLPCalculation = new FixedSizeMap<Player, Set<Sequence>>(2);
     protected Player[] players;
@@ -37,7 +37,7 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
         }
 	}
 
-	public Double calculateStrategyForPlayer(int secondPlayerIndex, GameState root, DoubleOracleConfig algConfig, double currentBoundSize) {
+	public void calculateStrategyForPlayer(int secondPlayerIndex, GameState root, DoubleOracleConfig algConfig, double currentBoundSize) {
 		try {
 
 //            if (this.boundSize < 0) {
@@ -67,10 +67,10 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
 			double v = calculateOnePlStrategy(algConfig, root, players[firstPlayerIndex], players[secondPlayerIndex]);
             overallComputationTime += (System.currentTimeMillis()) - currentTime;
             newSequencesSinceLastLPCalculation.get(players[secondPlayerIndex]).clear();
-            return v;
+//            return v;
 		} catch (IloException e) {
 			e.printStackTrace();
-			return null;
+//			return null;
 		}
 	}
 
@@ -103,6 +103,11 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP {
 
     public long getOverallGenerationTime() {
         return overallGenerationTime;
+    }
+
+    @Override
+    public Set<Sequence> getNewSequencesSinceLastLPCalc(Player player) {
+        return newSequencesSinceLastLPCalculation.get(player);
     }
 
     public long getOverallComputationTime() {

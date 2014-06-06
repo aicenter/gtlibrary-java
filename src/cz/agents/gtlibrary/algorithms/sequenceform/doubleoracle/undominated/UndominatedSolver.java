@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominatedsolver;
+package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominated;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
@@ -149,6 +149,11 @@ public class UndominatedSolver implements DoubleOracleLPSolver {
 
     public long getOverallConstraintLPSolvingTime() {
         return overallLPSolvingTime;
+    }
+
+    @Override
+    public Set<Sequence> getNewSequencesSinceLastLPCalc(Player player) {
+        throw new UnsupportedOperationException("Not yet implemented...");
     }
 
     public Map<Sequence, Double> solveForP2(DoubleOracleConfig<DoubleOracleInformationSet> config) {
