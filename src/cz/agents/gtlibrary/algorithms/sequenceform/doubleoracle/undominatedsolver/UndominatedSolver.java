@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominatedsolv
 
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleLPSolver;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -12,7 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class UndominatedSolver {
+public class UndominatedSolver implements DoubleOracleLPSolver {
 
     private Double p1Value;
     private Double p2Value;
