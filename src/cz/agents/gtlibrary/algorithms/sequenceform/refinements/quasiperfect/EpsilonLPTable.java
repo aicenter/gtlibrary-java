@@ -1,9 +1,9 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.quasiperfect;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.lp.LPDictionary;
-import cz.agents.gtlibrary.algorithms.sequenceform.lp.SimplexData;
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.EpsilonReal;
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Real;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.lp.LPDictionary;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.lp.SimplexData;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.EpsilonReal;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Real;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;

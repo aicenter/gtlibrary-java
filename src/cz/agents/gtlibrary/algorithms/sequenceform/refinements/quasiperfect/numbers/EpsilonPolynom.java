@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.numbers;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers;
 
 public class EpsilonPolynom extends Number {
 

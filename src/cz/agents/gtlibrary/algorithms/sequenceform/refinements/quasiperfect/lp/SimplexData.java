@@ -1,6 +1,6 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.lp;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.lp;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.EpsilonReal;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.EpsilonReal;
 
 import java.util.Map;
 

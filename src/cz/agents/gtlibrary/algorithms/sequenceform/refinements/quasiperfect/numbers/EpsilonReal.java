@@ -17,7 +17,7 @@
 |* Free Software Foundation, Inc., 59 Temple Place - Suite 330,         *|
 |* Boston, MA 02111-1307, USA.                                          *|
 \************************************************************************/
-package cz.agents.gtlibrary.algorithms.sequenceform.numbers;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers;
 
 import java.io.Serializable;
 import java.util.Arrays;

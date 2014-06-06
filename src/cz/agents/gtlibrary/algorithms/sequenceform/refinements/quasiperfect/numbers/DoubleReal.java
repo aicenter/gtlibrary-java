@@ -18,7 +18,7 @@
 |* Boston, MA 02111-1307, USA.                                          *|
 \************************************************************************/
 
-package cz.agents.gtlibrary.algorithms.sequenceform.numbers;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers;
 
 public class DoubleReal extends Real<DoubleReal> {
 	public double val;

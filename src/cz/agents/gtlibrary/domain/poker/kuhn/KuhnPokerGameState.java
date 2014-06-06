@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.domain.poker.kuhn;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.PokerGameState;
 import cz.agents.gtlibrary.interfaces.Action;

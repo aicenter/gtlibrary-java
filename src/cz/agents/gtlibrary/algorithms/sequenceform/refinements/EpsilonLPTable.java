@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import ilog.concert.IloException;
 import ilog.concert.IloLinearNumExpr;
 import ilog.concert.IloNumVar;

@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import ilog.concert.IloException;
@@ -16,8 +17,8 @@ public class P2QBuilder extends InitialP2QBuilder {
 
 	private Map<Sequence, Double> explSeqSum;
 
-	public P2QBuilder(Expander<SequenceInformationSet> expander, GameState rootState, double initialValue, double gameValue, IterationData data) {
-		super(expander, rootState, initialValue);
+	public P2QBuilder(Expander<SequenceInformationSet> expander, GameState rootState, GameInfo info, double initialValue, double gameValue, IterationData data) {
+		super(expander, rootState, info, initialValue);
 		this.explSeqSum = getSum(data.getLastItSeq(), data.getExplSeqSum(), gameValue);
 		lpFileName = "P2qLP.lp";
 	}

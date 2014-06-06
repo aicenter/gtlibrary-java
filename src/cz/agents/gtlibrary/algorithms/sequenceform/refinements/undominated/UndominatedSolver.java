@@ -8,6 +8,7 @@ import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
@@ -30,40 +31,41 @@ public class UndominatedSolver {
 	private Expander<SequenceInformationSet> expander;
 
 	public static void main(String[] args) {
+        System.out.println("****Undominated solver****");
 //		runUpOrDown();
 //		runAceOfSpades();
 //		runKuhnPoker();
-		runBPG();
-//		runGenericPoker();
+//		runBPG();
+		runGenericPoker();
 //		runGoofspiel();
-
 	}
 
 	public static void runGoofspiel() {
-		runNFPSolver(new GoofSpielGameState(), new GoofSpielExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
+		runUndominatedSolver(new GoofSpielGameState(), new GoofSpielExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
 	}
 
 	public static void runGenericPoker() {
-		runNFPSolver(new GenericPokerGameState(), new GenericPokerExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
+        new GPGameInfo();
+		runUndominatedSolver(new GenericPokerGameState(), new GenericPokerExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
 	}
 
 	public static void runBPG() {
-		runNFPSolver(new BPGGameState(), new BPGExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
+		runUndominatedSolver(new BPGGameState(), new BPGExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
 	}
 
 	public static void runKuhnPoker() {
-		runNFPSolver(new KuhnPokerGameState(), new KuhnPokerExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
+		runUndominatedSolver(new KuhnPokerGameState(), new KuhnPokerExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
 	}
 
 	public static void runUpOrDown() {
-		runNFPSolver(new UDGameState(), new UDExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
+		runUndominatedSolver(new UDGameState(), new UDExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
 	}
 
 	public static void runAceOfSpades() {
-		runNFPSolver(new AoSGameState(), new AoSExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
+		runUndominatedSolver(new AoSGameState(), new AoSExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
 	}
 	
-	private static void runNFPSolver(GameState root, Expander<SequenceInformationSet> expander) {
+	private static void runUndominatedSolver(GameState root, Expander<SequenceInformationSet> expander) {
 		UndominatedSolver solver = new UndominatedSolver(root, expander);
 
 		Map<Sequence, Double> p1RealizationPlan = solver.solveForP1();
@@ -92,21 +94,27 @@ public class UndominatedSolver {
 	}
 
 	public Map<Sequence, Double> solveForP1() {
-		P1Builder initPbuilder = new P1Builder(expander, root);
+		InitialP1Builder initPbuilder = new InitialP1Builder(expander, root);
 
 		initPbuilder.buildLP();
 		double initialValue = initPbuilder.solve();
 
-		return null;
+        P1Builder builder = new P1Builder(expander, root, initialValue);
+
+        builder.buildLP();
+        return builder.solve();
 	}
 
 	public Map<Sequence, Double> solveForP2() {
-		P2Builder initPbuilder = new P2Builder(expander, root);
+		InitialP2Builder initPbuilder = new InitialP2Builder(expander, root);
 
 		initPbuilder.buildLP();
 		double initialValue = initPbuilder.solve();
 
-        return null;
+        P2Builder builder = new P2Builder(expander, root, initialValue);
+
+        builder.buildLP();
+        return builder.solve();
 	}
 
 }

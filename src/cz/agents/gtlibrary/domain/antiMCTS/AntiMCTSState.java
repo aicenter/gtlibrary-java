@@ -6,7 +6,7 @@
 
 package cz.agents.gtlibrary.domain.antiMCTS;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;

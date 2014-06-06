@@ -3,9 +3,11 @@ package cz.agents.gtlibrary.algorithms.sequenceform.refinements.undominated;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.InformationSet;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
@@ -20,17 +22,20 @@ public class P2Builder extends TreeVisitor {
 
     protected String lpFileName;
     protected UndominatedTable lpTable;
-    protected Map<Sequence, Double> fullyMixedStrategy;
+    protected Map<Sequence, Double> uniformRealizationPlan;
     protected Map<Sequence, Integer> extensionCounts;
+    protected double gameValue;
 
-    public P2Builder(Expander<SequenceInformationSet> expander, GameState rootState) {
+    public P2Builder(Expander<SequenceInformationSet> expander, GameState rootState, double gameValue) {
         super(rootState, expander);
         this.expander = expander;
         lpFileName = "P2Undominated.lp";
-        fullyMixedStrategy = new HashMap<Sequence, Double>();
+        this.gameValue = gameValue;
+        uniformRealizationPlan = new HashMap<Sequence, Double>();
         extensionCounts = new HashMap<Sequence, Integer>();
 
-        fullyMixedStrategy.put(new ArrayListSequenceImpl(players[0]), 1d);
+        uniformRealizationPlan.put(new ArrayListSequenceImpl(players[0]), 1d);
+        extensionCounts.put(new ArrayListSequenceImpl(players[0]), expander.getActions(rootState).size());
     }
 
     public void buildLP() {
@@ -38,7 +43,7 @@ public class P2Builder extends TreeVisitor {
         visitTree(rootState);
     }
 
-    public double solve() {
+    public Map<Sequence, Double> solve() {
         try {
             LPData lpData = lpTable.toCplex();
             boolean solved = false;
@@ -54,21 +59,11 @@ public class P2Builder extends TreeVisitor {
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
 
-            Map<Sequence, Double> p1RealizationPlan = createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
-
-//            for (int i = 0; i < lpData.getVariables().length; i++) {
-//                System.out.println(lpData.getVariables()[i] + ": " + lpData.getSolver().getValue(lpData.getVariables()[i]));
-//            }
-
-            for (Entry<Sequence, Double> entry : p1RealizationPlan.entrySet()) {
-                if (entry.getValue() > 0)
-                    System.out.println(entry);
-            }
-            return lpData.getSolver().getObjValue();
+            return createSecondPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
         } catch (IloException e) {
             e.printStackTrace();
         }
-        return Double.NaN;
+        return null;
     }
 
     private boolean trySolve(LPData lpData) throws IloException {
@@ -139,9 +134,16 @@ public class P2Builder extends TreeVisitor {
         lpTable = new UndominatedTable();
 
 //		initObjective(p1EmptySequence);
+        addGameValueConstraint();
         initE(p1EmptySequence);
         initF(p2EmptySequence);
         initf();
+    }
+
+    private void addGameValueConstraint() {
+        lpTable.setConstraint("gameValue", players[1], 1);
+        lpTable.setConstraintType("gameValue", 1);
+        lpTable.setConstant("gameValue", gameValue);
     }
 
     public void initf() {
@@ -166,16 +168,8 @@ public class P2Builder extends TreeVisitor {
     @Override
     protected void visitLeaf(GameState state) {
         updateParentLinks(state);
-        if (state instanceof GenericPokerGameState) {
-            double value = ((GenericPokerGameState) state).getDenominator() * state.getNatureProbability() * state.getUtilities()[1];
-
-            assert Math.abs(value - Math.round(value)) < 1e-8;
-            lpTable.substractFromConstraint(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), Math.round(value));
-            lpTable.addToObjective(state.getSequenceFor(players[1]), fullyMixedStrategy.get(state.getSequenceFor(players[0])) * Math.round(value));
-        } else {
-            lpTable.substractFromConstraint(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), state.getNatureProbability() * state.getUtilities()[1]);
-            lpTable.addToObjective(state.getSequenceFor(players[1]), fullyMixedStrategy.get(state.getSequenceFor(players[0])) * state.getNatureProbability() * state.getUtilities()[1]);
-        }
+        lpTable.substractFromConstraint(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), state.getNatureProbability() * state.getUtilities()[1]);
+        lpTable.addToObjective(state.getSequenceFor(players[1]), uniformRealizationPlan.get(state.getSequenceFor(players[0])) * state.getNatureProbability() * state.getUtilities()[1]);
     }
 
     @Override
@@ -189,88 +183,13 @@ public class P2Builder extends TreeVisitor {
     }
 
     public void updateLPForFirstPlayer(GameState state) {
-        Sequence eqKey = state.getSequenceForPlayerToMove();
+        Object eqKey = state.getSequenceForPlayerToMove();
 
         updateParentLinks(state);
         lpTable.setConstraint(eqKey, state.getISKeyForPlayerToMove(), -1);//E
         lpTable.setConstraintType(eqKey, 0);
         lpTable.setLowerBound(state.getISKeyForPlayerToMove(), Double.NEGATIVE_INFINITY);
     }
-
-//    private void updateUniformRealPlan(GameState state, Sequence eqKey) {
-//        if (eqKey.size() > 0 && state.getPlayerToMove().equals(players[0])) {
-//            Sequence prefix = getSubsequence(eqKey);
-//            int extensionCount = expander.getActions(state).size();
-//
-//            extensionCounts.put(eqKey, extensionCount);
-//            fullyMixedStrategy.put(eqKey, fullyMixedStrategy.get(prefix) / extensionCounts.get(prefix));
-//        }
-//    }
-
-    private void updateUniformRealPlan(GameState state, Sequence p1Sequence) {
-        if (state.getPlayerToMove().equals(players[0])) {
-            int currentExtensionCount = expander.getActions(state).size();
-
-            if (p1Sequence.size() == 0) {
-                fullyMixedStrategy.put(p1Sequence, 1d);
-                extensionCounts.put(p1Sequence, expander.getActions(state).size());
-            } else {
-                Sequence prefix = getSubsequence(p1Sequence);
-                double probability = fullyMixedStrategy.get(prefix);
-                int extensionCount = extensionCounts.get(prefix);
-
-                extensionCounts.put(p1Sequence, currentExtensionCount);
-                fullyMixedStrategy.put(p1Sequence, probability / extensionCount);
-            }
-            if (!state.isGameEnd()) {
-                double probability = fullyMixedStrategy.get(p1Sequence);
-
-                for (Action action : expander.getActions(state)) {
-                    Sequence extension = new ArrayListSequenceImpl(p1Sequence);
-
-                    extension.addLast(action);
-                    fullyMixedStrategy.put(extension, probability / currentExtensionCount);
-                }
-            }
-        }
-        if (p1Sequence.size() > 0) {
-            Sequence sequence = state.getSequenceFor(players[0]);
-            Sequence prefix = getSubsequence(sequence);
-            double probability = fullyMixedStrategy.get(prefix);
-            Integer extensionCount = extensionCounts.get(prefix);
-
-            if (extensionCount != null)
-                fullyMixedStrategy.put(sequence, probability / extensionCount);
-        }
-    }
-
-//    private void updateUniformRealPlan(GameState state, Sequence p1Sequence) {
-//
-//        if (state.getPlayerToMove().equals(players[0])) {
-//            int currentExtensionCount = expander.getActions(state).size();
-//
-//            if (!state.isGameEnd()) {
-//                double probability = fullyMixedStrategy.get(p1Sequence);
-//
-//                for (Action action : expander.getActions(state)) {
-//                    Sequence extension = new ArrayListSequenceImpl(p1Sequence);
-//
-//                    extension.addLast(action);
-//                    fullyMixedStrategy.put(extension, probability / currentExtensionCount);
-//                }
-//            }
-//        }
-//        if (p1Sequence.size() > 0) {
-//            Sequence sequence = state.getSequenceFor(players[0]);
-//            Sequence prefix = getSubsequence(sequence);
-//            double probability = fullyMixedStrategy.get(prefix);
-//            Integer extensionCount = extensionCounts.get(prefix);
-//
-//            if (extensionCount != null)
-//                fullyMixedStrategy.put(sequence, probability / extensionCount);
-//        }
-//
-//    }
 
     public void updateLPForSecondPlayer(GameState state) {
         Object varKey = state.getSequenceForPlayerToMove();
@@ -296,7 +215,18 @@ public class P2Builder extends TreeVisitor {
     protected void updateP1Parent(GameState state) {
         Sequence p1Sequence = state.getSequenceFor(players[0]);
 
-        updateUniformRealPlan(state, p1Sequence);
+        if (p1Sequence.size() > 0) {
+            Sequence prefix = getSubsequence(p1Sequence);
+            double probability = uniformRealizationPlan.get(prefix);
+            int extensionCount = extensionCounts.get(prefix);
+
+//            lpTable.setConstraint(new Key("r", p1Sequence), p1Sequence, 1);
+//            lpTable.setConstant(new Key("r", p1Sequence), probability / extensionCount);
+//            lpTable.setConstraintType(new Key("r", p1Sequence), 1);
+
+            extensionCounts.put(p1Sequence, expander.getActions(state).size());
+            uniformRealizationPlan.put(p1Sequence, probability / extensionCount);
+        }
         if (p1Sequence.size() == 0)
             return;
         Object varKey = getLastISKey(p1Sequence);
@@ -304,6 +234,7 @@ public class P2Builder extends TreeVisitor {
         lpTable.setConstraint(p1Sequence, varKey, 1);//E child
         lpTable.setConstraintType(p1Sequence, 0);
         lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+
     }
 
     private Sequence getSubsequence(Sequence sequence) {

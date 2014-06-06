@@ -17,11 +17,11 @@
 |* Free Software Foundation, Inc., 59 Temple Place - Suite 330,         *|
 |* Boston, MA 02111-1307, USA.                                          *|
 \************************************************************************/
-package cz.agents.gtlibrary.algorithms.sequenceform.lp;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.lp;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.DoubleReal;
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Real;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.DoubleReal;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Real;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ import java.util.StringTokenizer;
  {@link #PCxSolve() PCxSolve()} is used to call an external solver).
  * 
  *  <tt>LPDictionary</tt> is polymorphic; entries in the dictionary
- *  can be objects of any class implementing {@link cz.agents.gtlibrary.algorithms.sequenceform.numbers.Real Real}. All
+ *  can be objects of any class implementing {@link cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Real Real}. All
  *  entries ought to be from the same class, though. 
  *  <P> Running the following program visualizes the example 
  *  presented by Chv&aacute;tal, pages 13-17.
@@ -128,7 +128,7 @@ public class LPDictionary<T extends Real<T>> {
 	}
 
 	/** converts the <tt>int</tt> array <tt>t</tt> to a 
-	 * {@link cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational Rational} array and then behaves as
+	 * {@link cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational Rational} array and then behaves as
 	 * {@link #LPDictionary(Real[][]) LPDictionary(Real[][])} */
 	public static LPDictionary<Rational> make(int[][] t){
 		Rational[][] templeau = new Rational[t.length][t[0].length];
@@ -139,7 +139,7 @@ public class LPDictionary<T extends Real<T>> {
 	}
 
 	/** converts the <tt>double</tt> array <tt>t</tt> to a 
-	 * {@link cz.agents.gtlibrary.algorithms.sequenceform.numbers.DoubleReal DoubleReal} array and then behaves as
+	 * {@link cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.DoubleReal DoubleReal} array and then behaves as
 	 * {@link #LPDictionary(Real[][]) LPDictionary(Real[][])} */
 	public static LPDictionary<DoubleReal> make(double[][] t){
 		DoubleReal[][] templeau = new DoubleReal[t.length][t[0].length];

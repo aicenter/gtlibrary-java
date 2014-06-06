@@ -1,11 +1,11 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.quasiperfect;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.lp.LPDictionary;
-import cz.agents.gtlibrary.algorithms.sequenceform.lp.SimplexData;
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.EpsilonReal;
-import cz.agents.gtlibrary.algorithms.sequenceform.numbers.Rational;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.lp.LPDictionary;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.lp.SimplexData;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.EpsilonReal;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;

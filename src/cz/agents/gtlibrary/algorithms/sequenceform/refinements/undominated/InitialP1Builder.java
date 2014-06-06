@@ -1,9 +1,10 @@
-package cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.undominated;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp.NFPTable;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
@@ -26,16 +27,62 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class InitialPBuilder extends TreeVisitor {
+public class InitialP1Builder extends TreeVisitor {
 
     protected String lpFileName;
     protected NFPTable lpTable;
-    protected GameInfo info;
 
-    public InitialPBuilder(Expander<SequenceInformationSet> expander, GameState rootState, GameInfo info) {
+    public static void main(String[] args) {
+        //		runAoS();
+        //		runGoofSpiel();
+        //		runKuhnPoker();
+        //		runGenericPoker();
+        runUpOrDown();
+    }
+
+    private static void runUpOrDown() {
+        AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        InitialP1Builder lpBuilder = new InitialP1Builder(new UDExpander<SequenceInformationSet>(algConfig), new UDGameState());
+
+        lpBuilder.buildLP();
+        lpBuilder.solve();
+    }
+
+    public static void runKuhnPoker() {
+        AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        InitialP1Builder lpBuilder = new InitialP1Builder(new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KuhnPokerGameState());
+
+        lpBuilder.buildLP();
+        lpBuilder.solve();
+    }
+
+    public static void runGenericPoker() {
+        AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        InitialP1Builder lpBuilder = new InitialP1Builder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState());
+
+        lpBuilder.buildLP();
+        lpBuilder.solve();
+    }
+
+    public static void runAoS() {
+        AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        InitialP1Builder lpBuilder = new InitialP1Builder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState());
+
+        lpBuilder.buildLP();
+        lpBuilder.solve();
+    }
+
+    public static void runGoofSpiel() {
+        AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        InitialP1Builder lpBuilder = new InitialP1Builder(new GoofSpielExpander<SequenceInformationSet>(algConfig), new GoofSpielGameState());
+
+        lpBuilder.buildLP();
+        lpBuilder.solve();
+    }
+
+    public InitialP1Builder(Expander<SequenceInformationSet> expander, GameState rootState) {
         super(rootState, expander);
         this.expander = expander;
-        this.info = info;
         lpFileName = "initialNFP.lp";
     }
 
@@ -60,12 +107,12 @@ public class InitialPBuilder extends TreeVisitor {
 //			trySolve(lpData);
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
-            double[] values = lpData.getSolver().getValues(lpData.getVariables());
-
-            System.out.println("values:");
-            for (int i = 0; i < values.length; i++) {
-                System.out.println(lpData.getVariables()[i] + ": " + values[i]);
-            }
+//			double[] values = lpData.getSolver().getValues(lpData.getVariables());
+//
+//			System.out.println("values:");
+//			for (int i = 0; i < values.length; i++) {
+//				System.out.println(lpData.getVariables()[i] + ": " + values[i]);
+//			}
 
             //			Map<Sequence, Double> p1RealizationPlan = createFirstPlayerStrategy(lpData.getSolver(), lpData.getWatchedPrimalVariables());
 
@@ -180,7 +227,8 @@ public class InitialPBuilder extends TreeVisitor {
     protected void visitLeaf(GameState state) {
         assert state.getNatureProbability() > 0;
         updateParentLinks(state);
-        lpTable.substractFromConstraint(state.getSequenceFor(players[1]), state.getSequenceFor(players[0]), info.getUtilityStabilizer() * state.getNatureProbability() * state.getUtilities()[0]);
+
+        lpTable.substractFromConstraint(state.getSequenceFor(players[1]), state.getSequenceFor(players[0]), state.getNatureProbability() * state.getUtilities()[0]);
     }
 
     @Override
