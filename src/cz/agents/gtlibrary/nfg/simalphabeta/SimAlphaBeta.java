@@ -16,6 +16,9 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.tron.TronGameInfo;
+import cz.agents.gtlibrary.domain.tron.TronExpander;
+import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
@@ -103,6 +106,15 @@ public class SimAlphaBeta {
         SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         GameInfo gameInfo = new OZGameInfo();
         simAlphaBeta.runSimAlpabeta(new OshiZumoGameState(), new OshiZumoExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
+        Stats.getInstance().stopTime();
+        Stats.getInstance().printOverallInfo();
+    }
+    
+    public static void runTron(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache) {
+        Stats.getInstance().startTime();
+        SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
+        GameInfo gameInfo = new TronGameInfo();
+        simAlphaBeta.runSimAlpabeta(new TronGameState(), new TronExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
         Stats.getInstance().stopTime();
         Stats.getInstance().printOverallInfo();
     }
