@@ -242,7 +242,7 @@ public class GoofSpielGameState extends GameStateImpl {
 
     @Override
     public boolean isGameEnd() {
-        if(history.getLength() > depth)
+        if(round > depth)
             return true;
         return round == GSGameInfo.depth;
     }
@@ -291,6 +291,10 @@ public class GoofSpielGameState extends GameStateImpl {
         if(sum == 0)
             return new double[]{0, 0, 0};
        return new double[]{(playerScore[0] - sum / 2) / sum, (playerScore[1] - sum / 2) / sum, 0};
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 
     @Override
