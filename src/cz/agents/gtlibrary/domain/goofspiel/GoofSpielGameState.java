@@ -22,6 +22,7 @@ public class GoofSpielGameState extends GameStateImpl {
     protected List<Action> sequenceForAllPlayers;
     private GoofSpielAction faceUpCard;
     private Sequence natureSequence;
+    private int depth;
 
     protected int[] playerScore;
 
@@ -39,6 +40,20 @@ public class GoofSpielGameState extends GameStateImpl {
         round = 0;
         currentPlayerIndex = 2;
         natureSequence = createRandomSequence();
+        depth = Integer.MAX_VALUE;
+
+        createPlayerCards();
+    }
+
+    public GoofSpielGameState(int depth) {
+        super(GSGameInfo.ALL_PLAYERS);
+        sequenceForAllPlayers = new ArrayList<Action>(GSGameInfo.CARDS_FOR_PLAYER.length * 3);
+        playerCards = new FixedSizeMap<Player, HashSet<Integer>>(3);
+        playerScore = new int[2];
+        round = 0;
+        currentPlayerIndex = 2;
+        natureSequence = createRandomSequence();
+        this.depth = depth;
 
         createPlayerCards();
     }
@@ -51,6 +66,20 @@ public class GoofSpielGameState extends GameStateImpl {
         round = 0;
         currentPlayerIndex = 2;
         this.natureSequence = natureSequence;
+        depth = Integer.MAX_VALUE;
+
+        createPlayerCards();
+    }
+
+    public GoofSpielGameState(Sequence natureSequence, int depth) {
+        super(GSGameInfo.ALL_PLAYERS);
+        sequenceForAllPlayers = new ArrayList<Action>(GSGameInfo.CARDS_FOR_PLAYER.length * 3);
+        playerCards = new FixedSizeMap<Player, HashSet<Integer>>(3);
+        playerScore = new int[2];
+        round = 0;
+        currentPlayerIndex = 2;
+        this.natureSequence = natureSequence;
+        this.depth = depth;
 
         createPlayerCards();
     }
@@ -75,6 +104,7 @@ public class GoofSpielGameState extends GameStateImpl {
         this.faceUpCard = gameState.faceUpCard;
         this.sequenceForAllPlayers = new ArrayList<Action>(gameState.sequenceForAllPlayers);
         this.natureSequence = new LinkedListSequenceImpl(gameState.natureSequence);
+        this.depth = gameState.depth;
     }
 
     public Sequence getNatureSequence() {
@@ -190,6 +220,10 @@ public class GoofSpielGameState extends GameStateImpl {
 //		double drawValue = (playerScore[0] + playerScore[1]) / 2.;
 //
 //		return new double[] { playerScore[0] - drawValue, playerScore[1] - drawValue, 0 };
+        return evaluate();
+    }
+
+    private double[] getEndGameUtilities() {
         if (playerScore[0] > playerScore[1])
             return new double[]{1, -1, 0};
         if (playerScore[0] < playerScore[1])
@@ -208,6 +242,8 @@ public class GoofSpielGameState extends GameStateImpl {
 
     @Override
     public boolean isGameEnd() {
+        if(history.getLength() > depth)
+            return true;
         return round == GSGameInfo.depth;
     }
 
@@ -248,11 +284,13 @@ public class GoofSpielGameState extends GameStateImpl {
 
     @Override
     public double[] evaluate() {
-        if (isGameEnd())
-            return getUtilities();
+        if (round == GSGameInfo.depth)
+            return getEndGameUtilities();
         double sum = playerScore[0] + playerScore[1];
 
-        return new double[]{(playerScore[0] - sum / 2) / sum, (playerScore[1] - sum / 2) / sum, 0};
+        if(sum == 0)
+            return new double[]{0, 0, 0};
+       return new double[]{(playerScore[0] - sum / 2) / sum, (playerScore[1] - sum / 2) / sum, 0};
     }
 
     @Override

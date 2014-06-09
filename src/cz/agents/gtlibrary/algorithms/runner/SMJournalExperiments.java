@@ -146,7 +146,7 @@ public class SMJournalExperiments {
                 throw new IllegalArgumentException("Illegal Argument Combination for Algorithm");
             }
             if (domain.equals("GS"))
-                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB,DO,SORT, CACHE);
+                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB,DO,SORT, CACHE, Integer.MAX_VALUE);
             else if (domain.equals("PE"))
                 SimAlphaBeta.runPursuit(AB, DO, SORT, CACHE);
             else if (domain.equals("RG"))
