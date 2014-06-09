@@ -16,6 +16,9 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.tron.TronGameInfo;
+import cz.agents.gtlibrary.domain.tron.TronExpander;
+import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
@@ -46,19 +49,19 @@ public class SimAlphaBeta {
 	public static void main(String[] args) {
 //		runGoofSpielWithNature();
 //		runGoofSpielWithNatureWithLocalCache();
-//		runGoofSpielWithFixedNatureSequence(true, true);
+		runGoofSpielWithFixedNatureSequence(true, false, false, false, 7);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
 //	    runPursuit(true,true);
 //        runSimRandomGame(false, true, false, false);
-        runOshiZumo(true,false,false,false);
+//        runOshiZumo(true,false,false,false);
     }
 
-	public static void runGoofSpielWithFixedNatureSequence(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache) {
+	public static void runGoofSpielWithFixedNatureSequence(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache, int depth) {
 		Stats.getInstance().startTime();
 		GSGameInfo.useFixedNatureSequence = true;
 		SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         GameInfo gameInfo = new GSGameInfo();
-		GoofSpielGameState root = new GoofSpielGameState();
+		GoofSpielGameState root = new GoofSpielGameState(depth);
 		
 		System.out.println(root.getNatureSequence());
 		simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
@@ -106,6 +109,15 @@ public class SimAlphaBeta {
         Stats.getInstance().stopTime();
         Stats.getInstance().printOverallInfo();
     }
+    
+    public static void runTron(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache) {
+        Stats.getInstance().startTime();
+        SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
+        GameInfo gameInfo = new TronGameInfo();
+        simAlphaBeta.runSimAlpabeta(new TronGameState(), new TronExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
+        Stats.getInstance().stopTime();
+        Stats.getInstance().printOverallInfo();
+    }
 
 	public void runSimAlpabeta(GameState rootState, Expander<SimABInformationSet> expander, boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache, GameInfo gameInfo) {
 		if (rootState.isPlayerToMoveNature()) {
@@ -129,6 +141,8 @@ public class SimAlphaBeta {
 			System.out.println("****************");
 //			System.out.println("root state: " + rootState);
 			System.out.println("game value: " + oracle.getGameValue());
-		}
+            System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
+            System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
+        }
 	}
 }

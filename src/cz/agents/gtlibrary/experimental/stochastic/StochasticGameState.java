@@ -29,13 +29,4 @@ public abstract class StochasticGameState extends GameStateImpl {
 		return true;
 	}
 
-    @Override
-    public Rational[] getExactUtilities() {
-        throw new UnsupportedOperationException("Not supported...");
-    }
-
-    @Override
-    public Rational getExactProbabilityOfNatureFor(Action action) {
-        throw new UnsupportedOperationException("Not supported...");
-    }
 }

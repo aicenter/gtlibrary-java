@@ -27,6 +27,9 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.tron.TronGameInfo;
+import cz.agents.gtlibrary.domain.tron.TronExpander;
+import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
@@ -59,7 +62,7 @@ public class SMJournalExperiments {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: SMJournalExperiments {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {GS|PE|RG} [domain parameters].");
+            System.err.println("Missing Arguments: SMJournalExperiments {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {GS|OZ|PE|RG|Tron} [domain parameters].");
             System.exit(-1);
         }
         String alg = args[0];
@@ -104,6 +107,14 @@ public class SMJournalExperiments {
             RandomGameInfo.MAX_CENTER_MODIFICATION = new Integer(args[5]);
             RandomGameInfo.BINARY_UTILITY = new Boolean(args[6]);
             RandomGameInfo.FIXED_SIZE_BF = new Boolean(args[7]);
+        } else if (args[1].equalsIgnoreCase("Tron")) { // Tron
+            if (args.length != 6) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {BOARDTYPE} {ROWS} {COLUMNS}");
+            }
+            TronGameInfo.seed = new Integer(args[2]);
+            TronGameInfo.BOARDTYPE = args[3].charAt(0);
+            TronGameInfo.ROWS = new Integer(args[4]);
+            TronGameInfo.COLS = new Integer(args[5]);
         } else throw new IllegalArgumentException("Illegal domain: " + args[1]);
     }
 
@@ -128,6 +139,11 @@ public class SMJournalExperiments {
             rootState = new SimRandomGameState();
             expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
             sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+        } else if (domain.equals("Tron")) {
+            gameInfo = new TronGameInfo();
+            rootState = new TronGameState();
+            expander = new TronExpander<MCTSInformationSet>(new MCTSConfig());
+            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         }
     }
 
@@ -136,6 +152,8 @@ public class SMJournalExperiments {
             loadGame(domain);
             if (alg.equals("MCTS"))
                 runMCTS();
+            else if (alg.equals("RS"))
+                runRandomSim();  // mlanctot: you could leave this here for me? :) 
             else runCFR(alg.equals("OOS"));
         } else { // backward induction algorithms
             boolean AB = alg.endsWith("AB");
@@ -146,13 +164,15 @@ public class SMJournalExperiments {
                 throw new IllegalArgumentException("Illegal Argument Combination for Algorithm");
             }
             if (domain.equals("GS"))
-                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB,DO,SORT, CACHE);
+                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB,DO,SORT, CACHE, Integer.MAX_VALUE);
             else if (domain.equals("PE"))
                 SimAlphaBeta.runPursuit(AB, DO, SORT, CACHE);
             else if (domain.equals("RG"))
                 SimAlphaBeta.runSimRandomGame(AB, DO, SORT, CACHE);
             else if (domain.equals("OZ"))
                 SimAlphaBeta.runOshiZumo(AB, DO, SORT, CACHE);
+            else if (domain.equals("Tron"))
+                SimAlphaBeta.runTron(AB, DO, SORT, CACHE);
        } 
     }
 
