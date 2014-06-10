@@ -11,15 +11,11 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 
@@ -62,7 +58,7 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
             iters++;
         }
         System.out.println();
-        System.out.println("Iters: " + iters);
+        System.out.println("OOS Iters: " + iters);
         if (!rootNode.getInformationSet().getPlayer().equals(searchingPlayer)) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData());
         return Strategy.selectAction(distribution, rnd);
@@ -197,6 +193,7 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         }
         assert is.getAllNodes().size()==1;
         rootNode = is.getAllNodes().iterator().next();
+        rootNode.setParent(null);
         Action a = runMiliseconds(miliseconds);
         if (gameState.getPlayerToMove().equals(searchingPlayer)){
             return a;

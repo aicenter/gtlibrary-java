@@ -59,7 +59,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             iters++;
         }
         System.out.println();
-        System.out.println("Iters: " + iters);
+        System.out.println("ISMCTS Iters: " + iters);
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
@@ -119,6 +119,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     public void setCurrentIS(InformationSet curIS) {
         MCTSInformationSet currentIS = (MCTSInformationSet) curIS;
         curISArray = currentIS.getAllNodes().toArray(new InnerNode[currentIS.getAllNodes().size()]);
+        rootNode = curISArray[0];
+        for (InnerNode n : curISArray) n.setParent(null);
     }
     
     public InnerNode getRootNode() {

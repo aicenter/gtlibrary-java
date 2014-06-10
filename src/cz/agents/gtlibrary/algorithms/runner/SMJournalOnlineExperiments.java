@@ -31,7 +31,7 @@ public class SMJournalOnlineExperiments {
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
     static Expander<MCTSInformationSet> expander;
     static Random rnd = new HighQualityRandom();
-    static int compTime = 100;
+    static int compTime = 1000;
 
 
     public static void main(String[] args) {
