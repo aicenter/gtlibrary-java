@@ -22,6 +22,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 	protected GameInfo gameInfo;
     private Action p1Action;
     private Action p2Action;
+    private Action tempAction;
 
     public AlphaBetaImpl(Player player, Expander<SimABInformationSet> expander, AlphaBetaCache cache, GameInfo gameInfo) {
 		this.player = player;
@@ -36,10 +37,10 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 	}
 
 	public double getValue(GameState state, double alpha, double beta) {
-//		Double value = cache.get(state);
-//
-//		if (value != null)
-//			return value;
+		Double value = cache.get(state);
+
+		if (value != null)
+			return value;
 
 		boolean prune = false;
 
@@ -53,9 +54,10 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 			for (Action minAction : getMinimizingActions(state)) {
 				double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
 
-                if (tempAlpha <= beta) {
-                    beta = Math.min(beta, tempAlpha);
+                if (tempAlpha < beta) {
+                    beta = tempAlpha;
                     storeAction(minAction);
+                    storeAction(tempAction);
                 } else {
                     prune = true;
                 }
@@ -108,9 +110,11 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 		for (Action maxAction : getMaximizingActions(state)) {
             double value = getInsideValue(performActions(state, minAction, maxAction), tempAlpha, beta);
 
-            if(value >= tempAlpha) {
+            if(tempAction == null)
+                tempAction = maxAction;
+            if(value > tempAlpha) {
                 tempAlpha = value;
-                storeAction(maxAction);
+                tempAction = maxAction;
             }
 			if (beta <= tempAlpha)
 				return tempAlpha;
