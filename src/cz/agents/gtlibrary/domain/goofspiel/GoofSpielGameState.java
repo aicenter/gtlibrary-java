@@ -53,7 +53,7 @@ public class GoofSpielGameState extends GameStateImpl {
         round = 0;
         currentPlayerIndex = 2;
         natureSequence = createRandomSequence();
-        this.depth = depth;
+        this.depth = depth*3;
 
         createPlayerCards();
     }
