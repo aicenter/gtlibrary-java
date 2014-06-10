@@ -26,7 +26,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
     private PrintStream debugOutput = System.out;//EmptyPrintStream.getInstance();
 
     public static void main(String[] args) {
-        SimAlphaBetaAlgorithm algorithm = new SimAlphaBetaAlgorithm(new PlayerImpl(1), new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), new GSGameInfo(), false, true, true, false);
+        SimAlphaBetaAlgorithm algorithm = new SimAlphaBetaAlgorithm(new PlayerImpl(1), new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), new GSGameInfo(), true, true, true, false);
         GoofSpielGameState root = new GoofSpielGameState();
         long start = System.currentTimeMillis();
 

@@ -39,7 +39,7 @@ public class SimAlphaBeta {
     public static void main(String[] args) {
 //		runGoofSpielWithNature();
 //		runGoofSpielWithNatureWithLocalCache();
-		runGoofSpielWithFixedNatureSequence(false, false, false, false, 5);
+        runGoofSpielWithFixedNatureSequence(true, false, false, false, 7);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
 //	    runPursuit(true,true);
 //        runSimRandomGame(false, true, false, false);
@@ -51,7 +51,7 @@ public class SimAlphaBeta {
         GSGameInfo.useFixedNatureSequence = true;
         SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         GameInfo gameInfo = new GSGameInfo();
-        GoofSpielGameState root = new GoofSpielGameState();
+        GoofSpielGameState root = new GoofSpielGameState(depth);
 
         System.out.println(root.getNatureSequence());
         simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
@@ -155,7 +155,19 @@ public class SimAlphaBeta {
         System.out.println("game value: " + oracle.getGameValue());
         System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
         System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
-        return oracle.getStrategyFor(player);
+        return getStrategy(player, data, oracle);
+    }
+
+    private MixedStrategy<ActionPureStrategy> getStrategy(Player player, Data data, DoubleOracle oracle) {
+        MixedStrategy<ActionPureStrategy> strategy = oracle.getStrategyFor(player);
+
+        if(strategy == null) {
+            strategy = new MixedStrategy<ActionPureStrategy>();
+
+            strategy.put(new ActionPureStrategy(data.getAlphaBetaFor(player).getTopLevelAction(player)), 1d);
+            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
+        }
+        return strategy;
     }
 
 }
