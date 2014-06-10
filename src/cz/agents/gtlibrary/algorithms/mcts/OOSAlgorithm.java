@@ -69,7 +69,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             iters++;
         }
         System.out.println();
-        System.out.println("Iters: " + iters);
+        System.out.println("OOS Iters: " + iters);
         if (!curIS.getPlayer().equals(searchingPlayer)) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
         return Strategy.selectAction(distribution, rnd);
@@ -309,6 +309,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         } else {
             setCurrentIS(rootNode.getAlgConfig().getInformationSetFor(gameState));
         }
+        rootNode.setParent(null);
         return runMiliseconds(miliseconds);
     }
 }
