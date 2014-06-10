@@ -140,4 +140,9 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
     public InnerNode getRootNode() {
         return null;
     }
+
+    @Override
+    public Action runMiliseconds(int miliseconds, GameState gameState) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

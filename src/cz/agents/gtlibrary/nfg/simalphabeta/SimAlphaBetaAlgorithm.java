@@ -13,7 +13,7 @@ import java.io.PrintStream;
 import java.util.Map;
 import java.util.Random;
 
-public class SimAlphaBetaAlgorithm {
+public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
 
     private boolean alphaBetaBounds;
     private boolean doubleOracle;
@@ -77,6 +77,11 @@ public class SimAlphaBetaAlgorithm {
             }
             bestStrategy = currentStrategy;
         }
+    }
+
+    @Override
+    public Action runMiliseconds(int miliseconds) {
+        return null;
     }
 
     private boolean isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(int limit, long start, long currentIterationTime) {

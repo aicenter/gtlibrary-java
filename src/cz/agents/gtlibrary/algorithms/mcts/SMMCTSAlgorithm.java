@@ -127,4 +127,10 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
     public InnerNode getRootNode() {
         return rootNode;
     }
+    
+    @Override
+    public Action runMiliseconds(int miliseconds, GameState gameState) {
+        setCurrentIS(rootNode.getAlgConfig().getInformationSetFor(gameState));
+        return runMiliseconds(miliseconds);
+    }
 }

@@ -6,6 +6,7 @@ package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.ActionFrequencyProvider;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
 import cz.agents.gtlibrary.interfaces.Action;
 import java.util.Arrays;
@@ -15,7 +16,7 @@ import java.util.List;
  *
  * @author vilo
  */
-public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, ActionFrequencyProvider {
+public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, ActionFrequencyProvider, MeanStrategyProvider {
     private UCTBackPropFactory fact;
     private List<Action> actions;
     double[] v;
@@ -86,6 +87,11 @@ public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, 
     @Override
     public List<Action> getActions() {
         return actions;
+    }
+
+    @Override
+    public double[] getMp() {
+        return getActionFreq();
     }
     
     

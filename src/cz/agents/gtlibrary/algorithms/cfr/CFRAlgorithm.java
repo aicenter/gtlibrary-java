@@ -108,4 +108,9 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
     public InnerNode getRootNode() {
         return rootNode;
     }
+
+    @Override
+    public Action runMiliseconds(int miliseconds, GameState gameState) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

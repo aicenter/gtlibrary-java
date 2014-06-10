@@ -4,6 +4,7 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts;
 
+import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanValueProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MostFrequentAction;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
@@ -59,12 +60,10 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
         System.out.println();
         System.out.println("Iters: " + iters);
-        return null;
-        //TODO temporary hack because IS-MCTS was throwing exceptions when the first action is not by nature
-//        if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
-//        MCTSInformationSet is = curISArray[0].getInformationSet();
-//        Map<Action, Double> distribution = (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData());
-//        return Strategy.selectAction(distribution, rnd);
+        if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
+        MCTSInformationSet is = curISArray[0].getInformationSet();
+        Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
+        return Strategy.selectAction(distribution, rnd);
     }
     
     public Action runIterations(int iterations){
@@ -74,9 +73,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
-        //Map<Action, Double> distribution = (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData());
-        //return Strategy.selectAction(distribution, rnd);
-        return null;
+        Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
+        return Strategy.selectAction(distribution, rnd);
     }
     
     protected double iteration(Node node){
@@ -125,5 +123,30 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     
     public InnerNode getRootNode() {
         return rootNode;
+    }
+    
+    @Override
+    public Action runMiliseconds(int miliseconds, GameState gameState) {
+        MCTSInformationSet is = rootNode.getAlgConfig().getInformationSetFor(gameState);
+        if (is.getAllNodes().isEmpty()){
+            InnerNode in = curISArray[0];
+            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast());
+            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast());
+            if (in.getGameState().isPlayerToMoveNature()){
+                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
+            }
+            is = rootNode.getAlgConfig().getInformationSetFor(gameState);
+            is.setAlgorithmData(fact.createSelector(in.getActions()));
+        }
+        setCurrentIS(is);
+        Action a = runMiliseconds(miliseconds);
+        if (gameState.getPlayerToMove().equals(searchingPlayer)){
+            return a;
+        } else {
+            InnerNode child = (InnerNode) curISArray[0].getChildren().values().iterator().next();
+            is = child.getInformationSet();
+            Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
+            return Strategy.selectAction(distribution, rnd);
+        }
     }
 }
