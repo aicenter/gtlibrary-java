@@ -8,6 +8,7 @@ package cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm;
 
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.Pair;
 import java.util.Arrays;
@@ -17,7 +18,7 @@ import java.util.List;
  *
  * @author vilo
  */
-public class SMRMSelector implements SMSelector, MeanStrategyProvider {
+public class SMRMSelector implements SMSelector, MeanStrategyProvider, NbSamplesProvider {
     SMRMBackPropFactory fact;
      List<Action> actions1;
      List<Action> actions2;
@@ -123,9 +124,16 @@ public class SMRMSelector implements SMSelector, MeanStrategyProvider {
     public double[] getMp() {
         return mp[0];
     }
+
+    @Override
+    public int getNbSamples() {
+        int sum = 0;
+        for (int i : n) sum += i;
+        return sum;
+    }
     
     
-    private class DummyBottom implements AlgorithmData, MeanStrategyProvider {
+    private class DummyBottom implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider {
         SMRMSelector top;
 
         public DummyBottom(SMRMSelector top) {
@@ -141,6 +149,12 @@ public class SMRMSelector implements SMSelector, MeanStrategyProvider {
         public double[] getMp() {
             return top.mp[1];
         }
+
+        @Override
+        public int getNbSamples() {
+            return top.getNbSamples();
+        }
+        
         
     }
 }
