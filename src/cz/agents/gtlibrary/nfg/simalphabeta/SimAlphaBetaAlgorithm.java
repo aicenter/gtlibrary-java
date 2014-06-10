@@ -67,7 +67,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
 
     public Action runMiliseconds(int miliseconds, GameState state) {
         int depth = 1;
-        long nanoseconds = miliseconds * 1000000;
+        long nanoseconds = ((long)miliseconds) * 1000000l;
         long start = threadBean.getCurrentThreadCpuTime();
         MixedStrategy<ActionPureStrategy> bestStrategy = null;
 
