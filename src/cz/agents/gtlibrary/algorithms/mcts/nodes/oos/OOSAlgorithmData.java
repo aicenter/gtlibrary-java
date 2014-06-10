@@ -6,6 +6,7 @@ package cz.agents.gtlibrary.algorithms.mcts.nodes.oos;
 
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
 import cz.agents.gtlibrary.interfaces.Action;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
  *
  * @author vilo
  */
-public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider {
+public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider {
     public static boolean useEpsilonRM = false; 
     List<Action> actions;
     /** Mean strategy. */
@@ -75,5 +76,12 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider {
     public double[] getMp() {
         return mp;
     }    
+
+    @Override
+    public int getNbSamples() {
+        double sum = 0;
+        for (double d : mp) sum += d;
+        return (int) sum;
+    }
 }
 

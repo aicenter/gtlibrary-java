@@ -6,6 +6,7 @@ package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
 import cz.agents.gtlibrary.interfaces.Action;
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
  *
  * @author vilo
  */
-public class Exp3Selector implements Selector, AlgorithmData, MeanStrategyProvider {
+public class Exp3Selector implements Selector, AlgorithmData, MeanStrategyProvider, NbSamplesProvider {
     private Exp3BackPropFactory fact;
     private List<Action> actions;
     /** Current probability of playing this action. */
@@ -85,6 +86,13 @@ public class Exp3Selector implements Selector, AlgorithmData, MeanStrategyProvid
     public double[] getMp() {
         return mp;
     }    
+
+    @Override
+    public int getNbSamples() {
+        double sum=0;
+        for (double d : mp) sum +=d;
+        return (int) sum;
+    }
     
     
 }
