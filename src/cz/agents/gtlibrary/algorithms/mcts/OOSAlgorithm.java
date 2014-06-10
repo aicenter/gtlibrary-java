@@ -11,6 +11,8 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -58,7 +60,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         int iters=0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (;(threadBean.getCurrentThreadCpuTime()-start)/1e6 < miliseconds;) {
-            if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<delta);
+            if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<=delta);
             underTargetIS = false;
             iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[0]);
             iters++;
@@ -75,7 +77,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     
     public Action runIterations(int iterations){
         for (int i=0;i<iterations/2;i++) {
-            if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<delta);
+            if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<=delta);
             underTargetIS = false;
             iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[0]);
             underTargetIS = false;
@@ -280,5 +282,33 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     
     public InnerNode getRootNode() {
         return rootNode;
+    }
+
+    @Override
+    public Action runMiliseconds(int miliseconds, GameState gameState) {
+        //TODO: finish debuging this
+        MCTSInformationSet is = rootNode.getAlgConfig().getInformationSetFor(gameState);
+        if (is.getAllNodes().isEmpty()){
+            Sequence[] seqs = new Sequence[gameState.getAllPlayers().length];
+            for (Player pl : gameState.getAllPlayers()){
+                seqs[pl.getId()] = new LinkedListSequenceImpl(gameState.getSequenceFor(pl));
+            }
+            InnerNode in = rootNode;
+            while (!in.getGameState().equals(gameState)){
+                in = (InnerNode) in.getChildFor(seqs[in.getGameState().getPlayerToMove().getId()].removeFirst());
+                if (in.getInformationSet().getAlgorithmData() == null){
+                    in.getInformationSet().setAlgorithmData(fact.createSelector(in.getActions()));
+                }
+            }
+            is = rootNode.getAlgConfig().getInformationSetFor(gameState);
+        }
+        if (!gameState.getPlayerToMove().equals(searchingPlayer)){
+            InnerNode in = is.getAllNodes().iterator().next();
+            in = (InnerNode) in.getChildFor(in.getActions().get(0));
+            setCurrentIS(in.getInformationSet());
+        } else {
+            setCurrentIS(rootNode.getAlgConfig().getInformationSetFor(gameState));
+        }
+        return runMiliseconds(miliseconds);
     }
 }
