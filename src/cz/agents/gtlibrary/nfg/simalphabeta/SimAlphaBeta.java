@@ -155,7 +155,19 @@ public class SimAlphaBeta {
         System.out.println("game value: " + oracle.getGameValue());
         System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
         System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
-        return oracle.getStrategyFor(player);
+        return getStrategy(player, data, oracle);
+    }
+
+    private MixedStrategy<ActionPureStrategy> getStrategy(Player player, Data data, DoubleOracle oracle) {
+        MixedStrategy<ActionPureStrategy> strategy = oracle.getStrategyFor(player);
+
+        if(strategy == null) {
+            strategy = new MixedStrategy<ActionPureStrategy>();
+
+            strategy.put(new ActionPureStrategy(data.getAlphaBetaFor(player).getTopLevelAction(player)), 1d);
+            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
+        }
+        return strategy;
     }
 
 }

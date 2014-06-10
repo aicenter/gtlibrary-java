@@ -5,31 +5,31 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public abstract class ActionImpl implements Action {
-	
-	private static final long serialVersionUID = -7380941202647059723L;
-	
-	protected InformationSet informationSet;
 
-	public ActionImpl(InformationSet informationSet) {
-		//		assert (informationSet != null);		
-		this.informationSet = informationSet;
-	}
+    private static final long serialVersionUID = -7380941202647059723L;
 
-	@Override
-	public abstract void perform(GameState gameState);
+    protected InformationSet informationSet;
 
-	@Override
-	public InformationSet getInformationSet() {
-		return informationSet;
-	}
+    public ActionImpl(InformationSet informationSet) {
+        //		assert (informationSet != null);
+        this.informationSet = informationSet;
+    }
 
-	@Override
-	public void setInformationSet(InformationSet informationSet) {
-		this.informationSet = informationSet;
-	}
+    @Override
+    public abstract void perform(GameState gameState);
 
-	@Override
-	public boolean equals(Object obj) {
+    @Override
+    public InformationSet getInformationSet() {
+        return informationSet;
+    }
+
+    @Override
+    public void setInformationSet(InformationSet informationSet) {
+        this.informationSet = informationSet;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
         if (this == obj)
             return true;
         if (obj == null)
@@ -45,13 +45,13 @@ public abstract class ActionImpl implements Action {
             return false;
         } else if (informationSet.getPlayersHistory().size() != ((ActionImpl) obj).informationSet.getPlayersHistory().size()) {
             return false;
-        } else for (int l=0; l<informationSet.getPlayersHistory().size(); l++) {
+        } else for (int l = 0; l < informationSet.getPlayersHistory().size(); l++) {
             Action myAction = informationSet.getPlayersHistory().get(l);
             Action otherAction = ((ActionImpl) obj).informationSet.getPlayersHistory().get(l);
             if (myAction.hashCode() != otherAction.hashCode())
                 return false;
             if ((myAction.getInformationSet() == null && otherAction.getInformationSet() != null) ||
-                (myAction.getInformationSet() != null && otherAction.getInformationSet() == null))
+                    (myAction.getInformationSet() != null && otherAction.getInformationSet() == null))
                 return false;
             if (myAction.getInformationSet() != null)
                 if (myAction.getInformationSet().hashCode() != otherAction.getInformationSet().hashCode())
@@ -59,8 +59,8 @@ public abstract class ActionImpl implements Action {
         }
 //        } else if (!informationSet.equals(((ActionImpl) obj).informationSet))
 //            return false;
-		return true;
-	}
+        return true;
+    }
 
     @Override
     abstract public int hashCode();
