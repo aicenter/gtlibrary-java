@@ -36,7 +36,7 @@ public class SMJournalOnlineExperiments {
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
     static Expander expander;
     static Random rnd = new HighQualityRandom();
-    static int compTime = 1000;
+    static int compTime = 5000;
 
 
     public static void main(String[] args) {
@@ -130,8 +130,8 @@ public class SMJournalOnlineExperiments {
             ISMCTSAlgorithm player = new ISMCTSAlgorithm(
                     rootState.getAllPlayers()[posIndex],
                     new DefaultSimulator(expander),
-                    new UCTBackPropFactory(2),
-                    //new Exp3BackPropFactory(-1, 1, 0.2),
+//                    new UCTBackPropFactory(2),
+                    new Exp3BackPropFactory(-1, 1, 0.2),
                     //new RMBackPropFactory(-1,1,0.4),
                     rootState, expander);
             player.returnMeanValue=false;
