@@ -12,6 +12,8 @@ import cz.agents.gtlibrary.utils.io.EmptyPrintStream;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.Map;
 import java.util.Random;
 
@@ -26,6 +28,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
     private Random random;
     private Expander<SimABInformationSet> expander;
     private PrintStream debugOutput = new PrintStream(EmptyPrintStream.getInstance());
+    private ThreadMXBean threadBean;
 
     public static void main(String[] args) {
         SimAlphaBetaAlgorithm algorithm = new SimAlphaBetaAlgorithm(new PlayerImpl(1), new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), new GSGameInfo(), true, true, true, false);
@@ -46,6 +49,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
         this.sortingOwnActions = sortingOwnActions;
         this.useGlobalCache = useGlobalCache;
         this.random = new Random();
+        this.threadBean = ManagementFactory.getThreadMXBean();
     }
 
     public SimAlphaBetaAlgorithm(Player player, Expander<SimABInformationSet> expander, GameInfo gameInfo, boolean alphaBetaBounds,
@@ -58,21 +62,22 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
         this.sortingOwnActions = sortingOwnActions;
         this.useGlobalCache = useGlobalCache;
         this.random = new Random(seed);
+        this.threadBean = ManagementFactory.getThreadMXBean();
     }
 
     public Action runMiliseconds(int miliseconds, GameState state) {
         int depth = 1;
-        long start = System.currentTimeMillis();
+        long start = threadBean.getCurrentThreadCpuTime();
         MixedStrategy<ActionPureStrategy> bestStrategy = null;
 
         while (true) {
             debugOutput.println("Running with depth " + depth);
             ((GoofSpielGameState) state).setDepth(depth++);
             SimAlphaBeta solver = new SimAlphaBeta();
-            long currentIterationStart = System.currentTimeMillis();
+            long currentIterationStart = threadBean.getCurrentThreadCpuTime();
             MixedStrategy<ActionPureStrategy> currentStrategy = solver.runSimAlpabeta(state, expander, player, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
-            long currentIterationTime = System.currentTimeMillis() - currentIterationStart;
-            debugOutput.println("Iteration for depth " + depth + " ended in " + (System.currentTimeMillis() - start));
+            long currentIterationTime = threadBean.getCurrentThreadCpuTime() - currentIterationStart;
+            debugOutput.println("Iteration for depth " + depth + " ended in " + (threadBean.getCurrentThreadCpuTime() - start));
             if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(miliseconds, start, currentIterationTime)) {
                 debugOutput.println("Time run out for depth " + depth);
                 System.out.println("Depth " + (depth - 1) + " finnished");
@@ -88,7 +93,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
     }
 
     private boolean isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(int limit, long start, long currentIterationTime) {
-        return limit - (System.currentTimeMillis() - start) < currentIterationTime;
+        return limit - (threadBean.getCurrentThreadCpuTime() - start) < currentIterationTime;
     }
 
     private Action chooseAction(MixedStrategy<ActionPureStrategy> bestStrategy) {
