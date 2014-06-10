@@ -67,6 +67,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
 
     public Action runMiliseconds(int miliseconds, GameState state) {
         int depth = 1;
+        long nanoseconds = miliseconds * 1000000;
         long start = threadBean.getCurrentThreadCpuTime();
         MixedStrategy<ActionPureStrategy> bestStrategy = null;
 
@@ -78,7 +79,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
             MixedStrategy<ActionPureStrategy> currentStrategy = solver.runSimAlpabeta(state, expander, player, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
             long currentIterationTime = threadBean.getCurrentThreadCpuTime() - currentIterationStart;
             debugOutput.println("Iteration for depth " + depth + " ended in " + (threadBean.getCurrentThreadCpuTime() - start));
-            if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(miliseconds, start, currentIterationTime)) {
+            if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(nanoseconds, start, currentIterationTime)) {
                 debugOutput.println("Time run out for depth " + depth);
                 System.out.println("Depth " + (depth - 1) + " finnished");
                 return chooseAction(bestStrategy);
@@ -92,7 +93,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
         return null;
     }
 
-    private boolean isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(int limit, long start, long currentIterationTime) {
+    private boolean isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(long limit, long start, long currentIterationTime) {
         return limit - (threadBean.getCurrentThreadCpuTime() - start) < currentIterationTime;
     }
 
