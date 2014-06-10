@@ -43,6 +43,8 @@ public abstract class ActionImpl implements Action {
                 return false;
         } else if (informationSet.hashCode() != ((ActionImpl) obj).informationSet.hashCode()) {
             return false;
+        } else if (informationSet.getPlayersHistory().size() != ((ActionImpl) obj).informationSet.getPlayersHistory().size()) {
+            return false;
         } else for (int l=0; l<informationSet.getPlayersHistory().size(); l++) {
             Action myAction = informationSet.getPlayersHistory().get(l);
             Action otherAction = ((ActionImpl) obj).informationSet.getPlayersHistory().get(l);
