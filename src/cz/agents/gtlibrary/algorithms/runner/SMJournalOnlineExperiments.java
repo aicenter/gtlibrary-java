@@ -36,7 +36,7 @@ public class SMJournalOnlineExperiments {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {GS|PE|RG} [domain parameters].");
+            System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS} {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS} {GS|PE|RG} [domain parameters].");
             System.exit(-1);
         }
         SMJournalOnlineExperiments exp = new SMJournalOnlineExperiments();
@@ -112,17 +112,17 @@ public class SMJournalOnlineExperiments {
             ISMCTSAlgorithm player = new ISMCTSAlgorithm(
                     rootState.getAllPlayers()[posIndex],
                     new DefaultSimulator(expander),
-                    //new UCTBackPropFactory(2),
-                    new Exp3BackPropFactory(-1, 1, 0.2),
+                    new UCTBackPropFactory(2),
+                    //new Exp3BackPropFactory(-1, 1, 0.2),
                     //new RMBackPropFactory(-1,1,0.4),
                     rootState, expander);
             player.returnMeanValue=false;
             player.runIterations(2);
             return player;
-        } else if (alg.equals("CFR") || alg.equals("OOS")){
+        } else if (alg.equals("OOS")){
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
-            GamePlayingAlgorithm player = (alg.equals("OOS")) ? new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex],new OOSSimulator(expander),rootState, expander, 0.6) : new CFRAlgorithm(rootState.getAllPlayers()[posIndex],rootState, expander);
+            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex],new OOSSimulator(expander),rootState, expander, 0.6);
             player.runMiliseconds(20);
             return player;
         } else { // backward induction algorithms
