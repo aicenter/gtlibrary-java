@@ -19,8 +19,13 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBetaAlgorithm;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
+import java.util.List;
 import java.util.Random;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -29,7 +34,7 @@ public class SMJournalOnlineExperiments {
     static GameInfo gameInfo;
     static GameState rootState;
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
-    static Expander<MCTSInformationSet> expander;
+    static Expander expander;
     static Random rnd = new HighQualityRandom();
     static int compTime = 1000;
 
@@ -103,6 +108,19 @@ public class SMJournalOnlineExperiments {
             expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
         }
     }
+
+    public void loadSMGame(String domain) {
+        loadGame(domain);
+        if (domain.equals("GS")) {
+            expander = new GoofSpielExpander<SimABInformationSet >(new SimABConfig());
+        } else if (domain.equals("PE")) {
+            expander = new PursuitExpander<SimABInformationSet>(new SimABConfig());
+        } else if (domain.equals("OZ")) {
+            expander = new OshiZumoExpander<SimABInformationSet>(new SimABConfig());
+        } else if (domain.equals("RG")) {
+            expander = new RandomGameExpander<SimABInformationSet>(new SimABConfig());
+        }
+    }
     
     public GamePlayingAlgorithm getPlayer(int posIndex, String alg, String domain) {
         if (alg.equals("MCTS")){
@@ -125,8 +143,19 @@ public class SMJournalOnlineExperiments {
             GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex],new OOSSimulator(expander),rootState, expander, 0.6);
             player.runMiliseconds(20);
             return player;
-        } else { // backward induction algorithms
-            throw new NotImplementedException();
+        } else if (alg.contains("BI") || alg.contains("DO")){ // backward induction algorithms
+            loadSMGame(domain);
+            boolean AB = alg.endsWith("AB");
+            boolean DO = alg.contains("DO");
+            boolean SORT = alg.contains("DOS");
+            boolean CACHE = alg.startsWith("CDO");
+            if (!DO && (SORT || CACHE)) {
+                throw new IllegalArgumentException("Illegal Argument Combination for Algorithm");
+            }
+            SimAlphaBetaAlgorithm player = new SimAlphaBetaAlgorithm(rootState.getAllPlayers()[posIndex],expander, gameInfo, AB, DO, SORT, CACHE);
+            return player;
+        }  else {
+            throw new UnsupportedOperationException("Unknown algorithms.");
         }
     }
     
@@ -139,7 +168,7 @@ public class SMJournalOnlineExperiments {
         while (!curState.isGameEnd()){
             if (curState.isPlayerToMoveNature()){
                 double r = rnd.nextDouble();
-                for(Action ca : expander.getActions(curState)){
+                for(Action ca : (List<Action>)expander.getActions(curState)){
                     final double ap = curState.getProbabilityOfNatureFor(ca);
                     if (r <= ap) {
                         moves.append(ca + " ");
