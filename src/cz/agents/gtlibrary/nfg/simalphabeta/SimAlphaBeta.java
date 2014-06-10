@@ -39,7 +39,7 @@ public class SimAlphaBeta {
     public static void main(String[] args) {
 //		runGoofSpielWithNature();
 //		runGoofSpielWithNatureWithLocalCache();
-        runGoofSpielWithFixedNatureSequence(true, false, false, false, 7);
+		runGoofSpielWithFixedNatureSequence(false, false, false, false, 5);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
 //	    runPursuit(true,true);
 //        runSimRandomGame(false, true, false, false);
@@ -51,7 +51,7 @@ public class SimAlphaBeta {
         GSGameInfo.useFixedNatureSequence = true;
         SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         GameInfo gameInfo = new GSGameInfo();
-        GoofSpielGameState root = new GoofSpielGameState(depth);
+        GoofSpielGameState root = new GoofSpielGameState();
 
         System.out.println(root.getNatureSequence());
         simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);

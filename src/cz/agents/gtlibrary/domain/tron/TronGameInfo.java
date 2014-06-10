@@ -15,8 +15,8 @@ public class TronGameInfo implements GameInfo {
     public static long seed = 1;
 
     public static char BOARDTYPE = 'A';    // which board type? (only one for now, empty board)
-    public static int ROWS = 16;           // locations (2K+1)
-    public static int COLS = 16;           // B from paper
+    public static int ROWS = 8;           // locations (2K+1)
+    public static int COLS = 8;           // B from paper
 
 
     public TronGameInfo() {

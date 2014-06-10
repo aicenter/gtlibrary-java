@@ -10,6 +10,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -283,7 +284,7 @@ public class SMJournalExperiments {
         ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
                 rootState.getAllPlayers()[0],
                 new DefaultSimulator(expander),
-                //new UCTBackPropFactory(2),
+//                new UCTBackPropFactory(2),
                 new Exp3BackPropFactory(-1, 1, 0.2),
                 //new RMBackPropFactory(-1,1,0.4),
                 rootState, expander);
@@ -310,8 +311,8 @@ public class SMJournalExperiments {
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
-            br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
-            br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
+            br1Val = brAlg1.calculateBR(rootState, strategy0);
+            br0Val = brAlg0.calculateBR(rootState, strategy1);
 //            System.out.println("BR1: " + br1Val);
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
