@@ -78,13 +78,20 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
             long currentIterationStart = threadBean.getCurrentThreadCpuTime();
             MixedStrategy<ActionPureStrategy> currentStrategy = solver.runSimAlpabeta(state, expander, player, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
             long currentIterationTime = threadBean.getCurrentThreadCpuTime() - currentIterationStart;
-            debugOutput.println("Iteration for depth " + depth + " ended in " + (threadBean.getCurrentThreadCpuTime() - start));
-            if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(nanoseconds, start, currentIterationTime)) {
+            debugOutput.println("Iteration for depth " + (depth - 1) + " ended in " + (threadBean.getCurrentThreadCpuTime() - start));
+            if(threadBean.getCurrentThreadCpuTime() - start > nanoseconds) {
+                System.out.println("limit: " + nanoseconds + " time taken: " + currentIterationTime);
                 debugOutput.println("Time run out for depth " + depth);
                 System.out.println("Depth " + (depth - 1) + " finnished");
                 return chooseAction(bestStrategy);
             }
             bestStrategy = currentStrategy;
+            if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(nanoseconds, start, currentIterationTime)) {
+                System.out.println("limit: " + nanoseconds + " time taken: " + currentIterationTime);
+                debugOutput.println("Time run out for depth " + depth);
+                System.out.println("Depth " + (depth) + " finnished");
+                return chooseAction(bestStrategy);
+            }
         }
     }
 
