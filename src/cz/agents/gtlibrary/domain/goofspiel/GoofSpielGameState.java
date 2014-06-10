@@ -294,7 +294,7 @@ public class GoofSpielGameState extends GameStateImpl {
     }
 
     public void setDepth(int depth) {
-        this.depth = depth;
+        this.depth = depth + round;
     }
 
     @Override
