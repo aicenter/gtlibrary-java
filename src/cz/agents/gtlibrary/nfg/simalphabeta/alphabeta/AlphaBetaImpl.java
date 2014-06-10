@@ -36,10 +36,10 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 	}
 
 	public double getValue(GameState state, double alpha, double beta) {
-		Double value = cache.get(state);
-
-		if (value != null)
-			return value;
+//		Double value = cache.get(state);
+//
+//		if (value != null)
+//			return value;
 
 		boolean prune = false;
 
@@ -53,7 +53,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 			for (Action minAction : getMinimizingActions(state)) {
 				double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
 
-                if (tempAlpha < beta) {
+                if (tempAlpha <= beta) {
                     beta = Math.min(beta, tempAlpha);
                     storeAction(minAction);
                 } else {
@@ -108,7 +108,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 		for (Action maxAction : getMaximizingActions(state)) {
             double value = getInsideValue(performActions(state, minAction, maxAction), tempAlpha, beta);
 
-            if(value > tempAlpha) {
+            if(value >= tempAlpha) {
                 tempAlpha = value;
                 storeAction(maxAction);
             }
@@ -146,7 +146,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 			double lowerBound = Math.max(-gameInfo.getMaxUtility(), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
 			double upperBound = Math.min(gameInfo.getMaxUtility(), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
 					
-			utility += state.getProbabilityOfNatureFor(action) * getValue(state.performAction(action), lowerBound, upperBound);
+			utility += state.getProbabilityOfNatureFor(action) * getInsideValue(state.performAction(action), lowerBound, upperBound);
 		}
 		return utility;
 	}

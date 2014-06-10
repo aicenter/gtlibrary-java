@@ -146,15 +146,15 @@ public class SimAlphaBeta {
                 new DOCacheImpl(),
                 new NatureCacheImpl(),
                 new LowerBoundComparatorFactory());
-        System.out.println(data.gameInfo.getInfo());
+//        System.out.println(data.gameInfo.getInfo());
         DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
 
         oracle.generate();
-        System.out.println("****************");
+//        System.out.println("****************");
 //			System.out.println("root state: " + rootState);
-        System.out.println("game value: " + oracle.getGameValue());
-        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
-        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
+//        System.out.println("game value: " + oracle.getGameValue());
+//        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
+//        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
         return getStrategy(player, data, oracle);
     }
 
@@ -165,7 +165,7 @@ public class SimAlphaBeta {
             strategy = new MixedStrategy<ActionPureStrategy>();
 
             strategy.put(new ActionPureStrategy(data.getAlphaBetaFor(player).getTopLevelAction(player)), 1d);
-            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
+//            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
         }
         return strategy;
     }

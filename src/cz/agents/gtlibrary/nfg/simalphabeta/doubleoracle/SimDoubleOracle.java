@@ -73,8 +73,8 @@ public class SimDoubleOracle extends DoubleOracle {
         while (true) {
             iters++;
             if (isRoot) {
-                System.out.print("Iterations in root: " + iters);
-                System.out.println(" interval size: " + (beta - alpha));
+//                System.out.print("Iterations in root: " + iters);
+//                System.out.println(" interval size: " + (beta - alpha));
             }
 
 

@@ -8,7 +8,9 @@ import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
+import cz.agents.gtlibrary.utils.io.EmptyPrintStream;
 
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Map;
 import java.util.Random;
@@ -23,7 +25,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
     private Player player;
     private Random random;
     private Expander<SimABInformationSet> expander;
-    private PrintStream debugOutput = System.out;//EmptyPrintStream.getInstance();
+    private PrintStream debugOutput = new PrintStream(EmptyPrintStream.getInstance());
 
     public static void main(String[] args) {
         SimAlphaBetaAlgorithm algorithm = new SimAlphaBetaAlgorithm(new PlayerImpl(1), new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), new GSGameInfo(), true, true, true, false);
@@ -73,6 +75,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm{
             debugOutput.println("Iteration for depth " + depth + " ended in " + (System.currentTimeMillis() - start));
             if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(miliseconds, start, currentIterationTime)) {
                 debugOutput.println("Time run out for depth " + depth);
+                System.out.println("Depth " + (depth - 1) + " finnished");
                 return chooseAction(bestStrategy);
             }
             bestStrategy = currentStrategy;
