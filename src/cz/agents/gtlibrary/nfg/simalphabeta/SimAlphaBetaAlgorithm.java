@@ -27,7 +27,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
     private final Random random;
     private final Expander<SimABInformationSet> expander;
     private final PrintStream debugOutput = new PrintStream(EmptyPrintStream.getInstance());
-    private MixedStrategy<ActionPureStrategy> currentBest;
+    private volatile MixedStrategy<ActionPureStrategy> currentBest;
 
     public static void main(String[] args) {
         SimAlphaBetaAlgorithm algorithm = new SimAlphaBetaAlgorithm(new PlayerImpl(1), new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), new GSGameInfo(), true, true, true, false);
@@ -71,7 +71,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
             Thread.currentThread().sleep(miliseconds - Math.min(((int) (miliseconds / 10.)), 100));
             Killer.kill = true;
             thread.join();
-            return chooseAction(getCurrentBest());
+            return chooseAction(currentBest);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -89,14 +89,6 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
                 return strategyEntry.getKey().getAction();
         }
         return null;
-    }
-
-    private synchronized void setCurrentBest(MixedStrategy<ActionPureStrategy> strategy) {
-        currentBest = strategy;
-    }
-
-    private synchronized MixedStrategy<ActionPureStrategy> getCurrentBest() {
-        return currentBest;
     }
 
     @Override
@@ -145,9 +137,9 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
                     System.out.println("Depth " + (depth - 1) + " finnished");
                     return;
                 }
-                if(Killer.kill)
+                if (Killer.kill)
                     return;
-                setCurrentBest(currentStrategy);
+                currentBest = currentStrategy;
                 if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(limit, start, currentIterationTime)) {
                     System.out.println("limit: " + limit + " time taken: " + currentIterationTime);
                     debugOutput.println("Time run out for depth " + depth);
