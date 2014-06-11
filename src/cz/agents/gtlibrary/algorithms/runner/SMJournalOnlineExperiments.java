@@ -2,8 +2,10 @@ package cz.agents.gtlibrary.algorithms.runner;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.*;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
@@ -36,7 +38,7 @@ public class SMJournalOnlineExperiments {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS} {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS} {GS|PE|RG} [domain parameters].");
+            System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|OOS|MCUCT|MCEXP3|MCRM} {BI|BIAB|DO|DOAB|DOSAB|OOS|MCUCT|MCEXP3|MCRM} {GS|PE|RG} [domain parameters].");
             System.exit(-1);
         }
         SMJournalOnlineExperiments exp = new SMJournalOnlineExperiments();
@@ -105,20 +107,38 @@ public class SMJournalOnlineExperiments {
     }
     
     public GamePlayingAlgorithm getPlayer(int posIndex, String alg, String domain) {
-        if (alg.equals("MCTS")){
+        if (alg.startsWith("MC")){
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
+            BackPropFactory fact;
+            switch(alg){
+                case "MCUCT":
+                    fact = new UCTBackPropFactory(2);
+                    break;
+                case "MCEXP3":
+                    fact = new Exp3BackPropFactory(-1, 1, 0.2);
+            }
             
-            ISMCTSAlgorithm player = new ISMCTSAlgorithm(
+            if (!alg.equals("MCRM")){
+                ISMCTSAlgorithm player = new ISMCTSAlgorithm(
+                        rootState.getAllPlayers()[posIndex],
+                        new DefaultSimulator(expander),
+                        new UCTBackPropFactory(2),
+                        //new Exp3BackPropFactory(-1, 1, 0.2),
+                        //new RMBackPropFactory(-1,1,0.4),
+                        rootState, expander);
+                player.returnMeanValue=false;
+                player.runIterations(2);
+                return player;
+            } else {
+                SMMCTSAlgorithm player = new SMMCTSAlgorithm(
                     rootState.getAllPlayers()[posIndex],
                     new DefaultSimulator(expander),
-                    new UCTBackPropFactory(2),
-                    //new Exp3BackPropFactory(-1, 1, 0.2),
-                    //new RMBackPropFactory(-1,1,0.4),
+                    new SMRMBackPropFactory(0.4),
                     rootState, expander);
-            player.returnMeanValue=false;
-            player.runIterations(2);
-            return player;
+                player.runIterations(2);
+                return player;
+            }
         } else if (alg.equals("OOS")){
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);

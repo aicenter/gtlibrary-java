@@ -56,6 +56,6 @@ public class Exp3BackPropFactory implements BackPropFactory  {
     
     @Override
     public Selector createSelector(int N) {
-        return new Exp3MSelector(N,this);
+        return new Exp3Selector(N,this);
     }
 }
