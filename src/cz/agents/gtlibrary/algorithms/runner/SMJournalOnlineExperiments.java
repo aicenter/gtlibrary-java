@@ -43,7 +43,7 @@ public class SMJournalOnlineExperiments {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|OOS|MCUCT|MCEXP3|MCRM} {BI|BIAB|DO|DOAB|DOSAB|OOS|MCUCT|MCEXP3|MCRM} {GS|PE|RG} [domain parameters].");
+            System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM} {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM} {GS|PE|RG} [domain parameters].");
             System.exit(-1);
         }
         SMJournalOnlineExperiments exp = new SMJournalOnlineExperiments();
@@ -125,20 +125,20 @@ public class SMJournalOnlineExperiments {
     }
     
     public GamePlayingAlgorithm getPlayer(int posIndex, String alg, String domain) {
-        if (alg.startsWith("MC")){
+        if (alg.startsWith("MCTS")){
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
-            BackPropFactory fact=null;
-            switch(alg){
-                case "MCUCT":
-                    fact = new UCTBackPropFactory(2);
-                    break;
-                case "MCEXP3":
-                    fact = new Exp3BackPropFactory(-1, 1, 0.2);
-                    break;
-            }
             
-            if (!alg.equals("MCRM")){
+            if (!alg.equals("MCTS-RM")){
+                BackPropFactory fact=null;
+                switch(alg){
+                    case "MCTS-UCT":
+                        fact = new UCTBackPropFactory(2);
+                        break;
+                    case "MCTS-EXP3":
+                        fact = new Exp3BackPropFactory(-1, 1, 0.2);
+                        break;
+                }
                 ISMCTSAlgorithm player = new ISMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
                         new DefaultSimulator(expander),
