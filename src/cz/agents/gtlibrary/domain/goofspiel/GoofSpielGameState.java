@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.domain.goofspiel;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -14,7 +15,7 @@ import cz.agents.gtlibrary.utils.Pair;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class GoofSpielGameState extends GameStateImpl {
+public class GoofSpielGameState extends SimultaneousGameState {
 
     private static final long serialVersionUID = -1885375538236725674L;
 
@@ -22,7 +23,6 @@ public class GoofSpielGameState extends GameStateImpl {
     protected List<Action> sequenceForAllPlayers;
     private GoofSpielAction faceUpCard;
     private Sequence natureSequence;
-    private int depth;
 
     protected int[] playerScore;
 
@@ -40,7 +40,6 @@ public class GoofSpielGameState extends GameStateImpl {
         round = 0;
         currentPlayerIndex = 2;
         natureSequence = createRandomSequence();
-        depth = Integer.MAX_VALUE;
 
         createPlayerCards();
     }
@@ -53,7 +52,6 @@ public class GoofSpielGameState extends GameStateImpl {
         round = 0;
         currentPlayerIndex = 2;
         natureSequence = createRandomSequence();
-        this.depth = depth*3;
 
         createPlayerCards();
     }
@@ -66,7 +64,6 @@ public class GoofSpielGameState extends GameStateImpl {
         round = 0;
         currentPlayerIndex = 2;
         this.natureSequence = natureSequence;
-        depth = Integer.MAX_VALUE;
 
         createPlayerCards();
     }
@@ -79,7 +76,6 @@ public class GoofSpielGameState extends GameStateImpl {
         round = 0;
         currentPlayerIndex = 2;
         this.natureSequence = natureSequence;
-        this.depth = depth;
 
         createPlayerCards();
     }
@@ -104,7 +100,6 @@ public class GoofSpielGameState extends GameStateImpl {
         this.faceUpCard = gameState.faceUpCard;
         this.sequenceForAllPlayers = new ArrayList<Action>(gameState.sequenceForAllPlayers);
         this.natureSequence = new LinkedListSequenceImpl(gameState.natureSequence);
-        this.depth = gameState.depth;
     }
 
     public Sequence getNatureSequence() {
@@ -215,15 +210,7 @@ public class GoofSpielGameState extends GameStateImpl {
         return currentPlayerIndex == 2;
     }
 
-    @Override
-    public double[] getUtilities() {
-//		double drawValue = (playerScore[0] + playerScore[1]) / 2.;
-//
-//		return new double[] { playerScore[0] - drawValue, playerScore[1] - drawValue, 0 };
-        return evaluate();
-    }
-
-    private double[] getEndGameUtilities() {
+    protected double[] getEndGameUtilities() {
         if (playerScore[0] > playerScore[1])
             return new double[]{1, -1, 0};
         if (playerScore[0] < playerScore[1])
@@ -241,10 +228,13 @@ public class GoofSpielGameState extends GameStateImpl {
     }
 
     @Override
-    public boolean isGameEnd() {
-        if(round > depth)
-            return true;
+    protected boolean isActualGameEnd() {
         return round == GSGameInfo.depth;
+    }
+
+    @Override
+    protected boolean isDepthLimit() {
+        return round > depth;
     }
 
     @Override

@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.domain.randomgame;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -12,13 +13,16 @@ import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-public class RandomGameState extends GameStateImpl {
+public class RandomGameState extends SimultaneousGameState {
 
-	private static final long serialVersionUID = 6086530572992658181L;
-	
-	private int ID;
+    private static final long serialVersionUID = 6086530572992658181L;
+
+    private int ID;
     private int center;
     private Player playerToMove;
     protected Map<Player, ArrayList<Integer>> observations = new FixedSizeMap<Player, ArrayList<Integer>>(2);
@@ -46,16 +50,16 @@ public class RandomGameState extends GameStateImpl {
     }
 
     protected void evaluateAction(RandomGameAction action) {
-        int newID = (ID + action.getOrder())*31 + 17;
-        center += new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_CENTER_MODIFICATION*2+1)-RandomGameInfo.MAX_CENTER_MODIFICATION;
+        int newID = (ID + action.getOrder()) * 31 + 17;
+        center += new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_CENTER_MODIFICATION * 2 + 1) - RandomGameInfo.MAX_CENTER_MODIFICATION;
         generateObservations(newID, action);
-        
+
         this.ID = newID;
         this.ISKey = null;
         this.changed = true;
     }
-    
-    protected void generateObservations(int newID, RandomGameAction action){
+
+    protected void generateObservations(int newID, RandomGameAction action) {
         switchPlayers();
 
         int newObservation = new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_OBSERVATION);
@@ -72,10 +76,9 @@ public class RandomGameState extends GameStateImpl {
         return new RandomGameState(this);
     }
 
-    @Override
-    public double[] getUtilities() {
+    protected double[] getEndGameUtilities() {
         if (!isGameEnd())
-            return new double[] { 0, 0 };
+            return new double[]{0, 0};
 
         double rndValue;
 
@@ -87,13 +90,12 @@ public class RandomGameState extends GameStateImpl {
             }
         } else {
             if (RandomGameInfo.BINARY_UTILITY) {
-                rndValue = new HighQualityRandom(ID).nextInt(RandomGameInfo.MAX_UTILITY+1); // totally random binary
+                rndValue = new HighQualityRandom(ID).nextInt(RandomGameInfo.MAX_UTILITY + 1); // totally random binary
             } else {
-                rndValue = new HighQualityRandom(ID).nextDouble()*RandomGameInfo.MAX_UTILITY; // totally random
+                rndValue = new HighQualityRandom(ID).nextDouble() * RandomGameInfo.MAX_UTILITY; // totally random
             }
         }
-
-        return new double[] { rndValue, -rndValue };
+        return new double[]{rndValue, -rndValue};
     }
 
     @Override
@@ -119,8 +121,12 @@ public class RandomGameState extends GameStateImpl {
                 assert Math.abs(doubleValue - rndValue.doubleValue()) < 1e-10;
             }
         }
-
         return new Rational[]{rndValue, rndValue.negate()};
+    }
+
+    @Override
+    public double[] evaluate() {
+        return new double[]{center, -center};
     }
 
     @Override
@@ -134,8 +140,18 @@ public class RandomGameState extends GameStateImpl {
     }
 
     @Override
-    public boolean isGameEnd() {
+    protected boolean isActualGameEnd() {
         return Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size()) == RandomGameInfo.MAX_DEPTH;
+    }
+
+    @Override
+    protected boolean isDepthLimit() {
+        return Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size()) > depth;
+    }
+
+    @Override
+    public void setDepth(int depth) {
+        this.depth = depth +  Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size());
     }
 
     @Override
@@ -152,16 +168,16 @@ public class RandomGameState extends GameStateImpl {
         }
         return ISKey;
     }
-    
-    private int uniqueHash(List<Integer> list, int base){
+
+    private int uniqueHash(List<Integer> list, int base) {
         int out = 1;
-        for (Integer i : list){
+        for (Integer i : list) {
             out *= base;
             out += i;
         }
         Iterator i = getHistory().getSequenceOf(getPlayerToMove()).iterator();
         while (i.hasNext()) {
-            RandomGameAction a = (RandomGameAction)i.next();
+            RandomGameAction a = (RandomGameAction) i.next();
             out *= base;
             out += a.getOrder();
         }
@@ -176,7 +192,7 @@ public class RandomGameState extends GameStateImpl {
         }
         return hash;
     }
-    
+
     @Override
     public boolean equals(Object object) {
         if (this == object)
@@ -203,6 +219,6 @@ public class RandomGameState extends GameStateImpl {
     public String toString() {
         return "RG" + center;
     }
-    
-    
+
+
 }
