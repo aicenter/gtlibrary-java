@@ -132,7 +132,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
 
                 debugOutput.println("Iteration for depth " + (depth - 1) + " ended in " + (threadBean.getCurrentThreadCpuTime() - start));
                 if (threadBean.getCurrentThreadCpuTime() - start > limit) {
-                    debugOutput.println("limit: " + limit + " time taken: " + currentIterationTime);
+                    System.out.println("limit: " + limit + " time taken: " + (threadBean.getCurrentThreadCpuTime() - start));
                     debugOutput.println("Time run out for depth " + depth);
                     System.out.println("Depth " + (depth - 1) + " finnished");
                     return;
@@ -141,7 +141,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
                     return;
                 currentBest = currentStrategy;
                 if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(limit, start, currentIterationTime)) {
-                    debugOutput.println("limit: " + limit + " time taken: " + currentIterationTime);
+                    System.out.println("limit: " + limit + " time taken: " + (threadBean.getCurrentThreadCpuTime() - start));
                     debugOutput.println("Time run out for depth " + depth);
                     System.out.println("Depth " + (depth) + " finnished");
                     return;
