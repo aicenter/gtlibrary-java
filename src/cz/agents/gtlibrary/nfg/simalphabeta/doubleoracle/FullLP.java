@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.PlayerStrategySet;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolverImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
@@ -23,6 +24,8 @@ public class FullLP extends DoubleOracle {
 
     @Override
     public void generate() {
+        if(Killer.kill)
+            return;
         PlayerStrategySet<ActionPureStrategy> p1StrategySet = new PlayerStrategySet<ActionPureStrategy>(p1Oracle.getActions());
         PlayerStrategySet<ActionPureStrategy> p2StrategySet = new PlayerStrategySet<ActionPureStrategy>(p2Oracle.getActions());
 
@@ -30,6 +33,8 @@ public class FullLP extends DoubleOracle {
         Stats.getInstance().addToP2StrategyCount(p2StrategySet.size());
         coreSolver.addPlayerTwoStrategies(p2StrategySet);
         coreSolver.addPlayerOneStrategies(p1StrategySet);
+        if(Killer.kill)
+            return;
         coreSolver.computeNashEquilibrium();
         Stats.getInstance().addToP1NESize(coreSolver.getPlayerOneStrategy());
         Stats.getInstance().addToP2NESize(coreSolver.getPlayerTwoStrategy());

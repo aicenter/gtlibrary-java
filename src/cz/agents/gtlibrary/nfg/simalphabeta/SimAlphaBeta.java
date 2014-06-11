@@ -153,6 +153,8 @@ public class SimAlphaBeta {
         DoubleOracle oracle = data.getDoubleOracle(rootState, -p2AlphaBeta.getUnboundedValue(rootState), p1AlphaBeta.getUnboundedValue(rootState));
 
         oracle.generate();
+        if(Killer.kill)
+            return null;
 //        System.out.println("****************");
 //			System.out.println("root state: " + rootState);
 //        System.out.println("game value: " + oracle.getGameValue());
