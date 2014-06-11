@@ -10,7 +10,6 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -27,7 +26,6 @@ import java.util.Random;
 public class SMOOSAlgorithm implements GamePlayingAlgorithm {
     protected Player searchingPlayer;
     protected OOSSimulator simulator;
-    protected BackPropFactory fact;
     protected InnerNode rootNode;
     protected ThreadMXBean threadBean;
     private double epsilon = 0.6;
@@ -189,7 +187,7 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
                 in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
             }
             is = rootNode.getAlgConfig().getInformationSetFor(gameState);
-            is.setAlgorithmData(fact.createSelector(in.getActions()));
+            is.setAlgorithmData(new OOSAlgorithmData(in.getActions()));
         }
         assert is.getAllNodes().size()==1;
         rootNode = is.getAllNodes().iterator().next();
