@@ -4,6 +4,7 @@
  */
 package cz.agents.gtlibrary.algorithms.mcts;
 
+import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
@@ -11,10 +12,12 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMSelector;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.Map;
 
     
 /**
@@ -49,20 +52,22 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         }
         System.out.println();
         System.out.println("Iters: " + iters);
-        return null;
-        //TODO finish implementation of the online case
-//        if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
-//        MCTSInformationSet is = curISArray[0].getInformationSet();
-//        Map<Action, Double> distribution = (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData());
-//        return Strategy.selectAction(distribution, rnd);
+        Map<Action, Double> distribution;
+        if (rootNode.getInformationSet().getPlayer().equals(searchingPlayer)){
+            distribution = (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData());
+        } else {
+            distribution = (new MeanStratDist()).getDistributionFor(((InnerNode)rootNode.getChildren().values().iterator().next()).getInformationSet().getAlgorithmData());
+        }
+        return Strategy.selectAction(distribution, rnd);
     }
     
     public Action runIterations(int iterations){
         for (int i=0;i<iterations;i++) {
             iteration(rootNode);
         }
-        return null;
-        //TODO: as above
+        if (!rootNode.getInformationSet().getPlayer().equals(searchingPlayer)) return null;
+        Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData());
+        return Strategy.selectAction(distribution, rnd);
     }
     
     protected double iteration(Node node){
@@ -130,7 +135,28 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
     
     @Override
     public Action runMiliseconds(int miliseconds, GameState gameState) {
-        setCurrentIS(rootNode.getAlgConfig().getInformationSetFor(gameState));
-        return runMiliseconds(miliseconds);
+        MCTSInformationSet is = rootNode.getAlgConfig().getInformationSetFor(gameState);
+        if (is.getAllNodes().isEmpty()){
+            InnerNode in = rootNode;
+            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast());
+            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast());
+            if (in.getGameState().isPlayerToMoveNature()){
+                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
+            }
+            is = rootNode.getAlgConfig().getInformationSetFor(gameState);
+            expandNode(in);
+        }
+        assert is.getAllNodes().size()==1;
+        rootNode = is.getAllNodes().iterator().next();
+        rootNode.setParent(null);
+        Action a = runMiliseconds(miliseconds);
+        if (gameState.getPlayerToMove().equals(searchingPlayer)){
+            return a;
+        } else {
+            InnerNode child = (InnerNode) rootNode.getChildFor(rootNode.getActions().get(0));
+            is = child.getInformationSet();
+            Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
+            return Strategy.selectAction(distribution, rnd);
+        }
     }
 }
