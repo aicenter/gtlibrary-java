@@ -1,6 +1,8 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.alphabeta;
 
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
 
 
 public class NullAlphaBeta implements AlphaBeta {
@@ -11,7 +13,12 @@ public class NullAlphaBeta implements AlphaBeta {
 		return Double.POSITIVE_INFINITY;
 	}
 
-	@Override
+    @Override
+    public Action getTopLevelAction(Player player) {
+        return null;
+    }
+
+    @Override
 	public double getUnboundedValue(GameState state) {
 		return Double.POSITIVE_INFINITY;
 	}

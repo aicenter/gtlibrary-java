@@ -9,7 +9,9 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -35,6 +37,7 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -59,6 +62,9 @@ public class SMJournalExperiments {
     static SQFBestResponseAlgorithm brAlg1;
     static Expander<MCTSInformationSet> expander;
 
+    static long samplingTimeLimit = 1800000; // default: 30min
+
+    static enum MCTStype {UCT, EXP3, RM};
 
     public static void main(String[] args) {
         if (args.length < 2) {
@@ -148,11 +154,19 @@ public class SMJournalExperiments {
     }
 
     public void runAlgorithm(String alg, String domain) {
-        if (alg.equals("CFR") || alg.equals("OOS") || alg.equals("MCTS") || alg.equals("RS")) {
+        if (alg.equals("CFR") || alg.equals("OOS") || alg.startsWith("MCTS") || alg.equals("RS")) {
             loadGame(domain);
-            if (alg.equals("MCTS"))
-                runMCTS();
-            else if (alg.equals("RS"))
+            String tl = System.getProperty("tLimit");
+            if (tl != null) samplingTimeLimit = new Long(tl);
+            if (alg.startsWith("MCTS")) {
+                if (alg.equals("MCTS-UCT"))
+                    runMCTS(MCTStype.UCT);
+                else if (alg.equals("MCTS-EXP3"))
+                    runMCTS(MCTStype.EXP3);
+                else {
+                    throw new IllegalArgumentException("MCTS requires selector function specified {MCTS-UCT,MCTS-EXP3}");
+                }
+            } else if (alg.equals("RS"))
                 runRandomSim();  // mlanctot: you could leave this here for me? :) 
             else runCFR(alg.equals("OOS"));
         } else { // backward induction algorithms
@@ -232,7 +246,7 @@ public class SMJournalExperiments {
         double br0Val = Double.POSITIVE_INFINITY;
         double cumulativeTime = 0;
 
-        for (int i = 0; cumulativeTime < 1800000 && (br0Val + br1Val > 0.005); i++) {
+        for (int i = 0; cumulativeTime < samplingTimeLimit && (br0Val + br1Val > 0.005); i++) {
             alg.runMiliseconds((int)(secondsIteration*1000));
             cumulativeTime += secondsIteration*1000;
 
@@ -273,20 +287,36 @@ public class SMJournalExperiments {
         System.out.println("Created nodes: " + nodes +"; infosets: " +infosets);
     }
 
-    public void runMCTS() {
+    public void runMCTS(MCTStype type) {
         double secondsIteration = 0.1;
 
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
 
         Distribution dist = new MeanStratDist();
 
-        ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
-                rootState.getAllPlayers()[0],
-                new DefaultSimulator(expander),
-                //new UCTBackPropFactory(2),
-                new Exp3BackPropFactory(-1, 1, 0.2),
-                //new RMBackPropFactory(-1,1,0.4),
-                rootState, expander);
+        BackPropFactory bpFactory = null;
+        ISMCTSAlgorithm alg = null;
+
+        switch (type) {
+            case UCT:
+                bpFactory = new UCTBackPropFactory(2);
+                break;
+            case EXP3:
+                bpFactory = new Exp3BackPropFactory(-1, 1, 0.2);
+                break;
+            case RM:
+                throw new NotImplementedException();
+        }
+
+        if (!type.equals(MCTStype.RM))
+            alg = new ISMCTSAlgorithm(
+                    rootState.getAllPlayers()[0],
+                    new DefaultSimulator(expander),
+                    bpFactory,
+    //                new UCTBackPropFactory(2),
+    //                new Exp3BackPropFactory(-1, 1, 0.2),
+                    //new RMBackPropFactory(-1,1,0.4),
+                    rootState, expander);
         alg.returnMeanValue=false;
 
         alg.runIterations(2);
@@ -302,7 +332,7 @@ public class SMJournalExperiments {
         double br0Val = Double.POSITIVE_INFINITY;
         double cumulativeTime = 0;
 
-        for (int i = 0; cumulativeTime < 1800000 && (br0Val + br1Val > 0.005); i++) {
+        for (int i = 0; cumulativeTime < samplingTimeLimit && (br0Val + br1Val > 0.005); i++) {
             alg.runMiliseconds((int)(secondsIteration*1000));
             cumulativeTime += secondsIteration*1000;
 
@@ -310,8 +340,8 @@ public class SMJournalExperiments {
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
-            br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
-            br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
+            br1Val = brAlg1.calculateBR(rootState, strategy0);
+            br0Val = brAlg0.calculateBR(rootState, strategy1);
 //            System.out.println("BR1: " + br1Val);
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));

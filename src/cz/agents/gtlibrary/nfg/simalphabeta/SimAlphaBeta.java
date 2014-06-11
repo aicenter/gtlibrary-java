@@ -18,6 +18,7 @@ import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
+import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.factory.AlphaBetaFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.factory.NoCacheAlphaBetaFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.factory.NullAlphaBetaFactory;
@@ -146,16 +147,32 @@ public class SimAlphaBeta {
                 new DOCacheImpl(),
                 new NatureCacheImpl(),
                 new LowerBoundComparatorFactory());
-        System.out.println(data.gameInfo.getInfo());
-        DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
+//        System.out.println(data.gameInfo.getInfo());
+        AlphaBeta p1AlphaBeta = abFactory.getP1AlphaBeta(expander, gameInfo);
+        AlphaBeta p2AlphaBeta = abFactory.getP2AlphaBeta(expander, gameInfo);
+        DoubleOracle oracle = data.getDoubleOracle(rootState, -p2AlphaBeta.getUnboundedValue(rootState), p1AlphaBeta.getUnboundedValue(rootState));
 
         oracle.generate();
-        System.out.println("****************");
+        if(Killer.kill)
+            return null;
+//        System.out.println("****************");
 //			System.out.println("root state: " + rootState);
-        System.out.println("game value: " + oracle.getGameValue());
-        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
-        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
-        return oracle.getStrategyFor(player);
+//        System.out.println("game value: " + oracle.getGameValue());
+//        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
+//        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
+        return getStrategy(player, p1AlphaBeta, oracle);
+    }
+
+    private MixedStrategy<ActionPureStrategy> getStrategy(Player player, AlphaBeta p1AlphaBeta, DoubleOracle oracle) {
+        MixedStrategy<ActionPureStrategy> strategy = oracle.getStrategyFor(player);
+
+        if(strategy == null) {
+            strategy = new MixedStrategy<ActionPureStrategy>();
+
+            strategy.put(new ActionPureStrategy(p1AlphaBeta.getTopLevelAction(player)), 1d);
+//            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
+        }
+        return strategy;
     }
 
 }

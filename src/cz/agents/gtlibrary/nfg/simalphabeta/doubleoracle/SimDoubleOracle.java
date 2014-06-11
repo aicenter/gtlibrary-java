@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.PlayerStrategySet;
 import cz.agents.gtlibrary.nfg.core.ZeroSumGameNESolverImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
@@ -71,13 +72,9 @@ public class SimDoubleOracle extends DoubleOracle {
         int iters = -1;
 
         while (true) {
+            if(Killer.kill)
+                return;
             iters++;
-            if (isRoot) {
-                System.out.print("Iterations in root: " + iters);
-                System.out.println(" interval size: " + (beta - alpha));
-            }
-
-
             Pair<ActionPureStrategy, Double> p2BestResponse = p2Oracle.getBestResponse(getP1MixedStrategy(initialStrategy), alpha, beta);
 
             if (-p2BestResponse.getRight() > alpha)
