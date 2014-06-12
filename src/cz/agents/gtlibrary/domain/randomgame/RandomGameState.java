@@ -2,7 +2,6 @@ package cz.agents.gtlibrary.domain.randomgame;
 
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
-import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -126,7 +125,9 @@ public class RandomGameState extends SimultaneousGameState {
 
     @Override
     public double[] evaluate() {
-        return new double[]{center, -center};
+        double normalization = 2 * RandomGameInfo.MAX_CENTER_MODIFICATION * RandomGameInfo.MAX_DEPTH;
+
+        return new double[]{center / normalization, -center / normalization};
     }
 
     @Override
@@ -151,7 +152,7 @@ public class RandomGameState extends SimultaneousGameState {
 
     @Override
     public void setDepth(int depth) {
-        this.depth = depth +  Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size());
+        this.depth = depth + Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size());
     }
 
     @Override
