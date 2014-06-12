@@ -71,6 +71,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
         try {
             Thread.currentThread().sleep(miliseconds - Math.min(((int) (miliseconds / 10.)), 100));
             Killer.kill = true;
+            System.out.println("killed");
             thread.join();
             return chooseAction(currentBest);
         } catch (InterruptedException e) {
@@ -138,8 +139,12 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
                     System.out.println("Depth " + (depth - 1) + " finnished");
                     return;
                 }
-                if (Killer.kill)
+                if (Killer.kill) {
+                    System.out.println("limit: " + limit + " time taken: " + (threadBean.getCurrentThreadCpuTime() - start));
+                    debugOutput.println("Time run out for depth " + depth);
+                    System.out.println("Depth " + (depth - 1) + " finnished");
                     return;
+                }
                 currentBest = currentStrategy;
                 if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(limit, start, currentIterationTime)) {
                     System.out.println("limit: " + limit + " time taken: " + (threadBean.getCurrentThreadCpuTime() - start));

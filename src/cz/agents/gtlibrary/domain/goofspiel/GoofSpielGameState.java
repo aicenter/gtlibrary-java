@@ -1,7 +1,6 @@
 package cz.agents.gtlibrary.domain.goofspiel;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
-import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -278,9 +277,64 @@ public class GoofSpielGameState extends SimultaneousGameState {
             return getEndGameUtilities();
         double sum = playerScore[0] + playerScore[1];
 
-        if(sum == 0)
+        if (sum == 0)
             return new double[]{0, 0, 0};
-       return new double[]{(playerScore[0] - sum / 2) / sum, (playerScore[1] - sum / 2) / sum, 0};
+        if (unwinnableFor(players[0]))
+            return new double[]{-1, 1, 0};
+        if (unwinnableFor(players[1]))
+            return new double[]{1, -1, 0};
+        int totalSum = getSum(GSGameInfo.CARDS_FOR_PLAYER);
+
+        return new double[]{(playerScore[0] - sum / 2) / totalSum, (playerScore[1] - sum / 2) / totalSum, 0};
+    }
+
+    private int getSum(int[] cards) {
+        int sum = 0;
+
+        for (int i = 0; i < cards.length; i++) {
+            sum += cards[i];
+        }
+        return sum;
+    }
+
+    private boolean unwinnableFor(Player player) {
+        int score = playerScore[player.getId()];
+        int opponentScore = playerScore[1 - player.getId()];
+
+        if (score + getSumOfRemainingCards() < opponentScore)
+            return true;
+        if (score + getHighestAchievableScore(player) < opponentScore)
+            return true;
+        return false;
+    }
+
+    private int getHighestAchievableScore(Player player) {
+        List<Integer> sortedCards = new ArrayList<>();
+        int possibleWinCount = getPossibleWinCount(player);
+        int highestAchievableScore = 0;
+
+        for (Action action : natureSequence) {
+            sortedCards.add(((GoofSpielAction) action).getValue());
+        }
+        Collections.sort(sortedCards);
+        for (int i = sortedCards.size() - 1; i > sortedCards.size() - possibleWinCount - 1; i--) {
+            highestAchievableScore += sortedCards.get(i);
+        }
+        return highestAchievableScore;
+    }
+
+    private int getPossibleWinCount(Player player) {
+        int possibleWinCount = 0;
+
+        for (Integer playerCard : playerCards.get(player)) {
+            for (Integer opponentCard : playerCards.get(players[1 - player.getId()])) {
+                if (playerCard > opponentCard) {
+                    possibleWinCount++;
+                    break;
+                }
+            }
+        }
+        return possibleWinCount;
     }
 
     public void setDepth(int depth) {
@@ -351,4 +405,12 @@ public class GoofSpielGameState extends SimultaneousGameState {
         return history.toString();
     }
 
+    public int getSumOfRemainingCards() {
+        int sum = faceUpCard.getValue();
+
+        for (Action action : natureSequence) {
+            sum += ((GoofSpielAction) action).getValue();
+        }
+        return sum;
+    }
 }
