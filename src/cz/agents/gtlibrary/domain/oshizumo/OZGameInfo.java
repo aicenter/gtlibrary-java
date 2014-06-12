@@ -40,7 +40,7 @@ public class OZGameInfo implements GameInfo {
 
     @Override
     public String getInfo() {
-        return "OshiZumo, starting coints: " + startingCoins + ", locK: " + locK + ", minBid: " + minBid;
+        return "OshiZumo, starting coins: " + startingCoins + ", locK: " + locK + ", minBid: " + minBid;
     }
 
     @Override
