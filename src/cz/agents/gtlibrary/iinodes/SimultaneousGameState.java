@@ -20,6 +20,10 @@ public abstract class SimultaneousGameState extends GameStateImpl {
         this.depth = depth;
     }
 
+    public int getDepth() {
+        return depth;
+    }
+
     @Override
     public boolean isGameEnd() {
         return isDepthLimit() || isActualGameEnd();
@@ -36,6 +40,4 @@ public abstract class SimultaneousGameState extends GameStateImpl {
     protected abstract boolean isActualGameEnd();
 
     protected abstract boolean isDepthLimit();
-
-
 }
