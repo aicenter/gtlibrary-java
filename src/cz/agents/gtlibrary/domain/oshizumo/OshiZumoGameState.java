@@ -1,36 +1,21 @@
 package cz.agents.gtlibrary.domain.oshizumo;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
-import cz.agents.gtlibrary.iinodes.GameStateImpl;
-import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.utils.FixedSizeMap;
-import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
-public class OshiZumoGameState extends GameStateImpl {
+public class OshiZumoGameState extends SimultaneousGameState {
 
     // lanctot: Note: maybe need to change this
     private static final long serialVersionUID = -1885423234236725674L;
 
     protected List<Action> sequenceForAllPlayers;
-    private OshiZumoAction faceUpCard;
 
     protected int wrestlerLoc;
     protected int round;
@@ -168,19 +153,47 @@ public class OshiZumoGameState extends GameStateImpl {
     }
 
     @Override
-    public double[] getUtilities() {
-        if (isGameEnd()) {
-            if (wrestlerLoc < OZGameInfo.locK)
-                return new double[]{-1, 1, 0};
-            else if (wrestlerLoc > OZGameInfo.locK)
-                return new double[]{1, -1, 0};
-        }
+    protected double[] getEndGameUtilities() {
+        if (wrestlerLoc < OZGameInfo.locK)
+            return new double[]{-1, 1, 0};
+        else if (wrestlerLoc > OZGameInfo.locK)
+            return new double[]{1, -1, 0};
         return new double[]{0, 0, 0};
     }
 
     @Override
-    public boolean isGameEnd() {
-        return ((p1Bid == 0 && p2Bid == 0) || wrestlerLoc < 0 || wrestlerLoc >= (2 * OZGameInfo.locK + 1) || (p1Coins < OZGameInfo.minBid && p2Coins < OZGameInfo.minBid));
+    protected boolean isActualGameEnd() {
+        return ((p1Bid == 0 && p2Bid == 0) || wrestlerLoc < 0 || wrestlerLoc >= (2 * OZGameInfo.locK + 1)
+                || (p1Coins < OZGameInfo.minBid && p2Coins < OZGameInfo.minBid));
+    }
+
+    @Override
+    public double[] evaluate() {
+        if (wrestlerLoc > OZGameInfo.locK && p1Coins >= p2Coins)//on the side of p2 and p1 has more money than p2
+            return new double[]{1, -1, 0};
+        if (wrestlerLoc == OZGameInfo.locK && p1Coins > p2Coins)//in the middle and p1 has more money than p2
+            return new double[]{1, -1, 0};
+        if (wrestlerLoc < OZGameInfo.locK && p1Coins <= p2Coins)//on the side of p1 and p2 has more money than p1
+            return new double[]{-1, 1, 0};
+        if (wrestlerLoc == OZGameInfo.locK && p1Coins < p2Coins)//in the middle and p2 has more money than p1
+            return new double[]{-1, 1, 0};
+        if (p2Coins < (wrestlerLoc - OZGameInfo.locK) * OZGameInfo.minBid)//on the side of p2 and p2 has not enough money to change that
+            return new double[]{1, -1, 0};
+        if (p1Coins < (OZGameInfo.locK - wrestlerLoc) * OZGameInfo.minBid)//on the side of p1 and p1 has not enough money to change that
+            return new double[]{1, -1, 0};
+        double value = ((double) p1Coins) / OZGameInfo.minBid - ((double) p2Coins) / OZGameInfo.minBid + wrestlerLoc - OZGameInfo.locK;
+
+        return new double[]{value, -value, 0};
+    }
+
+    @Override
+    protected boolean isDepthLimit() {
+        return round > depth;
+    }
+
+    @Override
+    public void setDepth(int depth) {
+        this.depth = round + depth;
     }
 
     @Override

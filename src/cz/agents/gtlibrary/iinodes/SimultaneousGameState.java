@@ -16,10 +16,6 @@ public abstract class SimultaneousGameState extends GameStateImpl {
         this.depth = gameState.depth;
     }
 
-    public void setDepth(int depth) {
-        this.depth = depth;
-    }
-
     public int getDepth() {
         return depth;
     }
@@ -34,6 +30,8 @@ public abstract class SimultaneousGameState extends GameStateImpl {
             return getEndGameUtilities();
         return evaluate();
     }
+
+    public abstract void setDepth(int depth);
 
     protected abstract double[] getEndGameUtilities();
 
