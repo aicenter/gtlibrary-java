@@ -90,7 +90,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
             if (selector != null){
                 selActionIdxs = selector.select();
                 selAction = n.getActions().get(selActionIdxs.getLeft());
-                InnerNode bottom = (InnerNode) n.getChildOrNull(selAction);
+                InnerNode bottom = (InnerNode) n.getChildFor(selAction);
                 Node child = bottom.getChildFor(bottom.getActions().get(selActionIdxs.getRight()));
                 retValue = iteration(child);
             } else {
@@ -98,7 +98,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
                 selector = (SMSelector) n.getInformationSet().getAlgorithmData();
                 selActionIdxs = selector.select();
                 selAction = n.getActions().get(selActionIdxs.getLeft());
-                InnerNode bottom = (InnerNode) n.getChildOrNull(selAction);
+                InnerNode bottom = (InnerNode) n.getChildFor(selAction);
                 Node child = bottom.getChildFor(bottom.getActions().get(selActionIdxs.getRight()));
                 retValue = simulator.simulate(child.getGameState())[searchingPlayer.getId()];
             }
@@ -108,14 +108,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
     }
     
     private void expandNode(InnerNode n){
-        InnerNode bottom=null;
-        for (Action a : n.getActions()){
-            bottom = (InnerNode) n.getChildFor(a);
-            for (Action b : bottom.getActions()){
-                bottom.getChildFor(b);
-            }
-        }
-        assert n.getActions().size() == bottom.getInformationSet().getAllNodes().size();
+        InnerNode bottom=(InnerNode) n.getChildFor(n.getActions().get(0));
         SMSelector selector = fact.createSlector(n.getActions(), bottom.getActions());
         n.getInformationSet().setAlgorithmData(selector);
         bottom.getInformationSet().setAlgorithmData(selector.getBottomData());
