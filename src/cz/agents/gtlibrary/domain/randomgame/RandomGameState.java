@@ -127,8 +127,9 @@ public class RandomGameState extends SimultaneousGameState {
     public double[] evaluate() {
         double normalization = 1;
 
-        if(!RandomGameInfo.UTILITY_CORRELATION || RandomGameInfo.BINARY_UTILITY)
+        if (RandomGameInfo.BINARY_UTILITY)
             normalization = 2 * RandomGameInfo.MAX_CENTER_MODIFICATION * RandomGameInfo.MAX_DEPTH;
+
         return new double[]{center / normalization, -center / normalization};
     }
 

@@ -41,7 +41,7 @@ public class SMJournalOnlineExperiments {
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
     static Expander expander;
     static Random rnd = new HighQualityRandom();
-    static int compTime = 1000;
+    static int compTime = 5000;
     static boolean printDebugInfo = true; 
 
     public static void main(String[] args) {
@@ -52,7 +52,7 @@ public class SMJournalOnlineExperiments {
         SMJournalOnlineExperiments exp = new SMJournalOnlineExperiments();
         exp.handleDomain(args);
         
-        for (int i=0; i<100; i++) exp.runMatch(args);
+        for (int i=0; i<50; i++) exp.runMatch(args);
     }
 
 
@@ -221,6 +221,7 @@ public class SMJournalOnlineExperiments {
                     r -= ap;
                 }
             } else {
+                System.out.println("Current State Eval Value: " + curState.evaluate()[0]);
                 Action a1 = p1.runMiliseconds(compTime, curState);
                 if (printDebugInfo) 
                   System.out.println("P1 chose: " + a1);

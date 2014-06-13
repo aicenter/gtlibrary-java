@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.io.EmptyPrintStream;
 
 import java.io.PrintStream;
@@ -25,7 +26,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
     private boolean useGlobalCache;
     private final GameInfo gameInfo;
     private final Player player;
-    private final Random random;
+    private final HighQualityRandom random;
     private final Expander<SimABInformationSet> expander;
     private final PrintStream debugOutput = new PrintStream(EmptyPrintStream.getInstance());
     private volatile MixedStrategy<ActionPureStrategy> currentBest;
@@ -49,8 +50,8 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
         this.doubleOracle = doubleOracle;
         this.sortingOwnActions = sortingOwnActions;
         this.useGlobalCache = useGlobalCache;
-        this.random = new Random();
-        threadBean = ManagementFactory.getThreadMXBean();
+        this.random = new HighQualityRandom();
+		threadBean = ManagementFactory.getThreadMXBean();
     }
 
     public SimAlphaBetaAlgorithm(Player player, Expander<SimABInformationSet> expander, GameInfo gameInfo, boolean alphaBetaBounds,
@@ -62,8 +63,8 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
         this.doubleOracle = doubleOracle;
         this.sortingOwnActions = sortingOwnActions;
         this.useGlobalCache = useGlobalCache;
-        this.random = new Random(seed);
-        threadBean = ManagementFactory.getThreadMXBean();
+        this.random = new HighQualityRandom(seed);
+		threadBean = ManagementFactory.getThreadMXBean();
     }
 
     public Action runMiliseconds(final int miliseconds, final GameState state) {
@@ -173,7 +174,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
                     System.out.println("Depth " + (depth - 1) + " finnished");
                     return;
                 }
-                if (Killer.kill) {
+                if (Killer.kill || ((SimultaneousGameState)state).getDepth() > gameInfo.getMaxDepth()) {
                     System.out.println("limit: " + limit + " time taken: " + (threadBean.getCurrentThreadCpuTime() - start));
                     debugOutput.println("Time run out for depth " + depth);
                     System.out.println("Depth " + (depth - 1) + " finnished");
