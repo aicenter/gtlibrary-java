@@ -29,6 +29,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
     private final Expander<SimABInformationSet> expander;
     private final PrintStream debugOutput = new PrintStream(EmptyPrintStream.getInstance());
     private volatile MixedStrategy<ActionPureStrategy> currentBest;
+    private ThreadMXBean threadBean;
 
     public static void main(String[] args) {
         SimAlphaBetaAlgorithm algorithm = new SimAlphaBetaAlgorithm(new PlayerImpl(1), new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), new GSGameInfo(), true, true, true, false);
@@ -49,6 +50,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
         this.sortingOwnActions = sortingOwnActions;
         this.useGlobalCache = useGlobalCache;
         this.random = new Random();
+        threadBean = ManagementFactory.getThreadMXBean();
     }
 
     public SimAlphaBetaAlgorithm(Player player, Expander<SimABInformationSet> expander, GameInfo gameInfo, boolean alphaBetaBounds,
@@ -61,23 +63,55 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
         this.sortingOwnActions = sortingOwnActions;
         this.useGlobalCache = useGlobalCache;
         this.random = new Random(seed);
+        threadBean = ManagementFactory.getThreadMXBean();
     }
 
     public Action runMiliseconds(final int miliseconds, final GameState state) {
         Killer.kill = false;
-        Thread thread = new Thread(new Runner(state, ((long) miliseconds) * 1000000l));
+        long nanoLimit = toNanos(miliseconds);
+        int sleepTime = miliseconds - milisBuffer(miliseconds);
+        Thread thread = new Thread(new Runner(state, nanoLimit));
+        long threadStart = threadBean.getThreadCpuTime(thread.getId());
 
         thread.start();
         try {
-            Thread.currentThread().sleep(miliseconds - Math.min(((int) (miliseconds / 10.)), 100));
-            Killer.kill = true;
-            System.out.println("killed");
-            thread.join();
+            while (true) {
+                Thread.currentThread().sleep(sleepTime);
+                long threadTime = threadBean.getThreadCpuTime(thread.getId()) - threadStart;
+
+                if (nanoLimit - nanoBuffer(nanoLimit) > threadTime && thread.isAlive()) {
+                    sleepTime = toMilis(nanoLimit - threadTime);
+                    System.out.println("snoozing for " + sleepTime);
+                } else {
+                    break;
+                }
+            }
+            if (thread.isAlive()) {
+                Killer.kill = true;
+                System.out.println("killed");
+                thread.join();
+            }
             return chooseAction(currentBest);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private int toMilis(long nanoTime) {
+        return ((int) (nanoTime / 1e6));
+    }
+
+    private long nanoBuffer(long nanoLimit) {
+        return Math.min(((long) (nanoLimit / 20.)), 100000000l);
+    }
+
+    private int milisBuffer(int miliseconds) {
+        return Math.min(((int) (miliseconds / 10.)), 50);
+    }
+
+    private long toNanos(long miliseconds) {
+        return miliseconds * 1000000l;
     }
 
     private Action chooseAction(MixedStrategy<ActionPureStrategy> bestStrategy) {
