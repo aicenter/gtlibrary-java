@@ -222,10 +222,13 @@ public class SMJournalOnlineExperiments {
                 }
             } else {
                 System.out.println("Current State Eval Value: " + curState.evaluate()[0]);
+
+                System.out.println("Searching player 1...");
                 Action a1 = p1.runMiliseconds(compTime, curState);
                 if (printDebugInfo) 
                   System.out.println("P1 chose: " + a1);
 
+                System.out.println("Searching player 2...");
                 Action a2 = p2.runMiliseconds(compTime, curState);
                 if (printDebugInfo) 
                   System.out.println("P2 chose: " + a2);

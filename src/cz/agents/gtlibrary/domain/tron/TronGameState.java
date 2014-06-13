@@ -21,6 +21,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.FastTanh;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 
@@ -415,19 +416,18 @@ public class TronGameState extends SimultaneousGameState {
         return getEndGameUtilities();
 
       // temporary
-      return new double[]{0, 0, 0};
+      //return new double[]{0, 0, 0};
 
-      /*
-        disabled for now
+      flood();
 
-        flood();
+      double delta = area1 - area2; 
 
-        if (area1 > area2) 
-          return new double[]{1, -1, 0};
-        else if (area2 > area1) 
-          return new double[]{-1, 1, 0};
+      // now scale and pass through tanh;
+      // tanh(1) = 0.762
+      // tanh(2) = 0.964
+      double p1eval = FastTanh.tanh(delta / 5.0);
 
-        return new double[]{0, 0, 0};*/
+      return new double[]{p1eval, -p1eval, 0};
     }
 
 
