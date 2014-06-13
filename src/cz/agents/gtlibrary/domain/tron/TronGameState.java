@@ -12,8 +12,10 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -24,7 +26,7 @@ import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.Collections;
 
-public class TronGameState extends GameStateImpl {
+public class TronGameState extends SimultaneousGameState {
 
     // lanctot: Note: maybe need to change this
     private static final long serialVersionUID = -1885423234236725674L;
@@ -290,7 +292,7 @@ public class TronGameState extends GameStateImpl {
     }
 
     @Override
-    public double[] getUtilities() {
+    public double[] getEndGameUtilities() {
         if (isGameEnd()) {
           if (playerRows[0] == playerRows[1] && playerCols[0] == playerCols[1]) 
             return new double[]{0, 0, 0};
@@ -311,7 +313,7 @@ public class TronGameState extends GameStateImpl {
     }
 
     @Override
-    public boolean isGameEnd() {
+    public boolean isActualGameEnd() {
         if (playerRows[0] == playerRows[1] && playerCols[0] == playerCols[1]) 
           return true;  // head-on collision
           
@@ -409,8 +411,8 @@ public class TronGameState extends GameStateImpl {
 
     @Override
     public double[] evaluate() {
-      if (isGameEnd()) 
-        return getUtilities();
+      if (isActualGameEnd())
+        return getEndGameUtilities();
 
       // temporary
       return new double[]{0, 0, 0};
@@ -506,6 +508,17 @@ public class TronGameState extends GameStateImpl {
 
         return str;
     }
+
+    @Override
+    protected boolean isDepthLimit() {
+        return Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size()) > depth;
+    }
+
+    @Override
+    public void setDepth(int depth) {
+        this.depth = depth + Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size());
+    }
+
 }
 
 
