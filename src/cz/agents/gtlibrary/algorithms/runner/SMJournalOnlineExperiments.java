@@ -20,6 +20,9 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.tron.TronGameInfo;
+import cz.agents.gtlibrary.domain.tron.TronExpander;
+import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
@@ -38,12 +41,12 @@ public class SMJournalOnlineExperiments {
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
     static Expander expander;
     static Random rnd = new HighQualityRandom();
-    static int compTime = 5000;
-
+    static int compTime = 1000;
+    static boolean printDebugInfo = true; 
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM} {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM} {GS|PE|RG} [domain parameters].");
+            System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM} {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM} {GS|PE|RG|Tron} [domain parameters].");
             System.exit(-1);
         }
         SMJournalOnlineExperiments exp = new SMJournalOnlineExperiments();
@@ -70,7 +73,7 @@ public class SMJournalOnlineExperiments {
             OZGameInfo.startingCoins = new Integer(args[4]);
             OZGameInfo.locK = new Integer(args[5]);
             OZGameInfo.minBid = new Integer(args[6]);
-        } else if (args[1].equalsIgnoreCase("PE")) { // Generic Poker
+        } else if (args[2].equalsIgnoreCase("PE")) { // Generic Poker
             if (args.length != 6) {
                 throw new IllegalArgumentException("Illegal poker domain arguments count: 3 parameters are required {SEED} {DEPTH} {GRAPH}");
             }
@@ -88,6 +91,14 @@ public class SMJournalOnlineExperiments {
             RandomGameInfo.MAX_CENTER_MODIFICATION = new Integer(args[6]);
             RandomGameInfo.BINARY_UTILITY = new Boolean(args[7]);
             RandomGameInfo.FIXED_SIZE_BF = new Boolean(args[8]);
+        } else if (args[2].equalsIgnoreCase("Tron")) { // Tron
+            if (args.length != 7) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {BOARDTYPE} {ROWS} {COLUMNS}");
+            }
+            TronGameInfo.seed = new Integer(args[3]);
+            TronGameInfo.BOARDTYPE = args[4].charAt(0);
+            TronGameInfo.ROWS = new Integer(args[5]);
+            TronGameInfo.COLS = new Integer(args[6]);
         } else throw new IllegalArgumentException("Illegal domain: " + args[2]);
     }
 
@@ -108,6 +119,10 @@ public class SMJournalOnlineExperiments {
             gameInfo = new RandomGameInfo();
             rootState = new SimRandomGameState();
             expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
+        } else if (domain.equals("Tron")) {
+            gameInfo = new TronGameInfo();
+            rootState = new TronGameState();
+            expander = new TronExpander<MCTSInformationSet>(new MCTSConfig());
         }
     }
 
@@ -185,6 +200,11 @@ public class SMJournalOnlineExperiments {
         
         GameState curState = rootState.copy();
         while (!curState.isGameEnd()){
+            if (printDebugInfo) { 
+              System.out.println("");
+              System.out.println(curState);
+            }
+
             if (curState.isPlayerToMoveNature()){
                 double r = rnd.nextDouble();
                 for(Action ca : (List<Action>)expander.getActions(curState)){
@@ -192,13 +212,23 @@ public class SMJournalOnlineExperiments {
                     if (r <= ap) {
                         moves.append(ca + " ");
                         curState = curState.performAction(ca);
+                
+                        if (printDebugInfo) 
+                          System.out.println("Nature chose: " + ca);
+                
                         break;
                     }
                     r -= ap;
                 }
             } else {
                 Action a1 = p1.runMiliseconds(compTime, curState);
+                if (printDebugInfo) 
+                  System.out.println("P1 chose: " + a1);
+
                 Action a2 = p2.runMiliseconds(compTime, curState);
+                if (printDebugInfo) 
+                  System.out.println("P2 chose: " + a2);
+
                 moves.append(a1 + " ");
                 moves.append(a2 + " ");
                 curState = curState.performAction(a1);

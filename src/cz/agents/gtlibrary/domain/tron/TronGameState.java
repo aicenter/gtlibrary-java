@@ -44,6 +44,16 @@ public class TronGameState extends GameStateImpl {
     protected Pair<Integer, Sequence> key;
     private int hashCode = -1;
 
+    // needed for efficient computation of floodfill eval func
+    private static int[] open1 = null;
+    private static int[] open2 = null;
+    private static int si1, ei1, si2, ei2;
+    private static int area1, area2;
+    private static int[][] tmpBoard = null;
+    private static int[][] toSingle;
+    private static int[] toRow;
+    private static int[] toCol;
+
     public TronGameState() {
         super(TronGameInfo.ALL_PLAYERS);
         sequenceForAllPlayers = new ArrayList<Action>();
@@ -53,6 +63,9 @@ public class TronGameState extends GameStateImpl {
         playerCols = new int[2];
         playerActions = new int[2];
         board = new char[TronGameInfo.ROWS][TronGameInfo.COLS]; 
+
+        if (tmpBoard == null) 
+          buildStatic(); 
 
         initBoard(TronGameInfo.BOARDTYPE);
     }
@@ -67,7 +80,29 @@ public class TronGameState extends GameStateImpl {
         playerActions = new int[2];
         board = new char[TronGameInfo.ROWS][TronGameInfo.COLS]; 
 
+        if (tmpBoard == null) 
+          buildStatic(); 
+
         initBoard(TronGameInfo.BOARDTYPE);
+    }
+
+    private void buildStatic() { 
+      tmpBoard = new int[TronGameInfo.ROWS][TronGameInfo.COLS]; 
+      open1 = new int[TronGameInfo.ROWS*TronGameInfo.COLS];
+      open2 = new int[TronGameInfo.ROWS*TronGameInfo.COLS];
+    
+      toSingle = new int[TronGameInfo.ROWS][TronGameInfo.COLS];
+      toRow = new int[TronGameInfo.ROWS*TronGameInfo.COLS];
+      toCol = new int[TronGameInfo.ROWS*TronGameInfo.COLS];
+
+      for (int r = 0; r < TronGameInfo.ROWS; r++) {
+        for (int c = 0; c < TronGameInfo.COLS; c++) { 
+          int sc = r*TronGameInfo.COLS + c;
+          toSingle[r][c] = sc;
+          toRow[sc] = r;
+          toCol[sc] = c; 
+        }
+      }
     }
 
     private void initBoard(char boardType) {
@@ -285,6 +320,114 @@ public class TronGameState extends GameStateImpl {
 
         return (p0surrounded || p1surrounded);
     }
+
+    private void flood() {
+
+      int width = TronGameInfo.ROWS*TronGameInfo.COLS;
+      int wi = 0;      
+
+      for (int r = 0; r < TronGameInfo.ROWS; r++) {
+        for (int c = 0; c < TronGameInfo.COLS; c++) {
+          tmpBoard[r][c] = 0;
+          open1[wi] = open2[wi] = -1; 
+          wi++;
+        }
+      }
+
+      // player 1, round 0 and player 2 round 0
+      tmpBoard[playerRows[0]][playerCols[0]] = 1000;
+      tmpBoard[playerRows[1]][playerCols[1]] = 2000;
+
+      area1 = area2 = 1; 
+
+      open1[0] = toSingle[playerRows[0]][playerCols[0]];
+      open2[0] = toSingle[playerRows[1]][playerCols[1]];
+
+      si1 = 0; ei1 = 1;
+      si2 = 0; ei2 = 1; 
+
+      int round = 0;
+
+      // both open lists are not empty
+      while (si1 < ei1 && si2 < ei2) { 
+        round++; 
+
+        // spread 1 first
+        if (si1 < ei1) {
+          int roundEnd1 = ei1; 
+
+          for (; si1 < roundEnd1; si1++) { 
+            int coord = open1[si1];
+            int r = toRow[coord], c = toCol[coord]; 
+
+            // if blocked due to being reached simultaneously, no longer expand from here
+            if (tmpBoard[r][c] == 3000)
+              continue;
+           
+            for (int dir = 0; dir < 4; dir++) { 
+              int rp = r + rowOffsets[dir], cp = c + colOffsets[dir]; 
+              
+              if (inBounds(rp,cp) && tmpBoard[rp][cp] == 0 && board[rp][cp] == '.') {
+                tmpBoard[rp][cp] = 1000 + round; 
+                open1[ei1] = toSingle[rp][cp]; 
+                ei1++;
+                area1++; 
+              }
+            }
+          }
+        }
+
+        // spread 2 
+        if (si2 < ei2) { 
+          int roundEnd2 = ei2; 
+
+          for (; si2 < roundEnd2; si2++) { 
+            int coord = open2[si2];
+            int r = toRow[coord], c = toCol[coord]; 
+           
+            // expand in all directions
+            for (int dir = 0; dir < 4; dir++) { 
+              int rp = r + rowOffsets[dir], cp = c + colOffsets[dir]; 
+              
+              if (inBounds(rp,cp) && (tmpBoard[rp][cp] == 0 || tmpBoard[rp][cp] == (1000+round)) && board[rp][cp] == '.') {
+                if (tmpBoard[rp][cp] == 0) {                
+                  tmpBoard[rp][cp] = 2000 + round; 
+                  open2[ei2] = toSingle[rp][cp]; 
+                  ei2++;
+                  area2++; 
+                }
+                else {
+                  tmpBoard[rp][cp] = 3000; // blocked from reaching simultaneously; p1 got here this round
+                  area1--; 
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    @Override
+    public double[] evaluate() {
+      if (isGameEnd()) 
+        return getUtilities();
+
+      // temporary
+      return new double[]{0, 0, 0};
+
+      /*
+        disabled for now
+
+        flood();
+
+        if (area1 > area2) 
+          return new double[]{1, -1, 0};
+        else if (area2 > area1) 
+          return new double[]{-1, 1, 0};
+
+        return new double[]{0, 0, 0};*/
+    }
+
 
     @Override
     public GameState copy() {
