@@ -20,8 +20,8 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.FastTanh;
+import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 
@@ -294,7 +294,7 @@ public class TronGameState extends SimultaneousGameState {
 
     @Override
     public double[] getEndGameUtilities() {
-        if (isGameEnd()) {
+        if (isActualGameEnd()) {
           if (playerRows[0] == playerRows[1] && playerCols[0] == playerCols[1]) 
             return new double[]{0, 0, 0};
           
