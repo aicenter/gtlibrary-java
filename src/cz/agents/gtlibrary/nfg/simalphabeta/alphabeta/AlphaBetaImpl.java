@@ -1,61 +1,58 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.alphabeta;
 
-import java.util.List;
-import java.util.ListIterator;
-
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameInfo;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
+import java.util.List;
+import java.util.ListIterator;
+
 public abstract class AlphaBetaImpl implements AlphaBeta {
 
-	protected Player player;
-	protected AlphaBetaCache cache;
-	protected Expander<SimABInformationSet> expander;
-	protected AlgorithmConfig<SimABInformationSet> algConfig;
-	protected GameInfo gameInfo;
+    protected Player player;
+    protected AlphaBetaCache cache;
+    protected Expander<SimABInformationSet> expander;
+    protected AlgorithmConfig<SimABInformationSet> algConfig;
+    protected GameInfo gameInfo;
     private Action p1Action;
     private Action p2Action;
     private Action tempAction;
 
     public AlphaBetaImpl(Player player, Expander<SimABInformationSet> expander, AlphaBetaCache cache, GameInfo gameInfo) {
-		this.player = player;
-		this.expander = expander;
-		this.cache = cache;
-		this.algConfig = expander.getAlgorithmConfig();
-		this.gameInfo = gameInfo;
-	}
+        this.player = player;
+        this.expander = expander;
+        this.cache = cache;
+        this.algConfig = expander.getAlgorithmConfig();
+        this.gameInfo = gameInfo;
+    }
 
-	public double getUnboundedValue(GameState state) {
-		return getValue(state, -gameInfo.getMaxUtility(), gameInfo.getMaxUtility());
-	}
+    public double getUnboundedValue(GameState state) {
+        return getValue(state, -gameInfo.getMaxUtility(), gameInfo.getMaxUtility());
+    }
 
-	public double getValue(GameState state, double alpha, double beta) {
-		Double value = cache.get(state);
+    public double getValue(GameState state, double alpha, double beta) {
+        Double value = cache.get(state);
 
-		if (value != null)
-			return value;
+        if (value != null)
+            return value;
 
-		boolean prune = false;
+        boolean prune = false;
 
-		if (state.isGameEnd())
-			return state.getUtilities()[player.getId()];
+        if (state.isGameEnd())
+            return state.getUtilities()[player.getId()];
 
-		if (state.isPlayerToMoveNature()) {
-			return getUtilityForNature(state, alpha, beta);
-		} else {
-            storeAction(getMaximizingActions(state).iterator().next());
-            storeAction(getMinimizingActions(state).iterator().next());
-			Stats.getInstance().increaseABStatesFor(player);
-			for (Action minAction : getMinimizingActions(state)) {
-				double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
+        if (state.isPlayerToMoveNature()) {
+            return getUtilityForNature(state, alpha, beta);
+        } else {
+            Stats.getInstance().increaseABStatesFor(player);
+            for (Action minAction : getMinimizingActions(state)) {
+                double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
 
+                if (tempAlpha <= beta && p1Action == null) {
+                    storeAction(minAction);
+                    storeAction(tempAction);
+                }
                 if (tempAlpha < beta) {
                     beta = tempAlpha;
                     storeAction(minAction);
@@ -63,16 +60,16 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
                 } else {
                     prune = true;
                 }
-				if (beta <= alpha) {
-					prune = true;
-					break;
-				}
-			}
-			if (!prune)
-				cache.put(state, beta);
-			return beta;
-		}
-	}
+                if (beta <= alpha) {
+                    prune = true;
+                    break;
+                }
+            }
+            if (!prune)
+                cache.put(state, beta);
+            return beta;
+        }
+    }
 
     private double getInsideValue(GameState state, double alpha, double beta) {
         Double value = cache.get(state);
@@ -106,26 +103,26 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         }
     }
 
-	private double getTempAlpha(GameState state, Action minAction, double alpha, double beta) {
-		double tempAlpha = alpha;
+    private double getTempAlpha(GameState state, Action minAction, double alpha, double beta) {
+        double tempAlpha = alpha;
 
-		for (Action maxAction : getMaximizingActions(state)) {
+        for (Action maxAction : getMaximizingActions(state)) {
             double value = getInsideValue(performActions(state, minAction, maxAction), tempAlpha, beta);
 
-            if(tempAction == null)
+            if (value >= tempAlpha && tempAction == null)
                 tempAction = maxAction;
-            if(value > tempAlpha) {
+            if (value > tempAlpha) {
                 tempAlpha = value;
                 tempAction = maxAction;
             }
-			if (beta <= tempAlpha)
-				return tempAlpha;
-		}
-		return tempAlpha;
-	}
+            if (beta <= tempAlpha)
+                return tempAlpha;
+        }
+        return tempAlpha;
+    }
 
     protected void storeAction(Action action) {
-        if(action.getInformationSet().getPlayer().getId() == 0)
+        if (action.getInformationSet().getPlayer().getId() == 0)
             p1Action = action;
         else
             p2Action = action;
@@ -142,60 +139,60 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         return tempAlpha;
     }
 
-	public double getUtilityForNature(GameState state, double alpha, double beta) {
-		double utility = 0;
-		List<Action> actions = expander.getActions(state);
-		ListIterator<Action> iterator = actions.listIterator();
+    public double getUtilityForNature(GameState state, double alpha, double beta) {
+        double utility = 0;
+        List<Action> actions = expander.getActions(state);
+        ListIterator<Action> iterator = actions.listIterator();
 
-		while (iterator.hasNext()) {
-			Action action = iterator.next();
-			double lowerBound = Math.max(-gameInfo.getMaxUtility(), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
-			double upperBound = Math.min(gameInfo.getMaxUtility(), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
-					
-			utility += state.getProbabilityOfNatureFor(action) * getInsideValue(state.performAction(action), lowerBound, upperBound);
-		}
-		return utility;
-	}
+        while (iterator.hasNext()) {
+            Action action = iterator.next();
+            double lowerBound = Math.max(-gameInfo.getMaxUtility(), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
+            double upperBound = Math.min(gameInfo.getMaxUtility(), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
 
-	private double getUpperBound(List<Action> actions, GameState state, double upperBound, double probability, double utilityValue, int index) {
-		ListIterator<Action> iterator = actions.listIterator();
-		double utility = utilityValue;
+            utility += state.getProbabilityOfNatureFor(action) * getInsideValue(state.performAction(action), lowerBound, upperBound);
+        }
+        return utility;
+    }
 
-		while (iterator.hasNext()) {
-			Action action = iterator.next();
+    private double getUpperBound(List<Action> actions, GameState state, double upperBound, double probability, double utilityValue, int index) {
+        ListIterator<Action> iterator = actions.listIterator();
+        double utility = utilityValue;
 
-			if (iterator.previousIndex() > index)
-				utility += state.getProbabilityOfNatureFor(action) * -gameInfo.getMaxUtility();
-		}
-		return (upperBound - utility) / probability;
-	}
+        while (iterator.hasNext()) {
+            Action action = iterator.next();
 
-	private double getLowerBound(List<Action> actions, GameState state, double lowerBound, double probability, double utilityValue, int index) {
-		ListIterator<Action> iterator = actions.listIterator();
-		double utility = utilityValue;
+            if (iterator.previousIndex() > index)
+                utility += state.getProbabilityOfNatureFor(action) * -gameInfo.getMaxUtility();
+        }
+        return (upperBound - utility) / probability;
+    }
 
-		while (iterator.hasNext()) {
-			Action action = iterator.next();
+    private double getLowerBound(List<Action> actions, GameState state, double lowerBound, double probability, double utilityValue, int index) {
+        ListIterator<Action> iterator = actions.listIterator();
+        double utility = utilityValue;
 
-			if (iterator.previousIndex() > index)
-				utility += state.getProbabilityOfNatureFor(action) * gameInfo.getMaxUtility();
-		}
-		return (lowerBound - utility) / probability;
-	}
+        while (iterator.hasNext()) {
+            Action action = iterator.next();
+
+            if (iterator.previousIndex() > index)
+                utility += state.getProbabilityOfNatureFor(action) * gameInfo.getMaxUtility();
+        }
+        return (lowerBound - utility) / probability;
+    }
 
     public Action getTopLevelAction(Player player) {
-        if(player.getId() == 0)
+        if (player.getId() == 0)
             return p1Action;
         return p2Action;
     }
 
-	public int getCacheSize() {
-		return cache.size();
-	}
+    public int getCacheSize() {
+        return cache.size();
+    }
 
-	protected abstract GameState performActions(GameState state, Action minAction, Action maxAction);
+    protected abstract GameState performActions(GameState state, Action minAction, Action maxAction);
 
-	protected abstract List<Action> getMaximizingActions(GameState state);
+    protected abstract List<Action> getMaximizingActions(GameState state);
 
-	protected abstract List<Action> getMinimizingActions(GameState state);
+    protected abstract List<Action> getMinimizingActions(GameState state);
 }
