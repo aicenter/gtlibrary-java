@@ -11,10 +11,10 @@ import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtilityImpl;
 public class SimABDoubleOracleFactory implements DoubleOracleFactory {
 
 	@Override
-	public DoubleOracle getDoubleOracle(GameState state, Data data, double alpha, double beta) {
+	public DoubleOracle getDoubleOracle(GameState state, Data data, double alpha, double beta, boolean isRoot) {
 		SimUtility utility = new SimUtilityImpl(state, new DOUtilityCalculator(data, data.getNatureCache(), data.getCache()), data.getCache());
 		
-		return new SimDoubleOracle(utility, alpha, beta, data, state, data.getCache());
+		return new SimDoubleOracle(utility, alpha, beta, data, state, data.getCache(), isRoot);
 	}
 
 }

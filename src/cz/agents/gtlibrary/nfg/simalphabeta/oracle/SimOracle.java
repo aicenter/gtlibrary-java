@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.nfg.simalphabeta.oracle;
 
 import java.util.Collection;
 
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.utils.Pair;
