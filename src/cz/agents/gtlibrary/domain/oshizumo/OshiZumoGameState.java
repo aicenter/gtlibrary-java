@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.FastTanh;
 import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.ArrayList;
@@ -167,8 +168,7 @@ public class OshiZumoGameState extends SimultaneousGameState {
                 || (p1Coins < OZGameInfo.minBid && p2Coins < OZGameInfo.minBid));
     }
 
-    @Override
-    public double[] evaluate() {
+    public double[] oldEvaluate() {
         if (wrestlerLoc > OZGameInfo.locK && p1Coins >= p2Coins)//on the side of p2 and p1 has more money than p2
             return new double[]{1, -1, 0};
         if (wrestlerLoc == OZGameInfo.locK && p1Coins > p2Coins)//in the middle and p1 has more money than p2
@@ -180,11 +180,42 @@ public class OshiZumoGameState extends SimultaneousGameState {
         if (p2Coins < (wrestlerLoc - OZGameInfo.locK) * OZGameInfo.minBid)//on the side of p2 and p2 has not enough money to change that
             return new double[]{1, -1, 0};
         if (p1Coins < (OZGameInfo.locK - wrestlerLoc) * OZGameInfo.minBid)//on the side of p1 and p1 has not enough money to change that
-            return new double[]{1, -1, 0};
+            return new double[]{1, -1, 0}; // <-- should be -1, 1, 0 ?
         double value = ((double) p1Coins) / OZGameInfo.minBid - ((double) p2Coins) / OZGameInfo.minBid + wrestlerLoc - OZGameInfo.locK;
 
         return new double[]{value, -value, 0};
     }
+    
+    @Override
+    public double[] evaluate() {
+        int minBid = (OZGameInfo.minBid == 0 ? 1 : OZGameInfo.minBid);
+        double p1base = 0;
+
+        if (wrestlerLoc > OZGameInfo.locK && p1Coins >= p2Coins)//on the side of p2 and p1 has more money than p2
+            p1base = 0.5;
+        if (wrestlerLoc == OZGameInfo.locK && p1Coins > p2Coins)//in the middle and p1 has more money than p2
+            p1base = 0.5;
+        if (wrestlerLoc < OZGameInfo.locK && p1Coins <= p2Coins)//on the side of p1 and p2 has more money than p1
+            p1base = -0.5;
+        if (wrestlerLoc == OZGameInfo.locK && p1Coins < p2Coins)//in the middle and p2 has more money than p1
+            p1base = -0.5;
+        if (p2Coins < (wrestlerLoc - OZGameInfo.locK) * OZGameInfo.minBid)//on the side of p2 and p2 has not enough money to change that
+            p1base = 0.5;
+        if (p1Coins < (OZGameInfo.locK - wrestlerLoc) * OZGameInfo.minBid)//on the side of p1 and p1 has not enough money to change that
+            p1base = -0.5;
+        
+        double p1bonus = ((double) p1Coins) / minBid - ((double) p2Coins) / minBid + wrestlerLoc - OZGameInfo.locK;
+        p1bonus /= 3.0;
+
+        double delta = p1base + p1bonus;
+        
+        // seems to play too gredily with this
+        //double p1eval = FastTanh.tanh(delta);
+        double p1eval = delta;
+
+        return new double[]{p1eval, -p1eval, 0};
+    }
+
 
     @Override
     protected boolean isDepthLimit() {
