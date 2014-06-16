@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
+import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.utils.Pair;
 
 public class DOCacheImpl implements DOCache {
@@ -36,7 +37,25 @@ public class DOCacheImpl implements DOCache {
 		return getOptimisticUtilityFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2));
 	}
 
-	public void setPesAndOptValueFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, Double utility) {
+    @Override
+    public void setStrategy(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, MixedStrategy<ActionPureStrategy>[] strategy) {
+    }
+
+    @Override
+    public void setStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, MixedStrategy<ActionPureStrategy>[] strategy) {
+    }
+
+    @Override
+    public MixedStrategy<ActionPureStrategy>[] getStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
+        return null;
+    }
+
+    @Override
+    public MixedStrategy<ActionPureStrategy>[] getStrategy(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+        return null;
+    }
+
+    public void setPesAndOptValueFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, Double utility) {
 		if (!utility.isNaN()) {
 			optimisticUtilities.put(strategyPair, utility);
 			pesimisticUtilities.put(strategyPair, utility);

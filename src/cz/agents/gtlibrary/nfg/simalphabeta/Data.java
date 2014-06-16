@@ -67,8 +67,12 @@ public class Data {
 	}
 	
 	public DoubleOracle getDoubleOracle(GameState state, double alpha, double beta) {
-		return doubleOracleFactory.getDoubleOracle(state, this, alpha, beta);
+		return doubleOracleFactory.getDoubleOracle(state, this, alpha, beta, false);
 	}
+
+    public DoubleOracle getDoubleOracle(GameState state, double alpha, double beta, boolean isRoot) {
+        return doubleOracleFactory.getDoubleOracle(state, this, alpha, beta, isRoot);
+    }
 
     public DOCache getCache() {
         return cache;

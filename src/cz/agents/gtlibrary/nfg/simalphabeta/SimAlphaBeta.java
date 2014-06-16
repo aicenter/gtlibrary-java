@@ -37,6 +37,8 @@ import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 public class SimAlphaBeta {
 
+    public double gameValue = Double.NaN;
+
     public static void main(String[] args) {
 //		runGoofSpielWithNature();
 //		runGoofSpielWithNatureWithLocalCache();
@@ -156,10 +158,11 @@ public class SimAlphaBeta {
         if(Killer.kill)
             return null;
 //        System.out.println("****************");
-//			System.out.println("root state: " + rootState);
+//		System.out.println("root state: " + rootState);
 //        System.out.println("game value: " + oracle.getGameValue());
 //        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
+        gameValue = oracle.getGameValue();
         return getStrategy(player, p1AlphaBeta, oracle);
     }
 
@@ -170,7 +173,7 @@ public class SimAlphaBeta {
             strategy = new MixedStrategy<ActionPureStrategy>();
 
             strategy.put(new ActionPureStrategy(p1AlphaBeta.getTopLevelAction(player)), 1d);
-//            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
+            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
         }
         return strategy;
     }

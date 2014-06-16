@@ -1,11 +1,20 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.cache;
 
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
+import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.utils.Pair;
 
 public class NullDOCache implements DOCache {
 
-	@Override
+    @Override
+    public void setStrategy(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, MixedStrategy<ActionPureStrategy>[] strategy) {
+    }
+
+    @Override
+    public void setStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, MixedStrategy<ActionPureStrategy>[] strategy) {
+    }
+
+    @Override
 	public void setPesAndOptValueFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, Double utilityValue) {
 	}
 
@@ -21,7 +30,17 @@ public class NullDOCache implements DOCache {
 	public void setPesAndOptValueFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2, Double optimisticUtility, Double pesimisticUtility) {
 	}
 
-	@Override
+    @Override
+    public MixedStrategy<ActionPureStrategy>[] getStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
+        return null;
+    }
+
+    @Override
+    public MixedStrategy<ActionPureStrategy>[] getStrategy(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+        return null;
+    }
+
+    @Override
 	public Double getPesimisticUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
 		return null;
 	}

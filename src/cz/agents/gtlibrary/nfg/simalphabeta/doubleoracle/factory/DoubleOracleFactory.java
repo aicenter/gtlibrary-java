@@ -5,5 +5,5 @@ import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 
 public interface DoubleOracleFactory {
-	public DoubleOracle getDoubleOracle(GameState state, Data data, double alpha, double beta);
+	public DoubleOracle getDoubleOracle(GameState state, Data data, double alpha, double beta, boolean isRoot);
 }

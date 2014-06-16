@@ -30,30 +30,24 @@ public class SimDoubleOracle extends DoubleOracle {
 
     final protected boolean isRoot;
 
-    public SimDoubleOracle(SimUtility utility, double alpha, double beta, Data data, GameState state, DOCache cache) {
+    public SimDoubleOracle(SimUtility utility, double alpha, double beta, Data data, GameState state, DOCache cache, boolean isRoot) {
         super(state, data);
         this.p1Oracle = data.getP1Oracle(state, utility, cache);
         this.p2Oracle = data.getP2Oracle(state, utility, cache);
         this.alpha = alpha;
         this.beta = beta;
-//		this.state = state;
         this.data = data;
         this.p1Utility = utility;
         this.coreSolver = new ZeroSumGameNESolverImpl<ActionPureStrategy, ActionPureStrategy>(utility);
         this.cache = cache;
-        this.isRoot = (state.getHistory().getSequenceOf(state.getAllPlayers()[0]).size() == 0) && (state.getHistory().getSequenceOf(state.getAllPlayers()[1]).size() == 0);
+        this.isRoot = false;
+    }
+    public SimDoubleOracle(SimUtility utility, double alpha, double beta, Data data, GameState state, DOCache cache) {
+        this(utility, alpha, beta, data, state, cache, false);
     }
 
     public double getGameValue() {
         return gameValue;
-    }
-
-    public MixedStrategy<ActionPureStrategy> getFirstPlayerStrategy() {
-        return coreSolver.getPlayerOneStrategy();
-    }
-
-    public MixedStrategy<ActionPureStrategy> getSecondPlayerStrategy() {
-        return coreSolver.getPlayerTwoStrategy();
     }
 
     public void generate() {

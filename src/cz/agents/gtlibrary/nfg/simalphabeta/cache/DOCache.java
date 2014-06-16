@@ -1,9 +1,18 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.cache;
 
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
+import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.utils.Pair;
 
 public interface DOCache {
+
+    public void setStrategy(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, MixedStrategy<ActionPureStrategy>[] strategy);
+
+    public void setStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, MixedStrategy<ActionPureStrategy>[] strategy);
+
+    public MixedStrategy<ActionPureStrategy>[] getStrategy(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair);
+
+    public MixedStrategy<ActionPureStrategy>[] getStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2);
 
 	public void setPesAndOptValueFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, Double utilityValue);
 	

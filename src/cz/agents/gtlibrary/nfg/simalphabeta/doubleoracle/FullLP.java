@@ -14,11 +14,17 @@ public class FullLP extends DoubleOracle {
 
     private SimOracle p1Oracle;
     private SimOracle p2Oracle;
+    private boolean isRoot;
 
     public FullLP(GameState rootState, Data data, SimUtility utility) {
+        this(rootState, data, utility, false);
+    }
+
+    public FullLP(GameState rootState, Data data, SimUtility utility, boolean isRoot) {
         super(rootState, data);
         this.p1Oracle = data.getP1Oracle(rootState, utility, null);
         this.p2Oracle = data.getP2Oracle(rootState, utility, null);
+        this.isRoot = isRoot;
         coreSolver = new ZeroSumGameNESolverImpl<ActionPureStrategy, ActionPureStrategy>(utility);
     }
 
