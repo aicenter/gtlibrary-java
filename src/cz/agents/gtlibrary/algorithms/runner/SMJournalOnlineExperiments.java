@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.algorithms.runner;
 
-import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
@@ -20,12 +19,15 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
-import cz.agents.gtlibrary.iinodes.RandomAlgorithm;
-import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronExpander;
+import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
+import cz.agents.gtlibrary.iinodes.RandomAlgorithm;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.nfg.simalphabeta.*;
+import cz.agents.gtlibrary.nfg.simalphabeta.ComparatorAlgorithm;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBetaAlgorithm;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 import java.util.List;
@@ -39,17 +41,23 @@ public class SMJournalOnlineExperiments {
     static Expander expander;
     static Random rnd = new HighQualityRandom();
     static int compTime = 5000;
-    static boolean printDebugInfo = true; 
+    static boolean printDebugInfo = true;
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM} {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM} {GS|PE|RG|Tron} [domain parameters].");
+            System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM|RAND|COMP} {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM|RAND|COMP} {GS|PE|RG|Tron} [domain parameters].");
             System.exit(-1);
         }
         SMJournalOnlineExperiments exp = new SMJournalOnlineExperiments();
         exp.handleDomain(args);
-        
-        for (int i=0; i<50; i++) exp.runMatch(args);
+
+        double sum = 0;
+
+        for (int i = 0; i < 50; i++) {
+            sum += exp.runMatch(args);
+            System.out.println("avg: " + sum / (i + 1));
+        }
+        System.out.println("Overall avg: " + sum / 50);
     }
 
 
@@ -126,7 +134,7 @@ public class SMJournalOnlineExperiments {
     public void loadSMGame(String domain) {
         loadGame(domain);
         if (domain.equals("GS")) {
-            expander = new GoofSpielExpander<SimABInformationSet >(new SimABConfig());
+            expander = new GoofSpielExpander<SimABInformationSet>(new SimABConfig());
         } else if (domain.equals("PE")) {
             expander = new PursuitExpander<SimABInformationSet>(new SimABConfig());
         } else if (domain.equals("OZ")) {
@@ -135,7 +143,7 @@ public class SMJournalOnlineExperiments {
             expander = new RandomGameExpander<SimABInformationSet>(new SimABConfig());
         }
     }
-    
+
     public GamePlayingAlgorithm getPlayer(int posIndex, String alg, String domain) {
         if (alg.startsWith("MCTS")) {
             loadGame(domain);
@@ -195,30 +203,30 @@ public class SMJournalOnlineExperiments {
             throw new UnsupportedOperationException("Unknown algorithms.");
         }
     }
-    
-    public void runMatch(String[] args){
+
+    public double runMatch(String[] args) {
         StringBuilder moves = new StringBuilder();
         GamePlayingAlgorithm p1 = getPlayer(0, args[0], args[2]);
         GamePlayingAlgorithm p2 = getPlayer(1, args[1], args[2]);
-        
+
         GameState curState = rootState.copy();
-        while (!curState.isGameEnd()){
-            if (printDebugInfo) { 
-              System.out.println("");
-              System.out.println(curState);
+        while (!curState.isGameEnd()) {
+            if (printDebugInfo) {
+                System.out.println("");
+                System.out.println(curState);
             }
 
-            if (curState.isPlayerToMoveNature()){
+            if (curState.isPlayerToMoveNature()) {
                 double r = rnd.nextDouble();
-                for(Action ca : (List<Action>)expander.getActions(curState)){
+                for (Action ca : (List<Action>) expander.getActions(curState)) {
                     final double ap = curState.getProbabilityOfNatureFor(ca);
                     if (r <= ap) {
                         moves.append(ca + " ");
                         curState = curState.performAction(ca);
-                
-                        if (printDebugInfo) 
-                          System.out.println("Nature chose: " + ca);
-                
+
+                        if (printDebugInfo)
+                            System.out.println("Nature chose: " + ca);
+
                         break;
                     }
                     r -= ap;
@@ -228,13 +236,13 @@ public class SMJournalOnlineExperiments {
 
                 System.out.println("Searching player 1...");
                 Action a1 = p1.runMiliseconds(compTime, curState);
-                if (printDebugInfo) 
-                  System.out.println("P1 chose: " + a1);
+                if (printDebugInfo)
+                    System.out.println("P1 chose: " + a1);
 
                 System.out.println("Searching player 2...");
                 Action a2 = p2.runMiliseconds(compTime, curState);
-                if (printDebugInfo) 
-                  System.out.println("P2 chose: " + a2);
+                if (printDebugInfo)
+                    System.out.println("P2 chose: " + a2);
 
                 moves.append(a1 + " ");
                 moves.append(a2 + " ");
@@ -243,5 +251,6 @@ public class SMJournalOnlineExperiments {
             }
         }
         System.out.println("MATCH: " + moves.toString() + curState.getUtilities()[0]);
+        return curState.getUtilities()[0];
     }
 }
