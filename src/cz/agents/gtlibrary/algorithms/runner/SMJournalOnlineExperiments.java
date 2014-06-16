@@ -20,11 +20,9 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.iinodes.RandomAlgorithm;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
-import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
-import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
-import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBetaAlgorithm;
+import cz.agents.gtlibrary.nfg.simalphabeta.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 import java.util.List;
@@ -125,13 +123,13 @@ public class SMJournalOnlineExperiments {
     }
     
     public GamePlayingAlgorithm getPlayer(int posIndex, String alg, String domain) {
-        if (alg.startsWith("MCTS")){
+        if (alg.startsWith("MCTS")) {
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
-            
-            if (!alg.equals("MCTS-RM")){
-                BackPropFactory fact=null;
-                switch(alg){
+
+            if (!alg.equals("MCTS-RM")) {
+                BackPropFactory fact = null;
+                switch (alg) {
                     case "MCTS-UCT":
                         fact = new UCTBackPropFactory(2);
                         break;
@@ -144,25 +142,25 @@ public class SMJournalOnlineExperiments {
                         new DefaultSimulator(expander),
                         fact,
                         rootState, expander);
-                player.returnMeanValue=false;
+                player.returnMeanValue = false;
                 player.runIterations(2);
                 return player;
             } else {
                 SMMCTSAlgorithm player = new SMMCTSAlgorithm(
-                    rootState.getAllPlayers()[posIndex],
-                    new DefaultSimulator(expander),
-                    new SMRMBackPropFactory(0.4),
-                    rootState, expander);
+                        rootState.getAllPlayers()[posIndex],
+                        new DefaultSimulator(expander),
+                        new SMRMBackPropFactory(0.4),
+                        rootState, expander);
                 player.runIterations(2);
                 return player;
             }
-        } else if (alg.equals("OOS")){
+        } else if (alg.equals("OOS")) {
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
-            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex],new OOSSimulator(expander),rootState, expander, 0.6);
+            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(expander), rootState, expander, 0.6);
             player.runMiliseconds(20);
             return player;
-        } else if (alg.contains("BI") || alg.contains("DO")){ // backward induction algorithms
+        } else if (alg.contains("BI") || alg.contains("DO")) { // backward induction algorithms
             loadSMGame(domain);
             boolean AB = alg.endsWith("AB");
             boolean DO = alg.contains("DO");
@@ -171,9 +169,15 @@ public class SMJournalOnlineExperiments {
             if (!DO && (SORT || CACHE)) {
                 throw new IllegalArgumentException("Illegal Argument Combination for Algorithm");
             }
-            SimAlphaBetaAlgorithm player = new SimAlphaBetaAlgorithm(rootState.getAllPlayers()[posIndex],expander, gameInfo, AB, DO, SORT, CACHE);
+            SimAlphaBetaAlgorithm player = new SimAlphaBetaAlgorithm(rootState.getAllPlayers()[posIndex], expander, gameInfo, AB, DO, SORT, CACHE);
             return player;
-        }  else {
+        } else if (alg.equals("COMP")) {
+            loadSMGame(domain);
+            return new ComparatorAlgorithm(rootState.getAllPlayers()[posIndex], expander, gameInfo, true, true, false, false);
+        } else if (alg.equals("RAND")) {
+            loadSMGame(domain);
+            return new RandomAlgorithm(expander);
+        } else {
             throw new UnsupportedOperationException("Unknown algorithms.");
         }
     }
