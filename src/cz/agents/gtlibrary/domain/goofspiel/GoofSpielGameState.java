@@ -317,9 +317,11 @@ public class GoofSpielGameState extends SimultaneousGameState {
             sortedCards.add(((GoofSpielAction) action).getValue());
         }
         Collections.sort(sortedCards);
-        for (int i = sortedCards.size() - 1; i > sortedCards.size() - possibleWinCount - 1; i--) {
-            highestAchievableScore += sortedCards.get(i);
-        }
+
+        if (sortedCards.size() > 0)
+            for (int i = sortedCards.size() - 1; i > Math.max(sortedCards.size() - possibleWinCount - 1, -1); i--) {
+                highestAchievableScore += sortedCards.get(i);
+            }
         return highestAchievableScore;
     }
 
