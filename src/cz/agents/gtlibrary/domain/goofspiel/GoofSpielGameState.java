@@ -283,8 +283,13 @@ public class GoofSpielGameState extends SimultaneousGameState {
             return new double[]{-1, 1, 0};
         if (unwinnableFor(players[1]))
             return new double[]{1, -1, 0};
-        double weight = Math.max(playerScore[0], playerScore[1]);
-        return new double[]{(playerScore[0] - sum / 2) / weight, (playerScore[1] - sum / 2) / weight, 0};
+        double value =  (playerScore[0] - sum / 2) / (sum / 2);
+
+        if(value > 0)
+            value -= 1e-3;
+        else if(value < 0)
+            value += 1e-3;
+        return new double[]{value, -value, 0};
     }
 
     private int getSum(int[] cards) {
