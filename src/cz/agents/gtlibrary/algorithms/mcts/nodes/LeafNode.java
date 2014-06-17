@@ -5,14 +5,14 @@ import cz.agents.gtlibrary.interfaces.GameState;
 
 public class LeafNode extends NodeImpl {
 
-	private final double[] utilities;
+    private final double[] utilities;
 
-	public LeafNode(InnerNode parent, GameState gameState, Action lastAction) {
-		super(parent, lastAction, gameState);
-		this.utilities = gameState.getUtilities();
-	}
-        
-        public double[] getUtilities(){
-                return utilities;   
-        }
+    public LeafNode(InnerNode parent, GameState gameState, Action lastAction) {
+        super(parent, lastAction, gameState);
+        this.utilities = gameState.getUtilities();
+    }
+
+    public double[] getUtilities() {
+        return utilities;
+    }
 }
