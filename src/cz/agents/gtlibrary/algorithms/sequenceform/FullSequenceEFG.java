@@ -71,12 +71,12 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-		runKuhnPoker();
+//		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
-//      runSimRandomGame();
+      runSimRandomGame();
 //		runPursuit();
 //      runPhantomTTT();
 //		runUpOrDown();
@@ -146,9 +146,13 @@ public class FullSequenceEFG {
 		GameState rootState = new SimRandomGameState();
 		GameInfo gameInfo = new RandomGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		FullSequenceEFG efg = new FullSequenceEFG(rootState, new RandomGameExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+        Expander expander = new RandomGameExpander<SequenceInformationSet>(algConfig);
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 
 		efg.generate();
+
+        GambitEFG gambitEFG = new GambitEFG();
+        gambitEFG.write("GP.gbt", rootState, expander);
 	}
 
 	public static void runKuhnPoker() {
