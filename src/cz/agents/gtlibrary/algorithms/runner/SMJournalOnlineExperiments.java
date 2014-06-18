@@ -45,7 +45,6 @@ public class SMJournalOnlineExperiments {
     static boolean printDebugInfo = true;
 
     public static void main(String[] args) {
-        new Scanner(System.in).next();
         if (args.length < 2) {
             System.err.println("Missing Arguments: SMJournalOnlineExperiments {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM|RAND|COMP} {BI|BIAB|DO|DOAB|DOSAB|OOS|MCTS-UCT|MCTS-EXP3|MCTS-RM|RAND|COMP} {GS|PE|RG|Tron} [domain parameters].");
             System.exit(-1);
