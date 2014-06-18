@@ -163,18 +163,18 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     }
 
     private void clean(Action action) {
-        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
-        long oldUsedMemory = memoryBean.getHeapMemoryUsage().getUsed();
-        int isCount = rootNode.getAlgConfig().getAllInformationSets().size();
-        long finPending = memoryBean.getObjectPendingFinalizationCount();
+//        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+//        long oldUsedMemory = memoryBean.getHeapMemoryUsage().getUsed();
+//        int isCount = rootNode.getAlgConfig().getAllInformationSets().size();
+//        long finPending = memoryBean.getObjectPendingFinalizationCount();
 
         cleanUnnecessaryPartsOfTree(rootNode, action);
-        System.err.println("pending change before gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
-        System.gc();
-        System.err.println("pending change after gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
-        System.err.println("saved memory: " + (oldUsedMemory - memoryBean.getHeapMemoryUsage().getUsed())/1e6);
-        System.err.println("total memory: " + memoryBean.getHeapMemoryUsage().getUsed()/1e6);
-        System.err.println("deleted IS: " + (isCount - rootNode.getAlgConfig().getAllInformationSets().size()));
+//        System.err.println("pending change before gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
+//        System.gc();
+//        System.err.println("pending change after gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
+//        System.err.println("saved memory: " + (oldUsedMemory - memoryBean.getHeapMemoryUsage().getUsed())/1e6);
+//        System.err.println("total memory: " + memoryBean.getHeapMemoryUsage().getUsed()/1e6);
+//        System.err.println("deleted IS: " + (isCount - rootNode.getAlgConfig().getAllInformationSets().size()));
 
     }
 
