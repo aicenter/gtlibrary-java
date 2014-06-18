@@ -175,8 +175,8 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
 //        long oldUsedMemory = memoryBean.getHeapMemoryUsage().getUsed();
 //        int isCount = config.getAllInformationSets().size();
 //        long finPending = memoryBean.getObjectPendingFinalizationCount();
-
-
+//
+//
 //        System.err.println("is count: " + isCount);
 //        new Scanner(System.in).next();
         cleanUnnecessaryPartsOfTree(action);
@@ -209,6 +209,21 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
 //    }
 
     private void cleanUnnecessaryPartsOfTree(Action action) {
+        if (rootNode.getChildren() != null)
+            for (Node node : rootNode.getChildren().values()) {
+                node.setParent(null);
+                if (node instanceof InnerNode) {
+
+                    if(!((InnerNode)node).getLastAction().equals(action)) {
+                        ((InnerNode)node).getInformationSet().setAlgorithmData(null);
+                        ((InnerNode)node).setInformationSet(null);
+                        ((InnerNode)node).setAlgorithmData(null);
+                        ((InnerNode)node).setChildren(null);
+                        ((InnerNode)node).setActions(null);
+                    }
+                    ((InnerNode) node).setLastAction(null);
+                }
+            }
         rootNode.setParent(null);
         rootNode.setLastAction(null);
         rootNode.setChildren(null);
@@ -228,6 +243,9 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
             else
                 rootNode.getAlgConfig().cleanSetsNotContaining(null, -1, action, p2Sequence.size());
         }
+        if (rootNode.getInformationSet() != null)
+            rootNode.getInformationSet().setAlgorithmData(null);
+        rootNode.setInformationSet(null);
         rootNode = null;
     }
 
