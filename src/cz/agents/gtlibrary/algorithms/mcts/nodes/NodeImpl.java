@@ -76,5 +76,7 @@ public abstract class NodeImpl implements Node {
         return algorithmData;
     }
 
-
+    public void setAlgorithmData(AlgorithmData algorithmData) {
+        this.algorithmData = algorithmData;
+    }
 }
