@@ -132,11 +132,17 @@ public class SimAlphaBeta {
             double alpha = data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState);
             DoubleOracle oracle = data.getDoubleOracle(rootState, beta, alpha);
 
-            if (beta + 1e-8 < alpha)
+            double result = 0d;
+            if (beta + 1e-8 < alpha) {
                 oracle.generate();
+                result = oracle.getGameValue();
+            } else {
+                result = alpha;
+            }
+
             System.out.println("****************");
 //			System.out.println("root state: " + rootState);
-            System.out.println("game value: " + oracle.getGameValue());
+            System.out.println("game value: " + result);
             System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
             System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
         }
