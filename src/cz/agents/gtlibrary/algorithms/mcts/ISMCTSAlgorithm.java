@@ -21,6 +21,7 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.ThreadMXBean;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 
 /**
@@ -168,21 +169,23 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     }
 
     private void clean(Action action) {
-        System.gc();
-        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
-        long oldUsedMemory = memoryBean.getHeapMemoryUsage().getUsed();
-        int isCount = config.getAllInformationSets().size();
-        long finPending = memoryBean.getObjectPendingFinalizationCount();
+//        System.gc();
+//        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+//        long oldUsedMemory = memoryBean.getHeapMemoryUsage().getUsed();
+//        int isCount = config.getAllInformationSets().size();
+//        long finPending = memoryBean.getObjectPendingFinalizationCount();
 
 
-        System.err.println("is count: " + isCount);
+//        System.err.println("is count: " + isCount);
+//        new Scanner(System.in).next();
         cleanUnnecessaryPartsOfTree(action);
-        System.err.println("pending change before gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
+//        System.err.println("pending change before gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
         System.gc();
-        System.err.println("pending change after gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
-        System.err.println("saved memory: " + (oldUsedMemory - memoryBean.getHeapMemoryUsage().getUsed()) / 1e6);
-        System.err.println("total memory: " + memoryBean.getHeapMemoryUsage().getUsed() / 1e6);
-        System.err.println("deleted IS: " + (isCount - config.getAllInformationSets().size()));
+//        new Scanner(System.in).next();
+//        System.err.println("pending change after gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
+//        System.err.println("saved memory: " + (oldUsedMemory - memoryBean.getHeapMemoryUsage().getUsed()) / 1e6);
+//        System.err.println("total memory: " + memoryBean.getHeapMemoryUsage().getUsed() / 1e6);
+//        System.err.println("deleted IS: " + (isCount - config.getAllInformationSets().size()));
 
     }
 
