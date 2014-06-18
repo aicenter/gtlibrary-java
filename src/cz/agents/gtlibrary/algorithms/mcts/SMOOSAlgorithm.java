@@ -228,11 +228,9 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
 
 
         System.err.println("is count: " + isCount);
-        new Scanner(System.in).next();
         cleanUnnecessaryPartsOfTree(action);
         System.err.println("pending change before gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
         System.gc();
-        new Scanner(System.in).next();
         System.err.println("pending change after gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
         System.err.println("saved memory: " + (oldUsedMemory - memoryBean.getHeapMemoryUsage().getUsed()) / 1e6);
         System.err.println("total memory: " + memoryBean.getHeapMemoryUsage().getUsed() / 1e6);
