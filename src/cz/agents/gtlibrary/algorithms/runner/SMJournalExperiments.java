@@ -253,7 +253,7 @@ public class SMJournalExperiments {
             alg.runMiliseconds((int)(secondsIteration*1000));
             cumulativeTime += secondsIteration*1000;
 
-            System.out.println("Cumulative Time: "+(cumulativeTime));
+            System.out.println("Cumulative Time: "+(Math.ceil(cumulativeTime)));
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
@@ -263,7 +263,7 @@ public class SMJournalExperiments {
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-            secondsIteration *= 2;
+            secondsIteration *= 1.5;
         }
     }
 
@@ -308,7 +308,7 @@ public class SMJournalExperiments {
                 bpFactory = new UCTBackPropFactory(c);
                 break;
             case EXP3:
-                bpFactory = new Exp3BackPropFactory(-1, 1, 0.2);
+                bpFactory = new Exp3BackPropFactory(-1, 1, 0.1);
                 break;
             case RM:
                 alg = new SMMCTSAlgorithm(
@@ -347,7 +347,7 @@ public class SMJournalExperiments {
             alg.runMiliseconds((int)(secondsIteration*1000));
             cumulativeTime += secondsIteration*1000;
 
-            System.out.println("Cumulative Time: "+(cumulativeTime));
+            System.out.println("Cumulative Time: "+(Math.ceil(cumulativeTime)));
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
@@ -357,7 +357,7 @@ public class SMJournalExperiments {
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-            secondsIteration *= 2;
+            secondsIteration *= 1.5;
         }
     }
 
