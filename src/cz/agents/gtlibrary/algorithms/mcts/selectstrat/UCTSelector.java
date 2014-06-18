@@ -55,19 +55,69 @@ public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, 
         return i;
     }
 
+//    private int getBestActionIdx() {
+//        double bestVal = -Double.MAX_VALUE;
+//        int bestIdx = -1;
+//
+//        for (int i = 0; i < v.length; i++) {
+//            double curVal = v[i] + fact.C * Math.sqrt(Math.log(n) / ni[i]);
+//
+//            if (curVal > bestVal) {
+//                bestVal = curVal;
+//                bestIdx = i;
+//            }
+//        }
+//        return bestIdx;
+//    }
+
     private int getBestActionIdx() {
+        double epsilon = 0.01;
+        double bestVal = getMaxValue();
+        int epsilonBestCount = getEpsilonBestCount(epsilon, bestVal);
+
+
+        return getRandomEpsilonBest(epsilon, bestVal, epsilonBestCount);
+    }
+
+    private int getRandomEpsilonBest(double epsilon, double bestVal, int epsilonBestCount) {
+        int randomIndex = fact.rnd.nextInt(epsilonBestCount);
+        int currentCount = 0;
+
+        for (int i = 0; i < v.length; i++) {
+            double curVal = v[i] + fact.C * Math.sqrt(Math.log(n) / ni[i]);
+
+            if (curVal >= bestVal - epsilon) {
+                if (currentCount == randomIndex)
+                    return i;
+                currentCount++;
+            }
+        }
+        return -1;
+    }
+
+    private int getEpsilonBestCount(double epsilon, double bestVal) {
+        int epsilonBestCount = 0;
+
+        for (int i = 0; i < v.length; i++) {
+            double curVal = v[i] + fact.C * Math.sqrt(Math.log(n) / ni[i]);
+
+            if (curVal >= bestVal - epsilon)
+                epsilonBestCount++;
+        }
+        return epsilonBestCount;
+    }
+
+    private double getMaxValue() {
         double bestVal = -Double.MAX_VALUE;
-        int bestIdx = -1;
 
         for (int i = 0; i < v.length; i++) {
             double curVal = v[i] + fact.C * Math.sqrt(Math.log(n) / ni[i]);
 
             if (curVal > bestVal) {
                 bestVal = curVal;
-                bestIdx = i;
             }
         }
-        return bestIdx;
+        return bestVal;
     }
 
     @Override
