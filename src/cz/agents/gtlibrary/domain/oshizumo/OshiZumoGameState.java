@@ -71,10 +71,6 @@ public class OshiZumoGameState extends SimultaneousGameState {
         this.sequenceForAllPlayers = new ArrayList<Action>(gameState.sequenceForAllPlayers);
     }
 
-    public Sequence getNatureSequence() {
-        return null;
-    }
-
     @Override
     public Player getPlayerToMove() {
         return players[currentPlayerIndex];

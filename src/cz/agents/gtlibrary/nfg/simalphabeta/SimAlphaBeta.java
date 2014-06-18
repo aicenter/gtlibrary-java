@@ -128,12 +128,21 @@ public class SimAlphaBeta {
                     new NatureCacheImpl(),
                     new LowerBoundComparatorFactory());
             System.out.println(data.gameInfo.getInfo());
-            DoubleOracle oracle = data.getDoubleOracle(rootState, -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState), data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState));
+            double beta = -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState);
+            double alpha = data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState);
+            DoubleOracle oracle = data.getDoubleOracle(rootState, beta, alpha);
 
-            oracle.generate();
+            double result = 0d;
+            if (beta + 1e-8 < alpha) {
+                oracle.generate();
+                result = oracle.getGameValue();
+            } else {
+                result = alpha;
+            }
+
             System.out.println("****************");
 //			System.out.println("root state: " + rootState);
-            System.out.println("game value: " + oracle.getGameValue());
+            System.out.println("game value: " + result);
             System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
             System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
         }
@@ -152,9 +161,11 @@ public class SimAlphaBeta {
 //        System.out.println(data.gameInfo.getInfo());
         AlphaBeta p1AlphaBeta = abFactory.getP1AlphaBeta(expander, gameInfo);
         AlphaBeta p2AlphaBeta = abFactory.getP2AlphaBeta(expander, gameInfo);
+
         DoubleOracle oracle = data.getDoubleOracle(rootState, -p2AlphaBeta.getUnboundedValue(rootState), p1AlphaBeta.getUnboundedValue(rootState));
 
-        oracle.generate();
+        if (-p2AlphaBeta.getUnboundedValue(rootState) + 1e-8 < p1AlphaBeta.getUnboundedValue(rootState))
+            oracle.generate();
         if(Killer.kill)
             return null;
 //        System.out.println("****************");
@@ -173,7 +184,7 @@ public class SimAlphaBeta {
             strategy = new MixedStrategy<ActionPureStrategy>();
 
             strategy.put(new ActionPureStrategy(p1AlphaBeta.getTopLevelAction(player)), 1d);
-            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
+//            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
         }
         return strategy;
     }

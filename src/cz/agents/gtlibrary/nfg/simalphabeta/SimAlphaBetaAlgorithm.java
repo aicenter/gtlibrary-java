@@ -82,7 +82,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
 
                 if (nanoLimit - nanoBuffer(nanoLimit) > threadTime && thread.isAlive()) {
                     sleepTime = toMilis(nanoLimit - threadTime);
-                    System.out.println("snoozing for " + sleepTime);
+//                    System.out.println("snoozing for " + sleepTime);
                 } else {
                     break;
                 }

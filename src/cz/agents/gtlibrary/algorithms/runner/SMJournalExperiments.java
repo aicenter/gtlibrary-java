@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -95,9 +96,9 @@ public class SMJournalExperiments {
             OZGameInfo.startingCoins = new Integer(args[3]);
             OZGameInfo.locK = new Integer(args[4]);
             OZGameInfo.minBid = new Integer(args[5]);
-        } else if (args[1].equalsIgnoreCase("PE")) { // Generic Poker
+        } else if (args[1].equalsIgnoreCase("PE")) { // Pursuit Evasion Game
             if (args.length != 5) {
-                throw new IllegalArgumentException("Illegal poker domain arguments count: 3 parameters are required {SEED} {DEPTH} {GRAPH}");
+                throw new IllegalArgumentException("Illegal PEG domain arguments count: 3 parameters are required {SEED} {DEPTH} {GRAPH}");
             }
             PursuitGameInfo.seed = new Integer(args[2]);
             PursuitGameInfo.depth = new Integer(args[3]);
@@ -163,8 +164,10 @@ public class SMJournalExperiments {
                     runMCTS(MCTStype.UCT);
                 else if (alg.equals("MCTS-EXP3"))
                     runMCTS(MCTStype.EXP3);
+                else if (alg.equals("MCTS-RM"))
+                    runMCTS(MCTStype.RM);
                 else {
-                    throw new IllegalArgumentException("MCTS requires selector function specified {MCTS-UCT,MCTS-EXP3}");
+                    throw new IllegalArgumentException("MCTS requires selector function specified {MCTS-UCT,MCTS-EXP3,MCTS-RM}");
                 }
             } else if (alg.equals("RS"))
                 runRandomSim();  // mlanctot: you could leave this here for me? :) 
@@ -229,7 +232,7 @@ public class SMJournalExperiments {
 
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         long start = threadBean.getCurrentThreadCpuTime();
-        buildCompleteTree(alg.getRootNode());
+//        buildCompleteTree(alg.getRootNode());
         System.out.println("Building GT: " + ((threadBean.getCurrentThreadCpuTime() - start)/1000000));
 
         alg.runMiliseconds(100);
@@ -250,7 +253,7 @@ public class SMJournalExperiments {
             alg.runMiliseconds((int)(secondsIteration*1000));
             cumulativeTime += secondsIteration*1000;
 
-            System.out.println("Cumulative Time: "+(cumulativeTime));
+            System.out.println("Cumulative Time: "+(Math.ceil(cumulativeTime)));
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
@@ -260,7 +263,7 @@ public class SMJournalExperiments {
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-            secondsIteration *= 2;
+            secondsIteration *= 1.5;
         }
     }
 
@@ -295,31 +298,39 @@ public class SMJournalExperiments {
         Distribution dist = new MeanStratDist();
 
         BackPropFactory bpFactory = null;
-        ISMCTSAlgorithm alg = null;
+        GamePlayingAlgorithm alg = null;
 
         switch (type) {
             case UCT:
-                bpFactory = new UCTBackPropFactory(2);
+                String cS = System.getProperty("UCT_C");
+                Double c = 2d;
+                if (cS != null) c = new Double(cS);
+                bpFactory = new UCTBackPropFactory(c);
                 break;
             case EXP3:
-                bpFactory = new Exp3BackPropFactory(-1, 1, 0.2);
+                bpFactory = new Exp3BackPropFactory(-1, 1, 0.1);
                 break;
             case RM:
-                throw new NotImplementedException();
+                alg = new SMMCTSAlgorithm(
+                        rootState.getAllPlayers()[0],
+                        new DefaultSimulator(expander),
+                        new SMRMBackPropFactory(0.4),
+                        rootState, expander);
+                ((SMMCTSAlgorithm)alg).runIterations(2);
         }
 
-        if (!type.equals(MCTStype.RM))
+        if (!type.equals(MCTStype.RM)) {
             alg = new ISMCTSAlgorithm(
                     rootState.getAllPlayers()[0],
                     new DefaultSimulator(expander),
                     bpFactory,
-    //                new UCTBackPropFactory(2),
-    //                new Exp3BackPropFactory(-1, 1, 0.2),
+                    //                new UCTBackPropFactory(2),
+                    //                new Exp3BackPropFactory(-1, 1, 0.2),
                     //new RMBackPropFactory(-1,1,0.4),
                     rootState, expander);
-        alg.returnMeanValue=false;
-
-        alg.runIterations(2);
+            ((ISMCTSAlgorithm) alg).returnMeanValue = false;
+            ((ISMCTSAlgorithm)alg).runIterations(2);
+        }
 
         brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
         brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
@@ -336,7 +347,7 @@ public class SMJournalExperiments {
             alg.runMiliseconds((int)(secondsIteration*1000));
             cumulativeTime += secondsIteration*1000;
 
-            System.out.println("Cumulative Time: "+(cumulativeTime));
+            System.out.println("Cumulative Time: "+(Math.ceil(cumulativeTime)));
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
@@ -346,7 +357,7 @@ public class SMJournalExperiments {
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-            secondsIteration *= 2;
+            secondsIteration *= 1.5;
         }
     }
 
