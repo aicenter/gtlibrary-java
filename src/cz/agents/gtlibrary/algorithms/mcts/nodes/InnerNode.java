@@ -30,6 +30,8 @@ public class InnerNode extends NodeImpl {
     }
 
     private void attendInformationSet() {
+        if(gameState.isPlayerToMoveNature())
+            return;
         informationSet = getAlgConfig().getInformationSetFor(gameState);
 
         //adding a new information set to the config

@@ -1,39 +1,38 @@
 package cz.agents.gtlibrary.iinodes;
 
-import java.util.List;
+import cz.agents.gtlibrary.interfaces.*;
 
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
+import java.util.List;
 
 public abstract class ExpanderImpl<I extends InformationSet> implements Expander<I> {
 
-	private static final long serialVersionUID = -2367393002316400229L;
-	
-	final private AlgorithmConfig<I> algConfig;
+    private static final long serialVersionUID = -2367393002316400229L;
 
-	public ExpanderImpl(AlgorithmConfig<I> algConfig) {
-		this.algConfig = algConfig;
-	}
+    final private AlgorithmConfig<I> algConfig;
 
-	@Override
-	public AlgorithmConfig<I> getAlgorithmConfig() {
-		return algConfig;
-	}
-	
-	@Override
-	public List<Action> getActionsForUnknownIS(GameState gameState) {
-		return getActions(algConfig.createInformationSetFor(gameState));
-	}
+    public ExpanderImpl(AlgorithmConfig<I> algConfig) {
+        this.algConfig = algConfig;
+    }
 
-	@Override
-	public List<Action> getActions(I informationSet) {
-		List<Action> actions = getActions(informationSet.getAllStates().iterator().next());
-		for (Action a : actions) {
-			a.setInformationSet(informationSet);
-		}
-		return actions;
-	}
+    @Override
+    public AlgorithmConfig<I> getAlgorithmConfig() {
+        return algConfig;
+    }
+
+    @Override
+    public List<Action> getActionsForUnknownIS(GameState gameState) {
+        return getActions(algConfig.createInformationSetFor(gameState));
+    }
+
+    @Override
+    public List<Action> getActions(I informationSet) {
+        GameState state = informationSet.getAllStates().iterator().next();
+        List<Action> actions = getActions(state);
+
+        if (!state.isPlayerToMoveNature())
+            for (Action a : actions) {
+                a.setInformationSet(informationSet);
+            }
+        return actions;
+    }
 }

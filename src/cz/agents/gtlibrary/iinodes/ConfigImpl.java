@@ -10,7 +10,7 @@ import cz.agents.gtlibrary.utils.Pair;
 
 public abstract class ConfigImpl<I extends InformationSetImpl> implements AlgorithmConfig<I> {
 
-	private HashMap<Pair<Integer, Sequence>, I> allInformationSets;
+	protected HashMap<Pair<Integer, Sequence>, I> allInformationSets;
 
 	public ConfigImpl() {
 		allInformationSets = new LinkedHashMap<Pair<Integer, Sequence>, I>();

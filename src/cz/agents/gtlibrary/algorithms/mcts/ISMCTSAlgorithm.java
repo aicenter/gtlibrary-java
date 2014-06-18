@@ -21,6 +21,7 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.ThreadMXBean;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 
 /**
@@ -32,6 +33,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     protected BackPropFactory fact;
     protected InnerNode rootNode;
     protected ThreadMXBean threadBean;
+    protected MCTSConfig config;
 
     private InnerNode[] curISArray;
     private HighQualityRandom rnd = new HighQualityRandom();
@@ -42,11 +44,15 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         this.searchingPlayer = searchingPlayer;
         this.simulator = simulator;
         this.fact = fact;
-        if (rootState.isPlayerToMoveNature()) this.rootNode = new ChanceNode(expander, rootState);
-        else this.rootNode = new InnerNode(expander, rootState);
+        if (rootState.isPlayerToMoveNature())
+            this.rootNode = new ChanceNode(expander, rootState);
+        else
+            this.rootNode = new InnerNode(expander, rootState);
         threadBean = ManagementFactory.getThreadMXBean();
         curISArray = new InnerNode[]{rootNode};
-        rootNode.getInformationSet().setAlgorithmData(fact.createSelector(rootNode.getActions()));
+        config = rootNode.getAlgConfig();
+        if (!rootState.isPlayerToMoveNature())
+            rootNode.getInformationSet().setAlgorithmData(fact.createSelector(rootNode.getActions()));
     }
 
     @Override
@@ -134,7 +140,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
 
     @Override
     public Action runMiliseconds(int miliseconds, GameState gameState) {
-        MCTSInformationSet is = rootNode.getAlgConfig().getInformationSetFor(gameState);
+        MCTSInformationSet is = config.getInformationSetFor(gameState);
 
         if (is.getAllNodes().isEmpty()) {
             InnerNode in = curISArray[0];
@@ -143,7 +149,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             if (in.getGameState().isPlayerToMoveNature()) {
                 in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
             }
-            is = rootNode.getAlgConfig().getInformationSetFor(gameState);
+            is = config.getInformationSetFor(gameState);
             is.setAlgorithmData(fact.createSelector(in.getActions()));
         }
         setCurrentIS(is);
@@ -163,28 +169,38 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     }
 
     private void clean(Action action) {
+        System.gc();
         MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
         long oldUsedMemory = memoryBean.getHeapMemoryUsage().getUsed();
-        int isCount = rootNode.getAlgConfig().getAllInformationSets().size();
+        int isCount = config.getAllInformationSets().size();
         long finPending = memoryBean.getObjectPendingFinalizationCount();
 
-        cleanUnnecessaryPartsOfTree(rootNode, action);
+
+        System.err.println("is count: " + isCount);
+        new Scanner(System.in).next();
+        cleanUnnecessaryPartsOfTree(action);
         System.err.println("pending change before gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
         System.gc();
+        new Scanner(System.in).next();
         System.err.println("pending change after gc: " + (finPending - memoryBean.getObjectPendingFinalizationCount()));
-        System.err.println("saved memory: " + (oldUsedMemory - memoryBean.getHeapMemoryUsage().getUsed())/1e6);
-        System.err.println("total memory: " + memoryBean.getHeapMemoryUsage().getUsed()/1e6);
-        System.err.println("deleted IS: " + (isCount - rootNode.getAlgConfig().getAllInformationSets().size()));
+        System.err.println("saved memory: " + (oldUsedMemory - memoryBean.getHeapMemoryUsage().getUsed()) / 1e6);
+        System.err.println("total memory: " + memoryBean.getHeapMemoryUsage().getUsed() / 1e6);
+        System.err.println("deleted IS: " + (isCount - config.getAllInformationSets().size()));
 
     }
 
-    private void cleanUnnecessaryPartsOfTree(InnerNode rootNode, Action action) {
+    private void cleanUnnecessaryPartsOfTree(Action action) {
         for (InnerNode innerNode : curISArray) {
             innerNode.setParent(null);
             innerNode.setLastAction(null);
+            rootNode.setChildren(null);
+            rootNode.setActions(null);
         }
+        curISArray = null;
         rootNode.setParent(null);
         rootNode.setLastAction(null);
+        rootNode.setChildren(null);
+        rootNode.setActions(null);
         GameState state = rootNode.getGameState();
         Sequence p1Sequence = state.getSequenceFor(state.getAllPlayers()[0]);
         Sequence p2Sequence = state.getSequenceFor(state.getAllPlayers()[1]);
@@ -200,5 +216,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             else
                 rootNode.getAlgConfig().cleanSetsNotContaining(null, -1, action, p2Sequence.size());
         }
+        rootNode.getInformationSet().setAlgorithmData(null);
+        rootNode.setInformationSet(null);
+        rootNode = null;
     }
 }

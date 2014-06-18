@@ -8,24 +8,26 @@ package cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm;
 
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.utils.Pair;
+
 import java.io.Serializable;
 
 /**
- *
  * @author vilo
  */
 public interface SMSelector extends Serializable, AlgorithmData {
-     /**
+
+    /**
      * Returns selected action index.
      */
-    public Pair<Integer,Integer> select();
+    public Pair<Integer, Integer> select();
+
     /**
-    * Updates the selector with action result
-    */
-    public void update(Pair<Integer,Integer> selection, double value);
-    
+     * Updates the selector with action result
+     */
+    public void update(Pair<Integer, Integer> selection, double value);
+
     /**
-    * Returns Algorithm for the second player information set in order to extract strategies.
-    */
+     * Returns Algorithm for the second player information set in order to extract strategies.
+     */
     public AlgorithmData getBottomData();
 }
