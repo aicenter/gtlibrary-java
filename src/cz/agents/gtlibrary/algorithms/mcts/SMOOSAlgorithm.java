@@ -40,7 +40,7 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         this.simulator = simulator;
         this.epsilon = epsilon;
         if (rootState.isPlayerToMoveNature())
-            this.rootNode = new ChanceNode(expander, rootState);
+            this.rootNode = new ChanceNode(expander, rootState, random);
         else
             this.rootNode = new InnerNode(expander, rootState);
         threadBean = ManagementFactory.getThreadMXBean();

@@ -44,7 +44,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         this.simulator = simulator;
         this.fact = fact;
         if (rootState.isPlayerToMoveNature())
-            this.rootNode = new ChanceNode(expander, rootState);
+            this.rootNode = new ChanceNode(expander, rootState, fact.getRandom());
         else
             this.rootNode = new InnerNode(expander, rootState);
         threadBean = ManagementFactory.getThreadMXBean();

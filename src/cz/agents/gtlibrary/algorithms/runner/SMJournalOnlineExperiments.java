@@ -110,26 +110,28 @@ public class SMJournalOnlineExperiments {
     }
 
     public void loadGame(String domain) {
+        Random random = new HighQualityRandom();
+
         if (domain.equals("GS")) {
             gameInfo = new GSGameInfo();
             rootState = new GoofSpielGameState();
-            expander = new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig(random));
         } else if (domain.equals("PE")) {
             gameInfo = new PursuitGameInfo();
             rootState = new PursuitGameState();
-            expander = new PursuitExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = new PursuitExpander<MCTSInformationSet>(new MCTSConfig(random));
         } else if (domain.equals("OZ")) {
             gameInfo = new OZGameInfo();
             rootState = new OshiZumoGameState();
-            expander = new OshiZumoExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = new OshiZumoExpander<MCTSInformationSet>(new MCTSConfig(random));
         } else if (domain.equals("RG")) {
             gameInfo = new RandomGameInfo();
             rootState = new SimRandomGameState();
-            expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig(random));
         } else if (domain.equals("Tron")) {
             gameInfo = new TronGameInfo();
             rootState = new TronGameState();
-            expander = new TronExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = new TronExpander<MCTSInformationSet>(new MCTSConfig(random));
         }
     }
 
@@ -153,7 +155,7 @@ public class SMJournalOnlineExperiments {
 
             if (!alg.equals("MCTS-RM")) {
                 BackPropFactory fact = null;
-                Random random = new HighQualityRandom();
+                Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
 
                 switch (alg) {
                     case "MCTS-UCT":
@@ -172,7 +174,7 @@ public class SMJournalOnlineExperiments {
                 player.runIterations(2);
                 return player;
             } else {
-                Random random = new HighQualityRandom();
+                Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
                 SMMCTSAlgorithm player = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
                         new DefaultSimulator(expander, random),
@@ -185,7 +187,7 @@ public class SMJournalOnlineExperiments {
         } else if (alg.equals("OOS")) {
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
-            Random random = new HighQualityRandom();
+            Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
             GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(expander, random), rootState, expander, 0.6, random);
 
             player.runMiliseconds(20);
