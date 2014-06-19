@@ -5,7 +5,7 @@
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.utils.HighQualityRandom;
+
 import java.util.List;
 import java.util.Random;
 
@@ -15,10 +15,11 @@ import java.util.Random;
  */
 public class UCTBackPropFactory implements BackPropFactory {
     public double C;
-    public Random rnd = new HighQualityRandom();
+    public Random random;
     
-    public UCTBackPropFactory(double C) {
+    public UCTBackPropFactory(double C, Random random) {
         this.C = C;
+        this.random = random;
     }
 
     @Override
@@ -30,6 +31,9 @@ public class UCTBackPropFactory implements BackPropFactory {
     public Selector createSelector(int N) {
         return new UCTSelector(N, this);
     }
-    
-    
+
+    @Override
+    public Random getRandom() {
+        return random;
+    }
 }
