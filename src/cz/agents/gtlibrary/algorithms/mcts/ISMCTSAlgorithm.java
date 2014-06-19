@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
@@ -34,6 +30,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     protected InnerNode rootNode;
     protected ThreadMXBean threadBean;
     protected MCTSConfig config;
+    protected Expander<MCTSInformationSet> expander;
 
     private InnerNode[] curISArray;
 
@@ -50,6 +47,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         threadBean = ManagementFactory.getThreadMXBean();
         curISArray = new InnerNode[]{rootNode};
         config = rootNode.getAlgConfig();
+        this.expander = expander;
         if (!rootState.isPlayerToMoveNature())
             rootNode.getInformationSet().setAlgorithmData(fact.createSelector(rootNode.getActions()));
     }
@@ -130,7 +128,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         MCTSInformationSet currentIS = (MCTSInformationSet) curIS;
         curISArray = currentIS.getAllNodes().toArray(new InnerNode[currentIS.getAllNodes().size()]);
         rootNode = curISArray[0];
-        for (InnerNode n : curISArray) n.setParent(null);
+        for (InnerNode n : curISArray)
+            n.setParent(null);
     }
 
     public InnerNode getRootNode() {
@@ -142,14 +141,19 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         MCTSInformationSet is = config.getInformationSetFor(gameState);
 
         if (is.getAllNodes().isEmpty()) {
-            InnerNode in = curISArray[0];
-            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast());
-            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast());
-            if (in.getGameState().isPlayerToMoveNature()) {
-                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
-            }
-            is = config.getInformationSetFor(gameState);
-            is.setAlgorithmData(fact.createSelector(in.getActions()));
+//            System.err.println("ha");
+//            InnerNode in = curISArray[0];
+//            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast());
+//            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast());
+//            if (in.getGameState().isPlayerToMoveNature()) {
+//                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
+//            }
+
+//            is = config.getInformationSetFor(gameState);
+            is.setAlgorithmData(fact.createSelector(expander.getActions(gameState)));
+
+            InnerNode in = new InnerNode(expander, gameState);
+            assert !is.getAllNodes().isEmpty();
         }
         setCurrentIS(is);
         Action action = runMiliseconds(miliseconds);
@@ -173,8 +177,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
 //        long oldUsedMemory = memoryBean.getHeapMemoryUsage().getUsed();
 //        int isCount = config.getAllInformationSets().size();
 //        long finPending = memoryBean.getObjectPendingFinalizationCount();
-//
-//
+
+
 //        System.err.println("is count: " + isCount);
 //        new Scanner(System.in).next();
         cleanUnnecessaryPartsOfTree(action);
@@ -194,7 +198,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
                 node.setParent(null);
                 if (node instanceof InnerNode) {
 
-                    if(!((InnerNode)node).getLastAction().equals(action)) {
+                    if(!node.getLastAction().equals(action)) {
                         ((InnerNode)node).getInformationSet().setAlgorithmData(null);
                         ((InnerNode)node).setInformationSet(null);
                         ((InnerNode)node).setAlgorithmData(null);
@@ -207,6 +211,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             innerNode.setParent(null);
             innerNode.setLastAction(null);
             innerNode.setChildren(null);
+
             innerNode.setActions(null);
             innerNode.getInformationSet().setAlgorithmData(null);
             innerNode.setInformationSet(null);
