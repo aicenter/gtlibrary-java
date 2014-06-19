@@ -16,13 +16,14 @@ import java.util.Random;
  * @author vilo
  */
 public class SMRMBackPropFactory implements SMBackPropFactory  {
-    private Random random;
-    private double gamma = 0.2;
+    Random random;
+    double gamma = 0.2;
     private double minUtility=0;
     private double maxUtility=1;
 
     public SMRMBackPropFactory(double gamma, Random random) {
         this.gamma = gamma;
+        this.random = random;
     }
     
     @Override

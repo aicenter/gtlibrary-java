@@ -36,7 +36,6 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     protected MCTSConfig config;
 
     private InnerNode[] curISArray;
-    private HighQualityRandom rnd = new HighQualityRandom();
 
     public boolean returnMeanValue = false;
 
@@ -60,7 +59,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         int iters = 0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
-            InnerNode n = curISArray[rnd.nextInt(curISArray.length)];
+            InnerNode n = curISArray[fact.getRandom().nextInt(curISArray.length)];
             iteration(n);
             iters++;
         }
@@ -69,18 +68,18 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
-        return Strategy.selectAction(distribution, rnd);
+        return Strategy.selectAction(distribution, fact.getRandom());
     }
 
     public Action runIterations(int iterations) {
         for (int i = 0; i < iterations; i++) {
-            InnerNode n = curISArray[rnd.nextInt(curISArray.length)];
+            InnerNode n = curISArray[fact.getRandom().nextInt(curISArray.length)];
             iteration(n);
         }
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
-        return Strategy.selectAction(distribution, rnd);
+        return Strategy.selectAction(distribution, fact.getRandom());
     }
 
     protected double iteration(Node node) {
@@ -162,7 +161,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             InnerNode child = (InnerNode) curISArray[0].getChildren().values().iterator().next();
             is = child.getInformationSet();
             Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
-            action = Strategy.selectAction(distribution, rnd);
+            action = Strategy.selectAction(distribution, fact.getRandom());
             clean(action);
             return action;
         }
@@ -218,8 +217,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             for (Node node : rootNode.getChildren().values()) {
                 node.setParent(null);
                 if (node instanceof InnerNode) {
-
-                    if(!((InnerNode)node).getLastAction().equals(action)) {
+                    if(!node.getLastAction().equals(action)) {
                         ((InnerNode)node).getInformationSet().setAlgorithmData(null);
                         ((InnerNode)node).setInformationSet(null);
                         ((InnerNode)node).setAlgorithmData(null);

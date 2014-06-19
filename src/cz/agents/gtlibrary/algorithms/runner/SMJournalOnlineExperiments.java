@@ -153,17 +153,19 @@ public class SMJournalOnlineExperiments {
 
             if (!alg.equals("MCTS-RM")) {
                 BackPropFactory fact = null;
+                Random random = new HighQualityRandom();
+
                 switch (alg) {
                     case "MCTS-UCT":
-                        fact = new UCTBackPropFactory(2);
+                        fact = new UCTBackPropFactory(2, random);
                         break;
                     case "MCTS-EXP3":
-                        fact = new Exp3BackPropFactory(-1, 1, 0.2);
+                        fact = new Exp3BackPropFactory(-1, 1, 0.2, random);
                         break;
                 }
                 ISMCTSAlgorithm player = new ISMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
-                        new DefaultSimulator(expander),
+                        new DefaultSimulator(expander, random),
                         fact,
                         rootState, expander);
                 player.returnMeanValue = false;

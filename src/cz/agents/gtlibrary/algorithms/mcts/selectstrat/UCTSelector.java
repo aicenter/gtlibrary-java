@@ -48,7 +48,7 @@ public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, 
     }
 
     private int getRandomUnusedActionIdx() {
-        int j = fact.rnd.nextInt(v.length - n);
+        int j = fact.random.nextInt(v.length - n);
         int i = 0;
 
         while (j > 0) {
@@ -84,7 +84,7 @@ public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, 
     }
 
     private int getRandomEpsilonBest(double epsilon, double bestVal, int epsilonBestCount) {
-        int randomIndex = fact.rnd.nextInt(epsilonBestCount);
+        int randomIndex = fact.random.nextInt(epsilonBestCount);
         int currentCount = 0;
 
         for (int i = 0; i < v.length; i++) {
