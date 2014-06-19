@@ -170,11 +170,13 @@ public class SMJournalOnlineExperiments {
                 player.runIterations(2);
                 return player;
             } else {
+                Random random = new HighQualityRandom();
                 SMMCTSAlgorithm player = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
-                        new DefaultSimulator(expander),
-                        new SMRMBackPropFactory(0.4),
+                        new DefaultSimulator(expander, random),
+                        new SMRMBackPropFactory(0.4, random),
                         rootState, expander);
+
                 player.runIterations(2);
                 return player;
             }

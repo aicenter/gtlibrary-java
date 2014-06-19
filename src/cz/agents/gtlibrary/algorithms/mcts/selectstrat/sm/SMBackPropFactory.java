@@ -6,14 +6,15 @@
 
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm;
 
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Selector;
 import cz.agents.gtlibrary.interfaces.Action;
+
 import java.util.List;
+import java.util.Random;
 
 /**
- *
  * @author vilo
  */
 public interface SMBackPropFactory {
-        SMSelector createSlector(List<Action> actions1,  List<Action> actions2);
+    SMSelector createSlector(List<Action> actions1, List<Action> actions2);
+    public Random getRandom();
 }
