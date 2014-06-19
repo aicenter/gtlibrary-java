@@ -214,7 +214,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
                 node.setParent(null);
                 if (node instanceof InnerNode) {
 
-                    if(!((InnerNode)node).getLastAction().equals(action)) {
+                    if(!node.getLastAction().equals(action)) {
                         ((InnerNode)node).getInformationSet().setAlgorithmData(null);
                         ((InnerNode)node).setInformationSet(null);
                         ((InnerNode)node).setAlgorithmData(null);
