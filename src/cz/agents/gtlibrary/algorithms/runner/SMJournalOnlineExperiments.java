@@ -53,12 +53,13 @@ public class SMJournalOnlineExperiments {
         exp.handleDomain(args);
 
         double sum = 0;
+        int iterationCount = 50;
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < iterationCount; i++) {
             sum += exp.runMatch(args);
             System.out.println("avg: " + sum / (i + 1));
         }
-        System.out.println("Overall avg: " + sum / 50);
+        System.out.println("Overall avg: " + sum / iterationCount);
     }
 
 

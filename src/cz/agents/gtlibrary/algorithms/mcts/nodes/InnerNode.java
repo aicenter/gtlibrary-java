@@ -1,6 +1,8 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Selector;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -18,21 +20,25 @@ public class InnerNode extends NodeImpl {
     public InnerNode(InnerNode parent, GameState gameState, Action lastAction) {
         super(parent, lastAction, gameState);
         attendInformationSet();
-        actions = getExpander().getActions(gameState);
+        if (actions == null)
+            actions = getExpander().getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
     }
 
     public InnerNode(Expander<MCTSInformationSet> expander, GameState gameState) {
         super(expander, gameState);
         attendInformationSet();
-        actions = getExpander().getActions(gameState);
+        if (actions == null)
+            actions = expander.getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
     }
 
     private void attendInformationSet() {
-        if(gameState.isPlayerToMoveNature())
+        if (gameState.isPlayerToMoveNature())
             return;
         informationSet = getAlgConfig().getInformationSetFor(gameState);
+        if (informationSet.getAlgorithmData() != null)
+            actions = ((MeanStrategyProvider) informationSet.getAlgorithmData()).getActions();
 
         //adding a new information set to the config
         if (informationSet.getAllNodes().isEmpty()) {
