@@ -33,13 +33,9 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
     protected MCTSConfig config;
     private double epsilon = 0.6;
 
-    private Random rnd = new HighQualityRandom();
+    private Random rnd;
 
-    public SMOOSAlgorithm(Player searchingPlayer, OOSSimulator simulator, GameState rootState, Expander expander) {
-        this(searchingPlayer, simulator, rootState, expander, 0.6);
-    }
-
-    public SMOOSAlgorithm(Player searchingPlayer, OOSSimulator simulator, GameState rootState, Expander expander, double epsilon) {
+    public SMOOSAlgorithm(Player searchingPlayer, OOSSimulator simulator, GameState rootState, Expander expander, double epsilon, Random random) {
         this.searchingPlayer = searchingPlayer;
         this.simulator = simulator;
         this.epsilon = epsilon;
@@ -49,6 +45,7 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
             this.rootNode = new InnerNode(expander, rootState);
         threadBean = ManagementFactory.getThreadMXBean();
         config = rootNode.getAlgConfig();
+        this.rnd = random;
     }
 
     @Override

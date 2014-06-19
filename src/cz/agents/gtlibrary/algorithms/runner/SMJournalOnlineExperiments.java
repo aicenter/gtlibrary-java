@@ -181,7 +181,9 @@ public class SMJournalOnlineExperiments {
         } else if (alg.equals("OOS")) {
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
-            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(expander), rootState, expander, 0.6);
+            Random random = new HighQualityRandom();
+            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(expander, random), rootState, expander, 0.6, random);
+
             player.runMiliseconds(20);
             return player;
         } else if (alg.contains("BI") || alg.contains("DO")) { // backward induction algorithms

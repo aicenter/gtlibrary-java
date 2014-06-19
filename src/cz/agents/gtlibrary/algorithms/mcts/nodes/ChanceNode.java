@@ -10,14 +10,30 @@ public class ChanceNode extends InnerNode {
 	private Random random;
 
 	public ChanceNode(InnerNode parent, GameState gameState, Action lastAction) {
-		super(parent, gameState, lastAction);
-		random = new Random();
+		this(parent, gameState, lastAction, new Random());
 	}
 	
 	public ChanceNode(Expander<MCTSInformationSet> expander, GameState gameState) {
-		super(expander, gameState);
-		random = new Random();
+		this(expander, gameState, new Random());
 	}
+
+    public ChanceNode(InnerNode parent, GameState gameState, Action lastAction, long seed) {
+        this(parent, gameState, lastAction, new Random(seed));
+    }
+
+    public ChanceNode(Expander<MCTSInformationSet> expander, GameState gameState, long seed) {
+        this(expander, gameState, new Random(seed));
+    }
+
+    public ChanceNode(InnerNode parent, GameState gameState, Action lastAction, Random random) {
+        super(parent, gameState, lastAction);
+        this.random = random;
+    }
+
+    public ChanceNode(Expander<MCTSInformationSet> expander, GameState gameState, Random random) {
+        super(expander, gameState);
+        this.random = random;
+    }
 
 	public Action getRandomAction() {
 		double move = random.nextDouble();
