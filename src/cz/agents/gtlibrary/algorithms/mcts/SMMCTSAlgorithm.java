@@ -13,14 +13,11 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMSelector;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
-import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
 import java.lang.management.ThreadMXBean;
 import java.util.Map;
-import java.util.Scanner;
 
 
 /**
@@ -34,14 +31,12 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
     protected MCTSConfig config;
     protected ThreadMXBean threadBean;
 
-    private HighQualityRandom rnd = new HighQualityRandom();
-
     public SMMCTSAlgorithm(Player searchingPlayer, Simulator simulator, SMBackPropFactory fact, GameState rootState, Expander expander) {
         this.searchingPlayer = searchingPlayer;
         this.simulator = simulator;
         this.fact = fact;
         if (rootState.isPlayerToMoveNature())
-            this.rootNode = new ChanceNode(expander, rootState);
+            this.rootNode = new ChanceNode(expander, rootState, fact.getRandom());
         else
             this.rootNode = new InnerNode(expander, rootState);
         config = rootNode.getAlgConfig();
@@ -66,7 +61,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         } else {
             distribution = (new MeanStratDist()).getDistributionFor(((InnerNode) rootNode.getChildren().values().iterator().next()).getInformationSet().getAlgorithmData());
         }
-        return Strategy.selectAction(distribution, rnd);
+        return Strategy.selectAction(distribution, fact.getRandom());
     }
 
     public Action runIterations(int iterations) {
@@ -77,7 +72,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
             return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData());
 
-        return Strategy.selectAction(distribution, rnd);
+        return Strategy.selectAction(distribution, fact.getRandom());
     }
 
     protected double iteration(Node node) {
@@ -163,7 +158,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
             InnerNode child = (InnerNode) rootNode.getChildFor(rootNode.getActions().get(0));
             is = child.getInformationSet();
             Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
-            action = Strategy.selectAction(distribution, rnd);
+            action = Strategy.selectAction(distribution, fact.getRandom());
             clean(action);
             return action;
         }
