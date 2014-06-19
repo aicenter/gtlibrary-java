@@ -30,6 +30,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
     protected InnerNode rootNode;
     protected MCTSConfig config;
     protected ThreadMXBean threadBean;
+    protected Expander<MCTSInformationSet> expander;
 
     public SMMCTSAlgorithm(Player searchingPlayer, Simulator simulator, SMBackPropFactory fact, GameState rootState, Expander expander) {
         this.searchingPlayer = searchingPlayer;
@@ -41,6 +42,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
             this.rootNode = new InnerNode(expander, rootState);
         config = rootNode.getAlgConfig();
         threadBean = ManagementFactory.getThreadMXBean();
+        this.expander = expander;
     }
 
     @Override
@@ -137,14 +139,18 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         MCTSInformationSet is = config.getInformationSetFor(gameState);
 
         if (is.getAllNodes().isEmpty()) {
-            InnerNode in = rootNode;
+//            InnerNode in = rootNode;
+//
+//            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast());
+//            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast());
+//            if (in.getGameState().isPlayerToMoveNature()) {
+//                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
+//            }
+//            is = config.getInformationSetFor(gameState);
+            InnerNode in = new InnerNode(expander, gameState);
 
-            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast());
-            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast());
-            if (in.getGameState().isPlayerToMoveNature()) {
-                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
-            }
-            is = config.getInformationSetFor(gameState);
+            is = in.getInformationSet();
+            assert !is.getAllNodes().isEmpty();
             expandNode(in);
         }
         assert is.getAllNodes().size() == 1;
