@@ -58,7 +58,7 @@ public class InnerNode extends NodeImpl {
             return new LeafNode(this, nextState, action);
         }
         if (nextState.isPlayerToMoveNature()) {
-            return new ChanceNode(this, nextState, action);
+            return new ChanceNode(this, nextState, action, getAlgConfig().getRandom());
         }
         return new InnerNode(this, nextState, action);
     }
