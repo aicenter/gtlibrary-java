@@ -25,6 +25,11 @@ public class OOSSimulator implements Simulator {
         this.expander = expander;
     }
 
+    public OOSSimulator(Expander expander, Random random) {
+        rnd = random;
+        this.expander = expander;
+    }
+
     public OOSSimulator(Expander expander) {
          rnd = new HighQualityRandom();
         this.expander = expander;
