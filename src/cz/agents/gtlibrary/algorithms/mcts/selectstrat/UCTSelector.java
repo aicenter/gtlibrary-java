@@ -17,6 +17,8 @@ import java.util.List;
  * @author vilo
  */
 public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, ActionFrequencyProvider, MeanStrategyProvider {
+    public static boolean useDeterministicUCT = true;
+
     private UCTBackPropFactory fact;
     private List<Action> actions;
     double[] v;
@@ -40,7 +42,9 @@ public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, 
         //random unused action
         if (n < v.length)
             return getRandomUnusedActionIdx();
-        return getBestActionIdx();
+        if(useDeterministicUCT)
+            return getDetBestActionIdx();
+        return getUndetBestActionIdx();
     }
 
     private int getRandomUnusedActionIdx() {
@@ -55,22 +59,22 @@ public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, 
         return i;
     }
 
-//    private int getBestActionIdx() {
-//        double bestVal = -Double.MAX_VALUE;
-//        int bestIdx = -1;
-//
-//        for (int i = 0; i < v.length; i++) {
-//            double curVal = v[i] + fact.C * Math.sqrt(Math.log(n) / ni[i]);
-//
-//            if (curVal > bestVal) {
-//                bestVal = curVal;
-//                bestIdx = i;
-//            }
-//        }
-//        return bestIdx;
-//    }
+    private int getDetBestActionIdx() {
+        double bestVal = -Double.MAX_VALUE;
+        int bestIdx = -1;
 
-    private int getBestActionIdx() {
+        for (int i = 0; i < v.length; i++) {
+            double curVal = v[i] + fact.C * Math.sqrt(Math.log(n) / ni[i]);
+
+            if (curVal > bestVal) {
+                bestVal = curVal;
+                bestIdx = i;
+            }
+        }
+        return bestIdx;
+    }
+
+    private int getUndetBestActionIdx() {
         double epsilon = 0.01;
         double bestVal = getMaxValue();
         int epsilonBestCount = getEpsilonBestCount(epsilon, bestVal);
