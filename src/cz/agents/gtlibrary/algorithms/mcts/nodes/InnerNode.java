@@ -37,6 +37,8 @@ public class InnerNode extends NodeImpl {
         if (gameState.isPlayerToMoveNature())
             return;
         informationSet = getAlgConfig().getInformationSetFor(gameState);
+
+        //if the actions are already created reuse them
         if (informationSet.getAlgorithmData() != null)
             actions = ((MeanStrategyProvider) informationSet.getAlgorithmData()).getActions();
 
