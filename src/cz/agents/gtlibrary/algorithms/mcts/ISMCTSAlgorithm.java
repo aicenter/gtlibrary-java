@@ -141,18 +141,17 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         MCTSInformationSet is = config.getInformationSetFor(gameState);
 
         if (is.getAllNodes().isEmpty()) {
-//            System.err.println("ha");
 //            InnerNode in = curISArray[0];
 //            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast());
 //            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast());
 //            if (in.getGameState().isPlayerToMoveNature()) {
 //                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
 //            }
-
 //            is = config.getInformationSetFor(gameState);
-            is.setAlgorithmData(fact.createSelector(expander.getActions(gameState)));
-
             InnerNode in = new InnerNode(expander, gameState);
+
+            is = in.getInformationSet();
+            is.setAlgorithmData(fact.createSelector(expander.getActions(gameState)));
             assert !is.getAllNodes().isEmpty();
         }
         setCurrentIS(is);

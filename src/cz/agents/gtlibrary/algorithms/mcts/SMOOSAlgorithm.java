@@ -31,6 +31,7 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
     protected InnerNode rootNode;
     protected ThreadMXBean threadBean;
     protected MCTSConfig config;
+    protected Expander expander;
     private double epsilon = 0.6;
 
     private Random rnd;
@@ -46,6 +47,7 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         threadBean = ManagementFactory.getThreadMXBean();
         config = rootNode.getAlgConfig();
         this.rnd = random;
+        this.expander = expander;
     }
 
     @Override
@@ -190,14 +192,19 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
     public Action runMiliseconds(int miliseconds, GameState gameState) {
         MCTSInformationSet is = config.getInformationSetFor(gameState);
         if (is.getAllNodes().isEmpty()) {
-            InnerNode in = rootNode;
-            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast());
-            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast());
-            if (in.getGameState().isPlayerToMoveNature()) {
-                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
-            }
-            is = config.getInformationSetFor(gameState);
+//            InnerNode in = rootNode;
+//            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast());
+//            in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast());
+//            if (in.getGameState().isPlayerToMoveNature()) {
+//                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
+//            }
+//            is = config.getInformationSetFor(gameState);
+//            is.setAlgorithmData(new OOSAlgorithmData(in.getActions()));
+            InnerNode in = new InnerNode(expander, gameState);
+
+            is = in.getInformationSet();
             is.setAlgorithmData(new OOSAlgorithmData(in.getActions()));
+            assert !is.getAllNodes().isEmpty();
         }
         assert is.getAllNodes().size() == 1;
         rootNode = is.getAllNodes().iterator().next();
