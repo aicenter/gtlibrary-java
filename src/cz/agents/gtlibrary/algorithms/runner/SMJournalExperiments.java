@@ -36,6 +36,7 @@ import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracleImpl;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -177,6 +178,8 @@ public class SMJournalExperiments {
             boolean DO = alg.contains("DO");
             boolean SORT = alg.contains("DOS");
             boolean CACHE = alg.startsWith("CDO");
+            boolean NOTUSEBOUNDS = !alg.startsWith("NUDO");
+            SimOracleImpl.USE_INCREASING_BOUND = NOTUSEBOUNDS;
             if (!DO && (SORT || CACHE)) {
                 throw new IllegalArgumentException("Illegal Argument Combination for Algorithm");
             }
@@ -226,7 +229,10 @@ public class SMJournalExperiments {
 
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
 
-        GamePlayingAlgorithm alg = (OOS) ? new OOSAlgorithm(rootState.getAllPlayers()[0],new OOSSimulator(expander),rootState, expander, 0, 0.6) : new CFRAlgorithm(rootState.getAllPlayers()[0],rootState, expander);
+        Double expl = 0.6d;
+        String explS = System.getProperty("EXPL");
+        if (explS != null) expl = new Double(explS);
+        GamePlayingAlgorithm alg = (OOS) ? new SMOOSAlgorithm(rootState.getAllPlayers()[0],new OOSSimulator(expander),rootState, expander, expl, new HighQualityRandom()) : new CFRAlgorithm(rootState.getAllPlayers()[0],rootState, expander);
 
         Distribution dist = new MeanStratDist();
 
@@ -263,7 +269,7 @@ public class SMJournalExperiments {
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-            secondsIteration *= 1.5;
+            secondsIteration *= 1.1;
         }
     }
 
@@ -302,19 +308,25 @@ public class SMJournalExperiments {
 
         switch (type) {
             case UCT:
-                String cS = System.getProperty("UCT_C");
+                String cS = System.getProperty("EXPL");
                 Double c = 2d;
                 if (cS != null) c = new Double(cS);
                 bpFactory = new UCTBackPropFactory(c);
                 break;
             case EXP3:
-                bpFactory = new Exp3BackPropFactory(-1, 1, 0.1);
+                cS = System.getProperty("EXPL");
+                c = 0.1d;
+                if (cS != null) c = new Double(cS);
+                bpFactory = new Exp3BackPropFactory(-1, 1, c);
                 break;
             case RM:
+                cS = System.getProperty("EXPL");
+                c = 0.1d;
+                if (cS != null) c = new Double(cS);
                 alg = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[0],
                         new DefaultSimulator(expander),
-                        new SMRMBackPropFactory(0.4),
+                        new SMRMBackPropFactory(c),
                         rootState, expander);
                 ((SMMCTSAlgorithm)alg).runIterations(2);
         }
@@ -357,7 +369,7 @@ public class SMJournalExperiments {
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-            secondsIteration *= 1.5;
+            secondsIteration *= 1.1;
         }
     }
 

@@ -41,8 +41,10 @@ public class StrategyCollector {
                 MCTSInformationSet curNodeIS = curNode.getInformationSet();
 //                if (((NbSamplesProvider)curNodeIS.getAlgorithmData()).getNbSamples() < 10)
 //                    continue;
- 
-                if (curNodeIS.getPlayer().equals(player) && !processed.contains(curNodeIS)){
+                if (curNodeIS == null) {
+                    assert (curNode.getGameState().isPlayerToMoveNature());
+                }
+                else if (curNodeIS.getPlayer().equals(player) && !processed.contains(curNodeIS)){
                     Map<Action, Double> actionDistribution = distribution.getDistributionFor(curNodeIS.getAlgorithmData());
                     double prefix = strategy.get(curNodeIS.getPlayersHistory());
                     if (actionDistribution == null || !(prefix>1e-4)) continue; //unreachable/unreached state
@@ -73,7 +75,10 @@ public class StrategyCollector {
             GameState curNode = q.removeFirst();
             MCTSInformationSet curNodeIS = informationSets.get(curNode.getISKeyForPlayerToMove());
 
-            if (curNode.getPlayerToMove().equals(player) && !processed.contains(curNodeIS)){
+            if (curNodeIS == null) {
+                assert (curNode.isPlayerToMoveNature());
+            }
+            else if (curNode.getPlayerToMove().equals(player) && !processed.contains(curNodeIS)){
                 Map<Action, Double> actionDistribution = distribution.getDistributionFor(curNodeIS.getAlgorithmData());
                 double prefix = strategy.get(curNodeIS.getPlayersHistory());
                 if (actionDistribution == null || !(prefix>0)) continue; //unreachable/unreached state
