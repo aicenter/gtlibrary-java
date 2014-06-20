@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.cache;
 
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.utils.Pair;
@@ -34,5 +35,8 @@ public interface DOCache {
 
 	public Double getOptimisticUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2);
 
-	
+    public void setTempStrategy(Pair<ActionPureStrategy, ActionPureStrategy> actionPair, MixedStrategy<ActionPureStrategy>[] strategiesFromAlphaBeta);
+
+    public MixedStrategy<ActionPureStrategy>[] getTempStrategy(Pair<ActionPureStrategy, ActionPureStrategy> actionPair);
+
 }

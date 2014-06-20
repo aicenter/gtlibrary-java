@@ -31,6 +31,15 @@ public class NullDOCache implements DOCache {
 	}
 
     @Override
+    public void setTempStrategy(Pair<ActionPureStrategy, ActionPureStrategy> actionPair, MixedStrategy<ActionPureStrategy>[] strategiesFromAlphaBeta) {
+    }
+
+    @Override
+    public MixedStrategy<ActionPureStrategy>[] getTempStrategy(Pair<ActionPureStrategy, ActionPureStrategy> actionPair) {
+        return null;
+    }
+
+    @Override
     public MixedStrategy<ActionPureStrategy>[] getStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
         return null;
     }
