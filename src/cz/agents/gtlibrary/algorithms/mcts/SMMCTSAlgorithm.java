@@ -58,6 +58,9 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         System.out.println("Iters: " + iters);
         Map<Action, Double> distribution;
 
+        if (rootNode == null || rootNode.getInformationSet() == null)
+            return null;
+
         if (rootNode.getInformationSet().getPlayer().equals(searchingPlayer)) {
             distribution = (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData());
         } else {
