@@ -40,6 +40,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         if (rootState.isPlayerToMoveNature()) this.rootNode = new ChanceNode(expander, rootState);
         else this.rootNode = new InnerNode(expander, rootState);
         threadBean = ManagementFactory.getThreadMXBean();
+        expandNode(rootNode);
     }
     
     @Override

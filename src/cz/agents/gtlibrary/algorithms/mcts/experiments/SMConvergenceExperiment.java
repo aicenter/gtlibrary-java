@@ -32,6 +32,7 @@ import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.SimSystematicGS;
 import cz.agents.gtlibrary.iinodes.ConfigImpl; 
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -63,9 +64,11 @@ public class SMConvergenceExperiment {
     static Expander<MCTSInformationSet> expander;
 
     public static void setupRnd(long seed) {
-        RandomGameInfo.MAX_DEPTH = 5;
-        RandomGameInfo.MAX_BF = 3;
-        RandomGameInfo.BINARY_UTILITY = true;
+        RandomGameInfo.MAX_DEPTH = 3;
+        RandomGameInfo.MAX_BF = 2;
+        RandomGameInfo.MAX_CENTER_MODIFICATION=1;
+        RandomGameInfo.BINARY_UTILITY = false;
+        RandomGameInfo.FIXED_SIZE_BF = true;
         RandomGameInfo.seed = seed;
         gameInfo = new RandomGameInfo();
         rootState = new SimRandomGameState();
@@ -76,6 +79,21 @@ public class SMConvergenceExperiment {
         optStrategies = efg.generate();
         new GambitEFG().write("RND" + RandomGameInfo.MAX_BF + RandomGameInfo.MAX_DEPTH + "_" +seed+".efg", rootState, sfExpander);
     }
+    
+    public static void setupAntiExploration() {
+        RandomGameInfo.MAX_DEPTH = 2;
+        RandomGameInfo.MAX_BF = 2;
+        SimSystematicGS.utilities = new double[]{-1,-1,-1,-1, 0,1,0,1, -1,-1,1,1, 0.5,1,0.5,1};
+        gameInfo = new RandomGameInfo();
+        rootState = new SimSystematicGS();
+        expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
+        sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+        sfExpander = new RandomGameExpander<SequenceInformationSet>(sfAlgConfig);
+        efg = new FullSequenceEFG(rootState, sfExpander, gameInfo, sfAlgConfig);
+        optStrategies = efg.generate();
+        new GambitEFG().write("antiExploration.efg", rootState, sfExpander);
+    }
+    
     
     public static void setupGoofSpiel(int d){
         assert GSGameInfo.depth==d;
@@ -301,8 +319,11 @@ public class SMConvergenceExperiment {
     public static void main(String[] args) throws Exception {
         //batchMain(args);
         //setupGoofSpiel(6);
-        setupOshiZumo(8, 2);
-        gamma=0.1;
+        //setupOshiZumo(8, 2);
+        //setupRnd(1);
+        setupAntiExploration();
+        gamma=0.3;
         runSMMCTS_RM();
+        runMCTSExp3();
     }
 }

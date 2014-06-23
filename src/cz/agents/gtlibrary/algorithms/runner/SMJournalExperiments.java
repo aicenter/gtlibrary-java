@@ -58,7 +58,6 @@ public class SMJournalExperiments {
 
     static GameInfo gameInfo;
     static GameState rootState;
-    static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
     static SQFBestResponseAlgorithm brAlg0;
     static SQFBestResponseAlgorithm brAlg1;
     static Expander<MCTSInformationSet> expander;
@@ -130,27 +129,22 @@ public class SMJournalExperiments {
             gameInfo = new GSGameInfo();
             rootState = new GoofSpielGameState();
             expander = new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig());
-            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         } else if (domain.equals("PE")) {
             gameInfo = new PursuitGameInfo();
             rootState = new PursuitGameState();
             expander = new PursuitExpander<MCTSInformationSet>(new MCTSConfig());
-            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         } else if (domain.equals("OZ")) {
             gameInfo = new OZGameInfo();
             rootState = new OshiZumoGameState();
             expander = new OshiZumoExpander<MCTSInformationSet>(new MCTSConfig());
-            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         } else if (domain.equals("RG")) {
             gameInfo = new RandomGameInfo();
             rootState = new SimRandomGameState();
             expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
-            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         } else if (domain.equals("Tron")) {
             gameInfo = new TronGameInfo();
             rootState = new TronGameState();
             expander = new TronExpander<MCTSInformationSet>(new MCTSConfig());
-            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         }
     }
 
@@ -265,6 +259,8 @@ public class SMJournalExperiments {
             System.out.flush();
             secondsIteration *= 2;
         }
+        //System.out.println(strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
+        //System.out.println(strategy1.fancyToString(rootState, expander, rootState.getAllPlayers()[1]));
     }
 
     public static void buildCompleteTree(InnerNode r){
@@ -350,6 +346,9 @@ public class SMJournalExperiments {
             System.out.println("Cumulative Time: "+(cumulativeTime));
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
+            
+            //System.out.println(strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
+            //System.out.println(strategy1.fancyToString(rootState, expander, rootState.getAllPlayers()[1]));
 
             br1Val = brAlg1.calculateBR(rootState, strategy0);
             br0Val = brAlg0.calculateBR(rootState, strategy1);
