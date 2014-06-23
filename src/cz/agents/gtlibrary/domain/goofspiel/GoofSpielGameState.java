@@ -289,6 +289,7 @@ public class GoofSpielGameState extends SimultaneousGameState {
             value -= 1e-3;
         else if(value < 0)
             value += 1e-3;
+        assert value < 1 && value > -1;
         return new double[]{value, -value, 0};
     }
 

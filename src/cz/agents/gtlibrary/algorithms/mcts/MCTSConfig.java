@@ -1,16 +1,28 @@
 package cz.agents.gtlibrary.algorithms.mcts;
 
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMSelector;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 
 public class MCTSConfig extends ConfigImpl<MCTSInformationSet> {
+
+    private Random random;
+
+    public MCTSConfig() {
+        this.random = new HighQualityRandom();
+    }
+
+    public MCTSConfig(Random random) {
+        this.random = random;
+    }
 
     @Override
     public MCTSInformationSet createInformationSetFor(GameState gameState) {
@@ -19,7 +31,10 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet> {
 
     @Override
     public MCTSInformationSet getInformationSetFor(GameState gameState) {
+        if(gameState.isPlayerToMoveNature())
+            return null;
         MCTSInformationSet infoSet = super.getInformationSetFor(gameState);
+
         if (infoSet == null) {
             infoSet = new MCTSInformationSet(gameState);
         }
@@ -42,12 +57,12 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet> {
             MCTSInformationSet is = entry.getValue();
             GameState state = is.getAllNodes().iterator().next().getGameState();
 
+
             if (isDirectSuccesor(p1Action, p1ActionPosition, p2Action, p2ActionPosition, state)) {
-//                for (InnerNode innerNode : is.getAllNodes()) {
-//                    innerNode.setParent(null);
-//                    innerNode.setInformationSet(null);
-//                    innerNode.setActions(null);
-//                }
+                AlgorithmData data = is.getAlgorithmData();
+
+                if (data instanceof SMRMSelector)
+                    ((SMRMSelector) data).setP1Actions(null);
                 is.getAllNodes().clear();
                 is.setAlgorithmData(null);
                 iterator.remove();
@@ -64,5 +79,9 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet> {
         if (actionPosition == -1)
             return true;
         return sequence.size() - 1 >= actionPosition && sequence.get(actionPosition).equals(action);
+    }
+
+    public Random getRandom() {
+        return random;
     }
 }

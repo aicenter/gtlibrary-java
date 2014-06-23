@@ -1,11 +1,11 @@
 package cz.agents.gtlibrary.algorithms.runner;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
-import cz.agents.gtlibrary.algorithms.cfr.CFRISAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
@@ -13,7 +13,6 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
-import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
@@ -28,23 +27,21 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
-import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronExpander;
+import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
+import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracleImpl;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -64,7 +61,9 @@ public class SMJournalExperiments {
 
     static long samplingTimeLimit = 1800000; // default: 30min
 
-    static enum MCTStype {UCT, EXP3, RM};
+    static enum MCTStype {UCT, EXP3, RM}
+
+    ;
 
     public static void main(String[] args) {
         if (args.length < 2) {
@@ -171,11 +170,13 @@ public class SMJournalExperiments {
             boolean DO = alg.contains("DO");
             boolean SORT = alg.contains("DOS");
             boolean CACHE = alg.startsWith("CDO");
+            boolean NOTUSEBOUNDS = !alg.startsWith("NUDO");
+            SimOracleImpl.USE_INCREASING_BOUND = NOTUSEBOUNDS;
             if (!DO && (SORT || CACHE)) {
                 throw new IllegalArgumentException("Illegal Argument Combination for Algorithm");
             }
             if (domain.equals("GS"))
-                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB,DO,SORT, CACHE, Integer.MAX_VALUE);
+                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB, DO, SORT, CACHE, Integer.MAX_VALUE);
             else if (domain.equals("PE"))
                 SimAlphaBeta.runPursuit(AB, DO, SORT, CACHE);
             else if (domain.equals("RG"))
@@ -184,7 +185,7 @@ public class SMJournalExperiments {
                 SimAlphaBeta.runOshiZumo(AB, DO, SORT, CACHE);
             else if (domain.equals("Tron"))
                 SimAlphaBeta.runTron(AB, DO, SORT, CACHE);
-       } 
+        }
     }
 
     // for testing
@@ -220,19 +221,22 @@ public class SMJournalExperiments {
 
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
 
-        GamePlayingAlgorithm alg = (OOS) ? new OOSAlgorithm(rootState.getAllPlayers()[0],new OOSSimulator(expander),rootState, expander, 0, 0.6) : new CFRAlgorithm(rootState.getAllPlayers()[0],rootState, expander);
+        Double expl = 0.6d;
+        String explS = System.getProperty("EXPL");
+        if (explS != null) expl = new Double(explS);
+        GamePlayingAlgorithm alg = (OOS) ? new SMOOSAlgorithm(rootState.getAllPlayers()[0], new OOSSimulator(expander), rootState, expander, expl, new HighQualityRandom()) : new CFRAlgorithm(rootState.getAllPlayers()[0], rootState, expander);
 
         Distribution dist = new MeanStratDist();
 
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         long start = threadBean.getCurrentThreadCpuTime();
 //        buildCompleteTree(alg.getRootNode());
-        System.out.println("Building GT: " + ((threadBean.getCurrentThreadCpuTime() - start)/1000000));
+        System.out.println("Building GT: " + ((threadBean.getCurrentThreadCpuTime() - start) / 1000000));
 
         alg.runMiliseconds(100);
 
-        brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
-        brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
 
 
         Strategy strategy0 = null;
@@ -244,10 +248,10 @@ public class SMJournalExperiments {
         double cumulativeTime = 0;
 
         for (int i = 0; cumulativeTime < samplingTimeLimit && (br0Val + br1Val > 0.005); i++) {
-            alg.runMiliseconds((int)(secondsIteration*1000));
-            cumulativeTime += secondsIteration*1000;
+            alg.runMiliseconds((int) (secondsIteration * 1000));
+            cumulativeTime += secondsIteration * 1000;
 
-            System.out.println("Cumulative Time: "+(cumulativeTime));
+            System.out.println("Cumulative Time: " + (Math.ceil(cumulativeTime)));
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
@@ -257,33 +261,34 @@ public class SMJournalExperiments {
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-            secondsIteration *= 2;
+            secondsIteration *= 1.1;
         }
         //System.out.println(strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
         //System.out.println(strategy1.fancyToString(rootState, expander, rootState.getAllPlayers()[1]));
     }
 
-    public static void buildCompleteTree(InnerNode r){
+    public static void buildCompleteTree(InnerNode r) {
         System.out.println("Building complete tree.");
-        int nodes=0, infosets=0;
+        int nodes = 0, infosets = 0;
         ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
         q.add(r);
-        while (!q.isEmpty()){
+        while (!q.isEmpty()) {
             nodes++;
             InnerNode n = q.removeFirst();
             MCTSInformationSet is = n.getInformationSet();
-            if (is.getAlgorithmData() == null) {
-                infosets++;
-                is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
-            }
-            for (Action a : n.getActions()){
+            if (!(n instanceof ChanceNode))
+                if (is.getAlgorithmData() == null) {
+                    infosets++;
+                    is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+                }
+            for (Action a : n.getActions()) {
                 Node ch = n.getChildFor(a);
                 if (ch instanceof InnerNode) {
-                    q.add((InnerNode)ch);
+                    q.add((InnerNode) ch);
                 }
             }
         }
-        System.out.println("Created nodes: " + nodes +"; infosets: " +infosets);
+        System.out.println("Created nodes: " + nodes + "; infosets: " + infosets);
     }
 
     public void runMCTS(MCTStype type) {
@@ -298,21 +303,27 @@ public class SMJournalExperiments {
 
         switch (type) {
             case UCT:
-                String cS = System.getProperty("UCT_C");
+                String cS = System.getProperty("EXPL");
                 Double c = 2d;
                 if (cS != null) c = new Double(cS);
                 bpFactory = new UCTBackPropFactory(c);
                 break;
             case EXP3:
-                bpFactory = new Exp3BackPropFactory(-1, 1, 0.2);
+                cS = System.getProperty("EXPL");
+                c = 0.1d;
+                if (cS != null) c = new Double(cS);
+                bpFactory = new Exp3BackPropFactory(-1, 1, c);
                 break;
             case RM:
+                cS = System.getProperty("EXPL");
+                c = 0.1d;
+                if (cS != null) c = new Double(cS);
                 alg = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[0],
                         new DefaultSimulator(expander),
-                        new SMRMBackPropFactory(0.4),
+                        new SMRMBackPropFactory(c),
                         rootState, expander);
-                ((SMMCTSAlgorithm)alg).runIterations(2);
+                ((SMMCTSAlgorithm) alg).runIterations(2);
         }
 
         if (!type.equals(MCTStype.RM)) {
@@ -325,11 +336,11 @@ public class SMJournalExperiments {
                     //new RMBackPropFactory(-1,1,0.4),
                     rootState, expander);
             ((ISMCTSAlgorithm) alg).returnMeanValue = false;
-            ((ISMCTSAlgorithm)alg).runIterations(2);
+            ((ISMCTSAlgorithm) alg).runIterations(2);
         }
 
-        brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
-        brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
 
         Strategy strategy0 = null;
         Strategy strategy1 = null;
@@ -340,10 +351,10 @@ public class SMJournalExperiments {
         double cumulativeTime = 0;
 
         for (int i = 0; cumulativeTime < samplingTimeLimit && (br0Val + br1Val > 0.005); i++) {
-            alg.runMiliseconds((int)(secondsIteration*1000));
-            cumulativeTime += secondsIteration*1000;
+            alg.runMiliseconds((int) (secondsIteration * 1000));
+            cumulativeTime += secondsIteration * 1000;
 
-            System.out.println("Cumulative Time: "+(cumulativeTime));
+            System.out.println("Cumulative Time: " + (Math.ceil(cumulativeTime)));
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
             
@@ -356,7 +367,7 @@ public class SMJournalExperiments {
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-            secondsIteration *= 2;
+            secondsIteration *= 1.1;
         }
     }
 

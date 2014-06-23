@@ -15,12 +15,15 @@ public class DefaultSimulator implements Simulator {
     final private Expander expander;
 
     public DefaultSimulator(Expander expander) {
-        this.rnd = new HighQualityRandom();
-        this.expander = expander;
+        this(expander, new HighQualityRandom());
     }
 
     public DefaultSimulator(Expander expander, long seed) {
-        this.rnd = new HighQualityRandom(seed);
+        this(expander, new HighQualityRandom(seed));
+    }
+
+    public DefaultSimulator(Expander expander, Random random) {
+        this.rnd = random;
         this.expander = expander;
     }
 

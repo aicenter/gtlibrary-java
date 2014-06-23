@@ -47,4 +47,9 @@ public class RMBackPropFactory implements BackPropFactory  {
     public Selector createSelector(int N) {
         return new RMSelector(N, this);
     }
+
+    @Override
+    public Random getRandom() {
+        return random;
+    }
 }

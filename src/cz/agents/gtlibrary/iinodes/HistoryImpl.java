@@ -1,35 +1,35 @@
 package cz.agents.gtlibrary.iinodes;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.utils.FixedSizeMap;
+
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 
 public class HistoryImpl implements History {
 
 	private static final long serialVersionUID = -36924832950052038L;
 	
-	private FixedSizeMap<Player, Sequence> sequencesOfPlayers;
+	private Map<Player, Sequence> sequencesOfPlayers;
 	private int hashCode = -1;
 	final private Player[] players;
 
 	public HistoryImpl(Player[] players) {
 		this.players = players;
-		sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(players.length);
+		sequencesOfPlayers = new LinkedHashMap<Player, Sequence>(players.length);
 		for (Player player : players) {
 			sequencesOfPlayers.put(player, new ArrayListSequenceImpl(player));
 		}
 	}
 
 	public HistoryImpl(Map<Player, Sequence> sequencesOfPlayers, Player[] players) {
-		this.sequencesOfPlayers = new FixedSizeMap<Player, Sequence>(sequencesOfPlayers.size());
+		this.sequencesOfPlayers = new LinkedHashMap<Player, Sequence>(sequencesOfPlayers.size());
 		this.players = players;
 		for (Entry<Player, Sequence> entry : sequencesOfPlayers.entrySet()) {
 			this.sequencesOfPlayers.put(entry.getKey(), new ArrayListSequenceImpl(entry.getValue()));

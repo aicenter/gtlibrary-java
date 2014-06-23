@@ -32,6 +32,7 @@ import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 public class SMJournalOnlineExperiments {
 
@@ -52,12 +53,13 @@ public class SMJournalOnlineExperiments {
         exp.handleDomain(args);
 
         double sum = 0;
+        int iterationCount = 50;
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < iterationCount; i++) {
             sum += exp.runMatch(args);
             System.out.println("avg: " + sum / (i + 1));
         }
-        System.out.println("Overall avg: " + sum / 50);
+        System.out.println("Overall avg: " + sum / iterationCount);
     }
 
 
@@ -108,26 +110,28 @@ public class SMJournalOnlineExperiments {
     }
 
     public void loadGame(String domain) {
+        Random random = new HighQualityRandom();
+
         if (domain.equals("GS")) {
             gameInfo = new GSGameInfo();
             rootState = new GoofSpielGameState();
-            expander = new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig(random));
         } else if (domain.equals("PE")) {
             gameInfo = new PursuitGameInfo();
             rootState = new PursuitGameState();
-            expander = new PursuitExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = new PursuitExpander<MCTSInformationSet>(new MCTSConfig(random));
         } else if (domain.equals("OZ")) {
             gameInfo = new OZGameInfo();
             rootState = new OshiZumoGameState();
-            expander = new OshiZumoExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = new OshiZumoExpander<MCTSInformationSet>(new MCTSConfig(random));
         } else if (domain.equals("RG")) {
             gameInfo = new RandomGameInfo();
             rootState = new SimRandomGameState();
-            expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig(random));
         } else if (domain.equals("Tron")) {
             gameInfo = new TronGameInfo();
             rootState = new TronGameState();
-            expander = new TronExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = new TronExpander<MCTSInformationSet>(new MCTSConfig(random));
         }
     }
 
@@ -151,35 +155,41 @@ public class SMJournalOnlineExperiments {
 
             if (!alg.equals("MCTS-RM")) {
                 BackPropFactory fact = null;
+                Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
+
                 switch (alg) {
                     case "MCTS-UCT":
-                        fact = new UCTBackPropFactory(2);
+                        fact = new UCTBackPropFactory(2, random);
                         break;
                     case "MCTS-EXP3":
-                        fact = new Exp3BackPropFactory(-1, 1, 0.2);
+                        fact = new Exp3BackPropFactory(-1, 1, 0.2, random);
                         break;
                 }
                 ISMCTSAlgorithm player = new ISMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
-                        new DefaultSimulator(expander),
+                        new DefaultSimulator(expander, random),
                         fact,
                         rootState, expander);
                 player.returnMeanValue = false;
                 player.runIterations(2);
                 return player;
             } else {
+                Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
                 SMMCTSAlgorithm player = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
-                        new DefaultSimulator(expander),
-                        new SMRMBackPropFactory(0.4),
+                        new DefaultSimulator(expander, random),
+                        new SMRMBackPropFactory(0.4, random),
                         rootState, expander);
+
                 player.runIterations(2);
                 return player;
             }
         } else if (alg.equals("OOS")) {
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
-            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(expander), rootState, expander, 0.6);
+            Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
+            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(expander, random), rootState, expander, 0.6, random);
+
             player.runMiliseconds(20);
             return player;
         } else if (alg.contains("BI") || alg.contains("DO")) { // backward induction algorithms

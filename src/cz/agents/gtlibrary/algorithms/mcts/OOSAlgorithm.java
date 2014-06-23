@@ -128,7 +128,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 a = cn.getRandomAction();
                 p = cn.getGameState().getProbabilityOfNatureFor(a);
             }
-            if (curIS.equals(cn.getInformationSet())) underTargetIS = true;
+            if (rootNode.getGameState().equals(cn.getGameState())) underTargetIS = true;
             double u=iteration(cn.getChildFor(a), pi, p*pi_, p*bs, cn.getGameState().getProbabilityOfNatureFor(a)*us, expPlayer);
             x *= p;
             return u;
