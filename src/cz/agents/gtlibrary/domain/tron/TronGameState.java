@@ -510,8 +510,8 @@ public class TronGameState extends SimultaneousGameState {
     }
 
     @Override
-    protected boolean isDepthLimit() {
-        return Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size()) > depth;
+    public boolean isDepthLimit() {
+        return Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size()) >= depth;
     }
 
     @Override

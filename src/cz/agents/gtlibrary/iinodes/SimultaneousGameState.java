@@ -35,7 +35,7 @@ public abstract class SimultaneousGameState extends GameStateImpl {
 
     protected abstract double[] getEndGameUtilities();
 
-    protected abstract boolean isActualGameEnd();
+    public abstract boolean isActualGameEnd();
 
-    protected abstract boolean isDepthLimit();
+    public abstract boolean isDepthLimit();
 }

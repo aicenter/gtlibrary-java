@@ -159,7 +159,7 @@ public class OshiZumoGameState extends SimultaneousGameState {
     }
 
     @Override
-    protected boolean isActualGameEnd() {
+    public boolean isActualGameEnd() {
         return ((p1Bid == 0 && p2Bid == 0) || wrestlerLoc < 0 || wrestlerLoc >= (2 * OZGameInfo.locK + 1)
                 || (p1Coins < OZGameInfo.minBid && p2Coins < OZGameInfo.minBid));
     }
@@ -206,16 +206,16 @@ public class OshiZumoGameState extends SimultaneousGameState {
         double delta = p1base + p1bonus;
         
         // seems to play too gredily with this
-        //double p1eval = FastTanh.tanh(delta);
-        double p1eval = delta;
+        double p1eval = FastTanh.tanh(delta);
+//        double p1eval = delta;
 
         return new double[]{p1eval, -p1eval, 0};
     }
 
 
     @Override
-    protected boolean isDepthLimit() {
-        return round > depth;
+    public boolean isDepthLimit() {
+        return round >= depth;
     }
 
     @Override
