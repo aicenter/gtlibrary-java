@@ -227,12 +227,12 @@ public class GoofSpielGameState extends SimultaneousGameState {
     }
 
     @Override
-    protected boolean isActualGameEnd() {
+    public boolean isActualGameEnd() {
         return round == GSGameInfo.depth;
     }
 
     @Override
-    protected boolean isDepthLimit() {
+    public boolean isDepthLimit() {
         return round > depth;
     }
 
