@@ -76,11 +76,14 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
                 } else {
                     prune = true;
                 }
+                tempAction = null;
                 if (beta <= alpha) {
                     prune = true;
                     break;
                 }
             }
+            assert p1Action != null;
+            assert p2Action != null;
             storeToDOCache(state, doCache);
             if (!prune)
                 cache.put(state, beta);
@@ -164,9 +167,28 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
                 tempAlpha = value;
                 tempAction = maxAction;
             }
-            if (beta <= tempAlpha)
+            if (beta <= tempAlpha) {
+                assert tempAction != null;
                 return tempAlpha;
+            }
         }
+        if(tempAction == null) {
+            for (Action maxAction : getMaximizingActions(state)) {
+                double value = getInsideValue(performActions(state, minAction, maxAction), tempAlpha, beta);
+
+                if (value >= tempAlpha - 1e-8 && tempAction == null)
+                    tempAction = maxAction;
+                if (value > tempAlpha) {
+                    tempAlpha = value;
+                    tempAction = maxAction;
+                }
+                if (beta <= tempAlpha) {
+                    assert tempAction != null;
+                    return tempAlpha;
+                }
+            }
+        }
+        assert tempAction != null;
         return tempAlpha;
     }
 
