@@ -35,14 +35,27 @@ public class RandomGameAction extends ActionImpl{
         return hashCode;
     }
 
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (!super.equals(obj))
+//            return false;
+//
+//        return true;
+//    }
+
     @Override
-    public boolean equals(Object obj) {
-        if (!super.equals(obj))
-            return false;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof RandomGameAction)) return false;
+        if (!super.equals(o)) return false;
+
+        RandomGameAction that = (RandomGameAction) o;
+
+        if (order != that.order) return false;
+        if (!value.equals(that.value)) return false;
 
         return true;
     }
-
     public String getValue() {
         return value;
     }
