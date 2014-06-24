@@ -144,13 +144,13 @@ public class RandomGameState extends SimultaneousGameState {
     }
 
     @Override
-    protected boolean isActualGameEnd() {
+    public boolean isActualGameEnd() {
         return Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size()) == RandomGameInfo.MAX_DEPTH;
     }
 
     @Override
-    protected boolean isDepthLimit() {
-        return Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size()) > depth;
+    public boolean isDepthLimit() {
+        return Math.min(history.getSequenceOf(players[0]).size(), history.getSequenceOf(players[1]).size()) >= depth;
     }
 
     @Override

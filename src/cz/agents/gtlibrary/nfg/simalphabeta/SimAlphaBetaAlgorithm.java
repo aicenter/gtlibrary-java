@@ -30,7 +30,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
     private final Player player;
     private final HighQualityRandom random;
     private final Expander<SimABInformationSet> expander;
-    private final PrintStream debugOutput = new PrintStream(EmptyPrintStream.getInstance());
+    private final PrintStream debugOutput = System.out;//new PrintStream(EmptyPrintStream.getInstance());
     private volatile MixedStrategy<ActionPureStrategy> currentBest;
     private ThreadMXBean threadBean;
     private volatile int lastIterationDepth = 0;
@@ -94,7 +94,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
             }
             if (thread.isAlive()) {
                 Killer.kill = true;
-                System.out.println("killed");
+                System.out.println("killed " + (threadBean.getThreadCpuTime(thread.getId()) - threadStart));
                 thread.join();
             }
             return chooseAction(currentBest);
@@ -204,26 +204,26 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
             assert depth == 1 || currentBest != null;
             while (true) {
                 debugOutput.println("Running with depth " + depth);
-                ((SimultaneousGameState) state).setDepth(depth++);
+                ((SimultaneousGameState) state).setDepth(depth);
                 SimAlphaBeta solver = new SimAlphaBeta();
                 long currentIterationStart = threadBean.getCurrentThreadCpuTime();
                 SimAlphaBetaResult result = solver.runSimAlpabeta(state, expander, player, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
                 long currentIterationTime = threadBean.getCurrentThreadCpuTime() - currentIterationStart;
 
-                debugOutput.println("Iteration for depth " + (depth - 1) + " ended in " + (threadBean.getCurrentThreadCpuTime() - start));
-                if (threadBean.getCurrentThreadCpuTime() - start > limit) {
-                    System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
-                    debugOutput.println("Time run out for depth " + depth);
-                    lastIterationDepth = depth - 1;
-//                    System.out.println("a");
-                    System.out.println("Depth " + (depth - 1) + " finnished");
-                    return;
-                }
+                debugOutput.println("Iteration for depth " + (depth - 1) + " ended in " + (threadBean.getCurrentThreadCpuTime() - start)/1e6);
                 if (Killer.kill) {
                     System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
                     debugOutput.println("Time run out for depth " + depth);
                     lastIterationDepth = depth - 1;
 //                    System.out.println("b");
+                    System.out.println("Depth " + (depth - 1) + " finnished");
+                    return;
+                }
+                if (threadBean.getCurrentThreadCpuTime() - start > limit) {
+                    System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
+                    debugOutput.println("Time run out for depth " + depth);
+                    lastIterationDepth = depth - 1;
+//                    System.out.println("a");
                     System.out.println("Depth " + (depth - 1) + " finnished");
                     return;
                 }
@@ -240,6 +240,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
                     System.out.println("Depth " + (depth) + " finnished");
                     return;
                 }
+                depth++;
             }
         }
 

@@ -55,4 +55,7 @@ public class PursuitGraph extends Graph {
 		return p2Start;
 	}
 
+    public double getDistance(Node p1Position, Node evaderPosition) {
+        return 0;
+    }
 }
