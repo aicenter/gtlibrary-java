@@ -172,22 +172,6 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
                 return tempAlpha;
             }
         }
-        if(tempAction == null) {
-            for (Action maxAction : getMaximizingActions(state)) {
-                double value = getInsideValue(performActions(state, minAction, maxAction), tempAlpha, beta);
-
-                if (value >= tempAlpha - 1e-8 && tempAction == null)
-                    tempAction = maxAction;
-                if (value > tempAlpha) {
-                    tempAlpha = value;
-                    tempAction = maxAction;
-                }
-                if (beta <= tempAlpha) {
-                    assert tempAction != null;
-                    return tempAlpha;
-                }
-            }
-        }
         assert tempAction != null;
         return tempAlpha;
     }
