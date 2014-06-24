@@ -9,10 +9,12 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
+import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
+import cz.agents.gtlibrary.utils.Pair;
 
 public abstract class SimOracleImpl implements SimOracle {
 
@@ -72,4 +74,5 @@ public abstract class SimOracleImpl implements SimOracle {
 			actions.add(new ActionPureStrategy(action));
 		}
 	}
+
 }
