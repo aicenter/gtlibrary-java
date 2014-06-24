@@ -208,7 +208,7 @@ public class SMJournalOnlineExperiments {
             return new ComparatorAlgorithm(rootState.getAllPlayers()[posIndex], expander, gameInfo, true, true, false, false);
         } else if (alg.equals("RAND")) {
             loadSMGame(domain);
-            return new RandomAlgorithm(expander);
+            return new RandomAlgorithm(rootState.getAllPlayers()[posIndex], expander);
         } else {
             throw new UnsupportedOperationException("Unknown algorithms.");
         }
