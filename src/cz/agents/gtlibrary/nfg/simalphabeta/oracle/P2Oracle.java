@@ -112,15 +112,16 @@ public class P2Oracle extends SimOracleImpl {
 	protected Double updateCacheAndGetOptimistic(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		GameState state = getStateAfter(strategyPair);
 		long time = System.currentTimeMillis();
-		double pesimisticUtility = -alphaBeta.getUnboundedValue(state);
-		double optimisticUtility = oppAlphaBeta.getUnboundedValue(state);
+		double pesimisticUtility = -alphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
+		double optimisticUtility = oppAlphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 
 		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
+//        storeStrategy(alphaBeta, strategyPair);
 		return optimisticUtility;
 	}
 
-	protected Double getPesimisticValueFromCache(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
+    protected Double getPesimisticValueFromCache(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		Double cachedValue = cache.getPesimisticUtilityFor(strategyPair);
 
 		if (cachedValue == null)
@@ -131,8 +132,8 @@ public class P2Oracle extends SimOracleImpl {
 	protected Double updateCacheAndGetPesimistic(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		GameState state = getStateAfter(strategyPair);
 		long time = System.currentTimeMillis();
-		double pesimisticUtility = -alphaBeta.getUnboundedValue(state);
-		double optimisticUtility = oppAlphaBeta.getUnboundedValue(state);
+		double pesimisticUtility = -alphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
+		double optimisticUtility = oppAlphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 
 		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);

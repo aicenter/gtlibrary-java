@@ -3,14 +3,15 @@ package cz.agents.gtlibrary.nfg.simalphabeta.cache;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.Triplet;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class DOCacheRoot extends DOCacheImpl {
 
-    private Map<Pair<ActionPureStrategy, ActionPureStrategy>, MixedStrategy<ActionPureStrategy>[]> strategies;
-    private Map<Pair<ActionPureStrategy, ActionPureStrategy>, MixedStrategy<ActionPureStrategy>[]> tempStrategies;
+    private Map<Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy>, MixedStrategy<ActionPureStrategy>[]> strategies;
+    private Map<Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy>, MixedStrategy<ActionPureStrategy>[]> tempStrategies;
 
     public DOCacheRoot() {
         super();
@@ -19,33 +20,38 @@ public class DOCacheRoot extends DOCacheImpl {
     }
 
     @Override
-    public void setStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, MixedStrategy<ActionPureStrategy>[] strategy) {
-        setStrategy(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2), strategy);
+    public void setStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, ActionPureStrategy strategy3, MixedStrategy<ActionPureStrategy>[] strategy) {
+        setStrategy(new Triplet<>(strategy1, strategy2, strategy3), strategy);
     }
 
     @Override
-    public void setStrategy(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair, MixedStrategy<ActionPureStrategy>[] strategy) {
-        strategies.put(strategyPair, strategy);
+    public void setStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> strategyTriplet, MixedStrategy<ActionPureStrategy>[] strategy) {
+        assert strategy != null;
+        strategies.put(strategyTriplet, strategy);
     }
 
     @Override
-    public MixedStrategy<ActionPureStrategy>[] getStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
-        return getStrategy(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2));
+    public MixedStrategy<ActionPureStrategy>[] getStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, ActionPureStrategy strategy3) {
+        return getStrategy(new Triplet<>(strategy1, strategy2, strategy3));
     }
 
     @Override
-    public MixedStrategy<ActionPureStrategy>[] getStrategy(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
-        assert strategyPair != null;
-        return strategies.get(strategyPair);
+    public MixedStrategy<ActionPureStrategy>[] getStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> strategyTriplet) {
+        return strategies.get(strategyTriplet);
     }
 
     @Override
-    public void setTempStrategy(Pair<ActionPureStrategy, ActionPureStrategy> actionPair, MixedStrategy<ActionPureStrategy>[] strategiesFromAlphaBeta) {
-        tempStrategies.put(actionPair, strategiesFromAlphaBeta);
+    public Map<Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy>, MixedStrategy<ActionPureStrategy>[]> getStrategies() {
+        return strategies;
     }
 
     @Override
-    public MixedStrategy<ActionPureStrategy>[] getTempStrategy(Pair<ActionPureStrategy, ActionPureStrategy> actionPair) {
-        return tempStrategies.get(actionPair);
+    public void setTempStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet, MixedStrategy<ActionPureStrategy>[] strategiesFromAlphaBeta) {
+        tempStrategies.put(actionTriplet, strategiesFromAlphaBeta);
+    }
+
+    @Override
+    public MixedStrategy<ActionPureStrategy>[] getTempStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet) {
+        return tempStrategies.get(actionTriplet);
     }
 }

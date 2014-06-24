@@ -10,15 +10,15 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheRoot;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
-import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.Triplet;
 import cz.agents.gtlibrary.utils.io.EmptyPrintStream;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Map;
-import java.util.Random;
 
 public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
 
@@ -37,7 +37,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
     private volatile DOCache lastIterationResults = null;
 
     public static void main(String[] args) {
-        SimAlphaBetaAlgorithm algorithm = new SimAlphaBetaAlgorithm(new PlayerImpl(1), new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), new GSGameInfo(), true, true, true, false);
+        SimAlphaBetaAlgorithm algorithm = new SimAlphaBetaAlgorithm(new PlayerImpl(1), new GoofSpielExpander<>(new SimABConfig()), new GSGameInfo(), true, true, true, false);
         GoofSpielGameState root = new GoofSpielGameState();
         long start = System.currentTimeMillis();
 
@@ -55,7 +55,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
         this.sortingOwnActions = sortingOwnActions;
         this.useGlobalCache = useGlobalCache;
         this.random = new HighQualityRandom();
-		threadBean = ManagementFactory.getThreadMXBean();
+        threadBean = ManagementFactory.getThreadMXBean();
     }
 
     public SimAlphaBetaAlgorithm(Player player, Expander<SimABInformationSet> expander, GameInfo gameInfo, boolean alphaBetaBounds,
@@ -68,17 +68,17 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
         this.sortingOwnActions = sortingOwnActions;
         this.useGlobalCache = useGlobalCache;
         this.random = new HighQualityRandom(seed);
-		threadBean = ManagementFactory.getThreadMXBean();
+        threadBean = ManagementFactory.getThreadMXBean();
     }
 
     public Action runMiliseconds(final int miliseconds, final GameState state) {
+        debugOutput.println("-------------------------------");
         Killer.kill = false;
         long nanoLimit = toNanos(miliseconds);
         int sleepTime = miliseconds - milisBuffer(miliseconds);
         Thread thread = new Thread(new Runner(state, nanoLimit));
         long threadStart = threadBean.getThreadCpuTime(thread.getId());
 
-        lastIterationDepth = 0;
         thread.start();
         try {
             while (true) {
@@ -87,7 +87,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
 
                 if (nanoLimit - nanoBuffer(nanoLimit) > threadTime && thread.isAlive()) {
                     sleepTime = toMilis(nanoLimit - threadTime);
-//                    System.out.println("snoozing for " + sleepTime);
+                    debugOutput.println("snoozing for " + sleepTime);
                 } else {
                     break;
                 }
@@ -147,18 +147,30 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
     }
 
     public MixedStrategy<ActionPureStrategy> getResultFromLastIteration(GameState state) {
-        if(lastIterationResults == null)
+        if (lastIterationResults == null)
             return null;
-        if(state.getSequenceForPlayerToMove().size() == 0)
+        if (state.getSequenceForPlayerToMove().size() == 0)
             return null;
-        Action p1Action = state.getSequenceFor(state.getAllPlayers()[0]).getLast();
-        Action p2Action = state.getSequenceFor(state.getAllPlayers()[1]).getLast();
-        Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<>(new ActionPureStrategy(p1Action), new ActionPureStrategy(p2Action));
-        MixedStrategy<ActionPureStrategy>[] result = lastIterationResults.getStrategy(strategyPair);
+        MixedStrategy<ActionPureStrategy>[] result = lastIterationResults.getStrategy(getStrategyTriplet(state));
 
-        if(result == null)
+        if (result == null)
             return null;
-        return result[state.getPlayerToMove().getId()];
+        return result[player.getId()];
+    }
+
+    private Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> getStrategyTriplet(GameState state) {
+        int index = Math.min(state.getSequenceFor(state.getAllPlayers()[0]).size(), state.getSequenceFor(state.getAllPlayers()[1]).size()) - 1;
+        ActionPureStrategy p1Strategy = new ActionPureStrategy(state.getSequenceFor(state.getAllPlayers()[0]).get(index));
+        ActionPureStrategy p2Strategy = new ActionPureStrategy(state.getSequenceFor(state.getAllPlayers()[1]).get(index));
+        ActionPureStrategy natureStrategy = null;
+
+        if (state.getAllPlayers().length == 3) {
+            Sequence natureSequence = state.getSequenceFor(state.getAllPlayers()[2]);
+
+            if (natureSequence.size() > 0)
+                natureStrategy = new ActionPureStrategy(natureSequence.getLast());
+        }
+        return new Triplet<>(p1Strategy, p2Strategy, natureStrategy);
     }
 
     public class Runner implements Runnable {
@@ -177,42 +189,73 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
         @Override
         public void run() {
             int depth = lastIterationDepth + 1;
-            System.err.println("starting in depth " + depth);
+            lastIterationDepth = 0;
+            debugOutput.println("starting in depth " + depth);
             long start = threadBean.getCurrentThreadCpuTime();
             currentBest = getResultFromLastIteration(state);
-            System.err.println("current best set to " + currentBest);
+            debugOutput.println("current best in " + state + " set to " + currentBest);
+            if (currentBest == null) {
+                debugOutput.println("null from prev it");
+                depth = 1;
+            } else {
+                assert applicable(currentBest);
+            }
+            lastIterationResults = null;
+            assert depth == 1 || currentBest != null;
             while (true) {
                 debugOutput.println("Running with depth " + depth);
                 ((SimultaneousGameState) state).setDepth(depth++);
                 SimAlphaBeta solver = new SimAlphaBeta();
                 long currentIterationStart = threadBean.getCurrentThreadCpuTime();
-                MixedStrategy<ActionPureStrategy> currentStrategy = solver.runSimAlpabeta(state, expander, player, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
+                SimAlphaBetaResult result = solver.runSimAlpabeta(state, expander, player, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
                 long currentIterationTime = threadBean.getCurrentThreadCpuTime() - currentIterationStart;
 
                 debugOutput.println("Iteration for depth " + (depth - 1) + " ended in " + (threadBean.getCurrentThreadCpuTime() - start));
                 if (threadBean.getCurrentThreadCpuTime() - start > limit) {
-                    System.out.println("limit: " + limit + " time taken: " + (threadBean.getCurrentThreadCpuTime() - start));
+                    System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
                     debugOutput.println("Time run out for depth " + depth);
                     lastIterationDepth = depth - 1;
+//                    System.out.println("a");
                     System.out.println("Depth " + (depth - 1) + " finnished");
                     return;
                 }
-                if (Killer.kill || ((SimultaneousGameState)state).getDepth() > gameInfo.getMaxDepth()) {
-                    System.out.println("limit: " + limit + " time taken: " + (threadBean.getCurrentThreadCpuTime() - start));
+                if (Killer.kill) {
+                    System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
                     debugOutput.println("Time run out for depth " + depth);
                     lastIterationDepth = depth - 1;
+//                    System.out.println("b");
                     System.out.println("Depth " + (depth - 1) + " finnished");
                     return;
                 }
-                currentBest = currentStrategy;
-                if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(limit, start, currentIterationTime)) {
-                    System.out.println("limit: " + limit + " time taken: " + (threadBean.getCurrentThreadCpuTime() - start));
+                currentBest = result.mixedStrategy;
+                if (result != null) {
+                    lastIterationResults = result.cache;
+                    assert lastIterationResults instanceof DOCacheRoot;
+                }
+                if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(limit, start, currentIterationTime) || ((SimultaneousGameState) state).getDepth() > gameInfo.getMaxDepth()) {
+                    System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
                     debugOutput.println("Time run out for depth " + depth);
                     lastIterationDepth = depth;
+//                    System.out.println("c");
                     System.out.println("Depth " + (depth) + " finnished");
                     return;
                 }
             }
+        }
+
+        private boolean applicable(MixedStrategy<ActionPureStrategy> strategy) {
+            try {
+                for (Map.Entry<ActionPureStrategy, Double> entry : strategy) {
+                    if (state.getPlayerToMove().equals(player)) {
+                        state.performAction(entry.getKey().getAction());
+                    } else {
+                        state.performAction(expander.getActions(state).get(0)).performAction(entry.getKey().getAction());
+                    }
+                }
+            } catch (IllegalStateException e) {
+                return false;
+            }
+            return true;
         }
 
         private boolean isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(long limit, long start, long currentIterationTime) {

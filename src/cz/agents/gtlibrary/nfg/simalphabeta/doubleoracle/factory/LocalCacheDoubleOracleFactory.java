@@ -19,6 +19,7 @@ public class LocalCacheDoubleOracleFactory implements DoubleOracleFactory {
         DOCache cache = isRoot ? new DOCacheRoot() : new DOCacheImpl();
         SimUtility utility = new SimUtilityImpl(state, new DOUtilityCalculator(data, new NatureCacheImpl(), cache), cache);
 
+        data.setCache(cache);
         return new SimDoubleOracle(utility, alpha, beta, data, state, utility.getUtilityCache(), isRoot);
     }
 

@@ -78,6 +78,10 @@ public class Data {
         return cache;
     }
 
+    public void setCache(DOCache cache) {
+        this.cache = cache;
+    }
+
     public NatureCache getNatureCache() {
         return natureCache;
     }

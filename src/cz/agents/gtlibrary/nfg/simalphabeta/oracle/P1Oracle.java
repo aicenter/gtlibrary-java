@@ -121,8 +121,8 @@ public class P1Oracle extends SimOracleImpl {
 	protected Double updateCacheAndGetPesimistic(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		GameState state = getStateAfter(strategyPair);
 		long time = System.currentTimeMillis();
-		double pesimisticUtility = -oppAlphaBeta.getUnboundedValue(state);
-		double optimisticUtility = alphaBeta.getUnboundedValue(state);
+		double pesimisticUtility = -oppAlphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
+		double optimisticUtility = alphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 
 		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
@@ -140,8 +140,8 @@ public class P1Oracle extends SimOracleImpl {
 	protected Double updateCacheAndGetOptimistic(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
 		GameState state = getStateAfter(strategyPair);
 		long time = System.currentTimeMillis();
-		double pesimisticUtility = -oppAlphaBeta.getUnboundedValue(state);
-		double optimisticUtility = alphaBeta.getUnboundedValue(state);
+		double pesimisticUtility = -oppAlphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
+		double optimisticUtility = alphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 
 		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);

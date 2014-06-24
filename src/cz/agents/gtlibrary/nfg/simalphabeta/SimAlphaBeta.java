@@ -30,7 +30,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.comparators.factory.LowerBoundComparatorFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.DoubleOracleFactory;
-import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.FullLPFactory;
+import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.LocalCacheFullLPFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.LocalCacheDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.SimABDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.OracleFactory;
@@ -40,7 +40,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 public class SimAlphaBeta {
 
-    public double gameValue = Double.NaN;
+//    public double gameValue = Double.NaN;
 
     public static void main(String[] args) {
 //		runGoofSpielWithNature();
@@ -131,7 +131,7 @@ public class SimAlphaBeta {
             }
         } else {
             AlphaBetaFactory abFactory = (alphaBetaBounds) ? new NoCacheAlphaBetaFactory() : new NullAlphaBetaFactory();
-            DoubleOracleFactory doFactory = (doubleOracle) ? ((useGlobalCache) ? new SimABDoubleOracleFactory() : new LocalCacheDoubleOracleFactory()) : new FullLPFactory();
+            DoubleOracleFactory doFactory = (doubleOracle) ? ((useGlobalCache) ? new SimABDoubleOracleFactory() : new LocalCacheDoubleOracleFactory()) : new LocalCacheFullLPFactory();
             OracleFactory oracleFactory = (sortingOwnActions) ? new SortingOracleFactory() : new SimABOracleFactory();
             Data data = new Data(abFactory, gameInfo, expander,
                     doFactory,
@@ -160,9 +160,9 @@ public class SimAlphaBeta {
         }
     }
 
-    public MixedStrategy<ActionPureStrategy> runSimAlpabeta(GameState rootState, Expander<SimABInformationSet> expander, Player player, boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache, GameInfo gameInfo) {
+    public SimAlphaBetaResult runSimAlpabeta(GameState rootState, Expander<SimABInformationSet> expander, Player player, boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache, GameInfo gameInfo) {
         AlphaBetaFactory abFactory = (alphaBetaBounds) ? new NoCacheAlphaBetaFactory() : new NullAlphaBetaFactory();
-        DoubleOracleFactory doFactory = (doubleOracle) ? ((useGlobalCache) ? new SimABDoubleOracleFactory() : new LocalCacheDoubleOracleFactory()) : new FullLPFactory();
+        DoubleOracleFactory doFactory = (doubleOracle) ? ((useGlobalCache) ? new SimABDoubleOracleFactory() : new LocalCacheDoubleOracleFactory()) : new LocalCacheFullLPFactory();
         OracleFactory oracleFactory = (sortingOwnActions) ? new SortingOracleFactory() : new SimABOracleFactory();
         Data data = new Data(abFactory, gameInfo, expander,
                 doFactory,
@@ -174,7 +174,7 @@ public class SimAlphaBeta {
         AlphaBeta p1AlphaBeta = abFactory.getP1AlphaBeta(expander, gameInfo);
         AlphaBeta p2AlphaBeta = abFactory.getP2AlphaBeta(expander, gameInfo);
 
-        DoubleOracle oracle = data.getDoubleOracle(rootState, -p2AlphaBeta.getUnboundedValue(rootState), p1AlphaBeta.getUnboundedValue(rootState));
+        DoubleOracle oracle = data.getDoubleOracle(rootState, -p2AlphaBeta.getUnboundedValue(rootState), p1AlphaBeta.getUnboundedValue(rootState), true);
 
         if (-p2AlphaBeta.getUnboundedValue(rootState) + 1e-8 < p1AlphaBeta.getUnboundedValue(rootState))
             oracle.generate();
@@ -185,8 +185,8 @@ public class SimAlphaBeta {
 //        System.out.println("game value: " + oracle.getGameValue());
 //        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
-        gameValue = oracle.getGameValue();
-        return getStrategy(player, p1AlphaBeta, oracle);
+//        gameValue = oracle.getGameValue();
+        return new SimAlphaBetaResult(getStrategy(player, p1AlphaBeta, oracle), oracle.getCache(), oracle.getGameValue());
     }
 
     private MixedStrategy<ActionPureStrategy> getStrategy(Player player, AlphaBeta p1AlphaBeta, DoubleOracle oracle) {

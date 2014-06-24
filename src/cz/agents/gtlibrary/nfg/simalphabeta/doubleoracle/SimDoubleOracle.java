@@ -188,4 +188,9 @@ public class SimDoubleOracle extends DoubleOracle {
         tempState.performActionModifyingThisState(strategyPair.getRight().getAction());
         return tempState;
     }
+
+    @Override
+    public DOCache getCache() {
+        return cache;
+    }
 }

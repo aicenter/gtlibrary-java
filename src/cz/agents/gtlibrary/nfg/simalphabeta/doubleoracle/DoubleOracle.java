@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.doubleoracle.NFGDoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 public abstract class DoubleOracle extends NFGDoubleOracle {
@@ -25,5 +26,7 @@ public abstract class DoubleOracle extends NFGDoubleOracle {
     public abstract double getGameValue();
 
     public abstract void generate();
+
+    public abstract DOCache getCache();
 
 }
