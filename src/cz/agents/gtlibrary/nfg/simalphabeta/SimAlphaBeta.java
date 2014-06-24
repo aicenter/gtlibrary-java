@@ -12,6 +12,9 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.rps.RPSExpander;
+import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
+import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.domain.tron.TronExpander;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
@@ -108,6 +111,15 @@ public class SimAlphaBeta {
         SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         GameInfo gameInfo = new TronGameInfo();
         simAlphaBeta.runSimAlpabeta(new TronGameState(), new TronExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
+        Stats.getInstance().stopTime();
+        Stats.getInstance().printOverallInfo();
+    }
+    
+    public static void runRPS(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache) {
+        Stats.getInstance().startTime();
+        SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
+        GameInfo gameInfo = new RPSGameInfo();
+        simAlphaBeta.runSimAlpabeta(new RPSGameState(), new RPSExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
         Stats.getInstance().stopTime();
         Stats.getInstance().printOverallInfo();
     }
