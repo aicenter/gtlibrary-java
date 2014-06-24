@@ -159,7 +159,7 @@ public class OshiZumoGameState extends SimultaneousGameState {
     }
 
     @Override
-    protected boolean isActualGameEnd() {
+    public boolean isActualGameEnd() {
         return ((p1Bid == 0 && p2Bid == 0) || wrestlerLoc < 0 || wrestlerLoc >= (2 * OZGameInfo.locK + 1)
                 || (p1Coins < OZGameInfo.minBid && p2Coins < OZGameInfo.minBid));
     }
@@ -214,8 +214,8 @@ public class OshiZumoGameState extends SimultaneousGameState {
 
 
     @Override
-    protected boolean isDepthLimit() {
-        return round > depth;
+    public boolean isDepthLimit() {
+        return round >= depth;
     }
 
     @Override

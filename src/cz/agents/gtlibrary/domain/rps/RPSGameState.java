@@ -120,7 +120,7 @@ public class RPSGameState extends SimultaneousGameState {
     }
 
     @Override
-    protected boolean isActualGameEnd() {
+    public boolean isActualGameEnd() {
         return (round >= 1); 
     }
 
@@ -132,8 +132,8 @@ public class RPSGameState extends SimultaneousGameState {
 
 
     @Override
-    protected boolean isDepthLimit() {
-        return round > depth;
+    public boolean isDepthLimit() {
+        return round >= depth;
     }
 
     @Override
