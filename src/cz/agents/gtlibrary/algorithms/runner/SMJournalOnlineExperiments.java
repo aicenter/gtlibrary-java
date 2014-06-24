@@ -53,7 +53,7 @@ public class SMJournalOnlineExperiments {
         exp.handleDomain(args);
 
         double sum = 0;
-        int iterationCount = 50;
+        int iterationCount = 10;
 
         for (int i = 0; i < iterationCount; i++) {
             sum += exp.runMatch(args);
