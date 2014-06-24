@@ -30,7 +30,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
     private final Player player;
     private final HighQualityRandom random;
     private final Expander<SimABInformationSet> expander;
-    private final PrintStream debugOutput = System.out;//new PrintStream(EmptyPrintStream.getInstance());
+    private final PrintStream debugOutput = new PrintStream(EmptyPrintStream.getInstance());
     private volatile MixedStrategy<ActionPureStrategy> currentBest;
     private ThreadMXBean threadBean;
     private volatile int lastIterationDepth = 0;
@@ -94,7 +94,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
             }
             if (thread.isAlive()) {
                 Killer.kill = true;
-                System.out.println("killed " + (threadBean.getThreadCpuTime(thread.getId()) - threadStart));
+                debugOutput.println("killed " + (threadBean.getThreadCpuTime(thread.getId()) - threadStart));
                 thread.join();
             }
             return chooseAction(currentBest);
