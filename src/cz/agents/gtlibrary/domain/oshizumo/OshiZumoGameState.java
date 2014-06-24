@@ -215,7 +215,7 @@ public class OshiZumoGameState extends SimultaneousGameState {
 
     @Override
     public boolean isDepthLimit() {
-        return round > depth;
+        return round >= depth;
     }
 
     @Override
