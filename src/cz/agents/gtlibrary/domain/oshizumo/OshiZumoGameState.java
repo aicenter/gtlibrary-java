@@ -207,7 +207,7 @@ public class OshiZumoGameState extends SimultaneousGameState {
         
         // seems to play too gredily with this
         double p1eval = FastTanh.tanh(delta);
-//        double p1eval = delta;
+        //double p1eval = delta;
 
         return new double[]{p1eval, -p1eval, 0};
     }
@@ -215,7 +215,7 @@ public class OshiZumoGameState extends SimultaneousGameState {
 
     @Override
     public boolean isDepthLimit() {
-        return round >= depth;
+        return round > depth;
     }
 
     @Override
