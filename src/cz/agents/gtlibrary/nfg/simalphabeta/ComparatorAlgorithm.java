@@ -149,7 +149,7 @@ public class ComparatorAlgorithm implements GamePlayingAlgorithm {
                 state.setDepth(depth++);
                 SimAlphaBeta solver = new SimAlphaBeta();
                 long currentIterationStart = threadBean.getCurrentThreadCpuTime();
-                MixedStrategy<ActionPureStrategy> currentStrategy = solver.runSimAlpabeta(state, expander, player, false, false, sortingOwnActions, false, gameInfo);
+                SimAlphaBetaResult result = solver.runSimAlpabeta(state, expander, player, false, false, sortingOwnActions, false, gameInfo);
                 long currentIterationTime = threadBean.getCurrentThreadCpuTime() - currentIterationStart;
 
                 debugOutput.println("Iteration for depth " + (depth - 1) + " ended in " + (threadBean.getCurrentThreadCpuTime() - start));
@@ -158,27 +158,27 @@ public class ComparatorAlgorithm implements GamePlayingAlgorithm {
                     debugOutput.println("Time run out for depth " + depth);
                     System.out.println("Depth " + (depth - 1) + " finnished");
                     state.setDepth(depth - 1);
-                    double oldValue = solver.gameValue;
+                    double oldValue = result.gameValue;
                     System.out.println("//////////////////////////////////////");
                     solver = new SimAlphaBeta();
-                    MixedStrategy<ActionPureStrategy> doStrat = solver.runSimAlpabeta(state, expander, player, true, true, sortingOwnActions, false, gameInfo);
-                    if(Math.abs(oldValue - solver.gameValue) > 1e-8) {
-                        throw new IllegalStateException(oldValue + " vs " + solver.gameValue);
+                    SimAlphaBetaResult doResult = solver.runSimAlpabeta(state, expander, player, true, true, sortingOwnActions, false, gameInfo);
+                    if(Math.abs(oldValue - doResult.gameValue) > 1e-8) {
+                        throw new IllegalStateException(oldValue + " vs " + doResult.gameValue);
                     }
                     return;
                 }
-                currentBest = currentStrategy;
+                currentBest = result.mixedStrategy;
                 if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(limit, start, currentIterationTime)) {
                     System.out.println("limit: " + limit + " time taken: " + (threadBean.getCurrentThreadCpuTime() - start));
                     debugOutput.println("Time run out for depth " + depth);
                     System.out.println("Depth " + (depth) + " finnished");
                     System.out.println();
-                    double oldValue = solver.gameValue;
+                    double oldValue = result.gameValue;
                     System.out.println("//////////////////////////////////////");
                     solver = new SimAlphaBeta();
-                    MixedStrategy<ActionPureStrategy> doStrat = solver.runSimAlpabeta(state, expander, player, true, true, sortingOwnActions, false, gameInfo);
-                    if(Math.abs(oldValue - solver.gameValue) > 1e-8) {
-                        throw new IllegalStateException(oldValue + " vs " + solver.gameValue);
+                    SimAlphaBetaResult doResult = solver.runSimAlpabeta(state, expander, player, true, true, sortingOwnActions, false, gameInfo);
+                    if(Math.abs(oldValue - doResult.gameValue) > 1e-8) {
+                        throw new IllegalStateException(oldValue + " vs " + doResult.gameValue);
                     }
                     return;
                 }

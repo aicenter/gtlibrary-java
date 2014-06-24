@@ -1,9 +1,14 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.alphabeta;
 
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.nfg.ActionPureStrategy;
+import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCache;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.NullDOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
+import cz.agents.gtlibrary.utils.Triplet;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -31,8 +36,19 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         return getValue(state, -gameInfo.getMaxUtility(), gameInfo.getMaxUtility());
     }
 
+    public double getUnboundedValueAndStoreStrategy(GameState state, DOCache doCache) {
+        return getValue(state, -gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), doCache);
+    }
+
     public double getValue(GameState state, double alpha, double beta) {
+       return getValue(state, alpha, beta, new NullDOCache());
+    }
+
+    private double getValue(GameState state, double alpha, double beta, DOCache doCache) {
         Double value = cache.get(state);
+        p1Action = null;
+        p2Action = null;
+        tempAction = null;
 
         if (value != null)
             return value;
@@ -43,7 +59,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
             return state.getUtilities()[player.getId()];
 
         if (state.isPlayerToMoveNature()) {
-            return getUtilityForNature(state, alpha, beta);
+            return getUtilityForNature(state, alpha, beta, doCache);
         } else {
             Stats.getInstance().increaseABStatesFor(player);
             for (Action minAction : getMinimizingActions(state)) {
@@ -65,10 +81,43 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
                     break;
                 }
             }
+            storeToDOCache(state, doCache);
             if (!prune)
                 cache.put(state, beta);
             return beta;
         }
+    }
+
+    private void storeToDOCache(GameState state, DOCache doCache) {
+        ActionPureStrategy p1Strategy = getStrategyFor(state, state.getAllPlayers()[0]);
+        ActionPureStrategy p2Strategy = getStrategyFor(state, state.getAllPlayers()[1]);
+        ActionPureStrategy natureStrategy = null;
+
+        if(state.getAllPlayers().length == 3)
+            natureStrategy = getStrategyFor(state, state.getAllPlayers()[2]);
+
+        Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> triplet = new Triplet<>(p1Strategy, p2Strategy, natureStrategy);
+
+        doCache.setTempStrategy(triplet, getStrategies());
+    }
+
+    public MixedStrategy<ActionPureStrategy>[] getStrategies() {
+        ActionPureStrategy p1Strategy = new ActionPureStrategy(p1Action);
+        ActionPureStrategy p2Strategy = new ActionPureStrategy(p2Action);
+        MixedStrategy<ActionPureStrategy> p1Mixed = new MixedStrategy<>();
+        MixedStrategy<ActionPureStrategy> p2Mixed = new MixedStrategy<>();
+
+        p1Mixed.put(p1Strategy, 1d);
+        p2Mixed.put(p2Strategy, 1d);
+        return new MixedStrategy[]{p1Mixed, p2Mixed};
+    }
+
+    private ActionPureStrategy getStrategyFor(GameState state, Player player) {
+        Sequence sequence = state.getSequenceFor(player);
+
+        if(sequence.size() == 0)
+            return null;
+        return new ActionPureStrategy(sequence.getLast());
     }
 
     private double getInsideValue(GameState state, double alpha, double beta) {
@@ -83,7 +132,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
             return state.getUtilities()[player.getId()];
 
         if (state.isPlayerToMoveNature()) {
-            return getUtilityForNature(state, alpha, beta);
+            return getInsideUtilityForNature(state, alpha, beta);
         } else {
             Stats.getInstance().increaseABStatesFor(player);
             for (Action minAction : getMinimizingActions(state)) {
@@ -139,7 +188,25 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         return tempAlpha;
     }
 
-    public double getUtilityForNature(GameState state, double alpha, double beta) {
+    public double getUtilityForNature(GameState state, double alpha, double beta, DOCache doCache) {
+        double utility = 0;
+        p1Action = null;
+        p2Action = null;
+        tempAction = null;
+        List<Action> actions = expander.getActions(state);
+        ListIterator<Action> iterator = actions.listIterator();
+
+        while (iterator.hasNext()) {
+            Action action = iterator.next();
+            double lowerBound = Math.max(-gameInfo.getMaxUtility(), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
+            double upperBound = Math.min(gameInfo.getMaxUtility(), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
+
+            utility += state.getProbabilityOfNatureFor(action) * getValue(state.performAction(action), lowerBound, upperBound, doCache);
+        }
+        return utility;
+    }
+
+    public double getInsideUtilityForNature(GameState state, double alpha, double beta) {
         double utility = 0;
         List<Action> actions = expander.getActions(state);
         ListIterator<Action> iterator = actions.listIterator();

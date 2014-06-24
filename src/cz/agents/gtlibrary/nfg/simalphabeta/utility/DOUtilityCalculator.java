@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.nfg.simalphabeta.utility;
 
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
@@ -11,6 +12,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.Triplet;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -91,8 +93,8 @@ public class DOUtilityCalculator implements UtilityCalculator {
         if (pesimistic == null) {
             long time = System.currentTimeMillis();
 
-            pesimistic = -data.alphaBetas[1].getUnboundedValue(state);
-            cache.setTempStrategy(getActionPair(state), getStrategiesFromAlphaBeta(data.alphaBetas[1]));
+            pesimistic = -data.alphaBetas[1].getUnboundedValueAndStoreStrategy(state, cache);
+//            cache.setTempStrategy(getStrategyTriplet(state), getStrategiesFromAlphaBeta(data.alphaBetas[1]));
             Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
             natureCache.updatePesimisticFor(state, pesimistic);
         }
@@ -105,19 +107,19 @@ public class DOUtilityCalculator implements UtilityCalculator {
         if (optimistic == null) {
             long time = System.currentTimeMillis();
 
-            optimistic = data.alphaBetas[0].getUnboundedValue(state);
-            cache.setTempStrategy(getActionPair(state), getStrategiesFromAlphaBeta(data.alphaBetas[0]));
+            optimistic = data.alphaBetas[0].getUnboundedValueAndStoreStrategy(state, cache);
+//            cache.setTempStrategy(getStrategyTriplet(state), getStrategiesFromAlphaBeta(data.alphaBetas[0]));
             Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
             natureCache.updateOptimisticFor(state, optimistic);
         }
         return optimistic;
     }
 
-    private Pair<ActionPureStrategy, ActionPureStrategy> getActionPair(GameState state) {
+    private Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> getStrategyTriplet(GameState state) {
         Action p1Action = state.getSequenceFor(state.getAllPlayers()[0]).getLast();
         Action p2Action = state.getSequenceFor(state.getAllPlayers()[1]).getLast();
 
-        return new Pair<>(new ActionPureStrategy(p1Action), new ActionPureStrategy(p2Action));
+        return new Triplet<>(new ActionPureStrategy(p1Action), new ActionPureStrategy(p2Action), getNatureStrategy(state));
     }
 
     private MixedStrategy<ActionPureStrategy>[] getStrategiesFromAlphaBeta(AlphaBeta alphaBeta) {
@@ -128,21 +130,33 @@ public class DOUtilityCalculator implements UtilityCalculator {
 
         p1Mixed.put(p1Pure, 1d);
         p2Mixed.put(p2Pure, 1d);
-        return new MixedStrategy[]{ p1Mixed, p2Mixed };
+        return new MixedStrategy[]{p1Mixed, p2Mixed};
     }
 
     protected double computeUtilityOf(GameState state, ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
         DoubleOracle doubleOracle = data.getDoubleOracle(state, alpha, beta);
+        ActionPureStrategy natureStrategy = getNatureStrategy(state);
 
         doubleOracle.generate();
         if (Math.abs(alpha - beta) < 1e-8) {
-            cache.setStrategy(s1, s2, new MixedStrategy[]{doubleOracle.getStrategyFor(state.getAllPlayers()[0]),
+            cache.setStrategy(s1, s2, natureStrategy, new MixedStrategy[]{doubleOracle.getStrategyFor(state.getAllPlayers()[0]),
                     doubleOracle.getStrategyFor(state.getAllPlayers()[1])});
         } else {
-            Pair<ActionPureStrategy, ActionPureStrategy> actionPair = new Pair<>(s1, s2);
-            cache.setStrategy(actionPair, cache.getTempStrategy(actionPair));
+            Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet = new Triplet<>(s1, s2, natureStrategy);
+
+            cache.setStrategy(actionTriplet, cache.getTempStrategy(actionTriplet));
         }
         return doubleOracle.getGameValue();
+    }
+
+    private ActionPureStrategy getNatureStrategy(GameState state) {
+        if (state.getAllPlayers().length < 3)
+            return null;
+        Sequence natureSequence = state.getSequenceFor(state.getAllPlayers()[2]);
+
+        if (natureSequence.size() == 0)
+            return null;
+        return new ActionPureStrategy(natureSequence.getLast());
     }
 
     public double getUtility(GameState state, ActionPureStrategy s1, ActionPureStrategy s2) {
