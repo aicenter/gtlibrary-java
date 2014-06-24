@@ -28,6 +28,9 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.rps.RPSExpander;
+import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
+import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.domain.tron.TronExpander;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
@@ -67,7 +70,7 @@ public class SMJournalExperiments {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: SMJournalExperiments {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {GS|OZ|PE|RG|Tron} [domain parameters].");
+            System.err.println("Missing Arguments: SMJournalExperiments {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {GS|OZ|PE|RG|RPS|Tron} [domain parameters].");
             System.exit(-1);
         }
         String alg = args[0];
@@ -120,6 +123,11 @@ public class SMJournalExperiments {
             TronGameInfo.BOARDTYPE = args[3].charAt(0);
             TronGameInfo.ROWS = new Integer(args[4]);
             TronGameInfo.COLS = new Integer(args[5]);
+        } else if (args[1].equalsIgnoreCase("RPS")) { // Tron
+            if (args.length != 3) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED}");
+            }
+            RPSGameInfo.seed = new Integer(args[2]);
         } else throw new IllegalArgumentException("Illegal domain: " + args[1]);
     }
 
@@ -144,6 +152,10 @@ public class SMJournalExperiments {
             gameInfo = new TronGameInfo();
             rootState = new TronGameState();
             expander = new TronExpander<MCTSInformationSet>(new MCTSConfig());
+        } else if (domain.equals("RPS")) {
+            gameInfo = new RPSGameInfo();
+            rootState = new RPSGameState();
+            expander = new RPSExpander<MCTSInformationSet>(new MCTSConfig());
         }
     }
 
@@ -185,6 +197,8 @@ public class SMJournalExperiments {
                 SimAlphaBeta.runOshiZumo(AB, DO, SORT, CACHE);
             else if (domain.equals("Tron"))
                 SimAlphaBeta.runTron(AB, DO, SORT, CACHE);
+            else if (domain.equals("RPS"))
+                SimAlphaBeta.runRPS(AB, DO, SORT, CACHE);
         }
     }
 
