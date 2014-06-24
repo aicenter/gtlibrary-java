@@ -36,13 +36,14 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         this.searchingPlayer = searchingPlayer;
         this.simulator = simulator;
         this.fact = fact;
+        this.expander = expander;
         if (rootState.isPlayerToMoveNature())
             this.rootNode = new ChanceNode(expander, rootState, fact.getRandom());
         else
             this.rootNode = new InnerNode(expander, rootState);
         config = rootNode.getAlgConfig();
         threadBean = ManagementFactory.getThreadMXBean();
-        this.expander = expander;
+        expandNode(rootNode);
     }
 
     @Override

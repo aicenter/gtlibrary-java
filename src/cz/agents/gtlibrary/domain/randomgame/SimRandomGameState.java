@@ -40,6 +40,6 @@ public class SimRandomGameState extends RandomGameState {
 
     @Override
     public String toString() {
-        return "GS" + getHistory();
+        return "RG" + getHistory();
     }
 }
