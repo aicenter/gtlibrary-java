@@ -43,7 +43,6 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
             this.rootNode = new InnerNode(expander, rootState);
         config = rootNode.getAlgConfig();
         threadBean = ManagementFactory.getThreadMXBean();
-        expandNode(rootNode);
     }
 
     @Override
