@@ -6,70 +6,87 @@ import cz.agents.gtlibrary.utils.graph.Edge;
 import cz.agents.gtlibrary.utils.graph.Graph;
 import cz.agents.gtlibrary.utils.graph.Node;
 
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class PursuitGraph extends Graph {
 
-	private static final long serialVersionUID = -3128524115361864271L;
-	
-	private Node evaderStart;
-	private Node p1Start;
-	private Node p2Start;
-	
-	public PursuitGraph(String graphFile) {
-		super(graphFile);
-	}
+    private static final long serialVersionUID = -3128524115361864271L;
 
-	protected void init() {
-		super.init();
+    private Node evaderStart;
+    private Node p1Start;
+    private Node p2Start;
+
+    public PursuitGraph(String graphFile) {
+        super(graphFile);
+    }
+
+    protected void init() {
+        super.init();
         if (PursuitGameInfo.randomizeStartPositions) {
-            int nodes = getAllNodes().size();
-            int tmp = (nodes)*(nodes-1)*(nodes-2);
-            HighQualityRandom rnd = new HighQualityRandom(PursuitGameInfo.seed);
-            int choice = rnd.nextInt(tmp);
-            int en = choice / ((nodes-1)*(nodes-2));
-            choice = choice % ((nodes-1)*(nodes-2));
-            int p1n = choice / (nodes - 2);
-            if (p1n == en) p1n++;
-            int p2n = choice % (nodes-2);
-            while (p2n == p1n || p2n == en)
-                p2n++;
-            evaderStart = allNodes.get("ID" + en);
-            p1Start = allNodes.get("ID" + p1n);
-            p2Start = allNodes.get("ID" + p2n);
-            PursuitGameInfo.evaderStart = en;
-            PursuitGameInfo.p1Start = p1n;
-            PursuitGameInfo.p2Start = p2n;
+            Random random = new HighQualityRandom(PursuitGameInfo.seed);
+            int nodeCount = getAllNodes().size();
+            evaderStart = getAllNodes().get("ID" + random.nextInt(nodeCount));
+            List<Node> nodes = new ArrayList<>(getAllNodes().values());
+
+            Collections.shuffle(nodes, random);
+
+            for (Node node : nodes) {
+                if (getDistance(evaderStart, node) == Math.floor(2 / 3. * PursuitGameInfo.depth)) {
+                    if (p1Start == null)
+                        p1Start = node;
+                    else
+                        p2Start = node;
+                }
+            }
+            if(p1Start == null || p2Start == null)
+                throw new IllegalStateException("No nodes in Pursuit graph with the distance from evader equal to " + Math.floor(2 / 3. * PursuitGameInfo.depth));
+//            int nodes = getAllNodes().size();
+//            int tmp = (nodes)*(nodes-1)*(nodes-2);
+//            HighQualityRandom rnd = new HighQualityRandom(PursuitGameInfo.seed);
+//            int choice = rnd.nextInt(tmp);
+//            int en = choice / ((nodes-1)*(nodes-2));
+//            choice = choice % ((nodes-1)*(nodes-2));
+//            int p1n = choice / (nodes - 2);
+//            if (p1n == en) p1n++;
+//            int p2n = choice % (nodes-2);
+//            while (p2n == p1n || p2n == en)
+//                p2n++;
+//            evaderStart = allNodes.get("ID" + en);
+//            p1Start = allNodes.get("ID" + p1n);
+//            p2Start = allNodes.get("ID" + p2n);
+//            PursuitGameInfo.evaderStart = en;
+//            PursuitGameInfo.p1Start = p1n;
+//            PursuitGameInfo.p2Start = p2n;
         } else {
             evaderStart = allNodes.get("ID" + PursuitGameInfo.evaderStart);
             p1Start = allNodes.get("ID" + PursuitGameInfo.p1Start);
             p2Start = allNodes.get("ID" + PursuitGameInfo.p2Start);
         }
-	}
+    }
 
-	public Node getEvaderStart() {
-		return evaderStart;
-	}
+    public Node getEvaderStart() {
+        return evaderStart;
+    }
 
-	public Node getP1Start() {
-		return p1Start;
-	}
+    public Node getP1Start() {
+        return p1Start;
+    }
 
-	public Node getP2Start() {
-		return p2Start;
-	}
+    public Node getP2Start() {
+        return p2Start;
+    }
 
     public double getDistance(Node start, Node goal) {
         PriorityQueue<cz.agents.gtlibrary.utils.graph.DistanceNode> queue = new PriorityQueue<>();
 
         queue.add(new DistanceNode(start, 0));
-        while(!queue.isEmpty()) {
+        while (!queue.isEmpty()) {
             DistanceNode current = queue.poll();
 
-            if(current.getNode().equals(goal))
+            if (current.getNode().equals(goal))
                 return current.getDistance();
             for (Edge edge : graph.edgesOf(current.getNode())) {
-                if(edge.getSource().equals(current.getNode()))
+                if (edge.getSource().equals(current.getNode()))
                     queue.add(new DistanceNode(edge.getTarget(), current.getDistance() + 1));
             }
         }
