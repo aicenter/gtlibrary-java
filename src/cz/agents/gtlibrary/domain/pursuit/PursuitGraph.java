@@ -30,11 +30,9 @@ public class PursuitGraph extends Graph {
             Random random = new HighQualityRandom(PursuitGameInfo.seed);
             int nodeCount = getAllNodes().size();
             double correctDistance = Math.floor(2 / 3. * PursuitGameInfo.depth);
-
-            evaderStart = getAllNodes().get("ID" + random.nextInt(nodeCount));
-
             List<Node> nodes = new ArrayList<>(getAllNodes().values());
 
+            evaderStart = getAllNodes().get("ID" + random.nextInt(nodeCount));
             Collections.shuffle(nodes, random);
             for (Node node : nodes) {
                 if (distanceMatrix[evaderStart.getIntID()][node.getIntID()] == correctDistance)
@@ -47,10 +45,6 @@ public class PursuitGraph extends Graph {
             }
             if (p1Start == null || p2Start == null)
                 throw new IllegalStateException("No nodes in Pursuit graph with the distance from evader equal to " + Math.floor(2 / 3. * PursuitGameInfo.depth));
-
-            System.out.println(evaderStart);
-            System.out.println(p1Start);
-            System.out.println(p2Start);
 //            int nodes = getAllNodes().size();
 //            int tmp = (nodes)*(nodes-1)*(nodes-2);
 //            HighQualityRandom rnd = new HighQualityRandom(PursuitGameInfo.seed);
