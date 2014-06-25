@@ -31,7 +31,7 @@ public class PursuitGraph extends Graph {
 
             while (p1Start == null || p2Start == null) {
                 int nodeCount = getAllNodes().size();
-                double correctDistance = Math.floor(2 / 3. * PursuitGameInfo.depth);
+                double correctDistance = Math.min(Math.floor(2 / 3. * PursuitGameInfo.depth), Math.floor(4 / 3. * Math.sqrt(nodeCount)));
                 List<Node> nodes = new ArrayList<>(getAllNodes().values());
 
                 evaderStart = getAllNodes().get("ID" + random.nextInt(nodeCount));
