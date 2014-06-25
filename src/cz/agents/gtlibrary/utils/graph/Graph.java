@@ -1,5 +1,8 @@
 package cz.agents.gtlibrary.utils.graph;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,8 +12,13 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 
 
 public class Graph implements Serializable {
-	
-	private static final long serialVersionUID = -578541448878434086L;
+
+    private static final long serialVersionUID = -578541448878434086L;
+
+    public static void main(String[] args) throws FileNotFoundException {
+        Graph.makeGrid(15, 15, new PrintStream(new FileOutputStream("pursuit_simple15x15.txt")));
+    }
+
 	protected DefaultDirectedGraph<Node, Edge> graph = new DefaultDirectedGraph<Node, Edge>(Edge.class);
 	protected Map<String, Node> allNodes = new HashMap<String, Node>();
 
@@ -53,16 +61,17 @@ public class Graph implements Serializable {
 		return dl;
 	}
         
-        public static void makeGrid(int w, int h){
+        public static void makeGrid(int w, int h, PrintStream output){
+            output.println(w*h);
             for (int n=0; n<w*h; n++){
                 int nX = n % w;
                 int nY = n / h;
                 for (int y=0; y<h; y++){
                     for (int x=0; x<w; x++){
-                        System.out.print((Math.abs(nX-x)==1 && nY==y || Math.abs(nY-y)==1 && nX==x) ? "1 " : "0 ");
+                        output.print((Math.abs(nX-x)==1 && nY==y || Math.abs(nY-y)==1 && nX==x) ? "1 " : "0 ");
                     }
                 }
-                System.out.println();
+                output.println();
             }
         }
 }

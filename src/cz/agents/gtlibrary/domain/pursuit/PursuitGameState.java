@@ -140,18 +140,19 @@ public class PursuitGameState extends SimultaneousGameState {
 
     @Override
     protected double[] getEndGameUtilities() {
-		if (isCaughtInNode() || isCaughtOnEdge())
-			return new double[] { -1, 1 };
-		return new double[] { 1, -1 };
+        if (isCaughtInNode() || isCaughtOnEdge())
+            return new double[]{-1, 1};
+        return new double[]{1, -1};
     }
 
     @Override
     public double[] evaluate() {
         double p1Distance = graph.getDistance(p1Position, evaderPosition);
         double p2Distance = graph.getDistance(p2Position, evaderPosition);
-        double weight = 2*(Math.sqrt(2) * graph.getGraph().edgeSet().size()/8 + 16);//approximate length of diagonal under assumption that we move on square grid where all 4-neighbouring nodes are connected
-        double p1Value = ((p1Distance + p2Distance) - weight/2) / (weight/2);
+        double weight = 4 * Math.sqrt(graph.getAllNodes().size());
+        double p1Value = ((p1Distance + p2Distance) - weight / 2) / (weight / 2);
 
+        assert p1Value < 1;
         return new double[]{p1Value, -p1Value};
     }
 

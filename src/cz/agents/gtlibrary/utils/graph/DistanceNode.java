@@ -1,6 +1,4 @@
-package cz.agents.gtlibrary.domain.pursuit;
-
-import cz.agents.gtlibrary.utils.graph.Node;
+package cz.agents.gtlibrary.utils.graph;
 
 public class DistanceNode implements Comparable<DistanceNode>{
 	
