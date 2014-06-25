@@ -1,9 +1,11 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.alphabeta;
 
+import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NullDOCache;
@@ -55,9 +57,11 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 
         boolean prune = false;
 
-        if (state.isGameEnd())
+        if (state.isGameEnd()) {
+            if(state instanceof SimultaneousGameState)
+                SimAlphaBeta.FULLY_COMPUTED &= ((SimultaneousGameState)state).isActualGameEnd();
             return state.getUtilities()[player.getId()];
-
+        }
         if (state.isPlayerToMoveNature()) {
             return getUtilityForNature(state, alpha, beta, doCache);
         } else {
@@ -131,9 +135,11 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 
         boolean prune = false;
 
-        if (state.isGameEnd())
+        if (state.isGameEnd()) {
+            if(state instanceof SimultaneousGameState)
+                SimAlphaBeta.FULLY_COMPUTED &= ((SimultaneousGameState)state).isActualGameEnd();
             return state.getUtilities()[player.getId()];
-
+        }
         if (state.isPlayerToMoveNature()) {
             return getInsideUtilityForNature(state, alpha, beta);
         } else {

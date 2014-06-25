@@ -70,7 +70,8 @@ public class SimDoubleOracle extends DoubleOracle {
                 return;
             iters++;
             Pair<ActionPureStrategy, Double> p2BestResponse = p2Oracle.getBestResponse(getP1MixedStrategy(initialStrategy), alpha, beta);
-
+            if(Killer.kill)
+                return;
             if (-p2BestResponse.getRight() > alpha)
                 alpha = -p2BestResponse.getRight();
             if (p2BestResponse.getLeft() == null) {
@@ -87,9 +88,11 @@ public class SimDoubleOracle extends DoubleOracle {
                 updateForP2Response(p2StrategySet);
                 assert gameValue == gameValue;
             }
-
+            if(Killer.kill)
+                return;
             Pair<ActionPureStrategy, Double> p1BestResponse = p1Oracle.getBestResponse(getP2MixedStrategy(), alpha, beta);
-
+            if(Killer.kill)
+                return;
             assert alpha <= beta + 1e-8;
             assert !p1BestResponse.getRight().isNaN();
             if (p1BestResponse.getRight() < beta)

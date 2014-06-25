@@ -1,7 +1,9 @@
 package cz.agents.gtlibrary.nfg.simalphabeta.utility;
 
+import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 
 public class SimUtilityImpl extends SimUtility {
@@ -19,8 +21,11 @@ public class SimUtilityImpl extends SimUtility {
 	public double getUtility(ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
 		GameState newState = getStateAfterActions(s1, s2);
 
-		if (newState.isGameEnd())
-			return newState.getUtilities()[0];
+		if (newState.isGameEnd()) {
+            if(newState instanceof SimultaneousGameState)
+                SimAlphaBeta.FULLY_COMPUTED &= ((SimultaneousGameState)newState).isActualGameEnd();
+            return newState.getUtilities()[0];
+        }
 		return calculator.getUtilities(newState, s1, s2, alpha, beta);
 	}
 
@@ -34,8 +39,12 @@ public class SimUtilityImpl extends SimUtility {
 	public double getUtility(ActionPureStrategy s1, ActionPureStrategy s2) {
 		GameState newState = getStateAfterActions(s1, s2);
 
-		if (newState.isGameEnd())
-			return newState.getUtilities()[0];
+
+        if (newState.isGameEnd()) {
+            if(newState instanceof SimultaneousGameState)
+                SimAlphaBeta.FULLY_COMPUTED &= ((SimultaneousGameState)newState).isActualGameEnd();
+            return newState.getUtilities()[0];
+        }
 		return calculator.getUtility(newState, s1, s2);
 	}
 
@@ -43,8 +52,11 @@ public class SimUtilityImpl extends SimUtility {
 	public double getUtilityForIncreasedBounds(ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
 		GameState newState = getStateAfterActions(s1, s2);
 
-		if (newState.isGameEnd())
-			return newState.getUtilities()[0];
+        if (newState.isGameEnd()) {
+            if(newState instanceof SimultaneousGameState)
+                SimAlphaBeta.FULLY_COMPUTED &= ((SimultaneousGameState)newState).isActualGameEnd();
+            return newState.getUtilities()[0];
+        }
 		return calculator.getUtilitiesForIncreasedBounds(newState, s1, s2, alpha, beta);
 	}
 

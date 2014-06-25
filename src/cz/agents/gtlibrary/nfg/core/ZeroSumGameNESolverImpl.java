@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.nfg.core;
 
+import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
 import ilog.concert.IloException;
 import ilog.cplex.IloCplex;
 
@@ -144,6 +145,8 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 	}
 
 	private void extractPlayerTwoStrategy() {
+        if(Killer.kill)
+            return;
 		MixedStrategy<U> mixedStrategy = new MixedStrategy<U>();
 
 		int i = 1 + 1; //indexed from 1, first value is sumX
@@ -278,6 +281,8 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 			if (playerOneStrategySet != null) {
 				for (T strategy : playerOneStrategySet) {
 					double utility = utilityComputer.getUtility(strategy, strategiesToAdd.get(i - 1));
+                    if(Killer.kill)
+                        return;
 					assert utility == utility;
 					jaS.add(j + 1);
 					arS.add(utility);
