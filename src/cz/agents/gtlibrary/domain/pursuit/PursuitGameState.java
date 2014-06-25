@@ -149,7 +149,7 @@ public class PursuitGameState extends SimultaneousGameState {
     public double[] evaluate() {
         double p1Distance = graph.getDistance(p1Position, evaderPosition);
         double p2Distance = graph.getDistance(p2Position, evaderPosition);
-        double weight = 4 * Math.sqrt(graph.getGraph().edgeSet().size() / 2. + 4);//approximate length of diagonal under assumption that we move on square grid where all 4-neighbouring nodes are connected
+        double weight = 4 * Math.sqrt(graph.getAllNodes().size());
         double p1Value = ((p1Distance + p2Distance) - weight / 2) / (weight / 2);
 
         assert p1Value < 1;
