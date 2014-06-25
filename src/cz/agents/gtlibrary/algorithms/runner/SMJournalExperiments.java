@@ -28,6 +28,9 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.rps.RPSExpander;
+import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
+import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.domain.tron.TronExpander;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
@@ -67,7 +70,7 @@ public class SMJournalExperiments {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: SMJournalExperiments {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {GS|OZ|PE|RG|Tron} [domain parameters].");
+            System.err.println("Missing Arguments: SMJournalExperiments {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {GS|OZ|PE|RG|RPS|Tron} [domain parameters].");
             System.exit(-1);
         }
         String alg = args[0];
@@ -120,6 +123,11 @@ public class SMJournalExperiments {
             TronGameInfo.BOARDTYPE = args[3].charAt(0);
             TronGameInfo.ROWS = new Integer(args[4]);
             TronGameInfo.COLS = new Integer(args[5]);
+        } else if (args[1].equalsIgnoreCase("RPS")) { // Tron
+            if (args.length != 3) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED}");
+            }
+            RPSGameInfo.seed = new Integer(args[2]);
         } else throw new IllegalArgumentException("Illegal domain: " + args[1]);
     }
 
@@ -144,6 +152,10 @@ public class SMJournalExperiments {
             gameInfo = new TronGameInfo();
             rootState = new TronGameState();
             expander = new TronExpander<MCTSInformationSet>(new MCTSConfig());
+        } else if (domain.equals("RPS")) {
+            gameInfo = new RPSGameInfo();
+            rootState = new RPSGameState();
+            expander = new RPSExpander<MCTSInformationSet>(new MCTSConfig());
         }
     }
 
@@ -153,11 +165,11 @@ public class SMJournalExperiments {
             String tl = System.getProperty("tLimit");
             if (tl != null) samplingTimeLimit = new Long(tl);
             if (alg.startsWith("MCTS")) {
-                if (alg.equals("MCTS-UCT"))
+                if (alg.equals("MCTS-UCT")) 
                     runMCTS(MCTStype.UCT);
                 else if (alg.equals("MCTS-EXP3"))
                     runMCTS(MCTStype.EXP3);
-                else if (alg.equals("MCTS-RM"))
+                else if (alg.equals("MCTS-RM")) 
                     runMCTS(MCTStype.RM);
                 else {
                     throw new IllegalArgumentException("MCTS requires selector function specified {MCTS-UCT,MCTS-EXP3,MCTS-RM}");
@@ -185,6 +197,8 @@ public class SMJournalExperiments {
                 SimAlphaBeta.runOshiZumo(AB, DO, SORT, CACHE);
             else if (domain.equals("Tron"))
                 SimAlphaBeta.runTron(AB, DO, SORT, CACHE);
+            else if (domain.equals("RPS"))
+                SimAlphaBeta.runRPS(AB, DO, SORT, CACHE);
         }
     }
 
@@ -368,6 +382,98 @@ public class SMJournalExperiments {
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
             secondsIteration *= 1.1;
+        }
+    }
+    
+    // mlanctot: Note, I used this to run batch experiments for Biased RPS
+    //           Does experiments by iterations using different parameters
+    public void runMCTS_ItersType(MCTStype type, Double c) {
+        double secondsIteration = 0.1;
+
+        expander.getAlgorithmConfig().createInformationSetFor(rootState);
+
+        Distribution dist = new MeanStratDist();
+
+        BackPropFactory bpFactory = null;
+        GamePlayingAlgorithm alg = null;
+        //ISMCTSAlgorithm alg = null
+
+        switch (type) {
+            case UCT:
+                String cS = System.getProperty("EXPL");
+                if (cS != null) c = new Double(cS);
+                bpFactory = new UCTBackPropFactory(c);
+                break;
+            case EXP3:
+                cS = System.getProperty("EXPL");
+                if (cS != null) c = new Double(cS);
+                bpFactory = new Exp3BackPropFactory(-1, 1, c);
+                break;
+            case RM:
+                cS = System.getProperty("EXPL");
+                if (cS != null) c = new Double(cS);
+                alg = new SMMCTSAlgorithm(
+                        rootState.getAllPlayers()[0],
+                        new DefaultSimulator(expander),
+                        new SMRMBackPropFactory(c),
+                        rootState, expander);
+                ((SMMCTSAlgorithm) alg).runIterations(2);
+        }
+
+        if (!type.equals(MCTStype.RM)) {
+            alg = new ISMCTSAlgorithm(
+                    rootState.getAllPlayers()[0],
+                    new DefaultSimulator(expander),
+                    bpFactory,
+                    //                new UCTBackPropFactory(2),
+                    //                new Exp3BackPropFactory(-1, 1, 0.2),
+                    //new RMBackPropFactory(-1,1,0.4),
+                    rootState, expander);
+            ((ISMCTSAlgorithm) alg).returnMeanValue = false;
+            ((ISMCTSAlgorithm) alg).runIterations(2);
+        }
+
+        brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+
+        Strategy strategy0 = null;
+        Strategy strategy1 = null;
+        //System.out.print("P1BRs: ");
+        System.out.println("Type: " + type + ", c = " + c);
+
+        double br1Val = Double.POSITIVE_INFINITY;
+        double br0Val = Double.POSITIVE_INFINITY;
+        double cumulativeTime = 0;
+        int iters = 100; 
+        int totalIters = 0; 
+
+        for (int i = 0; totalIters < 100000000; i++) {
+            //alg.runIterations(iters);
+            switch (type) { 
+              case RM: 
+                ((SMMCTSAlgorithm)alg).runIterations(iters);
+                break;
+              case UCT:
+              case EXP3:
+                ((ISMCTSAlgorithm)alg).runIterations(iters);
+                break;
+            }
+
+            totalIters += iters; 
+
+            //System.out.println("Total Iters: " + totalIters); 
+            strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
+            strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
+
+            br1Val = brAlg1.calculateBR(rootState, strategy0);
+            br0Val = brAlg0.calculateBR(rootState, strategy1);
+            //System.out.println("Precision: " + (br0Val + br1Val));
+
+            System.out.println(totalIters + " " + (br0Val + br1Val)); 
+
+            System.out.flush();
+
+            iters = (int)(iters*2);
         }
     }
 
