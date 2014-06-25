@@ -1,12 +1,14 @@
 package cz.agents.gtlibrary.domain.pursuit;
 
 import cz.agents.gtlibrary.utils.HighQualityRandom;
-import cz.agents.gtlibrary.utils.graph.DistanceNode;
 import cz.agents.gtlibrary.utils.graph.Edge;
 import cz.agents.gtlibrary.utils.graph.Graph;
 import cz.agents.gtlibrary.utils.graph.Node;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 public class PursuitGraph extends Graph {
 
@@ -15,6 +17,7 @@ public class PursuitGraph extends Graph {
     private Node evaderStart;
     private Node p1Start;
     private Node p2Start;
+    private double[][] distanceMatrix;
 
     public PursuitGraph(String graphFile) {
         super(graphFile);
@@ -22,24 +25,32 @@ public class PursuitGraph extends Graph {
 
     protected void init() {
         super.init();
+        computeDistanceMatrix();
         if (PursuitGameInfo.randomizeStartPositions) {
             Random random = new HighQualityRandom(PursuitGameInfo.seed);
             int nodeCount = getAllNodes().size();
+            double correctDistance = Math.floor(2 / 3. * PursuitGameInfo.depth);
+
             evaderStart = getAllNodes().get("ID" + random.nextInt(nodeCount));
+
             List<Node> nodes = new ArrayList<>(getAllNodes().values());
 
             Collections.shuffle(nodes, random);
-
             for (Node node : nodes) {
-                if (getDistance(evaderStart, node) == Math.floor(2 / 3. * PursuitGameInfo.depth)) {
-                    if (p1Start == null)
+                if (distanceMatrix[evaderStart.getIntID()][node.getIntID()] == correctDistance)
+                    if (p1Start == null) {
                         p1Start = node;
-                    else
+                    } else {
                         p2Start = node;
-                }
+                        break;
+                    }
             }
-            if(p1Start == null || p2Start == null)
+            if (p1Start == null || p2Start == null)
                 throw new IllegalStateException("No nodes in Pursuit graph with the distance from evader equal to " + Math.floor(2 / 3. * PursuitGameInfo.depth));
+
+            System.out.println(evaderStart);
+            System.out.println(p1Start);
+            System.out.println(p2Start);
 //            int nodes = getAllNodes().size();
 //            int tmp = (nodes)*(nodes-1)*(nodes-2);
 //            HighQualityRandom rnd = new HighQualityRandom(PursuitGameInfo.seed);
@@ -64,6 +75,30 @@ public class PursuitGraph extends Graph {
         }
     }
 
+    private void computeDistanceMatrix() {
+        distanceMatrix = new double[getAllNodes().size()][getAllNodes().size()];
+
+        for (int i = 0; i < distanceMatrix.length; i++) {
+            for (int j = 0; j < distanceMatrix[0].length; j++) {
+                if (i != j)
+                    distanceMatrix[i][j] = Double.POSITIVE_INFINITY;
+                else
+                    distanceMatrix[i][j] = 0;
+            }
+        }
+        for (Edge edge : graph.edgeSet()) {
+            distanceMatrix[edge.getSource().getIntID()][edge.getTarget().getIntID()] = 1;
+        }
+        for (int k = 0; k < distanceMatrix.length; k++) {
+            for (int i = 0; i < distanceMatrix.length; i++) {
+                for (int j = 0; j < distanceMatrix.length; j++) {
+                    if (distanceMatrix[i][j] > distanceMatrix[i][k] + distanceMatrix[k][j])
+                        distanceMatrix[i][j] = distanceMatrix[i][k] + distanceMatrix[k][j];
+                }
+            }
+        }
+    }
+
     public Node getEvaderStart() {
         return evaderStart;
     }
@@ -77,19 +112,7 @@ public class PursuitGraph extends Graph {
     }
 
     public double getDistance(Node start, Node goal) {
-        PriorityQueue<cz.agents.gtlibrary.utils.graph.DistanceNode> queue = new PriorityQueue<>();
-
-        queue.add(new DistanceNode(start, 0));
-        while (!queue.isEmpty()) {
-            DistanceNode current = queue.poll();
-
-            if (current.getNode().equals(goal))
-                return current.getDistance();
-            for (Edge edge : graph.edgesOf(current.getNode())) {
-                if (edge.getSource().equals(current.getNode()))
-                    queue.add(new DistanceNode(edge.getTarget(), current.getDistance() + 1));
-            }
-        }
-        return Double.POSITIVE_INFINITY;
+        return distanceMatrix[start.getIntID()][goal.getIntID()];
     }
+
 }
