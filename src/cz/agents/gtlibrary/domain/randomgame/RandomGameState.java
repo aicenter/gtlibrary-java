@@ -12,27 +12,26 @@ import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class RandomGameState extends SimultaneousGameState {
 
     private static final long serialVersionUID = 6086530572992658181L;
+    private static int rootID;
 
-    private int ID;
-    private int center;
+    protected int ID;
+    protected int center;
     private Player playerToMove;
     protected Map<Player, ArrayList<Integer>> observations = new FixedSizeMap<Player, ArrayList<Integer>>(2);
 
     private int hash = 0;
     protected Pair<Integer, Sequence> ISKey = null;
-    private boolean changed = true;
+    protected boolean changed = true;
 
     public RandomGameState() {
         super(RandomGameInfo.ALL_PLAYERS);
-        ID = RandomGameInfo.rnd.nextInt();
+        ID = new HighQualityRandom(RandomGameInfo.seed).nextInt();
+        rootID = ID;
         playerToMove = RandomGameInfo.FIRST_PLAYER;
         observations.put(players[0], new ArrayList<Integer>());
         observations.put(players[1], new ArrayList<Integer>());
@@ -49,8 +48,14 @@ public class RandomGameState extends SimultaneousGameState {
     }
 
     protected void evaluateAction(RandomGameAction action) {
+        assert false; //FIXME !!! the following center modification works for simultaneous-move only, but it does not make sense to use it this way for general II EFG
         int newID = (ID + action.getOrder()) * 31 + 17;
-        center += new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_CENTER_MODIFICATION * 2 + 1) - RandomGameInfo.MAX_CENTER_MODIFICATION;
+        if (getPlayerToMove().getId() == 1)
+            center += new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_CENTER_MODIFICATION * 2 + 1) - RandomGameInfo.MAX_CENTER_MODIFICATION;
+//        int newID = (ID + action.getOrder()) * 31 + 17;
+//        Random r = new HighQualityRandom(rootID+ISKey.getLeft());
+//        for (int i=0; i<action.getOrder(); i++) r.nextInt(RandomGameInfo.MAX_CENTER_MODIFICATION * 2 + 1);
+//        center += (r.nextInt(RandomGameInfo.MAX_CENTER_MODIFICATION * 2 + 1) - RandomGameInfo.MAX_CENTER_MODIFICATION);
         generateObservations(newID, action);
 
         this.ID = newID;
@@ -89,9 +94,9 @@ public class RandomGameState extends SimultaneousGameState {
             }
         } else {
             if (RandomGameInfo.BINARY_UTILITY) {
-                rndValue = new HighQualityRandom(ID).nextInt(RandomGameInfo.MAX_UTILITY + 1); // totally random binary
+                rndValue = new HighQualityRandom(ID).nextInt(2*RandomGameInfo.MAX_UTILITY + 1) - RandomGameInfo.MAX_UTILITY ; // totally random binary
             } else {
-                rndValue = new HighQualityRandom(ID).nextDouble() * RandomGameInfo.MAX_UTILITY; // totally random
+                rndValue = new HighQualityRandom(ID).nextDouble() * 2 * RandomGameInfo.MAX_UTILITY - RandomGameInfo.MAX_UTILITY; // totally random
             }
         }
         return new double[]{rndValue, -rndValue};
@@ -221,8 +226,10 @@ public class RandomGameState extends SimultaneousGameState {
 
     @Override
     public String toString() {
-        return "RG" + center;
+        return "RG-ID" + ID + "C:" + center;
     }
 
-
+    public int getCenter() {
+        return center;
+    }
 }

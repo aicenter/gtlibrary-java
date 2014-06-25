@@ -6,6 +6,7 @@ package cz.agents.gtlibrary.domain.randomgame;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 /**
  *
@@ -39,7 +40,15 @@ public class SimRandomGameState extends RandomGameState {
     }
 
     @Override
-    public String toString() {
-        return "RG" + getHistory();
+    protected void evaluateAction(RandomGameAction action) {
+        int newID = (ID + action.getOrder()) * 31 + 17;
+        if (getPlayerToMove().getId() == 1)
+            center += new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_CENTER_MODIFICATION * 2 + 1) - RandomGameInfo.MAX_CENTER_MODIFICATION;
+        generateObservations(newID, action);
+
+        this.ID = newID;
+        this.ISKey = null;
+        this.changed = true;
     }
+
 }

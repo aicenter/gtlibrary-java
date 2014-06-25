@@ -74,11 +74,11 @@ public class GeneralDoubleOracle {
 	public static void main(String[] args) {
 //		runAC();
 //        runBP();
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
-//		runSimRandomGame();
+		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
@@ -149,7 +149,8 @@ public class GeneralDoubleOracle {
         Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState,  expander, gameInfo, algConfig);
         doefg.generate(null);
-//        GambitEFG.write("randomgame.gbt", rootState, (Expander) expander);
+//        GambitEFG ggg = new GambitEFG();
+//        ggg.write("randomgame.gbt", rootState, (Expander) expander);
     }
 
     public static void runGenericPoker() {
@@ -172,6 +173,7 @@ public class GeneralDoubleOracle {
     }
 
     public static void runGoofSpiel() {
+        GSGameInfo.useFixedNatureSequence = true;
         GameState rootState = new GoofSpielGameState();
         GSGameInfo gameInfo = new GSGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
