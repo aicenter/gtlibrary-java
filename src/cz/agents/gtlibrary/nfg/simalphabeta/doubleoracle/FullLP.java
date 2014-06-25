@@ -46,6 +46,8 @@ public class FullLP extends DoubleOracle {
         if(Killer.kill)
             return;
         coreSolver.computeNashEquilibrium();
+        if(Killer.kill)
+            return;
         Stats.getInstance().addToP1NESize(coreSolver.getPlayerOneStrategy());
         Stats.getInstance().addToP2NESize(coreSolver.getPlayerTwoStrategy());
     }

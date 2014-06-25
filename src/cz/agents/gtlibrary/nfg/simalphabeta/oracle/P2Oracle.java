@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 import cz.agents.gtlibrary.utils.Pair;
@@ -26,6 +27,8 @@ public class P2Oracle extends SimOracleImpl {
 		for (ActionPureStrategy strategy : possibleActions) {
 			double utilityValue = getValueForAction(mixedStrategy, strategy, bestValue);
 
+            if(Killer.kill)
+                return null;
 			if (bestStrategy == null) {
 				if (utilityValue > bestValue ) {
 					bestValue = utilityValue;
@@ -46,6 +49,9 @@ public class P2Oracle extends SimOracleImpl {
 
 		for (ActionPureStrategy action : mixedStrategy.sortStrategies()) {
             double actionProb = mixedStrategy.getProbability(action);
+
+            if(Killer.kill)
+                return Double.NaN;
 			if (actionProb > 1e-8) {
 				Pair<ActionPureStrategy, ActionPureStrategy> strategyPair = new Pair<ActionPureStrategy, ActionPureStrategy>(action, strategy);
 				Double cacheValue = getValueFromCache(strategyPair);
