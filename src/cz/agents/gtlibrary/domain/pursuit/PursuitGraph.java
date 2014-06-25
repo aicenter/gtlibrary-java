@@ -86,8 +86,10 @@ public class PursuitGraph extends Graph {
         for (int k = 0; k < distanceMatrix.length; k++) {
             for (int i = 0; i < distanceMatrix.length; i++) {
                 for (int j = 0; j < distanceMatrix.length; j++) {
-                    if (distanceMatrix[i][j] > distanceMatrix[i][k] + distanceMatrix[k][j])
-                        distanceMatrix[i][j] = distanceMatrix[i][k] + distanceMatrix[k][j];
+                    double newDistance = distanceMatrix[i][k] + distanceMatrix[k][j];
+
+                    if (distanceMatrix[i][j] > newDistance)
+                        distanceMatrix[i][j] = newDistance;
                 }
             }
         }
