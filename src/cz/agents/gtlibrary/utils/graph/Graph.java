@@ -16,7 +16,7 @@ public class Graph implements Serializable {
     private static final long serialVersionUID = -578541448878434086L;
 
     public static void main(String[] args) throws FileNotFoundException {
-        Graph.makeGrid(50, 50, new PrintStream(new FileOutputStream("pursuit_simple50x50.txt")));
+        Graph.makeGrid(15, 15, new PrintStream(new FileOutputStream("pursuit_simple15x15.txt")));
     }
 
 	protected DefaultDirectedGraph<Node, Edge> graph = new DefaultDirectedGraph<Node, Edge>(Edge.class);
