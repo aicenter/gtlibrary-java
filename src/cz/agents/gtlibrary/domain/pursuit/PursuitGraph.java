@@ -28,23 +28,29 @@ public class PursuitGraph extends Graph {
         computeDistanceMatrix();
         if (PursuitGameInfo.randomizeStartPositions) {
             Random random = new HighQualityRandom(PursuitGameInfo.seed);
-            int nodeCount = getAllNodes().size();
-            double correctDistance = Math.floor(2 / 3. * PursuitGameInfo.depth);
-            List<Node> nodes = new ArrayList<>(getAllNodes().values());
 
-            evaderStart = getAllNodes().get("ID" + random.nextInt(nodeCount));
-            Collections.shuffle(nodes, random);
-            for (Node node : nodes) {
-                if (distanceMatrix[evaderStart.getIntID()][node.getIntID()] == correctDistance)
-                    if (p1Start == null) {
-                        p1Start = node;
-                    } else {
-                        p2Start = node;
-                        break;
-                    }
+            while (p1Start == null || p2Start == null) {
+                int nodeCount = getAllNodes().size();
+                double correctDistance = Math.floor(2 / 3. * PursuitGameInfo.depth);
+                List<Node> nodes = new ArrayList<>(getAllNodes().values());
+
+                evaderStart = getAllNodes().get("ID" + random.nextInt(nodeCount));
+                Collections.shuffle(nodes, random);
+                for (Node node : nodes) {
+                    if (distanceMatrix[evaderStart.getIntID()][node.getIntID()] == correctDistance)
+                        if (p1Start == null) {
+                            p1Start = node;
+                        } else {
+                            p2Start = node;
+                            break;
+                        }
+                }
+                if(p1Start == null || p2Start == null) {
+                    p1Start = null;
+                    p2Start = null;
+                    System.out.println("Impossible to place patrolers, moving evader");
+                }
             }
-            if (p1Start == null || p2Start == null)
-                throw new IllegalStateException("No nodes in Pursuit graph with the distance from evader equal to " + Math.floor(2 / 3. * PursuitGameInfo.depth));
 //            int nodes = getAllNodes().size();
 //            int tmp = (nodes)*(nodes-1)*(nodes-2);
 //            HighQualityRandom rnd = new HighQualityRandom(PursuitGameInfo.seed);
