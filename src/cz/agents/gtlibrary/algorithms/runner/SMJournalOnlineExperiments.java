@@ -80,9 +80,9 @@ public class SMJournalOnlineExperiments {
             OZGameInfo.startingCoins = new Integer(args[4]);
             OZGameInfo.locK = new Integer(args[5]);
             OZGameInfo.minBid = new Integer(args[6]);
-        } else if (args[2].equalsIgnoreCase("PE")) { // Generic Poker
+        } else if (args[2].equalsIgnoreCase("PE")) { // Pursuit evasion
             if (args.length != 6) {
-                throw new IllegalArgumentException("Illegal poker domain arguments count: 3 parameters are required {SEED} {DEPTH} {GRAPH}");
+                throw new IllegalArgumentException("Illegal pursuit evasion domain arguments count: 3 parameters are required {SEED} {DEPTH} {GRAPH}");
             }
             PursuitGameInfo.seed = new Integer(args[3]);
             PursuitGameInfo.depth = new Integer(args[4]);
