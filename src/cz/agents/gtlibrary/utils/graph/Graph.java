@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.utils.graph;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -10,7 +12,13 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 
 
 public class Graph implements Serializable {
+
     private static final long serialVersionUID = -578541448878434086L;
+
+    public static void main(String[] args) throws FileNotFoundException {
+        Graph.makeGrid(50, 50, new PrintStream(new FileOutputStream("pursuit_simple50x50.txt")));
+    }
+
 	protected DefaultDirectedGraph<Node, Edge> graph = new DefaultDirectedGraph<Node, Edge>(Edge.class);
 	protected Map<String, Node> allNodes = new HashMap<String, Node>();
 
@@ -54,6 +62,7 @@ public class Graph implements Serializable {
 	}
         
         public static void makeGrid(int w, int h, PrintStream output){
+            output.println(w*h);
             for (int n=0; n<w*h; n++){
                 int nX = n % w;
                 int nY = n / h;
