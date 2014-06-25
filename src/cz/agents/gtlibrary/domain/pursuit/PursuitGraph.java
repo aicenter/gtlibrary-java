@@ -1,8 +1,12 @@
 package cz.agents.gtlibrary.domain.pursuit;
 
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import cz.agents.gtlibrary.utils.graph.DistanceNode;
+import cz.agents.gtlibrary.utils.graph.Edge;
 import cz.agents.gtlibrary.utils.graph.Graph;
 import cz.agents.gtlibrary.utils.graph.Node;
+
+import java.util.PriorityQueue;
 
 public class PursuitGraph extends Graph {
 
@@ -55,7 +59,20 @@ public class PursuitGraph extends Graph {
 		return p2Start;
 	}
 
-    public double getDistance(Node p1Position, Node evaderPosition) {
-        return 0;
+    public double getDistance(Node start, Node goal) {
+        PriorityQueue<cz.agents.gtlibrary.utils.graph.DistanceNode> queue = new PriorityQueue<>();
+
+        queue.add(new DistanceNode(start, 0));
+        while(!queue.isEmpty()) {
+            DistanceNode current = queue.poll();
+
+            if(current.getNode().equals(goal))
+                return current.getDistance();
+            for (Edge edge : graph.edgesOf(current.getNode())) {
+                if(edge.getSource().equals(current.getNode()))
+                    queue.add(new DistanceNode(edge.getTarget(), current.getDistance() + 1));
+            }
+        }
+        return Double.POSITIVE_INFINITY;
     }
 }
