@@ -40,6 +40,8 @@ import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 public class SimAlphaBeta {
 
+    public static boolean FULLY_COMPUTED = true;
+
 //    public double gameValue = Double.NaN;
 
     public static void main(String[] args) {
