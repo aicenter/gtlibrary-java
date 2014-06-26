@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.FastTanh;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
@@ -283,13 +284,20 @@ public class GoofSpielGameState extends SimultaneousGameState {
             return new double[]{-1, 1, 0};
         if (unwinnableFor(players[1]))
             return new double[]{1, -1, 0};
-        double value =  (playerScore[0] - sum / 2) / (sum / 2);
-
-        if(value > 0)
-            value -= 1e-3;
-        else if(value < 0)
-            value += 1e-3;
-        assert value < 1 && value > -1;
+//        double value =  (playerScore[0] - sum / 2) / (sum / 2);
+//        if(value > 0)
+//            value -= 1e-3;
+//        else if(value < 0)
+//            value += 1e-3;
+//        assert value < 1 && value > -1;
+//        return new double[]{value, -value, 0};
+        int sumRemCardsP1 = 0;
+        for (Integer i : playerCards.get(GSGameInfo.FIRST_PLAYER))
+            sumRemCardsP1 += i;
+        int sumRemCardsP2 = 0;
+        for (Integer i : playerCards.get(GSGameInfo.SECOND_PLAYER))
+            sumRemCardsP2 += i;
+        double value = FastTanh.tanh((playerScore[0] - playerScore[1])/sum*round/GSGameInfo.CARDS_FOR_PLAYER.length + (getSumOfRemainingCards()/(GSGameInfo.CARDS_FOR_PLAYER.length*(GSGameInfo.CARDS_FOR_PLAYER.length+1)/2))*(sumRemCardsP1-sumRemCardsP2)/(sumRemCardsP1+sumRemCardsP2+1));
         return new double[]{value, -value, 0};
     }
 
@@ -308,8 +316,8 @@ public class GoofSpielGameState extends SimultaneousGameState {
 
         if (score + getSumOfRemainingCards() < opponentScore)
             return true;
-        if (score + getHighestAchievableScore(player) < opponentScore)
-            return true;
+//        if (score + getHighestAchievableScore(player) < opponentScore)
+//            return true;
         return false;
     }
 

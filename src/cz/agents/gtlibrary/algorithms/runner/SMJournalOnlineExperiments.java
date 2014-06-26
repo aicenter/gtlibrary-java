@@ -52,8 +52,17 @@ public class SMJournalOnlineExperiments {
         SMJournalOnlineExperiments exp = new SMJournalOnlineExperiments();
         exp.handleDomain(args);
 
+        String newCompTimeString = System.getProperty("COMPTIME");
+        if (newCompTimeString != null)
+            compTime = new Integer(newCompTimeString);
+
+
         double sum = 0;
         int iterationCount = 10;
+
+        String newMatchesString = System.getProperty("MATCHES");
+        if (newMatchesString != null)
+            iterationCount = new Integer(newMatchesString);
 
         for (int i = 0; i < iterationCount; i++) {
             sum += exp.runMatch(args);
