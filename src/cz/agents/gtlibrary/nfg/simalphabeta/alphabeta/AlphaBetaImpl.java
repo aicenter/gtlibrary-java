@@ -72,6 +72,8 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
                     return Double.NaN;
                 double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
 
+                if(Killer.kill)
+                    return Double.NaN;
                 if (tempAlpha <= beta && p1Action == null) {
                     storeAction(minAction);
                     storeAction(tempAction);
@@ -176,6 +178,8 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
                 return Double.NaN;
             double value = getInsideValue(performActions(state, minAction, maxAction), tempAlpha, beta);
 
+            if(Killer.kill)
+                return Double.NaN;
             if (value >= tempAlpha && tempAction == null)
                 tempAction = maxAction;
             if (value > tempAlpha) {
