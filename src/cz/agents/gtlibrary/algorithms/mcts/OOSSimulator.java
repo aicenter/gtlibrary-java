@@ -19,20 +19,24 @@ import java.util.Random;
 public class OOSSimulator implements Simulator {
     final private Random rnd;
     final private Expander expander;
+    final private int simLenght;
 
-    public OOSSimulator(Expander expander, long seed) {
-        rnd = new HighQualityRandom(seed);
-        this.expander = expander;
-    }
-
-    public OOSSimulator(Expander expander, Random random) {
+    public OOSSimulator(int simLength, Expander expander, Random random) {
         rnd = random;
         this.expander = expander;
+        this.simLenght = simLength;
+    }
+    
+    public OOSSimulator(Expander expander, Random random) {
+        this(Integer.MAX_VALUE, expander, random);
     }
 
     public OOSSimulator(Expander expander) {
-         rnd = new HighQualityRandom();
-        this.expander = expander;
+        this(Integer.MAX_VALUE, expander, new HighQualityRandom());
+    }
+    
+    public OOSSimulator(Expander expander, long seed) {
+        this(Integer.MAX_VALUE, expander, new HighQualityRandom(seed));
     }
 
     public double playOutProb;
@@ -46,13 +50,16 @@ public class OOSSimulator implements Simulator {
 
         GameStateImpl state = (GameStateImpl) gameState.copy();
         
+        int step=0;
         while (!state.isGameEnd()) {
+                if (step==simLenght) return state.evaluate();
                 List<Action> actions = expander.getActions(new MCTSInformationSet(state));
-                playOutProb *= 1.0/actions.size();
+                playOutProb *= 1.0/actions.size();//TODO: use correct chance probability
                 if (!state.isPlayerToMoveNature()) {
                         playersProb *= 1.0/actions.size();
                 }
                 state.performActionModifyingThisState(actions.get(rnd.nextInt(actions.size())));
+                step++;
         }
         return state.getUtilities();
     }

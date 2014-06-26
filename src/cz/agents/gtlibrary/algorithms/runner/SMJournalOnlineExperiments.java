@@ -58,7 +58,7 @@ public class SMJournalOnlineExperiments {
 
 
         double sum = 0;
-        int iterationCount = 10;
+        int iterationCount = 5;
 
         String newMatchesString = System.getProperty("MATCHES");
         if (newMatchesString != null)
