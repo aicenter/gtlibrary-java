@@ -178,7 +178,7 @@ public class SMJournalOnlineExperiments {
                 SMMCTSAlgorithm player = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
                         new DefaultSimulator(expander, random),
-                        new SMRMBackPropFactory(0.4, random),
+                        new SMRMBackPropFactory(0.1, random),
                         rootState, expander);
 
                 player.runIterations(2);

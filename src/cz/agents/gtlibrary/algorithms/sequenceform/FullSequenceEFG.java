@@ -46,7 +46,6 @@ import cz.agents.gtlibrary.domain.upordown.UDGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.DummyPrintStream;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
