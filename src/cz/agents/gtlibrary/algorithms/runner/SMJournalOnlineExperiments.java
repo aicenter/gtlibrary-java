@@ -58,7 +58,7 @@ public class SMJournalOnlineExperiments {
 
 
         double sum = 0;
-        int iterationCount = 10;
+        int iterationCount = 5;
 
         String newMatchesString = System.getProperty("MATCHES");
         if (newMatchesString != null)
@@ -168,7 +168,7 @@ public class SMJournalOnlineExperiments {
 
                 switch (alg) {
                     case "MCTS-UCT":
-                        fact = new UCTBackPropFactory(2, random);
+                        fact = new UCTBackPropFactory(2*gameInfo.getMaxUtility(), random);
                         break;
                     case "MCTS-EXP3":
                         fact = new Exp3BackPropFactory(-1, 1, 0.2, random);
@@ -187,7 +187,7 @@ public class SMJournalOnlineExperiments {
                 SMMCTSAlgorithm player = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
                         new DefaultSimulator(expander, random),
-                        new SMRMBackPropFactory(0.4, random),
+                        new SMRMBackPropFactory(0.1, random),
                         rootState, expander);
 
                 player.runIterations(2);

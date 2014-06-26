@@ -13,30 +13,39 @@ import java.util.Random;
 public class DefaultSimulator implements Simulator {
     final private Random rnd;
     final private Expander expander;
+    final private int simLenght;
 
     public DefaultSimulator(Expander expander) {
-        this(expander, new HighQualityRandom());
+        this(Integer.MAX_VALUE, expander, new HighQualityRandom());
     }
 
     public DefaultSimulator(Expander expander, long seed) {
-        this(expander, new HighQualityRandom(seed));
+        this(Integer.MAX_VALUE, expander, new HighQualityRandom(seed));
+    }
+    
+    public DefaultSimulator(Expander expander, Random random) {
+        this(Integer.MAX_VALUE, expander, random);
     }
 
-    public DefaultSimulator(Expander expander, Random random) {
+    public DefaultSimulator(int simLength, Expander expander, Random random) {
         this.rnd = random;
         this.expander = expander;
+        this.simLenght = simLength;
     }
 
     @Override
     public double[] simulate(GameState gameState) {
         GameStateImpl state = (GameStateImpl) gameState.copy();
 
+        int step=0;
         while (!state.isGameEnd()) {
+            if (step==simLenght) return state.evaluate();
             if (state.isPlayerToMoveNature()) {
                 state.performActionModifyingThisState(getActionForNature(state));
             } else {
                 state.performActionModifyingThisState(getActionForRegularPlayer(state));
             }
+            step++;
         }
         return state.getUtilities();
     }
