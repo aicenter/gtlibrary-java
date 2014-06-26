@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCache;
@@ -94,6 +95,8 @@ public class DOUtilityCalculator implements UtilityCalculator {
             long time = System.currentTimeMillis();
 
             pesimistic = -data.alphaBetas[1].getUnboundedValueAndStoreStrategy(state, cache);
+            if(Killer.kill)
+                return Double.NaN;
 //            cache.setTempStrategy(getStrategyTriplet(state), getStrategiesFromAlphaBeta(data.alphaBetas[1]));
             Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
             natureCache.updatePesimisticFor(state, pesimistic);
@@ -108,6 +111,8 @@ public class DOUtilityCalculator implements UtilityCalculator {
             long time = System.currentTimeMillis();
 
             optimistic = data.alphaBetas[0].getUnboundedValueAndStoreStrategy(state, cache);
+            if(Killer.kill)
+                return Double.NaN;
 //            cache.setTempStrategy(getStrategyTriplet(state), getStrategiesFromAlphaBeta(data.alphaBetas[0]));
             Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
             natureCache.updateOptimisticFor(state, optimistic);

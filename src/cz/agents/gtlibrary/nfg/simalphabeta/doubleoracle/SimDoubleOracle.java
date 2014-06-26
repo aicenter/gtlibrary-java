@@ -181,6 +181,8 @@ public class SimDoubleOracle extends DoubleOracle {
         double pesimisticUtility = -data.getAlphaBetaFor(tempState.getAllPlayers()[1]).getUnboundedValue(tempState);
         double optimisticUtility = data.getAlphaBetaFor(tempState.getAllPlayers()[0]).getUnboundedValue(tempState);
 
+        if(Killer.kill)
+            return;
         Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
         cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
     }

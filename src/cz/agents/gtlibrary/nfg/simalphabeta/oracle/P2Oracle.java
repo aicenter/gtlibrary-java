@@ -41,7 +41,7 @@ public class P2Oracle extends SimOracleImpl {
 				}
 			}
 		}
-		return new Pair<ActionPureStrategy, Double>(bestStrategy, bestValue);
+		return new Pair<>(bestStrategy, bestValue);
 	}
 
 	protected double getValueForAction(MixedStrategy<ActionPureStrategy> mixedStrategy, ActionPureStrategy strategy, double bestValue) {
@@ -58,6 +58,8 @@ public class P2Oracle extends SimOracleImpl {
 				double cacheWindow = getLowerBoundFromCache(strategyPair);
 				double windowValue = Math.max(cacheWindow, getWindowValue(bestValue, actionProb, mixedStrategy, strategy, action));
 
+                if(Killer.kill)
+                    return Double.NaN;
 				if (cacheValue == null) {
 					if (getPesimisticValueFromCache(strategyPair) < windowValue) {
 						Stats.getInstance().incrementABCuts();
@@ -121,6 +123,8 @@ public class P2Oracle extends SimOracleImpl {
 		double pesimisticUtility = -alphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 		double optimisticUtility = oppAlphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 
+        if(Killer.kill)
+            return Double.NaN;
 		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 //        storeStrategy(alphaBeta, strategyPair);
@@ -141,6 +145,8 @@ public class P2Oracle extends SimOracleImpl {
 		double pesimisticUtility = -alphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 		double optimisticUtility = oppAlphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 
+        if(Killer.kill)
+            return Double.NaN;
 		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 		return pesimisticUtility;
@@ -158,8 +164,11 @@ public class P2Oracle extends SimOracleImpl {
 		double utility = 0;
 
 		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) {
-            if (entry.getKey().equals(excludeStrategy)) continue;
-			utility += getPesimisticValueFromCache(new Pair<ActionPureStrategy, ActionPureStrategy>(entry.getKey(), strategy)) * entry.getValue();
+            if(Killer.kill)
+                return Double.NaN;
+            if (entry.getKey().equals(excludeStrategy))
+                continue;
+			utility += getPesimisticValueFromCache(new Pair<>(entry.getKey(), strategy)) * entry.getValue();
 		}
 		return (bestValue - utility) / currProbability;
 	}

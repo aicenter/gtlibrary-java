@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
+import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCache;
@@ -67,6 +68,8 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         } else {
             Stats.getInstance().increaseABStatesFor(player);
             for (Action minAction : getMinimizingActions(state)) {
+                if(Killer.kill)
+                    return Double.NaN;
                 double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
 
                 if (tempAlpha <= beta && p1Action == null) {
@@ -145,6 +148,8 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         } else {
             Stats.getInstance().increaseABStatesFor(player);
             for (Action minAction : getMinimizingActions(state)) {
+                if(Killer.kill)
+                    return Double.NaN;
                 double tempAlpha = getInsideTempAlpha(state, minAction, alpha, beta);
 
                 if (beta <= tempAlpha)
@@ -165,6 +170,8 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         double tempAlpha = alpha;
 
         for (Action maxAction : getMaximizingActions(state)) {
+            if(Killer.kill)
+                return Double.NaN;
             double value = getInsideValue(performActions(state, minAction, maxAction), tempAlpha, beta);
 
             if (value >= tempAlpha && tempAction == null)
@@ -193,6 +200,8 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         double tempAlpha = alpha;
 
         for (Action maxAction : getMaximizingActions(state)) {
+            if(Killer.kill)
+                return Double.NaN;
             tempAlpha = Math.max(tempAlpha, getInsideValue(performActions(state, minAction, maxAction), tempAlpha, beta));
             if (beta <= tempAlpha)
                 return tempAlpha;
@@ -209,11 +218,15 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         ListIterator<Action> iterator = actions.listIterator();
 
         while (iterator.hasNext()) {
+            if(Killer.kill)
+                return Double.NaN;
             Action action = iterator.next();
             double lowerBound = Math.max(-gameInfo.getMaxUtility(), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
             double upperBound = Math.min(gameInfo.getMaxUtility(), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
 
             utility += state.getProbabilityOfNatureFor(action) * getValue(state.performAction(action), lowerBound, upperBound, doCache);
+            if(Killer.kill)
+                return Double.NaN;
         }
         return utility;
     }

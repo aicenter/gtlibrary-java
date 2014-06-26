@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
+import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
@@ -35,6 +36,8 @@ public class CompleteUtilityCalculator implements UtilityCalculator {
         double p2Bound = -data.getAlphaBetaFor(state.getAllPlayers()[1]).getUnboundedValue(state);
         ActionPureStrategy natureStrategy = getNatureStrategy(state);
 
+        if(Killer.kill)
+            return Double.NaN;
         if (p1Bound - p2Bound < 1e-8) {
             data.getCache().setStrategy(s1, s2, natureStrategy, getStrategies());
             Stats.getInstance().incrementABCuts();

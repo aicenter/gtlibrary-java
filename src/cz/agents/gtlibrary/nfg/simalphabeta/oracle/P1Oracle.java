@@ -40,7 +40,7 @@ public class P1Oracle extends SimOracleImpl {
 				}
 			}
 		}
-		return new Pair<ActionPureStrategy, Double>(bestStrategy, bestValue);
+		return new Pair<>(bestStrategy, bestValue);
 	}
 
 	protected double getValueForAction(MixedStrategy<ActionPureStrategy> mixedStrategy, double bestValue, ActionPureStrategy strategy) {
@@ -56,6 +56,8 @@ public class P1Oracle extends SimOracleImpl {
 				double cacheWindow = getLowerBoundFromCache(strategyPair);
 				double windowValue = Math.max(cacheWindow, getWindowValue(bestValue, actionProb, mixedStrategy, strategy, action));
 
+                if(Killer.kill)
+                    return Double.NaN;
 				if (cacheValue == null) {
 					if (getOptimisticValueFromCache(strategyPair) < windowValue) {
 						Stats.getInstance().incrementABCuts();
@@ -105,8 +107,11 @@ public class P1Oracle extends SimOracleImpl {
 		double utility = 0;
 
 		for (Entry<ActionPureStrategy, Double> entry : mixedStrategy) {
-            if (entry.getKey().equals(excludeStrategy)) continue;
-			utility += getOptimisticValueFromCache(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy, entry.getKey())) * entry.getValue();
+            if(Killer.kill)
+                return Double.NaN;
+            if (entry.getKey().equals(excludeStrategy))
+                continue;
+			utility += getOptimisticValueFromCache(new Pair<>(strategy, entry.getKey())) * entry.getValue();
 		}
 		return (bestValue - utility) / currProbability;
 	}
@@ -129,6 +134,8 @@ public class P1Oracle extends SimOracleImpl {
 		double pesimisticUtility = -oppAlphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 		double optimisticUtility = alphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 
+        if(Killer.kill)
+            return Double.NaN;
 		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 		return pesimisticUtility;
@@ -148,6 +155,8 @@ public class P1Oracle extends SimOracleImpl {
 		double pesimisticUtility = -oppAlphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 		double optimisticUtility = alphaBeta.getUnboundedValueAndStoreStrategy(state, cache);
 
+        if(Killer.kill)
+            return Double.NaN;
 		Stats.getInstance().addToABTime(System.currentTimeMillis() - time);
 		cache.setPesAndOptValueFor(strategyPair, optimisticUtility, pesimisticUtility);
 		return optimisticUtility;
