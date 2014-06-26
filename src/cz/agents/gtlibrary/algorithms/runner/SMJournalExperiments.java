@@ -275,7 +275,7 @@ public class SMJournalExperiments {
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-            secondsIteration *= 1.1;
+            secondsIteration *= 1.2;
         }
         //System.out.println(strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
         //System.out.println(strategy1.fancyToString(rootState, expander, rootState.getAllPlayers()[1]));
@@ -381,7 +381,7 @@ public class SMJournalExperiments {
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
-            secondsIteration *= 1.1;
+            secondsIteration *= 1.2;
         }
     }
     
