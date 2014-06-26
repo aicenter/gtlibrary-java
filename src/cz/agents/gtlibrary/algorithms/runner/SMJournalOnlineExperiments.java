@@ -159,7 +159,7 @@ public class SMJournalOnlineExperiments {
 
                 switch (alg) {
                     case "MCTS-UCT":
-                        fact = new UCTBackPropFactory(2, random);
+                        fact = new UCTBackPropFactory(2*gameInfo.getMaxUtility(), random);
                         break;
                     case "MCTS-EXP3":
                         fact = new Exp3BackPropFactory(-1, 1, 0.2, random);
