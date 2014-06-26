@@ -3,10 +3,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.FullNFPSolver;
@@ -49,6 +46,8 @@ import cz.agents.gtlibrary.domain.upordown.UDGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.DummyPrintStream;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
@@ -143,6 +142,27 @@ public class FullSequenceEFG {
 	}
 
 	public static void runSimRandomGame() {
+        //bb used for debugging random games -- can be removed after while
+//        double sum=0;
+//        double min=Double.POSITIVE_INFINITY;
+//        double max=Double.NEGATIVE_INFINITY;
+//        for (int seed=0; seed < 100; seed++) {
+//            RandomGameInfo.seed = seed+300;
+//            GameState rootState = new SimRandomGameState();
+//    		GameInfo gameInfo = new RandomGameInfo();
+//	    	SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+//            Expander expander = new RandomGameExpander<SequenceInformationSet>(algConfig);
+//    		FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
+//            efg.debugOutput = DummyPrintStream.getDummyPS();
+//	    	efg.generate();
+//            sum += efg.getGameValue();
+//            min = Math.min(min,efg.getGameValue());
+//            max = Math.max(max,efg.getGameValue());
+//        }
+//        System.out.println(sum);
+//        System.out.println(min);
+//        System.out.println(max);
+//        return;
 		GameState rootState = new SimRandomGameState();
 		GameInfo gameInfo = new RandomGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
@@ -150,9 +170,9 @@ public class FullSequenceEFG {
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 
 		efg.generate();
-
-        GambitEFG gambitEFG = new GambitEFG();
-        gambitEFG.write("GP.gbt", rootState, expander);
+//
+//        GambitEFG gambitEFG = new GambitEFG();
+//        gambitEFG.write("RG.gbt", rootState, expander);
 	}
 
 	public static void runKuhnPoker() {
@@ -189,7 +209,8 @@ public class FullSequenceEFG {
 	}
 
 	public static void runGoofSpiel() {
-		GameState rootState = new GoofSpielGameState();
+        GSGameInfo.useFixedNatureSequence = true;
+        GameState rootState = new GoofSpielGameState();
 		GSGameInfo gameInfo = new GSGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new GoofSpielExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
