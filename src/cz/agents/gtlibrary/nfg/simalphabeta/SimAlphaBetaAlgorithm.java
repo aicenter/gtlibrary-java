@@ -188,8 +188,8 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
 
         @Override
         public void run() {
-            int depth = lastIterationDepth + 1;
-            lastIterationDepth = 0;
+            int depth = lastIterationDepth;
+            lastIterationDepth = 1;
             debugOutput.println("starting in depth " + depth);
             long start = threadBean.getCurrentThreadCpuTime();
             currentBest = getResultFromLastIteration(state);
@@ -203,6 +203,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
             lastIterationResults = null;
             assert depth == 1 || currentBest != null;
             while (true) {
+                SimAlphaBeta.FULLY_COMPUTED = true;
                 debugOutput.println("Running with depth " + depth);
                 ((SimultaneousGameState) state).setDepth(depth);
                 SimAlphaBeta solver = new SimAlphaBeta();
@@ -210,7 +211,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
                 SimAlphaBetaResult result = solver.runSimAlpabeta(state, expander, player, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
                 long currentIterationTime = threadBean.getCurrentThreadCpuTime() - currentIterationStart;
 
-                debugOutput.println("Iteration for depth " + (depth - 1) + " ended in " + (threadBean.getCurrentThreadCpuTime() - start)/1e6);
+                debugOutput.println("Iteration for depth " + depth + " ended in " + (threadBean.getCurrentThreadCpuTime() - start)/1e6);
                 if (Killer.kill) {
                     System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
                     debugOutput.println("Time run out for depth " + depth);
@@ -232,9 +233,8 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
                     lastIterationResults = result.cache;
                     assert lastIterationResults instanceof DOCacheRoot;
                 }
-                if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(limit, start, currentIterationTime) || ((SimultaneousGameState) state).getDepth() > gameInfo.getMaxDepth()) {
+                if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(limit, start, currentIterationTime) || SimAlphaBeta.FULLY_COMPUTED) {
                     System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
-                    debugOutput.println("Time run out for depth " + depth);
                     lastIterationDepth = depth;
 //                    System.out.println("c");
                     System.out.println("Depth " + (depth) + " finnished");

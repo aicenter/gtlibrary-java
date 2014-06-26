@@ -233,7 +233,7 @@ public class GoofSpielGameState extends SimultaneousGameState {
 
     @Override
     public boolean isDepthLimit() {
-        return round > depth;
+        return round >= depth;
     }
 
     @Override

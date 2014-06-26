@@ -229,6 +229,8 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 			if (playerTwoStrategySet != null) {
 				for (U strategy : playerTwoStrategySet) {
 					double utility = utilityComputer.getUtility(strategiesToAdd.get(j - 1), strategy);
+                    if(Killer.kill)
+                        return;
 					assert utility == utility;
 					//double utility = patrollerBRs.get(j - 1).getUtility(problem.getEvaderStrategies().get(i - 1));
 					// adding x_i
