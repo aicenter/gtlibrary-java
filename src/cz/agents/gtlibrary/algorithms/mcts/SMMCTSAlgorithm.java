@@ -82,7 +82,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
 
     protected double iteration(Node node) {
         if (node instanceof LeafNode) {
-            return ((LeafNode) node).getUtilities()[searchingPlayer.getId()];
+            return ((LeafNode) node).getUtilities()[0];
         } else {
             InnerNode n = (InnerNode) node;
             double retValue = 0;
@@ -111,7 +111,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
                 selAction = n.getActions().get(selActionIdxs.getLeft());
                 InnerNode bottom = (InnerNode) n.getChildFor(selAction);
                 Node child = bottom.getChildFor(bottom.getActions().get(selActionIdxs.getRight()));
-                retValue = simulator.simulate(child.getGameState())[searchingPlayer.getId()];
+                retValue = simulator.simulate(child.getGameState())[0];
             }
             selector.update(selActionIdxs, retValue);
             return retValue;
