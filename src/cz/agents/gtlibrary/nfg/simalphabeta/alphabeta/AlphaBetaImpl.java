@@ -89,6 +89,8 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
                     break;
                 }
             }
+            if(Killer.kill)
+                return Double.NaN;
             assert p1Action != null;
             assert p2Action != null;
             storeToDOCache(state, doCache);
