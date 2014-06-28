@@ -330,7 +330,7 @@ public class SMJournalExperiments {
                 break;
             case RM:
                 cS = System.getProperty("EXPL");
-                c = 0.1d;
+                c = 0.01d;
                 if (cS != null) c = new Double(cS);
                 alg = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[0],
