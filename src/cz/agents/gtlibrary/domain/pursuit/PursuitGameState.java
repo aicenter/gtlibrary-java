@@ -149,8 +149,9 @@ public class PursuitGameState extends SimultaneousGameState {
     public double[] evaluate() {
         double p1Distance = graph.getDistance(p1Position, evaderPosition);
         double p2Distance = graph.getDistance(p2Position, evaderPosition);
-        double weight = 4 * Math.sqrt(graph.getAllNodes().size());
-        double p1Value = ((p1Distance + p2Distance) - weight / 2) / (weight / 2);
+//        double weight = 2 * Math.sqrt(graph.getAllNodes().size());
+//        double p1Value = FastTanh.tanh(Math.min(p1Distance, p2Distance));// - weight / 2) / (weight / 2);
+        double p1Value = (Math.min(p1Distance, p2Distance) + 0.01*Math.max(p1Distance, p2Distance)) /(2.02 * Math.sqrt(graph.getAllNodes().size()));
 
         assert p1Value < 1;
         return new double[]{p1Value, -p1Value};

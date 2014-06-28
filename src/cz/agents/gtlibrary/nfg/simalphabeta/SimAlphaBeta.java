@@ -188,7 +188,7 @@ public class SimAlphaBeta {
 //        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
 //        gameValue = oracle.getGameValue();
-        return new SimAlphaBetaResult(getStrategy(player, p1AlphaBeta, oracle), oracle.getCache(), oracle.getGameValue());
+        return new SimAlphaBetaResult(getStrategy(player, player.getId() == 0?p2AlphaBeta:p1AlphaBeta, oracle), oracle.getCache(), oracle.getGameValue());
     }
 
     private MixedStrategy<ActionPureStrategy> getStrategy(Player player, AlphaBeta p1AlphaBeta, DoubleOracle oracle) {
@@ -198,7 +198,7 @@ public class SimAlphaBeta {
             strategy = new MixedStrategy<ActionPureStrategy>();
 
             strategy.put(new ActionPureStrategy(p1AlphaBeta.getTopLevelAction(player)), 1d);
-//            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
+            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
         }
         return strategy;
     }

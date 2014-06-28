@@ -44,7 +44,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
     }
 
     public double getValue(GameState state, double alpha, double beta) {
-       return getValue(state, alpha, beta, new NullDOCache());
+        return getValue(state, alpha, beta, new NullDOCache());
     }
 
     private double getValue(GameState state, double alpha, double beta, DOCache doCache) {
@@ -59,8 +59,8 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         boolean prune = false;
 
         if (state.isGameEnd()) {
-            if(state instanceof SimultaneousGameState)
-                SimAlphaBeta.FULLY_COMPUTED &= ((SimultaneousGameState)state).isActualGameEnd();
+            if (state instanceof SimultaneousGameState)
+                SimAlphaBeta.FULLY_COMPUTED &= ((SimultaneousGameState) state).isActualGameEnd();
             return state.getUtilities()[player.getId()];
         }
         if (state.isPlayerToMoveNature()) {
@@ -68,11 +68,11 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         } else {
             Stats.getInstance().increaseABStatesFor(player);
             for (Action minAction : getMinimizingActions(state)) {
-                if(Killer.kill)
+                if (Killer.kill)
                     return Double.NaN;
                 double tempAlpha = getTempAlpha(state, minAction, alpha, beta);
 
-                if(Killer.kill)
+                if (Killer.kill)
                     return Double.NaN;
                 if (tempAlpha <= beta && p1Action == null) {
                     storeAction(minAction);
@@ -91,7 +91,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
                     break;
                 }
             }
-            if(Killer.kill)
+            if (Killer.kill)
                 return Double.NaN;
             assert p1Action != null;
             assert p2Action != null;
@@ -107,29 +107,26 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         ActionPureStrategy p2Strategy = getStrategyFor(state, state.getAllPlayers()[1]);
         ActionPureStrategy natureStrategy = null;
 
-        if(state.getAllPlayers().length == 3)
+        if (state.getAllPlayers().length == 3)
             natureStrategy = getStrategyFor(state, state.getAllPlayers()[2]);
 
         Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> triplet = new Triplet<>(p1Strategy, p2Strategy, natureStrategy);
 
-        doCache.setTempStrategy(triplet, getStrategies());
+        doCache.setTempStrategy(triplet, gameInfo.getOpponent(player), getStrategy());
     }
 
-    public MixedStrategy<ActionPureStrategy>[] getStrategies() {
-        ActionPureStrategy p1Strategy = new ActionPureStrategy(p1Action);
-        ActionPureStrategy p2Strategy = new ActionPureStrategy(p2Action);
-        MixedStrategy<ActionPureStrategy> p1Mixed = new MixedStrategy<>();
-        MixedStrategy<ActionPureStrategy> p2Mixed = new MixedStrategy<>();
+    public MixedStrategy<ActionPureStrategy> getStrategy() {
+        ActionPureStrategy pure = new ActionPureStrategy(player.getId() == 0 ? p2Action : p1Action);
+        MixedStrategy<ActionPureStrategy> mixed = new MixedStrategy<>();
 
-        p1Mixed.put(p1Strategy, 1d);
-        p2Mixed.put(p2Strategy, 1d);
-        return new MixedStrategy[]{p1Mixed, p2Mixed};
+        mixed.put(pure, 1d);
+        return mixed;
     }
 
     private ActionPureStrategy getStrategyFor(GameState state, Player player) {
         Sequence sequence = state.getSequenceFor(player);
 
-        if(sequence.size() == 0)
+        if (sequence.size() == 0)
             return null;
         return new ActionPureStrategy(sequence.getLast());
     }
@@ -143,8 +140,8 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         boolean prune = false;
 
         if (state.isGameEnd()) {
-            if(state instanceof SimultaneousGameState)
-                SimAlphaBeta.FULLY_COMPUTED &= ((SimultaneousGameState)state).isActualGameEnd();
+            if (state instanceof SimultaneousGameState)
+                SimAlphaBeta.FULLY_COMPUTED &= ((SimultaneousGameState) state).isActualGameEnd();
             return state.getUtilities()[player.getId()];
         }
         if (state.isPlayerToMoveNature()) {
@@ -152,10 +149,12 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         } else {
             Stats.getInstance().increaseABStatesFor(player);
             for (Action minAction : getMinimizingActions(state)) {
-                if(Killer.kill)
+                if (Killer.kill)
                     return Double.NaN;
                 double tempAlpha = getInsideTempAlpha(state, minAction, alpha, beta);
 
+                if (Killer.kill)
+                    return Double.NaN;
                 if (beta <= tempAlpha)
                     prune = true;
                 beta = Math.min(beta, tempAlpha);
@@ -174,11 +173,11 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         double tempAlpha = alpha;
 
         for (Action maxAction : getMaximizingActions(state)) {
-            if(Killer.kill)
+            if (Killer.kill)
                 return Double.NaN;
             double value = getInsideValue(performActions(state, minAction, maxAction), tempAlpha, beta);
 
-            if(Killer.kill)
+            if (Killer.kill)
                 return Double.NaN;
             if (value >= tempAlpha && tempAction == null)
                 tempAction = maxAction;
@@ -206,9 +205,11 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         double tempAlpha = alpha;
 
         for (Action maxAction : getMaximizingActions(state)) {
-            if(Killer.kill)
+            if (Killer.kill)
                 return Double.NaN;
             tempAlpha = Math.max(tempAlpha, getInsideValue(performActions(state, minAction, maxAction), tempAlpha, beta));
+            if (Killer.kill)
+                return Double.NaN;
             if (beta <= tempAlpha)
                 return tempAlpha;
         }
@@ -224,14 +225,14 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         ListIterator<Action> iterator = actions.listIterator();
 
         while (iterator.hasNext()) {
-            if(Killer.kill)
+            if (Killer.kill)
                 return Double.NaN;
             Action action = iterator.next();
             double lowerBound = Math.max(-gameInfo.getMaxUtility(), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
             double upperBound = Math.min(gameInfo.getMaxUtility(), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
 
             utility += state.getProbabilityOfNatureFor(action) * getValue(state.performAction(action), lowerBound, upperBound, doCache);
-            if(Killer.kill)
+            if (Killer.kill)
                 return Double.NaN;
         }
         return utility;
@@ -246,8 +247,11 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
             Action action = iterator.next();
             double lowerBound = Math.max(-gameInfo.getMaxUtility(), getLowerBound(actions, state, alpha, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
             double upperBound = Math.min(gameInfo.getMaxUtility(), getUpperBound(actions, state, beta, state.getProbabilityOfNatureFor(action), utility, iterator.previousIndex()));
-
+            if (Killer.kill)
+                return Double.NaN;
             utility += state.getProbabilityOfNatureFor(action) * getInsideValue(state.performAction(action), lowerBound, upperBound);
+            if (Killer.kill)
+                return Double.NaN;
         }
         return utility;
     }
