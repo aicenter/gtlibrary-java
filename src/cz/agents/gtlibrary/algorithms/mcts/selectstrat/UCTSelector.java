@@ -17,7 +17,7 @@ import java.util.List;
  * @author vilo
  */
 public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, ActionFrequencyProvider, MeanStrategyProvider {
-    public static boolean useDeterministicUCT = false;
+    public static boolean useDeterministicUCT = true;
 
     private UCTBackPropFactory fact;
     private List<Action> actions;
