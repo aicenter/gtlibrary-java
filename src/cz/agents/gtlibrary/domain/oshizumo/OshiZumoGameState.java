@@ -199,7 +199,11 @@ public class OshiZumoGameState extends SimultaneousGameState {
             p1base = 0.5;
         if (p1Coins < (OZGameInfo.locK - wrestlerLoc) * OZGameInfo.minBid)//on the side of p1 and p1 has not enough money to change that
             p1base = -0.5;
-        
+
+        //bb: this eval function puts more penalty when the wrestler is far away from the center, however, can't really say is better than the original one
+//        double p1bonus = ((double) p1Coins) / minBid - ((double) p2Coins) / minBid + Math.signum(wrestlerLoc - OZGameInfo.locK)*(Math.pow(2,Math.abs(wrestlerLoc - OZGameInfo.locK))-1);
+//        p1bonus /= 5.0;
+
         double p1bonus = ((double) p1Coins) / minBid - ((double) p2Coins) / minBid + wrestlerLoc - OZGameInfo.locK;
         p1bonus /= 3.0;
 

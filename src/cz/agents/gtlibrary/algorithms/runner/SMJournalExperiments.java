@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -165,9 +166,13 @@ public class SMJournalExperiments {
             String tl = System.getProperty("tLimit");
             if (tl != null) samplingTimeLimit = new Long(tl);
             if (alg.startsWith("MCTS")) {
-                if (alg.equals("MCTS-UCT")) 
+                if (alg.equals("MCTS-UCT")) {
+                    UCTSelector.useDeterministicUCT = true;
                     runMCTS(MCTStype.UCT);
-                else if (alg.equals("MCTS-EXP3"))
+                } else if (alg.equals("MCTS-RUCT")) {
+                    UCTSelector.useDeterministicUCT = false;
+                    runMCTS(MCTStype.UCT);
+                } else if (alg.equals("MCTS-EXP3"))
                     runMCTS(MCTStype.EXP3);
                 else if (alg.equals("MCTS-RM")) 
                     runMCTS(MCTStype.RM);
@@ -321,6 +326,10 @@ public class SMJournalExperiments {
                 Double c = 2d;
                 if (cS != null) c = new Double(cS);
                 bpFactory = new UCTBackPropFactory(c);
+
+//                String determS = System.getProperty("UCTDET");
+//                if (determS != null)
+//                    UCTSelector.useDeterministicUCT = new Boolean(determS);
                 break;
             case EXP3:
                 cS = System.getProperty("EXPL");
@@ -330,7 +339,7 @@ public class SMJournalExperiments {
                 break;
             case RM:
                 cS = System.getProperty("EXPL");
-                c = 0.01d;
+                c = 0.1d;
                 if (cS != null) c = new Double(cS);
                 alg = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[0],
