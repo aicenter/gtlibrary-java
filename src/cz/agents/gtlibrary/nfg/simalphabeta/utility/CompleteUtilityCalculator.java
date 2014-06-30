@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
+import cz.agents.gtlibrary.nfg.simalphabeta.Result;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
@@ -39,15 +40,15 @@ public class CompleteUtilityCalculator implements UtilityCalculator {
         if(Killer.kill)
             return Double.NaN;
         if (p1Bound - p2Bound < 1e-8) {
-            data.getCache().setStrategy(s1, s2, natureStrategy, getStrategies());
+            data.getCache().setStrategy(s1, s2, natureStrategy, getStrategies(p1Bound, p2Bound));
             Stats.getInstance().incrementABCuts();
             return p1Bound;
         }
         DoubleOracle oracle = data.getDoubleOracle(state, 0, 0);
 
         oracle.generate();
-        data.getCache().setStrategy(s1, s2, natureStrategy, new MixedStrategy[]{oracle.getStrategyFor(state.getAllPlayers()[0]),
-                oracle.getStrategyFor(state.getAllPlayers()[1])});
+        data.getCache().setStrategy(s1, s2, natureStrategy, new Result[]{new Result(oracle.getGameValue(), oracle.getStrategyFor(state.getAllPlayers()[0])),
+                new Result(-oracle.getGameValue(), oracle.getStrategyFor(state.getAllPlayers()[1]))});
         return oracle.getGameValue();
     }
 
@@ -72,13 +73,14 @@ public class CompleteUtilityCalculator implements UtilityCalculator {
         throw new UnsupportedOperationException();
     }
 
-    public MixedStrategy<ActionPureStrategy>[] getStrategies() {
-        Action p1Action = data.getAlphaBetaFor(data.gameInfo.getAllPlayers()[0]).getTopLevelAction(data.gameInfo.getAllPlayers()[0]);
+    public Result[] getStrategies(double p1Bound, double p2Bound) {
+        Action p1Action = data.getAlphaBetaFor(data.gameInfo.getAllPlayers()[1]).getTopLevelAction(data.gameInfo.getAllPlayers()[0]);
         Action p2Action = data.getAlphaBetaFor(data.gameInfo.getAllPlayers()[0]).getTopLevelAction(data.gameInfo.getAllPlayers()[1]);
-        MixedStrategy<ActionPureStrategy>[] strategies = new MixedStrategy[]{new MixedStrategy(), new MixedStrategy()};
+        MixedStrategy p1Mixed = new MixedStrategy();
+        MixedStrategy p2Mixed = new MixedStrategy();
 
-        strategies[0].put(new ActionPureStrategy(p1Action), 1d);
-        strategies[1].put(new ActionPureStrategy(p2Action), 1d);
-        return strategies;
+        p1Mixed.put(new ActionPureStrategy(p1Action), 1d);
+        p2Mixed.put(new ActionPureStrategy(p2Action), 1d);
+        return new Result[]{new Result(p1Bound, p1Mixed), new Result(p2Bound, p2Mixed)};
     }
 }

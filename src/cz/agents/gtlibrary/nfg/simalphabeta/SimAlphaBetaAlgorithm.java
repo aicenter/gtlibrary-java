@@ -13,7 +13,6 @@ import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheRoot;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Triplet;
-import cz.agents.gtlibrary.utils.io.EmptyPrintStream;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -30,10 +29,10 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
     private final Player player;
     private final HighQualityRandom random;
     private final Expander<SimABInformationSet> expander;
-    private final PrintStream debugOutput = new PrintStream(EmptyPrintStream.getInstance());
+    private final PrintStream debugOutput = System.out;//new PrintStream(EmptyPrintStream.getInstance());
     private volatile MixedStrategy<ActionPureStrategy> currentBest;
     private ThreadMXBean threadBean;
-    private volatile int lastIterationDepth = 0;
+    private volatile int lastIterationDepth = 1;
     private volatile DOCache lastIterationResults = null;
 
     public static void main(String[] args) {
@@ -73,6 +72,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
 
     public Action runMiliseconds(final int miliseconds, final GameState state) {
         debugOutput.println("-------------------------------");
+        debugOutput.println("Player: " + player);
         Killer.kill = false;
         long nanoLimit = toNanos(miliseconds);
         int sleepTime = miliseconds - milisBuffer(miliseconds);
@@ -151,11 +151,21 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
             return null;
         if (state.getSequenceForPlayerToMove().size() == 0)
             return null;
-        MixedStrategy<ActionPureStrategy>[] result = lastIterationResults.getStrategy(getStrategyTriplet(state));
+        Result[] result = lastIterationResults.getStrategy(getStrategyTriplet(state));
 
         if (result == null)
             return null;
-        return result[player.getId()];
+        if(Math.abs(result[0].gameValue + result[1].gameValue) > 1e-8) {
+            System.err.println("Different values for players...");
+            return null;
+        } else {
+            System.err.println("Same values");
+        }
+        if(result[player.getId()].gameValue <= -gameInfo.getMaxUtility()) {
+            System.err.println("Strategy from previous iteration ommited because the game appears lost");
+            return null;
+        }
+        return result[player.getId()].strategy;
     }
 
     private Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> getStrategyTriplet(GameState state) {
@@ -211,33 +221,46 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
                 SimAlphaBetaResult result = solver.runSimAlpabeta(state, expander, player, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
                 long currentIterationTime = threadBean.getCurrentThreadCpuTime() - currentIterationStart;
 
-                debugOutput.println("Iteration for depth " + depth + " ended in " + (threadBean.getCurrentThreadCpuTime() - start)/1e6);
+                debugOutput.println("Iteration for depth " + depth + " ended in " + (threadBean.getCurrentThreadCpuTime() - start) / 1e6);
+                if (result != null)
+                    debugOutput.println("Game value " + result.gameValue);
                 if (Killer.kill) {
-                    System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
+                    System.out.println("limit: " + (limit / 1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start) / 1e6));
                     debugOutput.println("Time run out for depth " + depth);
                     lastIterationDepth = depth - 1;
 //                    System.out.println("b");
                     System.out.println("Depth " + (depth - 1) + " finnished");
+                    System.out.println("current best: " + currentBest);
                     return;
                 }
                 if (threadBean.getCurrentThreadCpuTime() - start > limit) {
-                    System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
+                    System.out.println("limit: " + (limit / 1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start) / 1e6));
                     debugOutput.println("Time run out for depth " + depth);
                     lastIterationDepth = depth - 1;
 //                    System.out.println("a");
                     System.out.println("Depth " + (depth - 1) + " finnished");
+                    System.out.println("current best: " + currentBest);
                     return;
                 }
-                currentBest = result.mixedStrategy;
                 if (result != null) {
-                    lastIterationResults = result.cache;
-                    assert lastIterationResults instanceof DOCacheRoot;
+                    if (result.gameValue > -gameInfo.getMaxUtility() || currentBest == null) {
+
+                        currentBest = result.strategy;
+
+                        lastIterationResults = result.cache;
+                        assert lastIterationResults instanceof DOCacheRoot;
+                    } else {
+                        debugOutput.println("!!!!!!!!!!!!!!!!!!!");
+                        debugOutput.println("Result ommited because the game appears lost");
+                    }
                 }
+
                 if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(limit, start, currentIterationTime) || SimAlphaBeta.FULLY_COMPUTED) {
-                    System.out.println("limit: " + (limit/1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start)/1e6));
+                    System.out.println("limit: " + (limit / 1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start) / 1e6));
                     lastIterationDepth = depth;
 //                    System.out.println("c");
                     System.out.println("Depth " + (depth) + " finnished");
+                    System.out.println("current best: " + currentBest);
                     return;
                 }
                 depth++;

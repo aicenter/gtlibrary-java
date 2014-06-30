@@ -167,7 +167,7 @@ public class ComparatorAlgorithm implements GamePlayingAlgorithm {
                     }
                     return;
                 }
-                currentBest = result.mixedStrategy;
+                currentBest = result.strategy;
                 if (isTimeLeftSmallerThanTimeNeededToFinnishLastIteration(limit, start, currentIterationTime)) {
                     System.out.println("limit: " + limit + " time taken: " + (threadBean.getCurrentThreadCpuTime() - start));
                     debugOutput.println("Time run out for depth " + depth);

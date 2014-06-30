@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
+import cz.agents.gtlibrary.nfg.simalphabeta.Result;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.AlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCache;
@@ -127,25 +128,14 @@ public class DOUtilityCalculator implements UtilityCalculator {
         return new Triplet<>(new ActionPureStrategy(p1Action), new ActionPureStrategy(p2Action), getNatureStrategy(state));
     }
 
-    private MixedStrategy<ActionPureStrategy>[] getStrategiesFromAlphaBeta(AlphaBeta alphaBeta) {
-        ActionPureStrategy p1Pure = new ActionPureStrategy(alphaBeta.getTopLevelAction(data.gameInfo.getAllPlayers()[0]));
-        ActionPureStrategy p2Pure = new ActionPureStrategy(alphaBeta.getTopLevelAction(data.gameInfo.getAllPlayers()[1]));
-        MixedStrategy<ActionPureStrategy> p1Mixed = new MixedStrategy<>();
-        MixedStrategy<ActionPureStrategy> p2Mixed = new MixedStrategy<>();
-
-        p1Mixed.put(p1Pure, 1d);
-        p2Mixed.put(p2Pure, 1d);
-        return new MixedStrategy[]{p1Mixed, p2Mixed};
-    }
-
     protected double computeUtilityOf(GameState state, ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
         DoubleOracle doubleOracle = data.getDoubleOracle(state, alpha, beta);
         ActionPureStrategy natureStrategy = getNatureStrategy(state);
 
         doubleOracle.generate();
-        if (Math.abs(alpha - beta) < 1e-8) {
-            cache.setStrategy(s1, s2, natureStrategy, new MixedStrategy[]{doubleOracle.getStrategyFor(state.getAllPlayers()[0]),
-                    doubleOracle.getStrategyFor(state.getAllPlayers()[1])});
+        if (Math.abs(alpha - beta) > 1e-8) {
+            cache.setStrategy(s1, s2, natureStrategy, new Result[]{new Result(alpha, doubleOracle.getStrategyFor(state.getAllPlayers()[0])),
+                    new Result(beta, doubleOracle.getStrategyFor(state.getAllPlayers()[1]))});
         } else {
             Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet = new Triplet<>(s1, s2, natureStrategy);
 
