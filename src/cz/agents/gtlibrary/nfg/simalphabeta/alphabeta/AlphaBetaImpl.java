@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
+import cz.agents.gtlibrary.nfg.simalphabeta.Result;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.AlphaBetaCache;
@@ -95,14 +96,14 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
                 return Double.NaN;
             assert p1Action != null;
             assert p2Action != null;
-            storeToDOCache(state, doCache);
+            storeToDOCache(state, doCache, beta);
             if (!prune)
                 cache.put(state, beta);
             return beta;
         }
     }
 
-    private void storeToDOCache(GameState state, DOCache doCache) {
+    private void storeToDOCache(GameState state, DOCache doCache, double value) {
         ActionPureStrategy p1Strategy = getStrategyFor(state, state.getAllPlayers()[0]);
         ActionPureStrategy p2Strategy = getStrategyFor(state, state.getAllPlayers()[1]);
         ActionPureStrategy natureStrategy = null;
@@ -112,7 +113,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
 
         Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> triplet = new Triplet<>(p1Strategy, p2Strategy, natureStrategy);
 
-        doCache.setTempStrategy(triplet, gameInfo.getOpponent(player), getStrategy());
+        doCache.setTempStrategy(triplet, gameInfo.getOpponent(player), new Result(-value, getStrategy()));
     }
 
     public MixedStrategy<ActionPureStrategy> getStrategy() {

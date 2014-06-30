@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
+import cz.agents.gtlibrary.domain.pursuit.EvaderPursuitAction;
 import cz.agents.gtlibrary.domain.pursuit.FastImprovedExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
@@ -18,6 +19,7 @@ import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.domain.tron.TronExpander;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
+import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
@@ -175,10 +177,12 @@ public class SimAlphaBeta {
 //        System.out.println(data.gameInfo.getInfo());
         AlphaBeta p1AlphaBeta = abFactory.getP1AlphaBeta(expander, gameInfo);
         AlphaBeta p2AlphaBeta = abFactory.getP2AlphaBeta(expander, gameInfo);
+        double p1ABBound = p1AlphaBeta.getUnboundedValue(rootState);
+        double p2ABBound = p2AlphaBeta.getUnboundedValue(rootState);
 
-        DoubleOracle oracle = data.getDoubleOracle(rootState, -p2AlphaBeta.getUnboundedValue(rootState), p1AlphaBeta.getUnboundedValue(rootState), true);
+        DoubleOracle oracle = data.getDoubleOracle(rootState, -p2ABBound, p1ABBound, true);
 
-        if (-p2AlphaBeta.getUnboundedValue(rootState) + 1e-8 < p1AlphaBeta.getUnboundedValue(rootState))
+        if (-p2ABBound + 1e-8 < p1ABBound)
             oracle.generate();
         if(Killer.kill)
             return null;
@@ -188,14 +192,21 @@ public class SimAlphaBeta {
 //        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
 //        gameValue = oracle.getGameValue();
-        return new SimAlphaBetaResult(getStrategy(player, player.getId() == 0?p2AlphaBeta:p1AlphaBeta, oracle), oracle.getCache(), oracle.getGameValue());
+
+        return new SimAlphaBetaResult(getStrategy(player, player.getId() == 0? p2AlphaBeta : p1AlphaBeta, oracle), oracle.getCache(), (player.getId() == 0?1:-1)*getGameValue(oracle, p1ABBound, p2ABBound));
+    }
+
+    private double getGameValue(DoubleOracle oracle, double p1ABBound, double p2ABBound) {
+        if (-p2ABBound + 1e-8 > p1ABBound)
+            return p1ABBound;
+        return oracle.getGameValue();
     }
 
     private MixedStrategy<ActionPureStrategy> getStrategy(Player player, AlphaBeta p1AlphaBeta, DoubleOracle oracle) {
         MixedStrategy<ActionPureStrategy> strategy = oracle.getStrategyFor(player);
 
         if(strategy == null) {
-            strategy = new MixedStrategy<ActionPureStrategy>();
+            strategy = new MixedStrategy<>();
 
             strategy.put(new ActionPureStrategy(p1AlphaBeta.getTopLevelAction(player)), 1d);
             System.out.println("Strategy " + strategy + " extracted from alpha-beta");

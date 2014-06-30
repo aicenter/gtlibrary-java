@@ -7,6 +7,7 @@ import java.util.Map;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
 import cz.agents.gtlibrary.nfg.MixedStrategy;
+import cz.agents.gtlibrary.nfg.simalphabeta.Result;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 
@@ -17,13 +18,13 @@ public class DOCacheImpl implements DOCache {
 	private Map<Pair<ActionPureStrategy, ActionPureStrategy>, Double> actualUtilities;
 
 	public DOCacheImpl() {
-		pesimisticUtilities = new HashMap<Pair<ActionPureStrategy, ActionPureStrategy>, Double>();
-		optimisticUtilities = new HashMap<Pair<ActionPureStrategy, ActionPureStrategy>, Double>();
-		actualUtilities = new HashMap<Pair<ActionPureStrategy, ActionPureStrategy>, Double>();
+		pesimisticUtilities = new HashMap<>();
+		optimisticUtilities = new HashMap<>();
+		actualUtilities = new HashMap<>();
 	}
 
 	public Double getPesimisticUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
-		return pesimisticUtilities.get(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2));
+		return pesimisticUtilities.get(new Pair<>(strategy1, strategy2));
 	}
 
 	public Double getPesimisticUtilityFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
@@ -36,58 +37,58 @@ public class DOCacheImpl implements DOCache {
 	
 	@Override
 	public Double getOptimisticUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
-		return getOptimisticUtilityFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2));
+		return getOptimisticUtilityFor(new Pair<>(strategy1, strategy2));
 	}
 
     @Override
-    public void setTempStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet, Player player, MixedStrategy<ActionPureStrategy> strategiesFromAlphaBeta) {
+    public void setTempStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet, Player player, Result result) {
     }
 
     @Override
-    public MixedStrategy<ActionPureStrategy> getP1TempStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet) {
+    public Result getP1TempStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet) {
         return null;
     }
 
     @Override
-    public MixedStrategy<ActionPureStrategy> getP2TempStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet) {
+    public Result getP2TempStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet) {
         return null;
     }
 
     @Override
-    public void setStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> strategyTriplet, MixedStrategy<ActionPureStrategy>[] strategy) {
+    public void setStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> strategyTriplet, Result[] results) {
     }
 
     @Override
-    public void setStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, ActionPureStrategy strategy3, MixedStrategy<ActionPureStrategy>[] strategy) {
+    public void setStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, ActionPureStrategy strategy3, Result[] results) {
     }
 
     @Override
-    public void setStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> strategyTriplet, MixedStrategy<ActionPureStrategy> p1Strategy, MixedStrategy<ActionPureStrategy> p2Strategy) {
+    public void setStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> strategyTriplet, Result p1Result, Result p2Result) {
     }
 
     @Override
-    public void setStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, ActionPureStrategy strategy3, MixedStrategy<ActionPureStrategy> p1strategy, MixedStrategy<ActionPureStrategy> p2strategy) {
+    public void setStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, ActionPureStrategy strategy3, Result p1Result, Result p2Result) {
 
     }
 
 
     @Override
-    public MixedStrategy<ActionPureStrategy>[] getStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, ActionPureStrategy strategy3) {
+    public Result[] getStrategy(ActionPureStrategy strategy1, ActionPureStrategy strategy2, ActionPureStrategy strategy3) {
         return null;
     }
 
     @Override
-    public MixedStrategy<ActionPureStrategy>[] getStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> strategyPair) {
+    public Result[] getStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> strategyPair) {
         return null;
     }
 
     @Override
-    public Map<Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy>, MixedStrategy<ActionPureStrategy>[]> getStrategies() {
+    public Map<Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy>, Result[]> getStrategies() {
         return null;
     }
 
     @Override
-    public MixedStrategy<ActionPureStrategy>[] getTempStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet) {
+    public Result[] getTempStrategy(Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet) {
         return null;
     }
 
@@ -100,15 +101,15 @@ public class DOCacheImpl implements DOCache {
 	}
 
 	public void setPesAndOptValueFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2, Double utility) {
-		setPesAndOptValueFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2), utility);
+		setPesAndOptValueFor(new Pair<>(strategy1, strategy2), utility);
 	}
 
 	public void setPesAndOptValueFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2, Double optimisticUtility, Double pesimisticUtility) {
-		setPesAndOptValueFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2), optimisticUtility, pesimisticUtility);
+		setPesAndOptValueFor(new Pair<>(strategy1, strategy2), optimisticUtility, pesimisticUtility);
 	}
 
 	public Double getUtilityFor(ActionPureStrategy strategy1, ActionPureStrategy strategy2) {
-		return getUtilityFor(new Pair<ActionPureStrategy, ActionPureStrategy>(strategy1, strategy2));
+		return getUtilityFor(new Pair<>(strategy1, strategy2));
 	}
 	
 	public Double getUtilityFor(Pair<ActionPureStrategy, ActionPureStrategy> strategyPair) {
