@@ -13,6 +13,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheRoot;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Triplet;
+import cz.agents.gtlibrary.utils.io.EmptyPrintStream;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -29,7 +30,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
     private final Player player;
     private final HighQualityRandom random;
     private final Expander<SimABInformationSet> expander;
-    private final PrintStream debugOutput = System.out;//new PrintStream(EmptyPrintStream.getInstance());
+    private final PrintStream debugOutput = new PrintStream(EmptyPrintStream.getInstance());
     private volatile MixedStrategy<ActionPureStrategy> currentBest;
     private ThreadMXBean threadBean;
     private volatile int lastIterationDepth = 1;
@@ -156,13 +157,13 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
         if (result == null)
             return null;
         if(Math.abs(result[0].gameValue + result[1].gameValue) > 1e-8) {
-            System.err.println("Different values for players...");
+            debugOutput.println("Different values for players...");
             return null;
         } else {
-            System.err.println("Same values");
+            debugOutput.println("Same values from previous iteration");
         }
         if(result[player.getId()].gameValue <= -gameInfo.getMaxUtility()) {
-            System.err.println("Strategy from previous iteration ommited because the game appears lost");
+            debugOutput.println("Strategy from previous iteration ommited because the game appears lost");
             return null;
         }
         return result[player.getId()].strategy;
