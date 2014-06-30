@@ -8,15 +8,18 @@ import cz.agents.gtlibrary.nfg.MixedStrategy;
 import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.Killer;
 import cz.agents.gtlibrary.nfg.simalphabeta.Result;
+import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 import cz.agents.gtlibrary.nfg.simalphabeta.stats.Stats;
 
 public class CompleteUtilityCalculator implements UtilityCalculator {
 
     private Data data;
+    private DOCache cache;
 
     public CompleteUtilityCalculator(Data data) {
         this.data = data;
+        this.cache = data.getCache();
     }
 
     public double getUtilities(GameState state, ActionPureStrategy s1, ActionPureStrategy s2, double alpha, double beta) {
@@ -40,14 +43,14 @@ public class CompleteUtilityCalculator implements UtilityCalculator {
         if(Killer.kill)
             return Double.NaN;
         if (p1Bound - p2Bound < 1e-8) {
-            data.getCache().setStrategy(s1, s2, natureStrategy, getStrategies(p1Bound, p2Bound));
+            cache.setStrategy(s1, s2, natureStrategy, getStrategies(p1Bound, p2Bound));
             Stats.getInstance().incrementABCuts();
             return p1Bound;
         }
         DoubleOracle oracle = data.getDoubleOracle(state, 0, 0);
 
         oracle.generate();
-        data.getCache().setStrategy(s1, s2, natureStrategy, new Result[]{new Result(oracle.getGameValue(), oracle.getStrategyFor(state.getAllPlayers()[0])),
+        cache.setStrategy(s1, s2, natureStrategy, new Result[]{new Result(oracle.getGameValue(), oracle.getStrategyFor(state.getAllPlayers()[0])),
                 new Result(-oracle.getGameValue(), oracle.getStrategyFor(state.getAllPlayers()[1]))});
         return oracle.getGameValue();
     }
