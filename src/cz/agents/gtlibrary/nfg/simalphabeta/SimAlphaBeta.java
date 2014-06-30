@@ -209,7 +209,7 @@ public class SimAlphaBeta {
             strategy = new MixedStrategy<>();
 
             strategy.put(new ActionPureStrategy(p1AlphaBeta.getTopLevelAction(player)), 1d);
-            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
+//            System.out.println("Strategy " + strategy + " extracted from alpha-beta");
         }
         return strategy;
     }
