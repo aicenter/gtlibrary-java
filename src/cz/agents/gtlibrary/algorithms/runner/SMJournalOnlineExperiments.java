@@ -158,6 +158,12 @@ public class SMJournalOnlineExperiments {
     }
 
     public GamePlayingAlgorithm getPlayer(int posIndex, String alg, String domain) {
+        int sampSimDepth = Integer.MAX_VALUE;
+
+        String SSDString = System.getProperty("SIMDEPTH");
+        if (SSDString != null)
+            sampSimDepth = new Integer(SSDString);
+
         if (alg.startsWith("MCTS")) {
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
@@ -176,7 +182,7 @@ public class SMJournalOnlineExperiments {
                 }
                 ISMCTSAlgorithm player = new ISMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
-                        new DefaultSimulator(expander, random),
+                        new DefaultSimulator(sampSimDepth, expander, random),
                         fact,
                         rootState, expander);
                 player.returnMeanValue = false;
@@ -186,7 +192,7 @@ public class SMJournalOnlineExperiments {
                 Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
                 SMMCTSAlgorithm player = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
-                        new DefaultSimulator(expander, random),
+                        new DefaultSimulator(sampSimDepth,expander, random),
                         new SMRMBackPropFactory(0.1, random),
                         rootState, expander);
 
@@ -197,7 +203,7 @@ public class SMJournalOnlineExperiments {
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
             Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
-            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(expander, random), rootState, expander, 0.6, random);
+            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(sampSimDepth, expander, random), rootState, expander, 0.6, random);
 
             player.runMiliseconds(20);
             return player;
