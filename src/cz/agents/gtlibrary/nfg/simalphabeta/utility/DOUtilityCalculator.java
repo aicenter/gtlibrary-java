@@ -134,8 +134,8 @@ public class DOUtilityCalculator implements UtilityCalculator {
 
         doubleOracle.generate();
         if (Math.abs(alpha - beta) > 1e-8) {
-            cache.setStrategy(s1, s2, natureStrategy, new Result[]{new Result(alpha, doubleOracle.getStrategyFor(state.getAllPlayers()[0])),
-                    new Result(beta, doubleOracle.getStrategyFor(state.getAllPlayers()[1]))});
+            cache.setStrategy(s1, s2, natureStrategy, new Result[]{new Result(doubleOracle.getGameValue(), doubleOracle.getStrategyFor(state.getAllPlayers()[0])),
+                    new Result(-doubleOracle.getGameValue(), doubleOracle.getStrategyFor(state.getAllPlayers()[1]))});
         } else {
             Triplet<ActionPureStrategy, ActionPureStrategy, ActionPureStrategy> actionTriplet = new Triplet<>(s1, s2, natureStrategy);
 
