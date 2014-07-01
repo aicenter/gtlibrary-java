@@ -23,6 +23,7 @@ import cz.agents.gtlibrary.domain.tron.TronExpander;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.iinodes.RandomAlgorithm;
+import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.ComparatorAlgorithm;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
@@ -234,8 +235,8 @@ public class SMJournalOnlineExperiments {
         GamePlayingAlgorithm p1 = getPlayer(0, args[0], args[2]);
         GamePlayingAlgorithm p2 = getPlayer(1, args[1], args[2]);
 
-        GameState curState = rootState.copy();
-        while (!curState.isGameEnd()) {
+        SimultaneousGameState curState = (SimultaneousGameState)rootState.copy();
+        while (!curState.isActualGameEnd()) {
             if (printDebugInfo) {
                 System.out.println("");
                 System.out.println(curState);
@@ -247,7 +248,7 @@ public class SMJournalOnlineExperiments {
                     final double ap = curState.getProbabilityOfNatureFor(ca);
                     if (r <= ap) {
                         moves.append(ca + " ");
-                        curState = curState.performAction(ca);
+                        curState = (SimultaneousGameState)curState.performAction(ca);
 
                         if (printDebugInfo)
                             System.out.println("Nature chose: " + ca);
@@ -274,8 +275,8 @@ public class SMJournalOnlineExperiments {
 
                 moves.append(a1 + " ");
                 moves.append(a2 + " ");
-                curState = curState.performAction(a1);
-                curState = curState.performAction(a2);
+                curState = (SimultaneousGameState)curState.performAction(a1);
+                curState = (SimultaneousGameState)curState.performAction(a2);
             }
         }
         System.out.println("MATCH: " + moves.toString() + curState.getUtilities()[0]);
