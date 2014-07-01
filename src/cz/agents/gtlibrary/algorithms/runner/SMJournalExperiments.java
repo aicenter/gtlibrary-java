@@ -326,7 +326,7 @@ public class SMJournalExperiments {
                 Double c = 2d;
                 if (cS != null) c = new Double(cS);
                 bpFactory = new UCTBackPropFactory(c);
-
+                System.out.println(UCTSelector.useDeterministicUCT);
 //                String determS = System.getProperty("UCTDET");
 //                if (determS != null)
 //                    UCTSelector.useDeterministicUCT = new Boolean(determS);
