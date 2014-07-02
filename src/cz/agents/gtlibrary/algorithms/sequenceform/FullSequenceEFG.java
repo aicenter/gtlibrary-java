@@ -18,6 +18,9 @@ import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitExpander;
+import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameInfo;
+import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
@@ -46,6 +49,8 @@ import cz.agents.gtlibrary.domain.upordown.UDGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
@@ -79,7 +84,26 @@ public class FullSequenceEFG {
 //      runPhantomTTT();
 //		runUpOrDown();
 //        runOshiZumo();
+//        testExploitGame();
 	}
+
+    private static void testExploitGame() {
+        GameState s = new OshiZumoGameState();
+        SimABConfig algConfig = new SimABConfig();
+        Expander<SimABInformationSet> e = new OshiZumoExpander<>(algConfig);
+        GameInfo gi = new OZGameInfo();
+
+        ExploitGameInfo ngi = new ExploitGameInfo(s,e,gi);
+        ExploitGameState ns = new ExploitGameState(ngi);
+        ExploitExpander ne = new ExploitExpander(new SequenceFormConfig(),ngi);
+
+        FullSequenceEFG efg = new FullSequenceEFG(ns,ne,ngi,(SequenceFormConfig)ne.getAlgorithmConfig());
+        efg.generateCompleteGame();
+
+        GambitEFG gambitEFG = new GambitEFG();
+        gambitEFG.write("EXPL.gbt", ns, ne);
+
+    }
 	
 	private static void runUpOrDown() {
 		GameState rootState = new UDGameState();

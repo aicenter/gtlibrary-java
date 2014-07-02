@@ -29,4 +29,6 @@ public interface Expander<I extends InformationSet> extends Serializable {
 	 * @return list of actions available in given information set, actions must include information set
 	 */
 	public List<Action> getActions(I informationSet);
+
+    public void setAlgConfig(AlgorithmConfig<I> algConfig);
 }

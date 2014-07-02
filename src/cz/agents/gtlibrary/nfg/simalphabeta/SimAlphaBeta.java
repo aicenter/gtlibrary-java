@@ -128,10 +128,11 @@ public class SimAlphaBeta {
         Stats.getInstance().printOverallInfo();
     }
 
-    public void runSimAlpabeta(GameState rootState, Expander<SimABInformationSet> expander, boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache, GameInfo gameInfo) {
+    public double runSimAlpabeta(GameState rootState, Expander<SimABInformationSet> expander, boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache, GameInfo gameInfo) {
+        double result = 0d;
         if (rootState.isPlayerToMoveNature()) {
             for (Action action : expander.getActions(rootState)) {
-                runSimAlpabeta(rootState.performAction(action), expander, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
+                result += rootState.getProbabilityOfNatureFor(action)*runSimAlpabeta(rootState.performAction(action), expander, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
             }
         } else {
             AlphaBetaFactory abFactory = (alphaBetaBounds) ? new NoCacheAlphaBetaFactory() : new NullAlphaBetaFactory();
@@ -143,12 +144,11 @@ public class SimAlphaBeta {
                     new DOCacheImpl(),
                     new NatureCacheImpl(),
                     new LowerBoundComparatorFactory());
-            System.out.println(data.gameInfo.getInfo());
+//            System.out.println(data.gameInfo.getInfo());
             double beta = -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState);
             double alpha = data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState);
             DoubleOracle oracle = data.getDoubleOracle(rootState, beta, alpha);
 
-            double result = 0d;
             if (beta + 1e-8 < alpha) {
                 oracle.generate();
                 result = oracle.getGameValue();
@@ -156,12 +156,13 @@ public class SimAlphaBeta {
                 result = alpha;
             }
 
-            System.out.println("****************");
+//            System.out.println("****************");
 //			System.out.println("root state: " + rootState);
-            System.out.println("game value: " + result);
-            System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
-            System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
+//            System.out.println("game value: " + result);
+//            System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
+//            System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
         }
+        return result;
     }
 
     public SimAlphaBetaResult runSimAlpabeta(GameState rootState, Expander<SimABInformationSet> expander, Player player, boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache, GameInfo gameInfo) {
