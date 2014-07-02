@@ -17,6 +17,9 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitExpander;
+import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameInfo;
+import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
@@ -37,6 +40,8 @@ import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracleImpl;
 import cz.agents.gtlibrary.strategy.Strategy;
@@ -61,7 +66,7 @@ public class SMJournalExperiments {
     static GameState rootState;
     static SQFBestResponseAlgorithm brAlg0;
     static SQFBestResponseAlgorithm brAlg1;
-    static Expander<MCTSInformationSet> expander;
+    static Expander expander;
 
     static long samplingTimeLimit = 1800000; // default: 30min
 
@@ -133,30 +138,42 @@ public class SMJournalExperiments {
     }
 
     public void loadGame(String domain) {
+        String tmp = System.getProperty("EXPLOIT");
+        boolean expl = (tmp != null && new Boolean(tmp));
         if (domain.equals("GS")) {
             gameInfo = new GSGameInfo();
             rootState = new GoofSpielGameState();
-            expander = new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = (!expl) ? new GoofSpielExpander<MCTSInformationSet>(new MCTSConfig()) : new GoofSpielExpander<SimABInformationSet>(new SimABConfig());
         } else if (domain.equals("PE")) {
             gameInfo = new PursuitGameInfo();
             rootState = new PursuitGameState();
-            expander = new PursuitExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = (!expl) ? new PursuitExpander<MCTSInformationSet>(new MCTSConfig()) : new PursuitExpander<SimABInformationSet>(new SimABConfig());
         } else if (domain.equals("OZ")) {
             gameInfo = new OZGameInfo();
             rootState = new OshiZumoGameState();
-            expander = new OshiZumoExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = (!expl) ? new OshiZumoExpander<MCTSInformationSet>(new MCTSConfig()) : new OshiZumoExpander<SimABInformationSet>(new SimABConfig());
         } else if (domain.equals("RG")) {
             gameInfo = new RandomGameInfo();
             rootState = new SimRandomGameState();
-            expander = new RandomGameExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = (!expl) ? new RandomGameExpander<MCTSInformationSet>(new MCTSConfig()) : new RandomGameExpander<SimABInformationSet>(new SimABConfig());
         } else if (domain.equals("Tron")) {
             gameInfo = new TronGameInfo();
             rootState = new TronGameState();
-            expander = new TronExpander<MCTSInformationSet>(new MCTSConfig());
+            expander = (!expl) ? new TronExpander<MCTSInformationSet>(new MCTSConfig()) : new TronExpander<SimABInformationSet>(new SimABConfig());
         } else if (domain.equals("RPS")) {
             gameInfo = new RPSGameInfo();
             rootState = new RPSGameState();
             expander = new RPSExpander<MCTSInformationSet>(new MCTSConfig());
+        } else {
+            throw new IllegalArgumentException("Incorrect game:" + domain);
+        }
+        if (expl) {
+            ExploitGameInfo newGameInfo = new ExploitGameInfo(rootState, expander, gameInfo);
+            Expander newExpander = new ExploitExpander<MCTSInformationSet>(new MCTSConfig(),newGameInfo);
+            GameState newRootState = new ExploitGameState(newGameInfo);
+            rootState = newRootState;
+            expander = newExpander;
+            gameInfo = newGameInfo;
         }
     }
 

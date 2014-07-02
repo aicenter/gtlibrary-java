@@ -8,7 +8,7 @@ public abstract class ExpanderImpl<I extends InformationSet> implements Expander
 
     private static final long serialVersionUID = -2367393002316400229L;
 
-    final private AlgorithmConfig<I> algConfig;
+    private AlgorithmConfig<I> algConfig;
 
     public ExpanderImpl(AlgorithmConfig<I> algConfig) {
         this.algConfig = algConfig;
@@ -22,6 +22,10 @@ public abstract class ExpanderImpl<I extends InformationSet> implements Expander
     @Override
     public List<Action> getActionsForUnknownIS(GameState gameState) {
         return getActions(algConfig.createInformationSetFor(gameState));
+    }
+
+    public void setAlgConfig(AlgorithmConfig<I> algConfig) {
+        this.algConfig = algConfig;
     }
 
     @Override
