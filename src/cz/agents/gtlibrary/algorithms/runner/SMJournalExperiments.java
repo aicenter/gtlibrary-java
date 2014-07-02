@@ -39,6 +39,7 @@ import cz.agents.gtlibrary.domain.tron.TronExpander;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
@@ -63,7 +64,7 @@ import java.util.Random;
 public class SMJournalExperiments {
 
     static GameInfo gameInfo;
-    static GameState rootState;
+    static SimultaneousGameState rootState;
     static SQFBestResponseAlgorithm brAlg0;
     static SQFBestResponseAlgorithm brAlg1;
     static Expander expander;
@@ -75,6 +76,7 @@ public class SMJournalExperiments {
     ;
 
     public static void main(String[] args) {
+        System.setProperty("EXPLOIT", "TRUE");
         if (args.length < 2) {
             System.err.println("Missing Arguments: SMJournalExperiments {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {GS|OZ|PE|RG|RPS|Tron} [domain parameters].");
             System.exit(-1);
@@ -170,7 +172,8 @@ public class SMJournalExperiments {
         if (expl) {
             ExploitGameInfo newGameInfo = new ExploitGameInfo(rootState, expander, gameInfo);
             Expander newExpander = new ExploitExpander<MCTSInformationSet>(new MCTSConfig(),newGameInfo);
-            GameState newRootState = new ExploitGameState(newGameInfo);
+            SimultaneousGameState newRootState = new ExploitGameState(newGameInfo);
+
             rootState = newRootState;
             expander = newExpander;
             gameInfo = newGameInfo;

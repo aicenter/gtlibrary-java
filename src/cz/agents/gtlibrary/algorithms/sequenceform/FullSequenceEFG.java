@@ -48,6 +48,7 @@ import cz.agents.gtlibrary.domain.upordown.UDGameInfo;
 import cz.agents.gtlibrary.domain.upordown.UDGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
+import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
@@ -88,7 +89,7 @@ public class FullSequenceEFG {
 	}
 
     private static void testExploitGame() {
-        GameState s = new OshiZumoGameState();
+        SimultaneousGameState s = new OshiZumoGameState();
         SimABConfig algConfig = new SimABConfig();
         Expander<SimABInformationSet> e = new OshiZumoExpander<>(algConfig);
         GameInfo gi = new OZGameInfo();
