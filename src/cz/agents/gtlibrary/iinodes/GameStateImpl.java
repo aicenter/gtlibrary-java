@@ -68,7 +68,7 @@ public abstract class GameStateImpl implements GameState {
     public boolean checkConsistency(Action action) {
         if (action == null || action.getInformationSet() == null)
             return false;
-        return this.getISKeyForPlayerToMove().equals(new Pair<Integer, Sequence>(action.getInformationSet().hashCode(), action.getInformationSet().getPlayersHistory()));
+        return this.getISKeyForPlayerToMove().equals(new Pair<>(action.getInformationSet().hashCode(), action.getInformationSet().getPlayersHistory()));
 //		return action.getInformationSet().getAllStates().contains(this);
     }
 
