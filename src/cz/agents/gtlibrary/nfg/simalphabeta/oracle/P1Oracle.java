@@ -30,12 +30,12 @@ public class P1Oracle extends SimOracleImpl {
                 return null;
 			if (bestStrategy == null) {
 				if (utilityValue > bestValue ) {
-					bestValue = utilityValue;
+                    bestValue = utilityValue;
 					bestStrategy = strategy;
-				}
+                }
 			} else {
 				if (utilityValue > bestValue) {
-					bestValue = utilityValue;
+                    bestValue = utilityValue;
 					bestStrategy = strategy;
 				}
 			}
@@ -85,15 +85,14 @@ public class P1Oracle extends SimOracleImpl {
 		double optimisticUtility = optimisticUtilityFromCache;
 		double utilityValue;
 
-		if (optimisticUtility - pesimisticUtility > 1e-14) {
+		if (optimisticUtility - pesimisticUtility > 1e-5) {
 			if (USE_INCREASING_BOUND && bound >= pesimisticUtility) {
 				pesimisticUtility = bound;
 				utilityValue = utility.getUtilityForIncreasedBounds(strategyPair.getLeft(), strategyPair.getRight(), pesimisticUtility, optimisticUtility);
 			} else {
 				utilityValue = utility.getUtility(strategyPair.getLeft(), strategyPair.getRight(), pesimisticUtility, optimisticUtility);
 			}
-			assert optimisticUtility >= pesimisticUtility;
-
+            assert optimisticUtility >= pesimisticUtility;
 			if (utilityValue == utilityValue) {
 				cache.setPesAndOptValueFor(strategyPair, utilityValue);
 			} else if (pesimisticUtilityFromCache <= bound && bound < optimisticUtilityFromCache) {
