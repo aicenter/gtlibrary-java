@@ -166,6 +166,7 @@ public class SMJournalOnlineExperiments {
             sampSimDepth = new Integer(SSDString);
 
         if (alg.startsWith("MCTS")) {
+
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
 
@@ -175,10 +176,16 @@ public class SMJournalOnlineExperiments {
 
                 switch (alg) {
                     case "MCTS-UCT":
-                        fact = new UCTBackPropFactory(2*gameInfo.getMaxUtility(), random);
+                        String explorationString = System.getProperty("EXPL"+(posIndex+1));
+                        Double exploration = 2*gameInfo.getMaxUtility();
+                        if (explorationString != null) exploration = new Double(explorationString);
+                        fact = new UCTBackPropFactory(exploration, random);
                         break;
                     case "MCTS-EXP3":
-                        fact = new Exp3BackPropFactory(-1, 1, 0.2, random);
+                        explorationString = System.getProperty("EXPL"+(posIndex+1));
+                        exploration = 0.2d;
+                        if (explorationString != null) exploration = new Double(explorationString);
+                        fact = new Exp3BackPropFactory(-1, 1, exploration, random);
                         break;
                 }
                 ISMCTSAlgorithm player = new ISMCTSAlgorithm(
@@ -190,21 +197,27 @@ public class SMJournalOnlineExperiments {
                 player.runIterations(2);
                 return player;
             } else {
+                String explorationString = System.getProperty("EXPL"+(posIndex+1));
+                Double exploration = 0.1;
+                if (explorationString != null) exploration = new Double(explorationString);
                 Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
                 SMMCTSAlgorithm player = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
                         new DefaultSimulator(sampSimDepth,expander, random),
-                        new SMRMBackPropFactory(0.1, random),
+                        new SMRMBackPropFactory(exploration, random),
                         rootState, expander);
 
                 player.runIterations(2);
                 return player;
             }
         } else if (alg.equals("OOS")) {
+            String explorationString = System.getProperty("EXPL"+(posIndex+1));
+            Double exploration = 0.6;
+            if (explorationString != null) exploration = new Double(explorationString);
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
             Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
-            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(sampSimDepth, expander, random), rootState, expander, 0.6, random);
+            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(sampSimDepth, expander, random), rootState, expander, exploration, random);
 
             player.runMiliseconds(20);
             return player;

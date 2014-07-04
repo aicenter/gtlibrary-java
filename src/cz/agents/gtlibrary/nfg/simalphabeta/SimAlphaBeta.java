@@ -47,9 +47,9 @@ public class SimAlphaBeta {
 //    public double gameValue = Double.NaN;
 
     public static void main(String[] args) {
-//		runGoofSpielWithNature();
+//		runGoofSpielWithNature(true,false,false,false);
 //		runGoofSpielWithNatureWithLocalCache();
-        runGoofSpielWithFixedNatureSequence(true, false, false, false, 7);
+        runGoofSpielWithFixedNatureSequence(false, false, false, false, 7);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
 //	    runPursuit(true,true);
 //        runSimRandomGame(false, true, false, false);
@@ -144,7 +144,7 @@ public class SimAlphaBeta {
                     new DOCacheImpl(),
                     new NatureCacheImpl(),
                     new LowerBoundComparatorFactory());
-//            System.out.println(data.gameInfo.getInfo());
+            System.out.println(data.gameInfo.getInfo());
             double beta = -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState);
             double alpha = data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState);
             DoubleOracle oracle = data.getDoubleOracle(rootState, beta, alpha);
@@ -156,9 +156,9 @@ public class SimAlphaBeta {
                 result = alpha;
             }
 
-//            System.out.println("****************");
-//			System.out.println("root state: " + rootState);
-//            System.out.println("game value: " + result);
+            System.out.println("****************");
+			System.out.println("root state: " + rootState);
+            System.out.println("game value: " + result);
 //            System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //            System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
         }
@@ -175,7 +175,7 @@ public class SimAlphaBeta {
                 new DOCacheImpl(),
                 new NatureCacheImpl(),
                 new LowerBoundComparatorFactory());
-//        System.out.println(data.gameInfo.getInfo());
+        System.out.println(data.gameInfo.getInfo());
         AlphaBeta p1AlphaBeta = abFactory.getP1AlphaBeta(expander, gameInfo);
         AlphaBeta p2AlphaBeta = abFactory.getP2AlphaBeta(expander, gameInfo);
         double p1ABBound = p1AlphaBeta.getUnboundedValue(rootState);
@@ -187,9 +187,9 @@ public class SimAlphaBeta {
             oracle.generate();
         if(Killer.kill)
             return null;
-//        System.out.println("****************");
-//		System.out.println("root state: " + rootState);
-//        System.out.println("game value: " + oracle.getGameValue());
+        System.out.println("****************");
+		System.out.println("root state: " + rootState);
+        System.out.println("game value: " + oracle.getGameValue());
 //        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
 //        gameValue = oracle.getGameValue();
