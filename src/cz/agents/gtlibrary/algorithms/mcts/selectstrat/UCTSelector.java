@@ -76,7 +76,7 @@ public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, 
 
     private int getUndetBestActionIdx() {
         // epsilon is used as the delta for the tie-breaker
-        double epsilon = 0.01;        
+        double epsilon = 0.01;
         double bestVal = getMaxValue();
         int epsilonBestCount = getEpsilonBestCount(epsilon, bestVal);
 
