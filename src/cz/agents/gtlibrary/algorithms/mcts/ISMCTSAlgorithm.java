@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanValueProvider;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.MostFrequentAction;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
@@ -164,6 +165,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             InnerNode child = (InnerNode) curISArray[0].getChildren().values().iterator().next();
             is = child.getInformationSet();
             Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
+            //Map<Action, Double> distribution = (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData());
             action = Strategy.selectAction(distribution, fact.getRandom());
             clean(action);
             return action;
