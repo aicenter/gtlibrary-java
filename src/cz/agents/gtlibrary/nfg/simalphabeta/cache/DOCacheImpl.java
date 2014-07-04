@@ -121,7 +121,7 @@ public class DOCacheImpl implements DOCache {
 		assert optimisticUtility >= pesimisticUtility;
 		optimisticUtilities.put(strategyPair, optimisticUtility);
 		pesimisticUtilities.put(strategyPair, pesimisticUtility);
-		if (optimisticUtility - pesimisticUtility < 1e-14)
+		if (optimisticUtility - pesimisticUtility <= 1e-5)
 			actualUtilities.put(strategyPair, optimisticUtility);
 	}
 }

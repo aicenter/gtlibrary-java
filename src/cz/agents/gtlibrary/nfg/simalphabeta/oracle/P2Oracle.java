@@ -31,12 +31,12 @@ public class P2Oracle extends SimOracleImpl {
                 return null;
 			if (bestStrategy == null) {
 				if (utilityValue > bestValue ) {
-					bestValue = utilityValue;
+                    bestValue = utilityValue;
 					bestStrategy = strategy;
 				}
 			} else {
 				if (utilityValue > bestValue) {
-					bestValue = utilityValue;
+                    bestValue = utilityValue;
 					bestStrategy = strategy;
 				}
 			}
@@ -87,15 +87,14 @@ public class P2Oracle extends SimOracleImpl {
 		double optimisticUtility = optimisticUtilityFromCache;
 		double utilityValue;
 
-		if (Math.abs(optimisticUtility - pesimisticUtility) > 1e-14) {
+		if (Math.abs(optimisticUtility - pesimisticUtility) > 1e-5) {
 			if (USE_INCREASING_BOUND && -bound < optimisticUtility) {
 				optimisticUtility = -bound;
 				utilityValue = -utility.getUtilityForIncreasedBounds(strategyPair.getRight(), strategyPair.getLeft(), pesimisticUtility, optimisticUtility);
 			} else {
 				utilityValue = -utility.getUtility(strategyPair.getRight(), strategyPair.getLeft(), pesimisticUtility, optimisticUtility);
 			}
-
-			assert optimisticUtility >= pesimisticUtility;
+            assert optimisticUtility >= pesimisticUtility;
 			if (utilityValue == utilityValue) {
 				cache.setPesAndOptValueFor(strategyPair, utilityValue);
 			} else if (-bound <= optimisticUtilityFromCache && -bound > pesimisticUtilityFromCache) {
