@@ -23,6 +23,7 @@ import cz.agents.gtlibrary.domain.tron.TronExpander;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
 import cz.agents.gtlibrary.iinodes.RandomAlgorithm;
+import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.ComparatorAlgorithm;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
@@ -165,6 +166,7 @@ public class SMJournalOnlineExperiments {
             sampSimDepth = new Integer(SSDString);
 
         if (alg.startsWith("MCTS")) {
+
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
 
@@ -174,10 +176,16 @@ public class SMJournalOnlineExperiments {
 
                 switch (alg) {
                     case "MCTS-UCT":
-                        fact = new UCTBackPropFactory(2*gameInfo.getMaxUtility(), random);
+                        String explorationString = System.getProperty("EXPL"+(posIndex+1));
+                        Double exploration = 2*gameInfo.getMaxUtility();
+                        if (explorationString != null) exploration = new Double(explorationString);
+                        fact = new UCTBackPropFactory(exploration, random);
                         break;
                     case "MCTS-EXP3":
-                        fact = new Exp3BackPropFactory(-1, 1, 0.2, random);
+                        explorationString = System.getProperty("EXPL"+(posIndex+1));
+                        exploration = 0.2d;
+                        if (explorationString != null) exploration = new Double(explorationString);
+                        fact = new Exp3BackPropFactory(-1, 1, exploration, random);
                         break;
                 }
                 ISMCTSAlgorithm player = new ISMCTSAlgorithm(
@@ -189,21 +197,27 @@ public class SMJournalOnlineExperiments {
                 player.runIterations(2);
                 return player;
             } else {
+                String explorationString = System.getProperty("EXPL"+(posIndex+1));
+                Double exploration = 0.1;
+                if (explorationString != null) exploration = new Double(explorationString);
                 Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
                 SMMCTSAlgorithm player = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
                         new DefaultSimulator(sampSimDepth,expander, random),
-                        new SMRMBackPropFactory(0.1, random),
+                        new SMRMBackPropFactory(exploration, random),
                         rootState, expander);
 
                 player.runIterations(2);
                 return player;
             }
         } else if (alg.equals("OOS")) {
+            String explorationString = System.getProperty("EXPL"+(posIndex+1));
+            Double exploration = 0.6;
+            if (explorationString != null) exploration = new Double(explorationString);
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
             Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
-            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(sampSimDepth, expander, random), rootState, expander, 0.6, random);
+            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(sampSimDepth, expander, random), rootState, expander, exploration, random);
 
             player.runMiliseconds(20);
             return player;
@@ -234,8 +248,8 @@ public class SMJournalOnlineExperiments {
         GamePlayingAlgorithm p1 = getPlayer(0, args[0], args[2]);
         GamePlayingAlgorithm p2 = getPlayer(1, args[1], args[2]);
 
-        GameState curState = rootState.copy();
-        while (!curState.isGameEnd()) {
+        SimultaneousGameState curState = (SimultaneousGameState)rootState.copy();
+        while (!curState.isActualGameEnd()) {
             if (printDebugInfo) {
                 System.out.println("");
                 System.out.println(curState);
@@ -247,7 +261,7 @@ public class SMJournalOnlineExperiments {
                     final double ap = curState.getProbabilityOfNatureFor(ca);
                     if (r <= ap) {
                         moves.append(ca + " ");
-                        curState = curState.performAction(ca);
+                        curState = (SimultaneousGameState)curState.performAction(ca);
 
                         if (printDebugInfo)
                             System.out.println("Nature chose: " + ca);
@@ -274,8 +288,8 @@ public class SMJournalOnlineExperiments {
 
                 moves.append(a1 + " ");
                 moves.append(a2 + " ");
-                curState = curState.performAction(a1);
-                curState = curState.performAction(a2);
+                curState = (SimultaneousGameState)curState.performAction(a1);
+                curState = (SimultaneousGameState)curState.performAction(a2);
             }
         }
         System.out.println("MATCH: " + moves.toString() + curState.getUtilities()[0]);

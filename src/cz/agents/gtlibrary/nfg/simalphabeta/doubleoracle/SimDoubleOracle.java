@@ -51,7 +51,7 @@ public class SimDoubleOracle extends DoubleOracle {
     }
 
     public void generate() {
-        if ((beta - alpha) < 1e-14) {
+        if ((beta - alpha) < 1e-5) {
             gameValue = alpha;
             return;
         }
@@ -167,7 +167,7 @@ public class SimDoubleOracle extends DoubleOracle {
         double pesimisticUtility = cache.getPesimisticUtilityFor(strategyPair);
         double optimisticUtility = cache.getOptimisticUtilityFor(strategyPair);
 
-        if (optimisticUtility - pesimisticUtility > 1e-14) {
+        if (optimisticUtility - pesimisticUtility > 1e-5) {
             Double utility = p1Utility.getUtility(strategyPair.getLeft(), strategyPair.getRight(), pesimisticUtility, optimisticUtility);
 
             if (!utility.isNaN())

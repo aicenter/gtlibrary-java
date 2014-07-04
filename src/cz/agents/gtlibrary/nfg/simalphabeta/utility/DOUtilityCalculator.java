@@ -161,8 +161,8 @@ public class DOUtilityCalculator implements UtilityCalculator {
 //            return utility;
 //        if (state.isPlayerToMoveNature())
 //            return computeUtilityForNature(state, s1, s2, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-//        return computeUtilityOf(state, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-
+//        return computeUtilityOf(state, s1, s2, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+////        assert utility != null;
         return utility == null ? Double.NaN : utility;
     }
 
