@@ -44,7 +44,7 @@ Integration with other projects:
 package cz/agents/gtlibrary/algorithms/sequenceform/refinements/quasiperfect contains several files from GTF framework by Troels Bjerre Sorensen (http://www.itu.dk/people/trbj/gtf.html) 
 
 
-Authors:
+Main authors:
 ~~~~~~~~
 
   Branislav Bosansky <branislav.bosansky@agents.fel.cvut.cz> (contact person)
@@ -52,6 +52,9 @@ Authors:
   Viliam Lisy <viliam.lisy@agents.fel.cvut.cz>
   Ondrej Vanek <ondrej.vanek@agents.fel.cvut.cz>
 
+Other Contributors:
+~~~~~~~~~~~~~~~~~~~
+Games of Oshi-Zumo and Tron were implemented by Marc Lanctot.
 
 More information:
 ~~~~~~~~~~~~~~~~~
