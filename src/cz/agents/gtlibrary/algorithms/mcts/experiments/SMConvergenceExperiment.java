@@ -15,6 +15,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMConjectureFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
@@ -268,6 +269,44 @@ public class SMConvergenceExperiment {
         //System.out.println("Strat: " + strategy1.fancyToString(rootState, expander, rootState.getAllPlayers()[1]));
     }
     
+        public static void runSMMCTS_Exp3() throws Exception {        
+        Distribution dist = new MeanStratDist();
+
+        SMMCTSAlgorithm alg = new SMMCTSAlgorithm(
+                    rootState.getAllPlayers()[0],
+                    new DefaultSimulator(expander),
+                    new SMConjectureFactory(gamma),
+                    rootState, expander);
+
+        assert !buildCompleteTree;
+        
+        brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        brAlg1 = new SQFBestResponseAlgorithm(expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, (ConfigImpl)expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+
+        Strategy strategy0 = null;
+        Strategy strategy1 = null;
+        String outLine = "";
+        System.out.print("P1BRs: ");
+
+        for (int i = 0; i < 100; i++) {
+            alg.runIterations(iterations);
+            strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
+            strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
+
+            System.out.println(brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0)) + " ");
+            System.out.println(((InnerNode)(alg.getRootNode().getChildren().values().iterator().next())).getInformationSet().getAlgorithmData());
+            System.out.flush();
+            outLine += brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1)) + " ";
+
+            //System.out.println("Strat: " + strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
+            //System.out.println("BR: " + brAlg.getFullBRSequences());
+        }
+        System.out.println();
+        System.out.println("P0BRs: " + outLine);
+        //System.out.println("Strat: " + strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
+        //System.out.println("Strat: " + strategy1.fancyToString(rootState, expander, rootState.getAllPlayers()[1]));
+    }
+    
     
     // game algorithm iterations_per_output
     //arguments: Anti[EL]D/GSX/RNDYYY OOS6/Exp3[MV][RK]2 100000
@@ -318,12 +357,12 @@ public class SMConvergenceExperiment {
     
     public static void main(String[] args) throws Exception {
         //batchMain(args);
-        //setupGoofSpiel(6);
+        setupGoofSpiel(4);
         //setupOshiZumo(8, 2);
         //setupRnd(1);
-        setupAntiExploration();
-        gamma=0.3;
-        runSMMCTS_RM();
-        runMCTSExp3();
+        //setupAntiExploration();
+        gamma=0.1;
+        runSMMCTS_Exp3();
+        //runMCTSExp3();
     }
 }
