@@ -39,6 +39,11 @@ Java 7.0+
 CPLEX 12.4+
 other free libraries available at https://dl.dropboxusercontent.com/u/102512308/libraries.zip
 
+Integration with other projects:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+package cz/agents/gtlibrary/algorithms/sequenceform/refinements/quasiperfect contains several files from GTF framework by Troels Bjerre Sorensen (http://www.itu.dk/people/trbj/gtf.html) 
+
+
 Authors:
 ~~~~~~~~
 
@@ -52,3 +57,4 @@ More information:
 ~~~~~~~~~~~~~~~~~
 
 http://agents.felk.cvut.cz/topics/Computational_game_theory
+
