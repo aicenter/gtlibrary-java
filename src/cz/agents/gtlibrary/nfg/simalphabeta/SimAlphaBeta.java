@@ -49,11 +49,14 @@ public class SimAlphaBeta {
     public static void main(String[] args) {
 //		runGoofSpielWithNature(true,false,false,false);
 //		runGoofSpielWithNatureWithLocalCache();
-        runGoofSpielWithFixedNatureSequence(false, false, false, false, 7);
+//        runGoofSpielWithFixedNatureSequence(false, false, false, false, 7);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
-//	    runPursuit(true,true);
-//        runSimRandomGame(false, true, false, false);
-//        runOshiZumo(true,false,false,false);
+	    runPursuit(false,false,false,false);
+//        runSimRandomGame(false, false, false, false);
+//        runOshiZumo(false,false,false,false);
+//        runTron(false,false,false,false);
+//        Stats.getInstance().showSupportCounts();
+
     }
 
     public static void runGoofSpielWithFixedNatureSequence(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache, int depth) {
@@ -84,8 +87,8 @@ public class SimAlphaBeta {
 
     public static void runPursuit(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache) {
         Stats.getInstance().startTime();
-        SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         GameInfo gameInfo = new PursuitGameInfo();
+        SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         simAlphaBeta.runSimAlpabeta(new PursuitGameState(), new FastImprovedExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
         Stats.getInstance().stopTime();
         Stats.getInstance().printOverallInfo();

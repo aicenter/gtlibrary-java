@@ -68,6 +68,10 @@ public class PursuitGraph extends Graph {
 //            PursuitGameInfo.evaderStart = en;
 //            PursuitGameInfo.p1Start = p1n;
 //            PursuitGameInfo.p2Start = p2n;
+            PursuitGameInfo.p1Start = p1Start.getIntID();
+            PursuitGameInfo.p2Start = p2Start.getIntID();
+            PursuitGameInfo.evaderStart = evaderStart.getIntID();
+
         } else {
             evaderStart = allNodes.get("ID" + PursuitGameInfo.evaderStart);
             p1Start = allNodes.get("ID" + PursuitGameInfo.p1Start);

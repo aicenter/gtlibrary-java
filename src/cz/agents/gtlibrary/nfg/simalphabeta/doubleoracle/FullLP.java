@@ -48,8 +48,13 @@ public class FullLP extends DoubleOracle {
         coreSolver.computeNashEquilibrium();
         if(Killer.kill)
             return;
-        Stats.getInstance().addToP1NESize(coreSolver.getPlayerOneStrategy());
-        Stats.getInstance().addToP2NESize(coreSolver.getPlayerTwoStrategy());
+        int NEsize1 = Stats.getInstance().addToP1NESize(coreSolver.getPlayerOneStrategy());
+        int NEsize2 =Stats.getInstance().addToP2NESize(coreSolver.getPlayerTwoStrategy());
+
+//        if (!rootState.isPlayerToMoveNature()) {
+//            int depth = Math.min(rootState.getHistory().getSequenceOf(rootState.getAllPlayers()[0]).size(), rootState.getHistory().getSequenceOf(rootState.getAllPlayers()[1]).size());
+//            Stats.getInstance().leavingNode(depth, NEsize1, p1StrategySet.size());
+//        }
     }
 
     @Override

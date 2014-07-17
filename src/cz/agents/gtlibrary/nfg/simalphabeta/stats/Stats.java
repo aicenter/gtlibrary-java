@@ -2,7 +2,9 @@ package cz.agents.gtlibrary.nfg.simalphabeta.stats;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -50,6 +52,11 @@ public class Stats implements Exportable {
 	private Set<GameState> stateSet = new HashSet<GameState>();
 	private int LPinvocations = 0;
 	private long overallTime;
+
+    private Map<Integer, Map<Boolean, Integer>> pureOrMixed = new HashMap<>();
+    private Map<Integer, Map<Integer, Integer>> supportSize = new HashMap<>();
+    private int supSizeHistSteps = 20;
+
 	
 	private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
 	
@@ -214,18 +221,26 @@ public class Stats implements Exportable {
 			increaseP2ABStates();
 	}
 
-	public void addToP1NESize(MixedStrategy<ActionPureStrategy> p1MixedStrategy) {
+	public int addToP1NESize(MixedStrategy<ActionPureStrategy> p1MixedStrategy) {
+        int result = 0;
 		for (Entry<ActionPureStrategy, Double> entry : p1MixedStrategy) {
-			if (entry.getValue() > 1e-8)
-				addToP1NESize(1);
+            if (entry.getValue() > 1e-8) {
+                addToP1NESize(1);
+                result++;
+            }
 		}
+        return result;
 	}
 
-	public void addToP2NESize(MixedStrategy<ActionPureStrategy> p2MixedStrategy) {
+	public int addToP2NESize(MixedStrategy<ActionPureStrategy> p2MixedStrategy) {
+        int result = 0;
 		for (Entry<ActionPureStrategy, Double> entry : p2MixedStrategy) {
-			if (entry.getValue() > 1e-8)
-				addToP2NESize(1);
+			if (entry.getValue() > 1e-8) {
+                addToP2NESize(1);
+                result++;
+            }
 		}
+        return result;
 	}
 
 	public void addToP2StrategyCount(int count) {
@@ -265,4 +280,46 @@ public class Stats implements Exportable {
 		overallTime += time;
 	}
 
+    public void leavingNode(int depth, int supsize, int BF) {
+        Map<Boolean, Integer> mapForDepth1 = pureOrMixed.get(depth);
+        if (mapForDepth1 == null) {
+            mapForDepth1 = new HashMap<>();
+            mapForDepth1.put(true, 0);
+            mapForDepth1.put(false, 0);
+        }
+        if (supsize == 1) {
+            mapForDepth1.put(true, mapForDepth1.get(true) + 1);
+        }  else {
+            mapForDepth1.put(false, mapForDepth1.get(false) + 1);
+        }
+        pureOrMixed.put(depth, mapForDepth1);
+
+        Map<Integer, Integer> mapForDepth2 = supportSize.get(depth);
+        if (mapForDepth2 == null) {
+            mapForDepth2 = new HashMap<>();
+            for (int i=0; i<supSizeHistSteps+1; i++)
+                mapForDepth2.put(i, 0);
+        }
+
+        int discSS = supsize*supSizeHistSteps/BF;
+        mapForDepth2.put(discSS, mapForDepth2.get(discSS) + 1);
+        supportSize.put(depth, mapForDepth2);
+    }
+
+    public void showSupportCounts() {
+        System.out.println("Pure or Mixed:\n------------------");
+        for (Integer d : pureOrMixed.keySet()) {
+            System.out.println("Depth " + d + ": Pure:" + pureOrMixed.get(d).get(true) + " Mixed:" + pureOrMixed.get(d).get(false));
+        }
+
+        System.out.println("Support Sizes:\n------------------");
+        for (Integer d : supportSize.keySet()) {
+            System.out.println("Depth " + d + ":");
+            for (int i=0; i<supSizeHistSteps+1; i++) {
+                System.out.println("SS " + ((double)i/supSizeHistSteps) + ":" + supportSize.get(d).get(i));
+            }
+            System.out.println("--------");
+        }
+
+    }
 }

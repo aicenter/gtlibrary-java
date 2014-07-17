@@ -10,11 +10,11 @@ public class PursuitGameInfo implements GameInfo {
 	public static Player EVADER = new PlayerImpl(0);
 	public static Player PATROLLER = new PlayerImpl(1);
 	public static Player[] ALL_PLAYERS = { EVADER, PATROLLER };
-	public static long seed = 1;
+	public static long seed = 11;
 	public static int evaderStart = 0;
-	public static int p1Start = 7;
-	public static int p2Start = 11;
-	public static int depth = 3;
+	public static int p1Start = 11;
+	public static int p2Start = 15;
+	public static int depth = 5;
 	public static boolean forceMoves = true;
     public static boolean randomizeStartPositions = true;
 
