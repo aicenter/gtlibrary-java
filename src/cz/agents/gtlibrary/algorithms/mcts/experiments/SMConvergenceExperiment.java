@@ -65,10 +65,10 @@ public class SMConvergenceExperiment {
     static Expander<MCTSInformationSet> expander;
 
     public static void setupRnd(long seed) {
-        RandomGameInfo.MAX_DEPTH = 3;
+        RandomGameInfo.MAX_DEPTH = 2;
         RandomGameInfo.MAX_BF = 2;
         RandomGameInfo.MAX_CENTER_MODIFICATION=1;
-        RandomGameInfo.BINARY_UTILITY = false;
+        RandomGameInfo.BINARY_UTILITY = true;
         RandomGameInfo.FIXED_SIZE_BF = true;
         RandomGameInfo.seed = seed;
         gameInfo = new RandomGameInfo();
@@ -288,13 +288,13 @@ public class SMConvergenceExperiment {
         String outLine = "";
         System.out.print("P1BRs: ");
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10000; i++) {
             alg.runIterations(iterations);
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
             System.out.println(brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0)) + " ");
-            System.out.println(((InnerNode)(alg.getRootNode().getChildren().values().iterator().next())).getInformationSet().getAlgorithmData());
+            System.out.println(alg.getRootNode().getInformationSet().getAlgorithmData());
             System.out.flush();
             outLine += brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1)) + " ";
 
@@ -311,7 +311,7 @@ public class SMConvergenceExperiment {
     // game algorithm iterations_per_output
     //arguments: Anti[EL]D/GSX/RNDYYY OOS6/Exp3[MV][RK]2 100000
     
-    private static int iterations = 100000;
+    private static int iterations = 10000000;
     private static String algorithm = "Exp3";
     private static boolean keepExploration = false;
     private static boolean propagateMeans = false;
@@ -357,11 +357,11 @@ public class SMConvergenceExperiment {
     
     public static void main(String[] args) throws Exception {
         //batchMain(args);
-        setupGoofSpiel(4);
+        //setupGoofSpiel(3);
         //setupOshiZumo(8, 2);
-        //setupRnd(1);
+        setupRnd(6);
         //setupAntiExploration();
-        gamma=0.1;
+        gamma=0.001;
         runSMMCTS_Exp3();
         //runMCTSExp3();
     }

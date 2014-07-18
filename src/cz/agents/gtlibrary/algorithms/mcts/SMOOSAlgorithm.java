@@ -5,6 +5,7 @@
 package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
@@ -33,6 +34,8 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
     protected MCTSConfig config;
     protected Expander expander;
     private double epsilon = 0.6;
+    public boolean dropTree = false;
+    public boolean useMatchProbs = false;
 
     private Random rnd;
 
@@ -48,16 +51,24 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         config = rootNode.getAlgConfig();
         this.rnd = random;
         this.expander = expander;
+        String s = System.getProperty("DROPTREE");
+        if (s != null) dropTree = Boolean.getBoolean(s);
+        s = System.getProperty("INMATCHPROBS");
+        if (s != null) useMatchProbs = Boolean.getBoolean(s);
     }
 
+    double match_p1=1;
+    double match_p2=1;
+    double match_pc=1;
+    
     @Override
     public Action runMiliseconds(int miliseconds) {
         int iters = 0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
-            iteration(rootNode, 1, 1, 1, rootNode.getGameState().getAllPlayers()[0]);
+            iteration(rootNode, match_p1, match_p2, match_p1*match_p2*match_pc,rootNode.getGameState().getAllPlayers()[0]);
             iters++;
-            iteration(rootNode, 1, 1, 1, rootNode.getGameState().getAllPlayers()[1]);
+            iteration(rootNode, match_p1, match_p2, match_p1*match_p2*match_pc,rootNode.getGameState().getAllPlayers()[1]);
             iters++;
         }
         System.out.println();
@@ -188,8 +199,12 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         return rootNode;
     }
 
+    Map<Action, Double> lastP1dist;
+    Map<Action, Double> lastP2dist;
+    
     @Override
     public Action runMiliseconds(int miliseconds, GameState gameState) {
+        if (dropTree) config.cleanSetsNotContaining(null, 0, null, 0);
         MCTSInformationSet is = config.getInformationSetFor(gameState);
         if (is.getAllNodes().isEmpty()) {
 //            InnerNode in = rootNode;
@@ -207,16 +222,30 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
             assert !is.getAllNodes().isEmpty();
         }
         assert is.getAllNodes().size() == 1;
+        Map<Action, Double> distribution;
+        //update the match position probabilities
+        if (useMatchProbs && gameState.getSequenceFor(gameState.getAllPlayers()[0]).size()>0){
+            Action p1action = gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast();
+            Action p2action = gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast();
+            match_p1 *= Math.max(0.01,lastP1dist.get(p1action));
+            match_p2 *= Math.max(0.01,lastP2dist.get(p2action));
+        }
+        //move to the right subtree
         rootNode = is.getAllNodes().iterator().next();
         rootNode.setParent(null);
         Action action = runMiliseconds(miliseconds);
+        if (useMatchProbs){
+            lastP1dist = (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData());
+            lastP2dist = (new MeanStratDist()).getDistributionFor(((InnerNode)rootNode.getChildFor(rootNode.getActions().get(0))).getInformationSet().getAlgorithmData());
+        }
+        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
             clean(action);
             return action;
         } else {
             InnerNode child = (InnerNode) rootNode.getChildFor(rootNode.getActions().get(0));
             is = child.getInformationSet();
-            Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
+            distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
             action = Strategy.selectAction(distribution, rnd);
             clean(action);
             return action;
