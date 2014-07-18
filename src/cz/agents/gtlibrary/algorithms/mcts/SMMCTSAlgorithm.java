@@ -5,6 +5,7 @@
 package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
@@ -160,6 +161,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         rootNode = is.getAllNodes().iterator().next();
         rootNode.setParent(null);
         Action action = runMiliseconds(miliseconds);
+        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
             clean(action);
             return action;

@@ -8,6 +8,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
@@ -99,6 +100,22 @@ public class StrategyCollector {
             }
         }
         return strategy;
+    }
+    
+    static public double meanLeafDepth(InnerNode rootNode) {
+        BasicStats bs = new BasicStats();
+        ArrayDeque<InnerNode> q = new ArrayDeque();
+        q.add(rootNode);
+        while (!q.isEmpty()){
+            InnerNode curNode = q.removeFirst();
+            if (curNode.getChildren().size()==0){
+                bs.onBackPropagate(curNode.getDepth());
+            }
+            for(Node n : curNode.getChildren().values()){
+                if ((n instanceof InnerNode)) q.addLast((InnerNode)n);
+            }
+        }
+        return bs.getEV();
     }
 
 }

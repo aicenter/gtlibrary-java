@@ -23,6 +23,7 @@ public class SMConjuctureSelector extends SMDecoupledSelector implements MeanStr
     double sumw[][];
     double wsum[][];
     BasicStats stats [][];
+    double max[][];
     
     public SMConjuctureSelector(List<Action> actions1, List<Action> actions2, Selector p1selector, Selector p2selector) {
         super(actions1, actions2, p1selector, p2selector);
@@ -30,6 +31,7 @@ public class SMConjuctureSelector extends SMDecoupledSelector implements MeanStr
         for (double[] a : w) Arrays.fill(a, 1);
         sumw = new double[actions1.size()][actions2.size()];
         wsum = new double[actions1.size()][actions2.size()];
+        max = new double[actions1.size()][actions2.size()];
         stats = new BasicStats[actions1.size()][actions2.size()];
         for (int i=0;i<actions1.size();i++){
             for (int j=0; j<actions2.size();j++){
@@ -53,6 +55,8 @@ public class SMConjuctureSelector extends SMDecoupledSelector implements MeanStr
         }
         wsum[si][sj] += w[si][sj]*value;
         sumw[si][sj] += w[si][sj];
+        
+        max[si][sj] = Math.max(max[si][sj], Math.abs(stats[si][sj].getEV()-(wsum[si][sj]/sumw[si][sj])));
         //if (stats[si][sj].getNbSamples() % 1e5==0) 
         //    System.out.println(stats[si][sj].getNbSamples() + ": " + Math.abs(stats[si][sj].getEV()-(wsum[si][sj]/sumw[si][sj])));
         super.update(selection, value);
@@ -73,18 +77,44 @@ public class SMConjuctureSelector extends SMDecoupledSelector implements MeanStr
         StringBuffer out = new StringBuffer();
         for (int i=0;i<actions1.size();i++){
             for (int j=0; j<actions2.size();j++){
+                out.append("Move" + i + j + " ");
                 out.append(stats[i][j].getNbSamples() + " ");
-            }
-            out.append("\n");
-        }
-        out.append("\n");
-        for (int i=0;i<actions1.size();i++){
-            for (int j=0; j<actions2.size();j++){
                 out.append(Math.abs(stats[i][j].getEV()-(wsum[i][j]/sumw[i][j])) + " ");
+                out.append(stats[i][j].getEV() + " ");
+                out.append((wsum[i][j]/sumw[i][j]) + " ");
+                out.append(max[i][j] + "\n");
+                max[i][j]=Math.abs(stats[i][j].getEV()-(wsum[i][j]/sumw[i][j]));
             }
-            out.append("\n");
         }
-        out.append("\n");
+//        out.append("\n");
+//        for (int i=0;i<actions1.size();i++){
+//            for (int j=0; j<actions2.size();j++){
+//                out.append(Math.abs(stats[i][j].getEV()-(wsum[i][j]/sumw[i][j])) + " ");
+//            }
+//            out.append("\n");
+//        }
+//        out.append("\n");
+//        for (int i=0;i<actions1.size();i++){
+//            for (int j=0; j<actions2.size();j++){
+//                out.append(stats[i][j].getEV() + " ");
+//            }
+//            out.append("\n");
+//        }
+//        out.append("\n");
+//        for (int i=0;i<actions1.size();i++){
+//            for (int j=0; j<actions2.size();j++){
+//                out.append((wsum[i][j]/sumw[i][j]) + " ");
+//            }
+//            out.append("\n");
+//        }
+//        out.append("\n");
+//        for (int i=0;i<actions1.size();i++){
+//            for (int j=0; j<actions2.size();j++){
+//                out.append(max[i][j] + " ");
+//                max[i][j]=0;
+//            }
+//            out.append("\n");
+//        }
         return out.toString();
     }
     
