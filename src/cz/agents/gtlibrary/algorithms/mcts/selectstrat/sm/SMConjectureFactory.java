@@ -38,10 +38,12 @@ public class SMConjectureFactory implements SMBackPropFactory {
     double gamma = 0.1;
     private double minUtility = -1;
     private double maxUtility = 1;
-    Exp3BackPropFactory fact = new Exp3BackPropFactory(minUtility, maxUtility, gamma);
+    Exp3BackPropFactory fact;
 
     public SMConjectureFactory(double gamma) {
         this(gamma, new HighQualityRandom());
+        this.gamma=gamma;
+        fact = new Exp3BackPropFactory(minUtility, maxUtility, gamma);
     }
 
     public SMConjectureFactory(double gamma, Random random) {

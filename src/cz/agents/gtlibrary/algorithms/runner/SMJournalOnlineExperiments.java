@@ -20,9 +20,13 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.runner;
 
 import cz.agents.gtlibrary.algorithms.mcts.*;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
@@ -49,6 +53,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBetaAlgorithm;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import java.util.ArrayDeque;
 
 import java.util.List;
 import java.util.Random;
@@ -61,7 +66,7 @@ public class SMJournalOnlineExperiments {
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
     static Expander expander;
     static Random rnd = new HighQualityRandom();
-    static int compTime = 5000;
+    static int compTime = 500;
     static boolean printDebugInfo = true;
 
     public static void main(String[] args) {
@@ -78,7 +83,7 @@ public class SMJournalOnlineExperiments {
 
 
         double sum = 0;
-        int iterationCount = 5;
+        int iterationCount = 1000;
 
         String newMatchesString = System.getProperty("MATCHES");
         if (newMatchesString != null)

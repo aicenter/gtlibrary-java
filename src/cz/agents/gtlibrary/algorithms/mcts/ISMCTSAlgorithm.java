@@ -22,6 +22,7 @@ package cz.agents.gtlibrary.algorithms.mcts;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanValueProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MostFrequentAction;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
@@ -176,7 +177,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
         setCurrentIS(is);
         Action action = runMiliseconds(miliseconds);
-
+        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
             clean(action);
             return action;
