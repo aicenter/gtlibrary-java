@@ -6,11 +6,11 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 public class PursuitGameInfo implements GameInfo {
 
-	public static String graphFile = "pursuit_simple5x5.txt";
+	public static String graphFile = "pursuit_simple4x4.txt";
 	public static Player EVADER = new PlayerImpl(0);
 	public static Player PATROLLER = new PlayerImpl(1);
 	public static Player[] ALL_PLAYERS = { EVADER, PATROLLER };
-	public static long seed = 1;
+	public static long seed = 11;
 	public static int evaderStart = 0;
 	public static int p1Start = 7;
 	public static int p2Start = 11;

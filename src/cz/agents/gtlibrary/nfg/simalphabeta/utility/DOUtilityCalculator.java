@@ -1,3 +1,22 @@
+/*
+Copyright 2014 Faculty of Electrical Engineering at CTU in Prague
+
+This file is part of Game Theoretic Library.
+
+Game Theoretic Library is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Game Theoretic Library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
+
+
 package cz.agents.gtlibrary.nfg.simalphabeta.utility;
 
 import cz.agents.gtlibrary.interfaces.Action;
@@ -157,13 +176,13 @@ public class DOUtilityCalculator implements UtilityCalculator {
     public double getUtility(GameState state, ActionPureStrategy s1, ActionPureStrategy s2) {
         Double utility = cache.getUtilityFor(s1, s2);
 
-        if (utility != null)
-            return utility;
-        if (state.isPlayerToMoveNature())
-            return computeUtilityForNature(state, s1, s2, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-        return computeUtilityOf(state, s1, s2, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-//        assert utility != null;
-//        return utility == null ? Double.NaN : utility;
+//        if (utility != null)
+//            return utility;
+//        if (state.isPlayerToMoveNature())
+//            return computeUtilityForNature(state, s1, s2, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+//        return computeUtilityOf(state, s1, s2, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+////        assert utility != null;
+        return utility == null ? Double.NaN : utility;
     }
 
     @Override

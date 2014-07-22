@@ -1,3 +1,22 @@
+/*
+Copyright 2014 Faculty of Electrical Engineering at CTU in Prague
+
+This file is part of Game Theoretic Library.
+
+Game Theoretic Library is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Game Theoretic Library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
+
+
 package cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle;
 
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -48,8 +67,13 @@ public class FullLP extends DoubleOracle {
         coreSolver.computeNashEquilibrium();
         if(Killer.kill)
             return;
-        Stats.getInstance().addToP1NESize(coreSolver.getPlayerOneStrategy());
-        Stats.getInstance().addToP2NESize(coreSolver.getPlayerTwoStrategy());
+        int NEsize1 = Stats.getInstance().addToP1NESize(coreSolver.getPlayerOneStrategy());
+        int NEsize2 =Stats.getInstance().addToP2NESize(coreSolver.getPlayerTwoStrategy());
+
+//        if (!rootState.isPlayerToMoveNature()) {
+//            int depth = Math.min(rootState.getHistory().getSequenceOf(rootState.getAllPlayers()[0]).size(), rootState.getHistory().getSequenceOf(rootState.getAllPlayers()[1]).size());
+//            Stats.getInstance().leavingNode(depth, NEsize1, p1StrategySet.size());
+//        }
     }
 
     @Override
