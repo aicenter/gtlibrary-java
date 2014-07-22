@@ -1,22 +1,3 @@
-/*
-Copyright 2014 Faculty of Electrical Engineering at CTU in Prague
-
-This file is part of Game Theoretic Library.
-
-Game Theoretic Library is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Game Theoretic Library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
-
-
 package cz.agents.gtlibrary.domain.pursuit;
 
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
@@ -31,9 +12,10 @@ public class PursuitGameInfo implements GameInfo {
 	public static Player[] ALL_PLAYERS = { EVADER, PATROLLER };
 	public static long seed = 11;
 	public static int evaderStart = 0;
-	public static int p1Start = 11;
-	public static int p2Start = 15;
-	public static int depth = 5;
+	public static int p1Start = 7;
+	public static int p2Start = 11;
+	public static int depth = 4;
+    public static double patrollerMoveCost = 0.5/depth;//0 for zero sum game
 	public static boolean forceMoves = true;
     public static boolean randomizeStartPositions = true;
 

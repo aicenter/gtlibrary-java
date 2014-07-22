@@ -40,7 +40,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     /** Mean strategy. */
     double[] mp;
     /** Cumulative regret. */
-    double[] r;
+    protected double[] r;
 
     public OOSAlgorithmData(List<Action> actions) {
         this.actions = actions;
@@ -84,7 +84,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
             mp[i] += w*p[i];
         }
     }
-    
+
+   public void setRegret(double[] r) {
+       this.r = r;
+   }
         
     @Override
     public List<Action> getActions() {
