@@ -113,7 +113,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
 
                 if (cplex.getCplexStatus() == CplexStatus.Optimal) {
                     double v = cplex.getValue(v0);
-                    debugOutput.println("Ub: " + upperBound + " v: " + v);
+                    debugOutput.println("Ub: " + upperBound + " v: " + v + " comp v " + getUtility(createSolution(algConfig, leader, cplex), getRP(pureRP), algConfig));
                     assert v <= upperBound;
 //                    GeneralSumBestResponse br = new GeneralSumBestResponse(expander, followerIdx, players, algConfig, info);
 
