@@ -183,4 +183,8 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
         if (!utilityForSequenceCombination.containsKey(sequenceCombination)) return null;
         return utilityForSequenceCombination.get(sequenceCombination)[player.getId()];
     }
+
+    public Map<GameState, Double[]> getActualNonZeroUtilityValuesInLeafsSE() {
+        return actualNonZeroUtilityValuesInLeafs;
+    }
 }

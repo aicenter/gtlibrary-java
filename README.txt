@@ -43,7 +43,6 @@ Integration with other projects:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 package cz/agents/gtlibrary/algorithms/sequenceform/refinements/quasiperfect contains several files from GTF framework by Troels Bjerre Sorensen (http://www.itu.dk/people/trbj/gtf.html) 
 
-
 Main authors:
 ~~~~~~~~
 

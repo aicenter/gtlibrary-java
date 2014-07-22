@@ -90,7 +90,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
                 setValueForBRSlack(cplex, pureRP, 0);
                 updateObjective(cplex, v0, pureRP, algConfig);
 
-			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+//			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
                 startTime = System.currentTimeMillis();
                 debugOutput.println("Solving");
                 cplex.solve();

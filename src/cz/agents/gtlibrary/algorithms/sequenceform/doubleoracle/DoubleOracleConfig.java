@@ -233,9 +233,6 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 			} else
 				assert false;
 		}
-//        if (1 == (3 / (2 + 1))) {
-//            System.out.println("AAA");
-//        }
 	}
 
 	private void addToTempLeafsForSeqComb(GameState currentState) {
