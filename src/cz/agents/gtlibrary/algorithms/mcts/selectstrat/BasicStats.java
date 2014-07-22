@@ -31,7 +31,7 @@ import java.io.Serializable;
  * @author Vilo
  */
 public class BasicStats implements Serializable {
-	private int n = 0;
+	private long n = 0;
 	private double oldM;
 	private double newM;
 
@@ -54,7 +54,7 @@ public class BasicStats implements Serializable {
 		return (n > 0) ? newM : 0.0;
 	}
 
-	public int getNbSamples() {
+	public long getNbSamples() {
 		return n;
 	}
 

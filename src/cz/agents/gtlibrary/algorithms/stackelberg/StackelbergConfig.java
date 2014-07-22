@@ -21,8 +21,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.iinodes.ConfigImpl;
-import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
@@ -40,9 +39,6 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
 
     protected Map<GameState, Double[]> actualNonZeroUtilityValuesInLeafs = new HashMap<GameState, Double[]>();
     protected Map<Map<Player, Sequence>, Double[]> utilityForSequenceCombination = new HashMap<Map<Player, Sequence>, Double[]>();
-
-
-
     private GameState rootState;
 
     public StackelbergConfig(GameState rootState) {
@@ -54,28 +50,32 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
         return new PureRealizationPlanIterator(player, expander);
     }
 
+    public GameState getRootState() {
+        return rootState;
+    }
+
     public class PureRealizationPlanIterator implements Iterator<Set<Sequence>> {
 
         private boolean first = true;
         private Set<Sequence> currentSet;
-        private List<Pair<GameState, List<Action>>> stack;
+        private List<Pair<InformationSet, List<Action>>> stack;
         private Player player;
         private Expander<SequenceInformationSet> expander;
 
 
         public PureRealizationPlanIterator(Player player, Expander expander) {
-            this.currentSet = new HashSet<Sequence>();
+            this.currentSet = new HashSet<>();
             this.player = player;
-            this.stack = new ArrayList<Pair<GameState, List<Action>>>();
+            this.stack = new ArrayList<>();
             this.expander = expander;
             recursive(rootState);
         }
 
         private void recursive(GameState state) {
-            LinkedList<GameState> queue = new LinkedList<GameState>();
-            queue.add(state);
-            Set<InformationSet> assignedIS = new HashSet<InformationSet>();
+            ArrayDeque<GameState> queue = new ArrayDeque<>();
+            Set<InformationSet> assignedIS = new HashSet<>();
 
+            queue.add(state);
             while (queue.size() > 0) {
                 GameState currentState = queue.removeFirst();
 
@@ -85,16 +85,19 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
                 }
 
                 if (currentState.getPlayerToMove().equals(player)) {
-                    if (assignedIS.contains(getInformationSetFor(currentState)))
+                    InformationSet set = getInformationSetFor(currentState);
+
+                    if (assignedIS.contains(set))
                         continue;
-                    Pair<GameState, List<Action>> actionsInThisState = new Pair<GameState, List<Action>>(currentState, expander.getActions(currentState));
-                    stack.add(actionsInThisState);
-                    Action a = actionsInThisState.getRight().get(actionsInThisState.getRight().size() - 1);
-                    queue.add(currentState.performAction(a));
+                    Pair<InformationSet, List<Action>> actionsInThisSet = new Pair<>(set, expander.getActions(currentState));
+                    Action lastAction = actionsInThisSet.getRight().get(actionsInThisSet.getRight().size() - 1);
+
+                    stack.add(actionsInThisSet);
+                    queue.addLast(currentState.performAction(lastAction));
                     assignedIS.add(getInformationSetFor(currentState));
                 } else {
                     for (Action action : expander.getActions(currentState)) {
-                        queue.add(currentState.performAction(action));
+                        queue.addFirst(currentState.performAction(action));
                     }
                 }
             }
@@ -102,7 +105,7 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
 
         @Override
         public boolean hasNext() {
-            for (Pair<GameState, List<Action>> p : stack) {
+            for (Pair<InformationSet, List<Action>> p : stack) {
                 if (p.getRight().size() > 1)
                     return true;
             }
@@ -111,24 +114,31 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
 
         @Override
         public Set<Sequence> next() {
-            if (!hasNext()) throw new NoSuchElementException();
+            if (!hasNext())
+                throw new NoSuchElementException();
             if (first) {
                 first = false;
                 return currentSet;
             }
-            int index=stack.size()-1;
-            for (; index>=0; index--) {
-                Action lastAction = stack.get(index).getRight().remove(stack.get(index).getRight().size()-1);
-                Sequence removingSequence = stack.get(index).getLeft().performAction(lastAction).getSequenceFor(player);
-                currentSet.remove(removingSequence);
+            int index = stack.size() - 1;
+
+            for (; index >= 0; index--) {
+                Action lastAction = stack.get(index).getRight().remove(stack.get(index).getRight().size() - 1);
+                Sequence sequence = new ArrayListSequenceImpl(stack.get(index).getLeft().getPlayersHistory());
+
+                sequence.addLast(lastAction);
+                currentSet.remove(sequence);
                 if (!stack.get(index).getRight().isEmpty()) {
                     break;
                 }
+
             }
-            stack = stack.subList(0, index+1);
-            Pair<GameState, List<Action>> lastActions = stack.get(stack.size()-1);
-            GameState s = lastActions.getLeft().performAction(lastActions.getRight().get(lastActions.getRight().size()-1));
-            recursive(s);
+            stack.subList(index + 1, stack.size()).clear();
+            Pair<InformationSet, List<Action>> lastActions = stack.get(stack.size() - 1);
+
+            for (GameState state : lastActions.getLeft().getAllStates()) {
+                recursive(state.performAction(lastActions.getRight().get(lastActions.getRight().size() - 1)));
+            }
             return currentSet;
         }
 
@@ -136,6 +146,7 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
         public void remove() {
             throw new UnsupportedOperationException("Not implemented.");
         }
+
     }
 
     public void setUtility(GameState leaf) {
@@ -166,7 +177,7 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
 
         if (utilityForSequenceCombination.containsKey(activePlayerMap)) {
             Double[] storedUV = utilityForSequenceCombination.get(activePlayerMap);
-            for (int i=0; i<existingUtility.length; i++) {
+            for (int i = 0; i < existingUtility.length; i++) {
                 existingUtility[i] += storedUV[i];
             }
         }

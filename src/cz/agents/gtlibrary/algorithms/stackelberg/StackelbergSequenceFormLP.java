@@ -19,12 +19,13 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.stackelberg;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormLP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
+import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
+import cz.agents.gtlibrary.strategy.Strategy;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.CplexStatus;
@@ -38,15 +39,19 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
     private Player leader;
     private Player follower;
     private Player[] players;
+    private GameInfo info;
+    private Expander<SequenceInformationSet> expander;
 
     private IloRange leaderObj = null;
 
-    protected Map<Object, IloNumVar> slackVariables = new HashMap<Object, IloNumVar>();
+    protected Map<Object, IloNumVar> slackVariables = new HashMap<>();
 
 
-	public StackelbergSequenceFormLP(Player[] players) {
+    public StackelbergSequenceFormLP(Player[] players, GameInfo info, Expander<SequenceInformationSet> expander) {
         super(players);
         this.players = players;
+        this.info = info;
+        this.expander = expander;
     }
 
 
@@ -66,8 +71,12 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         follower = players[followerIdx];
 
         double maxValue = Double.NEGATIVE_INFINITY;
-        Set<Sequence> followerBR = new HashSet<Sequence>();
-        Map<Sequence, Double> leaderResult = new HashMap<Sequence, Double>();
+        int upperBoundCut = 0;
+        int feasibilityCut = 0;
+        int totalRPCount = 0;
+        int iteration = 0;
+        Set<Sequence> followerBR = new HashSet<>();
+        Map<Sequence, Double> leaderResult = new HashMap<>();
 
         try {
 
@@ -85,29 +94,71 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
             overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
 
             StackelbergConfig.PureRealizationPlanIterator i = algConfig.getIterator(follower, expander);
+//            System.out.println("LP prepared");
             while (i.hasNext()) {
                 Set<Sequence> pureRP = i.next();
+                System.out.println("-------------");
+                for (Sequence sequence : pureRP) {
+                    System.out.println(sequence);
+                }
+//                System.out.println("Pure rp obtained");
+                double upperBound = getUpperBound(pureRP, algConfig);
+
+//                System.out.println("Upper bound computed");
+                totalRPCount++;
+                if (maxValue == info.getMaxUtility()) {
+                    System.err.println("Max utility reached in iteration " + iteration);//TODO: max utility for both players
+                    break;
+                }
+                if (maxValue >= upperBound - 1e-7) {
+                    upperBoundCut++;
+                    continue;
+                }
                 setValueForBRSlack(cplex, pureRP, 0);
                 updateObjective(cplex, v0, pureRP, algConfig);
+                addBestValueConstraint(cplex, v0, maxValue + 1e-7);
 
-//			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+                cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
                 startTime = System.currentTimeMillis();
                 debugOutput.println("Solving");
                 cplex.solve();
                 overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
-                debugOutput.println("Status: " + cplex.getStatus());
+                debugOutput.println("Status: " + cplex.getCplexStatus());
 
                 if (cplex.getCplexStatus() == CplexStatus.Optimal) {
                     double v = cplex.getValue(v0);
-                    debugOutput.println("Best value is " + v + " for follower strategy: " + pureRP);
+
+                    System.err.println("v: " + v + ", ub: " + upperBound);
+                    System.out.println("*******************");
+                    for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+                        if (entry.getValue() > 0)
+                            debugOutput.println(entry);
+                    }
+                    System.err.println("Utility: " + getUtility(createSolution(algConfig, leader, cplex), getRP(pureRP), algConfig));
+                    assert v <= upperBound;
+//                    GeneralSumBestResponse br = new GeneralSumBestResponse(expander, followerIdx, players, algConfig, info);
+
+//                    System.err.println("br: " + br.calculateBR(algConfig.getRootState(), createSolution(algConfig, leader, cplex)));
+//                    debugOutput.println("Best value is " + v + " for follower strategy: ");
+//                    for (Sequence sequence : pureRP) {
+//                        debugOutput.println(sequence);
+//                    }
+//                    System.out.println("----------------");
+//                    for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+//                        if (entry.getValue() > 0)
+//                            debugOutput.println(entry);
+//                    }
                     if (v > maxValue) {
                         maxValue = v;
                         resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
                         followerBR = pureRP;
                         leaderResult = createSolution(algConfig, leader, cplex);
                     }
+                } else {
+                    feasibilityCut++;
                 }
                 setValueForBRSlack(cplex, pureRP, 1);
+                iteration++;
             }
         } catch (IloException e) {
             e.printStackTrace();
@@ -115,8 +166,68 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
 
         resultStrategies.put(leader, leaderResult);
         resultValues.put(leader, maxValue);
-
+        debugOutput.println("final result with value " + maxValue + ": ");
+        for (Map.Entry<Sequence, Double> entry : leaderResult.entrySet()) {
+            if (entry.getValue() > 0)
+                debugOutput.println(entry);
+        }
+        System.out.println("Upper bound cuts: " + upperBoundCut);
+        System.out.println("Feasibility cuts: " + feasibilityCut);
+        System.out.println("Total RP count: " + totalRPCount);
         return maxValue;
+    }
+
+    private double getUtility(Map<Sequence, Double> leaderStrategy, Map<Sequence, Double> followerStrategy, StackelbergConfig algConfig) {
+        UtilityCalculator calculator = new UtilityCalculator(algConfig.getRootState(), expander);
+        Strategy leaderStrat = new NoMissingSeqStrategy(leaderStrategy);
+        Strategy followerStrat = new NoMissingSeqStrategy(followerStrategy);
+
+        leaderStrat.sanityCheck(algConfig.getRootState(), expander);
+        if (leader.getId() == 0)
+            return calculator.computeUtility(leaderStrat, followerStrat);
+        else
+            return calculator.computeUtility(followerStrat, leaderStrat);
+    }
+
+    private double getUpperBound(Set<Sequence> pureRP, StackelbergConfig config) {
+        SQFBestResponseAlgorithm bestResponse = new GeneralSumBestResponse(expander, leader.getId(), players, config, info);
+
+        return bestResponse.calculateBR(config.getRootState(), getRP(pureRP));
+    }
+
+    private Map<Sequence, Double> getRP(Iterable<Sequence> sequences) {
+        Map<Sequence, Double> rp = new HashMap<>();
+
+        for (Sequence sequence : sequences) {
+            rp.put(sequence, 1d);
+        }
+        return rp;
+    }
+
+    private void addBestValueConstraint(IloCplex cplex, IloNumVar v0, double maxValue) throws IloException {
+        IloRange maxValueConstraint = constraints.get("maxVal");
+
+        if (maxValueConstraint == null) {
+            IloLinearNumExpr rowExpr = cplex.linearNumExpr();
+
+            rowExpr.addTerm(1, v0);
+            maxValueConstraint = cplex.addGe(rowExpr, maxValue);
+            constraints.put("maxVal", maxValueConstraint);
+        }
+        maxValueConstraint.setLB(maxValue);
+    }
+
+    protected Map<Object, Double> getSlackVariableValues(IloCplex cplex) {
+        Map<Object, Double> slackValues = new HashMap<>();
+
+        try {
+            for (Map.Entry<Object, IloNumVar> slackEntry : slackVariables.entrySet()) {
+                slackValues.put(slackEntry.getKey(), cplex.getValue(slackEntry.getValue()));
+            }
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+        return slackValues;
     }
 
     protected void createConstraintsForSequences(StackelbergConfig<SequenceInformationSet> algConfig, IloCplex cplex, Collection<Sequence> VConstraints) throws IloException {
@@ -165,7 +276,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
 
     protected IloNumExpr computeSumGR(IloCplex cplex, Sequence firstPlayerSequence, StackelbergConfig<SequenceInformationSet> algConfig, Player firstPlayer) throws IloException {
         IloNumExpr sumGR = cplex.constant(0);
-        HashSet<Sequence> secondPlayerSequences = new HashSet<Sequence>();
+        HashSet<Sequence> secondPlayerSequences = new HashSet<>();
 
         if (algConfig.getCompatibleSequencesFor(firstPlayerSequence) != null)
             secondPlayerSequences.addAll(algConfig.getCompatibleSequencesFor(firstPlayerSequence));
@@ -237,11 +348,13 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         }
     }
 
-    protected void updateObjective(IloCplex cplex, IloNumVar v0, Set<Sequence> bestResponse, StackelbergConfig<SequenceInformationSet> algConfig) throws IloException{
-        if (leaderObj != null) cplex.delete(leaderObj);
+    protected void updateObjective(IloCplex cplex, IloNumVar v0, Set<Sequence> bestResponse, StackelbergConfig<SequenceInformationSet> algConfig) throws IloException {
+        if (leaderObj != null)
+            cplex.delete(leaderObj);
         IloNumExpr sumG = cplex.constant(0);
+
         for (Sequence s : bestResponse) {
-            HashSet<Sequence> leaderCompSequences = new HashSet<Sequence>();
+            HashSet<Sequence> leaderCompSequences = new HashSet<>();
 
             if (algConfig.getCompatibleSequencesFor(s) != null)
                 leaderCompSequences.addAll(algConfig.getCompatibleSequencesFor(s));
@@ -257,6 +370,6 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
                 sumG = cplex.sum(sumG, cplex.prod(utility, prob));
             }
         }
-        leaderObj = cplex.addEq(cplex.diff(v0, sumG),0);
+        leaderObj = cplex.addEq(cplex.diff(v0, sumG), 0);
     }
 }
