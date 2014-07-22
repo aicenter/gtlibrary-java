@@ -43,6 +43,8 @@ public class SimpleGSExpander extends ExpanderImpl {
     @Override
     public List<Action> getActions(GameState gameState) {
         List<Action> result = new ArrayList<Action>(SimpleGSInfo.MAX_ACTIONS);
+        if (gameState.isGameEnd())
+            return result;
         for (int i=0; i<SimpleGSInfo.MAX_ACTIONS; i++) {
             result.add(new SimpleGSAction(getAlgorithmConfig().getInformationSetFor(gameState), i, gameState.getPlayerToMove()));
         }

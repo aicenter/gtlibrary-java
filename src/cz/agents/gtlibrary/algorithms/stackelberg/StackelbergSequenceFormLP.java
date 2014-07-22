@@ -29,7 +29,9 @@ import cz.agents.gtlibrary.strategy.Strategy;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.CplexStatus;
+import ilog.cplex.IloCplex.UnknownObjectException;
 
+import java.io.PrintStream;
 import java.util.*;
 
 public class StackelbergSequenceFormLP extends SequenceFormLP {
@@ -53,7 +55,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
     }
 
 
-    protected void resetModel(IloCplex cplex, Player player) throws IloException {
+    protected void resetModel(IloCplex cplex, Player player) throws IloException{
         cplex.clearModel();
         cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
         cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
@@ -77,6 +79,9 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         Map<Sequence, Double> leaderResult = new HashMap<>();
 
         try {
+
+
+
             IloCplex cplex = modelsForPlayers.get(leader);
             IloNumVar v0 = objectiveForPlayers.get(leader);
 
@@ -128,10 +133,10 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
                             debugOutput.println(entry);
                     }
                     if (v > maxValue) {
-                        leaderResult = createSolution(algConfig, leader, cplex);
                         maxValue = v;
-                        resultStrategies.put(leader, leaderResult);
+                        resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
                         followerBR = pureRP;
+                        leaderResult = createSolution(algConfig, leader, cplex);
                     }
                 } else {
                     feasibilityCut++;
@@ -337,6 +342,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
 
             if (algConfig.getCompatibleSequencesFor(s) != null)
                 leaderCompSequences.addAll(algConfig.getCompatibleSequencesFor(s));
+
             for (Sequence ls : leaderCompSequences) {
                 IloNumExpr prob = variables.get(ls);
 

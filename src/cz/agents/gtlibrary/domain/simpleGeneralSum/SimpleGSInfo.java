@@ -39,7 +39,7 @@ public class SimpleGSInfo implements GameInfo {
     public static Player PL0 = new PlayerImpl(0);
     public static Player PL1 = new PlayerImpl(1);
 
-    public static double[][] utilityMatrix = {{1,1},{1,2},{2,1},{0,0}};
+    public static double[][] utilityMatrix = {{3,1},{1,3},{2,1},{0,0}};
 
     @Override
     public double getMaxUtility() {

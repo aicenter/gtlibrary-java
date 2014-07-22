@@ -121,6 +121,7 @@ public class SimpleGSState extends GameStateImpl {
 
             hashCode = 1;
             hashCode = prime * hashCode + ((history == null) ? 0 : history.hashCode());
+            hashCode = prime * hashCode + playerToMove.getId();
             hashCodeChange = false;
         }
         return hashCode;
@@ -145,6 +146,6 @@ public class SimpleGSState extends GameStateImpl {
 
     @Override
     public String toString() {
-        return "SGS:"+ID+":D:"+depth;
+        return "SGS:"+ID+"PL:"+getPlayerToMove().getId()+":D:"+depth;
     }
 }

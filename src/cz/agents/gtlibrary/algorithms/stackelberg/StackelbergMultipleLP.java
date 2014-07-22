@@ -23,12 +23,10 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
-import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
 import cz.agents.gtlibrary.domain.pursuit.GenSumPursuitGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
-import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
@@ -58,10 +56,10 @@ import java.util.Map;
 public class StackelbergMultipleLP {
 
     public static void main(String[] args) {
-        runGenSumRandom();
+//        runGenSumRandom();
 //        runBPRG();
 //        runSGSG();
-//        runPEG();
+        runPEG();
 //        runStackTest();
     }
 
@@ -138,7 +136,7 @@ public class StackelbergMultipleLP {
         long start = threadBean.getCurrentThreadCpuTime();
         long overallSequenceGeneration = 0;
         long overallCPLEX = 0;
-        Map<Player, Map<Sequence, Double>> realizationPlans = new HashMap<Player, Map<Sequence, Double>>();
+        Map<Player, Map<Sequence, Double>> realizationPlans = new HashMap<>();
         long startGeneration = threadBean.getCurrentThreadCpuTime();
 
         generateCompleteGame();
@@ -148,7 +146,8 @@ public class StackelbergMultipleLP {
 
         Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
         long startCPLEX = threadBean.getCurrentThreadCpuTime();
-        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
+//        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
+        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, expander);
 
 //        Iterator i = algConfig.getIterator(rootState.getAllPlayers()[0], expander);
 //        while (i.hasNext()) {
