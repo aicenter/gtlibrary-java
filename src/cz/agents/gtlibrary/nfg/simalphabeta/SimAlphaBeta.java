@@ -1,3 +1,22 @@
+/*
+Copyright 2014 Faculty of Electrical Engineering at CTU in Prague
+
+This file is part of Game Theoretic Library.
+
+Game Theoretic Library is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Game Theoretic Library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
+
+
 package cz.agents.gtlibrary.nfg.simalphabeta;
 
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
@@ -47,13 +66,16 @@ public class SimAlphaBeta {
 //    public double gameValue = Double.NaN;
 
     public static void main(String[] args) {
-//		runGoofSpielWithNature();
+//		runGoofSpielWithNature(true,false,false,false);
 //		runGoofSpielWithNatureWithLocalCache();
-        runGoofSpielWithFixedNatureSequence(true, false, false, false, 7);
+//        runGoofSpielWithFixedNatureSequence(false, false, false, false, 7);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
-//	    runPursuit(true,true);
-//        runSimRandomGame(false, true, false, false);
-//        runOshiZumo(true,false,false,false);
+	    runPursuit(false,false,false,false);
+//        runSimRandomGame(false, false, false, false);
+//        runOshiZumo(false,false,false,false);
+//        runTron(false,false,false,false);
+//        Stats.getInstance().showSupportCounts();
+
     }
 
     public static void runGoofSpielWithFixedNatureSequence(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache, int depth) {
@@ -84,8 +106,8 @@ public class SimAlphaBeta {
 
     public static void runPursuit(boolean alphaBetaBounds, boolean doubleOracle, boolean sortingOwnActions, boolean useGlobalCache) {
         Stats.getInstance().startTime();
-        SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         GameInfo gameInfo = new PursuitGameInfo();
+        SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
         simAlphaBeta.runSimAlpabeta(new PursuitGameState(), new FastImprovedExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
         Stats.getInstance().stopTime();
         Stats.getInstance().printOverallInfo();
@@ -144,7 +166,7 @@ public class SimAlphaBeta {
                     new DOCacheImpl(),
                     new NatureCacheImpl(),
                     new LowerBoundComparatorFactory());
-//            System.out.println(data.gameInfo.getInfo());
+            System.out.println(data.gameInfo.getInfo());
             double beta = -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState);
             double alpha = data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState);
             DoubleOracle oracle = data.getDoubleOracle(rootState, beta, alpha);
@@ -156,9 +178,9 @@ public class SimAlphaBeta {
                 result = alpha;
             }
 
-//            System.out.println("****************");
-//			System.out.println("root state: " + rootState);
-//            System.out.println("game value: " + result);
+            System.out.println("****************");
+			System.out.println("root state: " + rootState);
+            System.out.println("game value: " + result);
 //            System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //            System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
         }
@@ -175,7 +197,7 @@ public class SimAlphaBeta {
                 new DOCacheImpl(),
                 new NatureCacheImpl(),
                 new LowerBoundComparatorFactory());
-//        System.out.println(data.gameInfo.getInfo());
+        System.out.println(data.gameInfo.getInfo());
         AlphaBeta p1AlphaBeta = abFactory.getP1AlphaBeta(expander, gameInfo);
         AlphaBeta p2AlphaBeta = abFactory.getP2AlphaBeta(expander, gameInfo);
         double p1ABBound = p1AlphaBeta.getUnboundedValue(rootState);
@@ -187,9 +209,9 @@ public class SimAlphaBeta {
             oracle.generate();
         if(Killer.kill)
             return null;
-//        System.out.println("****************");
-//		System.out.println("root state: " + rootState);
-//        System.out.println("game value: " + oracle.getGameValue());
+        System.out.println("****************");
+		System.out.println("root state: " + rootState);
+        System.out.println("game value: " + oracle.getGameValue());
 //        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
 //        gameValue = oracle.getGameValue();

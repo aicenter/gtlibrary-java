@@ -1,3 +1,22 @@
+/*
+Copyright 2014 Faculty of Electrical Engineering at CTU in Prague
+
+This file is part of Game Theoretic Library.
+
+Game Theoretic Library is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Game Theoretic Library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
+
+
 package cz.agents.gtlibrary.domain.goofspiel;
 
 import java.util.Arrays;
@@ -13,8 +32,8 @@ public class GSGameInfo implements GameInfo {
 	public static final Player NATURE = new PlayerImpl(2);
 
 	public static final Player[] ALL_PLAYERS = { FIRST_PLAYER, SECOND_PLAYER, NATURE };
-	public static int[] CARDS_FOR_PLAYER = new int[] { 1, 2, 3, 4, 5, 6/*, 7, 8, 9, 10, 11, 12, 13*/};
-	public static long seed = 20;
+	public static int[] CARDS_FOR_PLAYER = new int[] { 1, 2, 3, 4, 5/*, 6, 7, 8, 9, 10, 11, 12, 13*/};
+	public static long seed = 1;
 	public static boolean useFixedNatureSequence = true;
     public static boolean regenerateCards = false;
 	public static int depth = CARDS_FOR_PLAYER.length;

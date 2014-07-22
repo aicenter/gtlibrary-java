@@ -1,9 +1,32 @@
+/*
+Copyright 2014 Faculty of Electrical Engineering at CTU in Prague
+
+This file is part of Game Theoretic Library.
+
+Game Theoretic Library is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Game Theoretic Library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
+
+
 package cz.agents.gtlibrary.algorithms.runner;
 
 import cz.agents.gtlibrary.algorithms.mcts.*;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
@@ -30,6 +53,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBetaAlgorithm;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import java.util.ArrayDeque;
 
 import java.util.List;
 import java.util.Random;
@@ -42,7 +66,7 @@ public class SMJournalOnlineExperiments {
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
     static Expander expander;
     static Random rnd = new HighQualityRandom();
-    static int compTime = 5000;
+    static int compTime = 500;
     static boolean printDebugInfo = true;
 
     public static void main(String[] args) {
@@ -59,7 +83,7 @@ public class SMJournalOnlineExperiments {
 
 
         double sum = 0;
-        int iterationCount = 5;
+        int iterationCount = 1000;
 
         String newMatchesString = System.getProperty("MATCHES");
         if (newMatchesString != null)
@@ -166,6 +190,7 @@ public class SMJournalOnlineExperiments {
             sampSimDepth = new Integer(SSDString);
 
         if (alg.startsWith("MCTS")) {
+
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
 
@@ -175,10 +200,16 @@ public class SMJournalOnlineExperiments {
 
                 switch (alg) {
                     case "MCTS-UCT":
-                        fact = new UCTBackPropFactory(2*gameInfo.getMaxUtility(), random);
+                        String explorationString = System.getProperty("EXPL"+(posIndex+1));
+                        Double exploration = 2*gameInfo.getMaxUtility();
+                        if (explorationString != null) exploration = new Double(explorationString);
+                        fact = new UCTBackPropFactory(exploration, random);
                         break;
                     case "MCTS-EXP3":
-                        fact = new Exp3BackPropFactory(-1, 1, 0.2, random);
+                        explorationString = System.getProperty("EXPL"+(posIndex+1));
+                        exploration = 0.2d;
+                        if (explorationString != null) exploration = new Double(explorationString);
+                        fact = new Exp3BackPropFactory(-1, 1, exploration, random);
                         break;
                 }
                 ISMCTSAlgorithm player = new ISMCTSAlgorithm(
@@ -190,21 +221,27 @@ public class SMJournalOnlineExperiments {
                 player.runIterations(2);
                 return player;
             } else {
+                String explorationString = System.getProperty("EXPL"+(posIndex+1));
+                Double exploration = 0.1;
+                if (explorationString != null) exploration = new Double(explorationString);
                 Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
                 SMMCTSAlgorithm player = new SMMCTSAlgorithm(
                         rootState.getAllPlayers()[posIndex],
                         new DefaultSimulator(sampSimDepth,expander, random),
-                        new SMRMBackPropFactory(0.1, random),
+                        new SMRMBackPropFactory(exploration, random),
                         rootState, expander);
 
                 player.runIterations(2);
                 return player;
             }
         } else if (alg.equals("OOS")) {
+            String explorationString = System.getProperty("EXPL"+(posIndex+1));
+            Double exploration = 0.6;
+            if (explorationString != null) exploration = new Double(explorationString);
             loadGame(domain);
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
             Random random = ((MCTSConfig)expander.getAlgorithmConfig()).getRandom();
-            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(sampSimDepth, expander, random), rootState, expander, 0.6, random);
+            GamePlayingAlgorithm player = new SMOOSAlgorithm(rootState.getAllPlayers()[posIndex], new OOSSimulator(sampSimDepth, expander, random), rootState, expander, exploration, random);
 
             player.runMiliseconds(20);
             return player;
