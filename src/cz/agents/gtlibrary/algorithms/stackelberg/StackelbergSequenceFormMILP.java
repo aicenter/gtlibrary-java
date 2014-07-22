@@ -39,7 +39,6 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
     protected Map<Object, IloNumVar> slackVariables = new HashMap<Object, IloNumVar>();
     protected Map<Object, IloRange[]> slackConstraints = new HashMap<Object, IloRange[]>(); // constraints for slack variables and p(h)
     protected Expander expander;
-    protected Map<Sequence, GameState> pVariablesMapping = new HashMap<>(); // sequence_of_leader -> leaf
 
 	public StackelbergSequenceFormMILP(Player[] players, Expander expander) {
         super(players);
@@ -78,53 +77,27 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
             long startTime = System.currentTimeMillis();
             createVariables(cplex, algConfig);
             createConstraintsForSets(cplex, algConfig.getAllInformationSets().values());
-//            createConstraintsForStates(cplex, informationSets.get(follower));
             createConstraintsForStates(cplex, algConfig.getAllInformationSets().values());
-//            createConstraintsForLeaves(cplex, algConfig.getActualNonZeroUtilityValuesInLeafsSE());
             createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
             setObjective(cplex, v0, algConfig);
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
 
-//            StackelbergConfig.PureRealizationPlanIterator i = algConfig.getIterator(follower, expander);
-//            while (i.hasNext()) {
-//                Set<Sequence> pureRP = i.next();
-//                setValueForBRSlack(cplex, pureRP, 0);
-//                updateObjective(cplex, v0, pureRP, algConfig);
+//			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+            startTime = System.currentTimeMillis();
+            debugOutput.println("Solving");
+            cplex.solve();
+            overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
+            debugOutput.println("Status: " + cplex.getStatus());
 
-			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
-                startTime = System.currentTimeMillis();
-                debugOutput.println("Solving");
-                cplex.solve();
-                overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
-                debugOutput.println("Status: " + cplex.getStatus());
+            if (cplex.getCplexStatus() == CplexStatus.Optimal) {
+                double v = cplex.getValue(v0);
+                debugOutput.println("Best value is " + v );
 
-                if (cplex.getCplexStatus() == CplexStatus.Optimal) {
-                    double v = cplex.getValue(v0);
-                    debugOutput.println("Best value is " + v );
-                    for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
-                        try {
-                            debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-                        } catch (IloCplex.UnknownObjectException e) {
-                            continue;
-                        }
-                    }
-                    debugOutput.println("-------");
-                    for (Map.Entry<Object, IloNumVar> ee : slackVariables.entrySet()) {
-                        try {
-                            debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-                        } catch (IloCplex.UnknownObjectException e) {
-                            continue;
-                        }
-                    }
-
-//                    if (v > maxValue) {
-//                        maxValue = v;
-//                        resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
-//                        leaderResult = createSolution(algConfig, leader, cplex);
-//                    }
-                }
-//            }
+                maxValue = v;
+                resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
+                leaderResult = createSolution(algConfig, leader, cplex);
+            }
         } catch (IloException e) {
             e.printStackTrace();
         }
@@ -191,26 +164,6 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         return utility;
     }
 
-//    protected IloNumExpr computeSumGR(IloCplex cplex, Sequence firstPlayerSequence, StackelbergConfig<SequenceInformationSet> algConfig, Player firstPlayer) throws IloException {
-//        IloNumExpr sumGR = cplex.constant(0);
-//        HashSet<Sequence> secondPlayerSequences = new HashSet<Sequence>();
-//
-//        if (algConfig.getCompatibleSequencesFor(firstPlayerSequence) != null)
-//            secondPlayerSequences.addAll(algConfig.getCompatibleSequencesFor(firstPlayerSequence));
-//
-//        for (Sequence secondPlayerSequence : secondPlayerSequences) {
-//            if (!pVariablesMapping.containsKey(secondPlayerSequence)) continue;
-//            IloNumExpr prob = variables.get(pVariablesMapping.get(secondPlayerSequence));
-//
-//            if (prob == null)
-//                continue;
-//            Map<Player, Sequence> actions = createActions(firstPlayerSequence, secondPlayerSequence);
-//            double utility = getUtility(algConfig, actions, firstPlayer);
-//            sumGR = cplex.sum(sumGR, cplex.prod(utility, prob));
-//        }
-//        return sumGR;
-//    }
-
     protected IloNumExpr computeSumGR(IloCplex cplex, Sequence firstPlayerSequence, StackelbergConfig<SequenceInformationSet> algConfig, Player firstPlayer) throws IloException {
         IloNumExpr sumGR = cplex.constant(0);
         HashSet<Sequence> secondPlayerSequences = new HashSet<Sequence>();
@@ -272,40 +225,6 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
 
     }
 
-//    protected void setValueForBRSlack(IloCplex cplex, Set<Sequence> sequences, int value) throws IloException {
-//        for (Sequence s : sequences) {
-//            IloRange constraint = constraints.get(s);
-//            IloNumVar slack = slackVariables.get(s);
-//            if (constraint == null) {
-//                if (s.size() == 0) continue;
-//                assert false;
-//            }
-//            cplex.setLinearCoef(constraint, slack, -value);
-//        }
-//    }
-
-//    protected void updateObjective(IloCplex cplex, IloNumVar v0, Set<Sequence> bestResponse, StackelbergConfig<SequenceInformationSet> algConfig) throws IloException{
-//        if (leaderObj != null) cplex.delete(leaderObj);
-//        IloNumExpr sumG = cplex.constant(0);
-//        for (Sequence s : bestResponse) {
-//            HashSet<Sequence> leaderCompSequences = new HashSet<Sequence>();
-//
-//            if (algConfig.getCompatibleSequencesFor(s) != null)
-//                leaderCompSequences.addAll(algConfig.getCompatibleSequencesFor(s));
-//
-//            for (Sequence ls : leaderCompSequences) {
-//                IloNumExpr prob = variables.get(ls);
-//
-//                if (prob == null)
-//                    continue;
-//                Map<Player, Sequence> actions = createActions(ls, s);
-//                double utility = getUtility(algConfig, actions, leader);
-//
-//                sumG = cplex.sum(sumG, cplex.prod(utility, prob));
-//            }
-//        }
-//        leaderObj = cplex.addEq(cplex.diff(v0, sumG),0);
-//    }
 
     protected IloNumVar createIntegerVariableForSequence(IloCplex cplex, Sequence sequence) throws IloException {
         IloNumVar r = cplex.numVar(0, 1, IloNumVarType.Int, "R" + sequence.toString());
@@ -319,15 +238,11 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
     protected IloNumVar createStateProbVariable(IloCplex cplex, GameState state) throws IloException {
         IloNumVar p = cplex.numVar(0,1,IloNumVarType.Float, "P" + state.toString());
         variables.put(state, p);
-        if (state.isGameEnd()) {
-            pVariablesMapping.put(state.getSequenceFor(leader),state);
-        }
         return p;
     }
 
     protected void createConstraintsForSets(IloCplex cplex, Collection<SequenceInformationSet> RConstraints) throws IloException {
         for (SequenceInformationSet infoSet : RConstraints) {
-//            assert (infoSet.getPlayer().equals(follower));
             if (constraints.containsKey(infoSet)) {
                 cplex.delete(constraints.get(infoSet));
                 constraints.remove(infoSet);
@@ -348,7 +263,6 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
                     cplex.delete(constraints.get(state));
                     constraints.remove(state);
                 }
-//                createConstraintForState(cplex, state);
                 createBoundConstraintsForState(cplex, state);
             }
         }
@@ -362,29 +276,6 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         IloRange cL = cplex.addLe(cplex.diff(LS, RSL), 0, "LBC:L:"+state);
         slackConstraints.put(state,new IloRange[]{cF, cL});
     }
-
-//    protected void createConstraintForState(IloCplex cplex, GameState state) throws IloException {
-//        IloNumExpr sumL = cplex.constant(0);
-//
-//        List<Action> applicableActions = expander.getActions(state);
-//        if (applicableActions.isEmpty()) return; // there are no actions -- leaf
-//
-//        for (Action a : applicableActions) {
-//            GameState successor = state.performAction(a);
-//            IloNumVar va = variables.get(successor);
-//            if (va == null) continue;
-//            sumL = cplex.sum(sumL, va);
-//        }
-//
-//        IloNumExpr sumR = variables.get(state);
-//
-//        if (sumR == null)
-//            return;
-//
-//        IloRange constrain = cplex.addEq(cplex.diff(sumL, sumR), 0, "CON:" + state.toString());
-//
-//        constraints.put(state, constrain);
-//    }
 
     protected void createSlackConstraintForSequence(IloCplex cplex, Sequence sequence) throws IloException{
         IloNumVar LS = slackVariables.get(sequence);
@@ -402,9 +293,4 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         leaderObj = cplex.addEq(cplex.diff(v0, sumG),0);
     }
 
-    protected void createConstraintsForLeaves(IloCplex cplex, Map<GameState, Double[]> map) throws IloException{
-        for (GameState s : map.keySet()) {
-            createBoundConstraintsForState(cplex, s);
-        }
-    }
 }
