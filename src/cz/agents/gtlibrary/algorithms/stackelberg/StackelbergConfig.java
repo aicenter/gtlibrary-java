@@ -35,7 +35,7 @@ import java.util.*;
  * Time: 2:50 PM
  * To change this template use File | Settings | File Templates.
  */
-public class StackelbergConfig<I extends SequenceInformationSet> extends SequenceFormConfig<I> {
+public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet> {
 
     protected Map<GameState, Double[]> actualNonZeroUtilityValuesInLeafs = new HashMap<GameState, Double[]>();
     protected Map<Map<Player, Sequence>, Double[]> utilityForSequenceCombination = new HashMap<Map<Player, Sequence>, Double[]>();
@@ -80,7 +80,7 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
                 GameState currentState = queue.removeFirst();
 
                 if (currentState.isGameEnd()) {
-                    currentSet.addAll(currentState.getHistory().getSequenceOf(player).getAllPrefixes());
+                    currentSet.addAll(currentState.getSequenceFor(player).getAllPrefixes());
                     continue;
                 }
 
@@ -93,14 +93,22 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
                     Action lastAction = actionsInThisSet.getRight().get(actionsInThisSet.getRight().size() - 1);
 
                     stack.add(actionsInThisSet);
-                    queue.addLast(currentState.performAction(lastAction));
+                    addToQueue(queue, currentState.performAction(lastAction));
                     assignedIS.add(getInformationSetFor(currentState));
                 } else {
                     for (Action action : expander.getActions(currentState)) {
-                        queue.addFirst(currentState.performAction(action));
+                        addToQueue(queue, currentState.performAction(action));
                     }
                 }
             }
+
+        }
+
+        private void addToQueue(ArrayDeque<GameState> queue, GameState state) {
+            if (state.getPlayerToMove().equals(player))
+                queue.addLast(state);
+            else
+                queue.addFirst(state);
         }
 
         @Override
@@ -136,7 +144,7 @@ public class StackelbergConfig<I extends SequenceInformationSet> extends Sequenc
             stack.subList(index + 1, stack.size()).clear();
             Pair<InformationSet, List<Action>> lastActions = stack.get(stack.size() - 1);
 
-            for (GameState state : lastActions.getLeft().getAllStates()) {
+            for (GameState state : lastActions.getLeft().getAllStates()) {//mam zaručený že se takhle updatně i IS ve stejný vrstvě? podle mě ne
                 recursive(state.performAction(lastActions.getRight().get(lastActions.getRight().size() - 1)));
             }
             return currentSet;

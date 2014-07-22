@@ -14,7 +14,7 @@ public class PursuitGameInfo implements GameInfo {
 	public static int evaderStart = 0;
 	public static int p1Start = 7;
 	public static int p2Start = 11;
-	public static int depth = 4;
+	public static int depth = 3;
     public static double patrollerMoveCost = 0.5/depth;//0 for zero sum game
 	public static boolean forceMoves = true;
     public static boolean randomizeStartPositions = true;

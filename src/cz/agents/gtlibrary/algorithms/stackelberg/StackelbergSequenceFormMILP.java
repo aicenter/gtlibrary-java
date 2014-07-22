@@ -108,7 +108,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         return maxValue;
     }
 
-    protected void createConstraintsForSequences(StackelbergConfig<SequenceInformationSet> algConfig, IloCplex cplex, Collection<Sequence> VConstraints) throws IloException {
+    protected void createConstraintsForSequences(StackelbergConfig algConfig, IloCplex cplex, Collection<Sequence> VConstraints) throws IloException {
         for (Sequence firstPlayerSequence : VConstraints) {
             if (constraints.containsKey(firstPlayerSequence)) {
                 cplex.delete(constraints.get(firstPlayerSequence));
@@ -123,7 +123,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         }
     }
 
-    protected void createVariables(IloCplex model, StackelbergConfig<SequenceInformationSet> algConfig) throws IloException {
+    protected void createVariables(IloCplex model, StackelbergConfig algConfig) throws IloException {
         for (Sequence sequence : algConfig.getAllSequences()) {
             if (variables.containsKey(sequence)) continue;
             if (sequence.getPlayer().equals(leader)) {
@@ -155,7 +155,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         return s;
     }
 
-    protected static double getUtility(StackelbergConfig<SequenceInformationSet> algConfig, Map<Player, Sequence> sequenceCombination, Player firstPlayer) {
+    protected static double getUtility(StackelbergConfig algConfig, Map<Player, Sequence> sequenceCombination, Player firstPlayer) {
         Double utility = algConfig.getUtilityFor(sequenceCombination, firstPlayer);
 
         if (utility == null) {
@@ -164,7 +164,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         return utility;
     }
 
-    protected IloNumExpr computeSumGR(IloCplex cplex, Sequence firstPlayerSequence, StackelbergConfig<SequenceInformationSet> algConfig, Player firstPlayer) throws IloException {
+    protected IloNumExpr computeSumGR(IloCplex cplex, Sequence firstPlayerSequence, StackelbergConfig algConfig, Player firstPlayer) throws IloException {
         IloNumExpr sumGR = cplex.constant(0);
         HashSet<Sequence> secondPlayerSequences = new HashSet<Sequence>();
 
@@ -183,7 +183,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         return sumGR;
     }
 
-    protected void createConstraintForSequence(IloCplex cplex, Sequence firstPlayerSequence, StackelbergConfig<SequenceInformationSet> algConfig) throws IloException {
+    protected void createConstraintForSequence(IloCplex cplex, Sequence firstPlayerSequence, StackelbergConfig algConfig) throws IloException {
         Player firstPlayer = firstPlayerSequence.getPlayer();
         InformationSet informationSet = firstPlayerSequence.getLastInformationSet();
         IloNumExpr VI = null;
@@ -284,7 +284,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         slackConstraints.put(sequence,new IloRange[]{c,null});
     }
 
-    protected void setObjective(IloCplex cplex, IloNumVar v0, StackelbergConfig<SequenceInformationSet> algConfig) throws IloException{
+    protected void setObjective(IloCplex cplex, IloNumVar v0, StackelbergConfig algConfig) throws IloException{
         if (leaderObj != null) cplex.delete(leaderObj);
         IloNumExpr sumG = cplex.constant(0);
         for (Map.Entry<GameState, Double[]> e : algConfig.getActualNonZeroUtilityValuesInLeafsSE().entrySet()) {
