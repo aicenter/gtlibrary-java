@@ -21,7 +21,7 @@ public class RandomGameState extends SimultaneousGameState {
 
     protected int ID;
     protected int center;
-    private Player playerToMove;
+    protected Player playerToMove;
     protected Map<Player, ArrayList<Integer>> observations = new FixedSizeMap<Player, ArrayList<Integer>>(2);
 
     private int hash = 0;
@@ -48,9 +48,9 @@ public class RandomGameState extends SimultaneousGameState {
     }
 
     protected void evaluateAction(RandomGameAction action) {
-        assert false; //FIXME !!! the following center modification works for simultaneous-move only, but it does not make sense to use it this way for general II EFG
+//        assert false; //FIXME !!! the following center modification works for simultaneous-move only, but it does not make sense to use it this way for general II EFG
         int newID = (ID + action.getOrder()) * 31 + 17;
-        if (getPlayerToMove().getId() == 1)
+//        if (getPlayerToMove().getId() == 1)
             center += new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_CENTER_MODIFICATION * 2 + 1) - RandomGameInfo.MAX_CENTER_MODIFICATION;
 //        int newID = (ID + action.getOrder()) * 31 + 17;
 //        Random r = new HighQualityRandom(rootID+ISKey.getLeft());

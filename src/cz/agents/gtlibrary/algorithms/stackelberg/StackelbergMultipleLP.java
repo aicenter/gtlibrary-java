@@ -5,9 +5,20 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
+import cz.agents.gtlibrary.domain.pursuit.GenSumPursuitGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
+import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.simpleGeneralSum.SimpleGSExpander;
 import cz.agents.gtlibrary.domain.simpleGeneralSum.SimpleGSInfo;
 import cz.agents.gtlibrary.domain.simpleGeneralSum.SimpleGSState;
+import cz.agents.gtlibrary.domain.stacktest.StackTestExpander;
+import cz.agents.gtlibrary.domain.stacktest.StackTestGameInfo;
+import cz.agents.gtlibrary.domain.stacktest.StackTestGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
@@ -15,7 +26,6 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -47,16 +57,26 @@ public class StackelbergMultipleLP {
     }
 
     public static void main(String[] args) {
-//        runBPG();
-        runSGSG();
+        runGenSumRandom();
+//        runBPRG();
+//        runSGSG();
+//        runPEG();
+//        runStackTest();
     }
 
+    public static void runGenSumRandom() {
+        GameState rootState = new GeneralSumRandomGameState();
+        GameInfo gameInfo = new RandomGameInfo();
+        StackelbergConfig<SequenceInformationSet> algConfig = new StackelbergConfig<SequenceInformationSet>(rootState);
+        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, new RandomGameExpander<>(algConfig), gameInfo, algConfig);
+        smlp.generate();
+    }
 
     public static void runBPG() {
-        GameState rootState = new BPGGameState();
+        GameState rootState = new GenSumBPGGameState();
         BPGGameInfo gameInfo = new BPGGameInfo();
         StackelbergConfig<SequenceInformationSet> algConfig = new StackelbergConfig<SequenceInformationSet>(rootState);
-        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, new BPGExpander<SequenceInformationSet>(algConfig), gameInfo, algConfig);
+        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, new BPGExpander<>(algConfig), gameInfo, algConfig);
         smlp.generate();
     }
 
@@ -69,6 +89,29 @@ public class StackelbergMultipleLP {
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
         smlp.generate();
         new GambitEFG().write("simpleGSG.gbt", rootState, expander);
+    }
+
+    public static void runPEG() {
+        GameInfo gameInfo = new PursuitGameInfo();
+        GameState rootState = new GenSumPursuitGameState();
+        StackelbergConfig<SequenceInformationSet> algConfig = new StackelbergConfig<SequenceInformationSet>(rootState);
+        Expander expander = new PursuitExpander(algConfig);
+
+        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
+        smlp.generate();
+        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
+    }
+
+    public static void runStackTest() {
+        GameInfo gameInfo = new StackTestGameInfo();
+        GameState rootState = new StackTestGameState();
+        StackelbergConfig<SequenceInformationSet> algConfig = new StackelbergConfig<SequenceInformationSet>(rootState);
+        Expander expander = new StackTestExpander(algConfig);
+
+        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
+        smlp.generate();
+        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
+
     }
 
     private Map<Player, Map<Sequence, Double>> generate() {
@@ -87,16 +130,16 @@ public class StackelbergMultipleLP {
         System.out.println("Information set count: " + algConfig.getAllInformationSets().size());
         overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
 
-        Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };
+        Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
         long startCPLEX = threadBean.getCurrentThreadCpuTime();
-        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers);
+        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
 
 //        Iterator i = algConfig.getIterator(rootState.getAllPlayers()[0], expander);
 //        while (i.hasNext()) {
 //            System.out.println(i.next());
 //        }
 
-        sequenceFormLP.calculateLeaderStrategies(0,1,algConfig,expander);
+        sequenceFormLP.calculateLeaderStrategies(1, 0, algConfig, expander);
 
         long thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX) / 1000000l;
 
@@ -109,7 +152,7 @@ public class StackelbergMultipleLP {
         System.out.println("done.");
         long finishTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
 
-        int[] support_size = new int[] { 0, 0 };
+        int[] support_size = new int[]{0, 0};
         for (Player player : actingPlayers) {
             for (Sequence sequence : realizationPlans.get(player).keySet()) {
                 if (realizationPlans.get(player).get(sequence) > 0) {
@@ -136,6 +179,7 @@ public class StackelbergMultipleLP {
         System.out.println("final BR time: " + 0);
         System.out.println("final RGB time: " + 0);
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
+        System.out.println("final IS count: " + algConfig.getAllInformationSets().size());
 
         if (DEBUG) {
             // sanity check -> calculation of Full BR on the solution of SQF LP
