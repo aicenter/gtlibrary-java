@@ -1,14 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package cz.agents.gtlibrary.algorithms.cfr;
+package cz.agents.gtlibrary.algorithms.cfr.generalsum;
 
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
@@ -16,8 +11,6 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.domain.ir.leftright.LRExpander;
-import cz.agents.gtlibrary.domain.ir.leftright.LRGameState;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLExpander;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
@@ -26,6 +19,10 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
+import cz.agents.gtlibrary.domain.stacktest.StackTestExpander;
+import cz.agents.gtlibrary.domain.stacktest.StackTestGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
@@ -34,15 +31,16 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
-/**
- * @author vilo
- */
-public class CFRISAlgorithm implements GamePlayingAlgorithm {
+public class CFRISGenSumAlg implements GamePlayingAlgorithm {
 
     public static void main(String[] args) {
-         runKuhnPoker();
+//         runKuhnPoker();
+//        runStackTest();
+           runPursuit();
 //        runGenericPoker();
 //        runML();
     }
@@ -50,7 +48,23 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
     private static void runML() {
         GameState rootState = new MLGameState();
         Expander<MCTSInformationSet> cfrExpander1 = new MLExpander<>(new MCTSConfig());
-        CFRISAlgorithm cfr = new CFRISAlgorithm(rootState.getAllPlayers()[0], rootState, cfrExpander1);
+        CFRISGenSumAlg cfr = new CFRISGenSumAlg(rootState.getAllPlayers()[0], rootState, cfrExpander1);
+
+        cfr.runMiliseconds(10000);
+    }
+
+    private static void runPursuit() {
+        GameState rootState = new PursuitGameState();
+        Expander<MCTSInformationSet> cfrExpander1 = new PursuitExpander<>(new MCTSConfig());
+        CFRISGenSumAlg cfr = new CFRISGenSumAlg(rootState.getAllPlayers()[0], rootState, cfrExpander1);
+
+        cfr.runMiliseconds(10000);
+    }
+
+    private static void runStackTest() {
+        GameState rootState = new StackTestGameState();
+        Expander<MCTSInformationSet> cfrExpander1 = new StackTestExpander<>(new MCTSConfig());
+        CFRISGenSumAlg cfr = new CFRISGenSumAlg(rootState.getAllPlayers()[0], rootState, cfrExpander1);
 
         cfr.runMiliseconds(10000);
     }
@@ -58,53 +72,17 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
     private static void runKuhnPoker() {
         GameState rootState = new KuhnPokerGameState();
         Expander<MCTSInformationSet> cfrExpander1 = new KuhnPokerExpander<>(new MCTSConfig());
-        Expander<MCTSInformationSet> cfrExpander2 = new KuhnPokerExpander<>(new MCTSConfig());
-        Expander<SequenceInformationSet> brExpander = new KuhnPokerExpander<>(new SequenceFormConfig<>());
-        FullSequenceEFG efg = new FullSequenceEFG(rootState, brExpander, new KPGameInfo(), (SequenceFormConfig<SequenceInformationSet>) brExpander.getAlgorithmConfig());
+        CFRISGenSumAlg cfr = new CFRISGenSumAlg(rootState.getAllPlayers()[0], rootState, cfrExpander1);
 
-        efg.generateCompleteGame();
-        CFRISAlgorithm cfr = new CFRISAlgorithm(rootState.getAllPlayers()[0], rootState, cfrExpander1);
-
-        cfr.runMiliseconds(10000);
-        Strategy p1Strategy = StrategyCollector.getStrategyFor(rootState, rootState.getAllPlayers()[0], new MeanStratDist(), cfr.informationSets, cfrExpander1);
-
-        p1Strategy.sanityCheck(rootState, brExpander);
-        cfr = new CFRISAlgorithm(rootState.getAllPlayers()[1], rootState, cfrExpander2);
-        cfr.runMiliseconds(10000);
-        Strategy p2Strategy = StrategyCollector.getStrategyFor(rootState, rootState.getAllPlayers()[1], new MeanStratDist(), cfr.informationSets, cfrExpander2);
-
-        p2Strategy.sanityCheck(rootState, brExpander);
-        UtilityCalculator calculator = new UtilityCalculator(rootState, brExpander);
-
-        System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
-        System.out.println(p1Strategy);
-        System.out.println(p2Strategy);
+        cfr.runMiliseconds(10000);;
     }
 
     private static void runGenericPoker() {
         GameState rootState = new GenericPokerGameState();
         Expander<MCTSInformationSet> cfrExpander1 = new GenericPokerExpander<>(new MCTSConfig());
-        Expander<MCTSInformationSet> cfrExpander2 = new GenericPokerExpander<>(new MCTSConfig());
-        Expander<SequenceInformationSet> brExpander = new GenericPokerExpander<>(new SequenceFormConfig<>());
-        FullSequenceEFG efg = new FullSequenceEFG(rootState, brExpander, new GPGameInfo(), (SequenceFormConfig<SequenceInformationSet>) brExpander.getAlgorithmConfig());
-
-        efg.generateCompleteGame();
-        CFRISAlgorithm cfr = new CFRISAlgorithm(rootState.getAllPlayers()[0], rootState, cfrExpander1);
+        CFRISGenSumAlg cfr = new CFRISGenSumAlg(rootState.getAllPlayers()[0], rootState, cfrExpander1);
 
         cfr.runMiliseconds(10000);
-        Strategy p1Strategy = StrategyCollector.getStrategyFor(rootState, rootState.getAllPlayers()[0], new MeanStratDist(), cfr.informationSets, cfrExpander1);
-
-        p1Strategy.sanityCheck(rootState, brExpander);
-        cfr = new CFRISAlgorithm(rootState.getAllPlayers()[1], rootState, cfrExpander2);
-        cfr.runMiliseconds(10000);
-        Strategy p2Strategy = StrategyCollector.getStrategyFor(rootState, rootState.getAllPlayers()[1], new MeanStratDist(), cfr.informationSets, cfrExpander2);
-
-        p2Strategy.sanityCheck(rootState, brExpander);
-        UtilityCalculator calculator = new UtilityCalculator(rootState, brExpander);
-
-        System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
-        System.out.println(p1Strategy);
-        System.out.println(p2Strategy);
     }
 
     protected Player searchingPlayer;
@@ -117,7 +95,7 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
     protected HashMap<Pair<Integer, Sequence>, MCTSInformationSet> informationSets = new HashMap<>();
     protected boolean firstIteration = true;
 
-    public CFRISAlgorithm(Player searchingPlayer, GameState rootState, Expander expander) {
+    public CFRISGenSumAlg(Player searchingPlayer, GameState rootState, Expander expander) {
         this.searchingPlayer = searchingPlayer;
         this.rootState = rootState;
         this.expander = expander;
@@ -129,10 +107,10 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
     public Action runMiliseconds(int miliseconds){
         int iters=0;
         long start = threadBean.getCurrentThreadCpuTime();
-        while ((threadBean.getCurrentThreadCpuTime()-start)/1e6 < miliseconds) {
-            System.out.println(iteration(rootState, 1, 1, rootState.getAllPlayers()[0]));
+        for (;(threadBean.getCurrentThreadCpuTime()-start)/1e6 < miliseconds;) {
+            System.out.println(Arrays.toString(iteration(rootState, 1, 1, rootState.getAllPlayers()[0])));
             iters++;
-            System.out.println(iteration(rootState, 1, 1, rootState.getAllPlayers()[1]));
+            System.out.println(Arrays.toString(iteration(rootState, 1, 1, rootState.getAllPlayers()[1])));
             iters++;
         }
         firstIteration = false;
@@ -148,13 +126,13 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
      * @param expPlayer the exploring player for this iteration
      * @return iteration game value is actually returned. Other return values are in global x and l
      */
-    protected double iteration(GameState node, double pi1, double pi2, Player expPlayer){
-        if (pi1==0 && pi2==0) return 0;
-        if (node.isGameEnd()) {
-            return node.getUtilities()[expPlayer.getId()];
-        }
-
+    protected double[] iteration(GameState node, double pi1, double pi2, Player expPlayer){
+        if (pi1==0 && pi2==0)
+            return new double[]{0, 0};
+        if (node.isGameEnd())
+            return node.getUtilities();
         MCTSInformationSet is = informationSets.get(node.getISKeyForPlayerToMove());
+
         if (is == null) {
             is = config.createInformationSetFor(node);
             config.addInformationSetFor(node, is);
@@ -169,21 +147,26 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
         List<Action> actions = data.getActions();
 
         if (node.isPlayerToMoveNature()) {
-            double ev=0;
+            double[] ev = new double[2];
+
             for (Action ai : actions){
                 ai.setInformationSet(is);
+
                 final double p = node.getProbabilityOfNatureFor(ai);
                 double new_p1 = expPlayer.getId()==1 ? pi1 * p : pi1;
                 double new_p2 = expPlayer.getId()==0 ? pi2 * p : pi2;
                 GameState newState = node.performAction(ai);
-                ev += p*iteration(newState, new_p1, new_p2, expPlayer);
+                double[] tempValues = iteration(newState, new_p1, new_p2, expPlayer);
+
+                ev[0] += p*tempValues[0];
+                ev[1] += p*tempValues[1];
             }
             return ev;
         }
 
         double[] rmProbs = getStrategy(data, node);
-        double[] tmpV = new double[rmProbs.length];
-        double ev=0;
+        double[][] tmpV = new double[rmProbs.length][2];
+        double[] ev = new double[2];
 
         int i=-1;
         for (Action ai : actions){
@@ -195,7 +178,8 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
             }  else {
                 tmpV[i]=iteration(newState, pi1, rmProbs[i] * pi2, expPlayer);
             }
-            ev += rmProbs[i]*tmpV[i];
+            ev[0] += rmProbs[i]*tmpV[i][0];
+            ev[1] += rmProbs[i]*tmpV[i][1];
         }
         if (is.getPlayer().equals(expPlayer)) {
             update(node, pi1, pi2, expPlayer, data, rmProbs, tmpV, ev);
@@ -208,14 +192,20 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
         return new OOSAlgorithmData(expander.getActions(node));
     }
 
-    protected void update(GameState state, double pi1, double pi2, Player expPlayer, OOSAlgorithmData data, double[] rmProbs, double[] tmpV, double ev) {
+    protected void update(GameState state, double pi1, double pi2, Player expPlayer, OOSAlgorithmData data, double[] rmProbs, double[][] tmpV, double[] ev) {
+        double[] expPlayerVals = getExpPlayerValues(expPlayer, tmpV);
+        
+        data.updateAllRegrets(expPlayerVals, ev[expPlayer.getId()], (expPlayer.getId() == 0 ? pi2 : pi1)/*pi1*pi2*/);
+        data.updateMeanStrategy(rmProbs, (expPlayer.getId() == 0 ? pi1 : pi2)/*pi1*pi2*/);
+    }
+
+    private double[] getExpPlayerValues(Player expPlayer, double[][] tmpV) {
         double[] expPlayerVals = new double[tmpV.length];
 
-        for (int i = 0; i < tmpV.length; i++) {
-            expPlayerVals[i] = tmpV[i];
+        for (int i = 0; i < expPlayerVals.length; i++) {
+            expPlayerVals[i] = tmpV[i][expPlayer.getId()];
         }
-        data.updateAllRegrets(tmpV, ev, (expPlayer.getId() == 0 ? pi2 : pi1)/*pi1*pi2*/);
-        data.updateMeanStrategy(rmProbs, (expPlayer.getId() == 0 ? pi1 : pi2)/*pi1*pi2*/);
+        return expPlayerVals;
     }
 
     protected double[] getStrategy(OOSAlgorithmData data, GameState state) {
