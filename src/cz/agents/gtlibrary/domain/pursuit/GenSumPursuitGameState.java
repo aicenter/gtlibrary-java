@@ -15,8 +15,8 @@ public class GenSumPursuitGameState extends PursuitGameState {
     @Override
     protected double[] getEndGameUtilities() {
         if (isCaughtInNode() || isCaughtOnEdge())
-            return new double[]{-1, 1 - getSequenceFor(PursuitGameInfo.PATROLLER).size()*PursuitGameInfo.patrollerMoveCost};
-        return new double[]{1, -1};
+            return new double[]{-1, 2 - getSequenceFor(PursuitGameInfo.PATROLLER).size()*PursuitGameInfo.patrollerMoveCost};
+        return new double[]{1, 0};
     }
 
     @Override

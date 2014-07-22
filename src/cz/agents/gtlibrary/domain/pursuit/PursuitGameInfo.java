@@ -21,7 +21,7 @@ public class PursuitGameInfo implements GameInfo {
 
     @Override
 	public double getMaxUtility() {
-		return 1;
+		return 2;
 	}
 
 	@Override
