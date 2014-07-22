@@ -57,24 +57,6 @@ import java.util.Map;
  */
 public class StackelbergMultipleLP {
 
-    private GameState rootState;
-    private Expander<SequenceInformationSet> expander;
-    private GameInfo gameConfig;
-    private StackelbergConfig<SequenceInformationSet> algConfig;
-
-    private PrintStream debugOutput = System.out;
-    final private static boolean DEBUG = false;
-    private ThreadMXBean threadBean;
-
-    private double gameValue = Double.NaN;
-
-    public StackelbergMultipleLP(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo gameInfo, StackelbergConfig<SequenceInformationSet> algConfig) {
-        this.rootState = rootState;
-        this.expander = expander;
-        this.gameConfig = gameInfo;
-        this.algConfig = algConfig;
-    }
-
     public static void main(String[] args) {
         runGenSumRandom();
 //        runBPRG();
@@ -86,54 +68,69 @@ public class StackelbergMultipleLP {
     public static void runGenSumRandom() {
         GameState rootState = new GeneralSumRandomGameState();
         GameInfo gameInfo = new RandomGameInfo();
-        StackelbergConfig<SequenceInformationSet> algConfig = new StackelbergConfig<SequenceInformationSet>(rootState);
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, new RandomGameExpander<>(algConfig), gameInfo, algConfig);
-        smlp.generate();
+        smlp.generate(rootState.getAllPlayers()[0]);
     }
 
     public static void runBPG() {
         GameState rootState = new GenSumBPGGameState();
         BPGGameInfo gameInfo = new BPGGameInfo();
-        StackelbergConfig<SequenceInformationSet> algConfig = new StackelbergConfig<SequenceInformationSet>(rootState);
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, new BPGExpander<>(algConfig), gameInfo, algConfig);
-        smlp.generate();
+        smlp.generate(rootState.getAllPlayers()[1]);
     }
 
     public static void runSGSG() {
         SimpleGSInfo gameInfo = new SimpleGSInfo();
         GameState rootState = new SimpleGSState(gameInfo.getAllPlayers());
-        StackelbergConfig<SequenceInformationSet> algConfig = new StackelbergConfig<SequenceInformationSet>(rootState);
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander expander = new SimpleGSExpander(algConfig);
 
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
-        smlp.generate();
+        smlp.generate(rootState.getAllPlayers()[0]);
         new GambitEFG().write("simpleGSG.gbt", rootState, expander);
     }
 
     public static void runPEG() {
         GameInfo gameInfo = new PursuitGameInfo();
         GameState rootState = new GenSumPursuitGameState();
-        StackelbergConfig<SequenceInformationSet> algConfig = new StackelbergConfig<SequenceInformationSet>(rootState);
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander expander = new PursuitExpander(algConfig);
 
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
-        smlp.generate();
-        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
+        smlp.generate(rootState.getAllPlayers()[1]);
     }
 
     public static void runStackTest() {
         GameInfo gameInfo = new StackTestGameInfo();
         GameState rootState = new StackTestGameState();
-        StackelbergConfig<SequenceInformationSet> algConfig = new StackelbergConfig<SequenceInformationSet>(rootState);
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander expander = new StackTestExpander(algConfig);
 
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
-        smlp.generate();
-        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
-
+        smlp.generate(rootState.getAllPlayers()[0]);
     }
 
-    private Map<Player, Map<Sequence, Double>> generate() {
+    private GameState rootState;
+    private Expander<SequenceInformationSet> expander;
+    private GameInfo gameConfig;
+    private StackelbergConfig algConfig;
+
+    private PrintStream debugOutput = System.out;
+    final private static boolean DEBUG = false;
+    private ThreadMXBean threadBean;
+
+    private double gameValue = Double.NaN;
+
+    public StackelbergMultipleLP(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo gameInfo, StackelbergConfig algConfig) {
+        this.rootState = rootState;
+        this.expander = expander;
+        this.gameConfig = gameInfo;
+        this.algConfig = algConfig;
+    }
+
+    private Map<Player, Map<Sequence, Double>> generate(Player leader) {
         debugOutput.println("Full Sequence Multiple LP Stackelberg");
         debugOutput.println(gameConfig.getInfo());
         threadBean = ManagementFactory.getThreadMXBean();
@@ -158,7 +155,7 @@ public class StackelbergMultipleLP {
 //            System.out.println(i.next());
 //        }
 
-        sequenceFormLP.calculateLeaderStrategies(1, 0, algConfig, expander);
+        sequenceFormLP.calculateLeaderStrategies(leader.getId(), 1 - leader.getId(), algConfig, expander);
 
         long thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX) / 1000000l;
 
@@ -188,7 +185,7 @@ public class StackelbergMultipleLP {
         } catch (InterruptedException e) {
         }
 
-        gameValue = sequenceFormLP.getResultForPlayer(actingPlayers[0]);
+        gameValue = sequenceFormLP.getResultForPlayer(leader);
         System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
         System.out.println("final result:" + gameValue);
