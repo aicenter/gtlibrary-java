@@ -86,13 +86,30 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
             debugOutput.println("Solving");
             cplex.solve();
             overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
-            debugOutput.println("Status: " + cplex.getStatus());
+            debugOutput.println("Status: " + cplex.getCplexStatus());
 
-            if (cplex.getCplexStatus() == CplexStatus.Optimal) {
+            if (cplex.getCplexStatus() == CplexStatus.Optimal || cplex.getCplexStatus() == CplexStatus.OptimalTol) {
                 double v = cplex.getValue(v0);
                 debugOutput.println("Best value is " + v);
 
                 maxValue = v;
+
+//                for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
+//                    try {
+//                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
+//                    } catch (IloCplex.UnknownObjectException e) {
+//                        continue;
+//                    }
+//                }
+//                debugOutput.println("-------");
+//                for (Map.Entry<Object, IloNumVar> ee : slackVariables.entrySet()) {
+//                    try {
+//                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
+//                    } catch (IloCplex.UnknownObjectException e) {
+//                        continue;
+//                    }
+//                }
+
                 resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
                 leaderResult = createSolution(algConfig, leader, cplex);
                 for (Map.Entry<Sequence, Double> entry : resultStrategies.get(leader).entrySet()) {
@@ -104,9 +121,9 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
                     if (entry.getValue() > 0)
                         System.out.println(entry);
                 }
-                UtilityCalculator calculator = new UtilityCalculator(algConfig.getRootState(), expander);
-
-                System.out.println(calculator.computeUtility(new NoMissingSeqStrategy(createSolution(algConfig, follower, cplex)), new NoMissingSeqStrategy(resultStrategies.get(leader))));
+//                UtilityCalculator calculator = new UtilityCalculator(algConfig.getRootState(), expander);
+//
+//                System.out.println(calculator.computeUtility(new NoMissingSeqStrategy(createSolution(algConfig, follower, cplex)), new NoMissingSeqStrategy(resultStrategies.get(leader))));
             }
         } catch (IloException e) {
             e.printStackTrace();
@@ -228,10 +245,11 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
             IloNumVar slack = slackVariables.get(firstPlayerSequence);
             IloRange con = cplex.addEq(cplex.diff(cplex.diff(cplex.diff(VI, sumV), sumGR), slack), 0, "CON:" + firstPlayerSequence.toString());
             constraints.put(firstPlayerSequence, con);
-        } else {
-            IloRange con = cplex.addEq(cplex.diff(cplex.diff(VI, sumV), sumGR), 0, "CON:" + firstPlayerSequence.toString());
-            constraints.put(firstPlayerSequence, con);
         }
+
+//        IloRange con = cplex.addGe(cplex.diff(cplex.diff(VI, sumV), sumGR), 0, "CON2:" + firstPlayerSequence.toString());
+//        constraints.put(firstPlayerSequence, con);
+//        }
 
     }
 
@@ -289,7 +307,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
 
     protected void createSlackConstraintForSequence(IloCplex cplex, Sequence sequence) throws IloException {
         IloNumVar LS = slackVariables.get(sequence);
-        IloNumExpr RS = cplex.prod(Integer.MAX_VALUE, cplex.diff(1, variables.get(sequence)));
+        IloNumExpr RS = cplex.prod(10, cplex.diff(1, variables.get(sequence)));
         IloRange c = cplex.addLe(cplex.diff(LS, RS), 0, "SLC:" + sequence);
         slackConstraints.put(sequence, new IloRange[]{c, null});
     }
@@ -297,10 +315,13 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
     protected void setObjective(IloCplex cplex, IloNumVar v0, StackelbergConfig algConfig) throws IloException {
         if (leaderObj != null) cplex.delete(leaderObj);
         IloNumExpr sumG = cplex.constant(0);
+        IloNumExpr sumP = cplex.constant(0);
         for (Map.Entry<GameState, Double[]> e : algConfig.getActualNonZeroUtilityValuesInLeafsSE().entrySet()) {
             sumG = cplex.sum(sumG, cplex.prod(e.getKey().getNatureProbability(), cplex.prod(e.getValue()[leader.getId()], variables.get(e.getKey()))));
+            sumP = cplex.sum(sumP, variables.get(e.getKey()));
         }
         leaderObj = cplex.addEq(cplex.diff(v0, sumG), 0);
+        cplex.addEq(sumP,1);
     }
 
 }
