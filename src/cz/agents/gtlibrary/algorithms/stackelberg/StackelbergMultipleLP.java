@@ -56,10 +56,10 @@ import java.util.Map;
 public class StackelbergMultipleLP {
 
     public static void main(String[] args) {
-//        runGenSumRandom();
+        runGenSumRandom();
 //        runBPRG();
 //        runSGSG();
-        runPEG();
+//        runPEG();
 //        runStackTest();
     }
 
@@ -67,8 +67,10 @@ public class StackelbergMultipleLP {
         GameState rootState = new GeneralSumRandomGameState();
         GameInfo gameInfo = new RandomGameInfo();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
-        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, new RandomGameExpander<>(algConfig), gameInfo, algConfig);
+        Expander expander =  new RandomGameExpander<>(algConfig);
+        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
         smlp.generate(rootState.getAllPlayers()[0]);
+        new GambitEFG().write("randomGame.gbt", rootState, expander);
     }
 
     public static void runBPG() {
@@ -145,9 +147,11 @@ public class StackelbergMultipleLP {
         overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
 
         Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
+        System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
+
         long startCPLEX = threadBean.getCurrentThreadCpuTime();
-        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
-//        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, expander);
+//        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
+        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, expander);
 
 //        Iterator i = algConfig.getIterator(rootState.getAllPlayers()[0], expander);
 //        while (i.hasNext()) {
