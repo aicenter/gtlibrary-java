@@ -28,6 +28,8 @@ import ilog.concert.*;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.CplexStatus;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class StackelbergSequenceFormMILP extends SequenceFormLP {
@@ -42,10 +44,14 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
     protected Map<Object, IloRange[]> slackConstraints = new HashMap<Object, IloRange[]>(); // constraints for slack variables and p(h)
     protected Expander expander;
 
+    private ThreadMXBean threadBean;
+
+
     public StackelbergSequenceFormMILP(Player[] players, Expander expander) {
         super(players);
         this.players = players;
         this.expander = expander;
+        this.threadBean = ManagementFactory.getThreadMXBean();
     }
 
 
@@ -72,20 +78,20 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
             IloCplex cplex = modelsForPlayers.get(leader);
             IloNumVar v0 = objectiveForPlayers.get(leader);
 
-            long startTime = System.currentTimeMillis();
+            long startTime = threadBean.getCurrentThreadCpuTime();
             createVariables(cplex, algConfig);
             createConstraintsForSets(cplex, algConfig.getAllInformationSets().values());
             createConstraintsForStates(cplex, algConfig.getAllInformationSets().values());
             createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
             setObjective(cplex, v0, algConfig);
             debugOutput.println("phase 1 done");
-            overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
+            overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
-//			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
-            startTime = System.currentTimeMillis();
+			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+            startTime = threadBean.getCurrentThreadCpuTime();
             debugOutput.println("Solving");
             cplex.solve();
-            overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
+            overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
             debugOutput.println("Status: " + cplex.getCplexStatus());
 
             if (cplex.getCplexStatus() == CplexStatus.Optimal || cplex.getCplexStatus() == CplexStatus.OptimalTol) {
@@ -110,17 +116,17 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
 //                    }
 //                }
 
-                resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
-                leaderResult = createSolution(algConfig, leader, cplex);
-                for (Map.Entry<Sequence, Double> entry : resultStrategies.get(leader).entrySet()) {
-                    if (entry.getValue() > 0)
-                        System.out.println(entry);
-                }
-                System.out.println("*********");
-                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, cplex).entrySet()) {
-                    if (entry.getValue() > 0)
-                        System.out.println(entry);
-                }
+//                resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
+//                leaderResult = createSolution(algConfig, leader, cplex);
+//                for (Map.Entry<Sequence, Double> entry : resultStrategies.get(leader).entrySet()) {
+//                    if (entry.getValue() > 0)
+//                        System.out.println(entry);
+//                }
+//                System.out.println("*********");
+//                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, cplex).entrySet()) {
+//                    if (entry.getValue() > 0)
+//                        System.out.println(entry);
+//                }
 //                UtilityCalculator calculator = new UtilityCalculator(algConfig.getRootState(), expander);
 //
 //                System.out.println(calculator.computeUtility(new NoMissingSeqStrategy(createSolution(algConfig, follower, cplex)), new NoMissingSeqStrategy(resultStrategies.get(leader))));

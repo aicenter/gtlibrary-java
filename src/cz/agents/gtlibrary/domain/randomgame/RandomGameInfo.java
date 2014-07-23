@@ -36,7 +36,7 @@ public class RandomGameInfo implements GameInfo {
     public static int MAX_DEPTH = 2;
     public static int MAX_BF = 2;
     public static int MAX_OBSERVATION = 2;
-    public static int MAX_UTILITY = 1;
+    public static int MAX_UTILITY = 3;
     public static boolean BINARY_UTILITY = false;
     public static boolean UTILITY_CORRELATION = false;
     public static int MAX_CENTER_MODIFICATION = 1;

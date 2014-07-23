@@ -56,10 +56,10 @@ import java.util.Map;
 public class StackelbergMultipleLP {
 
     public static void main(String[] args) {
-//        runGenSumRandom();
+        runGenSumRandom();
 //        runBPRG();
 //        runSGSG();
-        runPEG();
+//        runPEG();
 //        runStackTest();
     }
 
@@ -147,6 +147,7 @@ public class StackelbergMultipleLP {
         overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
 
         Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
+        System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         long startCPLEX = threadBean.getCurrentThreadCpuTime();
 //        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
         StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, expander);
@@ -193,6 +194,8 @@ public class StackelbergMultipleLP {
         System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
         System.out.println("final time: " + finishTime);
         System.out.println("final CPLEX time: " + overallCPLEX);
+        System.out.println("final CPLEX building time: " + sequenceFormLP.getOverallConstraintGenerationTime() / 1000000l);
+        System.out.println("final CPLEX solving time: " + sequenceFormLP.getOverallConstraintLPSolvingTime() / 1000000l);
         System.out.println("final BR time: " + 0);
         System.out.println("final RGB time: " + 0);
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
