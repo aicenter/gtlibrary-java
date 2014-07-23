@@ -67,8 +67,9 @@ public class StackelbergMultipleLP {
         GameState rootState = new GeneralSumRandomGameState();
         GameInfo gameInfo = new RandomGameInfo();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
-        Expander expander =  new RandomGameExpander<>(algConfig);
+        Expander expander = new RandomGameExpander<>(algConfig);
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
+
         smlp.generate(rootState.getAllPlayers()[0]);
         new GambitEFG().write("randomGame.gbt", rootState, expander);
     }
@@ -89,7 +90,7 @@ public class StackelbergMultipleLP {
 
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
         smlp.generate(rootState.getAllPlayers()[0]);
-        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
+//        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
     }
 
     public static void runPEG() {
