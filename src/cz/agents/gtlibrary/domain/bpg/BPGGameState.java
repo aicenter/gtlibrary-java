@@ -37,36 +37,40 @@ import cz.agents.gtlibrary.utils.graph.Node;
 
 public class BPGGameState extends GameStateImpl {
 
-	private static final long serialVersionUID = 7703160415991328955L;
+	protected static final long serialVersionUID = 7703160415991328955L;
 	
-	private BorderPatrollingGraph graph;
-	private Player playerToMove;
-	private Node attackerPosition;
-	private Node p1Position;
-	private Node p2Position;
+	protected BorderPatrollingGraph graph;
+	protected Player playerToMove;
+	protected Node attackerPosition;
+	protected Node p1Position;
+	protected Node p2Position;
 
-	private Set<Node> flaggedNodesObservedByPatroller;
-	private Set<Node> flaggedNodes;
+	protected Set<Node> flaggedNodesObservedByPatroller;
+	protected Set<Node> flaggedNodes;
 
-	private boolean slowAttackerMovement;
+	protected boolean slowAttackerMovement;
 
 	public final static int ATTACKER_WINS = 1;
 	public final static int OPEN_POSITION = 0;
 
-	private int hashCode = -1;
-	private Pair<Integer, Sequence> key;
+	protected int hashCode = -1;
+	protected Pair<Integer, Sequence> key;
 
 	public BPGGameState() {
-		super(BPGGameInfo.ALL_PLAYERS);
-		slowAttackerMovement = false;
-		playerToMove = BPGGameInfo.ATTACKER;
-		graph = new BorderPatrollingGraph(BPGGameInfo.graphFile);
-		flaggedNodesObservedByPatroller = new HashSet<Node>();
-		flaggedNodes = new HashSet<Node>();
-		attackerPosition = graph.getOrigin();
-		p1Position = graph.getP1Start();
-		p2Position = graph.getP2Start();
+		this(new BorderPatrollingGraph(BPGGameInfo.graphFile));
 	}
+
+    public BPGGameState(BorderPatrollingGraph graph) {
+        super(BPGGameInfo.ALL_PLAYERS);
+        slowAttackerMovement = false;
+        playerToMove = BPGGameInfo.ATTACKER;
+        this.graph = graph;
+        flaggedNodesObservedByPatroller = new HashSet<Node>();
+        flaggedNodes = new HashSet<Node>();
+        attackerPosition = graph.getOrigin();
+        p1Position = graph.getP1Start();
+        p2Position = graph.getP2Start();
+    }
 
 	public BPGGameState(BPGGameState gameState) {
 		super(gameState);
@@ -120,7 +124,7 @@ public class BPGGameState extends GameStateImpl {
 		playerToMove = BPGGameInfo.ATTACKER;
 	}
 
-	private void clearCache() {
+	protected void clearCache() {
 		hashCode = -1;
 		key = null;
 	}
@@ -131,13 +135,11 @@ public class BPGGameState extends GameStateImpl {
 			PatrollerAction patrollerAction = (PatrollerAction) history.getSequenceOf(BPGGameInfo.DEFENDER).getLast();
 			AttackerAction attackerAction = (AttackerAction) history.getSequenceOf(BPGGameInfo.ATTACKER).getLast();
 
-			if (isCaught(patrollerAction, attackerAction)) {
+			if (isCaught(patrollerAction, attackerAction))
 				return new double[] { -ATTACKER_WINS, ATTACKER_WINS };
-			}
 		}
-		if (attackerPosition.equals(graph.getDestination())) {
-			return new double[] { ATTACKER_WINS, -ATTACKER_WINS };
-		}
+		if (attackerPosition.equals(graph.getDestination()))
+            return new double[]{ATTACKER_WINS, -ATTACKER_WINS};
 		return new double[] { OPEN_POSITION, OPEN_POSITION };
 	}
 
@@ -157,15 +159,15 @@ public class BPGGameState extends GameStateImpl {
         return new Rational[] { new Rational(OPEN_POSITION), new Rational(OPEN_POSITION) };
     }
 
-	private boolean caughtOnEdgeByP1(PatrollerAction patrollerAction, AttackerAction attackerAction) {
+	protected boolean caughtOnEdgeByP1(PatrollerAction patrollerAction, AttackerAction attackerAction) {
 		return patrollerAction.getFromNodeForP1().equals(attackerAction.getToNode()) && patrollerAction.getToNodeForP1().equals(attackerAction.getFromNode());
 	}
 
-	private boolean caughtOnEdgeByP2(PatrollerAction patrollerAction, AttackerAction attackerAction) {
+	protected boolean caughtOnEdgeByP2(PatrollerAction patrollerAction, AttackerAction attackerAction) {
 		return patrollerAction.getFromNodeForP2().equals(attackerAction.getToNode()) && patrollerAction.getToNodeForP2().equals(attackerAction.getFromNode());
 	}
 
-	private boolean caughtInNode(PatrollerAction patrollerAction, AttackerAction attackerAction) {
+	protected boolean caughtInNode(PatrollerAction patrollerAction, AttackerAction attackerAction) {
 		return patrollerAction.getToNodeForP1().equals(attackerAction.getToNode()) || patrollerAction.getToNodeForP2().equals(attackerAction.getToNode());
 	}
 
@@ -185,7 +187,7 @@ public class BPGGameState extends GameStateImpl {
 		return isCaught(patrollerAction, attackerAction);
 	}
 
-	private boolean isCaught(PatrollerAction patrollerAction, AttackerAction attackerAction) {
+	protected boolean isCaught(PatrollerAction patrollerAction, AttackerAction attackerAction) {
 		return caughtInNode(patrollerAction, attackerAction) || caughtOnEdgeByP1(patrollerAction, attackerAction) || caughtOnEdgeByP2(patrollerAction, attackerAction);
 	}
 

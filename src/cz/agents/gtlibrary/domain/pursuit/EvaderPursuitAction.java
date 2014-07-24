@@ -90,7 +90,7 @@ public class EvaderPursuitAction extends ActionImpl {
 
 	@Override
 	public String toString() {
-		return "E: [" + origin + "->" + destination + "]";
+		return "E: "+ informationSet.getAllStates().iterator().next() + " [" + origin + "->" + destination + "]";
 	}
 
 }

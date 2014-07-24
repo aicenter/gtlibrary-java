@@ -34,16 +34,16 @@ import java.util.List;
 
 public class PursuitGameState extends SimultaneousGameState {
 
-    private static final long serialVersionUID = -1158263262570332115L;
+    protected static final long serialVersionUID = -1158263262570332115L;
 
-    private List<Action> sequence;
-    private PursuitGraph graph;
-    private Node evaderPosition;
-    private Node p1Position;
-    private Node p2Position;
-    private int currentPlayerIndex;
-    private int round;
-    private int hashCode = -1;
+    protected List<Action> sequence;
+    protected PursuitGraph graph;
+    protected Node evaderPosition;
+    protected Node p1Position;
+    protected Node p2Position;
+    protected int currentPlayerIndex;
+    protected int round;
+    protected int hashCode = -1;
 
     public PursuitGameState() {
         super(PursuitGameInfo.ALL_PLAYERS);
@@ -96,11 +96,11 @@ public class PursuitGameState extends SimultaneousGameState {
         hashCode = -1;
     }
 
-    private void switchPlayers() {
+    protected void switchPlayers() {
         currentPlayerIndex = 1 - currentPlayerIndex;
     }
 
-    private void endRound() {
+    protected void endRound() {
         addActionsToSequence();
         if (isCaughtInNode() || isCaughtOnEdge()) {
             round = PursuitGameInfo.depth;
@@ -109,27 +109,27 @@ public class PursuitGameState extends SimultaneousGameState {
         round++;
     }
 
-    private void addActionsToSequence() {
+    protected void addActionsToSequence() {
         sequence.add(getSequenceFor(players[0]).getLast());
         sequence.add(getSequenceFor(players[1]).getLast());
     }
 
-    private boolean isCaughtOnEdge() {
+    protected boolean isCaughtOnEdge() {
         EvaderPursuitAction lastEvaderAction = (EvaderPursuitAction) getSequenceFor(PursuitGameInfo.EVADER).getLast();
         PatrollerPursuitAction lastPatrollerAction = (PatrollerPursuitAction) getSequenceFor(PursuitGameInfo.PATROLLER).getLast();
 
         return caughtByP1(lastEvaderAction, lastPatrollerAction) || caughtByP2(lastEvaderAction, lastPatrollerAction);
     }
 
-    private boolean caughtByP2(EvaderPursuitAction lastEvaderAction, PatrollerPursuitAction lastPatrollerAction) {
+    protected boolean caughtByP2(EvaderPursuitAction lastEvaderAction, PatrollerPursuitAction lastPatrollerAction) {
         return lastEvaderAction.getOrigin().equals(lastPatrollerAction.getP2Destination()) && lastEvaderAction.getDestination().equals(lastPatrollerAction.getP2Origin());
     }
 
-    private boolean caughtByP1(EvaderPursuitAction lastEvaderAction, PatrollerPursuitAction lastPatrollerAction) {
+    protected boolean caughtByP1(EvaderPursuitAction lastEvaderAction, PatrollerPursuitAction lastPatrollerAction) {
         return lastEvaderAction.getOrigin().equals(lastPatrollerAction.getP1Destination()) && lastEvaderAction.getDestination().equals(lastPatrollerAction.getP1Origin());
     }
 
-    private boolean isCaughtInNode() {
+    protected boolean isCaughtInNode() {
         return evaderPosition.equals(p1Position) || evaderPosition.equals(p2Position);
     }
 

@@ -289,7 +289,7 @@ public class SQFBestResponseAlgorithm {
         for (Action act : actionsToExplore) {
             Action action = act;
 
-            GameState newState = (GameState) state.performAction(action);
+            GameState newState = state.performAction(action);
 
             double natureProb = newState.getNatureProbability(); // TODO extract these probabilities from selection Map
             Double oppRP = getOpponentRealizationPlan().get(newState.getHistory().getSequenceOf(players[opponentPlayerIndex]));

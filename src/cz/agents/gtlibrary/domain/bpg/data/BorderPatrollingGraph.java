@@ -22,14 +22,16 @@ package cz.agents.gtlibrary.domain.bpg.data;
 import cz.agents.gtlibrary.utils.graph.Graph;
 import cz.agents.gtlibrary.utils.graph.Node;
 
+import java.util.Map;
+
 public class BorderPatrollingGraph extends Graph {
 
-	private static final long serialVersionUID = -5572263962229886222L;
+	protected static final long serialVersionUID = -5572263962229886222L;
 	
-	private Node origin;
-	private Node destination;
-	private Node p1Start;
-	private Node p2Start;
+	protected Node origin;
+	protected Node destination;
+	protected Node p1Start;
+	protected Node p2Start;
 
     public BorderPatrollingGraph(String graphFile) {
         super(graphFile);
@@ -43,6 +45,7 @@ public class BorderPatrollingGraph extends Graph {
 		destination = allNodes.get("ID" + (n - 3));
 		p1Start = allNodes.get("ID" + (n - 2));
 		p2Start = allNodes.get("ID" + (n - 1));
+
 	}
 
 	public Node getOrigin() {
@@ -60,6 +63,7 @@ public class BorderPatrollingGraph extends Graph {
 	public Node getP2Start() {
 		return p2Start;
 	}
+
     public Node getNodeByID(int ID) {
         return allNodes.get("ID" + ID);
     }
