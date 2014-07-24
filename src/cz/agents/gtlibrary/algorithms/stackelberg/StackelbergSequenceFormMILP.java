@@ -34,17 +34,17 @@ import java.util.*;
 
 public class StackelbergSequenceFormMILP extends SequenceFormLP {
 
-    private Player leader;
-    private Player follower;
-    private Player[] players;
+    protected Player leader;
+    protected Player follower;
+    protected Player[] players;
 
-    private IloRange leaderObj = null;
+    protected IloRange leaderObj = null;
 
     protected Map<Object, IloNumVar> slackVariables = new HashMap<Object, IloNumVar>();
     protected Map<Object, IloRange[]> slackConstraints = new HashMap<Object, IloRange[]>(); // constraints for slack variables and p(h)
     protected Expander expander;
 
-    private ThreadMXBean threadBean;
+    protected ThreadMXBean threadBean;
 
 
     public StackelbergSequenceFormMILP(Player[] players, Expander expander) {
@@ -81,7 +81,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
             long startTime = threadBean.getCurrentThreadCpuTime();
             createVariables(cplex, algConfig);
             createConstraintsForSets(cplex, algConfig.getAllInformationSets().values());
-            createConstraintsForStates(cplex, algConfig.getAllInformationSets().values());
+            createConstraintsForStates(cplex, algConfig.getActualNonZeroUtilityValuesInLeafsSE().keySet());
             createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
             setObjective(cplex, v0, algConfig);
             debugOutput.println("phase 1 done");
@@ -166,11 +166,13 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
                 createSlackVariableForSequence(model, sequence);
             }
         }
+
+        for (GameState gs : algConfig.getActualNonZeroUtilityValuesInLeafsSE().keySet()) {
+            createStateProbVariable(model, gs);
+        }
+
         for (SequenceInformationSet informationSet : algConfig.getAllInformationSets().values()) {
             if (!variables.containsKey(informationSet)) {
-                for (GameState gs : informationSet.getAllStates()) {
-                    createStateProbVariable(model, gs);
-                }
                 if (informationSet.getPlayer().equals(leader)) {
                     //nothing
                 } else {
@@ -285,9 +287,10 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         }
     }
 
-    protected void createConstraintsForStates(IloCplex cplex, Collection<SequenceInformationSet> infoSets) throws IloException {
-        for (SequenceInformationSet infoSet : infoSets) {
-            for (GameState state : infoSet.getAllStates()) {
+    protected void createConstraintsForStates(IloCplex cplex, Collection<GameState> states) throws IloException {
+//        for (SequenceInformationSet infoSet : infoSets) {
+//            for (GameState state : infoSet.getAllStates()) {
+            for (GameState state : states) {
                 if (slackConstraints.containsKey(state)) {
                     cplex.delete(slackConstraints.get(state)[0]);
                     cplex.delete(slackConstraints.get(state)[1]);
@@ -299,7 +302,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
                 }
                 createBoundConstraintsForState(cplex, state);
             }
-        }
+//        }
     }
 
     protected void createBoundConstraintsForState(IloCplex cplex, GameState state) throws IloException {
