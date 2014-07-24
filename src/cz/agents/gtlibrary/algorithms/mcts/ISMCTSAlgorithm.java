@@ -75,6 +75,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
 
     @Override
     public Action runMiliseconds(int miliseconds) {
+        if (giveUp) return null;
         int iters = 0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
@@ -84,6 +85,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
         System.out.println();
         System.out.println("ISMCTS Iters: " + iters);
+        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
@@ -144,9 +146,11 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
     }
 
+    private boolean giveUp=false;
     @Override
     public void setCurrentIS(InformationSet curIS) {
         MCTSInformationSet currentIS = (MCTSInformationSet) curIS;
+        if (currentIS.getAllNodes().size()==0) giveUp=true;
         curISArray = currentIS.getAllNodes().toArray(new InnerNode[currentIS.getAllNodes().size()]);
         rootNode = curISArray[0];
         for (InnerNode n : curISArray)

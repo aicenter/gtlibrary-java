@@ -37,7 +37,7 @@ public class RMBackPropFactory implements BackPropFactory  {
     double gamma = 0.2;
     Random random = new Random();
 
-    private double minUtility=0;
+    private double minUtility=-1;
     private double maxUtility=1;
 
     public RMBackPropFactory(double minUtility, double maxUtility, double gamma) {

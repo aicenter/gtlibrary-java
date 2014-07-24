@@ -37,7 +37,7 @@ public class MeanStratDist implements Distribution {
 		Map<Action, Double> distribution = new FixedSizeMap<Action, Double>(stat.getActions().size());
 
                 int i=0;
-		for (Action a : stat.getActions()) distribution.put(a, mp[i++]/sum);
+		for (Action a : stat.getActions()) distribution.put(a, sum == 0 ? 1.0/mp.length : mp[i++]/sum);
                 
 		return distribution;
 	}
