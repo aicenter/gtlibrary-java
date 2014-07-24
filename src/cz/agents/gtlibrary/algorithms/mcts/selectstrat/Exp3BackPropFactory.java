@@ -50,7 +50,7 @@ public class Exp3BackPropFactory implements BackPropFactory  {
 
 
     public Exp3BackPropFactory(double minUtility, double maxUtility, double gamma, boolean storeExploration) {
-        this(minUtility, maxUtility, gamma, storeExploration, new Random());
+        this(minUtility, maxUtility, gamma, storeExploration, new HighQualityRandom());
     }
 
     public Exp3BackPropFactory(double minUtility, double maxUtility, double gamma, boolean storeExploration, Random random) {
@@ -59,7 +59,7 @@ public class Exp3BackPropFactory implements BackPropFactory  {
     }
 
     public Exp3BackPropFactory(double minUtility, double maxUtility, double gamma) {
-        this(minUtility, maxUtility, gamma, new Random());
+        this(minUtility, maxUtility, gamma, new HighQualityRandom());
     }
     
     public Exp3BackPropFactory(double minUtility, double maxUtility, double gamma, Random random) {

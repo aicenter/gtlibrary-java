@@ -43,6 +43,7 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
+
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -51,6 +52,7 @@ import cz.agents.gtlibrary.utils.Pair;
 import java.io.PrintStream;
 import java.util.*;
 import org.apache.commons.lang3.StringUtils;
+import org.jacop.examples.scala.Steiner;
 
 /**
  *
@@ -58,7 +60,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class IIGMCTSMatch {
         private static Random rnd = new HighQualityRandom();
-        private static int MCTS_MILISECONDS_PER_CALL = (int)1000;
+        private static int MCTS_MILISECONDS_PER_CALL = (int)10000;
 	private static PrintStream out = System.out;
     
         
@@ -78,12 +80,18 @@ public class IIGMCTSMatch {
         
         static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
         static Expander<SequenceInformationSet> sfExpander;
+        //static Strategy[] rationalStrategy = new Strategy[2];
         public static void setupIIGoofSpielExpl(){
             setupIIGoofSpiel();
             sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
             sfExpander = new GoofSpielExpander<SequenceInformationSet>(sfAlgConfig);
             FullSequenceEFG efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
             efg.generateCompleteGame();
+            //rationalStrategy[0] = new StrategyImpl(res.get(rootState.getAllPlayers()[0]));
+            //rationalStrategy[1] = new StrategyImpl(res.get(rootState.getAllPlayers()[1]));
+            //Map<Sequence, Double> bothRPs = res.get(rootState.getAllPlayers()[0]);
+            //bothRPs.putAll(res.get(rootState.getAllPlayers()[1]));
+            //svCalc = new StateValueCalculator(gameInfo, rootState, sfExpander, bothRPs);
         }
 
          public static void setupRnd(long seed){
@@ -112,6 +120,8 @@ public class IIGMCTSMatch {
                     rootState, expanderMCTS);
             algMCTS.runMiliseconds(100);
             
+            Distribution dist = new MeanStratDist();
+            StringBuilder moves = new StringBuilder();
             GameState curState = rootState;
             while (!curState.isGameEnd()){
                 Action a;
@@ -123,15 +133,19 @@ public class IIGMCTSMatch {
                     MCTSInformationSet curIS = expanderOOS.getAlgorithmConfig().getInformationSetFor(curState);
                     algOOS.setCurrentIS(curIS);
                     a = algOOS.runMiliseconds(MCTS_MILISECONDS_PER_CALL);
+                    Strategy strategy0 = StrategyCollector.getStrategyFor(algOOS.getRootNode(), rootState.getAllPlayers()[0], dist);
+                    Strategy strategy1 = StrategyCollector.getStrategyFor(algOOS.getRootNode(), rootState.getAllPlayers()[1], dist);
+                    double err =  exploitability(ISMCTSExploitability.filterLow(strategy0),expanderOOS) + exploitability(ISMCTSExploitability.filterLow(strategy0),expanderOOS);
+                    out.println("Current OOS error: " + err);
                 } else {
                     MCTSInformationSet curIS = expanderMCTS.getAlgorithmConfig().getInformationSetFor(curState);
                     algMCTS.setCurrentIS(curIS);
                     a = algMCTS.runMiliseconds(MCTS_MILISECONDS_PER_CALL);
                 }
-                out.print(a + " ");
+                moves.append(a + " ");
                 curState = curState.performAction(a);
             }
-            out.println(curState.getUtilities()[0]);
+            System.out.println("MATCH: " + moves.toString() + curState.getUtilities()[0]);
 //            out.println(((InnerNode)firstRunner.rootNode.getChildren().values().iterator().next()).getInformationSet().getInformationSetStats().getNbSamples()
 //                    + " " + (new MeanStratDist()).getDistributionFor(((InnerNode)firstRunner.rootNode.getChildren().values().iterator().next()).getInformationSet()));
 //            out.println(((InnerNode)secondRunner.rootNode.getChildren().values().iterator().next()).getInformationSet().getInformationSetStats().getNbSamples()
@@ -139,14 +153,15 @@ public class IIGMCTSMatch {
 //            out.println((new MeanStratDist()).getDistributionFor(firstRunner.rootNode.getInformationSet()));
 //            out.println((new FrequenceDistribution()).getDistributionFor(secondRunner.rootNode.getInformationSet()));
         }
-         
-         
+        
+        
         public static void ISMCTSvsStrategy(Strategy strategy) throws Exception {
             stitchingDist = new SumFrequenceDistribution();
+            StringBuilder moves = new StringBuilder();
             Expander<MCTSInformationSet> expander = new GoofSpielExpander<MCTSInformationSet> (new MCTSConfig());
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
             ISMCTSAlgorithm alg = new ISMCTSAlgorithm(
-                    rootState.getAllPlayers()[0],
+                    rootState.getAllPlayers()[playerID],
                     new DefaultSimulator(expander),
                     new UCTBackPropFactory(2),
                     rootState, expander);
@@ -166,19 +181,21 @@ public class IIGMCTSMatch {
                     a = alg.runMiliseconds(MCTS_MILISECONDS_PER_CALL);
                     addAllToStichedStrategy(curIS.getAllNodes());
                 }
-                out.print(a + " ");
+                moves.append(a + " ");
                 curState = curState.performAction(a);
             }
             out.println(curState.getUtilities()[0]);
+            out.println("MATCH: " + moves.toString() + curState.getUtilities()[0]);
         }
         
         
         public static void OOSvsStrategy(Strategy strategy) throws Exception {
             stitchingDist = new SumMeanStratDist();
+            StringBuilder moves = new StringBuilder();
             Expander<MCTSInformationSet> expander = new GoofSpielExpander<MCTSInformationSet> (new MCTSConfig());
             expander.getAlgorithmConfig().createInformationSetFor(rootState);
             OOSAlgorithm alg = new OOSAlgorithm(
-                    rootState.getAllPlayers()[0],
+                    rootState.getAllPlayers()[playerID],
                     new OOSSimulator(expander),
                     rootState, expander, delta, 0.6);
             alg.runMiliseconds(100);
@@ -197,21 +214,27 @@ public class IIGMCTSMatch {
                     a = alg.runMiliseconds(MCTS_MILISECONDS_PER_CALL);
                     addAllToStichedStrategy(curIS.getAllNodes());
                 }
-                out.print(a + " ");
+                if (a==null){
+                    out.println("Warning: playing a random move!!!");
+                    List<Action> actions = expander.getActions(curState);
+                    a=actions.get(rnd.nextInt(actions.size()));
+                }
+                moves.append(a + " ");
                 curState = curState.performAction(a);
+                
             }
-            out.println(curState.getUtilities()[0]);
+            out.println("MATCH: " + moves.toString() + curState.getUtilities()[0]);
         }
         
         public static double exploitability(Map<Sequence, Double> strategy, Expander expander){
             Map<Sequence, Double> st = ISMCTSExploitability.filterLow(strategy);
             SQFBestResponseAlgorithm mctsBR = new SQFBestResponseAlgorithm(
-                    sfExpander,
+                    expander,
                     1-strategy.keySet().iterator().next().getPlayer().getId(),
                     new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] },
-                    (ConfigImpl)sfExpander.getAlgorithmConfig(), gameInfo);
+                    (ConfigImpl)expander.getAlgorithmConfig(), gameInfo);
             double val = mctsBR.calculateBR(rootState, st);
-            return -val;
+            return val;
         }
         
         private static HashMap<Pair<Integer,Sequence>, Map<Action,Double>> stitchedStrategy = new HashMap();
@@ -236,7 +259,8 @@ public class IIGMCTSMatch {
             }
         }
         
-        static Distribution stitchingDist = new MeanStratDist();
+        static boolean stitchOnlyCurrentIS = false;
+        static Distribution stitchingDist = new SumMeanStratDist();
         public static void addAllToStichedStrategy(Collection<InnerNode> isNodes){
             if (isNodes.isEmpty()) return;
             Player pl = isNodes.iterator().next().getGameState().getPlayerToMove();
@@ -247,18 +271,21 @@ public class IIGMCTSMatch {
                 if (!(n instanceof InnerNode)) continue;
                 InnerNode in = (InnerNode) n;
                 if (in.getChildren() == null) continue;
-                MCTSInformationSet is = in.getInformationSet();
-                //if (is.getPlayer().getId() < 2 && is.getInformationSetStats().getNbSamples() < 20) continue;
-                if (is.getPlayer().equals(pl) &&
-                        !added.contains(in.getGameState().getISKeyForPlayerToMove())){
-                    Map<Action, Double> dist = stitchingDist.getDistributionFor(is.getAlgorithmData());
-//                    for (Map.Entry<Action,Double> en : dist.entrySet()){
-//                        en.setValue(en.getValue()*is.getInformationSetStats().getNbSamples());
-//                    }
-                    addToStichedStrategy(in.getGameState().getISKeyForPlayerToMove(), dist);
-                    added.add(in.getGameState().getISKeyForPlayerToMove());
+                if (!(n instanceof ChanceNode)){
+                    MCTSInformationSet is = in.getInformationSet();
+                    if (is.getAlgorithmData()==null) continue;
+                    if (is.getPlayer().getId() < 2 && ((NbSamplesProvider)is.getAlgorithmData()).getNbSamples() < 20) continue;
+                    if (is.getPlayer().equals(pl) &&
+                            !added.contains(in.getGameState().getISKeyForPlayerToMove())){
+                        Map<Action, Double> dist = stitchingDist.getDistributionFor(is.getAlgorithmData());
+    //                    for (Map.Entry<Action,Double> en : dist.entrySet()){
+    //                        en.setValue(en.getValue()*is.getInformationSetStats().getNbSamples());
+    //                    }
+                        addToStichedStrategy(in.getGameState().getISKeyForPlayerToMove(), dist);
+                        added.add(in.getGameState().getISKeyForPlayerToMove());
+                    }
                 }
-                q.addAll(in.getChildren().values());
+                if (!stitchOnlyCurrentIS) q.addAll(in.getChildren().values());
             }
         }
         
@@ -292,8 +319,8 @@ public class IIGMCTSMatch {
             playerID = Integer.parseInt(args[1].substring(1,2));
             String alg = parsePlayer(0, args[2]);
             
-            for (int r=0; r<matches/10;r++){
-                for (int i=0; i<10;i++){
+            for (int r=0; r<matches/50;r++){
+                for (int i=0; i<50;i++){
                     if (alg.equals("OOS")) OOSvsStrategy(new UniformStrategyForMissingSequences());
                     else ISMCTSvsStrategy(new UniformStrategyForMissingSequences());
                 }
@@ -313,17 +340,20 @@ public class IIGMCTSMatch {
         }
         
         
-        static int matches=150;
+        static int matches=500;
         public static void main(String[] args) throws Exception{
             //out = new PrintStream(StringUtils.join(args, '_'));
             //System.setErr(new PrintStream(StringUtils.join(args, '_')+".err"));=
             //assert GSGameInfo.CARDS_FOR_PLAYER.length==6;
-            if (args.length > 3) matches = Integer.parseInt(args[3]);
+            String s = System.getProperty("STITCHONE");
+            if (s != null) stitchOnlyCurrentIS = new Boolean(s);
+            
             if (args[1].length()==2){
                 setupIIGoofSpielExpl();
                 computeExploitability(args);
             } else {
-                setupIIGoofSpiel();
+                //setupIIGoofSpiel();                
+                setupIIGoofSpielExpl();
                 //setupPTTT();
                 runMatches(args);
             }
