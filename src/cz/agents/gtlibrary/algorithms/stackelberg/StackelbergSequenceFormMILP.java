@@ -37,6 +37,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
     protected Player leader;
     protected Player follower;
     protected Player[] players;
+    protected GameInfo info;
 
     protected IloRange leaderObj = null;
 
@@ -47,10 +48,11 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
     protected ThreadMXBean threadBean;
 
 
-    public StackelbergSequenceFormMILP(Player[] players, Expander expander) {
+    public StackelbergSequenceFormMILP(Player[] players, GameInfo info, Expander expander) {
         super(players);
         this.players = players;
         this.expander = expander;
+        this.info = info;
         this.threadBean = ManagementFactory.getThreadMXBean();
     }
 
@@ -87,7 +89,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
-			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+//			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
             startTime = threadBean.getCurrentThreadCpuTime();
             debugOutput.println("Solving");
             cplex.solve();

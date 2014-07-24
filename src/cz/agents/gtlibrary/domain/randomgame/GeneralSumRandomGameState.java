@@ -38,9 +38,10 @@ public class GeneralSumRandomGameState extends RandomGameState {
 
     private double[] getRandomBinaryUtilities() {
         Random random = new HighQualityRandom(ID);
+        int i = (random.nextInt(2 * RandomGameInfo.MAX_UTILITY + 1) - RandomGameInfo.MAX_UTILITY);
 
-        return new double[]{random.nextInt(2 * RandomGameInfo.MAX_UTILITY + 1) - RandomGameInfo.MAX_UTILITY,
-                -random.nextInt(2 * RandomGameInfo.MAX_UTILITY + 1) + RandomGameInfo.MAX_UTILITY};
+        return new double[]{i,
+                Math.min(RandomGameInfo.MAX_UTILITY, Math.max(-RandomGameInfo.MAX_UTILITY, -((int)i*0.5)+random.nextInt(2 * RandomGameInfo.MAX_UTILITY + 1) - RandomGameInfo.MAX_UTILITY))};
     }
 
     @Override
