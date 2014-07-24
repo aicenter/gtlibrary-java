@@ -70,7 +70,7 @@ public class StackelbergMultipleLP {
         Expander expander = new RandomGameExpander<>(algConfig);
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
         smlp.generate(rootState.getAllPlayers()[0]);
-//        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
+        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
     }
 
     public static void runBPG() {
@@ -151,7 +151,8 @@ public class StackelbergMultipleLP {
 
         long startCPLEX = threadBean.getCurrentThreadCpuTime();
 //        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
-        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, expander);
+//        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, gameConfig, expander);
+        StackelbergSequenceFormMILPOracle sequenceFormLP = new StackelbergSequenceFormMILPOracle(actingPlayers, gameConfig, expander);
 
 //        Iterator i = algConfig.getIterator(rootState.getAllPlayers()[0], expander);
 //        while (i.hasNext()) {

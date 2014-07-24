@@ -313,4 +313,6 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
     public Map<GameState, Double[]> getActualNonZeroUtilityValuesInLeafsSE() {
         return actualNonZeroUtilityValuesInLeafs;
     }
+
+
 }
