@@ -56,8 +56,8 @@ import java.util.Map;
 public class StackelbergMultipleLP {
 
     public static void main(String[] args) {
-        runGenSumRandom();
-//        runBPRG();
+//        runGenSumRandom();
+        runBPG();
 //        runSGSG();
 //        runPEG();
 //        runStackTest();
@@ -71,7 +71,7 @@ public class StackelbergMultipleLP {
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
 
         smlp.generate(rootState.getAllPlayers()[0]);
-        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
+        new GambitEFG().write("randomGame.gbt", rootState, expander);
     }
 
     public static void runBPG() {

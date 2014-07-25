@@ -127,12 +127,10 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
                     continue;
                 if (currentState.getPlayerToMove().equals(player)) {
                     SequenceInformationSet set = getInformationSetFor(currentState);
-
-                    if (assignedIS.contains(set))
-                        continue;
                     Pair<SequenceInformationSet, List<Action>> setActionPair = new Pair<>(set, expander.getActions(currentState));
 
-                    stack.add(setActionPair);
+                    if (!assignedIS.contains(set))
+                        stack.add(setActionPair);
                     assignedIS.add(set);
                     for (Action action : setActionPair.getRight()) {
                         addToQueue(queue, currentState.performAction(action));
@@ -246,17 +244,8 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
                     continuation.addLast(setActionPair.getRight().get(setActionPair.getRight().size() - 1));
                     currentSet.add(continuation);
                     if(!solver.checkFeasibilityFor(currentSet)) {
-                        System.err.println("feas cut");
+//                        System.err.println("feas cut");
                         i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
-
-//                        continuation.removeLast();
-//                        setActionPair.getRight().remove(setActionPair.getRight().size() - 1);
-//                        if(setActionPair.getRight().isEmpty()) {
-//                            stack.set(i, new Pair<>(setActionPair.getLeft(), expander.getActions(setActionPair.getLeft())));
-//                            i = getIndexOfReachableISWithActionsLeftFrom(i-1);
-//                            break;
-//                        }
-//                        continuation.addLast(setActionPair.getRight().get(setActionPair.getRight().size() - 1));
                     }
                 }
             }
@@ -276,9 +265,9 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
                     if (!actions.isEmpty()) {
                         if(minIndex >= index) {
                             minIndex = index;
-                            System.out.println(index);
-                            System.out.println(set.getPlayersHistory());
-                            System.out.println("Actions left: " + actions.size());
+//                            System.out.println(index);
+//                            System.out.println(set.getPlayersHistory());
+//                            System.out.println("Actions left: " + actions.size());
                             if(minIndex == 0) {
                                 minIndex = Integer.MAX_VALUE;
                             }

@@ -29,9 +29,7 @@ import cz.agents.gtlibrary.strategy.Strategy;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.CplexStatus;
-import ilog.cplex.IloCplex.UnknownObjectException;
 
-import java.io.PrintStream;
 import java.util.*;
 
 public class StackelbergSequenceFormLP extends SequenceFormLP {
@@ -55,7 +53,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
     }
 
 
-    protected void resetModel(IloCplex cplex, Player player) throws IloException{
+    protected void resetModel(IloCplex cplex, Player player) throws IloException {
         cplex.clearModel();
         cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
         cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
@@ -95,13 +93,12 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
             while (true) {
                 Set<Sequence> pureRP = i.next();
                 double upperBound = getUpperBound(pureRP, algConfig);
-                System.out.println(iteration);
+//                debugOutput.println(iteration);
 
-//                System.out.println("---");
+//                debugOutput.println("---");
 //                for (Sequence sequence : pureRP) {
 //                    debugOutput.println(sequence);
 //                }
-
                 totalRPCount++;
                 if (maxValue == info.getMaxUtility()) {//TODO: max utility for both players
                     break;
@@ -154,7 +151,6 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         } catch (NoSuchElementException e) {
 
         }
-
         resultStrategies.put(leader, leaderResult);
         resultValues.put(leader, maxValue);
         System.out.println("final result with value " + maxValue + ": ");
