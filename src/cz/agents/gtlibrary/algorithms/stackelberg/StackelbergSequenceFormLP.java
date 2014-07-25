@@ -90,12 +90,12 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
 
-            StackelbergConfig.PureRealizationPlanIterator i = algConfig.getIterator(follower, expander);
+            StackelbergConfig.PureRealizationPlanIterator i = algConfig.getIterator(follower, expander, this);
 
             while (true) {
                 Set<Sequence> pureRP = i.next();
                 double upperBound = getUpperBound(pureRP, algConfig);
-                if (iteration % 1000 == 0) System.out.println("Iteration: " + iteration);
+                System.out.println(iteration);
 
 //                System.out.println("---");
 //                for (Sequence sequence : pureRP) {
@@ -103,8 +103,9 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
 //                }
 
                 totalRPCount++;
-                if (maxValue == info.getMaxUtility())//TODO: max utility for both players
+                if (maxValue == info.getMaxUtility()) {//TODO: max utility for both players
                     break;
+                }
                 iteration++;
                 if (maxValue >= upperBound - 1e-7) {
                     upperBoundCut++;
@@ -165,6 +166,29 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         System.out.println("Feasibility cuts: " + feasibilityCut);
         System.out.println("Total RP count: " + totalRPCount);
         return maxValue;
+    }
+
+    public boolean checkFeasibilityFor(Iterable<Sequence> partialPureRp) {
+        try {
+            IloCplex cplex = modelsForPlayers.get(leader);
+
+            deleteObjectiveConstraint(cplex);
+            cplex.getObjective().clearExpr();
+            setValueForBRSlack(cplex, partialPureRp, 0);
+            cplex.solve();
+            setValueForBRSlack(cplex, partialPureRp, 1);
+            cplex.getObjective().setExpr(objectiveForPlayers.get(leader));
+            if(cplex.getStatus() == IloCplex.Status.Optimal)
+                return true;
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private void deleteObjectiveConstraint(IloCplex cplex) throws IloException {
+        if (leaderObj != null)
+            cplex.delete(leaderObj);
     }
 
     private double getUtility(Map<Sequence, Double> leaderStrategy, Map<Sequence, Double> followerStrategy, StackelbergConfig algConfig) {
@@ -326,7 +350,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
 
     }
 
-    protected void setValueForBRSlack(IloCplex cplex, Set<Sequence> sequences, int value) throws IloException {
+    protected void setValueForBRSlack(IloCplex cplex, Iterable<Sequence> sequences, int value) throws IloException {
         for (Sequence s : sequences) {
             IloRange constraint = constraints.get(s);
             IloNumVar slack = slackVariables.get(s);
@@ -339,8 +363,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
     }
 
     protected void updateObjective(IloCplex cplex, IloNumVar v0, Set<Sequence> bestResponse, StackelbergConfig algConfig) throws IloException {
-        if (leaderObj != null)
-            cplex.delete(leaderObj);
+        deleteObjectiveConstraint(cplex);
         IloNumExpr sumG = cplex.constant(0);
 
         for (Sequence s : bestResponse) {

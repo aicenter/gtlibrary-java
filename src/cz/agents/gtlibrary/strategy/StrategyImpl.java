@@ -25,7 +25,7 @@ import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.*;
 
-public abstract class StrategyImpl extends Strategy {
+public class StrategyImpl extends Strategy {
 
     private Map<Sequence, Double> strategy;
 
@@ -219,6 +219,8 @@ public abstract class StrategyImpl extends Strategy {
             return builder.toString();
     }
 
-    protected abstract Map<Action, Double> getMissingSeqDistribution(Collection<Action> actions);
+    protected Map<Action, Double> getMissingSeqDistribution(Collection<Action> actions){
+        return null;
+    };
 
 }

@@ -105,5 +105,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         for (double d : mp) sum += d;
         return (int) sum;
     }
+    
+    public void clear() {
+        Arrays.fill(r, 0);
+        Arrays.fill(mp, 0);
+    }
 }
 
