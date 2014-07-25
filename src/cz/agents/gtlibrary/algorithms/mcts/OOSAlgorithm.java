@@ -24,6 +24,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
@@ -37,6 +38,7 @@ import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -55,6 +57,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     protected ThreadMXBean threadBean;
     private double delta = 0.9;
     private double epsilon = 0.6;
+    public boolean dropTree = true;
     
     private MCTSInformationSet curIS;
     private Random rnd = new HighQualityRandom();
@@ -68,28 +71,42 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         this.simulator = simulator;
         this.delta = delta;
         this.epsilon = epsilon;
-        if (rootState.isPlayerToMoveNature()) this.rootNode = new ChanceNode(expander, rootState);
-        else this.rootNode = new InnerNode(expander, rootState);
+        if (rootState.isPlayerToMoveNature()) {
+            this.rootNode = new ChanceNode(expander, rootState);
+            //InnerNode next = (InnerNode) rootNode.getChildFor((Action) (expander.getActions(rootState).get(0)));
+            //curIS = next.getInformationSet();
+        } else {
+            this.rootNode = new InnerNode(expander, rootState);
+            curIS = rootNode.getInformationSet();
+        }
+        OOSAlgorithmData.useEpsilonRM=true;
         threadBean = ManagementFactory.getThreadMXBean();
-        curIS = rootNode.getInformationSet();
+        String s = System.getProperty("DROPTREE");
+        if (s != null) dropTree = Boolean.getBoolean(s);
     }
     
     @Override
     public Action runMiliseconds(int miliseconds){
         int iters=0;
+        int targISHits=0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (;(threadBean.getCurrentThreadCpuTime()-start)/1e6 < miliseconds;) {
             if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<=delta);
-            underTargetIS = false;
+            underTargetIS =  (curIS == null || curIS==rootNode.getInformationSet());
             iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[0]);
             iters++;
-            underTargetIS = false;
+            if (underTargetIS) targISHits++;
+            underTargetIS =  (curIS == null || curIS==rootNode.getInformationSet());
             iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[1]);
             iters++;
+            if (underTargetIS) targISHits++;
         }
         System.out.println();
         System.out.println("OOS Iters: " + iters);
-        if (!curIS.getPlayer().equals(searchingPlayer)) return null;
+        System.out.println("OOS Targeted IS Hist: " + targISHits);
+        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        if (curIS == null || !curIS.getPlayer().equals(searchingPlayer)) return null;
+        if (curIS.getAlgorithmData() == null) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
         return Strategy.selectAction(distribution, rnd);
     }
@@ -97,12 +114,12 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     public Action runIterations(int iterations){
         for (int i=0;i<iterations/2;i++) {
             if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<=delta);
-            underTargetIS = false;
+            underTargetIS = (curIS == null || curIS==rootNode.getInformationSet());
             iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[0]);
-            underTargetIS = false;
+            underTargetIS = (curIS == null || curIS==rootNode.getInformationSet());
             iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[1]);
         }
-        if (!curIS.getPlayer().equals(searchingPlayer)) return null;
+        if (curIS==null || !curIS.getPlayer().equals(searchingPlayer)) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
         return Strategy.selectAction(distribution, rnd);
     }
@@ -132,12 +149,19 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode)node;
             Action a; double p;
-            if (biasedIteration && cn.getGameState().getSequenceFor(getNaturePlayer()).size() <= chanceMaxSequenceLength){
+            if (biasedIteration && !underTargetIS && cn.getGameState().getSequenceFor(getNaturePlayer()).size() <= chanceMaxSequenceLength){
                 double sum=0; int i=0;
                 for (Action ai : cn.getActions()){
-                    biasedProbs[i] = cn.getGameState().getProbabilityOfNatureFor(ai);
-                    sum += biasedProbs[i];
+                    if (chanceAllowedSequences.contains(cn.getChildFor(ai).getGameState().getSequenceFor(getNaturePlayer()))) {
+                        biasedProbs[i] = cn.getGameState().getProbabilityOfNatureFor(ai);
+                        sum += biasedProbs[i];
+                    } else {
+                        biasedProbs[i]=0;
+                    }
                     i++;
+                }
+                if (sum == 0){
+                    int asjfdhsg=0;
                 }
                 assert sum>0;
                 i = randomChoice(biasedProbs, sum);
@@ -147,7 +171,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 a = cn.getRandomAction();
                 p = cn.getGameState().getProbabilityOfNatureFor(a);
             }
-            if (rootNode.getGameState().equals(cn.getGameState())) underTargetIS = true;
+            //if (rootNode.getGameState().equals(cn.getGameState())) underTargetIS = true;
             double u=iteration(cn.getChildFor(a), pi, p*pi_, p*bs, cn.getGameState().getProbabilityOfNatureFor(a)*us, expPlayer);
             x *= p;
             return u;
@@ -175,19 +199,17 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             if (bs > 0 && !underTargetIS) {
                 if (curIS.equals(is)){
                     underTargetIS = true;
-                    biasedProbs = rmProbs;
-                    biasedSum = 1; inBiasActions=in.getActions().size();
                 } else if (searchingPlayer.equals(is.getPlayer())){
                     //this IS is above the current IS, returning the action from the history
                     if (curIS.getPlayersHistory().size() > is.getPlayersHistory().size()){
                         selectedA = curIS.getPlayersHistory().get(is.getPlayersHistory().size());
                         ai = in.getActions().indexOf(selectedA);
-                        Arrays.fill(biasedProbs,0,in.getActions().size(),-0.0);
-                        biasedProbs[ai]=1;
-                        biasedSum = 1; inBiasActions=1;
-                    } else {
-                        assert biasedIteration==false;
-                    }
+                        if (ai != -1){//otherwise chance node has shifted us where we did not play before
+                            Arrays.fill(biasedProbs,0,in.getActions().size(),-0.0);
+                            biasedProbs[ai]=1;
+                            biasedSum = 1; inBiasActions=1;
+                        } else assert biasedIteration==false;
+                    } else assert biasedIteration==false;
                 } else {
                     if (is.getPlayersHistory().size() < opponentMaxSequenceLength){
                         int i=0;
@@ -269,25 +291,40 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     }
     
     
+    private void clearTreeISs(){
+        ArrayDeque<InnerNode> q = new ArrayDeque();
+        q.add(rootNode);
+        while (!q.isEmpty()){
+            InnerNode curNode = q.removeFirst();
+            //curNode.setAlgorithmData(null);
+            OOSAlgorithmData data = (OOSAlgorithmData) curNode.getAlgorithmData();
+            if (data != null) data.clear();
+            for(Node n : curNode.getChildren().values()){
+                if ((n instanceof InnerNode)) q.addLast((InnerNode)n);
+            }
+        }
+    }
+    
     public HashSet<Action> opponentAllowedActions = new HashSet();
-    public HashSet<Action> chanceAllowedActions = new HashSet();
+    public HashSet<Sequence> chanceAllowedSequences = new HashSet();//only because chance action have IS set to null 
     public int opponentMaxSequenceLength = 0;
     public int chanceMaxSequenceLength = 0;
     @Override
     public void setCurrentIS(InformationSet is){
         curIS = (MCTSInformationSet) is;
         opponentAllowedActions.clear();
-        chanceAllowedActions.clear();
+        chanceAllowedSequences.clear();
         for (GameState gs : curIS.getAllStates()){
             Sequence s = gs.getSequenceFor(getOpponent());
             opponentAllowedActions.addAll(s.getAsList());
             opponentMaxSequenceLength = Math.max(opponentMaxSequenceLength, s.size());
             if (gs.getAllPlayers().length>2){
                 s = gs.getSequenceFor(getNaturePlayer());
-                chanceAllowedActions.addAll(s.getAsList());
-                chanceMaxSequenceLength = Math.max(opponentMaxSequenceLength, s.size());
+                chanceAllowedSequences.addAll(s.getAllPrefixes());
+                chanceMaxSequenceLength = Math.max(chanceMaxSequenceLength, s.size());
             }
         }
+        if (dropTree) clearTreeISs();
     }
     
     private Player getOpponent(){

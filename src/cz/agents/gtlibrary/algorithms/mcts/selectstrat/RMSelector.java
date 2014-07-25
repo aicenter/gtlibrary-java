@@ -25,6 +25,7 @@ package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 import java.util.Arrays;
@@ -34,7 +35,7 @@ import java.util.List;
  * Regret matching in unknown game setting based on Hart and Mas-Colell 2001.
  * @author vilo
  */
-public class RMSelector implements Selector, MeanStrategyProvider {
+public class RMSelector implements Selector, MeanStrategyProvider,  NbSamplesProvider {
     private RMBackPropFactory fact;
     private List<Action> actions;
     /** Current probability of playing this action. */
@@ -105,6 +106,13 @@ public class RMSelector implements Selector, MeanStrategyProvider {
         return actions;
     }
 
+    @Override
+    public int getNbSamples() {
+        double sum = 0;
+        for (double d : mp) sum += d;
+        return (int) sum;
+    }
+    
     @Override
     public double[] getMp() {
         return mp;

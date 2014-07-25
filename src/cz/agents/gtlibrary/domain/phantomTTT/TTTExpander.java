@@ -49,8 +49,9 @@ public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet
 		ArrayList<Action> actions = new ArrayList<Action>();
 
                 byte[] allowed;
-//                if (s.moveNum == 0) allowed = new byte[]{4};//x
-//                else if (s.moveNum == 1) allowed = new byte[]{4};//o
+                if (TTTState.forceFirstMoves){
+                if (s.moveNum == 0) allowed = new byte[]{4};//x
+                else if (s.moveNum == 1) allowed = new byte[]{4};//o
 //                else if (s.moveNum == 2) allowed = new byte[]{0};//o
 //                else if (s.moveNum == 3) allowed = new byte[]{0};//x
 //                else if (s.moveNum == 4) allowed = new byte[]{8};//x
@@ -60,8 +61,10 @@ public class TTTExpander<I extends cz.agents.gtlibrary.interfaces.InformationSet
 //                else if (s.moveNum == 8) allowed = new byte[]{3};//x
 //                else if (s.moveNum == 9) allowed = new byte[]{3};//o
 //                else if (s.moveNum == 10) allowed = new byte[]{5,1};//o
-//                else
+                  else allowed = new byte[]{4,0,8,6,2,1,3,7,5};
+                } else {
                     allowed = new byte[]{4,0,8,6,2,1,3,7,5};
+                }
 //                allowed = new byte[]{0,1,2,3,4,5,6,7,8};
                 for(byte i : allowed){
                     if (!s.getTried(s.toMove, i)) {
