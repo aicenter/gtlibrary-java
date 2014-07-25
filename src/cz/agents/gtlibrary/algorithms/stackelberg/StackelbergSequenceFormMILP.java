@@ -83,13 +83,13 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
             long startTime = threadBean.getCurrentThreadCpuTime();
             createVariables(cplex, algConfig);
             createConstraintsForSets(cplex, algConfig.getAllInformationSets().values());
-            createConstraintsForStates(cplex, algConfig.getActualNonZeroUtilityValuesInLeafsSE().keySet());
+            createConstraintsForStates(cplex, algConfig.getAllLeafs());
             createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
             setObjective(cplex, v0, algConfig);
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
-//			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
             startTime = threadBean.getCurrentThreadCpuTime();
             debugOutput.println("Solving");
             cplex.solve();
@@ -169,7 +169,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
             }
         }
 
-        for (GameState gs : algConfig.getActualNonZeroUtilityValuesInLeafsSE().keySet()) {
+        for (GameState gs : algConfig.getAllLeafs()) {
             createStateProbVariable(model, gs);
         }
 
@@ -329,7 +329,9 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         IloNumExpr sumP = cplex.constant(0);
         for (Map.Entry<GameState, Double[]> e : algConfig.getActualNonZeroUtilityValuesInLeafsSE().entrySet()) {
             sumG = cplex.sum(sumG, cplex.prod(e.getKey().getNatureProbability(), cplex.prod(e.getValue()[leader.getId()], variables.get(e.getKey()))));
-            sumP = cplex.sum(sumP, variables.get(e.getKey()));
+        }
+        for (GameState gs : algConfig.getAllLeafs()) {
+            sumP = cplex.sum(sumP, variables.get(gs));
         }
         leaderObj = cplex.addEq(cplex.diff(v0, sumG), 0);
         cplex.addEq(sumP,1);
