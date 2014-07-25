@@ -65,7 +65,7 @@ public class TTTInfo implements GameInfo{
 
     @Override
     public double getMaxUtility() {
-        return 1.0;
+        return (TTTState.skewed ? 3 : 1.0);
     }
 
     @Override

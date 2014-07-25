@@ -57,7 +57,7 @@ public class StackelbergMultipleLP {
 
     public static void main(String[] args) {
         runGenSumRandom();
-//        runBPG();
+//        runBPRG();
 //        runSGSG();
 //        runPEG();
 //        runStackTest();
@@ -69,6 +69,7 @@ public class StackelbergMultipleLP {
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander expander = new RandomGameExpander<>(algConfig);
         StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
+
         smlp.generate(rootState.getAllPlayers()[0]);
         new GambitEFG().write("simpleGSG.gbt", rootState, expander);
     }

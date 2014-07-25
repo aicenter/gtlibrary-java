@@ -178,7 +178,9 @@ public class UCTSelector implements Selector, AlgorithmData, NbSamplesProvider, 
 
     @Override
     public double[] getMp() {
-        return getActionFreq();
+        double[] out = new double[ni.length];
+        for (int i = 0; i < ni.length; i++) out[i] = (double) ni[i];
+        return out;
     }
 
 

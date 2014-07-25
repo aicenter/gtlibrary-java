@@ -122,6 +122,7 @@ public class TTTState extends GameStateImpl {
     private static double[] xLargeWin = new double[]{3.0, -3.0};
     private static double[] oLargeWin = new double[]{-3.0, 3.0};
     public static boolean skewed = false;
+    public static boolean forceFirstMoves = false;
 
     @Override
     public double[] getUtilities() {
