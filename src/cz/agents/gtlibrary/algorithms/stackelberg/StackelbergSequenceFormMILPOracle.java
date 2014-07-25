@@ -1,16 +1,15 @@
 package cz.agents.gtlibrary.algorithms.stackelberg;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.DummyPrintStream;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by bosansky on 7/24/14.
@@ -22,15 +21,19 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
 
     public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander expander) {
 
-        Set<Sequence> followerSequences = new HashSet<>();
+        Set<Sequence> neverBR = new HashSet<>();
         leader = players[leaderIdx];
         follower = players[followerIdx];
 
         double maxValue = Double.NEGATIVE_INFINITY;
-        Set<Sequence> followerBR = new HashSet<Sequence>();
+//        Set<Sequence> followerBR = new HashSet<Sequence>();
         Map<Sequence, Double> leaderResult = new HashMap<Sequence, Double>();
-        Map<Sequence, Double> followerResult = new HashMap<Sequence, Double>();
+//        Map<Sequence, Double> followerResult = new HashMap<Sequence, Double>();
 
+        Map<Sequence, Double> firstRP = new HashMap<>();
+        firstRP.put(algConfig.getRootState().getSequenceFor(follower), 1d);
+        TreeSet<FollowerRP> set = new TreeSet<>(new FollowerRPComparator());
+        set.add(new FollowerRP(info.getMaxUtility(), firstRP));
 
         try {
             IloCplex cplex = modelsForPlayers.get(leader);
@@ -39,14 +42,11 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
             long startTime = threadBean.getCurrentThreadCpuTime();
             createVariables(cplex, algConfig);
             createConstraintsForSets(cplex, algConfig.getAllInformationSets().values());
-            createConstraintsForStates(cplex, algConfig.getActualNonZeroUtilityValuesInLeafsSE().keySet());
+            createConstraintsForStates(cplex, algConfig.getAllLeafs());
 
             for (Sequence firstPlayerSequence : algConfig.getSequencesFor(follower)) {
-                if (constraints.containsKey(firstPlayerSequence)) {
-                    cplex.delete(constraints.get(firstPlayerSequence));
-                    constraints.remove(firstPlayerSequence);
-                }
                 createConstraintForSequence(cplex, firstPlayerSequence, algConfig);
+//                createSlackConstraintForSequence(cplex, firstPlayerSequence);
             }
 
 //            createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
@@ -55,92 +55,94 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
             GeneralSumBestResponse gBR = new GeneralSumBestResponse(expander, follower.getId(), players, algConfig, info);
 
-            while (true) {
-                boolean tmp = false;
-                followerBR.clear();
+            int iterations = 0;
+
+            while (!set.isEmpty()) {
+//                boolean tmp = false;
+//                followerBR.clear();
 //                cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
-                startTime = threadBean.getCurrentThreadCpuTime();
-                debugOutput.println("Solving");
-                cplex.solve();
-                overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
-                debugOutput.println("Status: " + cplex.getCplexStatus());
+                FollowerRP currentBR = set.pollFirst();
 
-                if (cplex.getCplexStatus() == IloCplex.CplexStatus.Optimal || cplex.getCplexStatus() == IloCplex.CplexStatus.OptimalTol) {
-                    double v = cplex.getValue(v0);
-                    debugOutput.println("Best value is " + v);
-
-                    maxValue = v;
-
-//                for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
-//                    try {
-//                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-//                    } catch (IloCplex.UnknownObjectException e) {
-//                        continue;
-//                    }
-//                }
-//                debugOutput.println("-------");
-//                for (Map.Entry<Object, IloNumVar> ee : slackVariables.entrySet()) {
-//                    try {
-//                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-//                    } catch (IloCplex.UnknownObjectException e) {
-//                        continue;
-//                    }
-//                }
-
-//                resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
-                leaderResult = createSolution(algConfig, leader, cplex);
-//                for (Map.Entry<Sequence, Double> entry : resultStrategies.get(leader).entrySet()) {
-//                    if (entry.getValue() > 0)
-//                        System.out.println(entry);
-//                }
-//                System.out.println("*********");
-//                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, cplex).entrySet()) {
-//                    if (entry.getValue() > 0)
-//                        System.out.println(entry);
-//                }
-//                UtilityCalculator calculator = new UtilityCalculator(algConfig.getRootState(), expander);
-//
-//                System.out.println(calculator.computeUtility(new NoMissingSeqStrategy(createSolution(algConfig, follower, cplex)), new NoMissingSeqStrategy(resultStrategies.get(leader))));
-//                    gBR.calculateBR(algConfig.getRootState(), leaderResult);
-//                    followerBR = gBR.getBRSequences();
-                    followerResult = createSolution(algConfig, follower, cplex);
-                    for (Map.Entry<Sequence,Double> entry : followerResult.entrySet()) {
-                        if (entry.getValue() > 0) followerBR.add(entry.getKey());
-                    }
-//                    System.out.println(followerBR);
-                    tmp = addFollowerSequences(algConfig, cplex, followerBR);
-//                    cplex.exportModel("stck-" + leader + "-step1.lp");
+                if (currentBR.leaderUpperBound < maxValue) { // the best upper bound is strictly worse than current best result -- we can stop
+                    break;
                 }
-//                cplex.solve();
-//                double v = cplex.getValue(v0);
-//                debugOutput.println("Best value after modification is " + v);
-//                for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
-//                    try {
-//                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-//                    } catch (IloCplex.UnknownObjectException e) {
-//                        continue;
-//                    }
-//                }
-//                debugOutput.println("-------");
-//                for (Map.Entry<Object, IloNumVar> ee : slackVariables.entrySet()) {
-//                    try {
-//                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-//                    } catch (IloCplex.UnknownObjectException e) {
-//                        continue;
-//                    }
-//                }
 
-                if (!tmp)
-                break;
-//                if (followerBR.size() == 0 && followerSequences.containsAll(followerBR)) {
-//                    break;
-//                }
-//                followerSequences.addAll(followerBR);
+                iterations++;
+                if (iterations % 1000 == 0)
+                    System.out.println("Iterations: " + iterations);
 
+                Map<Sequence, Double> nextBR = new HashMap<>();
+                nextBR.putAll(currentBR.realizationPlan);
+                InformationSet isToBeExtended = null;
+                mainloop:
+                for (Sequence s : nextBR.keySet()) {
+                    isloop:
+                    for (InformationSet i : algConfig.getReachableSets(s)) {
+                        if (i.getPlayer().equals(leader)) continue;
+                        if (!expander.getActions(i).isEmpty()) {
+                            for (Action a : (List<Action>)expander.getActions(i)) {
+                                Sequence newSequence = new ArrayListSequenceImpl(i.getAllStates().iterator().next().getSequenceForPlayerToMove());
+                                newSequence.addLast(a);
+                                if (nextBR.containsKey(newSequence)) {
+                                     continue isloop;
+                                }
+                            }
+                            isToBeExtended = i;
+                            break mainloop;
+                        }
+                    }
+                }
+                if (isToBeExtended == null) { // there is no IS to be extended -> we have a final RP and
+                    if (currentBR.leaderUpperBound > maxValue) {
+                        maxValue = currentBR.leaderUpperBound;
+                        leaderResult = currentBR.realizationPlan;
+                        debugOutput.println("Best value is " + maxValue);
+                    }
+                    continue;
+                }
+
+                tightBoundsForSequences(cplex, nextBR.keySet());
+
+                for (Action a : (List<Action>)expander.getActions(isToBeExtended)) {
+                    Sequence newSequence = new ArrayListSequenceImpl(isToBeExtended.getAllStates().iterator().next().getSequenceForPlayerToMove());
+                    newSequence.addLast(a);
+
+                    if (neverBR.contains(newSequence)) continue;
+
+                    tightBoundsForSequence(cplex, newSequence);
+
+
+
+                    startTime = threadBean.getCurrentThreadCpuTime();
+//                    debugOutput.println("Solving");
+                    cplex.setOut(DummyPrintStream.getDummyPS());
+                    cplex.setWarning(DummyPrintStream.getDummyPS());
+                    cplex.solve();
+                    overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
+//                    debugOutput.println("Status: " + cplex.getCplexStatus());
+
+                    if (cplex.getCplexStatus() == IloCplex.CplexStatus.Optimal || cplex.getCplexStatus() == IloCplex.CplexStatus.OptimalTol) {
+                        double v = cplex.getValue(v0);
+//                        debugOutput.println("Best value is " + v);
+                        HashMap<Sequence, Double> tmp = new HashMap<>();
+                        tmp.putAll(nextBR);
+                        tmp.put(newSequence,1d);
+
+                        set.add(new FollowerRP(v, tmp));
+                    } else {
+                        neverBR.add(newSequence);
+                    }
+                    unTightBoundsForSequence(cplex, newSequence);
+
+                }
+                unTightBoundsForSequences(cplex, nextBR.keySet());
             }
         } catch (IloException e) {
             e.printStackTrace();
         }
+
+        System.out.println("Final NVBR Size : " + neverBR.size());
+        System.out.println(neverBR);
 
         resultStrategies.put(leader, leaderResult);
         resultValues.put(leader, maxValue);
@@ -163,7 +165,7 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
             }
         }
 
-        for (GameState gs : algConfig.getActualNonZeroUtilityValuesInLeafsSE().keySet()) {
+        for (GameState gs : algConfig.getAllLeafs()) {
             createStateProbVariable(model, gs);
         }
 
@@ -186,12 +188,12 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
         IloRange cF = cplex.addLe(cplex.diff(LS, RSF), 0, "LBC:F:" + state);
         IloNumVar RSL = variables.get(state.getSequenceFor(leader));
         IloRange cL = cplex.addLe(cplex.diff(LS, RSL), 0, "LBC:L:" + state);
-        slackConstraints.put(state, new IloRange[]{null, cL});
+        slackConstraints.put(state, new IloRange[]{cF, cL});
     }
 
-    protected boolean addFollowerSequences(StackelbergConfig algConfig, IloCplex model, Set<Sequence> sequences) throws IloException{
-        boolean somethingAdded = false;
-
+//    protected boolean addFollowerSequences(StackelbergConfig algConfig, IloCplex model, Set<Sequence> sequences) throws IloException{
+//        boolean somethingAdded = false;
+//
 //        Set<SequenceInformationSet> newInfoSets = new HashSet<>();
 //        Set<SequenceInformationSet> newLastInfoSets = new HashSet<>();
 //        Set<GameState> newLeafs = new HashSet<>();
@@ -202,25 +204,25 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
 //            if (s.size() > 0) newInfoSets.add((SequenceInformationSet)s.getLastInformationSet());
 //            newLastInfoSets.addAll(algConfig.getReachableSets(s));
 //        }
-
-        for (Sequence firstPlayerSequence : sequences) {
+//
+//        for (Sequence firstPlayerSequence : sequences) {
 //            if (constraints.containsKey(firstPlayerSequence)) {
 //                model.delete(constraints.get(firstPlayerSequence));
 //                constraints.remove(firstPlayerSequence);
 //            }
 //
 //            createConstraintForSequence(model, firstPlayerSequence, algConfig);
-
+//
 //            if (slackConstraints.containsKey(firstPlayerSequence)) {
 //                model.delete(slackConstraints.get(firstPlayerSequence));
 //                slackConstraints.remove(firstPlayerSequence);
 //            }
-            if (!slackConstraints.containsKey(firstPlayerSequence)) {
-                somethingAdded = true;
-            }
-            createSlackConstraintForSequence(model, firstPlayerSequence);
-        }
-
+//            if (!slackConstraints.containsKey(firstPlayerSequence)) {
+//                somethingAdded = true;
+//            }
+//            createSlackConstraintForSequence(model, firstPlayerSequence);
+//        }
+//
 //        for (InformationSet i : newLastInfoSets) {
 //            for (GameState gs : i.getAllStates()) {
 //                if (!sequences.contains(gs.getSequenceFor(follower))) continue;
@@ -244,6 +246,66 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
 //            IloRange cF = model.addLe(model.diff(LS, RSF), 0, "LBC:F:" + gs);
 //            slackConstraints.put(gs, new IloRange[]{cF, slackConstraints.get(gs)[1]});
 //        }
-        return somethingAdded;
+//        return somethingAdded;
+//    }
+
+    protected void tightBoundsForSequences(IloCplex cplex, Collection<Sequence> sequences) throws IloException{
+        for (Sequence s : sequences) {
+            tightBoundsForSequence(cplex, s);
+        }
+    }
+
+    protected void tightBoundsForSequence(IloCplex cplex, Sequence sequence) throws IloException{
+            createSlackConstraintForSequence(cplex, sequence);
+            variables.get(sequence).setLB(1d);
+    }
+
+    protected void unTightBoundsForSequences(IloCplex cplex, Collection<Sequence> sequences) throws IloException{
+        for (Sequence s : sequences) {
+            unTightBoundsForSequence(cplex, s);
+        }
+    }
+
+    protected void unTightBoundsForSequence(IloCplex cplex, Sequence sequence) throws IloException{
+        cplex.delete(slackConstraints.get(sequence));
+        slackConstraints.remove(sequence);
+        variables.get(sequence).setLB(0d);
+    }
+
+    protected class FollowerRP {
+        final protected double leaderUpperBound;
+        final Map<Sequence, Double> realizationPlan;
+
+        public FollowerRP(double leaderUpperBound, Map<Sequence, Double> realizationPlan) {
+            this.leaderUpperBound = leaderUpperBound;
+            this.realizationPlan = realizationPlan;
+        }
+    }
+
+    protected class FollowerRPComparator implements Comparator<FollowerRP> {
+
+
+        @Override
+        public int compare(FollowerRP o1, FollowerRP o2) {
+            if (o1.leaderUpperBound > o2.leaderUpperBound)
+                return -1;
+            if (o1.leaderUpperBound < o2.leaderUpperBound)
+                return 1;
+            if (o1.leaderUpperBound == o2.leaderUpperBound) {
+                if (o1.realizationPlan.size() > o2.realizationPlan.size())
+                    return -1;
+                if (o1.realizationPlan.size() < o2.realizationPlan.size())
+                    return 1;
+                if (o1.realizationPlan.size() == o2.realizationPlan.size()) {
+                    if (o1.realizationPlan.hashCode() > o2.realizationPlan.hashCode())
+                        return -1;
+                    if (o1.realizationPlan.hashCode() < o2.realizationPlan.hashCode())
+                        return 1;
+                    if (o1.realizationPlan.hashCode() == o2.realizationPlan.hashCode())
+                        return 0;
+                }
+            }
+            return 0;
+        }
     }
 }

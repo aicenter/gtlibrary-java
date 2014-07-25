@@ -38,6 +38,7 @@ import java.util.*;
 public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet> {
 
     protected Map<GameState, Double[]> actualNonZeroUtilityValuesInLeafs = new HashMap<>();
+    protected Set<GameState> allLeafs = new HashSet<>();
     protected Map<Map<Player, Sequence>, Double[]> utilityForSequenceCombination = new HashMap<>();
     private GameState rootState;
 
@@ -284,8 +285,10 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
                 break;
             }
         }
-
-        if (allZeros) return; // we do not store zero-utility
+        allLeafs.add(leaf);
+        if (allZeros) {
+            return; // we do not store zero-utility
+        }
 
         FixedSizeMap<Player, Sequence> activePlayerMap = createActivePlayerMap(leaf);
         Double[] existingUtility = utility;
@@ -314,5 +317,7 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
         return actualNonZeroUtilityValuesInLeafs;
     }
 
-
+    public Set<GameState> getAllLeafs() {
+        return allLeafs;
+    }
 }
