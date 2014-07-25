@@ -28,24 +28,32 @@ import ilog.concert.*;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.CplexStatus;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class StackelbergSequenceFormMILP extends SequenceFormLP {
 
-    private Player leader;
-    private Player follower;
-    private Player[] players;
+    protected Player leader;
+    protected Player follower;
+    protected Player[] players;
+    protected GameInfo info;
 
-    private IloRange leaderObj = null;
+    protected IloRange leaderObj = null;
 
     protected Map<Object, IloNumVar> slackVariables = new HashMap<Object, IloNumVar>();
     protected Map<Object, IloRange[]> slackConstraints = new HashMap<Object, IloRange[]>(); // constraints for slack variables and p(h)
     protected Expander expander;
 
-    public StackelbergSequenceFormMILP(Player[] players, Expander expander) {
+    protected ThreadMXBean threadBean;
+
+
+    public StackelbergSequenceFormMILP(Player[] players, GameInfo info, Expander expander) {
         super(players);
         this.players = players;
         this.expander = expander;
+        this.info = info;
+        this.threadBean = ManagementFactory.getThreadMXBean();
     }
 
 
@@ -72,20 +80,20 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
             IloCplex cplex = modelsForPlayers.get(leader);
             IloNumVar v0 = objectiveForPlayers.get(leader);
 
-            long startTime = System.currentTimeMillis();
+            long startTime = threadBean.getCurrentThreadCpuTime();
             createVariables(cplex, algConfig);
             createConstraintsForSets(cplex, algConfig.getAllInformationSets().values());
-            createConstraintsForStates(cplex, algConfig.getAllInformationSets().values());
+            createConstraintsForStates(cplex, algConfig.getAllLeafs());
             createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
             setObjective(cplex, v0, algConfig);
             debugOutput.println("phase 1 done");
-            overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
+            overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
-//			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
-            startTime = System.currentTimeMillis();
+			cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+            startTime = threadBean.getCurrentThreadCpuTime();
             debugOutput.println("Solving");
             cplex.solve();
-            overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
+            overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
             debugOutput.println("Status: " + cplex.getCplexStatus());
 
             if (cplex.getCplexStatus() == CplexStatus.Optimal || cplex.getCplexStatus() == CplexStatus.OptimalTol) {
@@ -110,17 +118,17 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
 //                    }
 //                }
 
-                resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
-                leaderResult = createSolution(algConfig, leader, cplex);
-                for (Map.Entry<Sequence, Double> entry : resultStrategies.get(leader).entrySet()) {
-                    if (entry.getValue() > 0)
-                        System.out.println(entry);
-                }
-                System.out.println("*********");
-                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, cplex).entrySet()) {
-                    if (entry.getValue() > 0)
-                        System.out.println(entry);
-                }
+//                resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
+//                leaderResult = createSolution(algConfig, leader, cplex);
+//                for (Map.Entry<Sequence, Double> entry : resultStrategies.get(leader).entrySet()) {
+//                    if (entry.getValue() > 0)
+//                        System.out.println(entry);
+//                }
+//                System.out.println("*********");
+//                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, cplex).entrySet()) {
+//                    if (entry.getValue() > 0)
+//                        System.out.println(entry);
+//                }
 //                UtilityCalculator calculator = new UtilityCalculator(algConfig.getRootState(), expander);
 //
 //                System.out.println(calculator.computeUtility(new NoMissingSeqStrategy(createSolution(algConfig, follower, cplex)), new NoMissingSeqStrategy(resultStrategies.get(leader))));
@@ -160,11 +168,13 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
                 createSlackVariableForSequence(model, sequence);
             }
         }
+
+        for (GameState gs : algConfig.getAllLeafs()) {
+            createStateProbVariable(model, gs);
+        }
+
         for (SequenceInformationSet informationSet : algConfig.getAllInformationSets().values()) {
             if (!variables.containsKey(informationSet)) {
-                for (GameState gs : informationSet.getAllStates()) {
-                    createStateProbVariable(model, gs);
-                }
                 if (informationSet.getPlayer().equals(leader)) {
                     //nothing
                 } else {
@@ -279,9 +289,10 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         }
     }
 
-    protected void createConstraintsForStates(IloCplex cplex, Collection<SequenceInformationSet> infoSets) throws IloException {
-        for (SequenceInformationSet infoSet : infoSets) {
-            for (GameState state : infoSet.getAllStates()) {
+    protected void createConstraintsForStates(IloCplex cplex, Collection<GameState> states) throws IloException {
+//        for (SequenceInformationSet infoSet : infoSets) {
+//            for (GameState state : infoSet.getAllStates()) {
+            for (GameState state : states) {
                 if (slackConstraints.containsKey(state)) {
                     cplex.delete(slackConstraints.get(state)[0]);
                     cplex.delete(slackConstraints.get(state)[1]);
@@ -293,7 +304,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
                 }
                 createBoundConstraintsForState(cplex, state);
             }
-        }
+//        }
     }
 
     protected void createBoundConstraintsForState(IloCplex cplex, GameState state) throws IloException {
@@ -318,7 +329,9 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         IloNumExpr sumP = cplex.constant(0);
         for (Map.Entry<GameState, Double[]> e : algConfig.getActualNonZeroUtilityValuesInLeafsSE().entrySet()) {
             sumG = cplex.sum(sumG, cplex.prod(e.getKey().getNatureProbability(), cplex.prod(e.getValue()[leader.getId()], variables.get(e.getKey()))));
-            sumP = cplex.sum(sumP, variables.get(e.getKey()));
+        }
+        for (GameState gs : algConfig.getAllLeafs()) {
+            sumP = cplex.sum(sumP, variables.get(gs));
         }
         leaderObj = cplex.addEq(cplex.diff(v0, sumG), 0);
         cplex.addEq(sumP,1);
