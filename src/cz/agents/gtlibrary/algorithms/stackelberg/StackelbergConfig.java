@@ -46,8 +46,8 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
         this.rootState = rootState;
     }
 
-    public PureRealizationPlanIterator getIterator(Player player, Expander<SequenceInformationSet> expander) {
-        return new PureRealizationPlanIterator(player, expander);
+    public PureRealizationPlanIterator getIterator(Player player, Expander<SequenceInformationSet> expander, StackelbergSequenceFormLP solver) {
+        return new PureRealizationPlanIterator(player, expander, solver);
     }
 
     public GameState getRootState() {
@@ -61,47 +61,57 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
         private List<Pair<SequenceInformationSet, List<Action>>> stack;
         private Player player;
         private Expander<SequenceInformationSet> expander;
+        private StackelbergSequenceFormLP solver;
+        private int minIndex = Integer.MAX_VALUE;
 
-
-        public PureRealizationPlanIterator(Player player, Expander<SequenceInformationSet> expander) {
+        public PureRealizationPlanIterator(Player player, Expander<SequenceInformationSet> expander, StackelbergSequenceFormLP solver) {
             this.currentSet = new HashSet<>();
             this.player = player;
             this.stack = new ArrayList<>();
             this.expander = expander;
+            this.solver = solver;
 //            recursive(rootState);
             initStack();
             initRealizationPlan();
         }
 
         private void initRealizationPlan() {
-            ArrayDeque<GameState> queue = new ArrayDeque<>();
-            Set<InformationSet> assignedIS = new HashSet<>();
+            currentSet.add(rootState.getSequenceFor(player));
+            updateRealizationPlan(0);
 
-            queue.add(rootState);
-            while (queue.size() > 0) {
-                GameState currentState = queue.removeFirst();
-
-                if (currentState.isGameEnd()) {
-                    currentSet.addAll(currentState.getSequenceFor(player).getAllPrefixes());
-                    continue;
-                }
-
-                if (currentState.getPlayerToMove().equals(player)) {
-                    InformationSet set = getInformationSetFor(currentState);
-
-                    if (assignedIS.contains(set))
-                        continue;
-                    List<Action> actions = expander.getActions(currentState);
-                    Action lastAction = actions.get(actions.size() - 1);
-
-                    addToQueue(queue, currentState.performAction(lastAction));
-                    assignedIS.add(getInformationSetFor(currentState));
-                } else {
-                    for (Action action : expander.getActions(currentState)) {
-                        addToQueue(queue, currentState.performAction(action));
-                    }
-                }
-            }
+//            ArrayDeque<GameState> queue = new ArrayDeque<>();
+//            Set<InformationSet> assignedIS = new HashSet<>();
+//
+//            queue.add(rootState);
+//            while (queue.size() > 0) {
+//                GameState currentState = queue.removeFirst();
+//
+//                if (currentState.isGameEnd()) {
+//                    currentSet.add(currentState.getSequenceFor(player));
+////                    currentSet.addAll(currentState.getSequenceFor(player).getAllPrefixes());
+//                    continue;
+//                }
+//
+//                if (currentState.getPlayerToMove().equals(player)) {
+//                    InformationSet set = getInformationSetFor(currentState);
+//
+//                    if (assignedIS.contains(set))
+//                        continue;
+//                    List<Action> actions = expander.getActions(currentState);
+//                    Action lastAction = actions.get(actions.size() - 1);
+//
+//                    currentSet.add(currentState.getSequenceFor(player));
+//                    while (!solver.checkFeasibilityFor(currentSet)) {
+//                       currentSet.remove(currentState.getSequenceFor(player));
+//                    }
+//                    addToQueue(queue, currentState.performAction(lastAction));
+//                    assignedIS.add(getInformationSetFor(currentState));
+//                } else {
+//                    for (Action action : expander.getActions(currentState)) {
+//                        addToQueue(queue, currentState.performAction(action));
+//                    }
+//                }
+//            }
         }
 
         private void initStack() {
@@ -219,26 +229,7 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
                 first = false;
                 return currentSet;
             }
-            int index = stack.size() - 1;
-
-            for (; index >= 0; index--) {
-                SequenceInformationSet set = stack.get(index).getLeft();
-                List<Action> actions = stack.get(index).getRight();
-
-                if (currentSet.contains(set.getPlayersHistory())) {
-                    Action lastAction = actions.remove(actions.size() - 1);
-                    Sequence sequence = new ArrayListSequenceImpl(set.getPlayersHistory());
-
-                    sequence.addLast(lastAction);
-                    currentSet.remove(sequence);
-                    if (!actions.isEmpty())
-                        break;
-                    if (index == 0)
-                        throw new NoSuchElementException();
-                }
-                stack.set(index, new Pair<>(set, expander.getActions(set))) ;
-            }
-
+            int index = getIndexOfReachableISWithActionsLeftFrom(stack.size() - 1);
 
             updateRealizationPlan(index);
             return currentSet;
@@ -253,8 +244,52 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
                     continuation.addLast(setActionPair.getRight().get(setActionPair.getRight().size() - 1));
                     currentSet.add(continuation);
+                    if(!solver.checkFeasibilityFor(currentSet)) {
+                        System.err.println("feas cut");
+                        i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
+
+//                        continuation.removeLast();
+//                        setActionPair.getRight().remove(setActionPair.getRight().size() - 1);
+//                        if(setActionPair.getRight().isEmpty()) {
+//                            stack.set(i, new Pair<>(setActionPair.getLeft(), expander.getActions(setActionPair.getLeft())));
+//                            i = getIndexOfReachableISWithActionsLeftFrom(i-1);
+//                            break;
+//                        }
+//                        continuation.addLast(setActionPair.getRight().get(setActionPair.getRight().size() - 1));
+                    }
                 }
             }
+        }
+
+        private int getIndexOfReachableISWithActionsLeftFrom(int index) {
+            for (; index >= 0; index--) {
+                SequenceInformationSet set = stack.get(index).getLeft();
+                List<Action> actions = stack.get(index).getRight();
+
+                if (currentSet.contains(set.getPlayersHistory())) {
+                    Action lastAction = actions.remove(actions.size() - 1);
+                    Sequence sequence = new ArrayListSequenceImpl(set.getPlayersHistory());
+
+                    sequence.addLast(lastAction);
+                    currentSet.remove(sequence);
+                    if (!actions.isEmpty()) {
+                        if(minIndex >= index) {
+                            minIndex = index;
+                            System.out.println(index);
+                            System.out.println(set.getPlayersHistory());
+                            System.out.println("Actions left: " + actions.size());
+                            if(minIndex == 0) {
+                                minIndex = Integer.MAX_VALUE;
+                            }
+                        }
+                        break;
+                    }
+                    if (index == 0)
+                        throw new NoSuchElementException();
+                }
+                stack.set(index, new Pair<>(set, expander.getActions(set))) ;
+            }
+            return index;
         }
 
         @Override
