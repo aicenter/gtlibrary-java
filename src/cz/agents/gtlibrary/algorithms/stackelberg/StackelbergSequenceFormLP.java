@@ -29,9 +29,7 @@ import cz.agents.gtlibrary.strategy.Strategy;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 import ilog.cplex.IloCplex.CplexStatus;
-import ilog.cplex.IloCplex.UnknownObjectException;
 
-import java.io.PrintStream;
 import java.util.*;
 
 public class StackelbergSequenceFormLP extends SequenceFormLP {
@@ -55,7 +53,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
     }
 
 
-    protected void resetModel(IloCplex cplex, Player player) throws IloException{
+    protected void resetModel(IloCplex cplex, Player player) throws IloException {
         cplex.clearModel();
         cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
         cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
@@ -90,36 +88,36 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
 
-            StackelbergConfig.PureRealizationPlanIterator i = algConfig.getIterator(follower, expander);
+            StackelbergConfig.PureRealizationPlanIterator i = algConfig.getIterator(follower, expander, this);
 
             while (true) {
                 Set<Sequence> pureRP = i.next();
                 double upperBound = getUpperBound(pureRP, algConfig);
-                System.out.println(iteration);
+//                System.out.println(iteration);
 
 //                System.out.println("---");
 //                for (Sequence sequence : pureRP) {
 //                    debugOutput.println(sequence);
 //                }
-
                 totalRPCount++;
-                if (maxValue == info.getMaxUtility())//TODO: max utility for both players
+                if (maxValue == info.getMaxUtility()) {//TODO: max utility for both players
                     break;
+                }
                 iteration++;
-//                if (maxValue >= upperBound - 1e-7) {
-//                    upperBoundCut++;
-//                    continue;
-//                }
+                if (maxValue >= upperBound - 1e-7) {
+                    upperBoundCut++;
+                    continue;
+                }
                 setValueForBRSlack(cplex, pureRP, 0);
                 updateObjective(cplex, v0, pureRP, algConfig);
-//                addBestValueConstraint(cplex, v0, maxValue + 1e-5);
+                addBestValueConstraint(cplex, v0, maxValue + 1e-5);
 
 //                cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
                 startTime = System.currentTimeMillis();
 //                debugOutput.println("Solving");
                 cplex.solve();
                 overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
-                debugOutput.println("Status: " + cplex.getCplexStatus());
+//                debugOutput.println("Status: " + cplex.getCplexStatus());
 
                 if (cplex.getCplexStatus() == CplexStatus.Optimal) {
                     double v = cplex.getValue(v0);
@@ -153,7 +151,6 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         } catch (NoSuchElementException e) {
 
         }
-
         resultStrategies.put(leader, leaderResult);
         resultValues.put(leader, maxValue);
         System.out.println("final result with value " + maxValue + ": ");
@@ -165,6 +162,29 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         System.out.println("Feasibility cuts: " + feasibilityCut);
         System.out.println("Total RP count: " + totalRPCount);
         return maxValue;
+    }
+
+    public boolean checkFeasibilityFor(Iterable<Sequence> partialPureRp) {
+        try {
+            IloCplex cplex = modelsForPlayers.get(leader);
+
+            deleteObjectiveConstraint(cplex);
+            cplex.getObjective().clearExpr();
+            setValueForBRSlack(cplex, partialPureRp, 0);
+            cplex.solve();
+            setValueForBRSlack(cplex, partialPureRp, 1);
+            cplex.getObjective().setExpr(objectiveForPlayers.get(leader));
+            if(cplex.getStatus() == IloCplex.Status.Optimal)
+                return true;
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private void deleteObjectiveConstraint(IloCplex cplex) throws IloException {
+        if (leaderObj != null)
+            cplex.delete(leaderObj);
     }
 
     private double getUtility(Map<Sequence, Double> leaderStrategy, Map<Sequence, Double> followerStrategy, StackelbergConfig algConfig) {
@@ -326,7 +346,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
 
     }
 
-    protected void setValueForBRSlack(IloCplex cplex, Set<Sequence> sequences, int value) throws IloException {
+    protected void setValueForBRSlack(IloCplex cplex, Iterable<Sequence> sequences, int value) throws IloException {
         for (Sequence s : sequences) {
             IloRange constraint = constraints.get(s);
             IloNumVar slack = slackVariables.get(s);
@@ -339,8 +359,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
     }
 
     protected void updateObjective(IloCplex cplex, IloNumVar v0, Set<Sequence> bestResponse, StackelbergConfig algConfig) throws IloException {
-        if (leaderObj != null)
-            cplex.delete(leaderObj);
+        deleteObjectiveConstraint(cplex);
         IloNumExpr sumG = cplex.constant(0);
 
         for (Sequence s : bestResponse) {

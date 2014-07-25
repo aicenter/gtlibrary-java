@@ -56,8 +56,8 @@ import java.util.Map;
 public class StackelbergMultipleLP {
 
     public static void main(String[] args) {
-        runGenSumRandom();
-//        runBPRG();
+//        runGenSumRandom();
+        runBPG();
 //        runSGSG();
 //        runPEG();
 //        runStackTest();
