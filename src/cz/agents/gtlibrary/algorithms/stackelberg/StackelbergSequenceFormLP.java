@@ -93,9 +93,9 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
             while (true) {
                 Set<Sequence> pureRP = i.next();
                 double upperBound = getUpperBound(pureRP, algConfig);
-//                System.out.println(iteration);
+//                debugOutput.println(iteration);
 
-//                System.out.println("---");
+//                debugOutput.println("---");
 //                for (Sequence sequence : pureRP) {
 //                    debugOutput.println(sequence);
 //                }
