@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="wicket-1.4.17">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/wicket-1.4.17.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
