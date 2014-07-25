@@ -126,14 +126,14 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
 //                    GeneralSumBestResponse br = new GeneralSumBestResponse(expander, followerIdx, players, algConfig, info);
 
                     debugOutput.println("Best value is " + v + " for follower strategy: ");
-                    for (Sequence sequence : pureRP) {
-                        debugOutput.println(sequence);
-                    }
-                    debugOutput.println("Leader's strategy: ");
-                    for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
-                        if (entry.getValue() > 0)
-                            debugOutput.println(entry);
-                    }
+//                    for (Sequence sequence : pureRP) {
+//                        debugOutput.println(sequence);
+//                    }
+//                    debugOutput.println("Leader's strategy: ");
+//                    for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+//                        if (entry.getValue() > 0)
+//                            debugOutput.println(entry);
+//                    }
                     if (v > maxValue) {
                         maxValue = v;
                         resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
@@ -154,10 +154,10 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         resultStrategies.put(leader, leaderResult);
         resultValues.put(leader, maxValue);
         System.out.println("final result with value " + maxValue + ": ");
-        for (Map.Entry<Sequence, Double> entry : leaderResult.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
+//        for (Map.Entry<Sequence, Double> entry : leaderResult.entrySet()) {
+//            if (entry.getValue() > 0)
+//                System.out.println(entry);
+//        }
         System.out.println("Upper bound cuts: " + upperBoundCut);
         System.out.println("Feasibility cuts: " + feasibilityCut);
         System.out.println("Total RP count: " + totalRPCount);
