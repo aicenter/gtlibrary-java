@@ -84,6 +84,10 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
             BoundLeafInfo info = boundLeafMap.get(state);
 
             tempLeafs.remove(state);
+            removeFrom(tempLeafMap, state);
+            if(!state.isGameEnd())
+                addToMap(addedNonTerminals, state);
+            expandTempLeafsFromISOf(info, algConfig, state);
             expand(info, state, algConfig);
         }
     }
@@ -103,6 +107,7 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
                 expandTempLeafsFromISOf(info, algConfig, nextState);
             } else {
                 Set<GameState> addedNonTerminalsForIS = addedNonTerminals.get(nextState.getISKeyForPlayerToMove());
+
                 if (addedNonTerminalsForIS != null) {
                     addToMap(addedNonTerminals, nextState);
                     expand(info, nextState, algConfig);
@@ -124,14 +129,28 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
     }
 
     private void expandTempLeafsFromISOf(BoundLeafInfo info, StackelbergConfig algConfig, GameState nextState) {
-        Set<GameState> tempLeafsInIS = tempLeafMap.get(nextState.getISKeyForPlayerToMove());
+        Pair<Integer, Sequence> key = nextState.getISKeyForPlayerToMove();
+        Set<GameState> tempLeafsInIS = tempLeafMap.get(key);
 
-        if (tempLeafsInIS != null)
+        if (tempLeafsInIS != null) {
             for (GameState tempLeaf : tempLeafsInIS) {
                 tempLeafs.remove(tempLeaf);
                 addToMap(addedNonTerminals, tempLeaf);
                 expand(info, tempLeaf, algConfig);
             }
+            tempLeafMap.remove(key);
+        }
+    }
+
+    private void removeFrom(Map<Pair<Integer, Sequence>, Set<GameState>> map, GameState state) {
+        Pair<Integer, Sequence> key = state.getISKeyForPlayerToMove();
+        Set<GameState> states = map.get(key);
+
+        if(states == null)
+            return;
+        states.remove(state);
+        if(states.isEmpty())
+            map.remove(key);
     }
 
     private void addToMap(Map<Pair<Integer, Sequence>, Set<GameState>> map, GameState tempLeaf) {
