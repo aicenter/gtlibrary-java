@@ -189,7 +189,10 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
 
     private void createTempLeafs(GameState rootState) {
         for (Action action : expander.getActions(rootState)) {
-            tempLeafs.add(rootState.performAction(action));
+            GameState nextState = rootState.performAction(action);
+
+            tempLeafs.add(nextState);
+            addToMap(tempLeafMap, nextState);
         }
     }
 
