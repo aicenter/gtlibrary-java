@@ -33,8 +33,8 @@ public class RandomGameInfo implements GameInfo {
 
     public static final Player[] ALL_PLAYERS = new Player[] {FIRST_PLAYER, SECOND_PLAYER};
 
-    public static int MAX_DEPTH =2;
-    public static int MAX_BF = 4;
+    public static int MAX_DEPTH = 2;
+    public static int MAX_BF = 3;
     public static int MAX_OBSERVATION = 2;
     public static int MAX_UTILITY = 5;
     public static boolean BINARY_UTILITY = true;
@@ -44,7 +44,7 @@ public class RandomGameInfo implements GameInfo {
 //    public static double KEEP_OBS_PROB = 0.9;
     public static int[] ACTIONS;
 
-    public static long seed = 2;
+    public static long seed = 5;
 
     public static Random rnd = new HighQualityRandom(seed);
 

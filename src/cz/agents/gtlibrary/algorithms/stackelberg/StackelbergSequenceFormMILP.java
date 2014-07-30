@@ -43,12 +43,12 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
 
     protected Map<Object, IloNumVar> slackVariables = new HashMap<Object, IloNumVar>();
     protected Map<Object, IloRange[]> slackConstraints = new HashMap<Object, IloRange[]>(); // constraints for slack variables and p(h)
-    protected Expander expander;
+    protected Expander<SequenceInformationSet> expander;
 
     protected ThreadMXBean threadBean;
 
 
-    public StackelbergSequenceFormMILP(Player[] players, GameInfo info, Expander expander) {
+    public StackelbergSequenceFormMILP(Player[] players, GameInfo info, Expander<SequenceInformationSet> expander) {
         super(players);
         this.players = players;
         this.expander = expander;
