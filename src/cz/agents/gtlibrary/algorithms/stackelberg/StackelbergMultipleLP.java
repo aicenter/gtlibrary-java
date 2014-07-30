@@ -56,8 +56,8 @@ import java.util.Map;
 public class StackelbergMultipleLP {
 
     public static void main(String[] args) {
-//        runGenSumRandom();
-        runBPG();
+        runGenSumRandom();
+//        runBPG();
 //        runSGSG();
 //        runPEG();
 //        runStackTest();
@@ -155,6 +155,7 @@ public class StackelbergMultipleLP {
         StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, gameConfig, expander);
 //        StackelbergSequenceFormMILPOracle sequenceFormLP = new StackelbergSequenceFormMILPOracle(actingPlayers, gameConfig, expander);
 //        StackelbergSequenceFormMILPIncremental sequenceFormLP = new StackelbergSequenceFormMILPIncremental(actingPlayers, gameConfig, expander);
+//        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILPBuilding(actingPlayers, gameConfig, expander);
 
 //        Iterator i = algConfig.getIterator(rootState.getAllPlayers()[0], expander);
 //        while (i.hasNext()) {
