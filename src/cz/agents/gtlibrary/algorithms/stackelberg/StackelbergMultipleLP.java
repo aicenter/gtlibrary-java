@@ -151,8 +151,8 @@ public class StackelbergMultipleLP {
         System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
 
         long startCPLEX = threadBean.getCurrentThreadCpuTime();
-//        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
-        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, gameConfig, expander);
+        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
+//        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, gameConfig, expander);
 //        StackelbergSequenceFormMILPOracle sequenceFormLP = new StackelbergSequenceFormMILPOracle(actingPlayers, gameConfig, expander);
 //        StackelbergSequenceFormMILPIncremental sequenceFormLP = new StackelbergSequenceFormMILPIncremental(actingPlayers, gameConfig, expander);
 //        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILPBuilding(actingPlayers, gameConfig, expander);
