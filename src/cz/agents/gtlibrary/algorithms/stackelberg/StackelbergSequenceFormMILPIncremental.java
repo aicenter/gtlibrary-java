@@ -32,6 +32,8 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
         Map<Sequence, Double> firstRP = new HashMap<>();
         firstRP.put(algConfig.getRootState().getSequenceFor(follower), 1d);
 
+        int iterations = 0;
+
         try {
             IloCplex cplex = modelsForPlayers.get(leader);
             IloNumVar v0 = objectiveForPlayers.get(leader);
@@ -57,9 +59,10 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
             GeneralSumBestResponse gBR = new GeneralSumBestResponse(expander, follower.getId(), players, algConfig, info);
 
             while (true) {
+                iterations++;
                 boolean tmp = false;
                 followerBR.clear();
-//                cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+                cplex.exportModel("stck-" + leader + "-i" + iterations + ".lp"); // uncomment for model export
                 startTime = threadBean.getCurrentThreadCpuTime();
                 debugOutput.println("Solving");
                 cplex.solve();
@@ -71,6 +74,22 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
                     debugOutput.println("Best value is " + v);
 
                     maxValue = v;
+
+                    for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
+                        try {
+                            debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
+                        } catch (IloCplex.UnknownObjectException e) {
+                            continue;
+                        }
+                    }
+                    debugOutput.println("-------");
+                    for (Map.Entry<Object, IloNumVar> ee : slackVariables.entrySet()) {
+                        try {
+                            debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
+                        } catch (IloCplex.UnknownObjectException e) {
+                            continue;
+                        }
+                    }
 
                     leaderResult = createSolution(algConfig, leader, cplex);
                     followerResult = createSolution(algConfig, follower, cplex);
@@ -99,7 +118,10 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
 //                        }
                     }
                     tmp = addFollowerSequences(algConfig, cplex, followerBR);
+
+
                 }
+
 
                 if (!tmp)
                     break;
