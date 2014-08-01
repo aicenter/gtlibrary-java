@@ -37,6 +37,8 @@ import java.util.*;
  */
 public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet> {
 
+    public static boolean USE_FEASIBILITY_CUT = true;
+
     protected Map<GameState, Double[]> actualNonZeroUtilityValuesInLeafs = new HashMap<>();
     protected Set<GameState> allLeafs = new HashSet<>();
     protected Map<Map<Player, Sequence>, Double[]> utilityForSequenceCombination = new HashMap<>();
@@ -47,7 +49,7 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
         this.rootState = rootState;
     }
 
-    public PureRealizationPlanIterator getIterator(Player player, Expander<SequenceInformationSet> expander, StackelbergSequenceFormLP solver) {
+    public PureRealizationPlanIterator getIterator(Player player, Expander<SequenceInformationSet> expander, FeasibilitySequenceFormLP solver) {
         return new PureRealizationPlanIterator(player, expander, solver);
     }
 
@@ -62,10 +64,10 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
         private List<Pair<SequenceInformationSet, List<Action>>> stack;
         private Player player;
         private Expander<SequenceInformationSet> expander;
-        private StackelbergSequenceFormLP solver;
+        private FeasibilitySequenceFormLP solver;
         private int minIndex = Integer.MAX_VALUE;
 
-        public PureRealizationPlanIterator(Player player, Expander<SequenceInformationSet> expander, StackelbergSequenceFormLP solver) {
+        public PureRealizationPlanIterator(Player player, Expander<SequenceInformationSet> expander, FeasibilitySequenceFormLP solver) {
             this.currentSet = new HashSet<>();
             this.player = player;
             this.stack = new ArrayList<>();
@@ -78,6 +80,7 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
         private void initRealizationPlan() {
             currentSet.add(rootState.getSequenceFor(player));
+            solver.removeSlackFor(rootState.getSequenceFor(player));
             updateRealizationPlan(0);
 
 //            ArrayDeque<GameState> queue = new ArrayDeque<>();
@@ -243,7 +246,8 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
                     continuation.addLast(setActionPair.getRight().get(setActionPair.getRight().size() - 1));
                     currentSet.add(continuation);
-                    if(!solver.checkFeasibilityFor(currentSet)) {
+                    solver.removeSlackFor(continuation);
+                    if(USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet)) {
 //                        System.err.println("feas cut");
                         i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
                     }
@@ -262,6 +266,7 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
                     sequence.addLast(lastAction);
                     currentSet.remove(sequence);
+                    solver.addSlackFor(sequence);
                     if (!actions.isEmpty()) {
                         if(minIndex >= index) {
                             minIndex = index;
@@ -299,10 +304,11 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
     public void setUtility(GameState leaf, Double[] utility) {
         if (actualNonZeroUtilityValuesInLeafs.containsKey(leaf)) {
-            assert (actualNonZeroUtilityValuesInLeafs.get(leaf) == utility);
+            assert (Arrays.equals(actualNonZeroUtilityValuesInLeafs.get(leaf), utility));
             return; // we have already stored this leaf
         }
         boolean allZeros = true;
+
         for (Player p : leaf.getAllPlayers()) {
             if (utility[p.getId()] != 0) {
                 allZeros = false;

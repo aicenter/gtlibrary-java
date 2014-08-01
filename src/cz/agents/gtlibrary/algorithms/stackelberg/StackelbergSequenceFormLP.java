@@ -28,25 +28,28 @@ import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
 import cz.agents.gtlibrary.strategy.Strategy;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
-import ilog.cplex.IloCplex.CplexStatus;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class StackelbergSequenceFormLP extends SequenceFormLP {
 
-    private Player leader;
-    private Player follower;
-    private Player[] players;
-    private GameInfo info;
-    private Expander<SequenceInformationSet> expander;
+    protected Player leader;
+    protected Player follower;
+    protected Player[] players;
+    protected GameInfo info;
+    protected Expander<SequenceInformationSet> expander;
+    protected ThreadMXBean mxBean;
 
-    private IloRange leaderObj = null;
+    protected IloRange leaderObj = null;
 
     protected Map<Object, IloNumVar> slackVariables = new HashMap<>();
 
 
     public StackelbergSequenceFormLP(Player[] players, GameInfo info, Expander<SequenceInformationSet> expander) {
         super(players);
+        mxBean = ManagementFactory.getThreadMXBean();
         this.players = players;
         this.info = info;
         this.expander = expander;
@@ -73,6 +76,8 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         int feasibilityCut = 0;
         int totalRPCount = 0;
         int iteration = 0;
+        int feasibilityCutWithoutObjective = 0;
+        FeasibilitySequenceFormLP feasibilitySolver = new FeasibilitySequenceFormLP(leader, follower, algConfig, informationSets, sequences);
         Set<Sequence> followerBR = new HashSet<>();
         Map<Sequence, Double> leaderResult = new HashMap<>();
 
@@ -81,14 +86,14 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
             IloNumVar v0 = objectiveForPlayers.get(leader);
 
 
-            long startTime = System.currentTimeMillis();
+            long startTime = mxBean.getCurrentThreadCpuTime();
             createVariables(cplex, algConfig);
             createConstraintsForSets(leader, cplex, informationSets.get(leader));
             createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
             debugOutput.println("phase 1 done");
-            overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
+            overallConstraintGenerationTime += mxBean.getCurrentThreadCpuTime() - startTime;
 
-            StackelbergConfig.PureRealizationPlanIterator i = algConfig.getIterator(follower, expander, this);
+            StackelbergConfig.PureRealizationPlanIterator i = algConfig.getIterator(follower, expander, feasibilitySolver);
 
             while (true) {
                 Set<Sequence> pureRP = i.next();
@@ -108,40 +113,42 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
                     upperBoundCut++;
                     continue;
                 }
-                setValueForBRSlack(cplex, pureRP, 0);
-                updateObjective(cplex, v0, pureRP, algConfig);
-                addBestValueConstraint(cplex, v0, maxValue + 1e-5);
+                if (feasibilitySolver.checkFeasibilityFor(pureRP, maxValue)) {
+                    setValueForBRSlack(cplex, pureRP, 0);
+                    updateObjective(cplex, v0, pureRP, algConfig);
+                    addBestValueConstraint(cplex, v0, maxValue + 1e-5);
+//                  cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+                    startTime = mxBean.getCurrentThreadCpuTime();
+//                  debugOutput.println("Solving");
+                    cplex.solve();
+                    overallConstraintLPSolvingTime += mxBean.getCurrentThreadCpuTime() - startTime;
+//                    debugOutput.println("Status: " + cplex.getCplexStatus());
 
-//                cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
-                startTime = System.currentTimeMillis();
-//                debugOutput.println("Solving");
-                cplex.solve();
-                overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
-//                debugOutput.println("Status: " + cplex.getCplexStatus());
+                    if (cplex.getStatus() == IloCplex.Status.Optimal) {
+                        double v = cplex.getValue(v0);
+                        debugOutput.println("Ub: " + upperBound + " v: " + v /*+ " comp v " + getUtility(createSolution(algConfig, leader, cplex), getRP(pureRP), algConfig)*/);
+                        assert v <= upperBound;
 
-                if (cplex.getCplexStatus() == CplexStatus.Optimal) {
-                    double v = cplex.getValue(v0);
-                    debugOutput.println("Ub: " + upperBound + " v: " + v /*+ " comp v " + getUtility(createSolution(algConfig, leader, cplex), getRP(pureRP), algConfig)*/);
-                    assert v <= upperBound;
-//                    GeneralSumBestResponse br = new GeneralSumBestResponse(expander, followerIdx, players, algConfig, info);
-
-                    debugOutput.println("Best value is " + v + " for follower strategy: ");
-//                    for (Sequence sequence : pureRP) {
-//                        debugOutput.println(sequence);
-//                    }
-//                    debugOutput.println("Leader's strategy: ");
-//                    for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
-//                        if (entry.getValue() > 0)
-//                            debugOutput.println(entry);
-//                    }
-                    if (v > maxValue) {
-                        maxValue = v;
-                        resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
-                        followerBR = pureRP;
-                        leaderResult = createSolution(algConfig, leader, cplex);
+                        debugOutput.println("Best value is " + v + " for follower strategy: ");
+//                      for (Sequence sequence : pureRP) {
+//                          debugOutput.println(sequence);
+//                      }
+//                      debugOutput.println("Leader's strategy: ");
+//                      for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+//                          if (entry.getValue() > 0)
+//                              debugOutput.println(entry);
+//                      }
+                        if (v > maxValue) {
+                            maxValue = v;
+                            resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
+                            followerBR = pureRP;
+                            leaderResult = createSolution(algConfig, leader, cplex);
+                        }
+                    } else {
+                        feasibilityCut++;
                     }
                 } else {
-                    feasibilityCut++;
+                    feasibilityCutWithoutObjective++;
                 }
                 setValueForBRSlack(cplex, pureRP, 1);
 
@@ -161,33 +168,17 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         System.out.println("Upper bound cuts: " + upperBoundCut);
         System.out.println("Feasibility cuts: " + feasibilityCut);
         System.out.println("Total RP count: " + totalRPCount);
+        System.out.println("Feasibility cut without obj: " + feasibilityCutWithoutObjective);
+        System.out.println("Feasibility time: " + feasibilitySolver.getCplexSolvingTime() / 1000000l);
         return maxValue;
     }
 
-    public boolean checkFeasibilityFor(Iterable<Sequence> partialPureRp) {
-        try {
-            IloCplex cplex = modelsForPlayers.get(leader);
-
-            deleteObjectiveConstraint(cplex);
-            cplex.getObjective().clearExpr();
-            setValueForBRSlack(cplex, partialPureRp, 0);
-            cplex.solve();
-            setValueForBRSlack(cplex, partialPureRp, 1);
-            cplex.getObjective().setExpr(objectiveForPlayers.get(leader));
-            if(cplex.getStatus() == IloCplex.Status.Optimal)
-                return true;
-        } catch (IloException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    private void deleteObjectiveConstraint(IloCplex cplex) throws IloException {
+    protected void deleteObjectiveConstraint(IloCplex cplex) throws IloException {
         if (leaderObj != null)
             cplex.delete(leaderObj);
     }
 
-    private double getUtility(Map<Sequence, Double> leaderStrategy, Map<Sequence, Double> followerStrategy, StackelbergConfig algConfig) {
+    protected double getUtility(Map<Sequence, Double> leaderStrategy, Map<Sequence, Double> followerStrategy, StackelbergConfig algConfig) {
         UtilityCalculator calculator = new UtilityCalculator(algConfig.getRootState(), expander);
         Strategy leaderStrat = new NoMissingSeqStrategy(leaderStrategy);
         Strategy followerStrat = new NoMissingSeqStrategy(followerStrategy);
@@ -199,13 +190,13 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
             return calculator.computeUtility(followerStrat, leaderStrat);
     }
 
-    private double getUpperBound(Set<Sequence> pureRP, StackelbergConfig config) {
+    protected double getUpperBound(Set<Sequence> pureRP, StackelbergConfig config) {
         SQFBestResponseAlgorithm bestResponse = new GeneralSumBestResponse(expander, leader.getId(), players, config, info);
 
         return bestResponse.calculateBR(config.getRootState(), getRP(pureRP));
     }
 
-    private Map<Sequence, Double> getRP(Iterable<Sequence> sequences) {
+    protected Map<Sequence, Double> getRP(Iterable<Sequence> sequences) {
         Map<Sequence, Double> rp = new HashMap<>();
 
         for (Sequence sequence : sequences) {
@@ -214,7 +205,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         return rp;
     }
 
-    private void addBestValueConstraint(IloCplex cplex, IloNumVar v0, double maxValue) throws IloException {
+    protected void addBestValueConstraint(IloCplex cplex, IloNumVar v0, double maxValue) throws IloException {
         IloRange maxValueConstraint = constraints.get("maxVal");
 
         if (maxValueConstraint == null) {
