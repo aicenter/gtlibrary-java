@@ -53,7 +53,7 @@ import java.util.Map;
  * Time: 2:46 PM
  * To change this template use File | Settings | File Templates.
  */
-public class StackelbergMultipleLP {
+public class StackelbergRunner {
 
     public static void main(String[] args) {
 //        runGenSumRandom();
@@ -67,10 +67,10 @@ public class StackelbergMultipleLP {
         GameState rootState = new GeneralSumRandomGameState();
         GameInfo gameInfo = new RandomGameInfo();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
-        Expander expander = new RandomGameExpander<>(algConfig);
-        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
+        Expander<SequenceInformationSet> expander = new RandomGameExpander<>(algConfig);
+        StackelbergRunner smlp = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-        smlp.generate(rootState.getAllPlayers()[0]);
+        smlp.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
         new GambitEFG().write("randomGame.gbt", rootState, expander);
     }
 
@@ -78,18 +78,20 @@ public class StackelbergMultipleLP {
         GameState rootState = new GenSumBPGGameState();
         BPGGameInfo gameInfo = new BPGGameInfo();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
-        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, new BPGExpander<>(algConfig), gameInfo, algConfig);
-        smlp.generate(rootState.getAllPlayers()[1]);
+        Expander<SequenceInformationSet> expander = new BPGExpander<>(algConfig);
+        StackelbergRunner smlp = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+
+        smlp.generate(rootState.getAllPlayers()[1], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
     }
 
     public static void runSGSG() {
         SimpleGSInfo gameInfo = new SimpleGSInfo();
         GameState rootState = new SimpleGSState(gameInfo.getAllPlayers());
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
-        Expander expander = new SimpleGSExpander(algConfig);
+        Expander<SequenceInformationSet> expander = new SimpleGSExpander(algConfig);
 
-        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
-        smlp.generate(rootState.getAllPlayers()[0]);
+        StackelbergRunner smlp = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        smlp.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
 //        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
     }
 
@@ -97,20 +99,20 @@ public class StackelbergMultipleLP {
         GameInfo gameInfo = new PursuitGameInfo();
         GameState rootState = new GenSumPursuitGameState();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
-        Expander expander = new PursuitExpander(algConfig);
+        Expander<SequenceInformationSet> expander = new PursuitExpander(algConfig);
 
-        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
-        smlp.generate(rootState.getAllPlayers()[1]);
+        StackelbergRunner smlp = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        smlp.generate(rootState.getAllPlayers()[1], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
     }
 
     public static void runStackTest() {
         GameInfo gameInfo = new StackTestGameInfo();
         GameState rootState = new StackTestGameState();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
-        Expander expander = new StackTestExpander(algConfig);
+        Expander<SequenceInformationSet> expander = new StackTestExpander(algConfig);
 
-        StackelbergMultipleLP smlp = new StackelbergMultipleLP(rootState, expander, gameInfo, algConfig);
-        smlp.generate(rootState.getAllPlayers()[0]);
+        StackelbergRunner smlp = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        smlp.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
     }
 
     private GameState rootState;
@@ -124,14 +126,14 @@ public class StackelbergMultipleLP {
 
     private double gameValue = Double.NaN;
 
-    public StackelbergMultipleLP(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo gameInfo, StackelbergConfig algConfig) {
+    public StackelbergRunner(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo gameInfo, StackelbergConfig algConfig) {
         this.rootState = rootState;
         this.expander = expander;
         this.gameConfig = gameInfo;
         this.algConfig = algConfig;
     }
 
-    private Map<Player, Map<Sequence, Double>> generate(Player leader) {
+    private Map<Player, Map<Sequence, Double>> generate(Player leader, StackelbergSequenceFormLP solver) {
         debugOutput.println("Full Sequence Multiple LP Stackelberg");
         debugOutput.println(gameConfig.getInfo());
         threadBean = ManagementFactory.getThreadMXBean();
@@ -151,7 +153,7 @@ public class StackelbergMultipleLP {
         System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
 
         long startCPLEX = threadBean.getCurrentThreadCpuTime();
-        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
+//        StackelbergSequenceFormMultipleLPs sequenceFormLP = new StackelbergSequenceFormMultipleLPs(actingPlayers, gameConfig, expander);
 //        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, gameConfig, expander);
 //        StackelbergSequenceFormMILPOracle sequenceFormLP = new StackelbergSequenceFormMILPOracle(actingPlayers, gameConfig, expander);
 //        StackelbergSequenceFormMILPIncremental sequenceFormLP = new StackelbergSequenceFormMILPIncremental(actingPlayers, gameConfig, expander);
@@ -162,14 +164,14 @@ public class StackelbergMultipleLP {
 //            System.out.println(i.next());
 //        }
 
-        sequenceFormLP.calculateLeaderStrategies(leader.getId(), 1 - leader.getId(), algConfig, expander);
+        solver.calculateLeaderStrategies(leader.getId(), 1 - leader.getId(), algConfig, expander);
 
         long thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX) / 1000000l;
 
         overallCPLEX += thisCPLEX;
 
         for (Player player : rootState.getAllPlayers()) {
-            realizationPlans.put(player, sequenceFormLP.getResultStrategiesForPlayer(player));
+            realizationPlans.put(player, solver.getResultStrategiesForPlayer(player));
         }
 
         System.out.println("done.");
@@ -192,15 +194,15 @@ public class StackelbergMultipleLP {
         } catch (InterruptedException e) {
         }
 
-        gameValue = sequenceFormLP.getResultForPlayer(leader);
+        gameValue = solver.getResultForPlayer(leader);
         System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
         System.out.println("final result:" + gameValue);
         System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
         System.out.println("final time: " + finishTime);
         System.out.println("final CPLEX time: " + overallCPLEX);
-        System.out.println("final CPLEX building time: " + sequenceFormLP.getOverallConstraintGenerationTime() / 1000000l);
-        System.out.println("final CPLEX solving time: " + sequenceFormLP.getOverallConstraintLPSolvingTime() / 1000000l);
+        System.out.println("final CPLEX building time: " + solver.getOverallConstraintGenerationTime() / 1000000l);
+        System.out.println("final CPLEX solving time: " + solver.getOverallConstraintLPSolvingTime() / 1000000l);
         System.out.println("final BR time: " + 0);
         System.out.println("final RGB time: " + 0);
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
@@ -220,7 +222,7 @@ public class StackelbergMultipleLP {
     }
 
     public void generateCompleteGame() {
-        LinkedList<GameState> queue = new LinkedList<GameState>();
+        LinkedList<GameState> queue = new LinkedList<>();
 
         queue.add(rootState);
 

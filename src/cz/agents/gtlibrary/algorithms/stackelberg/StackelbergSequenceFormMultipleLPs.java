@@ -33,7 +33,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
-public class StackelbergSequenceFormLP extends SequenceFormLP {
+public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormLP {
 
     protected Player leader;
     protected Player follower;
@@ -47,7 +47,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
     protected Map<Object, IloNumVar> slackVariables = new HashMap<>();
 
 
-    public StackelbergSequenceFormLP(Player[] players, GameInfo info, Expander<SequenceInformationSet> expander) {
+    public StackelbergSequenceFormMultipleLPs(Player[] players, GameInfo info, Expander<SequenceInformationSet> expander) {
         super(players);
         mxBean = ManagementFactory.getThreadMXBean();
         this.players = players;
