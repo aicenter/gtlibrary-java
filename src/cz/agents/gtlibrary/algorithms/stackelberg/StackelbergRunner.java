@@ -134,7 +134,7 @@ public class StackelbergRunner {
         this.algConfig = algConfig;
     }
 
-    private Map<Player, Map<Sequence, Double>> generate(Player leader, StackelbergSequenceFormLP solver) {
+    public Map<Player, Map<Sequence, Double>> generate(Player leader, StackelbergSequenceFormLP solver) {
         debugOutput.println("Full Sequence Multiple LP Stackelberg");
         debugOutput.println(gameConfig.getInfo());
         threadBean = ManagementFactory.getThreadMXBean();
