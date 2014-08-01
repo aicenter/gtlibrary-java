@@ -19,15 +19,15 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
         super(players, info, expander);
     }
 
-    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander expander) {
+    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
 
         leader = players[leaderIdx];
         follower = players[followerIdx];
 
         double maxValue = Double.NEGATIVE_INFINITY;
-        Set<Sequence> followerBR = new HashSet<Sequence>();
-        Map<Sequence, Double> leaderResult = new HashMap<Sequence, Double>();
-        Map<Sequence, Double> followerResult = new HashMap<Sequence, Double>();
+        Set<Sequence> followerBR = new HashSet<>();
+        Map<Sequence, Double> leaderResult = new HashMap<>();
+        Map<Sequence, Double> followerResult = new HashMap<>();
 
         Map<Sequence, Double> firstRP = new HashMap<>();
         firstRP.put(algConfig.getRootState().getSequenceFor(follower), 1d);

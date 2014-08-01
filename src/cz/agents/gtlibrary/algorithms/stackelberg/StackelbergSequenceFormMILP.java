@@ -30,7 +30,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
-public class StackelbergSequenceFormMILP extends SequenceFormLP {
+public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
 
     protected Player leader;
     protected Player follower;
@@ -66,7 +66,7 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
         objectiveForPlayers.put(player, v0);
     }
 
-    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander expander) {
+    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         leader = players[leaderIdx];
         follower = players[followerIdx];
 
