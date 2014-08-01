@@ -1,6 +1,8 @@
-package cz.agents.gtlibrary.algorithms.stackelberg;
+package cz.agents.gtlibrary.algorithms.stackelberg.milp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.stackelberg.GeneralSumBestResponse;
+import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.DummyPrintStream;
