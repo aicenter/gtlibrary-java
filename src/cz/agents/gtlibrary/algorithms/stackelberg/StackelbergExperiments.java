@@ -19,45 +19,47 @@ public class StackelbergExperiments {
      * @param args
      *      [0] algorithm: MILP, MultLP, MultLPFeas
      *      [1] domain: BPG
-     *             [2] depth
-     *             [3] slow moves
-     *             [4] graph file
-     *             [5] attacker move penalty (-1 for default)
-     *                  RND
-     *             [2] max. branching factor
+     *             [2] leader index
      *             [3] depth
-     *             [4] bin. utility
-     *             [5] correlation
-     *             [6] observations
-     *             [7] max. utility
-     *             [8] fixed size branching factor
-     *             [9] seed count
+     *             [4] slow moves
+     *             [5] graph file
+     *             [6] attacker move penalty (-1 for default)
+     *                  RND
+     *             [2] leader index
+     *             [3] max. branching factor
+     *             [4] depth
+     *             [5] bin. utility
+     *             [6] correlation
+     *             [7] observations
+     *             [8] max. utility
+     *             [9] fixed size branching factor
+     *             [10] seed count
      */
     public static void main(String[] args) {
         if (args[1].equals("BPG")) {
-            BPGGameInfo.DEPTH = Integer.parseInt(args[2]);
-            BPGGameInfo.SLOW_MOVES = Boolean.parseBoolean(args[3]);
-            BPGGameInfo.graphFile = args[4];
-            double penalty = Double.parseDouble(args[5]);
+            BPGGameInfo.DEPTH = Integer.parseInt(args[3]);
+            BPGGameInfo.SLOW_MOVES = Boolean.parseBoolean(args[4]);
+            BPGGameInfo.graphFile = args[5];
+            double penalty = Double.parseDouble(args[6]);
 
             if (penalty != -1)
                 BPGGameInfo.EVADER_MOVE_COST = penalty;
-            runBPG(args[0]);
+            runBPG(args[0], Integer.parseInt(args[2]));
         } else if (args[1].equals("RND")) {
-            RandomGameInfo.MAX_BF = Integer.parseInt(args[2]);
-            RandomGameInfo.MAX_DEPTH = Integer.parseInt(args[3]);
-            RandomGameInfo.BINARY_UTILITY = Boolean.parseBoolean(args[4]);
-            RandomGameInfo.CORRELATION = Double.parseDouble(args[5]);
-            RandomGameInfo.MAX_OBSERVATION = Integer.parseInt(args[6]);
-            RandomGameInfo.MAX_UTILITY = Integer.parseInt(args[7]);
-            RandomGameInfo.FIXED_SIZE_BF = Boolean.parseBoolean(args[8]);
-            runRandomGame(args[0], Integer.parseInt(args[9]));
+            RandomGameInfo.MAX_BF = Integer.parseInt(args[3]);
+            RandomGameInfo.MAX_DEPTH = Integer.parseInt(args[4]);
+            RandomGameInfo.BINARY_UTILITY = Boolean.parseBoolean(args[5]);
+            RandomGameInfo.CORRELATION = Double.parseDouble(args[6]);
+            RandomGameInfo.MAX_OBSERVATION = Integer.parseInt(args[7]);
+            RandomGameInfo.MAX_UTILITY = Integer.parseInt(args[8]);
+            RandomGameInfo.FIXED_SIZE_BF = Boolean.parseBoolean(args[9]);
+            runRandomGame(args[0], Integer.parseInt(args[2]), Integer.parseInt(args[10]));
         } else {
             throw new UnsupportedOperationException("Unsupported domain");
         }
     }
 
-    private static void runRandomGame(String algType, int seedCount) {
+    private static void runRandomGame(String algType, int leaderIndex, int seedCount) {
         for (int i = 0; i < seedCount; i++) {
             RandomGameInfo.seed = i;
             GameState rootState = new GeneralSumRandomGameState();
@@ -66,19 +68,19 @@ public class StackelbergExperiments {
             Expander<SequenceInformationSet> expander = new RandomGameExpander<>(algConfig);
             StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-            runner.generate(rootState.getAllPlayers()[0], getStackelbergSolver(algType, rootState, gameInfo, expander));
+            runner.generate(rootState.getAllPlayers()[leaderIndex], getStackelbergSolver(algType, rootState, gameInfo, expander));
             System.out.println("------------");
         }
     }
 
-    private static void runBPG(String algType) {
+    private static void runBPG(String algType, int leaderIndex) {
         GameState rootState = new GenSumBPGGameState();
         GameInfo gameInfo = new BPGGameInfo();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander<SequenceInformationSet> expander = new BPGExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-        runner.generate(rootState.getAllPlayers()[0], getStackelbergSolver(algType, rootState, gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[leaderIndex], getStackelbergSolver(algType, rootState, gameInfo, expander));
 
     }
 
