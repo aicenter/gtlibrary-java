@@ -28,8 +28,9 @@ import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
 import cz.agents.gtlibrary.strategy.Strategy;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
-import ilog.cplex.IloCplex.CplexStatus;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class StackelbergSequenceFormLP extends SequenceFormLP {
@@ -39,6 +40,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
     protected Player[] players;
     protected GameInfo info;
     protected Expander<SequenceInformationSet> expander;
+    protected ThreadMXBean mxBean;
 
     protected IloRange leaderObj = null;
 
@@ -47,6 +49,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
 
     public StackelbergSequenceFormLP(Player[] players, GameInfo info, Expander<SequenceInformationSet> expander) {
         super(players);
+        mxBean = ManagementFactory.getThreadMXBean();
         this.players = players;
         this.info = info;
         this.expander = expander;
@@ -83,12 +86,12 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
             IloNumVar v0 = objectiveForPlayers.get(leader);
 
 
-            long startTime = System.currentTimeMillis();
+            long startTime = mxBean.getCurrentThreadCpuTime();
             createVariables(cplex, algConfig);
             createConstraintsForSets(leader, cplex, informationSets.get(leader));
             createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
             debugOutput.println("phase 1 done");
-            overallConstraintGenerationTime += System.currentTimeMillis() - startTime;
+            overallConstraintGenerationTime += mxBean.getCurrentThreadCpuTime() - startTime;
 
             StackelbergConfig.PureRealizationPlanIterator i = algConfig.getIterator(follower, expander, feasibilitySolver);
 
@@ -110,16 +113,17 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
                     upperBoundCut++;
                     continue;
                 }
-                setValueForBRSlack(cplex, pureRP, 0);
-                updateObjective(cplex, v0, pureRP, algConfig);
-                addBestValueConstraint(cplex, v0, maxValue + 1e-5);
                 if (feasibilitySolver.checkFeasibilityFor(pureRP, maxValue)) {
+                    setValueForBRSlack(cplex, pureRP, 0);
+                    updateObjective(cplex, v0, pureRP, algConfig);
+                    addBestValueConstraint(cplex, v0, maxValue + 1e-5);
+
 
 //                cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
-                    startTime = System.currentTimeMillis();
+                    startTime = mxBean.getCurrentThreadCpuTime();
 //                debugOutput.println("Solving");
                     cplex.solve();
-                    overallConstraintLPSolvingTime += System.currentTimeMillis() - startTime;
+                    overallConstraintLPSolvingTime += mxBean.getCurrentThreadCpuTime() - startTime;
 //                debugOutput.println("Status: " + cplex.getCplexStatus());
 
                     if (cplex.getStatus() == IloCplex.Status.Optimal) {
@@ -169,6 +173,7 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
         System.out.println("Feasibility cuts: " + feasibilityCut);
         System.out.println("Total RP count: " + totalRPCount);
         System.out.println("Feasibility cut without obj: " + feasibilityCutWithoutObjective);
+        System.out.println("Feasibility time: " + feasibilitySolver.getCplexSolvingTime() / 1000000l);
         return maxValue;
     }
 
