@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.stackelberg;
+package cz.agents.gtlibrary.algorithms.stackelberg.milp;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 

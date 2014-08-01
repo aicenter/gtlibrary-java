@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenceFormMultipleLPs;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
