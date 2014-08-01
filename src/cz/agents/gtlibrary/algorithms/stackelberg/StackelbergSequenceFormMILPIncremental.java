@@ -41,6 +41,10 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
             createConstraintsForSets(cplex, algConfig.getAllInformationSets().values());
             createConstraintsForStates(cplex, algConfig.getAllLeafs());
 
+//            createVariables(cplex, algConfig);
+//            createConstraintsForSets(cplex, algConfig.getAllInformationSets().values());
+//            createConstraintsForStates(cplex, algConfig.getAllLeafs());
+
             for (Sequence firstPlayerSequence : algConfig.getSequencesFor(follower)) {
                 createConstraintForSequence(cplex, firstPlayerSequence, algConfig);
 //                createSlackConstraintForSequence(cplex, firstPlayerSequence);
@@ -70,8 +74,29 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
 
                     leaderResult = createSolution(algConfig, leader, cplex);
                     followerResult = createSolution(algConfig, follower, cplex);
-                    for (Map.Entry<Sequence,Double> entry : followerResult.entrySet()) {
-                        if (entry.getValue() > 0) followerBR.add(entry.getKey());
+//                    HashSet<Sequence> tmptmp = new HashSet<>();
+//                    for (Map.Entry<Sequence,Double> entry : followerResult.entrySet()) {
+//                        if (entry.getValue() > 0) tmptmp.add(entry.getKey());
+//                    }
+//                    tmp = addFollowerSequences(algConfig, cplex, tmptmp);
+
+                    HashSet<GameState> addedLeafs = new HashSet<>();
+                    for (GameState gs : algConfig.getAllLeafs()) {
+//                        if (gs.getUtilities()[leaderIdx] >= maxValue) {
+//                            followerBR.addAll(gs.getSequenceFor(follower).getAllPrefixes());
+//                            addedLeafs.add(gs);
+//                        } else {
+                            try {
+                                double p = cplex.getValue(variables.get(gs));
+                                if (p > 0) {
+                                    followerBR.addAll(gs.getSequenceFor(follower).getAllPrefixes());
+                                    addedLeafs.add(gs);
+                                }
+
+                            } catch (IloCplex.UnknownObjectException e) {
+
+                            }
+//                        }
                     }
                     tmp = addFollowerSequences(algConfig, cplex, followerBR);
                 }
@@ -133,25 +158,25 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
 
     protected boolean addFollowerSequences(StackelbergConfig algConfig, IloCplex model, Set<Sequence> sequences) throws IloException{
         boolean somethingAdded = false;
-//
+
 //        Set<SequenceInformationSet> newInfoSets = new HashSet<>();
 //        Set<SequenceInformationSet> newLastInfoSets = new HashSet<>();
-//        Set<GameState> newLeafs = new HashSet<>();
 //        for (Sequence s : sequences) {
 //            if (variables.containsKey(s)) continue;
 //            createIntegerVariableForSequence(model, s);
-//            createSlackVariableForSequence(model, s);
+////            createSlackVariableForSequence(model, s);
 //            if (s.size() > 0) newInfoSets.add((SequenceInformationSet)s.getLastInformationSet());
 //            newLastInfoSets.addAll(algConfig.getReachableSets(s));
 //        }
-//
+
         for (Sequence firstPlayerSequence : sequences) {
 //            if (constraints.containsKey(firstPlayerSequence)) {
 //                model.delete(constraints.get(firstPlayerSequence));
 //                constraints.remove(firstPlayerSequence);
 //            }
-//
 //            createConstraintForSequence(model, firstPlayerSequence, algConfig);
+//
+//
 //
 //            if (slackConstraints.containsKey(firstPlayerSequence)) {
 //                model.delete(slackConstraints.get(firstPlayerSequence));
@@ -159,8 +184,9 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
 //            }
             if (!slackConstraints.containsKey(firstPlayerSequence)) {
                 somethingAdded = true;
+                createSlackConstraintForSequence(model, firstPlayerSequence);
             }
-            createSlackConstraintForSequence(model, firstPlayerSequence);
+
         }
 //
 //        for (InformationSet i : newLastInfoSets) {
@@ -179,7 +205,7 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
 //            }
 //            createConstraintForIS(model, infoSet);
 //        }
-//
+////
 //        for (GameState gs : newLeafs) {
 //            IloNumVar LS = variables.get(gs);
 //            IloNumVar RSF = variables.get(gs.getSequenceFor(follower));
