@@ -119,21 +119,21 @@ public class StackelbergSequenceFormMILP extends SequenceFormLP {
 //               debugOutput.out.println("leader rp: ");
 //                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
 //                    if (entry.getValue() > 0)
-//                        debugOutput.out.println(entry);
+//                        debugOutput.println(entry);
 //                }
-//                debugOutput.out.println("follower rp: ");
+//                debugOutput.println("follower rp: ");
 //                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, cplex).entrySet()) {
 //                    if (entry.getValue() > 0)
-//                        debugOutput.out.println(entry);
+//                        debugOutput.println(entry);
 //                }
-//                debugOutput.out.println("Leaf probs");
+//                debugOutput.println("Leaf probs");
 //                for (Map.Entry<Object, IloNumVar> entry : variables.entrySet()) {
 //                    if (entry.getKey() instanceof GameState) {
 //                        GameState possibleLeaf = (GameState) entry.getKey();
 //
 //                        try {
 //                            if (cplex.getValue(entry.getValue()) > 0)
-//                                debugOutput.out.println(entry.getKey() + ": " + cplex.getValue(entry.getValue()));
+//                                debugOutput.println(entry.getKey() + ": " + cplex.getValue(entry.getValue()));
 //                        } catch (IloException e) {
 //                            e.printStackTrace();
 //                        }
