@@ -117,30 +117,27 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
                     setValueForBRSlack(cplex, pureRP, 0);
                     updateObjective(cplex, v0, pureRP, algConfig);
                     addBestValueConstraint(cplex, v0, maxValue + 1e-5);
-
-
-//                cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+//                  cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
                     startTime = mxBean.getCurrentThreadCpuTime();
-//                debugOutput.println("Solving");
+//                  debugOutput.println("Solving");
                     cplex.solve();
                     overallConstraintLPSolvingTime += mxBean.getCurrentThreadCpuTime() - startTime;
-//                debugOutput.println("Status: " + cplex.getCplexStatus());
+//                    debugOutput.println("Status: " + cplex.getCplexStatus());
 
                     if (cplex.getStatus() == IloCplex.Status.Optimal) {
                         double v = cplex.getValue(v0);
                         debugOutput.println("Ub: " + upperBound + " v: " + v /*+ " comp v " + getUtility(createSolution(algConfig, leader, cplex), getRP(pureRP), algConfig)*/);
                         assert v <= upperBound;
-//                    GeneralSumBestResponse br = new GeneralSumBestResponse(expander, followerIdx, players, algConfig, info);
 
                         debugOutput.println("Best value is " + v + " for follower strategy: ");
-//                    for (Sequence sequence : pureRP) {
-//                        debugOutput.println(sequence);
-//                    }
-//                    debugOutput.println("Leader's strategy: ");
-//                    for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
-//                        if (entry.getValue() > 0)
-//                            debugOutput.println(entry);
-//                    }
+//                      for (Sequence sequence : pureRP) {
+//                          debugOutput.println(sequence);
+//                      }
+//                      debugOutput.println("Leader's strategy: ");
+//                      for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+//                          if (entry.getValue() > 0)
+//                              debugOutput.println(entry);
+//                      }
                         if (v > maxValue) {
                             maxValue = v;
                             resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
@@ -148,7 +145,6 @@ public class StackelbergSequenceFormLP extends SequenceFormLP {
                             leaderResult = createSolution(algConfig, leader, cplex);
                         }
                     } else {
-//                        assert false;
                         feasibilityCut++;
                     }
                 } else {
