@@ -1,11 +1,15 @@
 package cz.agents.gtlibrary.algorithms.stackelberg;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
+import java.io.PrintStream;
 import java.util.*;
 
 public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceFormMILP {
@@ -31,10 +35,15 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
 
         IloCplex cplex = modelsForPlayers.get(leader);
         IloNumVar v0 = objectiveForPlayers.get(leader);
+        int it = 0;
 
         try {
             while (true) {
                 StackelbergConfig partialConfig = generateRestrictedGame(algConfig.getRootState());
+                PartialGambitEFG gambit = new PartialGambitEFG();
+
+                gambit.write("MILPBuild" + it++ + ".gbt", algConfig.getRootState(), expander);
+
                 long startTime = threadBean.getCurrentThreadCpuTime();
 
                 cplex.clearModel();
@@ -46,6 +55,7 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
 
                 createVariables(cplex, partialConfig);
                 createConstraintsForSets(cplex, partialConfig.getAllInformationSets().values());
+                assert partialConfig.getAllLeafs().equals(tempLeafs);
                 createConstraintsForStates(cplex, partialConfig.getAllLeafs());
                 createConstraintsForSequences(partialConfig, cplex, partialConfig.getSequencesFor(follower));
                 setObjective(cplex, v0, partialConfig);
@@ -69,6 +79,35 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
                     System.out.println("actual leaf count: " + tempLeafs.size() + " vs " + algConfig.getAllLeafs().size());
                     System.out.println("actual IS count: " + partialConfig.getAllInformationSets().size());
                     System.out.println("actual size: FirstPlayer Sequences: " + partialConfig.getSequencesFor(players[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(players[1]).size());
+                    gambit = new PartialGambitEFG();
+
+                    gambit.write("finalMILPBuild.gbt", algConfig.getRootState(), expander);
+                    Map<Sequence, Double> leaderRP = createSolution(partialConfig, leader, cplex);
+
+                    debugOutput.println("Leader rp:");
+                    for (Map.Entry<Sequence, Double> entry : leaderRP.entrySet()) {
+                        if(entry.getValue() > 0)
+                            debugOutput.println(entry);
+                    }
+                    Map<Sequence, Double> followerRP = createSolution(partialConfig, leader, cplex);
+
+                    debugOutput.println("Follower rp:");
+                    for (Map.Entry<Sequence, Double> entry : followerRP.entrySet()) {
+                        if(entry.getValue() > 0)
+                            debugOutput.println(entry);
+                    }
+                    debugOutput.println("Leaf probs");
+                    for (Map.Entry<Object, IloNumVar> entry : variables.entrySet()) {
+                        if (entry.getKey() instanceof GameState) {
+                            try {
+                                if (cplex.getValue(entry.getValue()) > 0)
+                                    debugOutput.println(entry.getKey() + ": " + cplex.getValue(entry.getValue()));
+                            } catch (IloException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                    assert !areTempLeafsNotReachable(algConfig.getRootState(), leaderRP, followerRP);
                     return value;
                 }
                 expand(nonZeroTempLeafs, partialConfig);
@@ -79,20 +118,36 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
         return Double.NaN;
     }
 
+    private boolean areTempLeafsNotReachable(GameState state, Map<Sequence, Double> leaderRP, Map<Sequence, Double> followerRP) {
+        if (tempLeafs.contains(state))
+            return !state.isGameEnd();
+        for (Action action : expander.getActions(state)) {
+            Sequence continuation = new ArrayListSequenceImpl(state.getSequenceForPlayerToMove());
+
+            continuation.addLast(action);
+            Double probability = continuation.getPlayer().equals(leader)?leaderRP.get(continuation):followerRP.get(continuation);
+
+            if(probability != null && probability > 0)
+                if(areTempLeafsNotReachable(state.performAction(action), leaderRP, followerRP))
+                    return true;
+        }
+        return false;
+    }
+
     private void expand(List<GameState> nonZeroTempLeafs, StackelbergConfig algConfig) {
         for (GameState state : nonZeroTempLeafs) {
             BoundLeafInfo info = boundLeafMap.get(state);
 
             tempLeafs.remove(state);
             removeFrom(tempLeafMap, state);
-            if(!state.isGameEnd())
+            if (!state.isGameEnd())
                 addToMap(addedNonTerminals, state);
             expandTempLeafsFromISOf(info, algConfig, state);
             expand(info, state, algConfig);
         }
     }
 
-    private void expand(BoundLeafInfo info, GameState state, StackelbergConfig algConfig) {    //   když tam vložim tempLeaf a pak teprve někdy expanduju nějakej jinej stav ve stejnym setu tak to neni dobře, u všech templeafů co nejsou opravdové leafy si to musim hlídat tzn asi udělat mapu pair na stavy co tam už jsou a ve chvli kdy expanduju nějakej stav taks e podivat jestli tam nejsou jiný co je potřeba expandovat
+    private void expand(BoundLeafInfo info, GameState state, StackelbergConfig algConfig) {
         if (state.isGameEnd()) {
 //            assert info.leaf.equals(state);
             tempLeafs.add(state);
@@ -120,22 +175,22 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
     }
 
     private boolean isOnPathTo(GameState state, GameState leaf) {
-        boolean isOnPath = true;
-
         for (Player player : state.getAllPlayers()) {
-            isOnPath &= state.getSequenceFor(player).isPrefixOf(leaf.getSequenceFor(player));
+            if(!state.getSequenceFor(player).isPrefixOf(leaf.getSequenceFor(player)))
+                return false;
         }
-        return isOnPath;
+        return true;
     }
 
-    private void expandTempLeafsFromISOf(BoundLeafInfo info, StackelbergConfig algConfig, GameState nextState) {
-        Pair<Integer, Sequence> key = nextState.getISKeyForPlayerToMove();
+    private void expandTempLeafsFromISOf(BoundLeafInfo info, StackelbergConfig algConfig, GameState state) {
+        Pair<Integer, Sequence> key = state.getISKeyForPlayerToMove();
         Set<GameState> tempLeafsInIS = tempLeafMap.get(key);
 
         if (tempLeafsInIS != null) {
             for (GameState tempLeaf : tempLeafsInIS) {
                 tempLeafs.remove(tempLeaf);
-                addToMap(addedNonTerminals, tempLeaf);
+                if (!tempLeaf.isGameEnd())
+                    addToMap(addedNonTerminals, tempLeaf);
                 expand(info, tempLeaf, algConfig);
             }
             tempLeafMap.remove(key);
@@ -146,10 +201,10 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
         Pair<Integer, Sequence> key = state.getISKeyForPlayerToMove();
         Set<GameState> states = map.get(key);
 
-        if(states == null)
+        if (states == null)
             return;
         states.remove(state);
-        if(states.isEmpty())
+        if (states.isEmpty())
             map.remove(key);
     }
 
@@ -176,7 +231,7 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
             if (tempLeafs.contains(currentState)) {
                 BoundLeafInfo info = boundLeafMap.get(currentState);
 
-                config.setUtility(currentState, getUtilityArray(currentState, info));
+                config.setUtility(currentState, getWrappedUtilityArray(currentState, info));
                 continue;
             }
             for (Action action : expander.getActions(currentState)) {
@@ -186,10 +241,20 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
         return config;
     }
 
-    private Double[] getUtilityArray(GameState currentState, BoundLeafInfo info) {
+    private Double[] getWrappedUtilityArray(GameState currentState, BoundLeafInfo info) {
         if (currentState.isGameEnd())
             return wrap(currentState.getUtilities());
         Double[] utilityArray = new Double[2];
+
+        utilityArray[leader.getId()] = info.leaderUpperBound;
+        utilityArray[follower.getId()] = info.followerUpperBound;
+        return utilityArray;
+    }
+
+    private double[] getUtilityArray(GameState currentState, BoundLeafInfo info) {
+        if (currentState.isGameEnd())
+            return currentState.getUtilities();
+        double[] utilityArray = new double[2];
 
         utilityArray[leader.getId()] = info.leaderUpperBound;
         utilityArray[follower.getId()] = info.followerUpperBound;
@@ -282,7 +347,7 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
         return new BoundLeafInfo(state, utilities[leader.getId()], utilities[follower.getId()]);
     }
 
-    public List<GameState> getNonZeroTempLeafs(IloCplex cplex) throws IloException {
+    public List<GameState> getNonZeroTempLeafs(IloCplex cplex) {
         List<GameState> nonZeroTempLeafs = new ArrayList<>();
 
         for (Map.Entry<Object, IloNumVar> entry : variables.entrySet()) {
@@ -290,11 +355,96 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
                 GameState possibleLeaf = (GameState) entry.getKey();
 
                 if (!possibleLeaf.isGameEnd()) {
-                    if (cplex.getValue(entry.getValue()) > 0)
-                        nonZeroTempLeafs.add(possibleLeaf);
+                    try {
+                        if (cplex.getValue(entry.getValue()) > 0)
+                            nonZeroTempLeafs.add(possibleLeaf);
+                    } catch (IloException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
         return nonZeroTempLeafs;
+    }
+
+    public class PartialGambitEFG {
+        private boolean wActionLabels = false;
+        private Map<Pair<Integer, Sequence>, Integer> infSetIndices;
+        private int maxIndex;
+
+
+        public PartialGambitEFG() {
+            infSetIndices = new HashMap<>();
+            maxIndex = 0;
+        }
+
+        public void write(String filename, GameState root, Expander<SequenceInformationSet> expander) {
+            write(filename, root, expander, Integer.MAX_VALUE);
+        }
+
+        public void write(String filename, GameState root, Expander<? extends InformationSet> expander, int cut_off_depth) {
+//        HashCodeEvaluator evaluator = new HashCodeEvaluator();
+//
+//        evaluator.build(root, expander);
+//        assert evaluator.getCollisionCount() == 0;
+            try {
+                PrintStream out = new PrintStream(filename);
+
+                out.print("EFG 2 R \"" + root.getClass() + expander.getClass() + "\" {");
+                Player[] players = root.getAllPlayers();
+                for (int i = 0; i < 2; i++) {//assumes 2 playter games (possibly with nature) nature is the last player and always present!!!
+                    if (i != 0) out.print(" ");
+                    out.print("\"" + players[i] + "\"");
+                }
+                out.println("}");
+                nextOutcome = 1;
+                nextChance = 1;
+                writeRec(out, root, expander, cut_off_depth);
+                out.flush();
+                out.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        int nextOutcome = 1;
+        int nextChance = 1;
+
+        private void writeRec(PrintStream out, GameState node, Expander<? extends InformationSet> expander, int cut_off_depth) {
+            if (node.isGameEnd() || cut_off_depth == 0 || tempLeafs.contains(node)) {
+                out.print("t \"" + node.toString() + "\" " + nextOutcome++ + " \"\" { ");
+                double[] u = getUtilityArray(node, boundLeafMap.get(node));
+
+                for (int i = 0; i < 2; i++) {
+                    out.print((i == 0 ? "" : ", ") + u[i]);
+                }
+                out.println("}");
+            } else {
+                List<Action> actions = expander.getActions(node);
+                if (node.isPlayerToMoveNature()) {
+                    out.print("c \"" + node.toString() + "\" " + nextChance++ + " \"\" { ");
+                    for (Action a : actions) {
+                        out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + node.getProbabilityOfNatureFor(a) + " ");
+                    }
+                } else {
+                    out.print("p \"" + node.toString() + "\" " + (node.getPlayerToMove().getId() + 1) + " " + getUniqueHash(node.getISKeyForPlayerToMove()) + " \"\" { ");
+                    for (Action a : actions) {
+                        out.print("\"" + (wActionLabels ? a.toString() : "") + "\" ");
+                    }
+                }
+                out.println("} 0");
+                for (Action a : actions) {
+                    GameState next = node.performAction(a);
+                    ((SequenceFormConfig<SequenceInformationSet>) expander.getAlgorithmConfig()).addStateToSequenceForm(next);
+                    writeRec(out, next, expander, cut_off_depth - 1);
+                }
+            }
+        }
+
+        private Integer getUniqueHash(Pair<Integer, Sequence> key) {
+            if (!infSetIndices.containsKey(key))
+                infSetIndices.put(key, ++maxIndex);
+            return infSetIndices.get(key);
+        }
     }
 }
