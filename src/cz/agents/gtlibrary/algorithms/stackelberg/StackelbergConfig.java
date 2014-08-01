@@ -80,6 +80,7 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
         private void initRealizationPlan() {
             currentSet.add(rootState.getSequenceFor(player));
+            solver.removeSlackFor(rootState.getSequenceFor(player));
             updateRealizationPlan(0);
 
 //            ArrayDeque<GameState> queue = new ArrayDeque<>();
@@ -245,6 +246,7 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
                     continuation.addLast(setActionPair.getRight().get(setActionPair.getRight().size() - 1));
                     currentSet.add(continuation);
+                    solver.removeSlackFor(continuation);
                     if(USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet)) {
 //                        System.err.println("feas cut");
                         i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
@@ -264,6 +266,7 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
                     sequence.addLast(lastAction);
                     currentSet.remove(sequence);
+                    solver.addSlackFor(sequence);
                     if (!actions.isEmpty()) {
                         if(minIndex >= index) {
                             minIndex = index;

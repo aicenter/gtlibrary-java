@@ -9,6 +9,8 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class FeasibilitySequenceFormLP {
@@ -25,9 +27,13 @@ public class FeasibilitySequenceFormLP {
     protected Map<Player, Set<Sequence>> sequences;
     protected IloNumVar objective;
     protected IloRange leaderObjConstraint;
+    protected ThreadMXBean mxBean;
+    private long cplexSolvingTime;
 
     public FeasibilitySequenceFormLP(Player leader, Player follower, StackelbergConfig algConfig, Map<Player, Set<SequenceInformationSet>> informationSets, Map<Player, Set<Sequence>> sequences) {
         try {
+            cplexSolvingTime = 0;
+            mxBean = ManagementFactory.getThreadMXBean();
             slackVariables = new HashMap<>();
             constraints = new HashMap<>();
             variables = new HashMap<>();
@@ -48,15 +54,18 @@ public class FeasibilitySequenceFormLP {
             createConstraintsForSets(leader, cplex, informationSets.get(leader));
             createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
         } catch (IloException e) {
+            e.printStackTrace();
         }
     }
 
     public boolean checkFeasibilityFor(Iterable<Sequence> partialPureRp) {
         try {
 //            cplex.exportModel("feas.lp");
-            setValueForBRSlack(cplex, partialPureRp, 0);
+//            setValueForBRSlack(cplex, partialPureRp, 0);
+            long start = mxBean.getCurrentThreadCpuTime();
             cplex.solve();
-            setValueForBRSlack(cplex, partialPureRp, 1);
+            cplexSolvingTime += mxBean.getCurrentThreadCpuTime() - start;
+//            setValueForBRSlack(cplex, partialPureRp, 1);
             if (cplex.getStatus() == IloCplex.Status.Optimal)
                 return true;
         } catch (IloException e) {
@@ -65,14 +74,52 @@ public class FeasibilitySequenceFormLP {
         return false;
     }
 
+    public void removeSlackFor(Sequence sequence) {
+        if (!StackelbergConfig.USE_FEASIBILITY_CUT)
+            return;
+        IloRange constraint = constraints.get(sequence);
+        IloNumVar slack = slackVariables.get(sequence);
+        if (constraint == null) {
+            if (sequence.size() == 0)
+                return;
+            assert false;
+        }
+        try {
+            cplex.setLinearCoef(constraint, slack, 0);
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addSlackFor(Sequence sequence) {
+        if (!StackelbergConfig.USE_FEASIBILITY_CUT)
+            return;
+        IloRange constraint = constraints.get(sequence);
+        IloNumVar slack = slackVariables.get(sequence);
+        if (constraint == null) {
+            if (sequence.size() == 0)
+                return;
+            assert false;
+        }
+        try {
+            cplex.setLinearCoef(constraint, slack, -1);
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+    }
+
     public boolean checkFeasibilityFor(Iterable<Sequence> pureRP, double maxValue) {
         try {
-            setValueForBRSlack(cplex, pureRP, 0);
+            if (!StackelbergConfig.USE_FEASIBILITY_CUT)
+                setValueForBRSlack(cplex, pureRP, 0);
             updateObjectiveConstraint(cplex, objective, pureRP, algConfig);
             addBestValueConstraint(cplex, objective, maxValue + 1e-5);
+            long start = mxBean.getCurrentThreadCpuTime();
 //            cplex.exportModel("feas.lp");
             cplex.solve();
-            setValueForBRSlack(cplex, pureRP, 1);
+            cplexSolvingTime += mxBean.getCurrentThreadCpuTime() - start;
+            if (!StackelbergConfig.USE_FEASIBILITY_CUT)
+                setValueForBRSlack(cplex, pureRP, 1);
             removePreviousValueConstraint();
             deleteObjectiveConstraint(cplex);
             if (cplex.getStatus() == IloCplex.Status.Optimal)
@@ -306,5 +353,9 @@ public class FeasibilitySequenceFormLP {
 
         constraints.put(informationSet, constrain);
         return constrain;
+    }
+
+    public long getCplexSolvingTime() {
+        return cplexSolvingTime;
     }
 }
