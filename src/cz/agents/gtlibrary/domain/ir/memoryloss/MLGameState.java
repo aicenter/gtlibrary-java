@@ -64,7 +64,7 @@ public class MLGameState extends ImperfectRecallGameState {
 
     @Override
     public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-        return new Pair<>(0, getSequenceForPlayerToMove());
+        return new Pair<>(round, getSequenceForPlayerToMove());
     }
 
     @Override
@@ -82,7 +82,7 @@ public class MLGameState extends ImperfectRecallGameState {
 
     @Override
     public int hashCode() {
-        return history.hashCode();
+        return history.toString().hashCode();
     }
 
     public void increaseRound() {

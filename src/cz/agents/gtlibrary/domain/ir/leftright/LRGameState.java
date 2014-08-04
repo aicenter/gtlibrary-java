@@ -39,7 +39,7 @@ public class LRGameState extends ImperfectRecallGameState {
     public double[] getUtilities() {
         if(((LRAction)getSequenceFor(LRGameInfo.SECOND_PLAYER).getLast()).getType().startsWith("A"))
             return new double[]{1, -1};
-        if(getFirstActionTypeFor(LRGameInfo.SECOND_PLAYER).equals(getFirstActionTypeFor(LRGameInfo.FIRST_PLAYER)))
+        if(((LRAction)getSequenceFor(LRGameInfo.SECOND_PLAYER).getLast()).getType().equals(getFirstActionTypeFor(LRGameInfo.FIRST_PLAYER)))
             return new double[]{-2, 2};
         return new double[]{10, -10};
     }
