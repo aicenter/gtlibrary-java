@@ -58,8 +58,8 @@ import java.util.Map;
 public class StackelbergRunner {
 
     public static void main(String[] args) {
-//        runGenSumRandom();
-        runBPG();
+        runGenSumRandom();
+//        runBPG();
 //        runSGSG();
 //        runPEG();
 //        runStackTest();
@@ -70,9 +70,9 @@ public class StackelbergRunner {
         GameInfo gameInfo = new RandomGameInfo();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander<SequenceInformationSet> expander = new RandomGameExpander<>(algConfig);
-        StackelbergRunner smlp = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-        smlp.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
         new GambitEFG().write("randomGame.gbt", rootState, expander);
     }
 
@@ -81,10 +81,10 @@ public class StackelbergRunner {
         BPGGameInfo gameInfo = new BPGGameInfo();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander<SequenceInformationSet> expander = new BPGExpander<>(algConfig);
-        StackelbergRunner smlp = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-        smlp.generate(rootState.getAllPlayers()[1], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander)
-                /*new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander)*/);
+        runner.generate(rootState.getAllPlayers()[1], /*new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander)*/
+                new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
     }
 
     public static void runSGSG() {
@@ -93,8 +93,8 @@ public class StackelbergRunner {
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander<SequenceInformationSet> expander = new SimpleGSExpander(algConfig);
 
-        StackelbergRunner smlp = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
-        smlp.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
 //        new GambitEFG().write("simpleGSG.gbt", rootState, expander);
     }
 
@@ -104,8 +104,8 @@ public class StackelbergRunner {
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander<SequenceInformationSet> expander = new PursuitExpander(algConfig);
 
-        StackelbergRunner smlp = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
-        smlp.generate(rootState.getAllPlayers()[1], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        runner.generate(rootState.getAllPlayers()[1], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
     }
 
     public static void runStackTest() {
@@ -114,8 +114,8 @@ public class StackelbergRunner {
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander<SequenceInformationSet> expander = new StackTestExpander(algConfig);
 
-        StackelbergRunner smlp = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
-        smlp.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander));
     }
 
     private GameState rootState;
@@ -156,16 +156,6 @@ public class StackelbergRunner {
         System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
 
         long startCPLEX = threadBean.getCurrentThreadCpuTime();
-//        StackelbergSequenceFormMultipleLPs sequenceFormLP = new StackelbergSequenceFormMultipleLPs(actingPlayers, gameConfig, expander);
-//        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, gameConfig, expander);
-//        StackelbergSequenceFormMILPOracle sequenceFormLP = new StackelbergSequenceFormMILPOracle(actingPlayers, gameConfig, expander);
-//        StackelbergSequenceFormMILPIncremental sequenceFormLP = new StackelbergSequenceFormMILPIncremental(actingPlayers, gameConfig, expander);
-//        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILPBuilding(actingPlayers, gameConfig, expander);
-
-//        Iterator i = algConfig.getIterator(rootState.getAllPlayers()[0], expander);
-//        while (i.hasNext()) {
-//            System.out.println(i.next());
-//        }
 
         solver.calculateLeaderStrategies(leader.getId(), 1 - leader.getId(), algConfig, expander);
 

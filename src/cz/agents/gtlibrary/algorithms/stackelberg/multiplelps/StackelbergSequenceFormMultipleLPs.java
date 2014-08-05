@@ -24,6 +24,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.GeneralSumBestResponse;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.PureRealPlanIterator;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
@@ -95,7 +96,7 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += mxBean.getCurrentThreadCpuTime() - startTime;
 
-            StackelbergConfig.PureRealizationPlanIterator i = algConfig.getIterator(follower, expander, feasibilitySolver);
+            PureRealPlanIterator i = algConfig.getIterator(follower, expander, feasibilitySolver);
 
             while (true) {
                 Set<Sequence> pureRP = i.next();
