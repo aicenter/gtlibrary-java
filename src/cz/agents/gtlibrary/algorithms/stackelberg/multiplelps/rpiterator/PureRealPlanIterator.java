@@ -53,7 +53,7 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
             Collections.sort(actionList, new Comparator<Action>() {
                 @Override
                 public int compare(Action o1, Action o2) {
-                    return Double.compare(maxFollowerValues.get(o2), maxFollowerValues.get(o1));
+                    return Double.compare(maxLeaderValues.get(o1), maxLeaderValues.get(o2));
                 }
             });
         }
@@ -180,8 +180,8 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
                 currentSet.add(continuation);
                 updateValuesForLeader(lastAction);
                 solver.removeSlackFor(continuation);
-//                if (leaderUpperBound < bestValue || (StackelbergConfig.USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet)))
-//                    i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
+                if (leaderUpperBound < bestValue || (StackelbergConfig.USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet)))
+                    i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
             }
         }
     }
