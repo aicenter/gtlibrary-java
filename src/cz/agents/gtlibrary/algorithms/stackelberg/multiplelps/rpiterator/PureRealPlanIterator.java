@@ -11,31 +11,39 @@ import java.util.*;
 
 public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
 
-    protected boolean first = true;
     protected GameState rootState;
     protected StackelbergConfig config;
     protected Set<Sequence> currentSet;
     protected List<Pair<SequenceInformationSet, List<Action>>> stack;
-    protected Player player;
+    protected Player follower;
     protected Expander<SequenceInformationSet> expander;
     protected FeasibilitySequenceFormLP solver;
+    protected boolean first = true;
+    protected double leaderUpperBound;
+    protected double bestValue;
 
-    private Map<InformationSet, List<Action>> actions;
-    private Map<Action, Double> maxActionValues;
+    protected Map<InformationSet, List<Action>> actions;
+    protected Map<Action, Double> currentSetValues;
+    protected Map<Action, Double> maxFollowerValues;
+    protected Map<Action, Double> maxLeaderValues;
 //    protected int minIndex = Integer.MAX_VALUE;
 
-    public PureRealPlanIterator(Player player, StackelbergConfig config, Expander<SequenceInformationSet> expander, FeasibilitySequenceFormLP solver) {
+    public PureRealPlanIterator(Player follower, StackelbergConfig config, Expander<SequenceInformationSet> expander, FeasibilitySequenceFormLP solver) {
         this.currentSet = new HashSet<>();
-        this.player = player;
+        this.follower = follower;
         this.stack = new ArrayList<>();
         this.expander = expander;
         this.solver = solver;
         this.config = config;
         this.rootState = config.getRootState();
         actions = new HashMap<>();
-        maxActionValues = new HashMap<>();
+        maxFollowerValues = new HashMap<>();
+        maxLeaderValues = new HashMap<>();
+        currentSetValues = new HashMap<>();
+        leaderUpperBound = Double.NEGATIVE_INFINITY;
+        bestValue = Double.NEGATIVE_INFINITY;
         initActions(rootState);
-//        sortActions();
+        sortActions();
         initStack();
         initRealizationPlan();
     }
@@ -45,35 +53,53 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
             Collections.sort(actionList, new Comparator<Action>() {
                 @Override
                 public int compare(Action o1, Action o2) {
-                    return Double.compare(maxActionValues.get(o2), maxActionValues.get(o1));
+                    return Double.compare(maxFollowerValues.get(o2), maxFollowerValues.get(o1));
                 }
             });
         }
     }
 
-    private double initActions(GameState state) {
+    private double[] initActions(GameState state) {
         if (state.isGameEnd())
-            return state.getUtilities()[player.getId()];
+            return state.getUtilities();
 
         List<Action> currentActions = getActions(state);
-        double maxValue = Double.NEGATIVE_INFINITY;
+        double followerMaxValue = Double.NEGATIVE_INFINITY;
+        double leaderMaxValue = Double.NEGATIVE_INFINITY;
 
         for (Action currentAction : currentActions) {
-            double currentValue = initActions(state.performAction(currentAction));
-            Double oldValue = maxActionValues.get(currentAction);
+            double[] currentValues = initActions(state.performAction(currentAction));
 
-            if (oldValue == null)
-                maxActionValues.put(currentAction, currentValue);
-            else
-                maxActionValues.put(currentAction, Math.max(currentValue, oldValue));
-            if(maxValue < currentValue)
-                maxValue = currentValue;
+            if (state.getPlayerToMove().equals(follower)) {
+                followerMaxValue = update(followerMaxValue, currentAction, currentValues[follower.getId()], maxFollowerValues);
+                leaderMaxValue = update(leaderMaxValue, currentAction, currentValues[1 - follower.getId()], maxLeaderValues);
+            }
         }
+        return getArray(followerMaxValue, leaderMaxValue);
+    }
+
+    private double update(double maxValue, Action currentAction, double value, Map<Action, Double> maxActionValues) {
+        Double oldValue = maxActionValues.get(currentAction);
+
+        if (oldValue == null)
+            maxActionValues.put(currentAction, value);
+        else
+            maxActionValues.put(currentAction, Math.max(value, oldValue));
+        if (maxValue < value)
+            return value;
         return maxValue;
     }
 
+    private double[] getArray(double followerValue, double leaderValue) {
+        double[] array = new double[2];
+
+        array[follower.getId()] = followerValue;
+        array[1 - follower.getId()] = leaderValue;
+        return array;
+    }
+
     private List<Action> getActions(GameState state) {
-        if (!player.equals(state.getPlayerToMove()))
+        if (!follower.equals(state.getPlayerToMove()))
             return expander.getActions(state);
         InformationSet set = config.getInformationSetFor(state);
         List<Action> currentActions = actions.get(set);
@@ -86,8 +112,8 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
     }
 
     protected void initRealizationPlan() {
-        currentSet.add(rootState.getSequenceFor(player));
-        solver.removeSlackFor(rootState.getSequenceFor(player));
+        currentSet.add(rootState.getSequenceFor(follower));
+        solver.removeSlackFor(rootState.getSequenceFor(follower));
         updateRealizationPlan(0);
     }
 
@@ -101,7 +127,7 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
 
             if (currentState.isGameEnd())
                 continue;
-            if (currentState.getPlayerToMove().equals(player)) {
+            if (currentState.getPlayerToMove().equals(follower)) {
                 SequenceInformationSet set = config.getInformationSetFor(currentState);
                 Pair<SequenceInformationSet, List<Action>> setActionPair = new Pair<SequenceInformationSet, List<Action>>(set, new ArrayList<>(actions.get(set)));
 
@@ -148,15 +174,24 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
 
             if (currentSet.contains(setActionPair.getLeft().getPlayersHistory())) {
                 Sequence continuation = new ArrayListSequenceImpl(setActionPair.getLeft().getPlayersHistory());
+                Action lastAction = setActionPair.getRight().get(setActionPair.getRight().size() - 1);
 
-                continuation.addLast(setActionPair.getRight().get(setActionPair.getRight().size() - 1));
+                continuation.addLast(lastAction);
                 currentSet.add(continuation);
+                updateValuesForLeader(lastAction);
                 solver.removeSlackFor(continuation);
-                if (StackelbergConfig.USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet)) {
-                    i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
-                }
+//                if (leaderUpperBound < bestValue || (StackelbergConfig.USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet)))
+//                    i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
             }
         }
+    }
+
+    private void updateValuesForLeader(Action lastAction) {
+        double value = maxLeaderValues.get(lastAction);
+
+        if (value > leaderUpperBound)
+            leaderUpperBound = value;
+        currentSetValues.put(lastAction, maxLeaderValues.get(lastAction));
     }
 
     protected int getIndexOfReachableISWithActionsLeftFrom(int index) {
@@ -170,6 +205,10 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
 
                 sequence.addLast(lastAction);
                 currentSet.remove(sequence);
+                Double value = currentSetValues.remove(lastAction);
+
+                if (leaderUpperBound == value)
+                    leaderUpperBound = Collections.max(currentSetValues.values());
                 solver.addSlackFor(sequence);
                 if (!actions.isEmpty()) {
 //                    if (minIndex >= index) {
@@ -189,6 +228,10 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
             stack.set(index, new Pair<SequenceInformationSet, List<Action>>(set, new ArrayList<>(this.actions.get(set))));
         }
         return index;
+    }
+
+    public void setBestValue(double bestValue) {
+        this.bestValue = bestValue;
     }
 
     @Override

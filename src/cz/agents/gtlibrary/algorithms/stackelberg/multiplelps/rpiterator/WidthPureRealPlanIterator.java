@@ -14,7 +14,7 @@ public class WidthPureRealPlanIterator extends PureRealPlanIterator {
     }
 
     protected void addToQueue(Deque<GameState> queue, GameState state) {
-        if (state.getPlayerToMove().equals(player))
+        if (state.getPlayerToMove().equals(follower))
             queue.addLast(state);
         else
             queue.addFirst(state);

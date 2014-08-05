@@ -96,10 +96,10 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += mxBean.getCurrentThreadCpuTime() - startTime;
 
-            PureRealPlanIterator i = algConfig.getIterator(follower, expander, feasibilitySolver);
+            PureRealPlanIterator iterator = algConfig.getIterator(follower, expander, feasibilitySolver);
 
             while (true) {
-                Set<Sequence> pureRP = i.next();
+                Set<Sequence> pureRP = iterator.next();
                 double upperBound = getUpperBound(pureRP, algConfig);
 //                debugOutput.println(iteration);
 
@@ -143,6 +143,7 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
 //                      }
                         if (v > maxValue) {
                             maxValue = v;
+                            iterator.setBestValue(maxValue);
                             resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
                             followerBR = pureRP;
                             leaderResult = createSolution(algConfig, leader, cplex);
