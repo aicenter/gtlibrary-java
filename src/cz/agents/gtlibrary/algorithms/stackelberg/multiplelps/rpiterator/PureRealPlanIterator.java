@@ -22,8 +22,10 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
     protected double leaderUpperBound;
     protected double bestValue;
 
+    protected Set<GameState> currentlyReachableLeafs;
+    protected Map<InformationSet, Map<Sequence, List<GameState>>> leafAccessibility;
     protected Map<InformationSet, List<Action>> actions;
-    protected Map<Action, Double> currentSetValues;
+//    protected Map<Action, Double> currentSetValues;
     protected Map<Action, Double> maxFollowerValues;
     protected Map<Action, Double> maxLeaderValues;
 //    protected int minIndex = Integer.MAX_VALUE;
@@ -39,13 +41,61 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
         actions = new HashMap<>();
         maxFollowerValues = new HashMap<>();
         maxLeaderValues = new HashMap<>();
-        currentSetValues = new HashMap<>();
+//        currentSetValues = new HashMap<>();
+        leafAccessibility = new HashMap<>();
+        currentlyReachableLeafs = new HashSet<>();
         leaderUpperBound = Double.NEGATIVE_INFINITY;
         bestValue = Double.NEGATIVE_INFINITY;
+        initLeafAccessibility(rootState);
         initActions(rootState);
         sortActions();
         initStack();
         initRealizationPlan();
+    }
+
+    private List<GameState> initLeafAccessibility(GameState rootState) {
+        if (rootState.isGameEnd())
+            return getListForLeaf(rootState);
+        List<GameState> allLeafs = new ArrayList<>();
+
+        for (Action action : expander.getActions(rootState)) {
+            GameState nextState = rootState.performAction(action);
+            List<GameState> leafs = initLeafAccessibility(nextState);
+
+            allLeafs.addAll(leafs);
+            if (rootState.getPlayerToMove().equals(follower))
+                updateLeafAccessibility(rootState, nextState, leafs);
+        }
+        return allLeafs;
+    }
+
+    private void updateLeafAccessibility(GameState rootState, GameState nextState, List<GameState> leafs) {
+        InformationSet set = config.getInformationSetFor(rootState);
+        Map<Sequence, List<GameState>> sequenceLeafs = getSequenceContinuationMap(set);
+        List<GameState> continuationLeafs = sequenceLeafs.get(nextState.getSequenceFor(rootState.getPlayerToMove()));
+
+        if (continuationLeafs == null) {
+            continuationLeafs = new ArrayList<>();
+            sequenceLeafs.put(nextState.getSequenceFor(rootState.getPlayerToMove()), continuationLeafs);
+        }
+        continuationLeafs.addAll(leafs);
+    }
+
+    private Map<Sequence, List<GameState>> getSequenceContinuationMap(InformationSet set) {
+        Map<Sequence, List<GameState>> sequenceLeafs = leafAccessibility.get(set);
+
+        if (sequenceLeafs == null) {
+            sequenceLeafs = new HashMap<>();
+            leafAccessibility.put(set, sequenceLeafs);
+        }
+        return sequenceLeafs;
+    }
+
+    private List<GameState> getListForLeaf(GameState rootState) {
+        List<GameState> utilityList = new ArrayList<>();
+
+        utilityList.add(rootState);
+        return utilityList;
     }
 
     protected void sortActions() {
@@ -70,21 +120,21 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
         for (Action currentAction : currentActions) {
             double[] currentValues = initActions(state.performAction(currentAction));
 
-            if (state.getPlayerToMove().equals(follower)) {
-                followerMaxValue = update(followerMaxValue, currentAction, currentValues[follower.getId()], maxFollowerValues);
-                leaderMaxValue = update(leaderMaxValue, currentAction, currentValues[1 - follower.getId()], maxLeaderValues);
-            }
+            followerMaxValue = update(state, followerMaxValue, currentAction, currentValues[follower.getId()], maxFollowerValues);
+            leaderMaxValue = update(state, leaderMaxValue, currentAction, currentValues[1 - follower.getId()], maxLeaderValues);
         }
         return getArray(followerMaxValue, leaderMaxValue);
     }
 
-    private double update(double maxValue, Action currentAction, double value, Map<Action, Double> maxActionValues) {
+    private double update(GameState state, double maxValue, Action currentAction, double value, Map<Action, Double> maxActionValues) {
         Double oldValue = maxActionValues.get(currentAction);
 
-        if (oldValue == null)
-            maxActionValues.put(currentAction, value);
-        else
-            maxActionValues.put(currentAction, Math.max(value, oldValue));
+        if (state.getPlayerToMove().equals(follower)) {
+            if (oldValue == null)
+                maxActionValues.put(currentAction, value);
+            else
+                maxActionValues.put(currentAction, Math.max(value, oldValue));
+        }
         if (maxValue < value)
             return value;
         return maxValue;
@@ -178,7 +228,7 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
 
                 continuation.addLast(lastAction);
                 currentSet.add(continuation);
-                updateValuesForLeader(lastAction);
+                updateReachableLeafsAfterAddition(setActionPair.getLeft(), continuation);
                 solver.removeSlackFor(continuation);
                 if (leaderUpperBound < bestValue || (StackelbergConfig.USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet)))
                     i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
@@ -186,13 +236,33 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
         }
     }
 
-    private void updateValuesForLeader(Action lastAction) {
-        double value = maxLeaderValues.get(lastAction);
+    private void updateReachableLeafsAfterAddition(InformationSet set, Sequence continuation) {
+        Map<Sequence, List<GameState>> sequenceLeafs = leafAccessibility.get(set);
 
-        if (value > leaderUpperBound)
-            leaderUpperBound = value;
-        currentSetValues.put(lastAction, maxLeaderValues.get(lastAction));
+        for (List<GameState> gameStates : sequenceLeafs.values()) {
+            currentlyReachableLeafs.removeAll(gameStates);
+        }
+        currentlyReachableLeafs.addAll(sequenceLeafs.get(continuation));
+        leaderUpperBound = getLeaderUpperBound();
     }
+
+
+//    private void removePrefixValue(Sequence continuation) {
+//        if (continuation.size() == 0)
+//            return;
+//        Double value = currentSetValues.remove(continuation.getLast());
+//
+//        if (leaderUpperBound == value)
+//            leaderUpperBound = Collections.max(currentSetValues.values());
+//    }
+//
+//    private void updateValuesForLeader(Action lastAction) {
+//        double value = maxLeaderValues.get(lastAction);
+//
+//        if (value > leaderUpperBound)
+//            leaderUpperBound = value;
+//        currentSetValues.put(lastAction, value);
+//    }
 
     protected int getIndexOfReachableISWithActionsLeftFrom(int index) {
         for (; index >= 0; index--) {
@@ -205,10 +275,16 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
 
                 sequence.addLast(lastAction);
                 currentSet.remove(sequence);
-                Double value = currentSetValues.remove(lastAction);
+//                Double value = currentSetValues.remove(lastAction);
 
-                if (leaderUpperBound == value)
-                    leaderUpperBound = Collections.max(currentSetValues.values());
+//                double previousActionValue = maxLeaderValues.get(set.getPlayersHistory().getLast());
+//                currentSetValues.put(set.getPlayersHistory().getLast(), previousActionValue);
+                updateReachableLeafsAfterRemoval(set, actions, sequence);
+
+//                if (leaderUpperBound == value)
+//                    leaderUpperBound = Collections.max(currentSetValues.values());
+//                if (previousActionValue > leaderUpperBound)
+//                    leaderUpperBound = previousActionValue;
                 solver.addSlackFor(sequence);
                 if (!actions.isEmpty()) {
 //                    if (minIndex >= index) {
@@ -230,6 +306,20 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
         return index;
     }
 
+    private void updateReachableLeafsAfterRemoval(SequenceInformationSet set, List<Action> actions, Sequence sequence) {
+        Map<Sequence, List<GameState>> reachableLeafs = leafAccessibility.get(set);
+
+        currentlyReachableLeafs.removeAll(reachableLeafs.get(sequence));
+        for (Action action : actions) {
+            Sequence continuation = new ArrayListSequenceImpl(set.getPlayersHistory());
+
+            continuation.addLast(action);
+            currentlyReachableLeafs.addAll(reachableLeafs.get(continuation));
+        }
+
+        leaderUpperBound = getLeaderUpperBound();
+    }
+
     public void setBestValue(double bestValue) {
         this.bestValue = bestValue;
     }
@@ -237,5 +327,17 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
     @Override
     public void remove() {
         throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    public double getLeaderUpperBound() {
+        double upperBound = Double.NEGATIVE_INFINITY;
+
+        for (GameState leaf : currentlyReachableLeafs) {
+            double[] utilities = leaf.getUtilities();
+
+            if(utilities[1 - follower.getId()] > upperBound)
+                upperBound = utilities[1 - follower.getId()];
+        }
+        return upperBound;
     }
 }
