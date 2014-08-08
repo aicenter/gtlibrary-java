@@ -15,15 +15,11 @@ import java.util.*;
  * Created by bosansky on 7/24/14.
  */
 public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceFormMILP{
-    public StackelbergSequenceFormMILPIncremental(Player[] players, GameInfo info, Expander expander) {
-        super(players, info, expander);
+    public StackelbergSequenceFormMILPIncremental(Player[] players, Player leader, Player follower, GameInfo info, Expander expander) {
+        super(players, leader, follower, info, expander);
     }
 
-    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
-
-        leader = players[leaderIdx];
-        follower = players[followerIdx];
-
+    public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         double maxValue = Double.NEGATIVE_INFINITY;
         Set<Sequence> followerBR = new HashSet<>();
         Map<Sequence, Double> leaderResult = new HashMap<>();

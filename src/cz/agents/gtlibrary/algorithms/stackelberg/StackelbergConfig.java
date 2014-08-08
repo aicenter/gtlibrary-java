@@ -25,7 +25,10 @@ import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.FeasibilitySequenc
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.DepthPureRealPlanIterator;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.PureRealPlanIterator;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.WidthPureRealPlanIterator;
-import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 import java.util.*;
@@ -105,8 +108,17 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
     }
 
     public Double getUtilityFor(Map<Player, Sequence> sequenceCombination, Player player) {
-        if (!utilityForSequenceCombination.containsKey(sequenceCombination)) return null;
+        if (!utilityForSequenceCombination.containsKey(sequenceCombination))
+            return null;
         return utilityForSequenceCombination.get(sequenceCombination)[player.getId()];
+    }
+
+    public Double getUtilityFor(Sequence sequence1, Sequence sequence2, Player player) {
+        Map<Player, Sequence> sequenceCombination = new HashMap<>(2);
+
+        sequenceCombination.put(sequence1.getPlayer(), sequence1);
+        sequenceCombination.put(sequence2.getPlayer(), sequence2);
+        return getUtilityFor(sequenceCombination, player);
     }
 
     public Map<GameState, Double[]> getActualNonZeroUtilityValuesInLeafsSE() {

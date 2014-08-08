@@ -17,16 +17,13 @@ import java.util.*;
  * Created by bosansky on 7/24/14.
  */
 public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMILP{
-    public StackelbergSequenceFormMILPOracle(Player[] players, GameInfo info, Expander expander) {
-        super(players, info, expander);
+    public StackelbergSequenceFormMILPOracle(Player[] players, Player leader, Player follower, GameInfo info, Expander expander) {
+        super(players, leader, follower, info, expander);
     }
 
-    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
+    public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
 
         Set<Sequence> neverBR = new HashSet<>();
-        leader = players[leaderIdx];
-        follower = players[followerIdx];
-
         double maxValue = Double.NEGATIVE_INFINITY;
 //        Set<Sequence> followerBR = new HashSet<>();
         Map<Sequence, Double> leaderResult = new HashMap<>();

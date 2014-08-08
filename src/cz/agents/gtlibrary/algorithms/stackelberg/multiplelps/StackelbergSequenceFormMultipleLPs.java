@@ -38,8 +38,6 @@ import java.util.*;
 
 public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormLP {
 
-    protected Player leader;
-    protected Player follower;
     protected Player[] players;
     protected GameInfo info;
     protected Expander<SequenceInformationSet> expander;
@@ -50,12 +48,13 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
     protected Map<Object, IloNumVar> slackVariables = new HashMap<>();
 
 
-    public StackelbergSequenceFormMultipleLPs(Player[] players, GameInfo info, Expander<SequenceInformationSet> expander) {
-        super(players);
-        mxBean = ManagementFactory.getThreadMXBean();
+    public StackelbergSequenceFormMultipleLPs(Player[] players, Player leader, Player follower, GameInfo info, Expander<SequenceInformationSet> expander) {
+        super(players, leader, follower);
         this.players = players;
+        this.follower = follower;
         this.info = info;
         this.expander = expander;
+        mxBean = ManagementFactory.getThreadMXBean();
     }
 
 
@@ -70,10 +69,7 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
         objectiveForPlayers.put(player, v0);
     }
 
-    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander expander) {
-        leader = players[leaderIdx];
-        follower = players[followerIdx];
-
+    public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander expander) {
         double maxValue = Double.NEGATIVE_INFINITY;
         int upperBoundCut = 0;
         int feasibilityCut = 0;
@@ -129,18 +125,19 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
 
                     if (cplex.getStatus() == IloCplex.Status.Optimal) {
                         double v = cplex.getValue(v0);
+                        System.out.println(iteration);
                         debugOutput.println("Ub: " + upperBound + " v: " + v /*+ " comp v " + getUtility(createSolution(algConfig, leader, cplex), getRP(pureRP), algConfig)*/);
                         assert v <= upperBound;
 
                         debugOutput.println("Best value is " + v + " for follower strategy: ");
-//                      for (Sequence sequence : pureRP) {
-//                          debugOutput.println(sequence);
-//                      }
-//                      debugOutput.println("Leader's strategy: ");
-//                      for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
-//                          if (entry.getValue() > 0)
-//                              debugOutput.println(entry);
-//                      }
+                      for (Sequence sequence : pureRP) {
+                          debugOutput.println(sequence);
+                      }
+                      debugOutput.println("Leader's strategy: ");
+                      for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+                          if (entry.getValue() > 0)
+                              debugOutput.println(entry);
+                      }
                         if (v > maxValue) {
                             maxValue = v;
                             iterator.setBestValue(maxValue);

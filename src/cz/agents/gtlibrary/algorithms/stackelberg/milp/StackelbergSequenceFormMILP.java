@@ -34,8 +34,6 @@ import java.util.*;
 
 public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
 
-    protected Player leader;
-    protected Player follower;
     protected Player[] players;
     protected GameInfo info;
 
@@ -48,8 +46,8 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
     protected ThreadMXBean threadBean;
 
 
-    public StackelbergSequenceFormMILP(Player[] players, GameInfo info, Expander<SequenceInformationSet> expander) {
-        super(players);
+    public StackelbergSequenceFormMILP(Player[] players, Player leader, Player follower, GameInfo info, Expander<SequenceInformationSet> expander) {
+        super(players, leader, follower);
         this.players = players;
         this.expander = expander;
         this.info = info;
@@ -68,10 +66,7 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
         objectiveForPlayers.put(player, v0);
     }
 
-    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
-        leader = players[leaderIdx];
-        follower = players[followerIdx];
-
+    public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         double maxValue = Double.NEGATIVE_INFINITY;
         Set<Sequence> followerBR = new HashSet<Sequence>();
         Map<Sequence, Double> leaderResult = new HashMap<Sequence, Double>();
@@ -117,17 +112,16 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
 //                        continue;
 //                    }
 //                }
-
-//               debugOutput.out.println("leader rp: ");
-//                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
-//                    if (entry.getValue() > 0)
-//                        debugOutput.println(entry);
-//                }
-//                debugOutput.println("follower rp: ");
-//                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, cplex).entrySet()) {
-//                    if (entry.getValue() > 0)
-//                        debugOutput.println(entry);
-//                }
+               debugOutput.println("leader rp: ");
+                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+                    if (entry.getValue() > 0)
+                        debugOutput.println(entry);
+                }
+                debugOutput.println("follower rp: ");
+                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, cplex).entrySet()) {
+                    if (entry.getValue() > 0)
+                        debugOutput.println(entry);
+                }
 //                debugOutput.println("Leaf probs");
 //                for (Map.Entry<Object, IloNumVar> entry : variables.entrySet()) {
 //                    if (entry.getKey() instanceof GameState) {

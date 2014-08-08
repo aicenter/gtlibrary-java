@@ -19,17 +19,15 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
     Map<Pair<Integer, Sequence>, Set<GameState>> tempLeafMap;
     Map<Pair<Integer, Sequence>, Set<GameState>> addedNonTerminals;
 
-    public StackelbergSequenceFormMILPBuilding(Player[] players, GameInfo info, Expander<SequenceInformationSet>expander) {
-        super(players, info, expander);
+    public StackelbergSequenceFormMILPBuilding(Player[] players, Player leader, Player follower, GameInfo info, Expander<SequenceInformationSet>expander) {
+        super(players, leader, follower, info, expander);
         boundLeafMap = new HashMap<>();
         tempLeafs = new HashSet<>();
         tempLeafMap = new HashMap<>();
         addedNonTerminals = new HashMap<>();
     }
 
-    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
-        leader = players[leaderIdx];
-        follower = players[followerIdx];
+    public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         buildBoundAndLeafMap(algConfig);
         createTempLeafs(algConfig.getRootState());
 
