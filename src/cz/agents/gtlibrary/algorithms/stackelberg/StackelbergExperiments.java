@@ -68,7 +68,7 @@ public class StackelbergExperiments {
             Expander<SequenceInformationSet> expander = new RandomGameExpander<>(algConfig);
             StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-            runner.generate(rootState.getAllPlayers()[leaderIndex], getStackelbergSolver(algType, rootState, gameInfo, expander));
+            runner.generate(rootState.getAllPlayers()[leaderIndex], getStackelbergSolver(algType, rootState, rootState.getAllPlayers()[leaderIndex], rootState.getAllPlayers()[1 - leaderIndex], gameInfo, expander));
             System.out.println("------------");
         }
     }
@@ -80,16 +80,16 @@ public class StackelbergExperiments {
         Expander<SequenceInformationSet> expander = new BPGExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-        runner.generate(rootState.getAllPlayers()[leaderIndex], getStackelbergSolver(algType, rootState, gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[leaderIndex], getStackelbergSolver(algType, rootState, rootState.getAllPlayers()[leaderIndex], rootState.getAllPlayers()[1 - leaderIndex], gameInfo, expander));
 
     }
 
-    private static StackelbergSequenceFormLP getStackelbergSolver(String algType, GameState rootState, GameInfo gameInfo, Expander<SequenceInformationSet> expander) {
+    private static StackelbergSequenceFormLP getStackelbergSolver(String algType, GameState rootState, Player leader, Player follower, GameInfo gameInfo, Expander<SequenceInformationSet> expander) {
         if (algType.equals("MILP"))
-            return new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander);
+            return new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
         if (algType.startsWith("MultLP")) {
             StackelbergConfig.USE_FEASIBILITY_CUT = algType.equals("MultLPFeas");
-            return new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander);
+            return new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
         } else {
             throw new UnsupportedOperationException("Unsupported algorithm");
         }

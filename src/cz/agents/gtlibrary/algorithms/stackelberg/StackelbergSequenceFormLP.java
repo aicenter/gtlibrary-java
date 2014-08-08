@@ -5,10 +5,13 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.Player;
 
-public abstract class StackelbergSequenceFormLP extends SequenceFormLP {
-    public StackelbergSequenceFormLP(Player[] players) {
-        super(players);
-    }
+public abstract class StackelbergSequenceFormLP extends SequenceFormLP implements StackelbergSolver {
+    protected Player leader;
+    protected Player follower;
 
-    public abstract double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander<SequenceInformationSet> expander);
+    public StackelbergSequenceFormLP(Player[] players, Player leader, Player follower) {
+        super(players);
+        this.leader = leader;
+        this.follower = follower;
+    }
 }
