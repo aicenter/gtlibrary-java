@@ -33,6 +33,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
 
     @Override
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
+        StackelbergConfig.USE_FEASIBILITY_CUT = false;
         IloCplex cplex = modelsForPlayers.get(leader);
         IloNumVar v0 = objectiveForPlayers.get(leader);
         double maxValue = Double.NEGATIVE_INFINITY;
@@ -46,12 +47,12 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
             PureRealPlanIterator iterator = algConfig.getIterator(follower, expander, new EmptyFeasibilitySequenceFormLP(leader, follower, algConfig, informationSets, sequences));
 
             while (true) {
-                Set<Sequence> pureRP = iterator.next();
+                Set<Sequence> pureRP = new HashSet<>(iterator.next());
                 IloNumExpr pureRPAddition = addLeftSideOfRPConstraints(pureRP, cplex, algConfig);
 
                 setObjectiveConstraint(pureRP, v0, cplex, algConfig);
                 addBestValueConstraint(cplex, v0, maxValue + 1e-5);
-//                cplex.exportModel("multipleLP.lp");
+                cplex.exportModel("multipleLP.lp");
                 cplex.solve();
                 rpCount++;
 //                System.out.println(cplex.getStatus());
@@ -130,7 +131,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
         }
         IloRange objConst = constraints.get("objConst");
 
-        if(objConst == null) {
+        if (objConst == null) {
             objConst = cplex.addEq(expr, 0, "objConst");
             constraints.put("objConst", objConst);
         } else {
@@ -140,12 +141,9 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
 
     private void removeLeftSideOfRPConstraints(IloNumExpr pureRPAddition, IloCplex cplex) {
         try {
-            int count = 0;
             for (Map.Entry<Object, IloRange> entry : constraints.entrySet()) {
-                if (entry.getKey() instanceof Set) {
-                    count++;
+                if (entry.getKey() instanceof Set)
                     cplex.addToExpr(entry.getValue(), cplex.negative(pureRPAddition));
-                }
             }
         } catch (IloException e) {
             e.printStackTrace();
@@ -178,7 +176,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
     private void createRPConstraints(PureRealPlanIterator iterator, IloCplex cplex, StackelbergConfig algConfig) throws IloException {
         try {
             while (true) {
-                createRightSideOfRPConstraint(iterator.next(), cplex, algConfig);
+                createRightSideOfRPConstraint(new HashSet<>(iterator.next()), cplex, algConfig);
             }
         } catch (NoSuchElementException e) {
         }
