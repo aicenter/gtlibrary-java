@@ -327,7 +327,8 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
     }
 
     protected void setObjective(IloCplex cplex, IloNumVar v0, StackelbergConfig algConfig) throws IloException {
-        if (leaderObj != null) cplex.delete(leaderObj);
+        if (leaderObj != null)
+            cplex.delete(leaderObj);
         IloNumExpr sumG = cplex.constant(0);
         IloNumExpr sumP = cplex.constant(0);
         for (Map.Entry<GameState, Double[]> e : algConfig.getActualNonZeroUtilityValuesInLeafsSE().entrySet()) {
