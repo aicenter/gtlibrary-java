@@ -115,7 +115,7 @@ public class DOBSS extends StackelbergSequenceFormMILP {
     private void createRPConstraints(PureRealPlanIterator iterator, IloCplex cplex, StackelbergConfig algConfig) throws IloException {
         try {
             while (true) {
-                Set<Sequence> pureRP = new HashSet<>(iterator.next());
+                Set<Sequence> pureRP = iterator.next();
 
                 creareRPVariable(pureRP, cplex);
                 createRPConstraint(pureRP, cplex, algConfig);
