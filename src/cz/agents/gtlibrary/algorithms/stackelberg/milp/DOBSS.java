@@ -67,11 +67,11 @@ public class DOBSS extends StackelbergSequenceFormMILP {
 //                        continue;
 //                    }
 //                }
-                debugOutput.println("leader rp: ");
-                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
-                    if (entry.getValue() > 0)
-                        debugOutput.println(entry);
-                }
+//                debugOutput.println("leader rp: ");
+//                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+//                    if (entry.getValue() > 0)
+//                        debugOutput.println(entry);
+//                }
 //                for (Map.Entry<Object, IloNumVar> entry : variables.entrySet()) {
 //                    if (entry.getKey() instanceof Set)
 //                        System.out.println(entry.getKey() + ": " + cplex.getValue(entry.getValue()));

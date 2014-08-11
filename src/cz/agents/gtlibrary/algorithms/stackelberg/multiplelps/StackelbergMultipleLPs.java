@@ -147,7 +147,6 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
                     cplex.addToExpr(entry.getValue(), cplex.negative(pureRPAddition));
                 }
             }
-            System.out.println(count + " constraints modified");
         } catch (IloException e) {
             e.printStackTrace();
         }

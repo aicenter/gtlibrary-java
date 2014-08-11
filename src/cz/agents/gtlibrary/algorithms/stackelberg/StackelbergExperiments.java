@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.stackelberg;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.stackelberg.milp.DOBSS;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergMultipleLPs;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenceFormMultipleLPs;
@@ -17,15 +18,14 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 public class StackelbergExperiments {
     /**
-     * @param args
-     *      [0] algorithm: MILP, MultLP, MultLPFeas
-     *      [1] domain: BPG
+     * @param args [0] algorithm: MILP, MultLP, MultLPFeas
+     *             [1] domain: BPG
      *             [2] leader index
      *             [3] depth
      *             [4] slow moves
      *             [5] graph file
      *             [6] attacker move penalty (-1 for default)
-     *                  RND
+     *             RND
      *             [2] leader index
      *             [3] max. branching factor
      *             [4] depth
@@ -91,11 +91,12 @@ public class StackelbergExperiments {
         if (algType.startsWith("MultLP")) {
             StackelbergConfig.USE_FEASIBILITY_CUT = algType.equals("MultLPFeas");
             return new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
-        } else if(algType.equals("ExpMultLP")) {
-            return new StackelbergMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower);
-        } else {
-            throw new UnsupportedOperationException("Unsupported algorithm");
         }
+        if (algType.equals("ExpMultLP"))
+            return new StackelbergMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower);
+        if (algType.equals("DOBBS"))
+            return new DOBSS(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
+        throw new UnsupportedOperationException("Unsupported algorithm");
     }
 
 }
