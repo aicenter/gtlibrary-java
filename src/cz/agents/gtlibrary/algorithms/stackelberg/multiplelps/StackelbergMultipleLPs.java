@@ -52,7 +52,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
 
                 setObjectiveConstraint(pureRP, v0, cplex, algConfig);
                 addBestValueConstraint(cplex, v0, maxValue + 1e-5);
-                cplex.exportModel("multipleLP.lp");
+//                cplex.exportModel("multipleLP.lp");
                 cplex.solve();
                 rpCount++;
 //                System.out.println(cplex.getStatus());
