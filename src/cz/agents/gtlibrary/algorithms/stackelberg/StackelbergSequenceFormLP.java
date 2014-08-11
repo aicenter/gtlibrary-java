@@ -5,7 +5,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.Player;
 
-public abstract class StackelbergSequenceFormLP extends SequenceFormLP implements StackelbergSolver {
+public abstract class StackelbergSequenceFormLP extends SequenceFormLP {
     protected Player leader;
     protected Player follower;
 
@@ -14,4 +14,6 @@ public abstract class StackelbergSequenceFormLP extends SequenceFormLP implement
         this.leader = leader;
         this.follower = follower;
     }
+
+    public abstract double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander);
 }

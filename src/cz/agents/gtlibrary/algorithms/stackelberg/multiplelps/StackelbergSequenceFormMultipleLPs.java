@@ -83,9 +83,8 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
         try {
             IloCplex cplex = modelsForPlayers.get(leader);
             IloNumVar v0 = objectiveForPlayers.get(leader);
-
-
             long startTime = mxBean.getCurrentThreadCpuTime();
+
             createVariables(cplex, algConfig);
             createConstraintsForSets(leader, cplex, informationSets.get(leader));
             createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
