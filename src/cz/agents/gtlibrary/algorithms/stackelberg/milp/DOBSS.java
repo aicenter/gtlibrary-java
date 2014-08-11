@@ -12,7 +12,6 @@ import ilog.cplex.IloCplex;
 import java.util.*;
 
 public class DOBSS extends StackelbergSequenceFormMILP {
-    private final double M = 10;
     private Map<GameState, IloNumExpr> boundsForLeafs;
 
     public DOBSS(Player[] players, Player leader, Player follower, GameInfo info, Expander<SequenceInformationSet> expander) {
@@ -213,7 +212,8 @@ public class DOBSS extends StackelbergSequenceFormMILP {
 
     protected void createVariables(IloCplex model, StackelbergConfig algConfig) throws IloException {
         for (Sequence sequence : algConfig.getAllSequences()) {
-            if (variables.containsKey(sequence)) continue;
+            if (variables.containsKey(sequence))
+                continue;
             if (sequence.getPlayer().equals(leader)) {
                 createVariableForSequence(model, sequence);
             } else {

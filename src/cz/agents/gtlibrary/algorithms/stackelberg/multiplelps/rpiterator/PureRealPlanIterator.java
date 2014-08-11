@@ -25,10 +25,8 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
     protected Set<GameState> currentlyReachableLeafs;
     protected Map<InformationSet, Map<Sequence, List<GameState>>> leafAccessibility;
     protected Map<InformationSet, List<Action>> actions;
-//    protected Map<Action, Double> currentSetValues;
     protected Map<Action, Double> maxFollowerValues;
     protected Map<Action, Double> maxLeaderValues;
-//    protected int minIndex = Integer.MAX_VALUE;
 
     public PureRealPlanIterator(Player follower, StackelbergConfig config, Expander<SequenceInformationSet> expander, FeasibilitySequenceFormLP solver) {
         this.currentSet = new HashSet<>();
@@ -41,7 +39,6 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
         actions = new HashMap<>();
         maxFollowerValues = new HashMap<>();
         maxLeaderValues = new HashMap<>();
-//        currentSetValues = new HashMap<>();
         leafAccessibility = new HashMap<>();
         currentlyReachableLeafs = new HashSet<>();
         leaderUpperBound = Double.NEGATIVE_INFINITY;
@@ -246,24 +243,6 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
         leaderUpperBound = getLeaderUpperBound();
     }
 
-
-//    private void removePrefixValue(Sequence continuation) {
-//        if (continuation.size() == 0)
-//            return;
-//        Double value = currentSetValues.remove(continuation.getLast());
-//
-//        if (leaderUpperBound == value)
-//            leaderUpperBound = Collections.max(currentSetValues.values());
-//    }
-//
-//    private void updateValuesForLeader(Action lastAction) {
-//        double value = maxLeaderValues.get(lastAction);
-//
-//        if (value > leaderUpperBound)
-//            leaderUpperBound = value;
-//        currentSetValues.put(lastAction, value);
-//    }
-
     protected int getIndexOfReachableISWithActionsLeftFrom(int index) {
         for (; index >= 0; index--) {
             SequenceInformationSet set = stack.get(index).getLeft();
@@ -275,16 +254,7 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
 
                 sequence.addLast(lastAction);
                 currentSet.remove(sequence);
-//                Double value = currentSetValues.remove(lastAction);
-
-//                double previousActionValue = maxLeaderValues.get(set.getPlayersHistory().getLast());
-//                currentSetValues.put(set.getPlayersHistory().getLast(), previousActionValue);
                 updateReachableLeafsAfterRemoval(set, actions, sequence);
-
-//                if (leaderUpperBound == value)
-//                    leaderUpperBound = Collections.max(currentSetValues.values());
-//                if (previousActionValue > leaderUpperBound)
-//                    leaderUpperBound = previousActionValue;
                 solver.addSlackFor(sequence);
                 if (!actions.isEmpty()) {
 //                    if (minIndex >= index) {

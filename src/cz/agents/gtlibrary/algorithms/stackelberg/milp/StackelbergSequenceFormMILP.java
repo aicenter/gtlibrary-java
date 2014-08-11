@@ -19,7 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.stackelberg.milp;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormLP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
@@ -33,6 +32,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
+    protected final double M = 10;
 
     protected Player[] players;
     protected GameInfo info;
@@ -321,7 +321,7 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
 
     protected void createSlackConstraintForSequence(IloCplex cplex, Sequence sequence) throws IloException {
         IloNumVar LS = slackVariables.get(sequence);
-        IloNumExpr RS = cplex.prod(10, cplex.diff(1, variables.get(sequence)));
+        IloNumExpr RS = cplex.prod(M, cplex.diff(1, variables.get(sequence)));
         IloRange c = cplex.addLe(cplex.diff(LS, RS), 0, "SLC:" + sequence);
         slackConstraints.put(sequence, new IloRange[]{c, null});
     }
