@@ -212,7 +212,7 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
         int index = getIndexOfReachableISWithActionsLeftFrom(stack.size() - 1);
 
         updateRealizationPlan(index);
-        return currentSet;
+        return new HashSet<>(currentSet);
     }
 
     protected void updateRealizationPlan(int index) {

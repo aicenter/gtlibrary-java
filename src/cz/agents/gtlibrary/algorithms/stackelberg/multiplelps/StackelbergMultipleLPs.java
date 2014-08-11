@@ -47,7 +47,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
             PureRealPlanIterator iterator = algConfig.getIterator(follower, expander, new EmptyFeasibilitySequenceFormLP(leader, follower, algConfig, informationSets, sequences));
 
             while (true) {
-                Set<Sequence> pureRP = new HashSet<>(iterator.next());
+                Set<Sequence> pureRP = iterator.next();
                 IloNumExpr pureRPAddition = addLeftSideOfRPConstraints(pureRP, cplex, algConfig);
 
                 setObjectiveConstraint(pureRP, v0, cplex, algConfig);
@@ -176,7 +176,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
     private void createRPConstraints(PureRealPlanIterator iterator, IloCplex cplex, StackelbergConfig algConfig) throws IloException {
         try {
             while (true) {
-                createRightSideOfRPConstraint(new HashSet<>(iterator.next()), cplex, algConfig);
+                createRightSideOfRPConstraint(iterator.next(), cplex, algConfig);
             }
         } catch (NoSuchElementException e) {
         }
