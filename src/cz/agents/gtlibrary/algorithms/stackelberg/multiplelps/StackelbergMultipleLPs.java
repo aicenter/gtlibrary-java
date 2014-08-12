@@ -26,7 +26,6 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormMultipleLPs {
         IloCplex cplex = modelsForPlayers.get(leader);
         IloNumVar v0 = objectiveForPlayers.get(leader);
         double maxValue = Double.NEGATIVE_INFINITY;
-        int rpCount = 0;
         int upperBoundCuts = 0;
         int feasibilityCuts = 0;
 
@@ -43,7 +42,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormMultipleLPs {
             while (true) {
                 Set<Sequence> pureRP = iterator.next();
 
-                double upperBound = getUpperBound(pureRP, algConfig);
+                assert Math.abs(getUpperBound(pureRP, algConfig) - iterator.getCurrentUpperBound()) < 1e-8 ;
 //                debugOutput.println(iteration);
 
 //                debugOutput.println("---");
@@ -52,10 +51,6 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormMultipleLPs {
 //                }
                 if (maxValue == info.getMaxUtility())
                     break;
-                if (maxValue >= upperBound - 1e-7) {
-                    upperBoundCuts++;
-                    continue;
-                }
                 IloNumExpr pureRPAddition = addLeftSideOfRPConstraints(pureRP, cplex, algConfig);
 
                 setObjectiveConstraint(pureRP, v0, cplex, algConfig);
@@ -64,7 +59,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormMultipleLPs {
                 startTime = mxBean.getCurrentThreadCpuTime();
                 cplex.solve();
                 overallConstraintLPSolvingTime += mxBean.getCurrentThreadCpuTime() - startTime;
-                rpCount++;
+                totalRPCount++;
 //                System.out.println(cplex.getStatus());
                 if (cplex.getStatus() == IloCplex.Status.Optimal) {
                     double v = cplex.getObjValue();
@@ -95,7 +90,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormMultipleLPs {
         } catch (IloException e) {
             e.printStackTrace();
         }
-        System.out.println("RP count: " + rpCount);
+        System.out.println("RP count: " + totalRPCount);
         System.out.println("Upper bound cuts: " + upperBoundCuts);
         System.out.println("Feasibility cuts: " + feasibilityCuts);
         return maxValue;

@@ -42,7 +42,7 @@ import java.util.*;
  */
 public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet> {
 
-    public static boolean USE_FEASIBILITY_CUT = true;
+    public static boolean USE_FEASIBILITY_CUT = false;
 
     protected Map<GameState, Double[]> actualNonZeroUtilityValuesInLeafs = new HashMap<>();
     protected Set<GameState> allLeafs = new HashSet<>();
