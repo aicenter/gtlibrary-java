@@ -207,7 +207,7 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
     public Set<Sequence> next() {
         if (first) {
             first = false;
-            return currentSet;
+            return new HashSet<>(currentSet);
         }
         int index = getIndexOfReachableISWithActionsLeftFrom(stack.size() - 1);
 
