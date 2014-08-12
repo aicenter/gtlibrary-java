@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.PureRealPlanIterator;
 import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import ilog.concert.*;
@@ -12,23 +13,11 @@ import ilog.cplex.IloCplex;
 
 import java.util.*;
 
-public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
+public class StackelbergMultipleLPs extends StackelbergSequenceFormMultipleLPs {
 
-    public StackelbergMultipleLPs(Player[] players, Player leader, Player follower) {
-        super(players, leader, follower);
-    }
 
-    protected void resetModel(IloCplex cplex, Player player) throws IloException {
-        cplex.clearModel();
-        cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
-        cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
-        if (CPLEXTHREADS == 1)
-            cplex.setParam(IloCplex.IntParam.AuxRootThreads, -1);
-        IloNumVar v0 = cplex.numVar(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, IloNumVarType.Float, "v0");
-
-        cplex.setOut(null);
-        cplex.addMaximize(v0);
-        objectiveForPlayers.put(player, v0);
+    public StackelbergMultipleLPs(Player[] players, Player leader, Player follower, GameInfo info, Expander<SequenceInformationSet> expander) {
+        super(players, leader, follower, info, expander);
     }
 
     @Override
@@ -38,22 +27,43 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
         IloNumVar v0 = objectiveForPlayers.get(leader);
         double maxValue = Double.NEGATIVE_INFINITY;
         int rpCount = 0;
+        int upperBoundCuts = 0;
+        int feasibilityCuts = 0;
 
         try {
+            long startTime = mxBean.getCurrentThreadCpuTime();
+
             buildInformationSets(algConfig);
             createVariables(cplex, algConfig);
             createConstraintsForSets(leader, cplex, informationSets.get(leader));
             createRPConstraints(algConfig.getIterator(follower, expander, new EmptyFeasibilitySequenceFormLP(leader, follower, algConfig, informationSets, sequences)), cplex, algConfig);
+            overallConstraintGenerationTime += mxBean.getCurrentThreadCpuTime() - startTime;
             PureRealPlanIterator iterator = algConfig.getIterator(follower, expander, new EmptyFeasibilitySequenceFormLP(leader, follower, algConfig, informationSets, sequences));
 
             while (true) {
                 Set<Sequence> pureRP = iterator.next();
+
+                double upperBound = getUpperBound(pureRP, algConfig);
+//                debugOutput.println(iteration);
+
+//                debugOutput.println("---");
+//                for (Sequence sequence : pureRP) {
+//                    debugOutput.println(sequence);
+//                }
+                if (maxValue == info.getMaxUtility())
+                    break;
+                if (maxValue >= upperBound - 1e-7) {
+                    upperBoundCuts++;
+                    continue;
+                }
                 IloNumExpr pureRPAddition = addLeftSideOfRPConstraints(pureRP, cplex, algConfig);
 
                 setObjectiveConstraint(pureRP, v0, cplex, algConfig);
                 addBestValueConstraint(cplex, v0, maxValue + 1e-5);
 //                cplex.exportModel("multipleLP.lp");
+                startTime = mxBean.getCurrentThreadCpuTime();
                 cplex.solve();
+                overallConstraintLPSolvingTime += mxBean.getCurrentThreadCpuTime() - startTime;
                 rpCount++;
 //                System.out.println(cplex.getStatus());
                 if (cplex.getStatus() == IloCplex.Status.Optimal) {
@@ -75,6 +85,8 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
                         resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
                         resultStrategies.put(follower, getRP(pureRP));
                     }
+                } else {
+                    feasibilityCuts++;
                 }
                 removeLeftSideOfRPConstraints(pureRPAddition, cplex);
             }
@@ -84,30 +96,9 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormLP {
             e.printStackTrace();
         }
         System.out.println("RP count: " + rpCount);
-
+        System.out.println("Upper bound cuts: " + upperBoundCuts);
+        System.out.println("Feasibility cuts: " + feasibilityCuts);
         return maxValue;
-    }
-
-    protected void addBestValueConstraint(IloCplex cplex, IloNumVar v0, double maxValue) throws IloException {
-        IloRange maxValueConstraint = constraints.get("maxVal");
-
-        if (maxValueConstraint == null) {
-            IloLinearNumExpr rowExpr = cplex.linearNumExpr();
-
-            rowExpr.addTerm(1, v0);
-            maxValueConstraint = cplex.addGe(rowExpr, maxValue);
-            constraints.put("maxVal", maxValueConstraint);
-        }
-        maxValueConstraint.setLB(maxValue);
-    }
-
-    private Map<Sequence, Double> getRP(Set<Sequence> followerBR) {
-        Map<Sequence, Double> rp = new HashMap<>(followerBR.size());
-
-        for (Sequence sequence : followerBR) {
-            rp.put(sequence, 1d);
-        }
-        return rp;
     }
 
     private void buildInformationSets(StackelbergConfig algConfig) {

@@ -93,7 +93,7 @@ public class StackelbergExperiments {
             return new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
         }
         if (algType.equals("ExpMultLP"))
-            return new StackelbergMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower);
+            return new StackelbergMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
         if (algType.equals("DOBBS"))
             return new DOBSS(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
         throw new UnsupportedOperationException("Unsupported algorithm");

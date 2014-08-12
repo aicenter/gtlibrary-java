@@ -62,14 +62,15 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
         cplex.clearModel();
         cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
         cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
-        if (CPLEXTHREADS == 1) cplex.setParam(IloCplex.IntParam.AuxRootThreads, -1);
+        if (CPLEXTHREADS == 1)
+            cplex.setParam(IloCplex.IntParam.AuxRootThreads, -1);
         IloNumVar v0 = cplex.numVar(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, IloNumVarType.Float, "v0");
         cplex.setOut(null);
         cplex.addMaximize(v0);
         objectiveForPlayers.put(player, v0);
     }
 
-    public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander expander) {
+    public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         double maxValue = Double.NEGATIVE_INFINITY;
         int upperBoundCut = 0;
         int feasibilityCut = 0;
