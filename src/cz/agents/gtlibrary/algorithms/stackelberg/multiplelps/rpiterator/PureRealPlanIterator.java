@@ -234,7 +234,7 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
                 currentSet.add(continuation);
                 updateReachableLeafsAfterAddition(setActionPair.getLeft(), continuation);
                 solver.removeSlackFor(continuation);
-                if (leaderUpperBound < bestValue || (StackelbergConfig.USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet))) {
+                if (leaderUpperBound <= bestValue + 1e-8 || (StackelbergConfig.USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet))) {
                     i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
                     assert !currentlyReachableLeafs.isEmpty();
                 }
@@ -327,5 +327,9 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
 //                upperBound = utilities[1 - follower.getId()];
 //        }
 //        return upperBound;
+    }
+
+    public double getCurrentUpperBound() {
+        return leaderUpperBound;
     }
 }
