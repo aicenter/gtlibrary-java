@@ -22,13 +22,14 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
     protected double leaderUpperBound;
     protected double bestValue;
 
-    protected Set<GameState> currentlyReachableLeafs;
+//    protected Set<GameState> currentlyReachableLeafs;
+    protected PriorityQueue<GameState> currentlyReachableLeafs;
     protected Map<InformationSet, Map<Sequence, List<GameState>>> leafAccessibility;
     protected Map<InformationSet, List<Action>> actions;
     protected Map<Action, Double> maxFollowerValues;
     protected Map<Action, Double> maxLeaderValues;
 
-    public PureRealPlanIterator(Player follower, StackelbergConfig config, Expander<SequenceInformationSet> expander, FeasibilitySequenceFormLP solver) {
+    public PureRealPlanIterator(final Player follower, StackelbergConfig config, Expander<SequenceInformationSet> expander, FeasibilitySequenceFormLP solver) {
         this.currentSet = new HashSet<>();
         this.follower = follower;
         this.stack = new ArrayList<>();
@@ -40,7 +41,13 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
         maxFollowerValues = new HashMap<>();
         maxLeaderValues = new HashMap<>();
         leafAccessibility = new HashMap<>();
-        currentlyReachableLeafs = new HashSet<>();
+//        currentlyReachableLeafs = new HashSet<>();
+        currentlyReachableLeafs = new PriorityQueue<>(100, new Comparator<GameState>() {
+            @Override
+            public int compare(GameState o1, GameState o2) {
+                return Double.compare(o2.getUtilities()[1 - follower.getId()], o1.getUtilities()[1 - follower.getId()]);
+            }
+        });
         leaderUpperBound = Double.NEGATIVE_INFINITY;
         bestValue = Double.NEGATIVE_INFINITY;
         initLeafAccessibility(rootState);
@@ -227,8 +234,10 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
                 currentSet.add(continuation);
                 updateReachableLeafsAfterAddition(setActionPair.getLeft(), continuation);
                 solver.removeSlackFor(continuation);
-                if (leaderUpperBound < bestValue || (StackelbergConfig.USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet)))
+                if (leaderUpperBound < bestValue || (StackelbergConfig.USE_FEASIBILITY_CUT && !solver.checkFeasibilityFor(currentSet))) {
                     i = getIndexOfReachableISWithActionsLeftFrom(i) - 1;
+                    assert !currentlyReachableLeafs.isEmpty();
+                }
             }
         }
     }
@@ -277,6 +286,14 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
     }
 
     private void updateReachableLeafsAfterRemoval(SequenceInformationSet set, List<Action> actions, Sequence sequence) {
+        if(actions.isEmpty())
+            updateLeafsFor(set, this.actions.get(set), sequence);
+        else
+            updateLeafsFor(set, actions, sequence);
+        leaderUpperBound = getLeaderUpperBound();
+    }
+
+    private void updateLeafsFor(SequenceInformationSet set, List<Action> actions, Sequence sequence) {
         Map<Sequence, List<GameState>> reachableLeafs = leafAccessibility.get(set);
 
         currentlyReachableLeafs.removeAll(reachableLeafs.get(sequence));
@@ -286,8 +303,6 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
             continuation.addLast(action);
             currentlyReachableLeafs.addAll(reachableLeafs.get(continuation));
         }
-
-        leaderUpperBound = getLeaderUpperBound();
     }
 
     public void setBestValue(double bestValue) {
@@ -300,14 +315,17 @@ public abstract class PureRealPlanIterator implements Iterator<Set<Sequence>> {
     }
 
     public double getLeaderUpperBound() {
-        double upperBound = Double.NEGATIVE_INFINITY;
-
-        for (GameState leaf : currentlyReachableLeafs) {
-            double[] utilities = leaf.getUtilities();
-
-            if(utilities[1 - follower.getId()] > upperBound)
-                upperBound = utilities[1 - follower.getId()];
-        }
-        return upperBound;
+        if(currentlyReachableLeafs.isEmpty())
+            return Double.NEGATIVE_INFINITY;
+        return currentlyReachableLeafs.peek().getUtilities()[1 - follower.getId()];
+//        double upperBound = Double.NEGATIVE_INFINITY;
+//
+//        for (GameState leaf : currentlyReachableLeafs) {
+//            double[] utilities = leaf.getUtilities();
+//
+//            if (utilities[1 - follower.getId()] > upperBound)
+//                upperBound = utilities[1 - follower.getId()];
+//        }
+//        return upperBound;
     }
 }
