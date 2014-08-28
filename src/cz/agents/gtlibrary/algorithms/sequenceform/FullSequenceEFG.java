@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -43,6 +44,9 @@ import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
@@ -99,7 +103,8 @@ public class FullSequenceEFG {
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
-      runSimRandomGame();
+//      runSimRandomGame();
+        runLiarsDice();
 //		runPursuit();
 //      runPhantomTTT();
 //		runUpOrDown();
@@ -209,7 +214,7 @@ public class FullSequenceEFG {
 		GameState rootState = new SimRandomGameState();
 		GameInfo gameInfo = new RandomGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-        Expander expander = new RandomGameExpander<SequenceInformationSet>(algConfig);
+                Expander expander = new RandomGameExpander<SequenceInformationSet>(algConfig);
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 
 		efg.generate();
@@ -222,7 +227,7 @@ public class FullSequenceEFG {
 		GameState rootState = new KuhnPokerGameState();
 		KPGameInfo gameInfo = new KPGameInfo();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-        Expander expander = new KuhnPokerExpander<SequenceInformationSet>(algConfig);
+                Expander expander = new KuhnPokerExpander<SequenceInformationSet>(algConfig);
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 
 		Map<Player, Map<Sequence, Double>> rps = efg.generate();
@@ -238,6 +243,17 @@ public class FullSequenceEFG {
 //				System.out.println(entry);
 //		}
 	}
+
+	
+        public static void runLiarsDice() {
+                GameState rootState = new LiarsDiceGameState();
+                LDGameInfo gameInfo = new LDGameInfo();
+                SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+                Expander expander = new LiarsDiceExpander<SequenceInformationSet>(algConfig);
+                FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
+
+                Map<Player, Map<Sequence, Double>> rps = efg.generate();
+        }
 
 	public static void runRandomGame() {
 		GameState rootState = new RandomGameState();
@@ -389,12 +405,12 @@ public class FullSequenceEFG {
 	}
 
 	public void generateCompleteGame() {
-		LinkedList<GameState> queue = new LinkedList<GameState>();
+		ArrayDeque<GameState> queue = new ArrayDeque<GameState>();
 
 		queue.add(rootState);
 
 		while (queue.size() > 0) {
-			GameState currentState = queue.removeFirst();
+			GameState currentState = queue.removeLast();
 
 			algConfig.addStateToSequenceForm(currentState);
 			if (currentState.isGameEnd()) {

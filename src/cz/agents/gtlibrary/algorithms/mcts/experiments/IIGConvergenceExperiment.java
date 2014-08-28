@@ -37,6 +37,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
@@ -50,12 +53,15 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.iinodes.RandomAlgorithm;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,6 +69,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.jacop.util.fsm.FSMState;
 
 
 public class IIGConvergenceExperiment {
@@ -78,7 +87,6 @@ public class IIGConvergenceExperiment {
     static int compTime = 1000;
     static int matches=500;
 
-    static enum Alg {UCT, EXP3, RM, OOS};
 
     public static void main(String[] args) {
         if (args.length < 2) {
@@ -181,6 +189,7 @@ public class IIGConvergenceExperiment {
         if (initializeSfConfig && sfAlgConfig.getAllSequences().isEmpty()){
             FullSequenceEFG efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
             efg.generateCompleteGame();
+            computeGameStatistics();
         }
     }
 
@@ -190,14 +199,16 @@ public class IIGConvergenceExperiment {
         BackPropFactory bpFactory = null;
         GamePlayingAlgorithm alg = null;
         
-        if (algString.equals("OOS")) {
-            Double expl = 0.6d;
-            Double targ = 0.4d;
+        if (algString.equals("RAND")) {
+            return new RandomAlgorithm(rootState.getAllPlayers()[playerID], expander);
+        } else if (algString.equals("OOS")) {
+            Double expl = 0.4d;
+            Double targ = 0.9d;
             String s = System.getProperty("EXPL");
             if (s != null) expl = new Double(s);
             s = System.getProperty("TARG");
-            if (s != null) expl = new Double(s);
-            alg = new OOSAlgorithm(rootState.getAllPlayers()[playerID], new OOSSimulator(expander), rootState, expander, expl, targ);
+            if (s != null) targ = new Double(s);
+            alg = new OOSAlgorithm(rootState.getAllPlayers()[playerID], new OOSSimulator(expander), rootState, expander, targ, expl);
             //((OOSAlgorithm) alg).runIterations(2);
         } else {
             switch (algString) {
@@ -209,14 +220,20 @@ public class IIGConvergenceExperiment {
                         UCTSelector.useDeterministicUCT = true;
                     String cS = System.getProperty("EXPL");
                     Double c = 2d*gameInfo.getMaxUtility();
-                    if (cS != null) c = new Double(cS);
+                    if (cS != null) c = Double.parseDouble(cS)*gameInfo.getMaxUtility();
                     bpFactory = new UCTBackPropFactory(c);
                     break;
                 case "MCTS-EXP3":
+                case "MCTS-EXP3L":
                     cS = System.getProperty("EXPL");
                     c = 0.1d;
                     if (cS != null) c = new Double(cS);
                     bpFactory = new Exp3BackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), c);
+                    if (algString.equals("MCTS-EXP3L")){
+                        assert cS == null;
+                        
+                    }
+                    
                     break;
                 case "MCTS-RM":
                     cS = System.getProperty("EXPL");
@@ -232,7 +249,6 @@ public class IIGConvergenceExperiment {
                     bpFactory,
                     rootState, expander);
             ((ISMCTSAlgorithm) alg).returnMeanValue = false;
-            //((ISMCTSAlgorithm) alg).runMiliseconds(matches)Iterations(2);
         }
         alg.runMiliseconds(100);
         return alg;
@@ -375,5 +391,43 @@ public class IIGConvergenceExperiment {
             System.out.println("Stiched strategy exploitability:" + exploitability(s, sfExpander));
         }
         
+    }
+    
+    private void computeGameStatistics(){
+        PrintStream o=null;
+        try {
+            o = new PrintStream("SuppSize");
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(IIGConvergenceExperiment.class.getName()).log(Level.SEVERE, null, ex);
+        }
+//        
+//        o.println("Depth,ISsize");
+//        for (SequenceInformationSet is :  sfAlgConfig.getAllInformationSets().values()){
+//            o.print(is.getAllStates().iterator().next().getHistory().getLength() + ",");
+//            o.println(is.getAllStates().size());
+//        }
+        
+        
+        o.println("Depth,suppSize");
+
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new TTTExpander<DoubleOracleInformationSet>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        Map<Player,Map<Sequence,Double>> strategies = doefg.generate(null);
+        
+        
+        Strategy s = new UniformStrategyForMissingSequences();
+        s.putAll(strategies.get(rootState.getAllPlayers()[0]));
+        s.putAll(strategies.get(rootState.getAllPlayers()[1]));
+        
+        for (SequenceInformationSet is :  sfAlgConfig.getAllInformationSets().values()){
+            GameState gs = is.getAllStates().iterator().next();
+            o.print(gs.getHistory().getLength() + ",");
+            Map<Action, Double> dist = s.getDistributionOfContinuationOf(gs.getSequenceForPlayerToMove(), sfExpander.getActions(gs));
+            int supp=0;
+            for (double d : dist.values()) if (d > 0) supp++;
+            o.println(supp);
+        }
+        o.close();
     }
 }

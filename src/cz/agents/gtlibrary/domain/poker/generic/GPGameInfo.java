@@ -38,7 +38,7 @@ public class GPGameInfo implements GameInfo {
     public static final int ANTE = 1;
     public static int MAX_RAISES_IN_ROW = 2;
 
-    public static int MAX_DIFFERENT_BETS = 1;
+    public static int MAX_DIFFERENT_BETS = 2;
     public static int MAX_DIFFERENT_RAISES = MAX_DIFFERENT_BETS;
     public static int[] BETS_FIRST_ROUND;
 
@@ -68,7 +68,7 @@ public class GPGameInfo implements GameInfo {
             CARD_TYPES[i] = i;
     }
 
-    public static int MAX_CARD_OF_EACH_TYPE = 2;
+    public static int MAX_CARD_OF_EACH_TYPE = 3;
     public static int[] DECK;
 
     {
@@ -133,7 +133,8 @@ public class GPGameInfo implements GameInfo {
         builder.append("Bets second round: " + Arrays.toString(BETS_SECOND_ROUND) + "\n");
         builder.append("Raises first round: " + Arrays.toString(RAISES_FIRST_ROUND) + "\n");
         builder.append("Raises second round: " + Arrays.toString(RAISES_SECOND_ROUND) + "\n");
-        builder.append("Deck: " + Arrays.toString(DECK));
+        builder.append("Deck: " + Arrays.toString(DECK) + "\n");
+        builder.append("Max utility: " + getMaxUtility());
         return builder.toString();
     }
 
