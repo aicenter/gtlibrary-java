@@ -87,6 +87,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     
     @Override
     public Action runMiliseconds(int miliseconds){
+        if (giveUp) return null;
         int iters=0;
         int targISHits=0;
         long start = threadBean.getCurrentThreadCpuTime();
@@ -103,7 +104,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         }
         System.out.println();
         System.out.println("OOS Iters: " + iters);
-        System.out.println("OOS Targeted IS Hist: " + targISHits);
+        System.out.println("OOS Targeted IS Hits: " + targISHits);
         System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
         if (curIS == null || !curIS.getPlayer().equals(searchingPlayer)) return null;
         if (curIS.getAlgorithmData() == null) return null;
@@ -159,9 +160,6 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                         biasedProbs[i]=0;
                     }
                     i++;
-                }
-                if (sum == 0){
-                    int asjfdhsg=0;
                 }
                 assert sum>0;
                 i = randomChoice(biasedProbs, sum);
@@ -309,9 +307,15 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     public HashSet<Sequence> chanceAllowedSequences = new HashSet();//only because chance action have IS set to null 
     public int opponentMaxSequenceLength = 0;
     public int chanceMaxSequenceLength = 0;
+    private boolean giveUp = false;
     @Override
     public void setCurrentIS(InformationSet is){
         curIS = (MCTSInformationSet) is;
+        if (curIS.getAllNodes().isEmpty()){
+            giveUp=true;
+            clearTreeISs();
+            return;
+        }
         opponentAllowedActions.clear();
         chanceAllowedSequences.clear();
         for (GameState gs : curIS.getAllStates()){
@@ -342,30 +346,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
     @Override
     public Action runMiliseconds(int miliseconds, GameState gameState) {
-        //TODO: finish debuging this
-        MCTSInformationSet is = rootNode.getAlgConfig().getInformationSetFor(gameState);
-        if (is.getAllNodes().isEmpty()){
-            Sequence[] seqs = new Sequence[gameState.getAllPlayers().length];
-            for (Player pl : gameState.getAllPlayers()){
-                seqs[pl.getId()] = new LinkedListSequenceImpl(gameState.getSequenceFor(pl));
-            }
-            InnerNode in = rootNode;
-            while (!in.getGameState().equals(gameState)){
-                in = (InnerNode) in.getChildFor(seqs[in.getGameState().getPlayerToMove().getId()].removeFirst());
-                if (in.getInformationSet().getAlgorithmData() == null){
-                    in.getInformationSet().setAlgorithmData(fact.createSelector(in.getActions()));
-                }
-            }
-            is = rootNode.getAlgConfig().getInformationSetFor(gameState);
-        }
-        if (!gameState.getPlayerToMove().equals(searchingPlayer)){
-            InnerNode in = is.getAllNodes().iterator().next();
-            in = (InnerNode) in.getChildFor(in.getActions().get(0));
-            setCurrentIS(in.getInformationSet());
-        } else {
-            setCurrentIS(rootNode.getAlgConfig().getInformationSetFor(gameState));
-        }
-        rootNode.setParent(null);
-        return runMiliseconds(miliseconds);
+        assert false;
+        return null;
     }
 }
