@@ -43,6 +43,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOra
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
+import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
@@ -90,7 +93,7 @@ public class IIGConvergenceExperiment {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: IIGConvergenceExperiment {P0|P1|ROOT} {OOS|MCTS-RUCT|MCTS-UCT|MCTS-EXP3|MCTS-RM} {IIGS|RG|GP|PTTT} [domain parameters].");
+            System.err.println("Missing Arguments: IIGConvergenceExperiment {P0|P1|ROOT} {OOS|MCTS-RUCT|MCTS-UCT|MCTS-EXP3|MCTS-RM} {IIGS|RG|GP|PTTT|LD} [domain parameters].");
             System.exit(-1);
         }
 
@@ -155,6 +158,14 @@ public class IIGConvergenceExperiment {
             }
             TTTState.forceFirstMoves = new Boolean(args[3]);
             TTTState.skewed = new Boolean(args[4]);
+        } else if (args[2].equalsIgnoreCase("LD")) { // Phantom TicTacToe
+            if (args.length != 6) {
+                throw new IllegalArgumentException("Illegal Liar's Dice domain arguments count. 3 are required {FACES} {P1DICE} {P2DICE}");
+            }
+            LDGameInfo.FACES = Integer.parseInt(args[3]);
+            LDGameInfo.P1DICE = Integer.parseInt(args[4]);
+            LDGameInfo.P2DICE = Integer.parseInt(args[5]);
+            LDGameInfo.CALLBID = (LDGameInfo.P1DICE + LDGameInfo.P2DICE) * LDGameInfo.FACES + 1;
         } else throw new IllegalArgumentException("Illegal domain: " + args[2]);
     }
 
@@ -183,13 +194,18 @@ public class IIGConvergenceExperiment {
             rootState = new TTTState();
             expander = new TTTExpander<MCTSInformationSet>(new MCTSConfig());
             if (sfExpander==null) sfExpander = new TTTExpander<SequenceInformationSet>(sfAlgConfig);
-        }else {
+        } else if (domain.equals("LD")) {
+            gameInfo = new LDGameInfo();
+            rootState = new LiarsDiceGameState();
+            expander = new LiarsDiceExpander<MCTSInformationSet>(new MCTSConfig());
+            if (sfExpander==null) sfExpander = new LiarsDiceExpander<SequenceInformationSet>(sfAlgConfig);
+        } else {
             throw new IllegalArgumentException("Incorrect game:" + domain);
         }
         if (initializeSfConfig && sfAlgConfig.getAllSequences().isEmpty()){
             FullSequenceEFG efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
             efg.generateCompleteGame();
-            computeGameStatistics();
+            //computeGameStatistics();
         }
     }
 
@@ -278,8 +294,8 @@ public class IIGConvergenceExperiment {
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
-            br1Val = brAlg1.calculateBR(rootState, strategy0);
-            br0Val = brAlg0.calculateBR(rootState, strategy1);
+            br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
+            br0Val = brAlg0.calculateBR(rootState,  ISMCTSExploitability.filterLow(strategy1));
 
             System.out.println("Precision: " + (br0Val + br1Val));
             System.out.flush();
@@ -396,24 +412,27 @@ public class IIGConvergenceExperiment {
     private void computeGameStatistics(){
         PrintStream o=null;
         try {
+            o = new PrintStream("ISsize");
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(IIGConvergenceExperiment.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        o.println("Depth,ISsize");
+        for (SequenceInformationSet is :  sfAlgConfig.getAllInformationSets().values()){
+            o.print(is.getAllStates().iterator().next().getHistory().getLength() + ",");
+            o.println(is.getAllStates().size());
+        }
+        
+        o.close();
+        try {
             o = new PrintStream("SuppSize");
         } catch (FileNotFoundException ex) {
             Logger.getLogger(IIGConvergenceExperiment.class.getName()).log(Level.SEVERE, null, ex);
         }
-//        
-//        o.println("Depth,ISsize");
-//        for (SequenceInformationSet is :  sfAlgConfig.getAllInformationSets().values()){
-//            o.print(is.getAllStates().iterator().next().getHistory().getLength() + ",");
-//            o.println(is.getAllStates().size());
-//        }
-        
         
         o.println("Depth,suppSize");
-
-        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
-        Expander<DoubleOracleInformationSet> expander = new TTTExpander<DoubleOracleInformationSet>(algConfig);
-        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
-        Map<Player,Map<Sequence,Double>> strategies = doefg.generate(null);
+        FullSequenceEFG efg = new FullSequenceEFG(rootState, sfExpander, gameInfo, sfAlgConfig);
+        Map<Player,Map<Sequence,Double>> strategies = efg.generate();
         
         
         Strategy s = new UniformStrategyForMissingSequences();

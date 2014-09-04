@@ -57,7 +57,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     protected ThreadMXBean threadBean;
     private double delta = 0.9;
     private double epsilon = 0.6;
-    public boolean dropTree = true;
+    public boolean dropTree = false;
     
     private MCTSInformationSet curIS;
     private Random rnd = new HighQualityRandom();
@@ -106,6 +106,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         System.out.println("OOS Iters: " + iters);
         System.out.println("OOS Targeted IS Hits: " + targISHits);
         System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("CurIS size: " + (curIS==null ? "null" : curIS.getAllNodes().size()));
         if (curIS == null || !curIS.getPlayer().equals(searchingPlayer)) return null;
         if (curIS.getAlgorithmData() == null) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
@@ -170,8 +171,9 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 p = cn.getGameState().getProbabilityOfNatureFor(a);
             }
             //if (rootNode.getGameState().equals(cn.getGameState())) underTargetIS = true;
-            double u=iteration(cn.getChildFor(a), pi, p*pi_, p*bs, cn.getGameState().getProbabilityOfNatureFor(a)*us, expPlayer);
-            x *= p;
+            final double realP = cn.getGameState().getProbabilityOfNatureFor(a);
+            double u=iteration(cn.getChildFor(a), pi, realP*pi_, p*bs, realP*us, expPlayer);
+            x *= realP;
             return u;
         }
         InnerNode in = (InnerNode) node;

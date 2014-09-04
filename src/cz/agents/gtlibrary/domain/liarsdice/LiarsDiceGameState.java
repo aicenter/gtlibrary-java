@@ -40,13 +40,12 @@ public class LiarsDiceGameState extends GameStateImpl {
     protected int hash = -1;
     protected int[] rolls;
 
-    public static final int CALLBID = (LDGameInfo.P1DICE + LDGameInfo.P2DICE) * 6 + 1;
 
     public LiarsDiceGameState() {
         super(new Player[]{LDGameInfo.FIRST_PLAYER, LDGameInfo.SECOND_PLAYER, LDGameInfo.NATURE});
         this.round = 0;
         this.currentPlayerIndex = 2;
-        this.rolls = new int[]{0, 0};
+        this.rolls = new int[LDGameInfo.P1DICE + LDGameInfo.P2DICE];
         this.currentBid = 0;
         this.previousBid = 0;
     }
@@ -55,9 +54,8 @@ public class LiarsDiceGameState extends GameStateImpl {
         super(gameState);
         this.round = gameState.round;
         this.currentPlayerIndex = gameState.currentPlayerIndex;
-        this.rolls = new int[2];
-        this.rolls[0] = gameState.rolls[0];
-        this.rolls[1] = gameState.rolls[1];
+        this.rolls = new int[gameState.rolls.length];
+        System.arraycopy(gameState.rolls, 0, this.rolls, 0, this.rolls.length);
         this.currentBid = gameState.currentBid;
         this.previousBid = gameState.previousBid;
     }
@@ -69,7 +67,7 @@ public class LiarsDiceGameState extends GameStateImpl {
 
     @Override
     public double getProbabilityOfNatureFor(Action action) {
-        return 1.0 / 6.0;
+        return 1.0 / LDGameInfo.FACES;
     }
 
     @Override
@@ -78,7 +76,7 @@ public class LiarsDiceGameState extends GameStateImpl {
             return Rational.ZERO;
         }
 
-        return new Rational(1, 6);
+        return new Rational(1, LDGameInfo.FACES);
     }
 
     @Override
@@ -112,10 +110,8 @@ public class LiarsDiceGameState extends GameStateImpl {
     public void bid(LiarsDiceAction action) {
         clearCachedValues();
 
-        if (currentPlayerIndex == 2 && rolls[0] == 0) {
-            rolls[0] = action.getValue();
-        } else if (currentPlayerIndex == 2 && rolls[1] == 0) {
-            rolls[1] = action.getValue();
+        if (currentPlayerIndex == 2 && round < (LDGameInfo.P1DICE+LDGameInfo.P2DICE)) {
+            rolls[round] = action.getValue();
         } else {
             previousBid = currentBid;
             currentBid = action.getValue();
@@ -132,13 +128,9 @@ public class LiarsDiceGameState extends GameStateImpl {
 
         int matches = 0;
 
-        // 6's are wild
-        if (rolls[0] == face || rolls[0] == 6) {
-            matches++;
-        }
-
-        if (rolls[1] == face || rolls[1] == 6) {
-            matches++;
+        // LDGameInfo.FACES's are wild
+        for (int f : rolls){
+            if (f == face || f == LDGameInfo.FACES) matches++;
         }
 
         // if bid is false, calling player wins
@@ -169,7 +161,7 @@ public class LiarsDiceGameState extends GameStateImpl {
 
     @Override
     public boolean isGameEnd() {
-        return currentBid == CALLBID;
+        return currentBid == LDGameInfo.CALLBID;
     }
 
     @Override
@@ -181,13 +173,26 @@ public class LiarsDiceGameState extends GameStateImpl {
             cachedISKey = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
             return cachedISKey;
         }
-
-        int hc = rolls[getPlayerToMove().getId()];
-        for (Action a : getSequenceFor(getAllPlayers()[1-getPlayerToMove().getId()])){
-            hc *= CALLBID;
-            hc += ((LiarsDiceAction)a).getValue();
+        
+        int hc = 0;
+        if (getPlayerToMove().getId() == 0){
+            for (int i=0; i<LDGameInfo.P1DICE;i++){
+                hc *= LDGameInfo.FACES;
+                hc += rolls[i];
+            }
+        } else {
+            for (int i=0; i<LDGameInfo.P2DICE;i++){
+                hc *= LDGameInfo.FACES;
+                hc += rolls[LDGameInfo.P1DICE+i];
+            }
         }
-
+        hc <<=LDGameInfo.CALLBID;
+        assert LDGameInfo.CALLBID < 30 && hc >= 0; //otherwise it has overrun
+        
+        for (Action a : getSequenceFor(getAllPlayers()[1-getPlayerToMove().getId()])){
+            hc |= 1 << ((LiarsDiceAction)a).getValue();
+        }
+        
         cachedISKey = new Pair<Integer, Sequence>(hc, history.getSequenceOf(getPlayerToMove()));
         return cachedISKey;
     }
@@ -244,9 +249,9 @@ public class LiarsDiceGameState extends GameStateImpl {
     }
 
     protected void switchPlayers() {
-        if (currentPlayerIndex == 2 && rolls[1] == 0) {
+        if (currentPlayerIndex == 2 && rolls[rolls.length-1] == 0) {
             currentPlayerIndex = 2;
-        } else if (currentPlayerIndex == 2 && rolls[1] != 0) {
+        } else if (currentPlayerIndex == 2 && rolls[rolls.length - 1] != 0) {
             currentPlayerIndex = 0;
         } else {
             currentPlayerIndex = 1 - currentPlayerIndex;
