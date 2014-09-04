@@ -24,6 +24,9 @@ import static cz.agents.gtlibrary.algorithms.mcts.experiments.IIGConvergenceExpe
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
+import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
@@ -89,7 +92,11 @@ public class IIGMatchesExperiment extends IIGConvergenceExperiment {
             gameInfo = new TTTInfo();
             rootState = new TTTState();
             expander = new TTTExpander<MCTSInformationSet>(new MCTSConfig());
-        }else {
+        }else if (domain.equals("LD")) {
+            gameInfo = new LDGameInfo();
+            rootState = new LiarsDiceGameState();
+            expander = new LiarsDiceExpander<MCTSInformationSet>(new MCTSConfig());
+        } else {
             throw new IllegalArgumentException("Incorrect game:" + domain);
         }
     }

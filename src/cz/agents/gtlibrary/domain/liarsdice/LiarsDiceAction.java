@@ -68,19 +68,13 @@ public class LiarsDiceAction extends ActionImpl {
         return player;
     }
 
-  // 1-1, 1-2, ..., 1-6, 2-1, ... , 2-6, call bluff
+  // 1-1, 1-2, ..., 1-6, 2-1, ... , 2-6, 3-1,...3-6,...,call bluff
     public static int getQuantity(int action) {
-        // note: assumes (1,1)
-        if (action >= 1 && action <= 6) {
-            return 1;
-        } else {
-            return 2;
-        }
+        return 1 + (action - 1) / LDGameInfo.FACES;
     }
 
     public static int getFace(int action) {
-        // note: assumes (1,1)
-        return ((action - 1) % 6) + 1;
+        return ((action - 1) % LDGameInfo.FACES) + 1;
     }
 
     @Override

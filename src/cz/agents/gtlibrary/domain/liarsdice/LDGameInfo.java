@@ -32,6 +32,8 @@ public class LDGameInfo implements GameInfo {
     // Note: only (1,1) is currently supported! 
     public static int P1DICE = 1;
     public static int P2DICE = 1;
+    public static int FACES = 6;
+    public static int CALLBID = (LDGameInfo.P1DICE + LDGameInfo.P2DICE) * LDGameInfo.FACES + 1;
 
     @Override
     public double getMaxUtility() {
@@ -53,12 +55,12 @@ public class LDGameInfo implements GameInfo {
 
     @Override
     public String getInfo() {
-        return "Liars dice, P1dice: " + P1DICE + ", P2dice: " + P2DICE;
+        return "Liars dice, Faces: " + FACES + ", P1dice: " + P1DICE + ", P2dice: " + P2DICE;
     }
 
     @Override
     public int getMaxDepth() {
-        return 13;
+        return FACES*(P1DICE+P2DICE)+1;
     }
 
     @Override

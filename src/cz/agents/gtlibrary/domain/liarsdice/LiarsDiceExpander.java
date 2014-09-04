@@ -18,7 +18,6 @@
 package cz.agents.gtlibrary.domain.liarsdice;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
@@ -40,7 +39,7 @@ public class LiarsDiceExpander<I extends InformationSet> extends ExpanderImpl<I>
         LiarsDiceGameState ldState = (LiarsDiceGameState) gameState;
         List<Action> actions = new ArrayList<Action>();
 
-        if (ldState.getRound() <= 1) {
+        if (ldState.getRound() < (LDGameInfo.P1DICE+LDGameInfo.P2DICE)) {
             addActionsOfNature(ldState, actions, getAlgorithmConfig().getInformationSetFor(gameState));
             return actions;
         }
@@ -49,7 +48,7 @@ public class LiarsDiceExpander<I extends InformationSet> extends ExpanderImpl<I>
     }
 
     private void addActionsOfNature(LiarsDiceGameState ldState, List<Action> actions, I informationSet) {
-        for (int c = 1; c <= 6; c++) {
+        for (int c = 1; c <= LDGameInfo.FACES; c++) {
             actions.add(new LiarsDiceAction(c, informationSet, ldState.getPlayerToMove()));
         }
     }
@@ -59,12 +58,12 @@ public class LiarsDiceExpander<I extends InformationSet> extends ExpanderImpl<I>
         if (!ldState.isGameEnd()) {
             if (ldState.getCurBid() == 0) {
                 // if first move of first turn, don't allow calling bluff
-                for (int b = 1; b <= (LiarsDiceGameState.CALLBID - 1); b++) {
+                for (int b = 1; b <= (LDGameInfo.CALLBID - 1); b++) {
                     actions.add(new LiarsDiceAction(b, informationSet, ldState.getPlayerToMove()));
                 }
             } else {
                 // otherwise start at next bid up to calling bluff
-                for (int b = ldState.getCurBid() + 1; b <= (LiarsDiceGameState.CALLBID); b++) {
+                for (int b = ldState.getCurBid() + 1; b <= (LDGameInfo.CALLBID); b++) {
                     actions.add(new LiarsDiceAction(b, informationSet, ldState.getPlayerToMove()));
                 }
             }
