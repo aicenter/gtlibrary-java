@@ -23,8 +23,8 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.FeasibilitySequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.DepthPureRealPlanIterator;
+import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.NoCutDepthPureRealPlanIterator;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.PureRealPlanIterator;
-import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.WidthPureRealPlanIterator;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -43,6 +43,7 @@ import java.util.*;
 public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet> {
 
     public static boolean USE_FEASIBILITY_CUT = false;
+    public static boolean USE_UPPERBOUND_CUT = true;
 
     protected Map<GameState, Double[]> actualNonZeroUtilityValuesInLeafs = new HashMap<>();
     protected Set<GameState> allLeafs = new HashSet<>();
@@ -56,7 +57,10 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
     public PureRealPlanIterator getIterator(Player player, Expander<SequenceInformationSet> expander, FeasibilitySequenceFormLP solver) {
 //        return new WidthPureRealPlanIterator(player, this, expander, solver);
-        return new DepthPureRealPlanIterator(player, this, expander, solver);
+        if (USE_UPPERBOUND_CUT)
+            return new DepthPureRealPlanIterator(player, this, expander, solver);
+        else
+            return new NoCutDepthPureRealPlanIterator(player, this, expander, solver);
     }
 
     public GameState getRootState() {

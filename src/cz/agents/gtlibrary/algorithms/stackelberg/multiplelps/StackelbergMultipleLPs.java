@@ -22,7 +22,6 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormMultipleLPs {
 
     @Override
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
-        StackelbergConfig.USE_FEASIBILITY_CUT = false;
         IloCplex cplex = modelsForPlayers.get(leader);
         IloNumVar v0 = objectiveForPlayers.get(leader);
         double maxValue = Double.NEGATIVE_INFINITY;

@@ -22,8 +22,6 @@ package cz.agents.gtlibrary.algorithms.stackelberg;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.DOBSS;
-import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
-import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergMultipleLPs;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenceFormMultipleLPs;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
@@ -60,8 +58,8 @@ import java.util.Map;
 public class StackelbergRunner {
 
     public static void main(String[] args) {
-        runGenSumRandom();
-//        runBPG();
+//        runGenSumRandom();
+        runBPG();
 //        runSGSG();
 //        runPEG();
 //        runStackTest();
@@ -92,8 +90,10 @@ public class StackelbergRunner {
 //                new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[1], rootState.getAllPlayers()[0], gameInfo, expander));
 //        runner.generate(rootState.getAllPlayers()[1],
 //                new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[1], rootState.getAllPlayers()[0], gameInfo, expander));
-        runner.generate(rootState.getAllPlayers()[1],
-                new StackelbergMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[1],
+//                new StackelbergMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[0], new DOBSS(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+
     }
 
     public static void runSGSG() {
@@ -141,6 +141,7 @@ public class StackelbergRunner {
     private ThreadMXBean threadBean;
 
     private double gameValue = Double.NaN;
+    private long finalTime;
 
     public StackelbergRunner(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo gameInfo, StackelbergConfig algConfig) {
         this.rootState = rootState;
@@ -181,7 +182,7 @@ public class StackelbergRunner {
         }
 
         System.out.println("done.");
-        long finishTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
+        finalTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
 
         int[] support_size = new int[]{0, 0};
         for (Player player : actingPlayers) {
@@ -205,7 +206,7 @@ public class StackelbergRunner {
         System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
         System.out.println("final result:" + gameValue);
         System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
-        System.out.println("final time: " + finishTime);
+        System.out.println("final time: " + finalTime);
         System.out.println("final CPLEX time: " + overallCPLEX);
         System.out.println("final CPLEX building time: " + solver.getOverallConstraintGenerationTime() / 1000000l);
         System.out.println("final CPLEX solving time: " + solver.getOverallConstraintLPSolvingTime() / 1000000l);
@@ -213,8 +214,9 @@ public class StackelbergRunner {
         System.out.println("final RGB time: " + 0);
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
         System.out.println("final IS count: " + algConfig.getAllInformationSets().size());
-        if(solver instanceof StackelbergSequenceFormMultipleLPs) {
-            System.out.println("pruned rp count: " + ((StackelbergSequenceFormMultipleLPs)solver).prunnedRPCountWhileBuilding(algConfig));
+        if (solver instanceof StackelbergSequenceFormMultipleLPs) {
+            System.out.println("Computing rp count");
+            System.out.println("pruned rp count: " + ((StackelbergSequenceFormMultipleLPs) solver).prunnedRPCountWhileBuilding(algConfig));
         }
 
         if (DEBUG) {
@@ -251,5 +253,9 @@ public class StackelbergRunner {
 
     public double getGameValue() {
         return gameValue;
+    }
+
+    public long getFinalTime() {
+        return finalTime;
     }
 }

@@ -9,6 +9,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class EmptyFeasibilitySequenceFormLP extends FeasibilitySequenceFormLP {
+    public EmptyFeasibilitySequenceFormLP() {
+        super();
+    }
+
     public EmptyFeasibilitySequenceFormLP(Player leader, Player follower, StackelbergConfig algConfig, Map<Player, Set<SequenceInformationSet>> informationSets, Map<Player, Set<Sequence>> sequences) {
         super(leader, follower, algConfig, informationSets, sequences);
     }
