@@ -28,16 +28,20 @@ public class Runner {
 	}
 
 	public static enum Domain {
-		KuhnPoker, GenericPoker, BPG
+		KuhnPoker, GenericPoker, BPG, LiarsDice
 	}
 
 	public static void main(String[] args) {
 		Algorithm algorithmToRun = Algorithm.FullSequenceEFG;
-		Domain domain = Domain.KuhnPoker;
+		Domain domain = Domain.GenericPoker;
 
 		switch (algorithmToRun) {
 		case FullSequenceEFG:
 			switch (domain) {
+                        case LiarsDice:
+				FullSequenceEFG.runLiarsDice();
+				break;
+
 			case KuhnPoker:
 				FullSequenceEFG.runKuhnPoker();
 				break;

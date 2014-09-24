@@ -39,6 +39,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import org.apache.commons.lang3.ArrayUtils;
 
 
 /**
@@ -54,6 +55,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     protected Expander<MCTSInformationSet> expander;
 
     private InnerNode[] curISArray;
+    double[] belief = new double[]{1};
+    public boolean useBelief = false;
 
     public boolean returnMeanValue = false;
 
@@ -71,35 +74,54 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         this.expander = expander;
         if (!rootState.isPlayerToMoveNature())
             rootNode.getInformationSet().setAlgorithmData(fact.createSelector(rootNode.getActions()));
+        
+        String s = System.getProperty("USEBELIEF");
+        if (s != null) useBelief = Boolean.parseBoolean(s);
+        s = System.getProperty("P1USEBELIEF");
+        if (s != null && searchingPlayer.getId()==0) useBelief = Boolean.parseBoolean(s);
+        s = System.getProperty("P2USEBELIEF");
+        if (s != null && searchingPlayer.getId()==1) useBelief = Boolean.parseBoolean(s);
     }
 
+    private MeanStratDist meanDist = new MeanStratDist();
     @Override
     public Action runMiliseconds(int miliseconds) {
         if (giveUp) return null;
         int iters = 0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
-            InnerNode n = curISArray[fact.getRandom().nextInt(curISArray.length)];
-            iteration(n);
-            iters++;
+            final int rndNum = fact.getRandom().nextInt(curISArray.length);
+            if (useBelief){
+                for (int i=0; i<1+100*belief[rndNum]; i++){
+                    InnerNode n = curISArray[rndNum];
+                    iteration(n);
+                    iters++;
+                }
+            } else {
+                InnerNode n = curISArray[rndNum];
+                iteration(n);
+                iters++;
+            }
         }
         System.out.println();
         System.out.println("ISMCTS Iters: " + iters);
         System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("CurIS size: " + curISArray.length);
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
-        Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
+        Map<Action, Double> distribution = meanDist.getDistributionFor(is.getAlgorithmData());
         return Strategy.selectAction(distribution, fact.getRandom());
     }
 
     public Action runIterations(int iterations) {
+        assert useBelief==false;//not imlpemented
         for (int i = 0; i < iterations; i++) {
             InnerNode n = curISArray[fact.getRandom().nextInt(curISArray.length)];
             iteration(n);
         }
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
-        Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
+        Map<Action, Double> distribution = meanDist.getDistributionFor(is.getAlgorithmData());
         return Strategy.selectAction(distribution, fact.getRandom());
     }
 
@@ -148,13 +170,66 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
 
     private boolean giveUp=false;
     @Override
-    public void setCurrentIS(InformationSet curIS) {
-        MCTSInformationSet currentIS = (MCTSInformationSet) curIS;
-        if (currentIS.getAllNodes().size()==0) giveUp=true;
-        curISArray = currentIS.getAllNodes().toArray(new InnerNode[currentIS.getAllNodes().size()]);
-        rootNode = curISArray[0];
+    public void setCurrentIS(InformationSet newCurIS) {
+        MCTSInformationSet newCurrentIS = (MCTSInformationSet) newCurIS;
+        if (newCurrentIS.getAllNodes().isEmpty()){
+            giveUp=true;
+            return;
+        }
+
+        if (useBelief){
+            System.out.println("Belief based tree progress.");
+            InnerNode[] oldArray = curISArray;
+            double[] oldBelief = belief;
+            curISArray = new InnerNode[newCurrentIS.getAllNodes().size()];
+            belief = new double[curISArray.length];
+            int next=0;
+            for (int i=0; i<oldArray.length; i++){
+                next = fillBelief(oldArray[i], newCurrentIS, oldBelief[i], next);
+            }
+            assert next==belief.length;
+            //normalize belief
+            double sum=0;
+            for (double d : belief) sum +=d;
+            for (int i=0;i<belief.length;i++) belief[i] /= sum;
+        } else {
+            curISArray = newCurrentIS.getAllNodes().toArray(new InnerNode[newCurrentIS.getAllNodes().size()]);
+        }
+        
         for (InnerNode n : curISArray)
             n.setParent(null);
+        rootNode = curISArray[0];
+    }
+    
+    private int fillBelief(InnerNode n, MCTSInformationSet curIS, double p, int nextPos){
+        if (curIS.equals(n.getInformationSet())) {
+            curISArray[nextPos]=n;
+            belief[nextPos]=p;
+            return nextPos+1;
+        }
+        if (n.getGameState().getPlayerToMove()==curIS.getPlayer()){//searching player's node
+            if (n.getInformationSet().getPlayersHistory().size() != curIS.getPlayersHistory().size()-1) return nextPos; //this is after opponent's move out of current IS
+            Node child = n.getChildOrNull(curIS.getPlayersHistory().getLast());
+            if (child == null) return nextPos;//running out of the tree in memory, alternativly, we could add the nodes to the tree
+            if (child instanceof LeafNode) return nextPos;//if based on unknown information the last players action leads to a leaf
+            return fillBelief((InnerNode) child, curIS, p, nextPos);
+        } else if (n.getGameState().isPlayerToMoveNature()){
+            int i=nextPos;
+            for (Map.Entry<Action, Node> en : n.getChildren().entrySet()){
+                if (en.getValue() instanceof InnerNode)
+                    i = fillBelief((InnerNode)en.getValue(), curIS, p*n.getGameState().getProbabilityOfNatureFor(en.getKey()), i);
+            }
+            return i;
+        } else {//opponent's move
+            Map<Action, Double> distribution = meanDist.getDistributionFor(n.getInformationSet().getAlgorithmData());
+            int i=nextPos;
+            for (Map.Entry<Action, Double> en : distribution.entrySet()){
+                Node child = n.getChildOrNull(en.getKey());
+                if (child != null && child instanceof InnerNode)
+                    i = fillBelief((InnerNode)child, curIS, p*en.getValue(), i);
+            }
+            return i;
+        }
     }
 
     public InnerNode getRootNode() {
