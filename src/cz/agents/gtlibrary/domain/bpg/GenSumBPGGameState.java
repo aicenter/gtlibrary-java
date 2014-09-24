@@ -51,7 +51,7 @@ public class GenSumBPGGameState extends BPGGameState {
 
             return new double[]{ATTACKER_WINS + utilityChange - evaderPenalty, -ATTACKER_WINS - defenderPenalty};
         }
-        return new double[]{OPEN_POSITION, OPEN_POSITION};
+        return new double[]{OPEN_POSITION - evaderPenalty, OPEN_POSITION - defenderPenalty};
     }
 
     private boolean isCaughtByP2(PatrollerAction patrollerAction, AttackerAction attackerAction) {

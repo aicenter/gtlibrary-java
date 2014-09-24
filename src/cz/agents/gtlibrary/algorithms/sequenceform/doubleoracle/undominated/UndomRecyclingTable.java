@@ -74,7 +74,7 @@ public class UndomRecyclingTable extends RecyclingLPTable {
         IloLinearNumExpr objExpr = cplex.linearNumExpr();
 
         for (Map.Entry<Object, Double> entry : newObjective.entrySet()) {
-            objExpr.addTerm(entry.getValue(), x[getVariableIndex(entry.getKey()) - 1]);
+            objExpr.addTerm(entry.getValue(), x[getVariableIndex(entry.getKey())]);
         }
         if (lpObj == null || clearObjective) {
             if (maximize)
@@ -88,7 +88,7 @@ public class UndomRecyclingTable extends RecyclingLPTable {
         newObjective.clear();
 
         for (Map.Entry<Object, Double> objectDoubleEntry : updatedObjective.entrySet()) {
-            cplex.setLinearCoef(lpObj, x[getVariableIndex(objectDoubleEntry.getKey()) - 1], objectDoubleEntry.getValue());
+            cplex.setLinearCoef(lpObj, x[getVariableIndex(objectDoubleEntry.getKey())], objectDoubleEntry.getValue());
         }
         updatedObjective.clear();
     }

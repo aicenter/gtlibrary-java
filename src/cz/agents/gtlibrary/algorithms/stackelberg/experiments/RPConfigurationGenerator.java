@@ -20,10 +20,10 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class RPConfigurationGenerator {
-    public static final int bucketCount = 5;
-    public static final int bucketSize = 200;
+    public static final int bucketCount = 20;
+    public static final int bucketSize = 20000;
     public static final int countPerBucket = 20;
-    public static final int start = 7000;
+    public static final int start = 1500000;
     public static BufferedWriter writer;
 
     public static void main(String[] args) throws IOException {

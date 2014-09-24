@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.GenSumSequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.FeasibilitySequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.DepthPureRealPlanIterator;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.NoCutDepthPureRealPlanIterator;
@@ -40,14 +41,12 @@ import java.util.*;
  * Time: 2:50 PM
  * To change this template use File | Settings | File Templates.
  */
-public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet> {
+public class StackelbergConfig extends GenSumSequenceFormConfig {
 
     public static boolean USE_FEASIBILITY_CUT = false;
     public static boolean USE_UPPERBOUND_CUT = true;
 
-    protected Map<GameState, Double[]> actualNonZeroUtilityValuesInLeafs = new HashMap<>();
     protected Set<GameState> allLeafs = new HashSet<>();
-    protected Map<Map<Player, Sequence>, Double[]> utilityForSequenceCombination = new HashMap<>();
     private GameState rootState;
 
     public StackelbergConfig(GameState rootState) {
@@ -65,14 +64,6 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
     public GameState getRootState() {
         return rootState;
-    }
-
-    public void setUtility(GameState leaf) {
-        final double[] utilities = leaf.getUtilities();
-        Double[] u = new Double[utilities.length];
-        for (Player p : leaf.getAllPlayers())
-            u[p.getId()] = utilities[p.getId()] * leaf.getNatureProbability();
-        setUtility(leaf, u);
     }
 
     public void setUtility(GameState leaf, Double[] utility) {
@@ -105,28 +96,6 @@ public class StackelbergConfig extends SequenceFormConfig<SequenceInformationSet
 
         actualNonZeroUtilityValuesInLeafs.put(leaf, utility);
         utilityForSequenceCombination.put(activePlayerMap, existingUtility);
-    }
-
-    public Double getActualNonzeroUtilityValues(GameState leaf, Player player) {
-        return actualNonZeroUtilityValuesInLeafs.get(leaf)[player.getId()];
-    }
-
-    public Double getUtilityFor(Map<Player, Sequence> sequenceCombination, Player player) {
-        if (!utilityForSequenceCombination.containsKey(sequenceCombination))
-            return null;
-        return utilityForSequenceCombination.get(sequenceCombination)[player.getId()];
-    }
-
-    public Double getUtilityFor(Sequence sequence1, Sequence sequence2, Player player) {
-        Map<Player, Sequence> sequenceCombination = new HashMap<>(2);
-
-        sequenceCombination.put(sequence1.getPlayer(), sequence1);
-        sequenceCombination.put(sequence2.getPlayer(), sequence2);
-        return getUtilityFor(sequenceCombination, player);
-    }
-
-    public Map<GameState, Double[]> getActualNonZeroUtilityValuesInLeafsSE() {
-        return actualNonZeroUtilityValuesInLeafs;
     }
 
     public Set<GameState> getAllLeafs() {

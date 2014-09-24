@@ -94,12 +94,12 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
-      runSimRandomGame();
+//      runSimRandomGame();
 //		runPursuit();
 //      runPhantomTTT();
 //		runUpOrDown();
@@ -390,12 +390,13 @@ public class FullSequenceEFG {
 
 	public void generateCompleteGame() {
 		LinkedList<GameState> queue = new LinkedList<GameState>();
+        int count = 0;
 
 		queue.add(rootState);
-
 		while (queue.size() > 0) {
 			GameState currentState = queue.removeFirst();
 
+            count++;
 			algConfig.addStateToSequenceForm(currentState);
 			if (currentState.isGameEnd()) {
 				algConfig.setUtility(currentState);
@@ -405,7 +406,8 @@ public class FullSequenceEFG {
 				queue.add(currentState.performAction(action));
 			}
 		}
-	}
+        System.out.println("State count: " + count);
+    }
 
 	public double getGameValue() {
 		return gameValue;

@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -53,7 +54,14 @@ public class SeqConfigurationGenerator {
 
                         builder.generateCompleteGame();
                         System.err.println("seed: " + seed);
+                        GambitEFG gambit = new GambitEFG();
+
+                        gambit.write("smallRandom", root, expander);
                         int seqCount = getRPCount(root.getAllPlayers()[0], root.getAllPlayers()[1], config, expander, counts);//config.getSequencesFor(root.getAllPlayers()[1]).size();
+                        long rpC = RPCounter.count(config, expander, config.getInformationSetFor(root), root.getAllPlayers()[1]);
+
+                        System.out.println(seqCount + " vs " + rpC);
+                        assert seqCount == rpC;
                         int index = -1;
 
 
