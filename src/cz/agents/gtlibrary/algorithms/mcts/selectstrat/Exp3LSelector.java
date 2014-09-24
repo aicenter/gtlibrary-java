@@ -29,7 +29,11 @@ import cz.agents.gtlibrary.interfaces.Action;
 import java.util.List;
 
 /**
- *
+ * This is an Exp3 implementation based on (Bubeck 2010). It does not need an exploration,
+ * but does not seem to always perform well in trees in practice, for example it converges much slower
+ * than regular Exp3 with SM-MCTS on Goofspiel 6.
+ * It would be good to understand it better.
+ * better.
  * @author vilo
  */
 public class Exp3LSelector implements Selector, AlgorithmData, MeanStrategyProvider {

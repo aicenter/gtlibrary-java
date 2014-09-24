@@ -23,9 +23,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import java.util.List;
 import java.util.Random;
 
@@ -35,7 +34,7 @@ import java.util.Random;
  */
 public class RMBackPropFactory implements BackPropFactory  {
     double gamma = 0.2;
-    Random random = new Random();
+    Random random = new HighQualityRandom();
 
     private double minUtility=-1;
     private double maxUtility=1;

@@ -44,6 +44,9 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTAction;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
@@ -97,7 +100,8 @@ public class GeneralDoubleOracle {
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
-		runSimRandomGame();
+//		runSimRandomGame();
+                runLiarsDice();
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
@@ -197,6 +201,15 @@ public class GeneralDoubleOracle {
         GSGameInfo gameInfo = new GSGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new GoofSpielExpander<DoubleOracleInformationSet>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        doefg.generate(null);
+    }
+    
+    public static void runLiarsDice() {
+        GameState rootState = new LiarsDiceGameState();
+        LDGameInfo gameInfo = new LDGameInfo();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander expander = new LiarsDiceExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
     }
