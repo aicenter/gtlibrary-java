@@ -22,7 +22,7 @@ import java.util.StringTokenizer;
 public class ComputeRPCount {
 
     public static void main(String[] args) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("rpCounting")));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("seqConfig")));
         RandomGameInfo.FIXED_SIZE_BF = false;
         RandomGameInfo.BINARY_UTILITY = true;
         RandomGameInfo.UTILITY_CORRELATION = false;
@@ -39,24 +39,14 @@ public class ComputeRPCount {
             Expander<SequenceInformationSet> expander = new RandomGameExpander<>(config);
             FullSequenceEFG builder = new FullSequenceEFG(root, expander, new RandomGameInfo(), config);
 
-            builder.generateCompleteGame();
             System.out.println(line);
-            System.out.println(getRPCount(root.getAllPlayers()[0], root.getAllPlayers()[1], config, expander));
+            builder.generateCompleteGame();
+            System.out.println(getRPCount(root, root.getAllPlayers()[1], config, expander));
 //            System.out.println("!!!!stored: " + tokenizer.nextToken());
         }
     }
 
-    public static int getRPCount(Player leader, Player follower, StackelbergConfig config, Expander<SequenceInformationSet> expander) {
-        Iterator<Set<Sequence>> iterator = new NoCutDepthPureRealPlanIterator(follower, config, expander, new EmptyFeasibilitySequenceFormLP());
-        int count = 0;
-
-        try {
-            while (true) {
-                iterator.next();
-                count++;
-            }
-        } catch (NoSuchElementException e) {
-        }
-        return count;
+    public static long getRPCount(GameState root, Player follower, StackelbergConfig config, Expander<SequenceInformationSet> expander) {
+       return RPCounter.count(config, expander, config.getInformationSetFor(root), follower);
     }
 }
