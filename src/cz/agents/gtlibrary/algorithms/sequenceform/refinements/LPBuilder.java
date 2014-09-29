@@ -63,7 +63,7 @@ public class LPBuilder extends TreeVisitor {
 
 	public static void runKuhnPoker() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		LPBuilder lpBuilder = new LPBuilder(new KuhnPokerExpander<SequenceInformationSet>(algConfig), new KuhnPokerGameState());
+		LPBuilder lpBuilder = new LPBuilder(new KuhnPokerExpander<>(algConfig), new KuhnPokerGameState());
 
 		lpBuilder.buildLP();
 		lpBuilder.solve();
@@ -71,7 +71,7 @@ public class LPBuilder extends TreeVisitor {
 
 	public static void runGenericPoker() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		LPBuilder lpBuilder = new LPBuilder(new GenericPokerExpander<SequenceInformationSet>(algConfig), new GenericPokerGameState());
+		LPBuilder lpBuilder = new LPBuilder(new GenericPokerExpander<>(algConfig), new GenericPokerGameState());
 
 		lpBuilder.buildLP();
 		lpBuilder.solve();
@@ -79,7 +79,7 @@ public class LPBuilder extends TreeVisitor {
 
 	public static void runAoS() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		LPBuilder lpBuilder = new LPBuilder(new AoSExpander<SequenceInformationSet>(algConfig), new AoSGameState());
+		LPBuilder lpBuilder = new LPBuilder(new AoSExpander<>(algConfig), new AoSGameState());
 
 		lpBuilder.buildLP();
 		lpBuilder.solve();
@@ -87,7 +87,7 @@ public class LPBuilder extends TreeVisitor {
 
 	public static void runGoofSpiel() {
 		AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
-		LPBuilder lpBuilder = new LPBuilder(new GoofSpielExpander<SequenceInformationSet>(algConfig), new GoofSpielGameState());
+		LPBuilder lpBuilder = new LPBuilder(new GoofSpielExpander<>(algConfig), new GoofSpielGameState());
 
 		lpBuilder.buildLP();
 		lpBuilder.solve();
