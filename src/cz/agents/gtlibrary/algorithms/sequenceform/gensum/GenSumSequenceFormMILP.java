@@ -19,13 +19,18 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.stacktest.StackTestExpander;
 import cz.agents.gtlibrary.domain.stacktest.StackTestGameInfo;
 import cz.agents.gtlibrary.domain.stacktest.StackTestGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
+import ilog.cplex.IloCplex;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -36,13 +41,26 @@ import java.util.Map;
 public class GenSumSequenceFormMILP {
 
     public static void main(String[] args) {
-        runStackelbergTest();
+//        runStackelbergTest();
 //        runKuhnPoker();
 //        runGP();
 //        runBPG();
 //        runGenSumBPG();
 //        runAoS();
 //        runMPoCHM();
+        runGenSumRandomGame();
+    }
+
+    private static void runGenSumRandomGame() {
+        GameState root = new GeneralSumRandomGameState();
+        GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
+        Expander<SequenceInformationSet> expander = new RandomGameExpander<>(config);
+        FullSequenceEFG builder = new FullSequenceEFG(root, expander, new RandomGameInfo(), config);
+
+        builder.generateCompleteGame();
+        GenSumSequenceFormMILP solver = new GenSumSequenceFormMILP(config, root.getAllPlayers(), new RandomGameInfo());
+
+        solver.compute();
     }
 
     private static void runAoS() {
@@ -103,6 +121,7 @@ public class GenSumSequenceFormMILP {
         GenSumSequenceFormMILP solver = new GenSumSequenceFormMILP(config, root.getAllPlayers(), new KPGameInfo());
 
         solver.compute();
+
     }
 
     private static void runBPG() {
@@ -115,6 +134,9 @@ public class GenSumSequenceFormMILP {
         GenSumSequenceFormMILP solver = new GenSumSequenceFormMILP(config, root.getAllPlayers(), new BPGGameInfo());
 
         solver.compute();
+        GambitEFG efg = new GambitEFG();
+
+        efg.write("BPG.gbt", root, expander);
     }
 
     private static void runGenSumBPG() {
@@ -127,6 +149,9 @@ public class GenSumSequenceFormMILP {
         GenSumSequenceFormMILP solver = new GenSumSequenceFormMILP(config, root.getAllPlayers(), new BPGGameInfo());
 
         solver.compute();
+        GambitEFG efg = new GambitEFG();
+
+        efg.write("GenSumBPG.gbt", root, expander);
     }
 
     private final double M = 100;
@@ -164,36 +189,44 @@ public class GenSumSequenceFormMILP {
     }
 
     private void addObjective() {
-        lpTable.setObjective(new Pair<>("v", 0), 1);
+//        lpTable.setObjective(new Pair<>("v", 0), 1);
     }
 
     private void solve() {
         try {
             LPData data = lpTable.toCplex();
 
+            System.out.println("p0 sequence count: " + config.getSequencesFor(players[0]).size());
+            System.out.println("p1 sequence count: " + config.getSequencesFor(players[1]).size());
+            System.out.println("IS count: " + config.getAllInformationSets().size());
             data.getSolver().exportModel("milp.lp");
             long start = threadMXBean.getCurrentThreadCpuTime();
             data.getSolver().solve();
 
             System.out.println(data.getSolver().getStatus());
+            setCplex(data);
             System.out.println("LP time: " + (threadMXBean.getCurrentThreadCpuTime() - start) / 1e6);
             System.out.println("p0 value: " + data.getSolver().getValue(data.getVariables()[lpTable.getVariableIndex(new Pair<>("v", 0))]) / info.getUtilityStabilizer());
             System.out.println("p1 value: " + data.getSolver().getValue(data.getVariables()[lpTable.getVariableIndex(new Pair<>("v", 1))]) / info.getUtilityStabilizer());
-            System.out.println("Strategies: ");
-            for (Map<Sequence, Double> realPan : getStrategyProfile(data).values()) {
-                printNonZero(System.out, realPan);
-            }
-            System.out.println("Slacks: ");
-            print(System.out, getSlacks(data, players[0]));
-            print(System.out, getSlacks(data, players[1]));
-            System.out.println("Values: ");
-            print(System.out, getISValues(data, players[0]));
-            print(System.out, getISValues(data, players[1]));
+//            System.out.println("Strategies: ");
+//            for (Map<Sequence, Double> realPan : getStrategyProfile(data).values()) {
+//                printNonZero(System.out, realPan);
+//            }
+//            System.out.println("Slacks: ");
+//            print(System.out, getSlacks(data, players[0]));
+//            print(System.out, getSlacks(data, players[1]));
+//            System.out.println("Values: ");
+//            print(System.out, getISValues(data, players[0]));
+//            print(System.out, getISValues(data, players[1]));
 
         } catch (IloException e) {
             e.printStackTrace();
         }
 
+    }
+
+    private void setCplex(LPData data) throws IloException {
+        data.getSolver().setParam(IloCplex.IntParam.IntSolLim, 1);
     }
 
     private Map<InformationSet, Double> getISValues(LPData data, Player player) {
