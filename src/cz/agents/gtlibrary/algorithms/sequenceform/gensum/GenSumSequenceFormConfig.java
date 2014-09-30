@@ -80,4 +80,8 @@ public class GenSumSequenceFormConfig extends SequenceFormConfig<SequenceInforma
     public Map<GameState, Double[]> getActualNonZeroUtilityValuesInLeafsGenSum() {
         return actualNonZeroUtilityValuesInLeafs;
     }
+
+    public Map<Map<Player, Sequence>, Double[]> getUtilityForSequenceCombinationGenSum() {
+        return utilityForSequenceCombination;
+    }
 }
