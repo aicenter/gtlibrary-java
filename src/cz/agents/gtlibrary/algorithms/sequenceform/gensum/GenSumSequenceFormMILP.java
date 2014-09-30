@@ -172,8 +172,8 @@ public class GenSumSequenceFormMILP {
     public void compute() {
         generateSequenceConstraints();
         generateISConstraints();
-        addObjective();
-        addMaxValueConstraints();
+//        addObjective();
+//        addMaxValueConstraints();
         solve();
     }
 
@@ -184,12 +184,27 @@ public class GenSumSequenceFormMILP {
 
     private void addMaxValueConstraintFor(Player player) {
         lpTable.setConstraint("uMax_" + player, new Pair<>("v", player.getId()), 1);
-        lpTable.setConstant("uMax_" + player, info.getMaxUtility());//TODO: max ut. for player
+//        lpTable.setConstant("uMax_" + player, info.getMaxUtility());
+        lpTable.setConstant("uMax_" + player, getMaxUtility(player));
         lpTable.setConstraintType("uMax_" + player, 0);
     }
 
+    private double getMaxUtility(Player player) {
+        double maxUtility = Double.NEGATIVE_INFINITY;
+
+        for (Double[] utilities : config.getUtilityForSequenceCombinationGenSum().values()) {
+            if(maxUtility < utilities[player.getId()])
+                maxUtility = utilities[player.getId()];
+        }
+        return maxUtility;
+    }
+
     private void addObjective() {
-//        lpTable.setObjective(new Pair<>("v", 0), 1);
+        lpTable.setObjective(new Pair<>("v", 0), 1);
+    }
+
+    private void setCplex(LPData data) throws IloException {
+//        data.getSolver().setParam(IloCplex.IntParam.NodeSel, IloCplex.NodeSelect.BestEst);
     }
 
     private void solve() {
@@ -223,10 +238,6 @@ public class GenSumSequenceFormMILP {
             e.printStackTrace();
         }
 
-    }
-
-    private void setCplex(LPData data) throws IloException {
-        data.getSolver().setParam(IloCplex.IntParam.IntSolLim, 1);
     }
 
     private Map<InformationSet, Double> getISValues(LPData data, Player player) {

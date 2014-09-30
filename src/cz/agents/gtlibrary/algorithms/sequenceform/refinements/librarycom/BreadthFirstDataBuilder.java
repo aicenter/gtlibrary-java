@@ -63,8 +63,8 @@ public class BreadthFirstDataBuilder {
     protected Player[] players;
 
     public static void main(String[] args) {
-        runAC();
-//		runAoS();
+//        runAC();
+		runAoS();
 //		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
@@ -105,7 +105,7 @@ public class BreadthFirstDataBuilder {
 
         lpBuilder.build();
         try {
-            Runtime.getRuntime().exec("lemkeQP " + inputFileName).waitFor();
+            Runtime.getRuntime().exec("./lemkeQP " + inputFileName).waitFor();
         } catch (IOException e) {
             System.err.println("Error during library invocation...");
         } catch (InterruptedException e) {

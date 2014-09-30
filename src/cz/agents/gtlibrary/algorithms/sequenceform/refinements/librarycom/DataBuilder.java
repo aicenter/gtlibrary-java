@@ -41,6 +41,9 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -54,67 +57,83 @@ import java.util.Map.Entry;
 
 public class DataBuilder extends TreeVisitor {
 
+    public enum Alg {
+        quasiPerfect, nash, quasiPerfect2, nash2
+    }
+
+    protected static Alg alg = Alg.nash2;
     protected String fileName;
     protected GameInfo info;
     protected Data data;
+
 
     public static void main(String[] args) {
 //		runAC();
         runAoS();
 //		runGoofSpiel();
 //		runKuhnPoker();
+//        runGenSumRandomGames();
 //		runGenericPoker();
 //		runBPG();
+    }
+
+    private static void runGenSumRandomGames() {
+        AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
+
+        runDataBuilder(new GeneralSumRandomGameState(), new RandomGameExpander<>(algConfig), algConfig, new RandomGameInfo(), "GenSumRandomGameRepr");
     }
 
     public static void runAC() {
         AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
 
-        runDataBuilder(new ACGameState(), new ACExpander<>(algConfig), algConfig, new ACGameInfo(), "ACRepr", "ACReprl1qp");
+        runDataBuilder(new ACGameState(), new ACExpander<>(algConfig), algConfig, new ACGameInfo(), "ACRepr");
     }
 
     public static void runBPG() {
         AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
 
-        runDataBuilder(new BPGGameState(), new BPGExpander<>(algConfig), algConfig, new BPGGameInfo(), "BPGRepr", "BPGReprl1qp");
+        runDataBuilder(new BPGGameState(), new BPGExpander<>(algConfig), algConfig, new BPGGameInfo(), "BPGRepr");
     }
 
     public static void runKuhnPoker() {
         AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
 
-        runDataBuilder(new KuhnPokerGameState(), new KuhnPokerExpander<>(algConfig), algConfig, new KPGameInfo(), "KuhnPokerRepr", "KuhnPokerReprl1qp");
+        runDataBuilder(new KuhnPokerGameState(), new KuhnPokerExpander<>(algConfig), algConfig, new KPGameInfo(), "KuhnPokerRepr");
     }
 
     public static void runGenericPoker() {
         AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
 
-        runDataBuilder(new GenericPokerGameState(), new GenericPokerExpander<>(algConfig), algConfig, new GPGameInfo(), "GenericPokerRepr", "GenericPokerReprl1qp");
+        runDataBuilder(new GenericPokerGameState(), new GenericPokerExpander<>(algConfig), algConfig, new GPGameInfo(), "GenericPokerRepr");
     }
 
     public static void runAoS() {
         AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
 
-        runDataBuilder(new AoSGameState(), new AoSExpander<>(algConfig), algConfig, new AoSGameInfo(), "AoSRepr", "AoSReprl1qp");
+        runDataBuilder(new AoSGameState(), new AoSExpander<>(algConfig), algConfig, new AoSGameInfo(), "AoSRepr");
     }
 
     public static void runGoofSpiel() {
         AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
 
-        runDataBuilder(new GoofSpielGameState(), new GoofSpielExpander<>(algConfig), algConfig, new GSGameInfo(), "GoofspielRepr", "GoofspielReprl1qp");
+        runDataBuilder(new GoofSpielGameState(), new GoofSpielExpander<>(algConfig), algConfig, new GSGameInfo(), "GoofspielRepr");
     }
 
-    public static void runDataBuilder(GameState rootState, Expander<SequenceInformationSet> expander, AlgorithmConfig<SequenceInformationSet> algConfig, GameInfo info, String inputFileName, String outputFileName) {
+    public static void runDataBuilder(GameState rootState, Expander<SequenceInformationSet> expander, AlgorithmConfig<SequenceInformationSet> algConfig, GameInfo info, String inputFileName) {
         DataBuilder lpBuilder = new DataBuilder(expander, rootState, info, inputFileName);
 
         lpBuilder.build();
         try {
-            Runtime.getRuntime().exec("lemkeQP " + inputFileName).waitFor();
+            long time = System.currentTimeMillis();
+
+            Runtime.getRuntime().exec("./" + getSolverName() + " " + inputFileName).waitFor();
+            System.out.println("LP time: " + (System.currentTimeMillis() - time));
         } catch (IOException e) {
             System.err.println("Error during library invocation...");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        ResultParser parser = new ResultParser(outputFileName, lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
+        ResultParser parser = new ResultParser(inputFileName + "l" + getSuffix(), lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
 
 //		System.out.println(parser.getP1RealizationPlan());
 //		System.out.println(parser.getP2RealizationPlan());
@@ -136,11 +155,29 @@ public class DataBuilder extends TreeVisitor {
         p2Strategy.putAll(parser.getP2RealizationPlan());
 
         UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
-        UtilityCalculator calculator1 = new UtilityCalculator(rootState, expander);
 
         System.out.println(parser.getGameValue() / info.getUtilityStabilizer());
         System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
-        System.out.println(calculator1.computeUtility(p1Strategy, p2Strategy));
+    }
+
+    private static String getSuffix() {
+        if (alg == Alg.nash)
+            return "1n";
+        if (alg == Alg.nash2)
+            return "2n";
+        if (alg == Alg.quasiPerfect)
+            return "1qp";
+        return "2qp";
+    }
+
+    private static String getSolverName() {
+        if (alg == Alg.nash)
+            return "lemkeSolver";
+        if (alg == Alg.nash2)
+            return "lemkeSolver2";
+        if (alg == Alg.quasiPerfect)
+            return "lemkeQP";
+        return "lemkeQP2";
     }
 
     public DataBuilder(Expander<SequenceInformationSet> expander, GameState rootState, GameInfo info, String fileName) {
@@ -275,7 +312,7 @@ public class DataBuilder extends TreeVisitor {
     }
 
     public Map<Integer, Sequence> getRevertedMapping(Map<Object, Integer> map, Player player) {
-        Map<Integer, Sequence> p1Indices = new HashMap<Integer, Sequence>();
+        Map<Integer, Sequence> p1Indices = new HashMap<>();
 
         for (Entry<Object, Integer> entry : map.entrySet()) {
             if (entry.getKey() instanceof Sequence)
