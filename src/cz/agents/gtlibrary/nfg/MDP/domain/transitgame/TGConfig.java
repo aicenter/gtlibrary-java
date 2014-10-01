@@ -137,14 +137,14 @@ public class TGConfig extends MDPConfigImpl{
                  (attAction.getTargetCol()[0] == defState.getCol()[0] && attAction.getTargetRow()[0] == defState.getRow()[0] && attState.getCol()[0] == defAction.getTargetCol()[0] && attState.getRow()[0] == defAction.getTargetRow()[0]) ||
                  (attAction.getTargetCol()[0] == defAction.getTargetCol()[0] && attAction.getTargetRow()[0] == defAction.getTargetRow()[0])
                 )
-            result = -1d;
+            result = -1d*UTILITY_MULTIPLIER;
         else if (attAction.getTargetCol()[0] == TGConfig.LENGTH_OF_GRID - 1) {
 //            result = 20d;
 //            result = result - attState.getTimeStep() * 2.0;
-//            result = 1d;
-//            result = result - attState.getTimeStep() * 0.01;
-            result = UTILITY_MULTIPLIER+1d;
-            result = result - attState.getTimeStep() * (0.01 + UTILITY_MULTIPLIER/100d);
+            result = 1d*UTILITY_MULTIPLIER;
+            result = result - attState.getTimeStep() * 0.02;
+//            result = UTILITY_MULTIPLIER+1d;
+//            result = result - attState.getTimeStep() * (0.01 + UTILITY_MULTIPLIER/100d);
         }
         else if (defState.getTimeStep()+1 == getMaxTimeStep() && !((defState.getRow()[0] == 0 && defState.getCol()[0] != TGConfig.PATROLLER_BASES[0]) || (defAction.getTargetCol()[0] == TGConfig.PATROLLER_BASES[0] && defAction.getTargetRow()[0] == 0))) {
             result = 1000d;
@@ -155,9 +155,9 @@ public class TGConfig extends MDPConfigImpl{
     @Override
     public double getBestUtilityValue(Player player) {
         if (player.getId() == 0) {
-            return 1d;
+            return 1d*UTILITY_MULTIPLIER;
         } else {
-            return -1d;
+            return -1d*UTILITY_MULTIPLIER;
         }
     }
 
