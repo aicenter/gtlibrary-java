@@ -42,7 +42,7 @@ import java.util.*;
 public class MDPEpsilonFristBetterResponse extends MDPBestResponse {
 
     public double epsilon = 0.1;
-    public static boolean FILTER = true;
+    public static boolean FILTER = false;
 
     protected long prunes = 0;
 
