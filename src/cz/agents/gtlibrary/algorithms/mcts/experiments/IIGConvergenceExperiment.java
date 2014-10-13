@@ -28,6 +28,7 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.SumMeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.NodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
@@ -46,12 +47,18 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
+import cz.agents.gtlibrary.domain.nonlocality.NonLocExpander;
+import cz.agents.gtlibrary.domain.nonlocality.NonLocInfo;
+import cz.agents.gtlibrary.domain.nonlocality.NonLocState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
@@ -63,18 +70,24 @@ import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jacop.util.fsm.FSMState;
 
 
 public class IIGConvergenceExperiment {
@@ -89,6 +102,7 @@ public class IIGConvergenceExperiment {
     static Random rnd;
     static int compTime = 1000;
     static int matches=500;
+    static int playerID;
 
 
     public static void main(String[] args) {
@@ -116,8 +130,14 @@ public class IIGConvergenceExperiment {
             exp.runRootExploitability(alg);
         } else {
             initializeSfConfig=true;
-            int playerID = Integer.parseInt(args[1].substring(1));
-            exp.runAggregatedExploitability(algString, playerID, args[2]);
+            if (args[1].startsWith("FP")){
+                playerID = Integer.parseInt(args[1].substring(2));
+                System.out.println("!!! Full stitching is still not fully debugged!");
+                exp.runFullStitchExploitabilityParallel(algString, args[2]);
+            } else {
+                playerID = Integer.parseInt(args[1].substring(1));
+                exp.runAggregatedExploitability(algString, playerID, args[2]);
+            }
         }
         
     }
@@ -166,12 +186,21 @@ public class IIGConvergenceExperiment {
             LDGameInfo.P1DICE = Integer.parseInt(args[4]);
             LDGameInfo.P2DICE = Integer.parseInt(args[5]);
             LDGameInfo.CALLBID = (LDGameInfo.P1DICE + LDGameInfo.P2DICE) * LDGameInfo.FACES + 1;
+        } else if (args[2].equalsIgnoreCase("NL")) { // Non-Locality Example
+            if (args.length != 3) {
+                throw new IllegalArgumentException("Illegal Non-Locality Example domain arguments count. 0 are required.");
+            }
+        } else if (args[2].equalsIgnoreCase("KP")) { // Non-Locality Example
+            if (args.length != 3) {
+                throw new IllegalArgumentException("Illegal Kuhn Poker domain arguments count. 0 are required.");
+            }
         } else throw new IllegalArgumentException("Illegal domain: " + args[2]);
     }
 
     static boolean initializeSfConfig = false;
     static SequenceFormConfig<SequenceInformationSet> sfAlgConfig;
     static Expander<SequenceInformationSet> sfExpander;
+    static Map<Player, Map<Sequence, Double>> sfStrategy;
     public void loadGame(String domain) {
         if (sfAlgConfig==null) sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
         if (domain.equals("IIGS")) {
@@ -199,13 +228,27 @@ public class IIGConvergenceExperiment {
             rootState = new LiarsDiceGameState();
             expander = new LiarsDiceExpander<MCTSInformationSet>(new MCTSConfig());
             if (sfExpander==null) sfExpander = new LiarsDiceExpander<SequenceInformationSet>(sfAlgConfig);
-        } else {
+        } else if (domain.equals("NL")) {
+            gameInfo = new NonLocInfo();
+            rootState = new NonLocState();
+            expander = new NonLocExpander<MCTSInformationSet>(new MCTSConfig());
+            if (sfExpander==null) sfExpander = new NonLocExpander<SequenceInformationSet>(sfAlgConfig);
+        } else if (domain.equals("KP")) {
+            gameInfo = new KPGameInfo();
+            rootState = new KuhnPokerGameState();
+            expander = new KuhnPokerExpander<MCTSInformationSet>(new MCTSConfig());
+            if (sfExpander==null) sfExpander = new KuhnPokerExpander<SequenceInformationSet>(sfAlgConfig);
+        }
+        else {
             throw new IllegalArgumentException("Incorrect game:" + domain);
         }
         if (initializeSfConfig && sfAlgConfig.getAllSequences().isEmpty()){
             FullSequenceEFG efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
-            efg.generateCompleteGame();
+            //efg.generateCompleteGame();
+            sfStrategy = efg.generate();
+            //(new GambitEFG()).write(domain + ".efg", rootState, sfExpander);
             //computeGameStatistics();
+            System.out.println();
         }
     }
 
@@ -285,7 +328,7 @@ public class IIGConvergenceExperiment {
         double br1Val = Double.POSITIVE_INFINITY;
         double br0Val = Double.POSITIVE_INFINITY;
         double cumulativeTime = 0;
-
+        
         for (int i = 0; cumulativeTime < samplingTimeLimit && (br0Val + br1Val > 0.005); i++) {
             alg.runMiliseconds((int) (secondsIteration * 1000));
             cumulativeTime += secondsIteration * 1000;
@@ -305,7 +348,7 @@ public class IIGConvergenceExperiment {
     
     
     
-        private static HashMap<Pair<Integer,Sequence>, Map<Action,Double>> stitchedStrategy = new HashMap();
+        private static ConcurrentHashMap<Pair<Integer,Sequence>, Map<Action,Double>> stitchedStrategy = new ConcurrentHashMap();
         public static void addToStichedStrategy(Pair<Integer,Sequence> isKey, Map<Action,Double> distribution){
             double sum=0;
             for (double d : distribution.values()) sum += d;
@@ -358,7 +401,13 @@ public class IIGConvergenceExperiment {
         }
     
     private void runAggregatedExploitabilityMatch(GamePlayingAlgorithm alg, int playerID) {
+        Strategy optStrategy = null;
         Strategy rndStrategy = new UniformStrategyForMissingSequences();
+        String s = System.getProperty("AMMOnPolicy");
+        if (s != null && Boolean.parseBoolean(s)){
+            optStrategy = new UniformStrategyForMissingSequences();
+            optStrategy.putAll(sfStrategy.get(rootState.getAllPlayers()[1-playerID]));
+        }
         StringBuilder moves = new StringBuilder();
         GameState curState = rootState;
         while (!curState.isGameEnd()){
@@ -368,11 +417,13 @@ public class IIGConvergenceExperiment {
                 a=actions.get(rnd.nextInt(actions.size()));
             } else if (curState.getPlayerToMove().getId()==1-playerID){
                 a = Strategy.selectAction(rndStrategy.getDistributionOfContinuationOf(curState.getSequenceForPlayerToMove(), expander.getActions(curState)), rnd);
+                if (optStrategy!= null && rnd.nextBoolean()) a = Strategy.selectAction(optStrategy.getDistributionOfContinuationOf(curState.getSequenceForPlayerToMove(), sfExpander.getActions(curState)), rnd);
             } else {                  
                 MCTSInformationSet curIS = (MCTSInformationSet) expander.getAlgorithmConfig().getInformationSetFor(curState);
                 alg.setCurrentIS(curIS);
                 a = alg.runMiliseconds(compTime);
                 addAllToStichedStrategy(curIS.getAllNodes());
+                //printTestSumS(alg.getRootNode());
             }
             if (a==null){
                 System.out.println("Warning: playing a random move!!!");
@@ -386,6 +437,18 @@ public class IIGConvergenceExperiment {
         System.out.println("MATCH: " + moves.toString() + curState.getUtilities()[0]);
     }
     
+//  Very useful for debugging. The   
+//    public void printTestSumS(NodeImpl n){
+//        if (n.visits > 100){
+//            System.out.print(n.visits + " " + n.testSumS + " ");
+//            System.out.println(n);
+//        }
+//        if (n.getDepth()<6 && n instanceof InnerNode){
+//            InnerNode in = (InnerNode) n;
+//            for (Node nn : in.getChildren().values()) printTestSumS((NodeImpl)nn);
+//        }
+//    }
+//    
     public static double exploitability(Map<Sequence, Double> strategy, Expander expander){
         Map<Sequence, Double> st = ISMCTSExploitability.filterLow(strategy);
         SQFBestResponseAlgorithm mctsBR = new SQFBestResponseAlgorithm(
@@ -396,17 +459,109 @@ public class IIGConvergenceExperiment {
         return mctsBR.calculateBR(rootState, st);
     }
     
-    private void runAggregatedExploitability(String algString, int playerID, String domain){        
+    private void runAggregatedExploitability(String algString, int playerID, String domain){
+        Strategy s=null;
         for (int r=0; r<matches/50;r++){
             for (int i=0; i<50;i++){
                 GamePlayingAlgorithm alg = initGameAndAlg(algString, playerID, domain);
                 runAggregatedExploitabilityMatch(alg, playerID);
             }
             System.out.println("Number of IS in the stiched strategy: " + stitchedStrategy.size());
-            Strategy s = UniformStrategyForMissingSequences.fromBehavioralStrategy(stitchedStrategy, rootState, sfExpander);
+            s = UniformStrategyForMissingSequences.fromBehavioralStrategy(stitchedStrategy, rootState, sfExpander);
             System.out.println("Stiched strategy exploitability:" + exploitability(s, sfExpander));
         }
+        //System.out.println(s.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
+    }
+    
+    Set<SequenceInformationSet> fullStitchISs = new HashSet<>();
+    Set<SequenceInformationSet> exploredISs = new HashSet<>();
+    private boolean buildFullStitchISs(GameState s){
+        if (s.isGameEnd()) return false;
+        if (s.getPlayerToMove().getId()!=playerID){
+            boolean out = false;
+            for (Action a : sfExpander.getActions(s)){
+               out |= buildFullStitchISs(s.performAction(a));
+            }
+            return out;
+        }
+        SequenceInformationSet is = sfExpander.getAlgorithmConfig().getInformationSetFor(s);
+         if (exploredISs.contains(is)) return true;
+        else exploredISs.add(is);
+        boolean out = false;
+        final List<Action> actions = sfExpander.getActions(s);
+        for (GameState s1 : is.getAllStates()){
+           for (Action a : actions){
+               out |= buildFullStitchISs(s.performAction(a));
+           }
+        }     
+        if (out) return true;//some of the children leads to an playerID's information set
+        fullStitchISs.add(is);
+        return true;
+    }
+    
+    private void runFullStitchExploitabilityParallel(final String algString, final String domain){
+        initGameAndAlg(algString, playerID, domain);
+        buildFullStitchISs(rootState);
+        exploredISs.clear();
+        System.out.println("Number of IS to reach: " + fullStitchISs.size());
         
+        //ExecutorService exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()/2);
+        ExecutorService exec = Executors.newFixedThreadPool(4);
+        try {
+            for (final SequenceInformationSet is : fullStitchISs) {
+                final GamePlayingAlgorithm alg = initGameAndAlg(algString, playerID, domain);
+                exec.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        runFullStitchMatch(alg, is.getAllStates().iterator().next().getHistory());
+                    }
+                });
+            }
+            exec.shutdown();
+            exec.awaitTermination(1, TimeUnit.DAYS);
+        } catch (Exception ex){
+            ex.printStackTrace();
+        }
+        
+        System.out.println("Number of IS in the full stiched strategy: " + stitchedStrategy.size());
+        Strategy s = UniformStrategyForMissingSequences.fromBehavioralStrategy(stitchedStrategy, rootState, sfExpander);
+        System.out.println("Full stiched strategy exploitability:" + exploitability(s, sfExpander));
+        
+    }
+    
+        private void runFullStitchExploitability(final String algString, final String domain){
+        initGameAndAlg(algString, playerID, domain);
+        buildFullStitchISs(rootState);
+        exploredISs.clear();
+        System.out.println("Number of IS to reach: " + fullStitchISs.size());
+        
+        for (final SequenceInformationSet is : fullStitchISs) {
+            final GamePlayingAlgorithm alg = initGameAndAlg(algString, playerID, domain);
+            runFullStitchMatch(alg, is.getAllStates().iterator().next().getHistory());
+        }
+        
+        System.out.println("Number of IS in the full stiched strategy: " + stitchedStrategy.size());
+        Strategy s = UniformStrategyForMissingSequences.fromBehavioralStrategy(stitchedStrategy, rootState, sfExpander);
+        System.out.println("Full stiched strategy exploitability:" + exploitability(s, sfExpander));
+        
+    }
+    
+     private void runFullStitchMatch(GamePlayingAlgorithm alg, History history) {
+        History histCopy = history.copy();
+        GameState curState = rootState;
+        while (!curState.isGameEnd()){
+            if (curState.getPlayerToMove().getId()==playerID){
+                MCTSInformationSet curIS = (MCTSInformationSet) alg.getRootNode().getExpander().getAlgorithmConfig().getInformationSetFor(curState);
+                alg.setCurrentIS(curIS);
+                alg.runMiliseconds(compTime);
+                Map<Action, Double> dist = stitchingDist.getDistributionFor(curIS.getAlgorithmData());
+                addToStichedStrategy(curState.getISKeyForPlayerToMove(), dist);
+            }
+            Sequence seq = histCopy.getSequenceOf(curState.getPlayerToMove());
+            if (seq.size()==0) break;
+            curState = curState.performAction(seq.removeFirst());
+        }
+        System.out.print(".");
     }
     
     private void computeGameStatistics(){

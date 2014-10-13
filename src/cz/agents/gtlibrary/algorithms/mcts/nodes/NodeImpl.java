@@ -34,7 +34,11 @@ public abstract class NodeImpl implements Node {
     protected Expander<MCTSInformationSet> expander;
     protected int depth;
     protected AlgorithmData algorithmData;
-
+    
+    // Very useful for debugging. testSumS should be approximatly the same everywhere
+    //public double testSumS=0;
+    //public int visits=0;
+    
     public NodeImpl(InnerNode parent, Action lastAction, GameState gameState) {
         this.parent = parent;
         this.lastAction = lastAction;
