@@ -68,8 +68,8 @@ public class ResultParser {
 	}
 	
 	private void parse() throws IOException {
-		p1RealPlan = new HashMap<Sequence, Double>();
-		p2RealPlan = new HashMap<Sequence, Double>();
+		p1RealPlan = new HashMap<>();
+		p2RealPlan = new HashMap<>();
 		reader.readLine();
 		reader.readLine();
 		

@@ -36,7 +36,7 @@ public class RandomGameInfo implements GameInfo {
     public static double CORRELATION = -0.2;// -1 for zero sum, 1 for identical utilities
     public static int MAX_DEPTH = 3;
     public static int MAX_BF = 2;
-    public static int MAX_OBSERVATION = 2;
+    public static int MAX_OBSERVATION = 4;
     public static int MAX_UTILITY = 5;
     public static boolean BINARY_UTILITY = false;
     public static boolean UTILITY_CORRELATION = false;
@@ -45,7 +45,7 @@ public class RandomGameInfo implements GameInfo {
 //    public static double KEEP_OBS_PROB = 0.9;
     public static int[] ACTIONS;
 
-    public static long seed = 0;
+    public static long seed = 1;
 
     public static Random rnd = new HighQualityRandom(seed);
 

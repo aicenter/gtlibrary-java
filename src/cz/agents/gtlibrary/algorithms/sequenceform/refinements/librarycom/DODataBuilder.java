@@ -199,8 +199,8 @@ public class DODataBuilder {
 			for (Sequence p2Sequence : p2Sequences) {
 				Double utility = config.getUtilityFromAllFor(p1Sequence, p2Sequence);
 
-				if (utility != null) 
-					data.addToU(p1Sequence, p2Sequence, utility);
+				if (utility != null)
+					data.addToU1(p1Sequence, p2Sequence, utility);
 			}
 		}
 	}

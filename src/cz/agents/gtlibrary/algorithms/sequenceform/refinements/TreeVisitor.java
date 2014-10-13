@@ -70,7 +70,7 @@ public abstract class TreeVisitor {
 		InformationSet informationSet = sequence.getLastInformationSet();
 		String string = sequence.getPlayer().equals(players[0]) ? "P" : "Q";
 
-		return new Key(string, new Key(new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory())));
+		return new Key(string, new Key(new Pair<>(informationSet.hashCode(), informationSet.getPlayersHistory())));
 	}
 
 }

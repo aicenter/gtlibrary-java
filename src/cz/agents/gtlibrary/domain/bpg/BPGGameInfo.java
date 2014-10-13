@@ -25,19 +25,20 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 public class BPGGameInfo implements GameInfo {
 
-	public static Player ATTACKER = new PlayerImpl(0);
+    public static Player ATTACKER = new PlayerImpl(0);
 	public static Player DEFENDER = new PlayerImpl(1);
 
 	public static Player[] ALL_PLAYERS = { ATTACKER, DEFENDER };
 
-	public static int DEPTH = 3;
+	public static int DEPTH = 2;
 	public static boolean SLOW_MOVES = true;
 	public static String graphFile = "GridW3-almost-connected.txt";//"GridW4.txt";"GridW3-small.txt"
     public static double EVADER_MOVE_COST = 0.5/(2*DEPTH);
+    public static final double DEFENDER_MOVE_COST = 0.5/(2*DEPTH);
 
 	@Override
 	public double getMaxUtility() {
-		return 1;
+		return 1.2;
 	}
 
 	@Override

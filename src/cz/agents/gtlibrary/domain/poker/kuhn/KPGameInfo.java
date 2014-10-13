@@ -67,6 +67,6 @@ public class KPGameInfo implements GameInfo {
 
     @Override
     public double getUtilityStabilizer() {
-        return 1;
+        return 6;
     }
 }

@@ -331,7 +331,7 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
             cplex.delete(leaderObj);
         IloNumExpr sumG = cplex.constant(0);
         IloNumExpr sumP = cplex.constant(0);
-        for (Map.Entry<GameState, Double[]> e : algConfig.getActualNonZeroUtilityValuesInLeafsSE().entrySet()) {
+        for (Map.Entry<GameState, Double[]> e : algConfig.getActualNonZeroUtilityValuesInLeafsGenSum().entrySet()) {
             sumG = cplex.sum(sumG, cplex.prod(e.getKey().getNatureProbability(), cplex.prod(e.getValue()[leader.getId()], variables.get(e.getKey()))));
         }
         for (GameState gs : algConfig.getAllLeafs()) {

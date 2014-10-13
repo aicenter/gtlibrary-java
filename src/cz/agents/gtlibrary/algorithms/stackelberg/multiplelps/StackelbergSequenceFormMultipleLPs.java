@@ -26,6 +26,7 @@ import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.NoCutDepthPureRealPlanIterator;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.PureRealPlanIterator;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
@@ -48,6 +49,8 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
 
     protected Map<Object, IloNumVar> slackVariables = new HashMap<>();
     protected int totalRPCount;
+    protected int feasibilityCuts;
+    private int evaluatedLPCount;
 
 
     public StackelbergSequenceFormMultipleLPs(Player[] players, Player leader, Player follower, GameInfo info, Expander<SequenceInformationSet> expander) {
@@ -104,7 +107,7 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
 //                for (Sequence sequence : pureRP) {
 //                    debugOutput.println(sequence);
 //                }
-                assert Math.abs(getUpperBound(pureRP, algConfig) - iterator.getCurrentUpperBound()) < 1e-8 ;
+//                assert Math.abs(getUpperBound(pureRP, algConfig) - iterator.getCurrentUpperBound()) < 1e-8;
                 totalRPCount++;
                 if (maxValue == info.getMaxUtility()) {//TODO: max utility for both players
                     break;
@@ -123,16 +126,18 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
 
                     if (cplex.getStatus() == IloCplex.Status.Optimal) {
                         double v = cplex.getValue(v0);
+
+                        evaluatedLPCount++;
                         System.out.println(iteration);
                         debugOutput.println("Best value is " + v + " for follower strategy: ");
-                      for (Sequence sequence : pureRP) {
-                          debugOutput.println(sequence);
-                      }
-                      debugOutput.println("Leader's strategy: ");
-                      for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
-                          if (entry.getValue() > 0)
-                              debugOutput.println(entry);
-                      }
+                        for (Sequence sequence : pureRP) {
+                            debugOutput.println(sequence);
+                        }
+                        debugOutput.println("Leader's strategy: ");
+                        for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+                            if (entry.getValue() > 0)
+                                debugOutput.println(entry);
+                        }
                         if (v > maxValue) {
                             maxValue = v;
                             iterator.setBestValue(maxValue);
@@ -166,6 +171,7 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
         System.out.println("Total RP count: " + totalRPCount);
         System.out.println("Feasibility cut without obj: " + feasibilityCutWithoutObjective);
         System.out.println("Feasibility time: " + feasibilitySolver.getCplexSolvingTime() / 1000000l);
+        feasibilityCuts = feasibilityCut + feasibilityCutWithoutObjective;
         return maxValue;
     }
 
@@ -371,10 +377,13 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
     }
 
     public int prunnedRPCountWhileBuilding(StackelbergConfig config) {
+        return getAllRPCount(config) - totalRPCount;
+    }
+
+    public int getAllRPCount(StackelbergConfig config) {
         PureRealPlanIterator iterator = new NoCutDepthPureRealPlanIterator(follower, config, expander, new EmptyFeasibilitySequenceFormLP(leader, follower, config, informationSets, sequences));
         int allRPCount = 0;
-
-        try{
+        try {
             while (true) {
                 iterator.next();
                 allRPCount++;
@@ -382,6 +391,18 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
         } catch (NoSuchElementException e) {
 
         }
-        return allRPCount - totalRPCount;
+        return allRPCount;
+    }
+
+    public int getTotalRPCount() {
+        return totalRPCount;
+    }
+
+    public int getFeasibilityCuts() {
+        return feasibilityCuts;
+    }
+
+    public int getEvaluatedLPCount() {
+        return evaluatedLPCount;
     }
 }

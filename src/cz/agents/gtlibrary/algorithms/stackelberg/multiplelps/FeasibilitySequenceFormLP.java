@@ -31,6 +31,9 @@ public class FeasibilitySequenceFormLP {
     protected ThreadMXBean mxBean;
     private long cplexSolvingTime;
 
+    public FeasibilitySequenceFormLP() {
+    }
+
     public FeasibilitySequenceFormLP(Player leader, Player follower, StackelbergConfig algConfig, Map<Player, Set<SequenceInformationSet>> informationSets, Map<Player, Set<Sequence>> sequences) {
         try {
             cplexSolvingTime = 0;
