@@ -156,7 +156,7 @@ public class SMConvergenceExperiment {
             nodes++;
             InnerNode n = q.removeFirst();
             MCTSInformationSet is = n.getInformationSet();
-            if (is.getAlgorithmData() == null) {
+            if (is!= null && is.getAlgorithmData() == null) {
                 infosets++;
                 is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
             }
