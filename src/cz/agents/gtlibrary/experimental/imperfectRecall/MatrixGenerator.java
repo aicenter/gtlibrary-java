@@ -55,6 +55,14 @@ public class MatrixGenerator {
             }
             System.out.println();
         }
+
+        MatrixToMINLP2 transformation = new MatrixToMINLP2(result, mg.numberedP1Actions.size(), mg.numberedP2Actions.size(), mg.leafUtilities.keySet().size(), (mg.numberedP1IS.size()+mg.numberedP2IS.size()));
+        transformation.reduceYVars();
+        transformation.replaceYHat();
+        transformation.generateReformulationInequalities();
+        transformation.generateKKTEQS();
+        transformation.generateXEQs();
+        transformation.saveMatrix();
     }
 
     public static MatrixGenerator runML() {
