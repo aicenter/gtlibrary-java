@@ -29,8 +29,11 @@ public class GAMSgenerator {
 //        String fileName = "game-2-3-4-10-8-8";
 //        GAMSgenerator g = new GAMSgenerator(2,3,4,10,8,8,fileName);
 
-        String fileName = "game-4-1-0-12-2-3";
-        GAMSgenerator g = new GAMSgenerator(4,1,0,12,2,3,fileName);
+        String fileName = "game-2-3-4-14-8-8";
+        GAMSgenerator g = new GAMSgenerator(2,3,4,14,8,8,fileName);
+
+//        String fileName = "game-4-1-0-12-2-3";
+//        GAMSgenerator g = new GAMSgenerator(4,1,0,12,2,3,fileName);
 
 //        System.out.println(Arrays.deepToString(g.matrixData));
 
