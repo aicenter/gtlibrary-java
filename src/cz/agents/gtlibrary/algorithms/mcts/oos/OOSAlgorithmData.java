@@ -21,7 +21,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.agents.gtlibrary.algorithms.mcts.nodes.oos;
+package cz.agents.gtlibrary.algorithms.mcts.oos;
 
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
