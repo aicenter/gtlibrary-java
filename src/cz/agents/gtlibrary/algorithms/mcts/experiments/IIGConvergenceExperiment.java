@@ -19,6 +19,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts.experiments;
 
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
 import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
