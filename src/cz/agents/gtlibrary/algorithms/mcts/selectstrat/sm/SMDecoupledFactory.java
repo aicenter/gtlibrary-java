@@ -16,31 +16,44 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
+
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm;
 
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.interfaces.Action;
-
 import java.util.List;
+import java.util.Random;
 
 /**
  * @author vilo
  */
-public class SMConjectureFactory extends SMDecoupledFactory {
+public class SMDecoupledFactory implements SMBackPropFactory {
+    BackPropFactory fact;
+    boolean useAverageForUpdates;
 
-    public SMConjectureFactory(BackPropFactory fact) {
-        super(fact);
-    }
-
-    public SMConjectureFactory(BackPropFactory fact, boolean useAverageForUpdates) {
-        super(fact, useAverageForUpdates);
+    public SMDecoupledFactory(BackPropFactory fact) {
+        this(fact, false);
     }
     
+    public SMDecoupledFactory(BackPropFactory fact, boolean useAverageForUpdates) {
+        this.fact = fact;
+        this.useAverageForUpdates = useAverageForUpdates;
+    }
+
     @Override
     public SMSelector createSlector(List<Action> actions1, List<Action> actions2) {
-        if (actions1.get(0).getInformationSet().getPlayersHistory().size()==0)
-            return new SMConjuctureSelector(super.createSlector(actions1, actions2), actions1.size(), actions2.size());
+        if (useAverageForUpdates)
+            return new SMADecoupledSelector(actions1, actions2, fact.createSelector(actions1), fact.createSelector(actions2));
         else
-            return super.createSlector(actions1, actions2);
+            return new SMDecoupledSelector(actions1, actions2, fact.createSelector(actions1), fact.createSelector(actions2));
+    }
+
+    @Override
+    public Random getRandom() {
+        return fact.getRandom();
     }
 }

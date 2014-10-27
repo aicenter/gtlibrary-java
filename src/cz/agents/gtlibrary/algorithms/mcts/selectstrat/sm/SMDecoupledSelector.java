@@ -17,12 +17,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm;
 
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
@@ -37,7 +31,7 @@ import java.util.List;
  *
  * @author vilo
  */
-public class SMDecoupledSelector implements SMSelector {
+public class SMDecoupledSelector implements SMSelector, MeanStrategyProvider {
     List<Action> actions1;
     List<Action> actions2;
     Selector p1selector;
@@ -59,6 +53,16 @@ public class SMDecoupledSelector implements SMSelector {
     public void update(Pair<Integer, Integer> selection, double value) {
         p1selector.update(selection.getLeft(), value);
         p2selector.update(selection.getRight(), -value);
+    }
+         
+    @Override
+    public List<Action> getActions() {
+        return actions1;
+    }
+    
+    @Override
+    public double[] getMp() {
+        return ((MeanStrategyProvider)p1selector).getMp();
     }
 
     @Override

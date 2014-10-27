@@ -16,31 +16,40 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
-package cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm;
 
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
+
 import cz.agents.gtlibrary.interfaces.Action;
-
 import java.util.List;
+import java.util.Random;
 
 /**
+ *
  * @author vilo
  */
-public class SMConjectureFactory extends SMDecoupledFactory {
+public class ABackPropFactory implements BackPropFactory {
+    BackPropFactory fact;
 
-    public SMConjectureFactory(BackPropFactory fact) {
-        super(fact);
-    }
-
-    public SMConjectureFactory(BackPropFactory fact, boolean useAverageForUpdates) {
-        super(fact, useAverageForUpdates);
+    public ABackPropFactory(BackPropFactory fact) {
+        this.fact = fact;
     }
     
     @Override
-    public SMSelector createSlector(List<Action> actions1, List<Action> actions2) {
-        if (actions1.get(0).getInformationSet().getPlayersHistory().size()==0)
-            return new SMConjuctureSelector(super.createSlector(actions1, actions2), actions1.size(), actions2.size());
-        else
-            return super.createSlector(actions1, actions2);
+    public Selector createSelector(List<Action> actions) {
+        return new ASelector(fact.createSelector(actions), actions.size());
+    }
+    
+    @Override
+    public Selector createSelector(int N) {
+        return new ASelector(fact.createSelector(N), N);
+    }
+
+    @Override
+    public Random getRandom() {
+        return fact.getRandom();
     }
 }
