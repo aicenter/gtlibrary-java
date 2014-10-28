@@ -35,7 +35,7 @@ import java.util.Set;
 public class LPTable {
 
     public int CPLEXALG = IloCplex.Algorithm.Barrier;
-    public int CPLEXTHREADS = 0; // change to 0 to have no restrictions
+    public int CPLEXTHREADS = 1; // change to 0 to have no restrictions
 
     protected Map<Object, Double> objective;
     protected Map<Object, Map<Object, Double>> constraints;

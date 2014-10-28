@@ -39,7 +39,6 @@ public class AoSGameState extends GameStateImpl {
 
 	private Pair<Integer, Sequence>[] playerISKeys;
 
-	@SuppressWarnings("unchecked")
 	public AoSGameState() {
 		super(AoSGameInfo.ALL_PLAYERS);
 		currentPlayer = 2;

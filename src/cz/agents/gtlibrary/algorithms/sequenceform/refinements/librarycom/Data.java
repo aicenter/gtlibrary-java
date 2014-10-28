@@ -171,31 +171,56 @@ public class Data {
 		return sequence.getSubSequence(sequence.size() - 1);
 	}
 
-	public void export(String fileName) throws IOException {
+	public void exportLemkeData(String fileName) throws IOException {
 		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(fileName)));
 
 		printSizes(writer);
 		writer.write("F1: " + E.size());
-		printEntrySet(writer, E);
+		printEntrySetWithBrackets(writer, E);
 		writer.write("F2: " + F.size());
-		printEntrySet(writer, F);
+		printEntrySetWithBrackets(writer, F);
 		writer.write("U1: " + U1.size());
-		printUtilityEntrySet(writer, U1);
+		printUtilityEntrySetWithBrackets(writer, U1);
 		writer.write("U2: " + U2.size());
-		printUtilityEntrySet(writer, U2);
+		printUtilityEntrySetWithBrackets(writer, U2);
 		writer.write("M1: " + M1.size());
-		printEntrySet(writer, M1);
+		printEntrySetWithBrackets(writer, M1);
 		writer.write("M2: " + M2.size());
-		printEntrySet(writer, M2);
+		printEntrySetWithBrackets(writer, M2);
 		writer.write("x1: " + initStrategy.get(new PlayerImpl(0)).size());
-		printX1(writer);
+		printX1WithBrackets(writer);
 		writer.write("x2: " + initStrategy.get(new PlayerImpl(1)).size());
-		printX2(writer);
+		printX2WithBrackets(writer);
 		writer.flush();
 		writer.close();
 	}
 
-	public void printX1(BufferedWriter writer) throws IOException {
+    public void exportSimplexData(String fileName) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(new File(fileName)));
+
+        printSizes(writer);
+
+        writer.write("U1: " + U1.size());
+        printUtilityEntrySet(writer, U1);
+        writer.write("U2: " + U2.size());
+        printUtilityEntrySet(writer, U2);
+        writer.write("F1: " + E.size());
+        printEntrySet(writer, E);
+        writer.write("F2: " + F.size());
+        printEntrySet(writer, F);
+//        writer.write("M1: " + M1.size());
+//        printEntrySet(writer, M1);
+//        writer.write("M2: " + M2.size());
+//        printEntrySet(writer, M2);
+        writer.write("x1: " + initStrategy.get(new PlayerImpl(0)).size());
+        printX1(writer);
+        writer.write("x2: " + initStrategy.get(new PlayerImpl(1)).size());
+        printX2(writer);
+        writer.flush();
+        writer.close();
+    }
+
+	public void printX1WithBrackets(BufferedWriter writer) throws IOException {
 		writer.newLine();
 		writer.newLine();
 		for (Object object : initStrategy.get(new PlayerImpl(0))) {
@@ -208,7 +233,7 @@ public class Data {
 		writer.newLine();
 	}
 
-	public void printX2(BufferedWriter writer) throws IOException {
+	public void printX2WithBrackets(BufferedWriter writer) throws IOException {
 		writer.newLine();
 		writer.newLine();
 		for (Object object : initStrategy.get(new PlayerImpl(1))) {
@@ -220,6 +245,32 @@ public class Data {
 		}
 		writer.newLine();
 	}
+
+    public void printX1(BufferedWriter writer) throws IOException {
+        writer.newLine();
+        writer.newLine();
+        for (Object object : initStrategy.get(new PlayerImpl(0))) {
+            writer.write("(");
+            writer.write(Integer.toString(getColumnIndexE(object)));
+            writer.write(",");
+            writer.write("1)");
+            writer.newLine();
+        }
+        writer.newLine();
+    }
+
+    public void printX2(BufferedWriter writer) throws IOException {
+        writer.newLine();
+        writer.newLine();
+        for (Object object : initStrategy.get(new PlayerImpl(1))) {
+            writer.write("(");
+            writer.write(Integer.toString(getColumnIndexF(object)));
+            writer.write(",");
+            writer.write("1)");
+            writer.newLine();
+        }
+        writer.newLine();
+    }
 
 	public void printSizes(BufferedWriter writer) throws IOException {
 		writer.write("S1: ");
@@ -234,7 +285,7 @@ public class Data {
 		writer.newLine();
 	}
 
-	public void printEntrySet(BufferedWriter writer, Map<Pair<Integer, Integer>, ? extends Object> map) throws IOException {
+	public void printEntrySetWithBrackets(BufferedWriter writer, Map<Pair<Integer, Integer>, ? extends Object> map) throws IOException {
 		writer.newLine();
 		writer.newLine();
 		List<Map.Entry<Pair<Integer, Integer>, ? extends Object>> entryList = new LinkedList<>();
@@ -254,8 +305,27 @@ public class Data {
 		writer.newLine();
 	}
 
-	@SuppressWarnings("unchecked")
-	public void printUtilityEntrySet(BufferedWriter writer, Map<Pair<Integer, Integer>, Double> map) throws IOException {
+    public void printEntrySet(BufferedWriter writer, Map<Pair<Integer, Integer>, ? extends Object> map) throws IOException {
+        writer.newLine();
+        writer.newLine();
+        List<Map.Entry<Pair<Integer, Integer>, ? extends Object>> entryList = new LinkedList<>();
+
+        entryList.addAll(map.entrySet());
+        Collections.sort(entryList, new EntryComparator());
+        for (Map.Entry<Pair<Integer, Integer>, ? extends Object> entry : entryList) {
+            writer.write("(");
+            writer.write(Integer.toString(entry.getKey().getLeft()));
+            writer.write(",");
+            writer.write(Integer.toString(entry.getKey().getRight()));
+            writer.write(",");
+            writer.write(entry.getValue().toString());
+            writer.write(")");
+            writer.newLine();
+        }
+        writer.newLine();
+    }
+
+	public void printUtilityEntrySetWithBrackets(BufferedWriter writer, Map<Pair<Integer, Integer>, Double> map) throws IOException {
 		writer.newLine();
 		writer.newLine();
 		List<Map.Entry<Pair<Integer, Integer>, Double>> entryList = new LinkedList<>();
@@ -274,6 +344,26 @@ public class Data {
 		}
 		writer.newLine();
 	}
+
+    public void printUtilityEntrySet(BufferedWriter writer, Map<Pair<Integer, Integer>, Double> map) throws IOException {
+        writer.newLine();
+        writer.newLine();
+        List<Map.Entry<Pair<Integer, Integer>, Double>> entryList = new LinkedList<>();
+
+        entryList.addAll(map.entrySet());
+        Collections.sort(entryList, new EntryComparator());
+        for (Map.Entry<Pair<Integer, Integer>, Double> entry : entryList) {
+            writer.write("(");
+            writer.write(Integer.toString(entry.getKey().getLeft()));
+            writer.write(",");
+            writer.write(Integer.toString(entry.getKey().getRight()));
+            writer.write(",");
+            writer.write(new Integer((new Double(entry.getValue()).intValue())).toString());
+            writer.write(")");
+            writer.newLine();
+        }
+        writer.newLine();
+    }
 
 	@SuppressWarnings("unchecked")
 	public void printUtilityNegatedEntrySet(BufferedWriter writer, Map<Pair<Integer, Integer>, ? extends Number> map) throws IOException {
@@ -325,5 +415,4 @@ public class Data {
 	public Map<Object, Integer> getColumnIndicesF() {
 		return columnIndicesF;
 	}
-
 }
