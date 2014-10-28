@@ -63,6 +63,6 @@ public class AoSGameInfo implements GameInfo {
 
     @Override
     public double getUtilityStabilizer() {
-        return 1;
+        return 52;
     }
 }

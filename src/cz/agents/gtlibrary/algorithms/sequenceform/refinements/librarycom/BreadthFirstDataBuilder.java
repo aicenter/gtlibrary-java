@@ -22,6 +22,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.resultparser.LemkeResultParser;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -111,7 +112,7 @@ public class BreadthFirstDataBuilder {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        ResultParser parser = new ResultParser(outputFileName, lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
+        LemkeResultParser parser = new LemkeResultParser(outputFileName, lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
 
 //		System.out.println(parser.getP1RealizationPlan());
 //		System.out.println(parser.getP2RealizationPlan());
@@ -173,7 +174,7 @@ public class BreadthFirstDataBuilder {
         }
         addInitialStrategy(rootState);
         try {
-            data.export(fileName);
+            data.exportLemkeData(fileName);
         } catch (IOException e) {
             e.printStackTrace();
         }
