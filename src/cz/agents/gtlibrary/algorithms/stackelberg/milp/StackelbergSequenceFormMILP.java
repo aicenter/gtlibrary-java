@@ -32,7 +32,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
-    protected final double M = 10;
+    protected final double M = 1e6;
 
     protected Player[] players;
     protected GameInfo info;
@@ -112,7 +112,8 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
 //                        continue;
 //                    }
 //                }
-               debugOutput.println("leader rp: ");
+                leaderResult = createSolution(algConfig, leader, cplex);
+                debugOutput.println("leader rp: ");
                 for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
                     if (entry.getValue() > 0)
                         debugOutput.println(entry);

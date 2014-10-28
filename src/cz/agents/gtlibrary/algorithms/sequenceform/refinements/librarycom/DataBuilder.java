@@ -21,8 +21,11 @@ package cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.SolverResult;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.resultparser.LemkeResultParser;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.resultparser.ResultParser;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -35,6 +38,9 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.mpochm.MPoCHMExpander;
+import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameInfo;
+import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -58,10 +64,10 @@ import java.util.Map.Entry;
 public class DataBuilder extends TreeVisitor {
 
     public enum Alg {
-        quasiPerfect, nash, quasiPerfect2, nash2
+        lemkeQuasiPerfect, lemkeNash, lemkeQuasiPerfect2, lemkeNash2, simplexNash, simplexQuasiPerfect;
     }
 
-    protected static Alg alg = Alg.nash2;
+    public static Alg alg = Alg.simplexQuasiPerfect;
     protected String fileName;
     protected GameInfo info;
     protected Data data;
@@ -71,6 +77,7 @@ public class DataBuilder extends TreeVisitor {
 //		runAC();
         runAoS();
 //		runGoofSpiel();
+//        runMPoCHM();
 //		runKuhnPoker();
 //        runGenSumRandomGames();
 //		runGenericPoker();
@@ -87,6 +94,12 @@ public class DataBuilder extends TreeVisitor {
         AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
 
         runDataBuilder(new ACGameState(), new ACExpander<>(algConfig), algConfig, new ACGameInfo(), "ACRepr");
+    }
+
+    public static void runMPoCHM() {
+        AlgorithmConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
+
+        runDataBuilder(new MPoCHMGameState(), new MPoCHMExpander<>(algConfig), algConfig, new MPoCHMGameInfo(), "MPoCHMRepr");
     }
 
     public static void runBPG() {
@@ -119,22 +132,26 @@ public class DataBuilder extends TreeVisitor {
         runDataBuilder(new GoofSpielGameState(), new GoofSpielExpander<>(algConfig), algConfig, new GSGameInfo(), "GoofspielRepr");
     }
 
-    public static void runDataBuilder(GameState rootState, Expander<SequenceInformationSet> expander, AlgorithmConfig<SequenceInformationSet> algConfig, GameInfo info, String inputFileName) {
+    public static SolverResult runDataBuilder(GameState rootState, Expander<SequenceInformationSet> expander, AlgorithmConfig<SequenceInformationSet> algConfig, GameInfo info, String inputFileName) {
         DataBuilder lpBuilder = new DataBuilder(expander, rootState, info, inputFileName);
+        long time = 0;
 
         lpBuilder.build();
+        System.out.println("Game build...");
         try {
-            long time = System.currentTimeMillis();
+            long start = System.currentTimeMillis();
 
             Runtime.getRuntime().exec("./" + getSolverName() + " " + inputFileName).waitFor();
-            System.out.println("LP time: " + (System.currentTimeMillis() - time));
+            time = (System.currentTimeMillis() - start);
+
+            System.out.println("LP time: " + time);
         } catch (IOException e) {
             System.err.println("Error during library invocation...");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        ResultParser parser = new ResultParser(inputFileName + "l" + getSuffix(), lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
-
+        ResultParser parser = new LemkeResultParser(inputFileName + getSuffix(), lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
+//        ResultParser parser = new SimplexResultParser(inputFileName + getSuffix(), lpBuilder.getP1IndicesOfSequences(), lpBuilder.getP2IndicesOfSequences());
 //		System.out.println(parser.getP1RealizationPlan());
 //		System.out.println(parser.getP2RealizationPlan());
 
@@ -150,34 +167,49 @@ public class DataBuilder extends TreeVisitor {
 
         Strategy p1Strategy = new UniformStrategyForMissingSequences();
         Strategy p2Strategy = new UniformStrategyForMissingSequences();
-
+//
         p1Strategy.putAll(parser.getP1RealizationPlan());
         p2Strategy.putAll(parser.getP2RealizationPlan());
 
         UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
-
-        System.out.println(parser.getGameValue() / info.getUtilityStabilizer());
+//
+//        System.out.println(parser.getGameValue() / info.getUtilityStabilizer());
         System.out.println(calculator.computeUtility(p1Strategy, p2Strategy));
+
+//        System.out.println("ExternalTime: " + parser.getTime());
+
+//        GambitEFG exporter = new GambitEFG();
+
+//        exporter.write("game.gbt", rootState, expander);
+        return new SolverResult(parser.getP1RealizationPlan(), parser.getP2RealizationPlan(), time);
     }
 
     private static String getSuffix() {
-        if (alg == Alg.nash)
-            return "1n";
-        if (alg == Alg.nash2)
-            return "2n";
-        if (alg == Alg.quasiPerfect)
-            return "1qp";
-        return "2qp";
+        if (alg == Alg.lemkeNash)
+            return "l1n";
+        if (alg == Alg.lemkeNash2)
+            return "l2n";
+        if (alg == Alg.lemkeQuasiPerfect)
+            return "l1qp";
+        if (alg == Alg.lemkeQuasiPerfect2)
+            return "l2qp";
+        if (alg == Alg.simplexNash)
+            return "sn";
+        return "sqp";
     }
 
     private static String getSolverName() {
-        if (alg == Alg.nash)
-            return "lemkeSolver";
-        if (alg == Alg.nash2)
+        if (alg == Alg.lemkeNash)
+            return "lemkeNash";
+        if (alg == Alg.lemkeNash2)
             return "lemkeSolver2";
-        if (alg == Alg.quasiPerfect)
+        if (alg == Alg.lemkeQuasiPerfect)
             return "lemkeQP";
-        return "lemkeQP2";
+        if (alg == Alg.lemkeQuasiPerfect2)
+            return "lemkeQP2";
+        if (alg == Alg.simplexNash)
+            return "simplexNash";
+        return "simplexQP";
     }
 
     public DataBuilder(Expander<SequenceInformationSet> expander, GameState rootState, GameInfo info, String fileName) {
@@ -191,7 +223,10 @@ public class DataBuilder extends TreeVisitor {
         visitTree(rootState);
         addInitialStrategy(rootState);
         try {
-            data.export(fileName);
+//            if (alg == Alg.simplexNash || alg == Alg.simplexQuasiPerfect)
+                data.exportSimplexData(fileName);
+//            else
+//                data.exportLemkeData(fileName);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -233,8 +268,8 @@ public class DataBuilder extends TreeVisitor {
     protected void visitLeaf(GameState state) {
         updateSequences(state);
         updateParentLinks(state);
-        data.addToU1(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), info.getUtilityStabilizer() * state.getNatureProbability() * state.getUtilities()[0]);
-        data.addToU2(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), info.getUtilityStabilizer() * state.getNatureProbability() * state.getUtilities()[1]);
+        data.addToU1(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), info.getUtilityStabilizer() * state.getNatureProbability() * (state.getUtilities()[0] + info.getMaxUtility() + 1));
+        data.addToU2(state.getSequenceFor(players[0]), state.getSequenceFor(players[1]), info.getUtilityStabilizer() * state.getNatureProbability() * (state.getUtilities()[1] + info.getMaxUtility() + 1));
     }
 
     @Override
