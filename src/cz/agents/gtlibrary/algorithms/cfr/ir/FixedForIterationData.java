@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.algorithms.cfr.ir;
 
-import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.interfaces.Action;
 
 import java.util.List;

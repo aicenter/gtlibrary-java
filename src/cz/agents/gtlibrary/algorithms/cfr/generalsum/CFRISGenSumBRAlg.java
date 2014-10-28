@@ -7,7 +7,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLExpander;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;

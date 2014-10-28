@@ -29,7 +29,7 @@ public class LDGameInfo implements GameInfo {
 
     public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
 
-    // Note: only (1,1) is currently supported! 
+    // Note: has codes are unlikely to handle more than (6,2,2)! 
     public static int P1DICE = 1;
     public static int P2DICE = 1;
     public static int FACES = 6;

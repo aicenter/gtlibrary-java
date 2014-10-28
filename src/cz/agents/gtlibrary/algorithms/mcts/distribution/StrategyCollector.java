@@ -26,7 +26,7 @@ package cz.agents.gtlibrary.algorithms.mcts.distribution;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;

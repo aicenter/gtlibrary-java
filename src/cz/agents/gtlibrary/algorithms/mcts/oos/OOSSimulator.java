@@ -21,8 +21,10 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.agents.gtlibrary.algorithms.mcts;
+package cz.agents.gtlibrary.algorithms.mcts.oos;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.Simulator;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;

@@ -28,7 +28,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.interfaces.*;
 import java.lang.management.ManagementFactory;
