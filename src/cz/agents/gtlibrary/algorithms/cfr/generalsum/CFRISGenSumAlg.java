@@ -119,6 +119,22 @@ public class CFRISGenSumAlg implements GamePlayingAlgorithm {
         return null;
     }
 
+    public Action runIterations(int iterations){
+        int iters=0;
+
+        for (int i = 0; i < iterations; i++) {
+            iteration(rootState, 1, 1, rootState.getAllPlayers()[0]);
+            iters++;
+            iteration(rootState, 1, 1, rootState.getAllPlayers()[1]);
+            iters++;
+        }
+        firstIteration = false;
+        System.out.println();
+        System.out.println("Iters: " + iters);
+        return null;
+    }
+
+
     /**
      * The main function for CFR iteration. Implementation based on Algorithm 1 in M. Lanctot PhD thesis.
      * @param node current node

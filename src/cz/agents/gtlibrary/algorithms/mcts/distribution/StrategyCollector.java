@@ -53,8 +53,8 @@ public class StrategyCollector {
 	static public Strategy getStrategyFor(InnerNode rootNode, Player player, Distribution distribution, int cutOffDepth) {
             Strategy strategy = new UniformStrategyForMissingSequences();
             strategy.put(new ArrayListSequenceImpl(player),1.0);
-            HashSet<MCTSInformationSet> processed = new HashSet();
-            ArrayDeque<InnerNode> q = new ArrayDeque();
+            HashSet<MCTSInformationSet> processed = new HashSet<>();
+            ArrayDeque<InnerNode> q = new ArrayDeque<>();
             q.add(rootNode);
             while (!q.isEmpty()){
                 InnerNode curNode = q.removeFirst();
