@@ -163,8 +163,8 @@ public class StrategyStrengthExperiments {
             CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[0], root, expander);
 
             buildCompleteTree(cfr.getRootNode());
-            for (int i = 0; i < 100; i++) {
-                cfr.runIterations(10000);
+            for (int i = 0; i < 200; i++) {
+                cfr.runIterations(500);
                 Strategy strategy = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
 
                 write(neWriter, computeExpectedValue(neResult.p1RealPlan, strategy, root, expander));
@@ -173,13 +173,13 @@ public class StrategyStrengthExperiments {
                 write(p1MaxWriter, computeExpectedValue(p1MaxResult.p1RealPlan, strategy, root, expander));
                 write(welfareWriter, computeExpectedValue(welfareResult.p1RealPlan, strategy, root, expander));
                 write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), strategy, root, expander));
-                neWriter.newLine();
-                undomWriter.newLine();
-                qpWriter.newLine();
-                p1MaxWriter.newLine();
-                welfareWriter.newLine();
-                stackWriter.newLine();
             }
+            neWriter.newLine();
+            undomWriter.newLine();
+            qpWriter.newLine();
+            p1MaxWriter.newLine();
+            welfareWriter.newLine();
+            stackWriter.newLine();
 
             neWriter.close();
             undomWriter.close();
@@ -205,8 +205,8 @@ public class StrategyStrengthExperiments {
             ISMCTSAlgorithm mcts = new ISMCTSAlgorithm(root.getAllPlayers()[0], new DefaultSimulator(expander),
                     new UCTBackPropFactory(Math.sqrt(2)*info.getMaxUtility()), root, expander);
 
-            for (int i = 0; i < 100; i++) {
-                mcts.runIterations(10000);
+            for (int i = 0; i < 200; i++) {
+                mcts.runIterations(500);
                 Strategy strategy = StrategyCollector.getStrategyFor(mcts.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
 
                 write(neWriter, computeExpectedValue(neResult.p1RealPlan, strategy, root, expander));
@@ -215,13 +215,14 @@ public class StrategyStrengthExperiments {
                 write(p1MaxWriter, computeExpectedValue(p1MaxResult.p1RealPlan, strategy, root, expander));
                 write(welfareWriter, computeExpectedValue(welfareResult.p1RealPlan, strategy, root, expander));
                 write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), strategy, root, expander));
-                neWriter.newLine();
-                undomWriter.newLine();
-                qpWriter.newLine();
-                p1MaxWriter.newLine();
-                welfareWriter.newLine();
-                stackWriter.newLine();
             }
+
+            neWriter.newLine();
+            undomWriter.newLine();
+            qpWriter.newLine();
+            p1MaxWriter.newLine();
+            welfareWriter.newLine();
+            stackWriter.newLine();
 
             neWriter.close();
             undomWriter.close();
