@@ -173,13 +173,13 @@ public class StrategyStrengthExperiments {
                 write(p1MaxWriter, computeExpectedValue(p1MaxResult.p1RealPlan, strategy, root, expander));
                 write(welfareWriter, computeExpectedValue(welfareResult.p1RealPlan, strategy, root, expander));
                 write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), strategy, root, expander));
+                neWriter.newLine();
+                undomWriter.newLine();
+                qpWriter.newLine();
+                p1MaxWriter.newLine();
+                welfareWriter.newLine();
+                stackWriter.newLine();
             }
-            neWriter.newLine();
-            undomWriter.newLine();
-            qpWriter.newLine();
-            p1MaxWriter.newLine();
-            welfareWriter.newLine();
-            stackWriter.newLine();
 
             neWriter.close();
             undomWriter.close();
@@ -215,14 +215,13 @@ public class StrategyStrengthExperiments {
                 write(p1MaxWriter, computeExpectedValue(p1MaxResult.p1RealPlan, strategy, root, expander));
                 write(welfareWriter, computeExpectedValue(welfareResult.p1RealPlan, strategy, root, expander));
                 write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), strategy, root, expander));
+                neWriter.newLine();
+                undomWriter.newLine();
+                qpWriter.newLine();
+                p1MaxWriter.newLine();
+                welfareWriter.newLine();
+                stackWriter.newLine();
             }
-
-            neWriter.newLine();
-            undomWriter.newLine();
-            qpWriter.newLine();
-            p1MaxWriter.newLine();
-            welfareWriter.newLine();
-            stackWriter.newLine();
 
             neWriter.close();
             undomWriter.close();
