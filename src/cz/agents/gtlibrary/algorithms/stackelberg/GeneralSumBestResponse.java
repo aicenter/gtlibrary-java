@@ -14,6 +14,8 @@ public class GeneralSumBestResponse extends SQFBestResponseAlgorithm {
 
     @Override
     protected Double calculateEvaluation(Map<Player, Sequence> currentHistory, GameState gameState) {
-        return gameState.getUtilities()[searchingPlayerIndex];
+        Double weight = getOpponentRealizationPlan().get(currentHistory.get(players[opponentPlayerIndex]));
+
+        return weight * gameState.getUtilities()[searchingPlayerIndex];
     }
 }
