@@ -305,15 +305,16 @@ public class StrategyStrengthExperiments {
             writeLambdas(brWriter, qreResult.lambdas);
             for (Map<Player, Map<Sequence, Double>> quantalResponse : qreResult.quantalResponses) {
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
+                Map<Sequence, Double> qreStrategy = filterLow(quantalResponse.get(player), 1e-6);
 
                 br.calculateBR(root, quantalResponse.get(player));
-                write(brWriter, computeExpectedValue(br.getBRStategy(), quantalResponse.get(player), root, expander));
-                write(neWriter, computeExpectedValue(neResult.p1RealPlan, quantalResponse.get(player), root, expander));
-                write(undomWriter, computeExpectedValue(undomResult.p1RealPlan, quantalResponse.get(player), root, expander));
-                write(qpWriter, computeExpectedValue(qpResult.p1RealPlan, quantalResponse.get(player), root, expander));
-                write(p1MaxWriter, computeExpectedValue(p1MaxResult.p1RealPlan, quantalResponse.get(player), root, expander));
-                write(welfareWriter, computeExpectedValue(welfareResult.p1RealPlan, quantalResponse.get(player), root, expander));
-                write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), quantalResponse.get(player), root, expander));
+                write(brWriter, computeExpectedValue(br.getBRStategy(), qreStrategy, root, expander));
+                write(neWriter, computeExpectedValue(neResult.p1RealPlan, qreStrategy, root, expander));
+                write(undomWriter, computeExpectedValue(undomResult.p1RealPlan, qreStrategy, root, expander));
+                write(qpWriter, computeExpectedValue(qpResult.p1RealPlan, qreStrategy, root, expander));
+                write(p1MaxWriter, computeExpectedValue(p1MaxResult.p1RealPlan, qreStrategy, root, expander));
+                write(welfareWriter, computeExpectedValue(welfareResult.p1RealPlan, qreStrategy, root, expander));
+                write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), qreStrategy, root, expander));
             }
             neWriter.newLine();
             undomWriter.newLine();
@@ -329,10 +330,22 @@ public class StrategyStrengthExperiments {
             p1MaxWriter.close();
             welfareWriter.close();
             stackWriter.close();
-            brWriter.newLine();
+            brWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static Map<Sequence, Double> filterLow(Map<Sequence, Double> realPlan, double filter) {
+        Iterator<Map.Entry<Sequence, Double>> iterator = realPlan.entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            Map.Entry<Sequence, Double> entry = iterator.next();
+
+            if(entry.getValue() < filter)
+                iterator.remove();
+        }
+        return realPlan;
     }
 
     private static void evaluateP1StrategiesAgainstCFR(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult,
@@ -350,7 +363,7 @@ public class StrategyStrengthExperiments {
 
             buildCompleteTree(cfr.getRootNode());
             for (int i = 0; i < 200; i++) {
-                cfr.runIterations(500);
+                cfr.runIterations(100);
                 Strategy strategy = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
 

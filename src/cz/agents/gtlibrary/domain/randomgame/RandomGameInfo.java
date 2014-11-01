@@ -41,7 +41,7 @@ public class RandomGameInfo implements GameInfo {
     public static boolean BINARY_UTILITY = true;
     public static boolean UTILITY_CORRELATION = false;
     public static int MAX_CENTER_MODIFICATION = 1;
-    public static boolean FIXED_SIZE_BF = true;
+    public static boolean FIXED_SIZE_BF = false;
 //    public static double KEEP_OBS_PROB = 0.9;
     public static int[] ACTIONS;
 
