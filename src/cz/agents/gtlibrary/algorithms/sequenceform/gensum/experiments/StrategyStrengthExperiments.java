@@ -19,11 +19,11 @@ import cz.agents.gtlibrary.algorithms.sequenceform.gensum.*;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.quantalresponse.QREResult;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.quantalresponse.QRESolver;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DataBuilder;
-import cz.agents.gtlibrary.algorithms.stackelberg.GeneralSumBestResponse;
-import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
-import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
-import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.*;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
+import cz.agents.gtlibrary.domain.poker.kuhn.GenSumKuhnPokerGameState;
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
@@ -44,21 +44,77 @@ public class StrategyStrengthExperiments {
     public static BufferedWriter welfareWriter;
     public static BufferedWriter stackWriter;
     public static BufferedWriter brWriter;
+    public static BufferedWriter wrWriter;
 
     /**
-     * bf, depth, corr, seed
+     * bf, depth, corr, observations, seed
      *
      * @param args
      */
     public static void main(String[] args) {
-        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]));
+//        runGenSumKuhnPoker(0);
+        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
     }
 
-    private static void runGenSumRandomGames(int bf, int depth, double correlation, int seed) {
+    private static void runGenSumKuhnPoker(double rake) {
+        GameState root = new GenSumKuhnPokerGameState();
+        GameInfo info = new KPGameInfo();
+        GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
+        Expander<SequenceInformationSet> expander = new KuhnPokerExpander<>(algConfig);
+        FullSequenceEFG builder = new FullSequenceEFG(root, expander, info, algConfig);
+
+        builder.generateCompleteGame();
+
+        GenSumSequenceFormMILP undomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p1MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
+        GenSumSequenceFormMILP welfareSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], root.getAllPlayers()[1]);
+        DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
+
+        SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
+        SolverResult undomResult = undomSolver.compute();
+        SolverResult neResult = neSolver.compute();
+        SolverResult p1MaxResult = p1MaxSolver.compute();
+        SolverResult welfareResult = welfareSolver.compute();
+
+        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
+        Expander<SequenceInformationSet> stackelbergExpander = new KuhnPokerExpander<>(stackelbergConfig);
+        StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
+        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
+        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
+
+
+        if (qpResult != null && undomResult != null && neResult != null) {
+            StackelbergConfig stackConfig = new StackelbergConfig(root);
+            Expander<SequenceInformationSet> stackExpander = new KuhnPokerExpander<>(stackConfig);
+            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+
+            stackBuilder.generateCompleteGame();
+            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
+            Expander<MCTSInformationSet> mctsExpander = new KuhnPokerExpander<>(mctsConfig);
+
+            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
+            Expander<MCTSInformationSet> cfrExpander = new KuhnPokerExpander<>(cfrConfig);
+//            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
+            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
+        }
+    }
+
+    private static Player[] getActingPlayers(GameState root) {
+        return new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]};
+    }
+
+
+    private static void runGenSumRandomGames(int bf, int depth, double correlation, int observations, int seed) {
         RandomGameInfo.seed = seed;
         RandomGameInfo.MAX_BF = bf;
         RandomGameInfo.MAX_DEPTH = depth;
         RandomGameInfo.CORRELATION = correlation;
+        RandomGameInfo.MAX_OBSERVATION = observations;
         GeneralSumRandomGameState root = new GeneralSumRandomGameState();
         GameInfo info = new RandomGameInfo();
         GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
@@ -106,7 +162,7 @@ public class StrategyStrengthExperiments {
         }
     }
 
-    private static void evaluateAgainstBRNE(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult, GeneralSumRandomGameState root, Expander<SequenceInformationSet> expander, GameInfo info, GenSumSequenceFormConfig algConfig, Player player) {
+    private static void evaluateAgainstBRNE(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult, GameState root, Expander<SequenceInformationSet> expander, GameInfo info, GenSumSequenceFormConfig algConfig, Player player) {
         try {
             neWriter = new BufferedWriter(new FileWriter("P1NEvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
             undomWriter = new BufferedWriter(new FileWriter("P1UndomvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
@@ -122,60 +178,18 @@ public class StrategyStrengthExperiments {
             SolverResult vsp1maxSolverResult = new BRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], p1MaxResult.p1RealPlan).compute();
             SolverResult vswelfareSolverResult = new BRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], welfareResult.p1RealPlan).compute();
 
-            GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vsNeSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsBRNEvsNEExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vsNeSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(neWriter, computeExpectedValue(neResult.p1RealPlan, vsNeSolverResult.p2RealPlan, root, expander));
-
-            br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vsUndomSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsBRNEvsUndomExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vsUndomSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(undomWriter, computeExpectedValue(undomResult.p1RealPlan, vsUndomSolverResult.p2RealPlan, root, expander));
-
-            br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vsQPSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsBRNEvsQPExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vsQPSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(qpWriter, computeExpectedValue(qpResult.p1RealPlan, vsQPSolverResult.p2RealPlan, root, expander));
-
-            br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vsp1maxSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsBRNEvsMNEExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vsp1maxSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(p1MaxWriter, computeExpectedValue(p1MaxResult.p1RealPlan, vsp1maxSolverResult.p2RealPlan, root, expander));
-
-            br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vswelfareSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsBRNEvsWNEExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vswelfareSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(welfareWriter, computeExpectedValue(welfareResult.p1RealPlan, vswelfareSolverResult.p2RealPlan, root, expander));
-
-            br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vsStackSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsBRNEvsStackExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vsStackSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), vsStackSolverResult.p2RealPlan, root, expander));
-
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsBRNEvsNEExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsBRNEvsNEExpVal" + getDomainDependentString() + ".csv", true)),
+                    neWriter, neResult.p1RealPlan, vsNeSolverResult.p2RealPlan, root, expander, info, algConfig);
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsBRNEvsUndomExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsBRNEvsUndomExpVal" + getDomainDependentString() + ".csv", true)),
+                    undomWriter, undomResult.p1RealPlan, vsUndomSolverResult.p2RealPlan, root, expander, info, algConfig);
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsBRNEvsQPExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsBRNEvsQPExpVal" + getDomainDependentString() + ".csv", true)),
+                    qpWriter, qpResult.p1RealPlan, vsQPSolverResult.p2RealPlan, root, expander, info, algConfig);
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsBRNEvsMNEExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsBRNEvsMNEExpVal" + getDomainDependentString() + ".csv", true)),
+                    p1MaxWriter, p1MaxResult.p1RealPlan, vsp1maxSolverResult.p2RealPlan, root, expander, info, algConfig);
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsBRNEvsWNEExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsBRNEvsWNEExpVal" + getDomainDependentString() + ".csv", true)),
+                    welfareWriter, welfareResult.p1RealPlan, vswelfareSolverResult.p2RealPlan, root, expander, info, algConfig);
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsBRNEvsStackExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsBRNEvsStackExpVal" + getDomainDependentString() + ".csv", true)),
+                    stackWriter, stackResult.get(root.getAllPlayers()[0]), vsStackSolverResult.p2RealPlan, root, expander, info, algConfig);
             neWriter.newLine();
             undomWriter.newLine();
             qpWriter.newLine();
@@ -194,7 +208,7 @@ public class StrategyStrengthExperiments {
         }
     }
 
-    private static void evaluateAgainstWRNE(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult, GeneralSumRandomGameState root, Expander<SequenceInformationSet> expander, GameInfo info, GenSumSequenceFormConfig algConfig, Player player) {
+    private static void evaluateAgainstWRNE(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult, GameState root, Expander<SequenceInformationSet> expander, GameInfo info, GenSumSequenceFormConfig algConfig, Player player) {
         try {
             neWriter = new BufferedWriter(new FileWriter("P1NEvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
             undomWriter = new BufferedWriter(new FileWriter("P1UndomvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
@@ -203,66 +217,25 @@ public class StrategyStrengthExperiments {
             welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
             stackWriter = new BufferedWriter(new FileWriter("P1StackvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
 
-
             SolverResult vsNeSolverResult = new WRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], neResult.p1RealPlan).compute();
             SolverResult vsUndomSolverResult = new WRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], undomResult.p1RealPlan).compute();
             SolverResult vsQPSolverResult = new WRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], qpResult.p1RealPlan).compute();
             SolverResult vsStackSolverResult = new WRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], stackResult.get(root.getAllPlayers()[0])).compute();
             SolverResult vsp1maxSolverResult = new WRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], p1MaxResult.p1RealPlan).compute();
             SolverResult vswelfareSolverResult = new WRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], welfareResult.p1RealPlan).compute();
-            GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vsNeSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsWRNEvsNEExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vsNeSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(neWriter, computeExpectedValue(neResult.p1RealPlan, vsNeSolverResult.p2RealPlan, root, expander));
-
-            br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vsUndomSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsWRNEvsUndomExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vsUndomSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(undomWriter, computeExpectedValue(undomResult.p1RealPlan, vsUndomSolverResult.p2RealPlan, root, expander));
-
-            br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vsQPSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsWRNEvsQPExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vsQPSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(qpWriter, computeExpectedValue(qpResult.p1RealPlan, vsQPSolverResult.p2RealPlan, root, expander));
-
-            br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vsp1maxSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsWRNEvsP1MNEExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vsp1maxSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(p1MaxWriter, computeExpectedValue(p1MaxResult.p1RealPlan, vsp1maxSolverResult.p2RealPlan, root, expander));
-
-            br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vswelfareSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsWRNEvsWNEExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vswelfareSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(welfareWriter, computeExpectedValue(welfareResult.p1RealPlan, vswelfareSolverResult.p2RealPlan, root, expander));
-            br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
-
-            br.calculateBR(root, vsStackSolverResult.p2RealPlan);
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsWRNEvsStackExpVal" + getDomainDependentString() + ".csv", true));
-            write(brWriter, computeExpectedValue(br.getBRStategy(), vsStackSolverResult.p2RealPlan, root, expander));
-            brWriter.newLine();
-            brWriter.close();
-            write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), vsStackSolverResult.p2RealPlan, root, expander));
-
+//
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsWRNEvsNEExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsWRNEvsNEExpVal" + getDomainDependentString() + ".csv", true)),
+                    neWriter, neResult.p1RealPlan, vsNeSolverResult.p2RealPlan, root, expander, info, algConfig);
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsWRNEvsUndomExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsWRNEvsUndomExpVal" + getDomainDependentString() + ".csv", true)),
+                    undomWriter, undomResult.p1RealPlan, vsUndomSolverResult.p2RealPlan, root, expander, info, algConfig);
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsWRNEvsQPExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsWRNEvsQPExpVal" + getDomainDependentString() + ".csv", true)),
+                    qpWriter, qpResult.p1RealPlan, vsQPSolverResult.p2RealPlan, root, expander, info, algConfig);
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsWRNEvsP1MNEExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsWRNEvsP1MNEExpVal" + getDomainDependentString() + ".csv", true)),
+                    p1MaxWriter, p1MaxResult.p1RealPlan, vsp1maxSolverResult.p2RealPlan, root, expander, info, algConfig);
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsWRNEvsWNEExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsWRNEvsWNEExpVal" + getDomainDependentString() + ".csv", true)),
+                    welfareWriter, welfareResult.p1RealPlan, vswelfareSolverResult.p2RealPlan, root, expander, info, algConfig);
+            evaluateBRWR(new BufferedWriter(new FileWriter("P1BRvsWRNEvsStackExpVal" + getDomainDependentString() + ".csv", true)), new BufferedWriter(new FileWriter("P1WRvsWRNEvsStackExpVal" + getDomainDependentString() + ".csv", true)),
+                    stackWriter, stackResult.get(root.getAllPlayers()[0]), vsStackSolverResult.p2RealPlan, root, expander, info, algConfig);
             neWriter.newLine();
             undomWriter.newLine();
             qpWriter.newLine();
@@ -281,6 +254,22 @@ public class StrategyStrengthExperiments {
         }
     }
 
+    private static void evaluateBRWR(BufferedWriter brWriter, BufferedWriter wrWriter, BufferedWriter writer, Map<Sequence, Double> p1Strategy, Map<Sequence, Double> p2Strategy, GameState root, Expander<SequenceInformationSet> expander, GameInfo info, GenSumSequenceFormConfig algConfig) throws IOException {
+        GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
+        GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 0, getActingPlayers(root), algConfig, info);
+
+        br.calculateBR(root, p2Strategy);
+        wr.calculateBR(root, p2Strategy);
+//        brWriter = new BufferedWriter(new FileWriter("P1BRvsWRNEvsStackExpVal" + getDomainDependentString() + ".csv", true));
+        write(brWriter, computeExpectedValue(br.getBRStategy(), p2Strategy, root, expander));
+        brWriter.newLine();
+        brWriter.close();
+//        wrWriter = new BufferedWriter(new FileWriter("P1WRvsWRNEvsStackExpVal" + getDomainDependentString() + ".csv", true));
+        write(wrWriter, computeExpectedValue(wr.getBRStategy(), p2Strategy, root, expander));
+        wrWriter.newLine();
+        wrWriter.close();
+        write(writer, computeExpectedValue(p1Strategy, p2Strategy, root, expander));
+    }
 
     private static void evaluateP1StrategiesAgainstQRE(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult,
                                                        GameState root, Expander<SequenceInformationSet> expander, GameInfo info, SequenceFormConfig<SequenceInformationSet> algConfig, Player player) {
@@ -292,6 +281,7 @@ public class StrategyStrengthExperiments {
             welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsQREExpVal" + getDomainDependentString() + ".csv", true));
             stackWriter = new BufferedWriter(new FileWriter("P1StackvsQREExpVal" + getDomainDependentString() + ".csv", true));
             brWriter = new BufferedWriter(new FileWriter("P1BRvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            wrWriter = new BufferedWriter(new FileWriter("P1WRvsQREExpVal" + getDomainDependentString() + ".csv", true));
 
             QRESolver solver = new QRESolver(root, expander, info, algConfig);
             QREResult qreResult = solver.solve();
@@ -303,12 +293,16 @@ public class StrategyStrengthExperiments {
             writeLambdas(welfareWriter, qreResult.lambdas);
             writeLambdas(stackWriter, qreResult.lambdas);
             writeLambdas(brWriter, qreResult.lambdas);
+            writeLambdas(wrWriter, qreResult.lambdas);
             for (Map<Player, Map<Sequence, Double>> quantalResponse : qreResult.quantalResponses) {
-                GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
+                GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
+                GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 0, getActingPlayers(root), algConfig, info);
                 Map<Sequence, Double> qreStrategy = filterLow(quantalResponse.get(player), 1e-6);
 
                 br.calculateBR(root, quantalResponse.get(player));
+                wr.calculateBR(root, quantalResponse.get(player));
                 write(brWriter, computeExpectedValue(br.getBRStategy(), qreStrategy, root, expander));
+                write(wrWriter, computeExpectedValue(wr.getBRStategy(), qreStrategy, root, expander));
                 write(neWriter, computeExpectedValue(neResult.p1RealPlan, qreStrategy, root, expander));
                 write(undomWriter, computeExpectedValue(undomResult.p1RealPlan, qreStrategy, root, expander));
                 write(qpWriter, computeExpectedValue(qpResult.p1RealPlan, qreStrategy, root, expander));
@@ -323,6 +317,7 @@ public class StrategyStrengthExperiments {
             welfareWriter.newLine();
             stackWriter.newLine();
             brWriter.newLine();
+            wrWriter.newLine();
 
             neWriter.close();
             undomWriter.close();
@@ -331,6 +326,7 @@ public class StrategyStrengthExperiments {
             welfareWriter.close();
             stackWriter.close();
             brWriter.close();
+            wrWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -342,7 +338,7 @@ public class StrategyStrengthExperiments {
         while (iterator.hasNext()) {
             Map.Entry<Sequence, Double> entry = iterator.next();
 
-            if(entry.getValue() < filter)
+            if (entry.getValue() < filter)
                 iterator.remove();
         }
         return realPlan;
@@ -358,6 +354,7 @@ public class StrategyStrengthExperiments {
             welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
             stackWriter = new BufferedWriter(new FileWriter("P1StackvsCFRExpVal" + getDomainDependentString() + ".csv", true));
             brWriter = new BufferedWriter(new FileWriter("P1BRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            wrWriter = new BufferedWriter(new FileWriter("P1WRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
 
             CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[0], root, expander);
 
@@ -365,9 +362,11 @@ public class StrategyStrengthExperiments {
             for (int i = 0; i < 200; i++) {
                 cfr.runIterations(100);
                 Strategy strategy = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
-                GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
+                GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
+                GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 0, getActingPlayers(root), algConfig, info);
 
                 br.calculateBR(root, strategy);
+                wr.calculateBR(root, strategy);
                 write(neWriter, computeExpectedValue(neResult.p1RealPlan, strategy, root, expander));
                 write(undomWriter, computeExpectedValue(undomResult.p1RealPlan, strategy, root, expander));
                 write(qpWriter, computeExpectedValue(qpResult.p1RealPlan, strategy, root, expander));
@@ -375,6 +374,7 @@ public class StrategyStrengthExperiments {
                 write(welfareWriter, computeExpectedValue(welfareResult.p1RealPlan, strategy, root, expander));
                 write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), strategy, root, expander));
                 write(brWriter, computeExpectedValue(br.getBRStategy(), strategy, root, expander));
+                write(wrWriter, computeExpectedValue(wr.getBRStategy(), strategy, root, expander));
             }
             neWriter.newLine();
             undomWriter.newLine();
@@ -383,6 +383,7 @@ public class StrategyStrengthExperiments {
             welfareWriter.newLine();
             stackWriter.newLine();
             brWriter.newLine();
+            wrWriter.newLine();
 
             neWriter.close();
             undomWriter.close();
@@ -391,6 +392,7 @@ public class StrategyStrengthExperiments {
             welfareWriter.close();
             stackWriter.close();
             brWriter.close();
+            wrWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -406,6 +408,7 @@ public class StrategyStrengthExperiments {
             welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
             stackWriter = new BufferedWriter(new FileWriter("P1StackvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
             brWriter = new BufferedWriter(new FileWriter("P1BRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            wrWriter = new BufferedWriter(new FileWriter("P1WRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
 
             ISMCTSAlgorithm mcts = new ISMCTSAlgorithm(root.getAllPlayers()[0], new DefaultSimulator(expander),
                     new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
@@ -413,9 +416,11 @@ public class StrategyStrengthExperiments {
             for (int i = 0; i < 200; i++) {
                 mcts.runIterations(500);
                 Strategy strategy = StrategyCollector.getStrategyFor(mcts.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
-                GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, root.getAllPlayers(), algConfig, info);
+                GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
+                GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 0, getActingPlayers(root), algConfig, info);
 
                 br.calculateBR(root, strategy);
+                wr.calculateBR(root, strategy);
                 write(neWriter, computeExpectedValue(neResult.p1RealPlan, strategy, root, expander));
                 write(undomWriter, computeExpectedValue(undomResult.p1RealPlan, strategy, root, expander));
                 write(qpWriter, computeExpectedValue(qpResult.p1RealPlan, strategy, root, expander));
@@ -423,6 +428,7 @@ public class StrategyStrengthExperiments {
                 write(welfareWriter, computeExpectedValue(welfareResult.p1RealPlan, strategy, root, expander));
                 write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), strategy, root, expander));
                 write(brWriter, computeExpectedValue(br.getBRStategy(), strategy, root, expander));
+                write(wrWriter, computeExpectedValue(wr.getBRStategy(), strategy, root, expander));
             }
 
             neWriter.newLine();
@@ -432,6 +438,7 @@ public class StrategyStrengthExperiments {
             welfareWriter.newLine();
             stackWriter.newLine();
             brWriter.newLine();
+            wrWriter.newLine();
 
             neWriter.close();
             undomWriter.close();
@@ -440,6 +447,7 @@ public class StrategyStrengthExperiments {
             welfareWriter.close();
             stackWriter.close();
             brWriter.close();
+            wrWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
