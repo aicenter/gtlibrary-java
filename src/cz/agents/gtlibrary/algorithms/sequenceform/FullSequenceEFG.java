@@ -252,6 +252,9 @@ public class FullSequenceEFG {
                 FullSequenceEFG efg = new FullSequenceEFG(rootState, expander, gameInfo, algConfig);
 
                 Map<Player, Map<Sequence, Double>> rps = efg.generate();
+                Strategy s = new UniformStrategyForMissingSequences();
+                s.putAll(rps.get(rootState.getAllPlayers()[0]));
+                System.out.println(s.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
         }
 
 	public static void runRandomGame() {

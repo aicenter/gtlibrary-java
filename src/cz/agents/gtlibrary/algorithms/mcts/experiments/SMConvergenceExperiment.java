@@ -90,13 +90,14 @@ public class SMConvergenceExperiment {
     static SQFBestResponseAlgorithm brAlg1;
     static Expander<MCTSInformationSet> expander;
 
-    public static void setupRnd(long seed) {
-        RandomGameInfo.MAX_DEPTH = 2;
-        RandomGameInfo.MAX_BF = 2;
+    public static void setupRnd(int depth) {
+        RandomGameInfo.MAX_DEPTH = depth;
+        RandomGameInfo.MAX_BF = 3;
         RandomGameInfo.MAX_CENTER_MODIFICATION=1;
-        RandomGameInfo.BINARY_UTILITY = true;
-        RandomGameInfo.FIXED_SIZE_BF = true;
-        RandomGameInfo.seed = seed;
+        RandomGameInfo.UTILITY_CORRELATION = true;
+        RandomGameInfo.BINARY_UTILITY = false;
+        RandomGameInfo.FIXED_SIZE_BF = false;
+        RandomGameInfo.seed = 792;
         gameInfo = new RandomGameInfo();
         rootState = new SimRandomGameState();
         expander = new RandomGameExpander<MCTSInformationSet> (new MCTSConfig());
@@ -104,7 +105,7 @@ public class SMConvergenceExperiment {
         sfExpander = new RandomGameExpander<SequenceInformationSet>(sfAlgConfig);
         efg = new FullSequenceEFG(rootState, sfExpander, gameInfo, sfAlgConfig);
         optStrategies = efg.generate();
-        new GambitEFG().write("RND" + RandomGameInfo.MAX_BF + RandomGameInfo.MAX_DEPTH + "_" +seed+".efg", rootState, sfExpander);
+        new GambitEFG().write("RND" + RandomGameInfo.MAX_BF + RandomGameInfo.MAX_DEPTH + "_" +RandomGameInfo.seed +".efg", rootState, sfExpander);
     }
     
     public static void setupAntiExploration() {
@@ -144,7 +145,7 @@ public class SMConvergenceExperiment {
 //        sfExpander = new AntiMCTSExpander<SequenceInformationSet>(sfAlgConfig);
 //        efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
 //        efg.generate();
-//        GambitEFG.write("AntiMCTS" + AntiMCTSInfo.gameDepth + ".efg", rootState, sfExpander);
+//        (new GambitEFG()).write("AntiMCTS" + AntiMCTSInfo.gameDepth + ".efg", rootState, sfExpander);
     }
     
     public static void setupOshiZumo(int coins, int locs){
@@ -328,8 +329,8 @@ public class SMConvergenceExperiment {
                     rootState.getAllPlayers()[0],
                     new DefaultSimulator(expander),
                     //new SMConjectureFactory(gamma),
-                    algorithm.equals("Exp3") ? new SMConjectureFactory(new Exp3BackPropFactory(-1, 1, gamma, keepExploration), propagateMeans) 
-                            : new SMConjectureFactory(new RMBackPropFactory(-1, 1, gamma), propagateMeans),
+                    algorithm.equals("Exp3") ? new SMConjectureFactory(new Exp3BackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma, keepExploration), propagateMeans) 
+                            : new SMConjectureFactory(new RMBackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma), propagateMeans),
                     rootState, expander);
 
         assert !buildCompleteTree;
@@ -392,6 +393,10 @@ public class SMConvergenceExperiment {
     private static boolean propagateMeans = false;
     public static void batchMain(String[] args) throws Exception {
         //System.setOut(new PrintStream("experiments/SMMCTS/" + StringUtils.join(args)));
+        
+        String s = System.getProperty("RUNS");
+        if (s != null) runs = new Integer(s);
+        
         switch(args[1].substring(0, 3)){
             case "OOS":
                 algorithm = "OOS";
@@ -426,6 +431,10 @@ public class SMConvergenceExperiment {
                     break;
                 case "RN":
                     setupRnd(Integer.parseInt(args[0].substring(3)));
+                    break;
+                case "OZ":
+                    setupOshiZumo(Integer.parseInt(args[0].substring(2)), 2);
+                    break;
 
             }
             if (algorithm.equals("OOS")){

@@ -20,11 +20,13 @@ package cz.agents.gtlibrary.domain.liarsdice;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.ActionImpl;
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.PublicAction;
 
-public class LiarsDiceAction extends ActionImpl {
+public class LiarsDiceAction extends ActionImpl implements PublicAction {
 
     protected final int action;
     protected final Player player;
@@ -126,6 +128,12 @@ public class LiarsDiceAction extends ActionImpl {
 
     public int observableISHash() {
         return cachedHashWithoutIS;
+    }
+
+    @Override
+    public boolean publicEquals(Action act) {
+        if (act.getInformationSet() == null && getInformationSet() == null) return true;
+        return observableEquals((LiarsDiceAction) act);
     }
 
 }

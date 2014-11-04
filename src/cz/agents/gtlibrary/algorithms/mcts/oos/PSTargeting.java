@@ -1,55 +1,54 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+Copyright 2014 Faculty of Electrical Engineering at CTU in Prague
+
+This file is part of Game Theoretic Library.
+
+Game Theoretic Library is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Game Theoretic Library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
-import java.util.ArrayDeque;
-import java.util.List;
+import cz.agents.gtlibrary.interfaces.PublicAction;
 
 /**
- * This is non-generic public subtree targeting implementation.
- * Instead of targeting the public subtree, it targets all information sets of the opponent 
- * that can follow after the current information set. Hopefully, this is the same portion 
- * of the tree for Liar's Dice and Generic Poker.
+ *
  * @author vilo
  */
-public class PSTargeting extends ISTargeting{
-    Expander expander;
-
-    public PSTargeting(Player[] allPlayers, Expander expander) {
-        super(allPlayers);
-        this.expander = expander;
-    }
+public class PSTargeting implements OOSTargeting {
+    History sampleHist;
     
     @Override
-    public void update(InformationSet curIS) {
-        clear();
-        Player pl = curIS.getPlayer();
-        
-        ArrayDeque<GameState> q = new ArrayDeque<>();
-        q.addAll(curIS.getAllStates());
-        
-        while (!q.isEmpty()){
-            GameState gs = q.removeFirst();
-            if (gs.isPlayerToMoveNature() || gs.getPlayerToMove().equals(pl)){
-                for (Action a : (List<Action>) expander.getActions(gs)){
-                    q.add(gs.performAction(a));
-                }
-            } else {
-                addIStoTargeting(expander.getAlgorithmConfig().getInformationSetFor(gs));
-            }
-        }
+    public boolean isAllowedAction(InnerNode node, Action action) {
+        if (!(action instanceof PublicAction)) return true;
+        Player pl = node.getGameState().getPlayerToMove();
+        if (node.getGameState().getSequenceFor(pl).size() >= sampleHist.getSequenceOf(pl).size()) return true; //all actions are allowed here
+        Action histAct = sampleHist.getSequenceOf(pl).get(node.getGameState().getSequenceFor(pl).size());//in other games, this might need to be more sophisticated
+        return ((PublicAction)action).publicEquals(histAct);
     }
-}
-    
 
+    @Override
+    public void update(InformationSet curIS) {
+        sampleHist = curIS.getAllStates().iterator().next().getHistory();
+    }
+
+    @Override
+    public String toString() {
+        return "PST(" + sampleHist + ')';
+    }
+    
+}
