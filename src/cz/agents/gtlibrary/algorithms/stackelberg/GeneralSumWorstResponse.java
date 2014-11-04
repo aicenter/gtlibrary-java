@@ -6,9 +6,9 @@ import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.Map;
 
-public class GeneralSumBestResponse extends SQFBestResponseAlgorithm {
+public class GeneralSumWorstResponse extends SQFBestResponseAlgorithm {
 
-    public GeneralSumBestResponse(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, ConfigImpl algConfig, GameInfo gameInfo) {
+    public GeneralSumWorstResponse(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, ConfigImpl algConfig, GameInfo gameInfo) {
         super(expander, searchingPlayerIndex, actingPlayers, algConfig, gameInfo);
     }
 
@@ -20,6 +20,6 @@ public class GeneralSumBestResponse extends SQFBestResponseAlgorithm {
         if (weight == null || weight == 0) {
             weight = 1d;
         }
-        return utRes * weight;
+        return -utRes * weight;
     }
 }

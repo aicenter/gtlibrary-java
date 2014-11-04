@@ -86,7 +86,7 @@ public class CSVStrategyImport {
                     strategy.put(thisSequence,d);
                 }
                 NoMissingSeqStrategy tmp = new NoMissingSeqStrategy(strategy);
-                tmp.sanityCheck(root,expander);
+//                tmp.sanityCheck(root,expander);
                 result.add(strategy);
             }
 

@@ -160,6 +160,16 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
         return null;
     }
 
+    public Action runIterations(int iterations){
+        for (int i = 0; i < iterations; i++) {
+            iteration(rootState, 1, 1, rootState.getAllPlayers()[0]);
+            iteration(rootState, 1, 1, rootState.getAllPlayers()[1]);
+        }
+        firstIteration = false;
+        System.out.println();
+        return null;
+    }
+
     /**
      * The main function for CFR iteration. Implementation based on Algorithm 1 in M. Lanctot PhD thesis.
      * @param node current node

@@ -30,7 +30,6 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
-import ilog.cplex.IloCplex;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -46,12 +45,12 @@ public class GenSumSequenceFormMILP {
 //        runGP();
 //        runBPG();
 //        runGenSumBPG();
-//        runAoS();
+        runAoS();
 //        runMPoCHM();
-        runGenSumRandomGame();
+//        runGenSumRandomGame();
     }
 
-    private static void runGenSumRandomGame() {
+    protected static void runGenSumRandomGame() {
         GameState root = new GeneralSumRandomGameState();
         GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
         Expander<SequenceInformationSet> expander = new RandomGameExpander<>(config);
@@ -63,7 +62,7 @@ public class GenSumSequenceFormMILP {
         solver.compute();
     }
 
-    private static void runAoS() {
+    protected static void runAoS() {
         GameState root = new AoSGameState();
         GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
         Expander<SequenceInformationSet> expander = new AoSExpander<>(config);
@@ -75,7 +74,7 @@ public class GenSumSequenceFormMILP {
         solver.compute();
     }
 
-    private static void runMPoCHM() {
+    protected static void runMPoCHM() {
         GameState root = new MPoCHMGameState();
         GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
         Expander<SequenceInformationSet> expander = new MPoCHMExpander<>(config);
@@ -87,7 +86,7 @@ public class GenSumSequenceFormMILP {
         solver.compute();
     }
 
-    private static void runStackelbergTest() {
+    protected static void runStackelbergTest() {
         GameState root = new StackTestGameState();
         GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
         Expander<SequenceInformationSet> expander = new StackTestExpander<>(config);
@@ -99,7 +98,7 @@ public class GenSumSequenceFormMILP {
         solver.compute();
     }
 
-    private static void runGP() {
+    protected static void runGP() {
         GameState root = new GenericPokerGameState();
         GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
         Expander<SequenceInformationSet> expander = new GenericPokerExpander<>(config);
@@ -111,7 +110,7 @@ public class GenSumSequenceFormMILP {
         solver.compute();
     }
 
-    private static void runKuhnPoker() {
+    protected static void runKuhnPoker() {
         GameState root = new KuhnPokerGameState();
         GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
         Expander<SequenceInformationSet> expander = new KuhnPokerExpander<>(config);
@@ -124,7 +123,7 @@ public class GenSumSequenceFormMILP {
 
     }
 
-    private static void runBPG() {
+    protected static void runBPG() {
         GameState root = new BPGGameState();
         GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
         Expander<SequenceInformationSet> expander = new BPGExpander<>(config);
@@ -139,7 +138,7 @@ public class GenSumSequenceFormMILP {
         efg.write("BPG.gbt", root, expander);
     }
 
-    private static void runGenSumBPG() {
+    protected static void runGenSumBPG() {
         GameState root = new GenSumBPGGameState();
         GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
         Expander<SequenceInformationSet> expander = new BPGExpander<>(config);
@@ -154,12 +153,13 @@ public class GenSumSequenceFormMILP {
         efg.write("GenSumBPG.gbt", root, expander);
     }
 
-    private final double M = 100;
-    private MILPTable lpTable;
-    private GenSumSequenceFormConfig config;
-    private GameInfo info;
-    private Player[] players;
-    private ThreadMXBean threadMXBean;
+    protected final double M = 1e6;
+    protected MILPTable lpTable;
+    protected GenSumSequenceFormConfig config;
+    protected GameInfo info;
+    protected Player[] players;
+    protected ThreadMXBean threadMXBean;
+    protected long lpTime;
 
     public GenSumSequenceFormMILP(GenSumSequenceFormConfig config, Player[] players, GameInfo info) {
         lpTable = new MILPTable();
@@ -169,64 +169,61 @@ public class GenSumSequenceFormMILP {
         threadMXBean = ManagementFactory.getThreadMXBean();
     }
 
-    public void compute() {
+    public SolverResult compute() {
         generateSequenceConstraints();
         generateISConstraints();
 //        addObjective();
 //        addMaxValueConstraints();
-        solve();
+        return solve();
     }
 
-    private void addMaxValueConstraints() {
+    protected void addMaxValueConstraints() {
         addMaxValueConstraintFor(players[0]);
         addMaxValueConstraintFor(players[1]);
     }
 
-    private void addMaxValueConstraintFor(Player player) {
+    protected void addMaxValueConstraintFor(Player player) {
         lpTable.setConstraint("uMax_" + player, new Pair<>("v", player.getId()), 1);
 //        lpTable.setConstant("uMax_" + player, info.getMaxUtility());
         lpTable.setConstant("uMax_" + player, getMaxUtility(player));
         lpTable.setConstraintType("uMax_" + player, 0);
     }
 
-    private double getMaxUtility(Player player) {
+    protected double getMaxUtility(Player player) {
         double maxUtility = Double.NEGATIVE_INFINITY;
 
         for (Double[] utilities : config.getUtilityForSequenceCombinationGenSum().values()) {
-            if(maxUtility < utilities[player.getId()])
+            if (maxUtility < utilities[player.getId()])
                 maxUtility = utilities[player.getId()];
         }
         return maxUtility;
     }
 
-    private void addObjective() {
-        lpTable.setObjective(new Pair<>("v", 0), 1);
-    }
-
-    private void setCplex(LPData data) throws IloException {
+    protected void setCplex(LPData data) throws IloException {
 //        data.getSolver().setParam(IloCplex.IntParam.NodeSel, IloCplex.NodeSelect.BestEst);
     }
 
-    private void solve() {
+    protected SolverResult solve() {
         try {
             LPData data = lpTable.toCplex();
 
             System.out.println("p0 sequence count: " + config.getSequencesFor(players[0]).size());
             System.out.println("p1 sequence count: " + config.getSequencesFor(players[1]).size());
             System.out.println("IS count: " + config.getAllInformationSets().size());
-            data.getSolver().exportModel("milp.lp");
+//            data.getSolver().exportModel("milp.lp");
             long start = threadMXBean.getCurrentThreadCpuTime();
-            data.getSolver().solve();
 
-            System.out.println(data.getSolver().getStatus());
             setCplex(data);
-            System.out.println("LP time: " + (threadMXBean.getCurrentThreadCpuTime() - start) / 1e6);
+            data.getSolver().solve();
+            lpTime = (long) ((threadMXBean.getCurrentThreadCpuTime() - start) / 1e6);
+            System.out.println("LP time: " + lpTime);
+            System.out.println(data.getSolver().getStatus());
             System.out.println("p0 value: " + data.getSolver().getValue(data.getVariables()[lpTable.getVariableIndex(new Pair<>("v", 0))]) / info.getUtilityStabilizer());
             System.out.println("p1 value: " + data.getSolver().getValue(data.getVariables()[lpTable.getVariableIndex(new Pair<>("v", 1))]) / info.getUtilityStabilizer());
 //            System.out.println("Strategies: ");
-//            for (Map<Sequence, Double> realPan : getStrategyProfile(data).values()) {
-//                printNonZero(System.out, realPan);
-//            }
+            for (Map<Sequence, Double> realPan : getStrategyProfile(data).values()) {
+                printNonZero(System.out, realPan);
+            }
 //            System.out.println("Slacks: ");
 //            print(System.out, getSlacks(data, players[0]));
 //            print(System.out, getSlacks(data, players[1]));
@@ -234,13 +231,14 @@ public class GenSumSequenceFormMILP {
 //            print(System.out, getISValues(data, players[0]));
 //            print(System.out, getISValues(data, players[1]));
 
+            return new SolverResult(getRealPlan(data, players[0]), getRealPlan(data, players[1]), lpTime);
         } catch (IloException e) {
             e.printStackTrace();
         }
-
+        return null;
     }
 
-    private Map<InformationSet, Double> getISValues(LPData data, Player player) {
+    protected Map<InformationSet, Double> getISValues(LPData data, Player player) {
         Map<InformationSet, Double> isValues = new HashMap<>();
 
         for (SequenceInformationSet informationSet : config.getAllInformationSets().values()) {
@@ -255,7 +253,7 @@ public class GenSumSequenceFormMILP {
         return isValues;
     }
 
-    private Map<Sequence, Double> getSlacks(LPData data, Player player) {
+    protected Map<Sequence, Double> getSlacks(LPData data, Player player) {
         Map<Sequence, Double> slacks = new HashMap<>();
 
         for (Sequence sequence : config.getSequencesFor(player)) {
@@ -276,7 +274,7 @@ public class GenSumSequenceFormMILP {
         return strategyProfile;
     }
 
-    private Map<Sequence, Double> getRealPlan(LPData data, Player player) {
+    protected Map<Sequence, Double> getRealPlan(LPData data, Player player) {
         Map<Sequence, Double> realPlan = new HashMap<>();
 
         for (Sequence sequence : config.getSequencesFor(player)) {
@@ -289,13 +287,13 @@ public class GenSumSequenceFormMILP {
         return realPlan;
     }
 
-    private void generateISConstraints() {
+    protected void generateISConstraints() {
         for (SequenceInformationSet informationSet : config.getAllInformationSets().values()) {
             createConstraintFor(informationSet);
         }
     }
 
-    private void generateSequenceConstraints() {
+    protected void generateSequenceConstraints() {
         initRPConstraint(new ArrayListSequenceImpl(players[0]));
         initRPConstraint(new ArrayListSequenceImpl(players[1]));
         for (Sequence sequence : config.getAllSequences()) {
@@ -305,7 +303,7 @@ public class GenSumSequenceFormMILP {
         }
     }
 
-    private void createSlackConstraint(Sequence sequence) {
+    protected void createSlackConstraint(Sequence sequence) {
         Object key = new Pair<>("s", sequence);
 
         lpTable.setConstraint(key, key, 1);
@@ -314,7 +312,7 @@ public class GenSumSequenceFormMILP {
         lpTable.setConstraintType(key, 0);
     }
 
-    private void createIntegerConstraint(Sequence sequence) {
+    protected void createIntegerConstraint(Sequence sequence) {
         Object key = new Pair<>("b", sequence);
 
         lpTable.setConstraint(key, sequence, 1);
@@ -323,13 +321,13 @@ public class GenSumSequenceFormMILP {
         lpTable.markAsBinary(key);
     }
 
-    private void initRPConstraint(Sequence emptySequence) {
+    protected void initRPConstraint(Sequence emptySequence) {
         lpTable.setConstraint(emptySequence.getPlayer(), emptySequence, 1);
         lpTable.setConstant(emptySequence.getPlayer(), 1);
         lpTable.setConstraintType(emptySequence.getPlayer(), 1);
     }
 
-    private void createConstraintFor(SequenceInformationSet informationSet) {
+    protected void createConstraintFor(SequenceInformationSet informationSet) {
         if (!informationSet.getOutgoingSequences().isEmpty()) {
             lpTable.setConstraint(informationSet, informationSet.getPlayersHistory(), 1);
             for (Sequence outgoingSequence : informationSet.getOutgoingSequences()) {
@@ -339,7 +337,7 @@ public class GenSumSequenceFormMILP {
         }
     }
 
-    private void createValueConstraintFor(Sequence sequence) {
+    protected void createValueConstraintFor(Sequence sequence) {
         Object infSetVarKey = new Pair<>("v", (sequence.size() == 0 ? sequence.getPlayer().getId() : sequence.getLastInformationSet()));
 
         lpTable.setConstraint(sequence, infSetVarKey, 1);
@@ -358,16 +356,20 @@ public class GenSumSequenceFormMILP {
         lpTable.setConstraintType(sequence, 1);
     }
 
-    private void printNonZero(PrintStream stream, Map<? extends Object, Double> realPlan) {
+    protected void printNonZero(PrintStream stream, Map<? extends Object, Double> realPlan) {
         for (Map.Entry<? extends Object, Double> entry : realPlan.entrySet()) {
             if (entry.getValue() > 0)
                 stream.println(entry);
         }
     }
 
-    private void print(PrintStream stream, Map<? extends Object, Double> realPlan) {
+    protected void print(PrintStream stream, Map<? extends Object, Double> realPlan) {
         for (Map.Entry<? extends Object, Double> entry : realPlan.entrySet()) {
             stream.println(entry);
         }
+    }
+
+    public long getLpTime() {
+        return lpTime;
     }
 }
