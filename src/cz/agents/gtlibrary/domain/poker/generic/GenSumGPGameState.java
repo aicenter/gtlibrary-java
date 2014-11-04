@@ -1,7 +1,16 @@
 package cz.agents.gtlibrary.domain.poker.generic;
 
+import cz.agents.gtlibrary.interfaces.GameState;
+
 public class GenSumGPGameState extends GenericPokerGameState {
     private final double rake = .1;
+
+    public GenSumGPGameState() {
+    }
+
+    public GenSumGPGameState(GenSumGPGameState gameState) {
+        super(gameState);
+    }
 
     @Override
     public double[] getUtilities() {
@@ -22,4 +31,8 @@ public class GenSumGPGameState extends GenericPokerGameState {
         return new double[]{0};
     }
 
+    @Override
+    public GameState copy() {
+        return new GenSumGPGameState(this);
+    }
 }

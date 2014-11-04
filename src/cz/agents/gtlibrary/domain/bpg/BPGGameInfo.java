@@ -38,7 +38,7 @@ public class BPGGameInfo implements GameInfo {
 
 	@Override
 	public double getMaxUtility() {
-		return 1.2;
+		return 2;
 	}
 
 	@Override
