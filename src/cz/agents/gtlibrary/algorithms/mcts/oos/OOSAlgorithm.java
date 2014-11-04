@@ -92,7 +92,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         s = System.getProperty("TARGTYPE");
         if (s != null){
             if (s.equals("IST")) targeting = new ISTargeting(rootState.getAllPlayers());
-            else if (s.equals("PST")) targeting = new PSTargeting(rootState.getAllPlayers(), expander);
+            else if (s.equals("PST")) targeting = new PSTargeting();
         } else targeting = new ISTargeting(rootState.getAllPlayers());
     }
     
@@ -116,11 +116,12 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         System.out.println();
         System.out.println("OOS Iters: " + iters);
         System.out.println("OOS Targeted IS Hits: " + targISHits);
-        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+//        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
         System.out.println("CurIS size: " + (curIS==null ? "null" : curIS.getAllNodes().size()));
         if (curIS == null || !curIS.getPlayer().equals(searchingPlayer)) return null;
         if (curIS.getAlgorithmData() == null) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
+//        System.out.println("CurIS strategy: " + distribution.toString());
         return Strategy.selectAction(distribution, rnd);
     }
     
