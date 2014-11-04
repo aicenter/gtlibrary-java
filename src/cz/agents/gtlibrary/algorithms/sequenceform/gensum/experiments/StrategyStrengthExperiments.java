@@ -21,6 +21,12 @@ import cz.agents.gtlibrary.algorithms.sequenceform.gensum.quantalresponse.QRESol
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DataBuilder;
 import cz.agents.gtlibrary.algorithms.stackelberg.*;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
+import cz.agents.gtlibrary.domain.bpg.BPGExpander;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenSumGPGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.GenSumKuhnPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
@@ -52,9 +58,61 @@ public class StrategyStrengthExperiments {
      * @param args
      */
     public static void main(String[] args) {
-//        runGenSumKuhnPoker(0);
-        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
+//        runGenSumKuhnPoker(0.1);
+        runGenSumBPG(Integer.parseInt(args[0]));
+//        runGenSumGenericPoker(0.1);   //zkusit bpg, připravit článek nakopírovat všechno relevantní, podivat se na ty grafy
+//        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
     }
+
+    private static void runGenSumBPG(int depth) {
+        BPGGameInfo.DEPTH = depth;
+        GameState root = new GenSumBPGGameState();
+        GameInfo info = new BPGGameInfo();
+        GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
+        Expander<SequenceInformationSet> expander = new BPGExpander<>(algConfig);
+        FullSequenceEFG builder = new FullSequenceEFG(root, expander, info, algConfig);
+
+        builder.generateCompleteGame();
+
+        GenSumSequenceFormMILP undomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p1MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
+        GenSumSequenceFormMILP welfareSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], root.getAllPlayers()[1]);
+        DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
+
+        SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
+        SolverResult undomResult = undomSolver.compute();
+        SolverResult neResult = neSolver.compute();
+        SolverResult p1MaxResult = p1MaxSolver.compute();
+        SolverResult welfareResult = welfareSolver.compute();
+
+        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
+        Expander<SequenceInformationSet> stackelbergExpander = new BPGExpander<>(stackelbergConfig);
+        StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
+        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
+        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
+
+
+        if (qpResult != null && undomResult != null && neResult != null) {
+            StackelbergConfig stackConfig = new StackelbergConfig(root);
+            Expander<SequenceInformationSet> stackExpander = new BPGExpander<>(stackConfig);
+            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+
+            stackBuilder.generateCompleteGame();
+            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
+            Expander<MCTSInformationSet> mctsExpander = new BPGExpander<>(mctsConfig);
+
+            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
+            Expander<MCTSInformationSet> cfrExpander = new BPGExpander<>(cfrConfig);
+//            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
+            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
+        }
+    }
+
 
     private static void runGenSumKuhnPoker(double rake) {
         GameState root = new GenSumKuhnPokerGameState();
@@ -95,6 +153,54 @@ public class StrategyStrengthExperiments {
 
             MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
             Expander<MCTSInformationSet> cfrExpander = new KuhnPokerExpander<>(cfrConfig);
+//            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
+            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
+        }
+    }
+
+    private static void runGenSumGenericPoker(double rake) {
+        GameState root = new GenSumGPGameState();
+        GameInfo info = new GPGameInfo();
+        GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
+        Expander<SequenceInformationSet> expander = new GenericPokerExpander<>(algConfig);
+        FullSequenceEFG builder = new FullSequenceEFG(root, expander, info, algConfig);
+
+        builder.generateCompleteGame();
+
+        GenSumSequenceFormMILP undomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p1MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
+        GenSumSequenceFormMILP welfareSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], root.getAllPlayers()[1]);
+        DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
+
+        SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
+        SolverResult undomResult = undomSolver.compute();
+        SolverResult neResult = neSolver.compute();
+        SolverResult p1MaxResult = p1MaxSolver.compute();
+        SolverResult welfareResult = welfareSolver.compute();
+
+        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
+        Expander<SequenceInformationSet> stackelbergExpander = new GenericPokerExpander<>(stackelbergConfig);
+        StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
+        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
+        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
+
+
+        if (qpResult != null && undomResult != null && neResult != null) {
+            StackelbergConfig stackConfig = new StackelbergConfig(root);
+            Expander<SequenceInformationSet> stackExpander = new GenericPokerExpander<>(stackConfig);
+            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+
+            stackBuilder.generateCompleteGame();
+            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
+            Expander<MCTSInformationSet> mctsExpander = new GenericPokerExpander<>(mctsConfig);
+
+            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
+            Expander<MCTSInformationSet> cfrExpander = new GenericPokerExpander<>(cfrConfig);
 //            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
             evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
             evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, root, expander, info, algConfig, root.getAllPlayers()[1]);
