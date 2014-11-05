@@ -28,7 +28,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.interfaces.*;
 import java.lang.management.ManagementFactory;
@@ -66,6 +66,14 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         }
         System.out.println();
         System.out.println("Iters: " + iters);
+        return null;
+    }
+
+    public Action runIterations(int iterations){
+        for (int i = 0; i < iterations; i++) {
+            iteration(rootNode,1,1,rootNode.getGameState().getAllPlayers()[0]);
+            iteration(rootNode,1,1,rootNode.getGameState().getAllPlayers()[1]);
+        }
         return null;
     }
     

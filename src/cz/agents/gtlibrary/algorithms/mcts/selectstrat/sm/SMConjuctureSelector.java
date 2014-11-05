@@ -16,18 +16,11 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm;
 
+import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Selector;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.Pair;
 import java.util.Arrays;
@@ -37,23 +30,24 @@ import java.util.List;
  *
  * @author vilo
  */
-public class SMConjuctureSelector extends SMDecoupledSelector implements MeanStrategyProvider {
+public class SMConjuctureSelector implements SMSelector, MeanStrategyProvider{
+    SMSelector coreSelector;
     double w[][];
     double sumw[][];
     double wsum[][];
     BasicStats stats [][];
     double max[][];
     
-    public SMConjuctureSelector(List<Action> actions1, List<Action> actions2, Selector p1selector, Selector p2selector) {
-        super(actions1, actions2, p1selector, p2selector);
-        w = new double[actions1.size()][actions2.size()];
+    public SMConjuctureSelector(SMSelector coreSelector, int n1, int n2) {
+        this.coreSelector = coreSelector;
+        w = new double[n1][n2];
         for (double[] a : w) Arrays.fill(a, 1);
-        sumw = new double[actions1.size()][actions2.size()];
-        wsum = new double[actions1.size()][actions2.size()];
-        max = new double[actions1.size()][actions2.size()];
-        stats = new BasicStats[actions1.size()][actions2.size()];
-        for (int i=0;i<actions1.size();i++){
-            for (int j=0; j<actions2.size();j++){
+        sumw = new double[n1][n2];
+        wsum = new double[n1][n2];
+        max = new double[n1][n2];
+        stats = new BasicStats[n1][n2];
+        for (int i=0;i<n1;i++){
+            for (int j=0; j<n2;j++){
                 stats[i][j]=new BasicStats();
             }
         }
@@ -64,38 +58,29 @@ public class SMConjuctureSelector extends SMDecoupledSelector implements MeanStr
         final int si=selection.getLeft();
         final int sj=selection.getRight();
         stats[si][sj].onBackPropagate(value);
-        for (int i=0; i<actions1.size();i++){
+        for (int i=0; i<w.length;i++){
             if (i==si) continue;
             w[i][sj]++;
         }
-        for (int j=0; j<actions1.size();j++){
+        for (int j=0; j<w[0].length;j++){
             if (j==sj) continue;
             w[si][j]++;
         }
         wsum[si][sj] += w[si][sj]*value;
         sumw[si][sj] += w[si][sj];
+        w[si][sj] = 1;
         
         max[si][sj] = Math.max(max[si][sj], Math.abs(stats[si][sj].getEV()-(wsum[si][sj]/sumw[si][sj])));
         //if (stats[si][sj].getNbSamples() % 1e5==0) 
         //    System.out.println(stats[si][sj].getNbSamples() + ": " + Math.abs(stats[si][sj].getEV()-(wsum[si][sj]/sumw[si][sj])));
-        super.update(selection, value);
-    }
-
-    @Override
-    public List<Action> getActions() {
-        return actions1;
-    }
-
-    @Override
-    public double[] getMp() {
-        return ((MeanStrategyProvider)p1selector).getMp();
+        coreSelector.update(selection, value);
     }
 
     @Override
     public String toString() {
         StringBuffer out = new StringBuffer();
-        for (int i=0;i<actions1.size();i++){
-            for (int j=0; j<actions2.size();j++){
+        for (int i=0;i<stats.length;i++){
+            for (int j=0; j<stats[0].length;j++){
                 out.append("Move" + i + j + " ");
                 out.append(stats[i][j].getNbSamples() + " ");
                 out.append(Math.abs(stats[i][j].getEV()-(wsum[i][j]/sumw[i][j])) + " ");
@@ -105,37 +90,26 @@ public class SMConjuctureSelector extends SMDecoupledSelector implements MeanStr
                 max[i][j]=Math.abs(stats[i][j].getEV()-(wsum[i][j]/sumw[i][j]));
             }
         }
-//        out.append("\n");
-//        for (int i=0;i<actions1.size();i++){
-//            for (int j=0; j<actions2.size();j++){
-//                out.append(Math.abs(stats[i][j].getEV()-(wsum[i][j]/sumw[i][j])) + " ");
-//            }
-//            out.append("\n");
-//        }
-//        out.append("\n");
-//        for (int i=0;i<actions1.size();i++){
-//            for (int j=0; j<actions2.size();j++){
-//                out.append(stats[i][j].getEV() + " ");
-//            }
-//            out.append("\n");
-//        }
-//        out.append("\n");
-//        for (int i=0;i<actions1.size();i++){
-//            for (int j=0; j<actions2.size();j++){
-//                out.append((wsum[i][j]/sumw[i][j]) + " ");
-//            }
-//            out.append("\n");
-//        }
-//        out.append("\n");
-//        for (int i=0;i<actions1.size();i++){
-//            for (int j=0; j<actions2.size();j++){
-//                out.append(max[i][j] + " ");
-//                max[i][j]=0;
-//            }
-//            out.append("\n");
-//        }
         return out.toString();
     }
-    
-    
+
+    @Override
+    public Pair<Integer, Integer> select() {
+        return coreSelector.select();
+    }
+
+    @Override
+    public AlgorithmData getBottomData() {
+        return coreSelector.getBottomData();
+    }
+
+    @Override
+    public List<Action> getActions() {
+        return ((MeanStrategyProvider)coreSelector).getActions();
+    }
+
+    @Override
+    public double[] getMp() {
+        return ((MeanStrategyProvider)coreSelector).getMp();
+    }
 }

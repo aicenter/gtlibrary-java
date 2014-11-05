@@ -26,7 +26,7 @@ package cz.agents.gtlibrary.algorithms.mcts.distribution;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -53,8 +53,8 @@ public class StrategyCollector {
 	static public Strategy getStrategyFor(InnerNode rootNode, Player player, Distribution distribution, int cutOffDepth) {
             Strategy strategy = new UniformStrategyForMissingSequences();
             strategy.put(new ArrayListSequenceImpl(player),1.0);
-            HashSet<MCTSInformationSet> processed = new HashSet();
-            ArrayDeque<InnerNode> q = new ArrayDeque();
+            HashSet<MCTSInformationSet> processed = new HashSet<>();
+            ArrayDeque<InnerNode> q = new ArrayDeque<>();
             q.add(rootNode);
             while (!q.isEmpty()){
                 InnerNode curNode = q.removeFirst();

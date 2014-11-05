@@ -227,15 +227,6 @@ public class SequenceFormLP implements FullSequenceFormLP{
 		return v;
 	}
 
-	protected IloNumVar createVariableForSequence(IloCplex cplex, Sequence sequence) throws IloException {
-		IloNumVar r = cplex.numVar(0, 1, IloNumVarType.Float, "R" + sequence.toString());
-
-		if (sequence.size() == 0)
-			r.setLB(1d);
-		variables.put(sequence, r);
-		return r;
-	}
-
 	protected IloRange createConstraintForIS(IloCplex cplex, SequenceInformationSet informationSet) throws IloException {
 		IloNumExpr sumL = cplex.constant(0);
 
@@ -259,6 +250,15 @@ public class SequenceFormLP implements FullSequenceFormLP{
 		constraints.put(informationSet, constrain);
 		return constrain;
 	}
+
+    protected IloNumVar createVariableForSequence(IloCplex cplex, Sequence sequence) throws IloException {
+        IloNumVar r = cplex.numVar(0, 1, IloNumVarType.Float, "R" + sequence.toString());
+
+        if (sequence.size() == 0)
+            r.setLB(1d);
+        variables.put(sequence, r);
+        return r;
+    }
 
 	protected void createConstraintForSequence(IloCplex cplex, Sequence firstPlayerSequence, SequenceFormConfig<SequenceInformationSet> algConfig) throws IloException {
 		Player firstPlayer = firstPlayerSequence.getPlayer();

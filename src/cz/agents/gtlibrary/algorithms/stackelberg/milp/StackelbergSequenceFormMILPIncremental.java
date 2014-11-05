@@ -1,10 +1,12 @@
-package cz.agents.gtlibrary.algorithms.stackelberg;
+package cz.agents.gtlibrary.algorithms.stackelberg.milp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.algorithms.stackelberg.GeneralSumBestResponse;
+import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.DummyPrintStream;
-import ilog.concert.*;
+import ilog.concert.IloException;
+import ilog.concert.IloNumVar;
+import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
 import java.util.*;
@@ -13,24 +15,18 @@ import java.util.*;
  * Created by bosansky on 7/24/14.
  */
 public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceFormMILP{
-    public StackelbergSequenceFormMILPIncremental(Player[] players, GameInfo info, Expander expander) {
-        super(players, info, expander);
+    public StackelbergSequenceFormMILPIncremental(Player[] players, Player leader, Player follower, GameInfo info, Expander expander) {
+        super(players, leader, follower, info, expander);
     }
 
-    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander expander) {
-
-        leader = players[leaderIdx];
-        follower = players[followerIdx];
-
+    public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         double maxValue = Double.NEGATIVE_INFINITY;
-        Set<Sequence> followerBR = new HashSet<Sequence>();
-        Map<Sequence, Double> leaderResult = new HashMap<Sequence, Double>();
-        Map<Sequence, Double> followerResult = new HashMap<Sequence, Double>();
+        Set<Sequence> followerBR = new HashSet<>();
+        Map<Sequence, Double> leaderResult = new HashMap<>();
+        Map<Sequence, Double> followerResult = new HashMap<>();
 
         Map<Sequence, Double> firstRP = new HashMap<>();
         firstRP.put(algConfig.getRootState().getSequenceFor(follower), 1d);
-
-        int iterations = 0;
 
         try {
             IloCplex cplex = modelsForPlayers.get(leader);
@@ -57,10 +53,9 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
             GeneralSumBestResponse gBR = new GeneralSumBestResponse(expander, follower.getId(), players, algConfig, info);
 
             while (true) {
-                iterations++;
                 boolean tmp = false;
                 followerBR.clear();
-                cplex.exportModel("stck-" + leader + "-i" + iterations + ".lp"); // uncomment for model export
+//                cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
                 startTime = threadBean.getCurrentThreadCpuTime();
                 debugOutput.println("Solving");
                 cplex.solve();
@@ -72,24 +67,6 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
                     debugOutput.println("Best value is " + v);
 
                     maxValue = v;
-
-                    for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
-                        try {
-                            debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-                        } catch (IloCplex.UnknownObjectException e) {
-                            continue;
-                        }
-                    }
-                    debugOutput.println("-------");
-                    for (Map.Entry<Object, IloNumVar> ee : slackVariables.entrySet()) {
-                        try {
-                            debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-                        } catch (IloCplex.UnknownObjectException e) {
-                            continue;
-                        }
-                    }
-
-
 
                     leaderResult = createSolution(algConfig, leader, cplex);
                     followerResult = createSolution(algConfig, follower, cplex);
@@ -118,10 +95,7 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
 //                        }
                     }
                     tmp = addFollowerSequences(algConfig, cplex, followerBR);
-
-
                 }
-
 
                 if (!tmp)
                     break;
@@ -162,7 +136,6 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
                     //nothing
                 } else {
                     createVariableForIS(model, informationSet);
-                    createSlackVariablesForIS(informationSet, model);
                     informationSets.get(informationSet.getPlayer()).add(informationSet);
                 }
             }
@@ -238,54 +211,6 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
         return somethingAdded;
     }
 
-    protected void createSlackVariablesForIS(InformationSet is, IloCplex cplex) throws IloException {
-        IloNumVar v = cplex.numVar(0, Double.POSITIVE_INFINITY, IloNumVarType.Float, "SL" + is.toString());
-        slackVariables.put(is, v);
-    }
 
-    protected void createConstraintsForSets(IloCplex cplex, Collection<SequenceInformationSet> RConstraints) throws IloException {
-        for (SequenceInformationSet infoSet : RConstraints) {
-            if (constraints.containsKey(infoSet)) {
-                cplex.delete(constraints.get(infoSet));
-                constraints.remove(infoSet);
-            }
-            createConstraintForIS(cplex, infoSet);
-            createSlackConstraintsForIS(cplex, infoSet);
-        }
-    }
 
-    protected void createSlackConstraintsForIS(IloCplex cplex, SequenceInformationSet informationSet) throws IloException {
-        IloNumExpr LS = slackVariables.get(informationSet);
-
-        if (informationSet.getOutgoingSequences().isEmpty()) {
-            return;
-        }
-        for (Sequence sequence : informationSet.getOutgoingSequences()) {
-            if (slackVariables.get(sequence) == null)
-                continue;
-            IloNumExpr RS = slackVariables.get(sequence);
-            cplex.addLe(cplex.diff(LS,RS),0,"SLCON:" + informationSet.toString() + sequence.toString());
-        }
-
-    }
-
-    protected void setObjective(IloCplex cplex, IloNumVar v0, StackelbergConfig algConfig) throws IloException {
-        if (leaderObj != null) cplex.delete(leaderObj);
-        IloNumExpr sumG = cplex.constant(0);
-        IloNumExpr sumP = cplex.constant(0);
-        for (Map.Entry<GameState, Double[]> e : algConfig.getActualNonZeroUtilityValuesInLeafsSE().entrySet()) {
-            sumG = cplex.sum(sumG, cplex.prod(e.getKey().getNatureProbability(), cplex.prod(e.getValue()[leader.getId()], variables.get(e.getKey()))));
-        }
-        for (GameState gs : algConfig.getAllLeafs()) {
-            sumP = cplex.sum(sumP, variables.get(gs));
-        }
-        IloNumExpr sumSL_IS = cplex.constant(0);
-        for (SequenceInformationSet informationSet : algConfig.getAllInformationSets().values()) {
-            if (informationSet.getPlayer().equals(leader)) continue;
-            sumSL_IS = cplex.sum(sumSL_IS, slackVariables.get(informationSet));
-        }
-        sumSL_IS = cplex.prod(-100,sumSL_IS);
-        leaderObj = cplex.addEq(cplex.diff(v0, cplex.sum(sumG,sumSL_IS)), 0);
-        cplex.addEq(sumP,1);
-    }
 }

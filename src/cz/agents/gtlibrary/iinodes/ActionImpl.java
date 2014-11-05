@@ -60,6 +60,8 @@ public abstract class ActionImpl implements Action {
         if (informationSet == null) {
             if (((ActionImpl) obj).informationSet != null)
                 return false;
+        } else if(informationSet != null && ((ActionImpl) obj).informationSet == null) {
+            return false;
         } else if (informationSet.hashCode() != ((ActionImpl) obj).informationSet.hashCode()) {
             return false;
         } else if (informationSet.getPlayersHistory().size() != ((ActionImpl) obj).informationSet.getPlayersHistory().size()) {
