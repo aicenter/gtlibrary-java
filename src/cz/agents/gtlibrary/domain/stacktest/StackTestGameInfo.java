@@ -13,7 +13,7 @@ public class StackTestGameInfo implements GameInfo{
 
     @Override
     public double getMaxUtility() {
-        return 5;
+        return 6;
     }
 
     @Override

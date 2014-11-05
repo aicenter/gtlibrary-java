@@ -17,7 +17,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom;
+package cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.resultparser;
 
 import cz.agents.gtlibrary.interfaces.Sequence;
 
@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-public class ResultParser {
+public class LemkeResultParser implements ResultParser {
 	
 	private BufferedReader reader;
 	private Map<Integer, Sequence> p1Sequences;
@@ -37,7 +37,7 @@ public class ResultParser {
 	
 	private double gameValue;
 	
-	public ResultParser(String fileName, Map<Integer, Sequence> p1Sequences, Map<Integer, Sequence> p2Sequences) {
+	public LemkeResultParser(String fileName, Map<Integer, Sequence> p1Sequences, Map<Integer, Sequence> p2Sequences) {
 		try {
 			reader = new BufferedReader(new FileReader(new File(fileName)));
 		} catch (FileNotFoundException e) {
@@ -68,25 +68,26 @@ public class ResultParser {
 	}
 	
 	private void parse() throws IOException {
-		p1RealPlan = new HashMap<Sequence, Double>();
-		p2RealPlan = new HashMap<Sequence, Double>();
-		reader.readLine();
-		reader.readLine();
+		p1RealPlan = new HashMap<>();
+		p2RealPlan = new HashMap<>();
+//		reader.readLine();
+//		reader.readLine();
 		
-		String firstRPLine = reader.readLine();
+//		String firstRPLine = reader.readLine();
 		
-		if(firstRPLine == null)
-			return;
-		StringTokenizer sizeTokenizer = new StringTokenizer(firstRPLine);
+//		if(firstRPLine == null)
+//			return;
+//		StringTokenizer sizeTokenizer = new StringTokenizer(firstRPLine);
 		
-		sizeTokenizer.nextToken();
-		int p1SequenceCount = Integer.parseInt(sizeTokenizer.nextToken());
-		sizeTokenizer.nextToken();
-		int p2SequenceCount = Integer.parseInt(sizeTokenizer.nextToken());
+//		sizeTokenizer.nextToken();
+//		int p1SequenceCount = Integer.parseInt(sizeTokenizer.nextToken());
+//		sizeTokenizer.nextToken();
+//		int p2SequenceCount = Integer.parseInt(sizeTokenizer.nextToken());
 		
-		loadP1Strategy(p1SequenceCount);
-		loadP2Strategy(p2SequenceCount);
-		loadValueOfGame();
+		loadP1Strategy();
+        reader.readLine();
+		loadP2Strategy();
+//		loadValueOfGame();
 	}
 
 	private void loadValueOfGame() throws IOException {
@@ -101,9 +102,8 @@ public class ResultParser {
 		gameValue = Double.parseDouble(token.substring(0, token.length() - 1));
 	}
 
-	public void loadP2Strategy(int p2SequenceCount) throws IOException {
-		reader.readLine();
-		for (int i = 0; i < p2SequenceCount; i++) {
+	public void loadP2Strategy() throws IOException {
+        for (int i = 0; i < p2Sequences.size(); i++) {
 			StringTokenizer rowTokenizer = new StringTokenizer(reader.readLine());
 			
 			rowTokenizer.nextToken();
@@ -111,13 +111,12 @@ public class ResultParser {
 			StringTokenizer strategyTokenizer = new StringTokenizer(strategy.substring(1, strategy.length() - 1), ",");
 			
 			strategyTokenizer.nextToken();
-			p2RealPlan.put(p2Sequences.get(i), Double.parseDouble(strategyTokenizer.nextToken()));			
+			p2RealPlan.put(p2Sequences.get(i), Double.parseDouble(strategyTokenizer.nextToken()));
 		}
 	}
 
-	public void loadP1Strategy(int p1SequenceCount) throws IOException {
-		reader.readLine();
-		for (int i = 0; i < p1SequenceCount; i++) {
+	public void loadP1Strategy() throws IOException {
+        for (int i = 0; i < p1Sequences.size(); i++) {
 			StringTokenizer rowTokenizer = new StringTokenizer(reader.readLine());
 			
 			rowTokenizer.nextToken();
@@ -125,12 +124,17 @@ public class ResultParser {
 			StringTokenizer strategyTokenizer = new StringTokenizer(strategy.substring(1, strategy.length() - 1), ",");
 			
 			strategyTokenizer.nextToken();
-			p1RealPlan.put(p1Sequences.get(i), Double.parseDouble(strategyTokenizer.nextToken()));			
+			p1RealPlan.put(p1Sequences.get(i), Double.parseDouble(strategyTokenizer.nextToken()));
 		}
 	}
 	
 	public double getGameValue() {
 		return gameValue;
 	}
+
+    @Override
+    public long getTime() {
+        return -1;
+    }
 
 }

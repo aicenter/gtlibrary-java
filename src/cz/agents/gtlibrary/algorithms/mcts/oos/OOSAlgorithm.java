@@ -21,15 +21,17 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package cz.agents.gtlibrary.algorithms.mcts;
+package cz.agents.gtlibrary.algorithms.mcts.oos;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
+import cz.agents.gtlibrary.algorithms.mcts.experiments.SMConvergenceExperiment;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.NodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
@@ -41,6 +43,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -57,10 +60,11 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     protected ThreadMXBean threadBean;
     private double delta = 0.9;
     private double epsilon = 0.6;
-    public boolean dropTree = true;
+    public boolean dropTree = false;
     
     private MCTSInformationSet curIS;
     private Random rnd = new HighQualityRandom();
+    private OOSTargeting targeting;
 
     public OOSAlgorithm(Player searchingPlayer, OOSSimulator simulator, GameState rootState, Expander expander) {
         this(searchingPlayer, simulator, rootState, expander, 0.9, 0.6);
@@ -83,10 +87,18 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         threadBean = ManagementFactory.getThreadMXBean();
         String s = System.getProperty("DROPTREE");
         if (s != null) dropTree = Boolean.getBoolean(s);
+        s = System.getProperty("INCTREEBUILD");
+        if (s != null && !Boolean.parseBoolean(s)) SMConvergenceExperiment.buildCompleteTree(rootNode);
+        s = System.getProperty("TARGTYPE");
+        if (s != null){
+            if (s.equals("IST")) targeting = new ISTargeting(rootState.getAllPlayers());
+            else if (s.equals("PST")) targeting = new PSTargeting();
+        } else targeting = new ISTargeting(rootState.getAllPlayers());
     }
     
     @Override
     public Action runMiliseconds(int miliseconds){
+        if (giveUp) return null;
         int iters=0;
         int targISHits=0;
         long start = threadBean.getCurrentThreadCpuTime();
@@ -103,11 +115,13 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         }
         System.out.println();
         System.out.println("OOS Iters: " + iters);
-        System.out.println("OOS Targeted IS Hist: " + targISHits);
-        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("OOS Targeted IS Hits: " + targISHits);
+//        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("CurIS size: " + (curIS==null ? "null" : curIS.getAllNodes().size()));
         if (curIS == null || !curIS.getPlayer().equals(searchingPlayer)) return null;
         if (curIS.getAlgorithmData() == null) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
+//        System.out.println("CurIS strategy: " + distribution.toString());
         return Strategy.selectAction(distribution, rnd);
     }
     
@@ -142,38 +156,45 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
      * @return iteration game value is actually returned. Other return values are in global x and l
      */
     protected double iteration(Node node, double pi, double pi_, double bs, double us, Player expPlayer){
+        //useful for debugging
+//        ((NodeImpl)node).testSumS += 1/(delta*bs+(1-delta)*us);
+//        ((NodeImpl)node).visits += 1;
         if (node instanceof LeafNode) {
             x=1; l=delta*bs+(1-delta)*us;
             return ((LeafNode)node).getUtilities()[expPlayer.getId()];
         } 
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode)node;
-            Action a; double p;
-            if (biasedIteration && !underTargetIS && cn.getGameState().getSequenceFor(getNaturePlayer()).size() <= chanceMaxSequenceLength){
-                double sum=0; int i=0;
+            Action a; double bp; double bsum=0;
+            if (!underTargetIS){
+                int i=0;
                 for (Action ai : cn.getActions()){
-                    if (chanceAllowedSequences.contains(cn.getChildFor(ai).getGameState().getSequenceFor(getNaturePlayer()))) {
+                    if (targeting.isAllowedAction(cn, ai)) {
                         biasedProbs[i] = cn.getGameState().getProbabilityOfNatureFor(ai);
-                        sum += biasedProbs[i];
+                        bsum += biasedProbs[i];
                     } else {
                         biasedProbs[i]=0;
                     }
                     i++;
                 }
-                if (sum == 0){
-                    int asjfdhsg=0;
-                }
-                assert sum>0;
-                i = randomChoice(biasedProbs, sum);
+                //assert bsum>0;
+            }
+            
+            int i;
+            if (biasedIteration && bsum > 0){
+                i = randomChoice(biasedProbs, bsum);
                 a = cn.getActions().get(i);
-                p = biasedProbs[i]/sum;
             } else {
                 a = cn.getRandomAction();
-                p = cn.getGameState().getProbabilityOfNatureFor(a);
+                i = cn.getActions().indexOf(a);
             }
+            if (bsum > 0) bp = biasedProbs[i]/bsum;
+            else bp = cn.getGameState().getProbabilityOfNatureFor(a);
+            
             //if (rootNode.getGameState().equals(cn.getGameState())) underTargetIS = true;
-            double u=iteration(cn.getChildFor(a), pi, p*pi_, p*bs, cn.getGameState().getProbabilityOfNatureFor(a)*us, expPlayer);
-            x *= p;
+            final double realP = cn.getGameState().getProbabilityOfNatureFor(a);
+            double u=iteration(cn.getChildFor(a), pi, pi_, bp*bs, realP*us, expPlayer);
+            x *= realP;
             return u;
         }
         InnerNode in = (InnerNode) node;
@@ -188,7 +209,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             selectedA = in.getActions().get(ai);
             Node child = in.getChildFor(selectedA);
             u = simulator.simulate(child.getGameState())[expPlayer.getId()];
-            x = simulator.playersProb*(1.0/in.getActions().size());
+            x = simulator.playersProb; //*(1.0/in.getActions().size()) will be added at the bottom;
             l = (delta*bs+(1-delta)*us)*simulator.playOutProb*(1.0/in.getActions().size());
         } else {
             data = (OOSAlgorithmData) is.getAlgorithmData();
@@ -196,40 +217,24 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             double biasedSum=0;
             int inBiasActions=0;
             biasedProbs = tmpProbs;
-            if (bs > 0 && !underTargetIS) {
+            if (bs > 0 && !underTargetIS) { //targeting may still make a difference
                 if (curIS.equals(is)){
                     underTargetIS = true;
-                } else if (searchingPlayer.equals(is.getPlayer())){
-                    //this IS is above the current IS, returning the action from the history
-                    if (curIS.getPlayersHistory().size() > is.getPlayersHistory().size()){
-                        selectedA = curIS.getPlayersHistory().get(is.getPlayersHistory().size());
-                        ai = in.getActions().indexOf(selectedA);
-                        if (ai != -1){//otherwise chance node has shifted us where we did not play before
-                            Arrays.fill(biasedProbs,0,in.getActions().size(),-0.0);
-                            biasedProbs[ai]=1;
-                            biasedSum = 1; inBiasActions=1;
-                        } else assert biasedIteration==false;
-                    } else assert biasedIteration==false;
                 } else {
-                    if (is.getPlayersHistory().size() < opponentMaxSequenceLength){
-                        int i=0;
-                        for (Action a : in.getActions()){
-                            if (opponentAllowedActions.contains(a)){
-                                biasedSum += rmProbs[i];
-                                biasedProbs[i] = rmProbs[i];
-                                inBiasActions++;
-                            } else biasedProbs[i] = -0.0;//negative zeros denote the banned actions
-                            i++;
-                        }
+                    int i=0;
+                    for (Action a : in.getActions()){
+                        if (targeting.isAllowedAction(in, a)){
+                            biasedSum += rmProbs[i];
+                            biasedProbs[i] = rmProbs[i];
+                            inBiasActions++;
+                        } else biasedProbs[i] = -0.0;//negative zeros denote the banned actions
+                        i++;
                     }
                 }
-                if (biasedSum==0) {//if all actions were not present for the opponnet or it was under the current IS
-                    biasedProbs = rmProbs;
-                    biasedSum=1; inBiasActions=in.getActions().size();
-                }
-            } else {
+            }
+            if (biasedSum==0) {//if all actions were not present for the opponnet or it was under the current IS
                 biasedProbs = rmProbs;
-                biasedSum = 1; inBiasActions=in.getActions().size();
+                biasedSum=1; inBiasActions=in.getActions().size();
             }
             
             if (is.getPlayer().equals(expPlayer)){
@@ -305,25 +310,16 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         }
     }
     
-    public HashSet<Action> opponentAllowedActions = new HashSet();
-    public HashSet<Sequence> chanceAllowedSequences = new HashSet();//only because chance action have IS set to null 
-    public int opponentMaxSequenceLength = 0;
-    public int chanceMaxSequenceLength = 0;
+    private boolean giveUp = false;
     @Override
     public void setCurrentIS(InformationSet is){
         curIS = (MCTSInformationSet) is;
-        opponentAllowedActions.clear();
-        chanceAllowedSequences.clear();
-        for (GameState gs : curIS.getAllStates()){
-            Sequence s = gs.getSequenceFor(getOpponent());
-            opponentAllowedActions.addAll(s.getAsList());
-            opponentMaxSequenceLength = Math.max(opponentMaxSequenceLength, s.size());
-            if (gs.getAllPlayers().length>2){
-                s = gs.getSequenceFor(getNaturePlayer());
-                chanceAllowedSequences.addAll(s.getAllPrefixes());
-                chanceMaxSequenceLength = Math.max(chanceMaxSequenceLength, s.size());
-            }
+        if (curIS.getAllNodes().isEmpty()){
+            giveUp=true;
+            clearTreeISs();
+            return;
         }
+        targeting.update(is);
         if (dropTree) clearTreeISs();
     }
     
@@ -342,30 +338,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
     @Override
     public Action runMiliseconds(int miliseconds, GameState gameState) {
-        //TODO: finish debuging this
-        MCTSInformationSet is = rootNode.getAlgConfig().getInformationSetFor(gameState);
-        if (is.getAllNodes().isEmpty()){
-            Sequence[] seqs = new Sequence[gameState.getAllPlayers().length];
-            for (Player pl : gameState.getAllPlayers()){
-                seqs[pl.getId()] = new LinkedListSequenceImpl(gameState.getSequenceFor(pl));
-            }
-            InnerNode in = rootNode;
-            while (!in.getGameState().equals(gameState)){
-                in = (InnerNode) in.getChildFor(seqs[in.getGameState().getPlayerToMove().getId()].removeFirst());
-                if (in.getInformationSet().getAlgorithmData() == null){
-                    in.getInformationSet().setAlgorithmData(fact.createSelector(in.getActions()));
-                }
-            }
-            is = rootNode.getAlgConfig().getInformationSetFor(gameState);
-        }
-        if (!gameState.getPlayerToMove().equals(searchingPlayer)){
-            InnerNode in = is.getAllNodes().iterator().next();
-            in = (InnerNode) in.getChildFor(in.getActions().get(0));
-            setCurrentIS(in.getInformationSet());
-        } else {
-            setCurrentIS(rootNode.getAlgConfig().getInformationSetFor(gameState));
-        }
-        rootNode.setParent(null);
-        return runMiliseconds(miliseconds);
+        assert false;
+        return null;
     }
 }

@@ -1,6 +1,8 @@
-package cz.agents.gtlibrary.algorithms.stackelberg;
+package cz.agents.gtlibrary.algorithms.stackelberg.milp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.stackelberg.GeneralSumBestResponse;
+import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.DummyPrintStream;
@@ -15,20 +17,17 @@ import java.util.*;
  * Created by bosansky on 7/24/14.
  */
 public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMILP{
-    public StackelbergSequenceFormMILPOracle(Player[] players, GameInfo info, Expander expander) {
-        super(players, info, expander);
+    public StackelbergSequenceFormMILPOracle(Player[] players, Player leader, Player follower, GameInfo info, Expander expander) {
+        super(players, leader, follower, info, expander);
     }
 
-    public double calculateLeaderStrategies(int leaderIdx, int followerIdx, StackelbergConfig algConfig, Expander expander) {
+    public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
 
         Set<Sequence> neverBR = new HashSet<>();
-        leader = players[leaderIdx];
-        follower = players[followerIdx];
-
         double maxValue = Double.NEGATIVE_INFINITY;
-//        Set<Sequence> followerBR = new HashSet<Sequence>();
-        Map<Sequence, Double> leaderResult = new HashMap<Sequence, Double>();
-//        Map<Sequence, Double> followerResult = new HashMap<Sequence, Double>();
+//        Set<Sequence> followerBR = new HashSet<>();
+        Map<Sequence, Double> leaderResult = new HashMap<>();
+//        Map<Sequence, Double> followerResult = new HashMap<>();
 
         Map<Sequence, Double> firstRP = new HashMap<>();
         firstRP.put(algConfig.getRootState().getSequenceFor(follower), 1d);
@@ -73,11 +72,11 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
 
                 Map<Sequence, Double> nextBR = new HashMap<>();
                 nextBR.putAll(currentBR.realizationPlan);
-                InformationSet isToBeExtended = null;
+                SequenceInformationSet isToBeExtended = null;
                 mainloop:
                 for (Sequence s : nextBR.keySet()) {
                     isloop:
-                    for (InformationSet i : algConfig.getReachableSets(s)) {
+                    for (SequenceInformationSet i : algConfig.getReachableSets(s)) {
                         if (i.getPlayer().equals(leader)) continue;
                         if (!expander.getActions(i).isEmpty()) {
                             for (Action a : (List<Action>)expander.getActions(i)) {
@@ -103,7 +102,7 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
 
                 tightBoundsForSequences(cplex, nextBR.keySet());
 
-                for (Action a : (List<Action>)expander.getActions(isToBeExtended)) {
+                for (Action a : expander.getActions(isToBeExtended)) {
                     Sequence newSequence = new ArrayListSequenceImpl(isToBeExtended.getAllStates().iterator().next().getSequenceForPlayerToMove());
                     newSequence.addLast(a);
 

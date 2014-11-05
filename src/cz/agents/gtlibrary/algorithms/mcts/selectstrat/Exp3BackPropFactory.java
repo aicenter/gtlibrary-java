@@ -40,6 +40,7 @@ public class Exp3BackPropFactory implements BackPropFactory  {
     public double gamma = 0.05;
     public boolean useCFRValues = false;
     public boolean storeExploration = false;
+    public boolean useExp3L = false;
     Random random;
     /** Each player's contribution to the probability of being in current IS. */
     double[] pi = new double[]{1,1,1};
@@ -82,12 +83,12 @@ public class Exp3BackPropFactory implements BackPropFactory  {
 
     @Override
     public Selector createSelector(List<Action> actions) {
-        return new Exp3Selector(actions,this);
+        return useExp3L ? new Exp3LSelector(actions, this) : new Exp3Selector(actions,this);
     }
     
     @Override
     public Selector createSelector(int N) {
-        return new Exp3Selector(N,this);
+        return useExp3L ? new Exp3LSelector(N, this) : new Exp3Selector(N,this);
     }
 
     @Override

@@ -181,10 +181,10 @@ public class RecyclingLPTable extends LPTable {
 
         for (Entry<Object, Map<Object, Double>> rowEntry : updatedConstraints.entrySet()) {
             assert rowEntry.getValue().get("t") == null || Math.abs(rowEntry.getValue().get("t")) == 1 || Math.abs(rowEntry.getValue().get("t")) == 0;
-            modifyExistingConstraint(x, cplexConstraints, rowEntry, getEquationIndex(rowEntry.getKey()) - 1);
+            modifyExistingConstraint(x, cplexConstraints, rowEntry, getEquationIndex(rowEntry.getKey()));
         }
         for (Object eqKey : removedConstraints) {
-            int equationIndex = getEquationIndex(eqKey) - 1;
+            int equationIndex = getEquationIndex(eqKey);
 
             cplex.remove(cplexConstraints[equationIndex]);
             cplexConstraints[equationIndex] = null;
@@ -193,7 +193,7 @@ public class RecyclingLPTable extends LPTable {
         removedConstraints.clear();
 
         for (Entry<Object, Map<Object, Double>> rowEntry : newConstraints.entrySet()) {
-            int equationIndex = getEquationIndex(rowEntry.getKey()) - 1;
+            int equationIndex = getEquationIndex(rowEntry.getKey());
 
             if (cplexConstraints[equationIndex] == null) {
                 assert rowEntry.getValue().get("t") == null || rowEntry.getValue().get("t") == 1;
@@ -218,11 +218,11 @@ public class RecyclingLPTable extends LPTable {
 
     private void updateConstant(IloRange[] cplexConstraints, Object eqKey, Double constant) throws IloException {
         if (constraintTypes.get(eqKey) == 0)
-            cplexConstraints[getEquationIndex(eqKey) - 1].setUB(constant);
+            cplexConstraints[getEquationIndex(eqKey)].setUB(constant);
         else if (constraintTypes.get(eqKey) == 2)
-            cplexConstraints[getEquationIndex(eqKey) - 1].setLB(constant);
+            cplexConstraints[getEquationIndex(eqKey)].setLB(constant);
         else
-            cplexConstraints[getEquationIndex(eqKey) - 1].setBounds(constant, constant);
+            cplexConstraints[getEquationIndex(eqKey)].setBounds(constant, constant);
     }
 
     private void modifyExistingConstraint(IloNumVar[] x, IloRange[] cplexConstraints, Entry<Object, Map<Object, Double>> rowEntry, int equationIndex) throws IloException {

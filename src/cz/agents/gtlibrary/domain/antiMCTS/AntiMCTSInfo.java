@@ -17,10 +17,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package cz.agents.gtlibrary.domain.antiMCTS;
 
 import cz.agents.gtlibrary.domain.phantomTTT.*;
@@ -31,7 +27,8 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 /**
  * A single player game in which the optimal path is to always play right (utility 1),
- * but the player is deceived by payoffs to play left.
+ * but the player is deceived by payoffs to play left. The linear payoffs version is very
+ * similar to Coquelin, Munos:Bandit algorithms for tree search. UAI 2007.
  * @author vilo
  */
 public class AntiMCTSInfo implements GameInfo{

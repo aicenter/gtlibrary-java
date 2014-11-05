@@ -23,6 +23,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.resultparser.LemkeResultParser;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
@@ -81,7 +82,7 @@ public class DODataBuilder {
 
 	public void solve() {
 		try {
-			data.export(fileName);
+			data.exportLemkeData(fileName);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -93,7 +94,7 @@ public class DODataBuilder {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		ResultParser parser = new ResultParser(fileName + "l1qp", getP1IndicesOfSequences(), getP2IndicesOfSequences());
+		LemkeResultParser parser = new LemkeResultParser(fileName + "l1qp", getP1IndicesOfSequences(), getP2IndicesOfSequences());
 		
 		p1RealizationPlan = parser.getP1RealizationPlan();
 		p2RealizationPlan = parser.getP2RealizationPlan();
@@ -199,8 +200,8 @@ public class DODataBuilder {
 			for (Sequence p2Sequence : p2Sequences) {
 				Double utility = config.getUtilityFromAllFor(p1Sequence, p2Sequence);
 
-				if (utility != null) 
-					data.addToU(p1Sequence, p2Sequence, utility);
+				if (utility != null)
+					data.addToU1(p1Sequence, p2Sequence, utility);
 			}
 		}
 	}

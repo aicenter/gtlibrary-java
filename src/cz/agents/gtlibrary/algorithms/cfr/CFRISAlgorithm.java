@@ -30,7 +30,7 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -157,6 +157,16 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
         firstIteration = false;
         System.out.println();
         System.out.println("Iters: " + iters);
+        return null;
+    }
+
+    public Action runIterations(int iterations){
+        for (int i = 0; i < iterations; i++) {
+            iteration(rootState, 1, 1, rootState.getAllPlayers()[0]);
+            iteration(rootState, 1, 1, rootState.getAllPlayers()[1]);
+        }
+        firstIteration = false;
+        System.out.println();
         return null;
     }
 

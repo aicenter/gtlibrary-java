@@ -46,10 +46,8 @@ public abstract class PokerGameState extends GameStateImpl {
 	protected int gainForFirstPlayer;
 	protected int hash = -1;
 
-	private double[] utilities;
+	protected double[] utilities;
 	
-	private final double coef = 1;
-
 	public PokerGameState(Player[] players, int ante) {
 		super(players);
 		this.playerCards = new PokerAction[2];
@@ -95,11 +93,11 @@ public abstract class PokerGameState extends GameStateImpl {
 			int result = hasPlayerOneWon();
 
 			if (result > 0)
-				utilities = new double[] { coef*gainForFirstPlayer, -coef*gainForFirstPlayer, 0 };
+				utilities = new double[] { gainForFirstPlayer, -gainForFirstPlayer, 0 };
 			else if (result == 0)
 				utilities = new double[] { 0, 0, 0 };
 			else
-				utilities = new double[] { coef*(gainForFirstPlayer - pot), coef*(pot - gainForFirstPlayer), 0 };
+				utilities = new double[] { gainForFirstPlayer - pot, pot - gainForFirstPlayer, 0 };
 			return utilities;
 		}
 		return new double[] { 0 };
