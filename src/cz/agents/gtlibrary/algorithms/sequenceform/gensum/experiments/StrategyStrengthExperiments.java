@@ -1,10 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.gensum.experiments;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
-import cz.agents.gtlibrary.algorithms.mcts.DefaultSimulator;
-import cz.agents.gtlibrary.algorithms.mcts.ISMCTSAlgorithm;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
@@ -514,7 +511,7 @@ public class StrategyStrengthExperiments {
             brWriter = new BufferedWriter(new FileWriter("P1BRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
             wrWriter = new BufferedWriter(new FileWriter("P1WRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
 
-            CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[0], root, expander);
+            CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[1], root, expander);
 
             buildCompleteTree(cfr.getRootNode());
             for (int i = 0; i < 200; i++) {
@@ -568,12 +565,16 @@ public class StrategyStrengthExperiments {
             brWriter = new BufferedWriter(new FileWriter("P1BRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
             wrWriter = new BufferedWriter(new FileWriter("P1WRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
 
-            ISMCTSAlgorithm mcts = new ISMCTSAlgorithm(root.getAllPlayers()[0], new DefaultSimulator(expander),
-                    new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
-
-            for (int i = 0; i < 200; i++) {
-                mcts.runIterations(500);
-                Strategy strategy = StrategyCollector.getStrategyFor(mcts.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
+            ISMCTSExploitability.rootState = root;
+            ISMCTSExploitability.expander = expander;
+            ISMCTSExploitability.gameInfo = info;
+            GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
+//            GenSumISMCTSAlgorithm mcts = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
+            for (int i = 0; i < 500; i++) {
+                GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
+                        GenSumISMCTSNestingRunner.alg.getRootNode(), 200);
+//                mcts.runIterations(500);
+                Strategy strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
                 GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 0, getActingPlayers(root), algConfig, info);
 
