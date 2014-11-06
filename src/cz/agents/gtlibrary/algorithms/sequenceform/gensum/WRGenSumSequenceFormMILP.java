@@ -14,9 +14,9 @@ public class WRGenSumSequenceFormMILP extends BRGenSumSequenceFormMILP {
     protected void addObjective() {
         for (Map.Entry<Map<Player, Sequence>, Double[]> entry : config.getUtilityForSequenceCombinationGenSum().entrySet()) {
             Sequence playerSequence = entry.getKey().get(player);
-            double utility = entry.getValue()[player.getId()];
+            double utility = entry.getValue()[1 - player.getId()];
 
-            lpTable.setObjective(playerSequence, -utility * opponentRealPlan.get(entry.getKey().get(info.getOpponent(player))));
+            lpTable.setObjective(playerSequence, utility * opponentRealPlan.get(entry.getKey().get(info.getOpponent(player))));
         }
     }
 
