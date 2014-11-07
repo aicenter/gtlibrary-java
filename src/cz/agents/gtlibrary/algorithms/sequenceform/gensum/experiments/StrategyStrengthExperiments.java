@@ -44,17 +44,6 @@ import java.util.*;
 
 public class StrategyStrengthExperiments {
 
-    public static BufferedWriter neWriter;
-    public static BufferedWriter undomWriter;
-    public static BufferedWriter qpWriter;
-    public static BufferedWriter p1MaxWriter;
-    public static BufferedWriter welfareWriter;
-    public static BufferedWriter stackWriter;
-    public static BufferedWriter brWriter;
-    public static BufferedWriter wrWriter;
-    public static BufferedWriter cfrWriter;
-    public static BufferedWriter mctsWriter;
-
     /**
      * bf, depth, corr, observations, seed
      *
@@ -395,14 +384,14 @@ public class StrategyStrengthExperiments {
 
     private static void evaluateAgainstBRNE(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult, Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<SequenceInformationSet> expander, GameInfo info, GenSumSequenceFormConfig algConfig, Player player) {
         try {
-            neWriter = new BufferedWriter(new FileWriter("P1NEvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
-            undomWriter = new BufferedWriter(new FileWriter("P1UndomvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
-            qpWriter = new BufferedWriter(new FileWriter("P1QPvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
-            p1MaxWriter = new BufferedWriter(new FileWriter("P1MNEvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
-            welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
-            stackWriter = new BufferedWriter(new FileWriter("P1StackvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
-            cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
-            mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter undomWriter = new BufferedWriter(new FileWriter("P1UndomvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter qpWriter = new BufferedWriter(new FileWriter("P1QPvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter p1MaxWriter = new BufferedWriter(new FileWriter("P1MNEvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter stackWriter = new BufferedWriter(new FileWriter("P1StackvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsBRNEExpVal" + getDomainDependentString() + ".csv", true));
 
             SolverResult vsNeSolverResult = new BRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], neResult.p1RealPlan).compute();
             SolverResult vsUndomSolverResult = new BRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], undomResult.p1RealPlan).compute();
@@ -453,14 +442,14 @@ public class StrategyStrengthExperiments {
 
     private static void evaluateAgainstWRNE(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult, Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<SequenceInformationSet> expander, GameInfo info, GenSumSequenceFormConfig algConfig, Player player) {
         try {
-            neWriter = new BufferedWriter(new FileWriter("P1NEvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
-            undomWriter = new BufferedWriter(new FileWriter("P1UndomvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
-            qpWriter = new BufferedWriter(new FileWriter("P1QPvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
-            p1MaxWriter = new BufferedWriter(new FileWriter("P1MNEvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
-            welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
-            stackWriter = new BufferedWriter(new FileWriter("P1StackvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
-            cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
-            mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter undomWriter = new BufferedWriter(new FileWriter("P1UndomvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter qpWriter = new BufferedWriter(new FileWriter("P1QPvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter p1MaxWriter = new BufferedWriter(new FileWriter("P1MNEvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter stackWriter = new BufferedWriter(new FileWriter("P1StackvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsWRNEExpVal" + getDomainDependentString() + ".csv", true));
             SolverResult vsNeSolverResult = new WRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], neResult.p1RealPlan).compute();
             SolverResult vsUndomSolverResult = new WRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], undomResult.p1RealPlan).compute();
             SolverResult vsQPSolverResult = new WRGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1], qpResult.p1RealPlan).compute();
@@ -529,16 +518,16 @@ public class StrategyStrengthExperiments {
     private static void evaluateP1StrategiesAgainstQRE(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult,
                                                        Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<SequenceInformationSet> expander, GameInfo info, SequenceFormConfig<SequenceInformationSet> algConfig, Player player) {
         try {
-            neWriter = new BufferedWriter(new FileWriter("P1NEvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            undomWriter = new BufferedWriter(new FileWriter("P1UndomvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            qpWriter = new BufferedWriter(new FileWriter("P1QPvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            p1MaxWriter = new BufferedWriter(new FileWriter("P1MNEvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            stackWriter = new BufferedWriter(new FileWriter("P1StackvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            wrWriter = new BufferedWriter(new FileWriter("P1WRvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter undomWriter = new BufferedWriter(new FileWriter("P1UndomvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter qpWriter = new BufferedWriter(new FileWriter("P1QPvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter p1MaxWriter = new BufferedWriter(new FileWriter("P1MNEvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter stackWriter = new BufferedWriter(new FileWriter("P1StackvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter brWriter = new BufferedWriter(new FileWriter("P1BRvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter wrWriter = new BufferedWriter(new FileWriter("P1WRvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsQREExpVal" + getDomainDependentString() + ".csv", true));
 
             QRESolver solver = new QRESolver(root, expander, info, algConfig);
             QREResult qreResult = solver.solve();
@@ -612,16 +601,16 @@ public class StrategyStrengthExperiments {
     private static void evaluateP1StrategiesAgainstCFR(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult,
                                                        Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<MCTSInformationSet> expander, GameInfo info, MCTSConfig algConfig, Player player) {
         try {
-            neWriter = new BufferedWriter(new FileWriter("P1NEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            undomWriter = new BufferedWriter(new FileWriter("P1UndomvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            qpWriter = new BufferedWriter(new FileWriter("P1QPvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            p1MaxWriter = new BufferedWriter(new FileWriter("P1MNEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            stackWriter = new BufferedWriter(new FileWriter("P1StackvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            wrWriter = new BufferedWriter(new FileWriter("P1WRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter undomWriter = new BufferedWriter(new FileWriter("P1UndomvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter qpWriter = new BufferedWriter(new FileWriter("P1QPvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter p1MaxWriter = new BufferedWriter(new FileWriter("P1MNEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter stackWriter = new BufferedWriter(new FileWriter("P1StackvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter brWriter = new BufferedWriter(new FileWriter("P1BRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter wrWriter = new BufferedWriter(new FileWriter("P1WRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsCFRExpVal" + getDomainDependentString() + ".csv", true));
 
             CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[1], root, expander);
 
@@ -674,16 +663,16 @@ public class StrategyStrengthExperiments {
     private static void evaluateP1StrategiesAgainstMCTS(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult,
                                                         Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<MCTSInformationSet> expander, GameInfo info, MCTSConfig algConfig, Player player) {
         try {
-            neWriter = new BufferedWriter(new FileWriter("P1NEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            undomWriter = new BufferedWriter(new FileWriter("P1UndomvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            qpWriter = new BufferedWriter(new FileWriter("P1QPvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            p1MaxWriter = new BufferedWriter(new FileWriter("P1MNEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            stackWriter = new BufferedWriter(new FileWriter("P1StackvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            wrWriter = new BufferedWriter(new FileWriter("P1WRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter undomWriter = new BufferedWriter(new FileWriter("P1UndomvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter qpWriter = new BufferedWriter(new FileWriter("P1QPvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter p1MaxWriter = new BufferedWriter(new FileWriter("P1MNEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter welfareWriter = new BufferedWriter(new FileWriter("P1WNEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter stackWriter = new BufferedWriter(new FileWriter("P1StackvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter brWriter = new BufferedWriter(new FileWriter("P1BRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter wrWriter = new BufferedWriter(new FileWriter("P1WRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
 
             ISMCTSExploitability.rootState = root;
             ISMCTSExploitability.expander = expander;

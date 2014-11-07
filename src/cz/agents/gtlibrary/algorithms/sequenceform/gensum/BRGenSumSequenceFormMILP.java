@@ -30,7 +30,7 @@ public class BRGenSumSequenceFormMILP extends GenSumSequenceFormMILP {
             Sequence playerSequence = entry.getKey().get(player);
             double utility = entry.getValue()[1 - player.getId()];
 
-            lpTable.setObjective(playerSequence, -utility * opponentRealPlan.get(entry.getKey().get(info.getOpponent(player))));
+            lpTable.addToObjective(playerSequence, -utility * opponentRealPlan.get(entry.getKey().get(info.getOpponent(player))));
         }
     }
 }
