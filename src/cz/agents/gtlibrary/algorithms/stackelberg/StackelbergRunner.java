@@ -75,8 +75,8 @@ public class StackelbergRunner {
 
 //        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
 //        runner.generate(rootState.getAllPlayers()[0], new StackelbergMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-//        runner.generate(rootState.getAllPlayers()[0], new DOBSS(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[0], new DOBSS(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
         new GambitEFG().write("randomGame.gbt", rootState, expander);
     }
 
@@ -171,10 +171,6 @@ public class StackelbergRunner {
         System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
 
         long startCPLEX = threadBean.getCurrentThreadCpuTime();
-//        StackelbergSequenceFormLP sequenceFormLP = new StackelbergSequenceFormLP(actingPlayers, gameConfig, expander);
-//        StackelbergSequenceFormMILP sequenceFormLP = new StackelbergSequenceFormMILP(actingPlayers, gameConfig, expander);
-        StackelbergSequenceFormMILPIncremental sequenceFormLP = new StackelbergSequenceFormMILPIncremental(actingPlayers, gameConfig, expander);
-//        StackelbergSequenceFormMILPOracle sequenceFormLP = new StackelbergSequenceFormMILPOracle(actingPlayers, gameConfig, expander);
 
         solver.calculateLeaderStrategies(algConfig, expander);
 
