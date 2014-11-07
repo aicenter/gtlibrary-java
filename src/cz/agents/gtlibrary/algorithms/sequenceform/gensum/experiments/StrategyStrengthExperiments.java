@@ -8,6 +8,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
@@ -357,33 +358,37 @@ public class StrategyStrengthExperiments {
     private static Map<Sequence, Double> getMCTSStrategy(GameState root, Expander<MCTSInformationSet> expander, GameInfo info) {
         ISMCTSExploitability.rootState = root;
         ISMCTSExploitability.expander = expander;
-        ISMCTSExploitability.gameInfo = info;
-        GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
+        BackPropFactory factory = new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility());
+        GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), factory, root, expander);
 //            GenSumISMCTSAlgorithm mcts = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
-        GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
-        GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
-                GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
-        Strategy strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
-
-        if (strategy.size() <= 2) {
-            GenSumISMCTSNestingRunner.alg.runMiliseconds(150);
-            GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
-                    GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
-
-            strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
-            if (strategy.size() <= 2) {
-                GenSumISMCTSNestingRunner.alg.runMiliseconds(150);
-            }
-        }
+//        GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
+//        GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
+//                GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
+//        Strategy strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
+//
+//        if (strategy.size() <= 2) {
+//            GenSumISMCTSNestingRunner.alg.runMiliseconds(150);
+//            GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
+//                    GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
+//
+//            strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
+//            if (strategy.size() <= 2) {
+//                GenSumISMCTSNestingRunner.alg.runMiliseconds(150);
+//            }
+//        }
+        buildMCTSCompleteTree(GenSumISMCTSNestingRunner.alg.getRootNode(), factory);
+        InnerNode rootNode =  GenSumISMCTSNestingRunner.alg.getRootNode();
+//        GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
         GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[0], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
                 GenSumISMCTSNestingRunner.alg.getRootNode(), 100000);
+        GenSumISMCTSNestingRunner.alg.setCurrentIS(rootNode.getInformationSet());
         return StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
     }
 
     private static Map<Sequence, Double> getCFRStrategy(GameState root, Expander<MCTSInformationSet> expander) {
         CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[0], root, expander);
 
-        buildCompleteTree(cfr.getRootNode());
+        buildCFRCompleteTree(cfr.getRootNode());
         cfr.runIterations(100000);
         return StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
     }
@@ -620,7 +625,7 @@ public class StrategyStrengthExperiments {
 
             CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[1], root, expander);
 
-            buildCompleteTree(cfr.getRootNode());
+            buildCFRCompleteTree(cfr.getRootNode());
             for (int i = 0; i < 500; i++) {
                 cfr.runIterations(20);
                 Strategy strategy = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
@@ -683,28 +688,17 @@ public class StrategyStrengthExperiments {
             ISMCTSExploitability.rootState = root;
             ISMCTSExploitability.expander = expander;
             ISMCTSExploitability.gameInfo = info;
-            GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
-            GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
+            BackPropFactory factory = new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility());
+            GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), factory, root, expander);
+            buildMCTSCompleteTree(GenSumISMCTSNestingRunner.alg.getRootNode(), factory);
+            InnerNode rootNode = GenSumISMCTSNestingRunner.alg.getRootNode();
 //            GenSumISMCTSAlgorithm mcts = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
             for (int i = 0; i < 500; i++) {
                 GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
                         GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
+                GenSumISMCTSNestingRunner.alg.setCurrentIS(rootNode.getInformationSet());
                 Strategy strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
 
-                if (strategy.size() <= 2) {
-                    GenSumISMCTSNestingRunner.alg.runMiliseconds(150);
-                    GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
-                            GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
-
-                    strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
-                    if (strategy.size() <= 2) {
-                        GenSumISMCTSNestingRunner.alg.runMiliseconds(150);
-                        GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
-                                GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
-
-                        strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
-                    }
-                }
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
                 GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 0, getActingPlayers(root), algConfig, info);
 
@@ -749,7 +743,7 @@ public class StrategyStrengthExperiments {
         }
     }
 
-    public static void buildCompleteTree(InnerNode r) {
+    public static void buildCFRCompleteTree(InnerNode r) {
         System.out.println("Building complete tree.");
         int nodes = 0, infosets = 0;
         ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
@@ -762,6 +756,30 @@ public class StrategyStrengthExperiments {
                 if (is.getAlgorithmData() == null) {
                     infosets++;
                     is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+                }
+            for (Action a : n.getActions()) {
+                Node ch = n.getChildFor(a);
+                if (ch instanceof InnerNode) {
+                    q.add((InnerNode) ch);
+                }
+            }
+        }
+        System.out.println("Created nodes: " + nodes + "; infosets: " + infosets);
+    }
+
+    public static void buildMCTSCompleteTree(InnerNode r, BackPropFactory factory) {
+        System.out.println("Building complete tree.");
+        int nodes = 0, infosets = 0;
+        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
+        q.add(r);
+        while (!q.isEmpty()) {
+            nodes++;
+            InnerNode n = q.removeFirst();
+            MCTSInformationSet is = n.getInformationSet();
+            if (!(n instanceof ChanceNode))
+                if (is.getAlgorithmData() == null) {
+                    infosets++;
+                    is.setAlgorithmData(factory.createSelector(n.getActions()));
                 }
             for (Action a : n.getActions()) {
                 Node ch = n.getChildFor(a);
