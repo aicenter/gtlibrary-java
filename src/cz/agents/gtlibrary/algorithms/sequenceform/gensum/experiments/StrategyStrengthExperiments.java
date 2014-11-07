@@ -360,6 +360,7 @@ public class StrategyStrengthExperiments {
         ISMCTSExploitability.gameInfo = info;
         GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
 //            GenSumISMCTSAlgorithm mcts = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
+        GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
         GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
                 GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
         Strategy strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
@@ -545,6 +546,7 @@ public class StrategyStrengthExperiments {
             writeLambdas(stackWriter, qreResult.lambdas);
             writeLambdas(brWriter, qreResult.lambdas);
             writeLambdas(wrWriter, qreResult.lambdas);
+            writeLambdas(mctsWriter, qreResult.lambdas);
             writeLambdas(cfrWriter, qreResult.lambdas);
             for (Map<Player, Map<Sequence, Double>> quantalResponse : qreResult.quantalResponses) {
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
@@ -619,7 +621,7 @@ public class StrategyStrengthExperiments {
             CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[1], root, expander);
 
             buildCompleteTree(cfr.getRootNode());
-            for (int i = 0; i < 1000; i++) {
+            for (int i = 0; i < 500; i++) {
                 cfr.runIterations(20);
                 Strategy strategy = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
@@ -684,7 +686,7 @@ public class StrategyStrengthExperiments {
             GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
             GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
 //            GenSumISMCTSAlgorithm mcts = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
-            for (int i = 0; i < 2000; i++) {
+            for (int i = 0; i < 500; i++) {
                 GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
                         GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
                 Strategy strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
