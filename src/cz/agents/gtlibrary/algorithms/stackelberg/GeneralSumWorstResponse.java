@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class GeneralSumWorstResponse extends SQFBestResponseAlgorithm {
 
-    public GeneralSumWorstResponse(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, ConfigImpl algConfig, GameInfo gameInfo) {
+    public GeneralSumWorstResponse(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo) {
         super(expander, searchingPlayerIndex, actingPlayers, algConfig, gameInfo);
     }
 

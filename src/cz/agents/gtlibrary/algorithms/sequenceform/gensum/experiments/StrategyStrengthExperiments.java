@@ -50,11 +50,11 @@ public class StrategyStrengthExperiments {
      * @param args
      */
     public static void main(String[] args) {
-//        runGenSumKuhnPoker(0.1);
+        runGenSumKuhnPoker(0.1);
 //        runGenSumBPG(Integer.parseInt(args[0]));
 //        runGenSumGenericPoker(0.1);
 //        runGenSumPursuit(1);
-        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
+//        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
     }
 
     private static void runGenSumPursuit(int depth) {
@@ -191,9 +191,9 @@ public class StrategyStrengthExperiments {
         SolverResult p1MaxResult = p1MaxSolver.compute();
         SolverResult welfareResult = welfareSolver.compute();
         MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> mctsP1Expander = new RandomGameExpander<>(mctsP1Config);
+        Expander<MCTSInformationSet> mctsP1Expander = new KuhnPokerExpander<>(mctsP1Config);
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> cfrP1Expander = new RandomGameExpander<>(cfrP1Config);
+        Expander<MCTSInformationSet> cfrP1Expander = new KuhnPokerExpander<>(cfrP1Config);
 
         Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
         Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
@@ -366,11 +366,9 @@ public class StrategyStrengthExperiments {
 //            }
 //        }
         buildMCTSCompleteTree(GenSumISMCTSNestingRunner.alg.getRootNode(), factory);
-        InnerNode rootNode =  GenSumISMCTSNestingRunner.alg.getRootNode();
-//        GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
         GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[0], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
                 GenSumISMCTSNestingRunner.alg.getRootNode(), 100000);
-        GenSumISMCTSNestingRunner.alg.setCurrentIS(rootNode.getInformationSet());
+        GenSumISMCTSNestingRunner.alg.resetRootNode();
         return StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
     }
 
@@ -705,13 +703,12 @@ public class StrategyStrengthExperiments {
             BackPropFactory factory = new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility());
             GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), factory, root, expander);
             buildMCTSCompleteTree(GenSumISMCTSNestingRunner.alg.getRootNode(), factory);
-            InnerNode rootNode = GenSumISMCTSNestingRunner.alg.getRootNode();
 //            GenSumISMCTSAlgorithm mcts = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
             for (int i = 0; i < 100; i++) {
                 GenSumISMCTSNestingRunner.clear();
                 GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
                         GenSumISMCTSNestingRunner.alg.getRootNode(), 200);
-                GenSumISMCTSNestingRunner.alg.setCurrentIS(rootNode.getInformationSet());
+                GenSumISMCTSNestingRunner.alg.resetRootNode();
                 Strategy strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
 
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
