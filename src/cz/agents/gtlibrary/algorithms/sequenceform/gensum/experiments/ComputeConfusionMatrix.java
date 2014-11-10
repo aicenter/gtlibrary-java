@@ -21,6 +21,7 @@ import cz.agents.gtlibrary.algorithms.stackelberg.*;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenSumGPGameState;
@@ -42,10 +43,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-public class StrategyStrengthExperiments {
+public class ComputeConfusionMatrix {
 
     /**
-     * bf, depth, corr, observations, seed
+     * bf, depth, corr, observations, seed, filename
      *
      * @param args
      */
@@ -54,7 +55,7 @@ public class StrategyStrengthExperiments {
 //        runGenSumBPG(Integer.parseInt(args[0]));
 //        runGenSumGenericPoker(0.1);
 //        runGenSumPursuit(1);
-        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
+        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), args[5]);
     }
 
     private static void runGenSumPursuit(int depth) {
@@ -67,55 +68,134 @@ public class StrategyStrengthExperiments {
 
         builder.generateCompleteGame();
 
-        GenSumSequenceFormMILP undomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p1UndomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p2UndomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[1]);
         GenSumSequenceFormMILP p1MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p2MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1]);
         GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
         GenSumSequenceFormMILP welfareSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], root.getAllPlayers()[1]);
         DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
 
         SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
-        SolverResult undomResult = undomSolver.compute();
+        SolverResult p1UndomResult = p1UndomSolver.compute();
+        SolverResult p2UndomResult = p2UndomSolver.compute();
         SolverResult neResult = neSolver.compute();
         SolverResult p1MaxResult = p1MaxSolver.compute();
+        SolverResult p2MaxResult = p2MaxSolver.compute();
         SolverResult welfareResult = welfareSolver.compute();
-        MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> mctsP1Expander = new RandomGameExpander<>(mctsP1Config);
-        MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> cfrP1Expander = new RandomGameExpander<>(cfrP1Config);
+        MCTSConfig mctsP1Config = new MCTSConfig();
+        Expander<MCTSInformationSet> mctsP1Expander = new PursuitExpander<>(mctsP1Config);
+        MCTSConfig cfrP1Config = new MCTSConfig();
+        Expander<MCTSInformationSet> cfrP1Expander = new PursuitExpander<>(cfrP1Config);
 
-        Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
-        Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
+        Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander, root.getAllPlayers()[0]);
+        Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info, root.getAllPlayers()[0]);
 
-        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
-        Expander<SequenceInformationSet> stackelbergExpander = new PursuitExpander<>(stackelbergConfig);
-        StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
-        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
-        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
+        MCTSConfig mctsP2Config = new MCTSConfig();
+        Expander<MCTSInformationSet> mctsP2Expander = new PursuitExpander<>(mctsP2Config);
+        MCTSConfig cfrP2Config = new MCTSConfig();
+        Expander<MCTSInformationSet> cfrP2Expander = new PursuitExpander<>(cfrP2Config);
+
+        Map<Sequence, Double> cfrP2RealPlan = getCFRStrategy(root, cfrP2Expander, root.getAllPlayers()[1]);
+        Map<Sequence, Double> mctsP2RealPlan = getMCTSStrategy(root, mctsP2Expander, info, root.getAllPlayers()[1]);
+
+        Map<Player, Map<Sequence, Double>> p1Stack = getStackelberg(root, info, expander, root.getAllPlayers()[0]);
+        Map<Player, Map<Sequence, Double>> p2Stack = getStackelberg(root, info, expander, root.getAllPlayers()[1]);
+
+        Map<String, Map<Sequence, Double>> p1Rps = new LinkedHashMap<>();
+        Map<String, Map<Sequence, Double>> p2Rps = new LinkedHashMap<>();
 
 
-        if (qpResult != null && undomResult != null && neResult != null) {
-            StackelbergConfig stackConfig = new StackelbergConfig(root);
-            Expander<SequenceInformationSet> stackExpander = new PursuitExpander<>(stackConfig);
-            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+        p1Rps.put("P1NE", neResult.p1RealPlan);
+        p1Rps.put("P1Undom", p1UndomResult.p1RealPlan);
+        p1Rps.put("P1QPE", qpResult.p1RealPlan);
+        p1Rps.put("P1MNE", p1MaxResult.p1RealPlan);
+        p1Rps.put("P1WNE", welfareResult.p1RealPlan);
+        p1Rps.put("P1Stack", p1Stack.get(root.getAllPlayers()[0]));
+        p1Rps.put("P1CFR", cfrP1RealPlan);
+        p1Rps.put("P1MCTS", mctsP1RealPlan);
 
-            stackBuilder.generateCompleteGame();
-            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
-            Expander<MCTSInformationSet> mctsExpander = new PursuitExpander<>(mctsConfig);
-
-            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
-            Expander<MCTSInformationSet> cfrExpander = new PursuitExpander<>(cfrConfig);
-//            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
-            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+        p2Rps.put("P2NE", neResult.p2RealPlan);
+        p2Rps.put("P2Undom", p2UndomResult.p2RealPlan);
+        p2Rps.put("P2QPE", qpResult.p2RealPlan);
+        p2Rps.put("P2MNE", p2MaxResult.p2RealPlan);
+        p2Rps.put("P2WNE", welfareResult.p2RealPlan);
+        p2Rps.put("P2Stack", p2Stack.get(root.getAllPlayers()[1]));
+        p2Rps.put("P2CFR", cfrP2RealPlan);
+        p2Rps.put("P2MCTS", mctsP2RealPlan);
+        if (qpResult != null && p1UndomResult != null && p2UndomResult != null && neResult != null) {
+            try {
+                buildP1Matrix(p1Rps, p2Rps, root, expander, "testP1.csv");
+                buildP1Matrix(p1Rps, p2Rps, root, expander, "testP2.csv");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+//            StackelbergConfig stackConfig = new StackelbergConfig(root);
+//            Expander<SequenceInformationSet> stackExpander = new PursuitExpander<>(stackConfig);
+//            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+//
+//            stackBuilder.generateCompleteGame();
+//            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
+//            Expander<MCTSInformationSet> mctsExpander = new PursuitExpander<>(mctsConfig);
+//
+//            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
+//            Expander<MCTSInformationSet> cfrExpander = new PursuitExpander<>(cfrConfig);
+////            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
+//            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+//            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
         }
+    }
+
+    private static void buildP1Matrix(Map<String, Map<Sequence, Double>> p1Rps, Map<String, Map<Sequence, Double>> p2Rps, GameState root, Expander<? extends InformationSet> expander, String fileName) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+
+        for (Map.Entry<String, Map<Sequence, Double>> p1Entry : p1Rps.entrySet()) {
+            Iterator<Map.Entry<String, Map<Sequence, Double>>> iterator = p2Rps.entrySet().iterator();
+
+            while(iterator.hasNext()) {
+                Map.Entry<String, Map<Sequence, Double>> p2Entry = iterator.next();
+
+                writer.write("" + computeExpectedValue(p1Entry.getValue(), p2Entry.getValue(), root, expander)[0]);
+                if(iterator.hasNext())
+                    writer.write(", ");
+            }
+            writer.newLine();
+        }
+        writer.close();
+    }
+
+    private static void buildP2Matrix(Map<String, Map<Sequence, Double>> p1Rps, Map<String, Map<Sequence, Double>> p2Rps, GameState root, Expander<? extends InformationSet> expander, String fileName) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+
+        for (Map.Entry<String, Map<Sequence, Double>> p1Entry : p1Rps.entrySet()) {
+            Iterator<Map.Entry<String, Map<Sequence, Double>>> iterator = p2Rps.entrySet().iterator();
+
+            while(iterator.hasNext()) {
+                Map.Entry<String, Map<Sequence, Double>> p2Entry = iterator.next();
+
+                writer.write("" + computeExpectedValue(p1Entry.getValue(), p2Entry.getValue(), root, expander)[1]);
+                if(iterator.hasNext())
+                    writer.write(", ");
+            }
+            writer.newLine();
+        }
+        writer.close();
+    }
+
+    private static Map<Player, Map<Sequence, Double>> getStackelberg(GameState root, GameInfo info, Expander<SequenceInformationSet> expander, Player player) {
+        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
+        StackelbergRunner runner = new StackelbergRunner(root, expander, info, stackelbergConfig);
+        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), player, info.getOpponent(player), info, expander);
+
+        return runner.generate(player, solver);
     }
 
     private static void runGenSumBPG(int depth) {
         BPGGameInfo.DEPTH = depth;
-        GameState root = new GenSumBPGGameState();
+        GameState root = new BPGGameState();
         GameInfo info = new BPGGameInfo();
         GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
         Expander<SequenceInformationSet> expander = new BPGExpander<>(algConfig);
@@ -123,174 +203,154 @@ public class StrategyStrengthExperiments {
 
         builder.generateCompleteGame();
 
-        GenSumSequenceFormMILP undomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p1UndomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p2UndomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[1]);
         GenSumSequenceFormMILP p1MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p2MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1]);
         GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
         GenSumSequenceFormMILP welfareSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], root.getAllPlayers()[1]);
         DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
 
         SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
-        SolverResult undomResult = undomSolver.compute();
+        SolverResult p1UndomResult = p1UndomSolver.compute();
+        SolverResult p2UndomResult = p2UndomSolver.compute();
         SolverResult neResult = neSolver.compute();
         SolverResult p1MaxResult = p1MaxSolver.compute();
+        SolverResult p2MaxResult = p2MaxSolver.compute();
         SolverResult welfareResult = welfareSolver.compute();
         MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> mctsP1Expander = new RandomGameExpander<>(mctsP1Config);
+        Expander<MCTSInformationSet> mctsP1Expander = new BPGExpander<>(mctsP1Config);
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> cfrP1Expander = new RandomGameExpander<>(cfrP1Config);
+        Expander<MCTSInformationSet> cfrP1Expander = new BPGExpander<>(cfrP1Config);
 
-        Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
-        Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
+        Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander, root.getAllPlayers()[0]);
+        Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info, root.getAllPlayers()[0]);
 
-        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
-        Expander<SequenceInformationSet> stackelbergExpander = new BPGExpander<>(stackelbergConfig);
-        StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
-        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
-        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
+        MCTSConfig mctsP2Config = new MCTSConfig(new Random(1));
+        Expander<MCTSInformationSet> mctsP2Expander = new BPGExpander<>(mctsP2Config);
+        MCTSConfig cfrP2Config = new MCTSConfig(new Random(1));
+        Expander<MCTSInformationSet> cfrP2Expander = new BPGExpander<>(cfrP2Config);
+
+        Map<Sequence, Double> cfrP2RealPlan = getCFRStrategy(root, cfrP2Expander, root.getAllPlayers()[1]);
+        Map<Sequence, Double> mctsP2RealPlan = getMCTSStrategy(root, mctsP2Expander, info, root.getAllPlayers()[1]);
+
+        Map<Player, Map<Sequence, Double>> p1Stack = getStackelberg(root, info, expander, root.getAllPlayers()[0]);
+        Map<Player, Map<Sequence, Double>> p2Stack = getStackelberg(root, info, expander, root.getAllPlayers()[1]);
+
+        Map<String, Map<Sequence, Double>> p1Rps = new LinkedHashMap<>();
+        Map<String, Map<Sequence, Double>> p2Rps = new LinkedHashMap<>();
 
 
-        if (qpResult != null && undomResult != null && neResult != null) {
-            StackelbergConfig stackConfig = new StackelbergConfig(root);
-            Expander<SequenceInformationSet> stackExpander = new BPGExpander<>(stackConfig);
-            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+        p1Rps.put("P1NE", neResult.p1RealPlan);
+        p1Rps.put("P1Undom", p1UndomResult.p1RealPlan);
+        p1Rps.put("P1QPE", qpResult.p1RealPlan);
+        p1Rps.put("P1MNE", p1MaxResult.p1RealPlan);
+        p1Rps.put("P1WNE", welfareResult.p1RealPlan);
+        p1Rps.put("P1Stack", p1Stack.get(root.getAllPlayers()[0]));
+        p1Rps.put("P1CFR", cfrP1RealPlan);
+        p1Rps.put("P1MCTS", mctsP1RealPlan);
 
-            stackBuilder.generateCompleteGame();
-            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
-            Expander<MCTSInformationSet> mctsExpander = new BPGExpander<>(mctsConfig);
-
-            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
-            Expander<MCTSInformationSet> cfrExpander = new BPGExpander<>(cfrConfig);
-//            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
-            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+        p2Rps.put("P2NE", neResult.p2RealPlan);
+        p2Rps.put("P2Undom", p2UndomResult.p2RealPlan);
+        p2Rps.put("P2QPE", qpResult.p2RealPlan);
+        p2Rps.put("P2MNE", p2MaxResult.p2RealPlan);
+        p2Rps.put("P2WNE", welfareResult.p2RealPlan);
+        p2Rps.put("P2Stack", p2Stack.get(root.getAllPlayers()[1]));
+        p2Rps.put("P2CFR", cfrP2RealPlan);
+        p2Rps.put("P2MCTS", mctsP2RealPlan);
+        if (qpResult != null && p1UndomResult != null && p2UndomResult != null && neResult != null) {
+            try {
+                buildP1Matrix(p1Rps, p2Rps, root, expander, "testP1.csv");
+                buildP2Matrix(p1Rps, p2Rps, root, expander, "testP2.csv");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+//            StackelbergConfig stackConfig = new StackelbergConfig(root);
+//            Expander<SequenceInformationSet> stackExpander = new PursuitExpander<>(stackConfig);
+//            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+//
+//            stackBuilder.generateCompleteGame();
+//            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
+//            Expander<MCTSInformationSet> mctsExpander = new PursuitExpander<>(mctsConfig);
+//
+//            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
+//            Expander<MCTSInformationSet> cfrExpander = new PursuitExpander<>(cfrConfig);
+////            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
+//            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+//            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
         }
     }
 
 
-    private static void runGenSumKuhnPoker(double rake) {
-        GameState root = new GenSumKuhnPokerGameState();
-        GameInfo info = new KPGameInfo();
-        GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
-        Expander<SequenceInformationSet> expander = new KuhnPokerExpander<>(algConfig);
-        FullSequenceEFG builder = new FullSequenceEFG(root, expander, info, algConfig);
-
-        builder.generateCompleteGame();
-
-        GenSumSequenceFormMILP undomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
-        GenSumSequenceFormMILP p1MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0]);
-        GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
-        GenSumSequenceFormMILP welfareSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], root.getAllPlayers()[1]);
-        DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
-
-        SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
-        SolverResult undomResult = undomSolver.compute();
-        SolverResult neResult = neSolver.compute();
-        SolverResult p1MaxResult = p1MaxSolver.compute();
-        SolverResult welfareResult = welfareSolver.compute();
-        MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> mctsP1Expander = new RandomGameExpander<>(mctsP1Config);
-        MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> cfrP1Expander = new RandomGameExpander<>(cfrP1Config);
-
-        Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
-        Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
-
-        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
-        Expander<SequenceInformationSet> stackelbergExpander = new KuhnPokerExpander<>(stackelbergConfig);
-        StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
-        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
-        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
-
-
-        if (qpResult != null && undomResult != null && neResult != null) {
-            StackelbergConfig stackConfig = new StackelbergConfig(root);
-            Expander<SequenceInformationSet> stackExpander = new KuhnPokerExpander<>(stackConfig);
-            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
-
-            stackBuilder.generateCompleteGame();
-            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
-            Expander<MCTSInformationSet> mctsExpander = new KuhnPokerExpander<>(mctsConfig);
-
-            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
-            Expander<MCTSInformationSet> cfrExpander = new KuhnPokerExpander<>(cfrConfig);
-//            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
-            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-        }
-    }
-
-    private static void runGenSumGenericPoker(double rake) {
-        GameState root = new GenSumGPGameState();
-        GameInfo info = new GPGameInfo();
-        GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
-        Expander<SequenceInformationSet> expander = new GenericPokerExpander<>(algConfig);
-        FullSequenceEFG builder = new FullSequenceEFG(root, expander, info, algConfig);
-
-        builder.generateCompleteGame();
-
-        GenSumSequenceFormMILP undomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
-        GenSumSequenceFormMILP p1MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0]);
-        GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
-        GenSumSequenceFormMILP welfareSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], root.getAllPlayers()[1]);
-        DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
-
-        SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
-        SolverResult undomResult = undomSolver.compute();
-        SolverResult neResult = neSolver.compute();
-        SolverResult p1MaxResult = p1MaxSolver.compute();
-        SolverResult welfareResult = welfareSolver.compute();
-        MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> mctsP1Expander = new RandomGameExpander<>(mctsP1Config);
-        MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> cfrP1Expander = new RandomGameExpander<>(cfrP1Config);
-
-        Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
-        Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
-        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
-        Expander<SequenceInformationSet> stackelbergExpander = new GenericPokerExpander<>(stackelbergConfig);
-        StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
-        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
-        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
-
-
-        if (qpResult != null && undomResult != null && neResult != null) {
-            StackelbergConfig stackConfig = new StackelbergConfig(root);
-            Expander<SequenceInformationSet> stackExpander = new GenericPokerExpander<>(stackConfig);
-            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
-
-            stackBuilder.generateCompleteGame();
-            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
-            Expander<MCTSInformationSet> mctsExpander = new GenericPokerExpander<>(mctsConfig);
-
-            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
-            Expander<MCTSInformationSet> cfrExpander = new GenericPokerExpander<>(cfrConfig);
-//            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
-            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-        }
-    }
+//    private static void runGenSumGenericPoker(double rake) {
+//        GameState root = new GenSumGPGameState();
+//        GameInfo info = new GPGameInfo();
+//        GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
+//        Expander<SequenceInformationSet> expander = new GenericPokerExpander<>(algConfig);
+//        FullSequenceEFG builder = new FullSequenceEFG(root, expander, info, algConfig);
+//
+//        builder.generateCompleteGame();
+//
+//        GenSumSequenceFormMILP undomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+//        GenSumSequenceFormMILP p1MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0]);
+//        GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
+//        GenSumSequenceFormMILP welfareSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], root.getAllPlayers()[1]);
+//        DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
+//
+//        SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
+//        SolverResult undomResult = undomSolver.compute();
+//        SolverResult neResult = neSolver.compute();
+//        SolverResult p1MaxResult = p1MaxSolver.compute();
+//        SolverResult welfareResult = welfareSolver.compute();
+//        MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
+//        Expander<MCTSInformationSet> mctsP1Expander = new RandomGameExpander<>(mctsP1Config);
+//        MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
+//        Expander<MCTSInformationSet> cfrP1Expander = new RandomGameExpander<>(cfrP1Config);
+//
+//        Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
+//        Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
+//        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
+//        Expander<SequenceInformationSet> stackelbergExpander = new GenericPokerExpander<>(stackelbergConfig);
+//        StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
+//        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
+//        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
+//
+//
+//        if (qpResult != null && undomResult != null && neResult != null) {
+//            StackelbergConfig stackConfig = new StackelbergConfig(root);
+//            Expander<SequenceInformationSet> stackExpander = new GenericPokerExpander<>(stackConfig);
+//            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+//
+//            stackBuilder.generateCompleteGame();
+//            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
+//            Expander<MCTSInformationSet> mctsExpander = new GenericPokerExpander<>(mctsConfig);
+//
+//            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
+//            Expander<MCTSInformationSet> cfrExpander = new GenericPokerExpander<>(cfrConfig);
+////            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
+//            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+//            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+//        }
+//    }
 
     private static Player[] getActingPlayers(GameState root) {
         return new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]};
     }
 
 
-    private static void runGenSumRandomGames(int bf, int depth, double correlation, int observations, int seed) {
+    private static void runGenSumRandomGames(int bf, int depth, double correlation, int observations, int seed, String fileName) {
         RandomGameInfo.seed = seed;
         RandomGameInfo.MAX_BF = bf;
         RandomGameInfo.MAX_DEPTH = depth;
         RandomGameInfo.CORRELATION = correlation;
         RandomGameInfo.MAX_OBSERVATION = observations;
-        GeneralSumRandomGameState root = new GeneralSumRandomGameState();
+        GameState root = new GeneralSumRandomGameState();
         GameInfo info = new RandomGameInfo();
         GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
         Expander<SequenceInformationSet> expander = new RandomGameExpander<>(algConfig);
@@ -298,57 +358,92 @@ public class StrategyStrengthExperiments {
 
         builder.generateCompleteGame();
 
-        GenSumSequenceFormMILP undomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p1UndomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p2UndomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[1]);
         GenSumSequenceFormMILP p1MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p2MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[1]);
         GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
         GenSumSequenceFormMILP welfareSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], root.getAllPlayers()[1]);
         DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
 
-        SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "GenSumRndGameRepr");
-        SolverResult undomResult = undomSolver.compute();
+        SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
+        SolverResult p1UndomResult = p1UndomSolver.compute();
+        SolverResult p2UndomResult = p2UndomSolver.compute();
         SolverResult neResult = neSolver.compute();
         SolverResult p1MaxResult = p1MaxSolver.compute();
+        SolverResult p2MaxResult = p2MaxSolver.compute();
         SolverResult welfareResult = welfareSolver.compute();
         MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> mctsP1Expander = new RandomGameExpander<>(mctsP1Config);
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> cfrP1Expander = new RandomGameExpander<>(cfrP1Config);
 
-        Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
-        Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
+        Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander, root.getAllPlayers()[0]);
+        Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info, root.getAllPlayers()[0]);
 
-        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
-        Expander<SequenceInformationSet> stackelbergExpander = new RandomGameExpander<>(stackelbergConfig);
-        StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
-        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(root.getAllPlayers(), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
-        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
+        MCTSConfig mctsP2Config = new MCTSConfig(new Random(1));
+        Expander<MCTSInformationSet> mctsP2Expander = new RandomGameExpander<>(mctsP2Config);
+        MCTSConfig cfrP2Config = new MCTSConfig(new Random(1));
+        Expander<MCTSInformationSet> cfrP2Expander = new RandomGameExpander<>(cfrP2Config);
+
+        Map<Sequence, Double> cfrP2RealPlan = getCFRStrategy(root, cfrP2Expander, root.getAllPlayers()[1]);
+        Map<Sequence, Double> mctsP2RealPlan = getMCTSStrategy(root, mctsP2Expander, info, root.getAllPlayers()[1]);
+
+        Map<Player, Map<Sequence, Double>> p1Stack = getStackelberg(root, info, expander, root.getAllPlayers()[0]);
+        Map<Player, Map<Sequence, Double>> p2Stack = getStackelberg(root, info, expander, root.getAllPlayers()[1]);
+
+        Map<String, Map<Sequence, Double>> p1Rps = new LinkedHashMap<>();
+        Map<String, Map<Sequence, Double>> p2Rps = new LinkedHashMap<>();
 
 
-        if (qpResult != null && undomResult != null && neResult != null) {
-            StackelbergConfig stackConfig = new StackelbergConfig(root);
-            Expander<SequenceInformationSet> stackExpander = new RandomGameExpander<>(stackConfig);
-            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+        p1Rps.put("P1NE", neResult.p1RealPlan);
+        p1Rps.put("P1Undom", p1UndomResult.p1RealPlan);
+        p1Rps.put("P1QPE", qpResult.p1RealPlan);
+        p1Rps.put("P1MNE", p1MaxResult.p1RealPlan);
+        p1Rps.put("P1WNE", welfareResult.p1RealPlan);
+        p1Rps.put("P1Stack", p1Stack.get(root.getAllPlayers()[0]));
+        p1Rps.put("P1CFR", cfrP1RealPlan);
+        p1Rps.put("P1MCTS", mctsP1RealPlan);
 
-            stackBuilder.generateCompleteGame();
-            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
-            Expander<MCTSInformationSet> mctsExpander = new RandomGameExpander<>(mctsConfig);
-
-            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
-            Expander<MCTSInformationSet> cfrExpander = new RandomGameExpander<>(cfrConfig);
-//            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
-            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+        p2Rps.put("P2NE", neResult.p2RealPlan);
+        p2Rps.put("P2Undom", p2UndomResult.p2RealPlan);
+        p2Rps.put("P2QPE", qpResult.p2RealPlan);
+        p2Rps.put("P2MNE", p2MaxResult.p2RealPlan);
+        p2Rps.put("P2WNE", welfareResult.p2RealPlan);
+        p2Rps.put("P2Stack", p2Stack.get(root.getAllPlayers()[1]));
+        p2Rps.put("P2CFR", cfrP2RealPlan);
+        p2Rps.put("P2MCTS", mctsP2RealPlan);
+        if (qpResult != null && p1UndomResult != null && p2UndomResult != null && neResult != null) {
+            try {
+                buildP1Matrix(p1Rps, p2Rps, root, expander, fileName + "P1.csv");
+                buildP2Matrix(p1Rps, p2Rps, root, expander, fileName + "P2.csv");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+//            StackelbergConfig stackConfig = new StackelbergConfig(root);
+//            Expander<SequenceInformationSet> stackExpander = new PursuitExpander<>(stackConfig);
+//            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+//
+//            stackBuilder.generateCompleteGame();
+//            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
+//            Expander<MCTSInformationSet> mctsExpander = new PursuitExpander<>(mctsConfig);
+//
+//            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
+//            Expander<MCTSInformationSet> cfrExpander = new PursuitExpander<>(cfrConfig);
+////            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
+//            evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+//            evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
+//            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
         }
     }
 
-    private static Map<Sequence, Double> getMCTSStrategy(GameState root, Expander<MCTSInformationSet> expander, GameInfo info) {
+    private static Map<Sequence, Double> getMCTSStrategy(GameState root, Expander<MCTSInformationSet> expander, GameInfo info, Player player) {
         ISMCTSExploitability.rootState = root;
         ISMCTSExploitability.expander = expander;
         BackPropFactory factory = new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility());
-        GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), factory, root, expander);
+        GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(player, new DefaultSimulator(expander), factory, root, expander);
 //            GenSumISMCTSAlgorithm mcts = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
 //        GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
 //        GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
@@ -368,18 +463,18 @@ public class StrategyStrengthExperiments {
         buildMCTSCompleteTree(GenSumISMCTSNestingRunner.alg.getRootNode(), factory);
         InnerNode rootNode =  GenSumISMCTSNestingRunner.alg.getRootNode();
 //        GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
-        GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[0], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
+        GenSumISMCTSNestingRunner.buildStichedStrategy(player, GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
                 GenSumISMCTSNestingRunner.alg.getRootNode(), 100000);
         GenSumISMCTSNestingRunner.alg.setCurrentIS(rootNode.getInformationSet());
-        return StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
+        return StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), player, new MeanStratDist());
     }
 
-    private static Map<Sequence, Double> getCFRStrategy(GameState root, Expander<MCTSInformationSet> expander) {
-        CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[0], root, expander);
+    private static Map<Sequence, Double> getCFRStrategy(GameState root, Expander<MCTSInformationSet> expander, Player player) {
+        CFRAlgorithm cfr = new CFRAlgorithm(player, root, expander);
 
         buildCFRCompleteTree(cfr.getRootNode());
         cfr.runIterations(100000);
-        return StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
+        return StrategyCollector.getStrategyFor(cfr.getRootNode(), player, new MeanStratDist());
     }
 
     private static void evaluateAgainstBRNE(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult, Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<SequenceInformationSet> expander, GameInfo info, GenSumSequenceFormConfig algConfig, Player player) {
@@ -683,7 +778,6 @@ public class StrategyStrengthExperiments {
             InnerNode rootNode = GenSumISMCTSNestingRunner.alg.getRootNode();
 //            GenSumISMCTSAlgorithm mcts = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
             for (int i = 0; i < 500; i++) {
-                GenSumISMCTSNestingRunner.clear();
                 GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
                         GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
                 GenSumISMCTSNestingRunner.alg.setCurrentIS(rootNode.getInformationSet());

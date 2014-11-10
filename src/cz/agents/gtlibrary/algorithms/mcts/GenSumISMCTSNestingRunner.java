@@ -54,6 +54,11 @@ public class GenSumISMCTSNestingRunner {
         }
     }
 
+    public static void clear() {
+        processed = new HashSet();
+        strategy = new UniformStrategyForMissingSequences.Factory().create();
+    }
+
     public static Map<Sequence, Double> filterLow(Map<Sequence, Double> s) {
         for (Iterator<Map.Entry<Sequence, Double>> it = s.entrySet().iterator(); it.hasNext(); ) {
             if (it.next().getValue() < 1e-4) it.remove();
