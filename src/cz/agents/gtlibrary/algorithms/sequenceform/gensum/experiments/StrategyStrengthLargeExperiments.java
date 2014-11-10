@@ -44,17 +44,6 @@ import java.util.*;
 
 public class StrategyStrengthLargeExperiments {
 
-    public static BufferedWriter neWriter;
-    public static BufferedWriter undomWriter;
-    public static BufferedWriter qpWriter;
-    public static BufferedWriter p1MaxWriter;
-    public static BufferedWriter welfareWriter;
-    public static BufferedWriter stackWriter;
-    public static BufferedWriter brWriter;
-    public static BufferedWriter wrWriter;
-    public static BufferedWriter cfrWriter;
-    public static BufferedWriter mctsWriter;
-
     /**
      * bf, depth, corr, observations, seed
      *
@@ -62,10 +51,10 @@ public class StrategyStrengthLargeExperiments {
      */
     public static void main(String[] args) {
 //        runGenSumKuhnPoker(0.1);
-//        runGenSumBPG(Integer.parseInt(args[0]));
+        runGenSumBPG(Integer.parseInt(args[0]));
 //        runGenSumGenericPoker(0.1);
 //        runGenSumPursuit(1);
-        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
+//        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
     }
 
     private static void runGenSumPursuit(int depth) {
@@ -134,9 +123,9 @@ public class StrategyStrengthLargeExperiments {
         SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
         SolverResult neResult = neSolver.compute();
         MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> mctsP1Expander = new RandomGameExpander<>(mctsP1Config);
+        Expander<MCTSInformationSet> mctsP1Expander = new BPGExpander<>(mctsP1Config);
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> cfrP1Expander = new RandomGameExpander<>(cfrP1Config);
+        Expander<MCTSInformationSet> cfrP1Expander = new BPGExpander<>(cfrP1Config);
 
         Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
         Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
@@ -230,15 +219,16 @@ public class StrategyStrengthLargeExperiments {
 
         builder.generateCompleteGame();
 
-        GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
         DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
 
         SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
-        SolverResult neResult = neSolver.compute();
+        DataBuilder.alg = DataBuilder.Alg.lemkeNash2;
+
+        SolverResult neResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
         MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> mctsP1Expander = new RandomGameExpander<>(mctsP1Config);
+        Expander<MCTSInformationSet> mctsP1Expander = new GenericPokerExpander<>(mctsP1Config);
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
-        Expander<MCTSInformationSet> cfrP1Expander = new RandomGameExpander<>(cfrP1Config);
+        Expander<MCTSInformationSet> cfrP1Expander = new GenericPokerExpander<>(cfrP1Config);
 
         Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
         Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
@@ -288,11 +278,12 @@ public class StrategyStrengthLargeExperiments {
 
         builder.generateCompleteGame();
 
-        GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
         DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
 
         SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "GenSumRndGameRepr");
-        SolverResult neResult = neSolver.compute();
+        DataBuilder.alg = DataBuilder.Alg.lemkeNash2;
+
+        SolverResult neResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "GenSumRndGameRepr");
         MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> mctsP1Expander = new RandomGameExpander<>(mctsP1Config);
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
@@ -387,13 +378,13 @@ public class StrategyStrengthLargeExperiments {
     private static void evaluateP1StrategiesAgainstQRE(SolverResult neResult, SolverResult qpResult, Map<Player, Map<Sequence, Double>> stackResult,
                                                        Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<SequenceInformationSet> expander, GameInfo info, SequenceFormConfig<SequenceInformationSet> algConfig, Player player) {
         try {
-            neWriter = new BufferedWriter(new FileWriter("P1NEvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            qpWriter = new BufferedWriter(new FileWriter("P1QPvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            stackWriter = new BufferedWriter(new FileWriter("P1StackvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            wrWriter = new BufferedWriter(new FileWriter("P1WRvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsQREExpVal" + getDomainDependentString() + ".csv", true));
-            mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter qpWriter = new BufferedWriter(new FileWriter("P1QPvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter stackWriter = new BufferedWriter(new FileWriter("P1StackvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter brWriter = new BufferedWriter(new FileWriter("P1BRvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter wrWriter = new BufferedWriter(new FileWriter("P1WRvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsQREExpVal" + getDomainDependentString() + ".csv", true));
 
             QRESolver solver = new QRESolver(root, expander, info, algConfig);
             QREResult qreResult = solver.solve();
@@ -455,13 +446,13 @@ public class StrategyStrengthLargeExperiments {
     private static void evaluateP1StrategiesAgainstCFR(SolverResult neResult, SolverResult qpResult, Map<Player, Map<Sequence, Double>> stackResult,
                                                        Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<MCTSInformationSet> expander, GameInfo info, MCTSConfig algConfig, Player player) {
         try {
-            neWriter = new BufferedWriter(new FileWriter("P1NEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            qpWriter = new BufferedWriter(new FileWriter("P1QPvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            stackWriter = new BufferedWriter(new FileWriter("P1StackvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            wrWriter = new BufferedWriter(new FileWriter("P1WRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
-            mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter qpWriter = new BufferedWriter(new FileWriter("P1QPvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter stackWriter = new BufferedWriter(new FileWriter("P1StackvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter brWriter = new BufferedWriter(new FileWriter("P1BRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter wrWriter = new BufferedWriter(new FileWriter("P1WRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsCFRExpVal" + getDomainDependentString() + ".csv", true));
 
             CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[1], root, expander);
 
@@ -505,13 +496,13 @@ public class StrategyStrengthLargeExperiments {
     private static void evaluateP1StrategiesAgainstMCTS(SolverResult neResult, SolverResult qpResult, Map<Player, Map<Sequence, Double>> stackResult,
                                                         Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<MCTSInformationSet> expander, GameInfo info, MCTSConfig algConfig, Player player) {
         try {
-            neWriter = new BufferedWriter(new FileWriter("P1NEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            qpWriter = new BufferedWriter(new FileWriter("P1QPvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            stackWriter = new BufferedWriter(new FileWriter("P1StackvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            brWriter = new BufferedWriter(new FileWriter("P1BRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            wrWriter = new BufferedWriter(new FileWriter("P1WRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
-            mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter qpWriter = new BufferedWriter(new FileWriter("P1QPvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter stackWriter = new BufferedWriter(new FileWriter("P1StackvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter brWriter = new BufferedWriter(new FileWriter("P1BRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter wrWriter = new BufferedWriter(new FileWriter("P1WRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
 
             ISMCTSExploitability.rootState = root;
             ISMCTSExploitability.expander = expander;
@@ -522,6 +513,7 @@ public class StrategyStrengthLargeExperiments {
             InnerNode rootNode = GenSumISMCTSNestingRunner.alg.getRootNode();
 //            GenSumISMCTSAlgorithm mcts = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
             for (int i = 0; i < 500; i++) {
+                GenSumISMCTSNestingRunner.clear();
                 GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
                         GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
                 GenSumISMCTSNestingRunner.alg.setCurrentIS(rootNode.getInformationSet());
