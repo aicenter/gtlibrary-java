@@ -107,9 +107,9 @@ public class StrategyStrengthExperiments {
 //            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
             evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
             evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1], algConfig);
         }
     }
 
@@ -163,9 +163,9 @@ public class StrategyStrengthExperiments {
 //            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
             evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
             evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1], algConfig);
         }
     }
 
@@ -219,9 +219,9 @@ public class StrategyStrengthExperiments {
 //            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
             evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
             evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1], algConfig);
         }
     }
 
@@ -273,9 +273,9 @@ public class StrategyStrengthExperiments {
 //            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
             evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
             evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1], algConfig);
         }
     }
 
@@ -338,9 +338,9 @@ public class StrategyStrengthExperiments {
 //            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
             evaluateAgainstWRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
             evaluateAgainstBRNE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1]);
-            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstMCTS(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstCFR(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstQRE(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1], algConfig);
         }
     }
 
@@ -516,7 +516,7 @@ public class StrategyStrengthExperiments {
     }
 
     private static void evaluateP1StrategiesAgainstQRE(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult,
-                                                       Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<SequenceInformationSet> expander, GameInfo info, SequenceFormConfig<SequenceInformationSet> algConfig, Player player) {
+                                                       Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<SequenceInformationSet> expander, GameInfo info, SequenceFormConfig<SequenceInformationSet> algConfig, Player player, GenSumSequenceFormConfig seqConfig) {
         try {
             BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsQREExpVal" + getDomainDependentString() + ".csv", true));
             BufferedWriter undomWriter = new BufferedWriter(new FileWriter("P1UndomvsQREExpVal" + getDomainDependentString() + ".csv", true));
@@ -528,6 +528,8 @@ public class StrategyStrengthExperiments {
             BufferedWriter wrWriter = new BufferedWriter(new FileWriter("P1WRvsQREExpVal" + getDomainDependentString() + ".csv", true));
             BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsQREExpVal" + getDomainDependentString() + ".csv", true));
             BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter bestNEWriter = new BufferedWriter(new FileWriter("P1BestNEvsQREExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter worstNEWriter = new BufferedWriter(new FileWriter("P1WorstNEvsQREExpVal" + getDomainDependentString() + ".csv", true));
 
             QRESolver solver = new QRESolver(root, expander, info, algConfig);
             QREResult qreResult = solver.solve();
@@ -542,10 +544,15 @@ public class StrategyStrengthExperiments {
             writeLambdas(wrWriter, qreResult.lambdas);
             writeLambdas(mctsWriter, qreResult.lambdas);
             writeLambdas(cfrWriter, qreResult.lambdas);
+            writeLambdas(bestNEWriter, qreResult.lambdas);
+            writeLambdas(worstNEWriter, qreResult.lambdas);
             for (Map<Player, Map<Sequence, Double>> quantalResponse : qreResult.quantalResponses) {
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
                 GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 0, getActingPlayers(root), algConfig, info);
                 Map<Sequence, Double> qreStrategy = filterLow(quantalResponse.get(player), 1e-6);
+
+                BestGenSumSequenceFormMILP bNE = new BestGenSumSequenceFormMILP(seqConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], qreStrategy);
+                WorstGenSumSequenceFormMILP wNE = new WorstGenSumSequenceFormMILP(seqConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], qreStrategy);
 
                 br.calculateBR(root, quantalResponse.get(player));
                 wr.calculateBR(root, quantalResponse.get(player));
@@ -559,6 +566,8 @@ public class StrategyStrengthExperiments {
                 write(stackWriter, computeExpectedValue(stackResult.get(root.getAllPlayers()[0]), qreStrategy, root, expander));
                 write(cfrWriter, computeExpectedValue(cfrP1RealPlan, qreStrategy, root, expander));
                 write(mctsWriter, computeExpectedValue(mctsP1RealPlan, qreStrategy, root, expander));
+                write(bestNEWriter, computeExpectedValue(bNE.compute().p1RealPlan, qreStrategy, root, expander));
+                write(worstNEWriter, computeExpectedValue(wNE.compute().p1RealPlan, qreStrategy, root, expander));
             }
             neWriter.newLine();
             undomWriter.newLine();
@@ -570,6 +579,8 @@ public class StrategyStrengthExperiments {
             wrWriter.newLine();
             cfrWriter.newLine();
             mctsWriter.newLine();
+            bestNEWriter.newLine();
+            worstNEWriter.newLine();
 
             neWriter.close();
             undomWriter.close();
@@ -581,6 +592,8 @@ public class StrategyStrengthExperiments {
             wrWriter.close();
             cfrWriter.close();
             mctsWriter.close();
+            bestNEWriter.close();
+            worstNEWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -599,7 +612,7 @@ public class StrategyStrengthExperiments {
     }
 
     private static void evaluateP1StrategiesAgainstCFR(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult,
-                                                       Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<MCTSInformationSet> expander, GameInfo info, MCTSConfig algConfig, Player player) {
+                                                       Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<MCTSInformationSet> expander, GameInfo info, MCTSConfig algConfig, Player player, GenSumSequenceFormConfig seqConfig) {
         try {
             BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
             BufferedWriter undomWriter = new BufferedWriter(new FileWriter("P1UndomvsCFRExpVal" + getDomainDependentString() + ".csv", true));
@@ -611,15 +624,19 @@ public class StrategyStrengthExperiments {
             BufferedWriter wrWriter = new BufferedWriter(new FileWriter("P1WRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
             BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsCFRExpVal" + getDomainDependentString() + ".csv", true));
             BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter bestNEWriter = new BufferedWriter(new FileWriter("P1BestNEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter worstNEWriter = new BufferedWriter(new FileWriter("P1WorstNEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
 
             CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[1], root, expander);
 
             buildCFRCompleteTree(cfr.getRootNode());
-            for (int i = 0; i < 500; i++) {
-                cfr.runIterations(20);
+            for (int i = 0; i < 100; i++) {
+                cfr.runIterations(100);
                 Strategy strategy = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
                 GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 0, getActingPlayers(root), algConfig, info);
+                BestGenSumSequenceFormMILP bNE = new BestGenSumSequenceFormMILP(seqConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], strategy);
+                WorstGenSumSequenceFormMILP wNE = new WorstGenSumSequenceFormMILP(seqConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], strategy);
 
                 br.calculateBR(root, strategy);
                 wr.calculateBR(root, strategy);
@@ -633,6 +650,8 @@ public class StrategyStrengthExperiments {
                 write(wrWriter, computeExpectedValue(wr.getBRStategy(), strategy, root, expander));
                 write(cfrWriter, computeExpectedValue(cfrP1RealPlan, strategy, root, expander));
                 write(mctsWriter, computeExpectedValue(mctsP1RealPlan, strategy, root, expander));
+                write(bestNEWriter, computeExpectedValue(bNE.compute().p1RealPlan, strategy, root, expander));
+                write(worstNEWriter, computeExpectedValue(wNE.compute().p1RealPlan, strategy, root, expander));
             }
             neWriter.newLine();
             undomWriter.newLine();
@@ -644,6 +663,8 @@ public class StrategyStrengthExperiments {
             wrWriter.newLine();
             cfrWriter.newLine();
             mctsWriter.newLine();
+            bestNEWriter.newLine();
+            worstNEWriter.newLine();
 
             neWriter.close();
             undomWriter.close();
@@ -655,13 +676,15 @@ public class StrategyStrengthExperiments {
             wrWriter.close();
             cfrWriter.close();
             mctsWriter.close();
+            bestNEWriter.close();
+            worstNEWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private static void evaluateP1StrategiesAgainstMCTS(SolverResult neResult, SolverResult undomResult, SolverResult qpResult, SolverResult p1MaxResult, SolverResult welfareResult, Map<Player, Map<Sequence, Double>> stackResult,
-                                                        Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<MCTSInformationSet> expander, GameInfo info, MCTSConfig algConfig, Player player) {
+                                                        Map<Sequence, Double> cfrP1RealPlan, Map<Sequence, Double> mctsP1RealPlan, GameState root, Expander<MCTSInformationSet> expander, GameInfo info, MCTSConfig algConfig, Player player, GenSumSequenceFormConfig seqConfig) {
         try {
             BufferedWriter neWriter = new BufferedWriter(new FileWriter("P1NEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
             BufferedWriter undomWriter = new BufferedWriter(new FileWriter("P1UndomvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
@@ -673,6 +696,8 @@ public class StrategyStrengthExperiments {
             BufferedWriter wrWriter = new BufferedWriter(new FileWriter("P1WRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
             BufferedWriter cfrWriter = new BufferedWriter(new FileWriter("P1CFRvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
             BufferedWriter mctsWriter = new BufferedWriter(new FileWriter("P1MCTSvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter bestNEWriter = new BufferedWriter(new FileWriter("P1BestNEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
+            BufferedWriter worstNEWriter = new BufferedWriter(new FileWriter("P1WorstNEvsMCTSExpVal" + getDomainDependentString() + ".csv", true));
 
             ISMCTSExploitability.rootState = root;
             ISMCTSExploitability.expander = expander;
@@ -682,18 +707,20 @@ public class StrategyStrengthExperiments {
             buildMCTSCompleteTree(GenSumISMCTSNestingRunner.alg.getRootNode(), factory);
             InnerNode rootNode = GenSumISMCTSNestingRunner.alg.getRootNode();
 //            GenSumISMCTSAlgorithm mcts = new GenSumISMCTSAlgorithm(root.getAllPlayers()[1], new DefaultSimulator(expander), new UCTBackPropFactory(Math.sqrt(2) * info.getMaxUtility()), root, expander);
-            for (int i = 0; i < 500; i++) {
+            for (int i = 0; i < 100; i++) {
                 GenSumISMCTSNestingRunner.clear();
                 GenSumISMCTSNestingRunner.buildStichedStrategy(root.getAllPlayers()[1], GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
-                        GenSumISMCTSNestingRunner.alg.getRootNode(), 50);
+                        GenSumISMCTSNestingRunner.alg.getRootNode(), 200);
                 GenSumISMCTSNestingRunner.alg.setCurrentIS(rootNode.getInformationSet());
                 Strategy strategy = StrategyCollector.getStrategyFor(GenSumISMCTSNestingRunner.alg.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
 
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
                 GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 0, getActingPlayers(root), algConfig, info);
-
+                BestGenSumSequenceFormMILP bNE = new BestGenSumSequenceFormMILP(seqConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], strategy);
+                WorstGenSumSequenceFormMILP wNE = new WorstGenSumSequenceFormMILP(seqConfig, root.getAllPlayers(), info, root.getAllPlayers()[0], strategy);
                 br.calculateBR(root, strategy);
                 wr.calculateBR(root, strategy);
+
                 write(neWriter, computeExpectedValue(neResult.p1RealPlan, strategy, root, expander));
                 write(undomWriter, computeExpectedValue(undomResult.p1RealPlan, strategy, root, expander));
                 write(qpWriter, computeExpectedValue(qpResult.p1RealPlan, strategy, root, expander));
@@ -704,6 +731,8 @@ public class StrategyStrengthExperiments {
                 write(wrWriter, computeExpectedValue(wr.getBRStategy(), strategy, root, expander));
                 write(cfrWriter, computeExpectedValue(cfrP1RealPlan, strategy, root, expander));
                 write(mctsWriter, computeExpectedValue(mctsP1RealPlan, strategy, root, expander));
+                write(bestNEWriter, computeExpectedValue(bNE.compute().p1RealPlan, strategy, root, expander));
+                write(worstNEWriter, computeExpectedValue(wNE.compute().p1RealPlan, strategy, root, expander));
             }
 
             neWriter.newLine();
@@ -716,7 +745,8 @@ public class StrategyStrengthExperiments {
             wrWriter.newLine();
             cfrWriter.newLine();
             mctsWriter.newLine();
-
+            bestNEWriter.newLine();
+            worstNEWriter.newLine();
 
             neWriter.close();
             undomWriter.close();
@@ -728,6 +758,8 @@ public class StrategyStrengthExperiments {
             wrWriter.close();
             cfrWriter.close();
             mctsWriter.close();
+            bestNEWriter.close();
+            worstNEWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
