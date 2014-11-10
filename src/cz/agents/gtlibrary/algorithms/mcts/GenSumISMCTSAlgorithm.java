@@ -42,6 +42,7 @@ public class GenSumISMCTSAlgorithm implements GamePlayingAlgorithm {
     protected Simulator simulator;
     protected BackPropFactory fact;
     protected InnerNode rootNode;
+    protected InnerNode backupRootNode;
     protected ThreadMXBean threadBean;
     protected MCTSConfig config;
     protected Expander<MCTSInformationSet> expander;
@@ -60,6 +61,7 @@ public class GenSumISMCTSAlgorithm implements GamePlayingAlgorithm {
             this.rootNode = new ChanceNode(expander, rootState, fact.getRandom());
         else
             this.rootNode = new InnerNode(expander, rootState);
+        backupRootNode = rootNode;
         threadBean = ManagementFactory.getThreadMXBean();
         curISArray = new InnerNode[]{rootNode};
         config = rootNode.getAlgConfig();
@@ -191,6 +193,11 @@ public class GenSumISMCTSAlgorithm implements GamePlayingAlgorithm {
         for (InnerNode n : curISArray)
             n.setParent(null);
         rootNode = curISArray[0];
+    }
+
+    public void resetRootNode() {
+        rootNode = backupRootNode;
+        curISArray = new InnerNode[]{rootNode};
     }
 
     private int fillBelief(InnerNode n, MCTSInformationSet curIS, double p, int nextPos) {

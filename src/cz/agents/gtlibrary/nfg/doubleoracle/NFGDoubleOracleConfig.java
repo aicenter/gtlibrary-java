@@ -45,4 +45,14 @@ public class NFGDoubleOracleConfig implements AlgorithmConfig{
     public InformationSet createInformationSetFor(GameState gameState) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    @Override
+    public Double getActualNonzeroUtilityValues(GameState gameState) {
+        return null;
+    }
+
+    @Override
+    public void setUtility(GameState gameState, double utility) {
+
+    }
 }

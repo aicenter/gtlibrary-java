@@ -51,7 +51,7 @@ public class QRESolver {
 
         writer.write("GenSumRndGambit", root, expander);
         try {
-            new ProcessBuilder().command("gambit-logit").redirectInput(new File("GenSumRndGambit")).redirectOutput(new File("GenSumRndGambitQRE.csv")).start().waitFor();
+            new ProcessBuilder().command("./gambit-logit").redirectInput(new File("GenSumRndGambit")).redirectOutput(new File("GenSumRndGambitQRE.csv")).start().waitFor();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (IOException e) {
