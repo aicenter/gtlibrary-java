@@ -463,6 +463,7 @@ public class ComputeConfusionMatrix {
         buildMCTSCompleteTree(GenSumISMCTSNestingRunner.alg.getRootNode(), factory);
         InnerNode rootNode =  GenSumISMCTSNestingRunner.alg.getRootNode();
 //        GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
+        GenSumISMCTSNestingRunner.clear();
         GenSumISMCTSNestingRunner.buildStichedStrategy(player, GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
                 GenSumISMCTSNestingRunner.alg.getRootNode(), 100000);
         GenSumISMCTSNestingRunner.alg.setCurrentIS(rootNode.getInformationSet());
