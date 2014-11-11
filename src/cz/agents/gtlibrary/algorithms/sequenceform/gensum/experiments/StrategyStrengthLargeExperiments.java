@@ -52,9 +52,9 @@ public class StrategyStrengthLargeExperiments {
     public static void main(String[] args) {
 //        runGenSumKuhnPoker(0.1);
 //        runGenSumBPG(Integer.parseInt(args[0]));
-//        runGenSumGenericPoker(0.1);
+        runGenSumGenericPoker(0.1);
 //        runGenSumPursuit(1);
-        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
+//        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
     }
 
     private static void runGenSumPursuit(int depth) {

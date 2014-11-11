@@ -17,7 +17,10 @@ public class WorstGenSumSequenceFormMILP extends BRGenSumSequenceFormMILP {
             Sequence playerSequence = entry.getKey().get(player);
             double utility = entry.getValue()[player.getId()];
 
-            lpTable.addToObjective(playerSequence, -utility * opponentRealPlan.get(entry.getKey().get(info.getOpponent(player))));
+            Double opponentProbability = opponentRealPlan.get(entry.getKey().get(info.getOpponent(player)));
+
+            if (opponentProbability != null)
+            lpTable.addToObjective(playerSequence, -utility * opponentProbability);
         }
     }
 }
