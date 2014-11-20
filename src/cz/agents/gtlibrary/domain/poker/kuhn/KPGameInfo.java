@@ -35,7 +35,7 @@ public class KPGameInfo implements GameInfo {
 
 	@Override
 	public double getMaxUtility() {
-		return ANTE + BET;
+		return 50;
 	}
 
 	@Override
@@ -67,6 +67,6 @@ public class KPGameInfo implements GameInfo {
 
     @Override
     public double getUtilityStabilizer() {
-        return 6;
+        return 60;
     }
 }

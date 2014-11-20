@@ -20,7 +20,7 @@ public class WorstGenSumSequenceFormMILP extends BRGenSumSequenceFormMILP {
             Double opponentProbability = opponentRealPlan.get(entry.getKey().get(info.getOpponent(player)));
 
             if (opponentProbability != null)
-            lpTable.addToObjective(playerSequence, -utility * opponentProbability);
+                lpTable.addToObjective(playerSequence, -utility * opponentProbability);
         }
     }
 }
