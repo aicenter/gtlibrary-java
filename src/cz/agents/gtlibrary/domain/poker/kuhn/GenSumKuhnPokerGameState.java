@@ -15,7 +15,7 @@ public class GenSumKuhnPokerGameState extends KuhnPokerGameState {
     @Override
     public double[] getUtilities() {
         if (utilities != null) {
-            return utilities;
+            return copy(utilities);
         }
         if (isGameEnd()) {
             int result = hasPlayerOneWon();
@@ -26,10 +26,20 @@ public class GenSumKuhnPokerGameState extends KuhnPokerGameState {
                 utilities = new double[]{0, 0, 0};
             else
                 utilities = new double[]{gainForFirstPlayer - pot, (1 - rake) * (pot - gainForFirstPlayer), 0};
-            return utilities;
+            return copy(utilities);
         }
         return new double[]{0};
     }
+
+    private double[] copy(double[] utilities) {
+        double[] copy = new double[utilities.length];
+
+        for (int i = 0; i < utilities.length; i++) {
+            copy[i] = utilities[i];
+        }
+        return copy;
+    }
+
 
     @Override
     public GameState copy() {

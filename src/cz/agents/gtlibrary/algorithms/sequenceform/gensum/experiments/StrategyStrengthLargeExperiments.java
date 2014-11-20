@@ -46,13 +46,14 @@ public class StrategyStrengthLargeExperiments {
 
     /**
      * bf, depth, corr, observations, seed
+     * card types, card count, bet count, raise count, rake
      *
      * @param args
      */
     public static void main(String[] args) {
 //        runGenSumKuhnPoker(0.1);
 //        runGenSumBPG(Integer.parseInt(args[0]));
-        runGenSumGenericPoker(0.1);
+        runGenSumGenericPoker(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]), Double.parseDouble(args[4]));
 //        runGenSumPursuit(1);
 //        runGenSumRandomGames(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Double.parseDouble(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]));
     }
@@ -117,11 +118,15 @@ public class StrategyStrengthLargeExperiments {
 
         builder.generateCompleteGame();
 
-        GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
         DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
 
         SolverResult qpResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
-        SolverResult neResult = neSolver.compute();
+        DataBuilder.alg = DataBuilder.Alg.lemkeNash2;
+
+        SolverResult neResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
+
+        StrategyStrengthExperiments.checkIfNE(root, info, algConfig, expander, qpResult);
+        StrategyStrengthExperiments.checkIfNE(root, info, algConfig, expander, neResult);
         MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> mctsP1Expander = new BPGExpander<>(mctsP1Config);
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
@@ -210,7 +215,40 @@ public class StrategyStrengthLargeExperiments {
         }
     }
 
-    private static void runGenSumGenericPoker(double rake) {
+    private static void runGenSumGenericPoker(int cardTypes, int cardCount, int betCount, int raiseCount, double rake) {
+        GPGameInfo.MAX_CARD_TYPES = cardTypes;
+        GPGameInfo.MAX_CARD_OF_EACH_TYPE = cardCount;
+        GPGameInfo.MAX_DIFFERENT_BETS = betCount;
+        GPGameInfo.MAX_DIFFERENT_RAISES = raiseCount;
+
+        GPGameInfo.RAISES_FIRST_ROUND = new int[GPGameInfo.MAX_DIFFERENT_RAISES];
+        for (int i = 0; i < GPGameInfo.MAX_DIFFERENT_RAISES; i++)
+            GPGameInfo.RAISES_FIRST_ROUND[i] = (i + 1) * 2;
+        GPGameInfo.CARD_TYPES = new int[GPGameInfo.MAX_CARD_TYPES];
+        for (int i = 0; i < GPGameInfo.MAX_CARD_TYPES; i++)
+            GPGameInfo.CARD_TYPES[i] = i;
+        GPGameInfo.DECK = new int[GPGameInfo.MAX_CARD_OF_EACH_TYPE * GPGameInfo.MAX_CARD_TYPES];
+        for (int i = 0; i < GPGameInfo.MAX_CARD_TYPES; i++)
+            for (int j = 0; j < GPGameInfo.MAX_CARD_OF_EACH_TYPE; j++) {
+                GPGameInfo.DECK[i * GPGameInfo.MAX_CARD_OF_EACH_TYPE + j] = i;
+            }
+        GPGameInfo.BETS_FIRST_ROUND = new int[GPGameInfo.MAX_DIFFERENT_BETS];
+        for (int i = 0; i < GPGameInfo.MAX_DIFFERENT_BETS; i++)
+            GPGameInfo.BETS_FIRST_ROUND[i] = (i + 1) * 2;
+
+        GPGameInfo.RAISES_FIRST_ROUND = new int[GPGameInfo.MAX_DIFFERENT_RAISES];
+        for (int i = 0; i < GPGameInfo.MAX_DIFFERENT_RAISES; i++)
+            GPGameInfo.RAISES_FIRST_ROUND[i] = (i + 1) * 2;
+
+        GPGameInfo.BETS_SECOND_ROUND = new int[GPGameInfo.BETS_FIRST_ROUND.length];
+        for (int i = 0; i < GPGameInfo.BETS_FIRST_ROUND.length; i++) {
+            GPGameInfo.BETS_SECOND_ROUND[i] = 2 * GPGameInfo.BETS_FIRST_ROUND[i];
+        }
+
+        GPGameInfo.RAISES_SECOND_ROUND = new int[GPGameInfo.RAISES_FIRST_ROUND.length];
+        for (int i = 0; i < GPGameInfo.RAISES_FIRST_ROUND.length; i++) {
+            GPGameInfo.RAISES_SECOND_ROUND[i] = 2 * GPGameInfo.RAISES_FIRST_ROUND[i];
+        }
         GameState root = new GenSumGPGameState();
         GameInfo info = new GPGameInfo();
         GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
@@ -225,6 +263,8 @@ public class StrategyStrengthLargeExperiments {
         DataBuilder.alg = DataBuilder.Alg.lemkeNash2;
 
         SolverResult neResult = DataBuilder.runDataBuilder(root, expander, algConfig, info, "KuhnPokerRepr");
+        StrategyStrengthExperiments.checkIfNE(root, info, algConfig, expander, qpResult);
+        StrategyStrengthExperiments.checkIfNE(root, info, algConfig, expander, neResult);
         MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> mctsP1Expander = new GenericPokerExpander<>(mctsP1Config);
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
