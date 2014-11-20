@@ -22,18 +22,22 @@ package cz.agents.gtlibrary.domain.poker.generic;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.poker.PokerAction;
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.PublicAction;
 
-public class GenericPokerAction extends PokerAction {
+public class GenericPokerAction extends PokerAction implements PublicAction {
 
 	private static final long serialVersionUID = -1491826905055714815L;
 	
 	final private int value;
+        final private int round;
 
-	public GenericPokerAction(String action, InformationSet i, Player player, int value) {
+	public GenericPokerAction(String action, InformationSet i, Player player, int value, int round) {
 		super(action, i, player);
 		this.value = value;
+                this.round = round;
         cachedHash = computeHashCode();
         cachedHashWithoutIS = computeHashCodeWithoutIS();
     }
@@ -80,12 +84,16 @@ public class GenericPokerAction extends PokerAction {
     }
 
     @Override
-    public boolean observableEquals(PokerAction obj) {
-        if (!super.equals(obj))
-            return false;
-        GenericPokerAction other = (GenericPokerAction)obj;
-        if (this.value != other.value)
-            return false;
-        return true;
+    public boolean publicEquals(Action act) {
+        GenericPokerAction other = (GenericPokerAction)act;
+        if (getInformationSet() == null){
+            if (other.getInformationSet() != null) return false;//both are nature actions
+            if (round < 2) return round == other.round;
+            else return value == other.value;
+        }
+        assert getInformationSet().getPlayer().getId() != 2 : "Chance action are assumed to have null information set";
+        return round == other.round && action.equals(other.action) && value == other.value;
     }
+
+    
 }

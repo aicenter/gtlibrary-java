@@ -17,4 +17,5 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 public interface OOSTargeting {
     public boolean isAllowedAction(InnerNode node, Action action);
     public void update(InformationSet curIS);
+    public double getSampleProbMultiplayer();
 }
