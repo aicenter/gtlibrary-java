@@ -153,7 +153,7 @@ public class RPOptimizedGPExpander<I extends InformationSet> extends ExpanderImp
 	}
 
 	protected PokerAction createAction(GenericPokerGameState state, int action, String actionString, I informationSet) {
-		return new GenericPokerAction(actionString, informationSet, state.getPlayerToMove(), action);
+		return new GenericPokerAction(actionString, informationSet, state.getPlayerToMove(), action, state.getRound());
 	}
 
 	protected boolean isCardAvailableInState(int cardValue, GenericPokerGameState state) {

@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts;
 
+import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanValueProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MostFrequentAction;
@@ -29,6 +30,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Selector;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -83,7 +85,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         if (s != null && searchingPlayer.getId()==1) useBelief = Boolean.parseBoolean(s);
     }
 
-    private MeanStratDist meanDist = new MeanStratDist();
+    private Distribution meanDist = new MeanStratDist();
     @Override
     public Action runMiliseconds(int miliseconds) {
         if (giveUp) return null;
@@ -103,13 +105,16 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
                 iters++;
             }
         }
-        System.out.println();
-        System.out.println("ISMCTS Iters: " + iters);
-        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
-        System.out.println("CurIS size: " + curISArray.length);
+//        System.out.println();
+//        System.out.println("ISMCTS Iters: " + iters);
+//        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+//        System.out.println("CurIS size: " + curISArray.length);
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
-        Map<Action, Double> distribution = meanDist.getDistributionFor(is.getAlgorithmData());
+        Map<Action, Double> distribution = is.getAlgorithmData() instanceof UCTSelector 
+                ? (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData()) 
+                : meanDist.getDistributionFor(is.getAlgorithmData());
+//        System.out.println("Strategy: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
         return Strategy.selectAction(distribution, fact.getRandom());
     }
 

@@ -106,6 +106,12 @@ public class IIGMatchesExperiment extends IIGConvergenceExperiment {
         StringBuilder moves = new StringBuilder();
         GamePlayingAlgorithm p1 = initGameAndAlg(args[0], 0, args[2]);
         GamePlayingAlgorithm p2 = initGameAndAlg(args[1], 1, args[2]);
+        
+        String s = System.getProperty("RIR");//run in root
+        if (s != null && Boolean.parseBoolean(s)){
+            p1.runMiliseconds(compTime);
+            p2.runMiliseconds(compTime);
+        }
 
         GameState curState = rootState.copy();
         while (!curState.isGameEnd()) {
@@ -146,16 +152,26 @@ public class IIGMatchesExperiment extends IIGConvergenceExperiment {
                     System.out.println("P2 chose: " + a);
             }
             
+            List<Action> actions = expander.getActions(curState);
             if (a == null){
                 System.out.println("Warning!!! Selecting random move for " + curState.getPlayerToMove());
-                List<Action> actions = expander.getActions(curState);
                 a = actions.get(rnd.nextInt(actions.size()));
+            } else {
+                a = actions.get(actions.indexOf(a));//just to prevent memory leaks
             }
                 
             moves.append(a + " ");
             curState = curState.performAction(a);
         }
         System.out.println("MATCH: " + moves.toString() + curState.getUtilities()[0]);
+        
+        p1=null;
+        p2=null;
+        gameInfo=null;
+        expander=null;
+        rootState=null;
+        System.gc();
+        
         return curState.getUtilities()[0];
     }
 }
