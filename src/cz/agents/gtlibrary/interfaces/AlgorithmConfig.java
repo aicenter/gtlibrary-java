@@ -28,5 +28,9 @@ public interface AlgorithmConfig<I extends InformationSet> extends Serializable 
 	public void addInformationSetFor(GameState gameState, I informationSet);
 
 	public I createInformationSetFor(GameState gameState);
-	
+
+    public Double getActualNonzeroUtilityValues(GameState gameState);
+
+    public void setUtility(GameState gameState, double utility);
+
 }
