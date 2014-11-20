@@ -41,6 +41,8 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     double[] mp;
     /** Cumulative regret. */
     protected double[] r;
+    /** Number of strategy update samples. */
+    protected int nbSamples;
 
     public OOSAlgorithmData(List<Action> actions) {
         this.actions = actions;
@@ -83,6 +85,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         for (int i=0; i<r.length; i++){
             mp[i] += w*p[i];
         }
+        nbSamples++;
     }
 
    public void setRegret(double[] r) {
@@ -101,14 +104,13 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
 
     @Override
     public int getNbSamples() {
-        double sum = 0;
-        for (double d : mp) sum += d;
-        return (int) sum;
+        return nbSamples;
     }
     
     public void clear() {
         Arrays.fill(r, 0);
         Arrays.fill(mp, 0);
+        nbSamples=0;
     }
 }
 

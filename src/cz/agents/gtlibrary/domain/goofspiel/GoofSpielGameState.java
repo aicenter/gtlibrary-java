@@ -103,8 +103,9 @@ public class GoofSpielGameState extends SimultaneousGameState {
         ArrayList<Action> actions = new ArrayList(GSGameInfo.CARDS_FOR_PLAYER.length);
         for (int card : GSGameInfo.CARDS_FOR_PLAYER)
             actions.add(new GoofSpielAction(card, GSGameInfo.NATURE, null));
-        if (GSGameInfo.useFixedNatureSequence && GSGameInfo.seed == 1) Collections.reverse(actions);
-        else Collections.shuffle(actions, new HighQualityRandom(GSGameInfo.seed));
+        if (GSGameInfo.useFixedNatureSequence){
+            if (GSGameInfo.seed == 1) Collections.reverse(actions);
+        } else Collections.shuffle(actions, new HighQualityRandom(GSGameInfo.seed));
         Sequence natureSequence = new LinkedListSequenceImpl(GSGameInfo.NATURE);
         natureSequence.addAllAsLast(actions);
         return natureSequence;
