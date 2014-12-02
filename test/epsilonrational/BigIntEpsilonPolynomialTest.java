@@ -35,12 +35,12 @@ public class BigIntEpsilonPolynomialTest {
         EpsilonPolynomial result = rational.add(factory.one());
         assertEquals(1, result.getPolynomial().length);
         assertEquals(2, result.getPolynomial()[0].doubleValue(), 1e-6);
-    }
+    }                                                                                      
 
     @Test
     public void addLongTest() {
-        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{1, 2, 3}, new int[]{3, 2, 1}, new BigIntRationalFactory());
-        EpsilonPolynomial rational2 = new EpsilonPolynomial(new int[]{4, 5, 6}, new int[]{7, 8, 9}, new BigIntRationalFactory());
+        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{1, 2, 3}, new int[]{3, 2, 1}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial rational2 = new EpsilonPolynomial(new int[]{4, 5, 6}, new int[]{7, 8, 9}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
 
         EpsilonPolynomial result = rational1.add(rational2);
         assertEquals(3, result.getPolynomial().length);
@@ -50,11 +50,35 @@ public class BigIntEpsilonPolynomialTest {
     }
 
     @Test
-    public void subtractLongTest() {
-        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{1, 2, 3}, new int[]{3, 2, 1}, new BigIntRationalFactory());
-        EpsilonPolynomial rational2 = new EpsilonPolynomial(new int[]{4, 5, 6}, new int[]{7, 8, 9}, new BigIntRationalFactory());
+    public void addDifferentLengthsTest() {
+        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{1, 2, 3}, new int[]{3, 2, 1}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial rational2 = new EpsilonPolynomial(new int[]{4, 5}, new int[]{7, 8}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
 
+        EpsilonPolynomial result = rational1.add(rational2);
+        assertEquals(3, result.getPolynomial().length);
+        assertEquals(0.9048, result.getPolynomial()[0].doubleValue(), 1e-4);
+        assertEquals(1.625, result.getPolynomial()[1].doubleValue(), 1e-4);
+        assertEquals(3, result.getPolynomial()[2].doubleValue(), 1e-4);
+    }
+
+    @Test
+    public void addDifferentLengths1Test() {
+        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{1, 2}, new int[]{3, 2}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial rational2 = new EpsilonPolynomial(new int[]{4, 5, 6}, new int[]{7, 8, 9}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+
+        EpsilonPolynomial result = rational1.add(rational2);
+        assertEquals(3, result.getPolynomial().length);
+        assertEquals(0.9048, result.getPolynomial()[0].doubleValue(), 1e-4);
+        assertEquals(1.625, result.getPolynomial()[1].doubleValue(), 1e-4);
+        assertEquals(0.66666, result.getPolynomial()[2].doubleValue(), 1e-4);
+    }
+
+    @Test
+    public void subtractLongTest() {
+        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{1, 2, 3}, new int[]{3, 2, 1}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial rational2 = new EpsilonPolynomial(new int[]{4, 5, 6}, new int[]{7, 8, 9}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
         EpsilonPolynomial result = rational1.subtract(rational2);
+
         assertEquals(3, result.getPolynomial().length);
         assertEquals(-0.23809, result.getPolynomial()[0].doubleValue(), 1e-4);
         assertEquals(0.375, result.getPolynomial()[1].doubleValue(), 1e-4);
@@ -62,8 +86,32 @@ public class BigIntEpsilonPolynomialTest {
     }
 
     @Test
+    public void subtractDifferentLengthsTest() {
+        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{1, 2, 3}, new int[]{3, 2, 1}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial rational2 = new EpsilonPolynomial(new int[]{4, 5}, new int[]{7, 8}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial result = rational1.subtract(rational2);
+
+        assertEquals(3, result.getPolynomial().length);
+        assertEquals(-0.23809, result.getPolynomial()[0].doubleValue(), 1e-4);
+        assertEquals(0.375, result.getPolynomial()[1].doubleValue(), 1e-4);
+        assertEquals(3, result.getPolynomial()[2].doubleValue(), 1e-4);
+    }
+
+    @Test
+    public void subtractDifferentLengths1Test() {
+        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{1, 2}, new int[]{3, 2}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial rational2 = new EpsilonPolynomial(new int[]{4, 5, 6}, new int[]{7, 8, 9}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial result = rational1.subtract(rational2);
+
+        assertEquals(3, result.getPolynomial().length);
+        assertEquals(-0.23809, result.getPolynomial()[0].doubleValue(), 1e-4);
+        assertEquals(0.375, result.getPolynomial()[1].doubleValue(), 1e-4);
+        assertEquals(-0.6666666, result.getPolynomial()[2].doubleValue(), 1e-4);
+    }
+
+    @Test
     public void negateTest() {
-        EpsilonPolynomial rational = new EpsilonPolynomial(new int[]{1, 2, -3}, new int[]{3, 2, 1}, new BigIntRationalFactory());
+        EpsilonPolynomial rational = new EpsilonPolynomial(new int[]{1, 2, -3}, new int[]{3, 2, 1}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
 
         EpsilonPolynomial result = rational.negate();
         assertEquals(3, result.getPolynomial().length);
@@ -74,8 +122,8 @@ public class BigIntEpsilonPolynomialTest {
 
     @Test
     public void multiplyTest() {
-        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{-1, 2, -3}, new int[]{3, 2, 1}, new BigIntRationalFactory());
-        EpsilonPolynomial rational2 = new EpsilonPolynomial(1, 3, new BigIntRationalFactory());
+        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{-1, 2, -3}, new int[]{3, 2, 1}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial rational2 = new EpsilonPolynomial(1, 3, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
 
         EpsilonPolynomial result = rational1.multiply(rational2);
         assertEquals(3, result.getPolynomial().length);
@@ -86,14 +134,62 @@ public class BigIntEpsilonPolynomialTest {
 
     @Test
     public void divideTest() {
-        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{-1, 2, -3}, new int[]{3, 2, 1}, new BigIntRationalFactory());
-        EpsilonPolynomial rational2 = new EpsilonPolynomial(1, 3, new BigIntRationalFactory());
+        EpsilonPolynomial rational1 = new EpsilonPolynomial(new int[]{-1, 2, -3}, new int[]{3, 2, 1}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial rational2 = new EpsilonPolynomial(1, 3, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
 
         EpsilonPolynomial result = rational1.divide(rational2);
         assertEquals(3, result.getPolynomial().length);
         assertEquals(-1, result.getPolynomial()[0].doubleValue(), 1e-4);
         assertEquals(3, result.getPolynomial()[1].doubleValue(), 1e-4);
         assertEquals(-9, result.getPolynomial()[2].doubleValue(), 1e-4);
+    }
+
+    @Test
+    public void isZeroSimpleTest() {
+        assertEquals(true, new EpsilonPolynomialFactory(new BigIntRationalFactory()).zero().isZero());
+    }
+
+    @Test
+    public void isZeroSimpleTest2() {
+        EpsilonPolynomialFactory factory = new EpsilonPolynomialFactory(new BigIntRationalFactory());
+
+        assertEquals(true, factory.one().subtract(factory.one()).isZero());
+    }
+
+    @Test
+    public void isZeroSimpleTest3() {
+        assertEquals(false, new EpsilonPolynomialFactory(new BigIntRationalFactory()).one().isZero());
+    }
+
+    @Test
+    public void isZeroTest() {
+        EpsilonPolynomialFactory factory = new EpsilonPolynomialFactory(new BigIntRationalFactory());
+
+        assertEquals(true, factory.one().add(factory.one()).multiply(factory.create(2)).divide(factory.create(4)).subtract(factory.one()).isZero());
+    }
+
+    @Test
+    public void isOneSimpleTest() {
+        assertEquals(true, new EpsilonPolynomialFactory(new BigIntRationalFactory()).one().isOne());
+    }
+
+    @Test
+    public void isOneSimpleTest2() {
+        EpsilonPolynomialFactory factory = new EpsilonPolynomialFactory(new BigIntRationalFactory());
+
+        assertEquals(true, factory.one().multiply(factory.one()).isOne());
+    }
+
+    @Test
+    public void isOneSimpleTest3() {
+        assertEquals(false, new EpsilonPolynomialFactory(new BigIntRationalFactory()).zero().isOne());
+    }
+
+    @Test
+    public void isOneTest() {
+        EpsilonPolynomialFactory factory = new EpsilonPolynomialFactory(new BigIntRationalFactory());
+
+        assertEquals(true, factory.one().add(factory.one()).multiply(factory.create(2)).divide(factory.create(4)).subtract(factory.create(2)).negate().isOne());
     }
 
 }

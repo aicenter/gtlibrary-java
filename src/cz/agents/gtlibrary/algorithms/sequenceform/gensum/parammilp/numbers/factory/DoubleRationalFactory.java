@@ -11,6 +11,11 @@ public class DoubleRationalFactory implements ArithmeticFactory {
     }
 
     @Override
+    public Arithmetic create(long numerator, long denominator) {
+        return new DoubleRational((double)numerator / denominator);
+    }
+
+    @Override
     public Arithmetic one() {
         return DoubleRational.ONE;
     }
