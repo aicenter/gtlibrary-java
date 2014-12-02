@@ -1,21 +1,24 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.Arithmetic;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.EpsilonPolynomial;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.factory.EpsilonPolynomialFactory;
+import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-
-;
+import java.util.*;
 
 public class SimplexTable {
 
-    protected Map<Object, Rational> objective;
-    protected Map<Object, Map<Object, Rational>> constraints;
-    protected Map<Object, Rational> constants;
+    protected EpsilonPolynomialFactory factory;
+
+    private Set<Object> binaryVariables;
+
+    protected Map<Object, EpsilonPolynomial> objective;
+    protected Map<Object, Map<Object, EpsilonPolynomial>> constraints;
+    protected Map<Object, EpsilonPolynomial> constants;
 
     protected Map<Object, Integer> equationIndices;
     protected Map<Object, Integer> variableIndices;
@@ -24,10 +27,14 @@ public class SimplexTable {
     protected Set<Object> relaxableConstraints;
 
     protected Map<Object, Integer> constraintTypes;
-    protected Map<Object, Rational> lb;
-    protected Map<Object, Rational> ub;
+    protected Map<Object, EpsilonPolynomial> lb;
+    protected Map<Object, EpsilonPolynomial> ub;
 
-    public SimplexTable() {
+    protected List<Integer> basis;
+
+    public SimplexTable(EpsilonPolynomialFactory factory) {
+        this.factory = factory;
+
         constants = new LinkedHashMap<>();
         constraints = new LinkedHashMap<>();
         objective = new LinkedHashMap<>();
@@ -37,13 +44,17 @@ public class SimplexTable {
         primalWatch = new LinkedHashMap<>();
         dualWatch = new LinkedHashMap<>();
         relaxableConstraints = new HashSet<>();
+        binaryVariables = new HashSet<>();
 
         constraintTypes = new LinkedHashMap<>();
         lb = new LinkedHashMap<>();
         ub = new LinkedHashMap<>();
+        basis = new ArrayList<>();
     }
 
-    public SimplexTable(int m, int n) {
+    public SimplexTable(int m, int n, EpsilonPolynomialFactory factory) {
+        this.factory = factory;
+
         constants = new LinkedHashMap<>(m);
         constraints = new LinkedHashMap<>(m);
         objective = new LinkedHashMap<>(n);
@@ -53,16 +64,18 @@ public class SimplexTable {
         primalWatch = new LinkedHashMap<>();
         dualWatch = new LinkedHashMap<>();
         relaxableConstraints = new HashSet<>();
+        binaryVariables = new HashSet<>();
 
         constraintTypes = new LinkedHashMap<>(m);
         lb = new LinkedHashMap<>(n);
-        ub = new LinkedHashMap<>();
+        ub = new LinkedHashMap<>(n);
+        basis = new ArrayList<>(m);
     }
 
-    public Rational get(Object eqKey, Object varKey) {
-        Rational value = constraints.get(eqKey).get(varKey);
+    public EpsilonPolynomial get(Object eqKey, Object varKey) {
+        EpsilonPolynomial value = constraints.get(eqKey).get(varKey);
 
-        return value == null ? Rational.ZERO : value;
+        return value == null ? factory.zero() : value;
     }
 
     protected void updateEquationIndices(Object eqKey) {
@@ -73,37 +86,43 @@ public class SimplexTable {
         getVariableIndex(varKey);
     }
 
-    public void setObjective(Object varKey, Rational value) {
+    public void setObjective(Object varKey, EpsilonPolynomial value) {
         objective.put(varKey, value);
         updateVariableIndices(varKey);
     }
 
-    public void addToObjective(Object varKey, Rational value) {
-        Rational oldValue = objective.get(varKey);
+    public void setObjective(Object varKey, Arithmetic value) {
+        setObjective(varKey, factory.create(value));
+    }
+
+    public void addToObjective(Object varKey, EpsilonPolynomial value) {
+        EpsilonPolynomial oldValue = objective.get(varKey);
 
         objective.put(varKey, oldValue == null ? value : oldValue.add(value));
         updateVariableIndices(varKey);
     }
 
-    public Rational getObjective(Object varKey) {
-        Rational value = objective.get(varKey);
-
-        return value == null ? Rational.ZERO : value;
+    public void addToObjective(Object varKey, Arithmetic arithmetic) {
+        addToObjective(varKey, factory.create(arithmetic));
     }
 
-    public void setConstant(Object eqKey, Rational value) {
+    public EpsilonPolynomial getObjective(Object varKey) {
+        EpsilonPolynomial value = objective.get(varKey);
+
+        return value == null ? factory.zero() : value;
+    }
+
+    public void setConstant(Object eqKey, EpsilonPolynomial value) {
         constants.put(eqKey, value);
         updateEquationIndices(eqKey);
     }
 
-    public double getConstant(Object eqKey) {
-        Rational value = constants.get(eqKey);
-
-        return value == null ? 0 : value.doubleValue();
+    public void setConstant(Object eqKey, Arithmetic value) {
+        setConstant(eqKey, factory.create(value));
     }
 
-    public void setConstraint(Object eqKey, Object varKey, Rational value) {
-        Map<Object, Rational> row = constraints.get(eqKey);
+    public void setConstraint(Object eqKey, Object varKey, EpsilonPolynomial value) {
+        Map<Object, EpsilonPolynomial> row = constraints.get(eqKey);
 
         if (row == null) {
             row = new LinkedHashMap<>();
@@ -114,11 +133,15 @@ public class SimplexTable {
         updateVariableIndices(varKey);
     }
 
-    public void addToConstraint(Object eqKey, Object varKey, Rational value) {
+    public void setConstraint(Object eqKey, Object varKey, Arithmetic value) {
+        setConstraint(eqKey, varKey, factory.create(value));
+    }
+
+    public void addToConstraint(Object eqKey, Object varKey, EpsilonPolynomial value) {
         setConstraint(eqKey, varKey, get(eqKey, varKey).add(value));
     }
 
-    public void substractFromConstraint(Object eqKey, Object varKey, Rational value) {
+    public void substractFromConstraint(Object eqKey, Object varKey, EpsilonPolynomial value) {
         setConstraint(eqKey, varKey, get(eqKey, varKey).subtract(value));
     }
 
@@ -183,7 +206,7 @@ public class SimplexTable {
         return watchedPrimalVars;
     }
 
-    protected int getConstraintType(Map.Entry<Object, Map<Object, Rational>> rowEntry) {
+    protected int getConstraintType(Map.Entry<Object, Map<Object, EpsilonPolynomial>> rowEntry) {
         Integer constraintType = constraintTypes.get(rowEntry.getKey());
 
         return constraintType == null ? 0 : constraintType;
@@ -219,54 +242,79 @@ public class SimplexTable {
     }
 
     /**
-     * Set lower bound for variable represented by varObject, default value is 0
-     *
-     * @param varKey
-     * @param value
-     */
-    public void setLowerBound(Object varKey, Rational value) {
-        lb.put(varKey, value);
-    }
-
-    /**
      * Set upper bound for variable represented by varObject, default value is POSITIVE_INFINITY
      *
      * @param varKey
      * @param value
      */
-    public void setUpperBound(Object varKey, Rational value) {
+    public void setUpperBound(Object varKey, EpsilonPolynomial value) {
         ub.put(varKey, value);
     }
 
+    public void markAsBinary(Object varKey) {
+        binaryVariables.add(varKey);
+    }
+
     public void removeFromConstraint(Object eqKey, Object varKey) {
-        Map<Object, Rational> row = constraints.get(eqKey);
+        Map<Object, EpsilonPolynomial> row = constraints.get(eqKey);
 
         if (row != null)
             row.remove(varKey);
     }
 
     public ParamSimplexData toSimplex() {
-        Rational[][] tableau = new Rational[rowCount() + 1][columnCount() + 1];
+        EpsilonPolynomial[][] tableau = new EpsilonPolynomial[rowCount() + 1][columnCount() + 1];
 
+        for (int i = 0; i < tableau.length; i++) {
+            for (int j = 0; j < tableau[0].length; j++) {
+                tableau[i][j] = factory.zero();
+            }
+        }
         addObjective(tableau);
         addConstraints(tableau);
-        return new ParamSimplexData(tableau);
+        return new ParamSimplexData(tableau, basis);
     }
 
-    private void addConstraints(Rational[][] tableau) {
-        for (Map.Entry<Object, Map<Object, Rational>> constraintEntry : constraints.entrySet()) {
-            for (Map.Entry<Object, Rational> memberEntry : constraintEntry.getValue().entrySet()) {
+    public ParamSimplexData toFirstPhaseSimplex() {
+        EpsilonPolynomial[][] tableau = new EpsilonPolynomial[rowCount() + 1][columnCount() + 1];
+
+        for (int i = 0; i < tableau.length; i++) {
+            for (int j = 0; j < tableau[0].length; j++) {
+                tableau[i][j] = factory.zero();
+            }
+        }
+        addFirstPhaseObjective(tableau);
+        addConstraints(tableau);
+        return new ParamSimplexData(tableau, basis);
+    }
+
+    private void addFirstPhaseObjective(EpsilonPolynomial[][] tableau) {
+        for (Integer member : basis) {
+            tableau[0][member] = factory.one();
+        }
+    }
+
+
+    private void addConstraints(EpsilonPolynomial[][] tableau) {
+        for (Map.Entry<Object, Map<Object, EpsilonPolynomial>> constraintEntry : constraints.entrySet()) {
+            for (Map.Entry<Object, EpsilonPolynomial> memberEntry : constraintEntry.getValue().entrySet()) {
                 tableau[getEquationIndex(constraintEntry.getKey()) + 1][getVariableIndex(memberEntry.getKey())] = memberEntry.getValue();
             }
         }
-        for (Map.Entry<Object, Rational> constantEntry : constants.entrySet()) {
+        for (Map.Entry<Object, EpsilonPolynomial> constantEntry : constants.entrySet()) {
             tableau[getEquationIndex(constantEntry.getKey()) + 1][columnCount()] = constantEntry.getValue();
         }
     }
 
-    private void addObjective(Rational[][] tableau) {
-        for (Map.Entry<Object, Rational> objectiveEntry : objective.entrySet()) {
+    private void addObjective(EpsilonPolynomial[][] tableau) {
+        for (Map.Entry<Object, EpsilonPolynomial> objectiveEntry : objective.entrySet()) {
             tableau[0][getVariableIndex(objectiveEntry.getKey())] = objectiveEntry.getValue();
         }
+    }
+
+    public void setInitBasis(Object eqKey, Object varKey) {
+        int varIndex = getVariableIndex(varKey);
+
+        basis.add(getEquationIndex(eqKey));
     }
 }

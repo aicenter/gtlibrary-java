@@ -21,6 +21,11 @@ public class ApIntRational implements Arithmetic {
         denominator = new Apint(d);
     }
 
+    public ApIntRational(long n, long d) {
+        numerator = new Apint(n);
+        denominator = new Apint(d);
+    }
+
     public ApIntRational(int i) {
         denominator = Apint.ONE;
         numerator = new Apint(i);
@@ -119,53 +124,63 @@ public class ApIntRational implements Arithmetic {
     }
 
     @Override
-    public void multiplyThis(Arithmetic y) {
-        ApIntRational rational = (ApIntRational) y;
-
-        numerator = numerator.multiply(rational.numerator);
-        denominator = denominator.multiply(rational.denominator);
+    public boolean isZero() {
+        return numerator.equals(Apint.ZERO);
     }
 
     @Override
-    public void divideThis(Arithmetic y) {
-        ApIntRational rational = (ApIntRational) y;
-
-        numerator = numerator.multiply(rational.denominator);
-        denominator = denominator.multiply(rational.numerator);
+    public boolean isOne() {
+        return numerator.equals(denominator);
     }
 
-    @Override
-    public void addToThis(Arithmetic y) {
-        ApIntRational rational = (ApIntRational) y;
-
-        numerator = numerator.multiply(rational.denominator).add(rational.numerator.multiply(denominator));
-        denominator = denominator.multiply(rational.denominator);
-    }
-
-    @Override
-    public void subtractFromThis(Arithmetic y) {
-        ApIntRational rational = (ApIntRational) y;
-        numerator = numerator.multiply(rational.denominator).subtract(rational.numerator.multiply(denominator));
-        denominator = denominator.multiply(rational.denominator);
-    }
-
-    @Override
-    public void negateThis() {
-        numerator = numerator.negate();
-    }
-
-    @Override
-    public void invertThis() {
-        Apint temp = numerator;
-
-        numerator = denominator;
-        denominator = temp;
-    }
-
-    @Override
-    public void absThis() {
-        numerator = ApintMath.abs(numerator);
-    }
+    //    @Override
+//    public void multiplyThis(Arithmetic y) {
+//        ApIntRational rational = (ApIntRational) y;
+//
+//        numerator = numerator.multiply(rational.numerator);
+//        denominator = denominator.multiply(rational.denominator);
+//    }
+//
+//    @Override
+//    public void divideThis(Arithmetic y) {
+//        ApIntRational rational = (ApIntRational) y;
+//
+//        numerator = numerator.multiply(rational.denominator);
+//        denominator = denominator.multiply(rational.numerator);
+//    }
+//
+//    @Override
+//    public void addToThis(Arithmetic y) {
+//        ApIntRational rational = (ApIntRational) y;
+//
+//        numerator = numerator.multiply(rational.denominator).add(rational.numerator.multiply(denominator));
+//        denominator = denominator.multiply(rational.denominator);
+//    }
+//
+//    @Override
+//    public void subtractFromThis(Arithmetic y) {
+//        ApIntRational rational = (ApIntRational) y;
+//        numerator = numerator.multiply(rational.denominator).subtract(rational.numerator.multiply(denominator));
+//        denominator = denominator.multiply(rational.denominator);
+//    }
+//
+//    @Override
+//    public void negateThis() {
+//        numerator = numerator.negate();
+//    }
+//
+//    @Override
+//    public void invertThis() {
+//        Apint temp = numerator;
+//
+//        numerator = denominator;
+//        denominator = temp;
+//    }
+//
+//    @Override
+//    public void absThis() {
+//        numerator = ApintMath.abs(numerator);
+//    }
 
     @Override
     public boolean equals(Object o) {

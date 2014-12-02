@@ -11,6 +11,11 @@ public class ApIntRationalFactory implements ArithmeticFactory {
     }
 
     @Override
+    public Arithmetic create(long numerator, long denominator) {
+        return new ApIntRational(numerator, denominator);
+    }
+
+    @Override
     public Arithmetic one() {
         return ApIntRational.ONE;
     }

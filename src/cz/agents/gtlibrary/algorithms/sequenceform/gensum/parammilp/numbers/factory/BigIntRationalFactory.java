@@ -11,6 +11,11 @@ public class BigIntRationalFactory implements ArithmeticFactory {
     }
 
     @Override
+    public Arithmetic create(long numerator, long denominator) {
+        return new BigIntRational(numerator, denominator);
+    }
+
+    @Override
     public Arithmetic one() {
         return BigIntRational.ONE;
     }

@@ -16,19 +16,9 @@ public interface Arithmetic extends Comparable<Arithmetic> {
 
     public Arithmetic abs();
 
-    public void multiplyThis(Arithmetic y);
+    public boolean isZero();
 
-    public void divideThis(Arithmetic y);
-
-    public void addToThis(Arithmetic y);
-
-    public void subtractFromThis(Arithmetic y);
-
-    public void negateThis();
-
-    public void invertThis();
-
-    public void absThis();
+    public boolean isOne();
 
     public double doubleValue();
 

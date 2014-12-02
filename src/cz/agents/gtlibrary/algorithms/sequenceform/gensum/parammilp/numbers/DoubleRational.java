@@ -47,39 +47,49 @@ public class DoubleRational implements Arithmetic {
     }
 
     @Override
-    public void multiplyThis(Arithmetic y) {
-          value = value*((DoubleRational)y).value;
+    public boolean isZero() {
+        return value == 0;
     }
 
     @Override
-    public void divideThis(Arithmetic y) {
-        value = value/((DoubleRational)y).value;
+    public boolean isOne() {
+        return value == 1;
     }
 
-    @Override
-    public void addToThis(Arithmetic y) {
-        value = value+((DoubleRational)y).value;
-    }
-
-    @Override
-    public void subtractFromThis(Arithmetic y) {
-        value = value-((DoubleRational)y).value;
-    }
-
-    @Override
-    public void negateThis() {
-        value = -value;
-    }
-
-    @Override
-    public void invertThis() {
-        value = 1/value;
-    }
-
-    @Override
-    public void absThis() {
-         value = Math.abs(value);
-    }
+//    @Override
+//    public void multiplyThis(Arithmetic y) {
+//          value = value*((DoubleRational)y).value;
+//    }
+//
+//    @Override
+//    public void divideThis(Arithmetic y) {
+//        value = value/((DoubleRational)y).value;
+//    }
+//
+//    @Override
+//    public void addToThis(Arithmetic y) {
+//        value = value+((DoubleRational)y).value;
+//    }
+//
+//    @Override
+//    public void subtractFromThis(Arithmetic y) {
+//        value = value-((DoubleRational)y).value;
+//    }
+//
+//    @Override
+//    public void negateThis() {
+//        value = -value;
+//    }
+//
+//    @Override
+//    public void invertThis() {
+//        value = 1/value;
+//    }
+//
+//    @Override
+//    public void absThis() {
+//         value = Math.abs(value);
+//    }
 
     @Override
     public int compareTo(Arithmetic o) {

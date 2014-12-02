@@ -45,6 +45,12 @@ public class BigIntRational implements Arithmetic {
 //        normalize();
     }
 
+    public BigIntRational(long n, long d) {
+        numerator = new BigInteger(Long.toString(n));
+        denominator = new BigInteger(Long.toString(d));
+//        normalize();
+    }
+
     /**
      * builds Rational with value <tt>i</tt>.
      */
@@ -132,7 +138,7 @@ public class BigIntRational implements Arithmetic {
      * @return -1 if x < y, 0 if x=y, and 1 if x>y where x is this Rational
      */
     public int compareTo(Arithmetic y) {
-        return subtract(y).compareTo(ZERO);
+        return ((BigIntRational)subtract(y)).numerator.compareTo(BigInteger.ZERO);
     }
 
     public BigIntRational negate() {
@@ -148,53 +154,63 @@ public class BigIntRational implements Arithmetic {
     }
 
     @Override
-    public void multiplyThis(Arithmetic y) {
-        BigIntRational rational = (BigIntRational) y;
-
-        numerator = numerator.multiply(rational.numerator);
-        denominator = denominator.multiply(rational.denominator);
+    public boolean isZero() {
+        return numerator.equals(BigInteger.ZERO);
     }
 
     @Override
-    public void divideThis(Arithmetic y) {
-        BigIntRational rational = (BigIntRational) y;
-
-        numerator = numerator.multiply(rational.denominator);
-        denominator = denominator.multiply(rational.numerator);
+    public boolean isOne() {
+        return numerator.equals(denominator);
     }
 
-    @Override
-    public void addToThis(Arithmetic y) {
-        BigIntRational rational = (BigIntRational) y;
-
-        numerator = numerator.multiply(rational.denominator).add(rational.numerator.multiply(denominator));
-        denominator = denominator.multiply(rational.denominator);
-    }
-
-    @Override
-    public void subtractFromThis(Arithmetic y) {
-        BigIntRational rational = (BigIntRational) y;
-        numerator = numerator.multiply(rational.denominator).subtract(rational.numerator.multiply(denominator));
-        denominator = denominator.multiply(rational.denominator);
-    }
-
-    @Override
-    public void negateThis() {
-        numerator = numerator.negate();
-    }
-
-    @Override
-    public void invertThis() {
-        BigInteger temp = numerator;
-
-        numerator = denominator;
-        denominator = temp;
-    }
-
-    @Override
-    public void absThis() {
-        numerator = numerator.abs();
-    }
+//    @Override
+//    public void multiplyThis(Arithmetic y) {
+//        BigIntRational rational = (BigIntRational) y;
+//
+//        numerator = numerator.multiply(rational.numerator);
+//        denominator = denominator.multiply(rational.denominator);
+//    }
+//
+//    @Override
+//    public void divideThis(Arithmetic y) {
+//        BigIntRational rational = (BigIntRational) y;
+//
+//        numerator = numerator.multiply(rational.denominator);
+//        denominator = denominator.multiply(rational.numerator);
+//    }
+//
+//    @Override
+//    public void addToThis(Arithmetic y) {
+//        BigIntRational rational = (BigIntRational) y;
+//
+//        numerator = numerator.multiply(rational.denominator).add(rational.numerator.multiply(denominator));
+//        denominator = denominator.multiply(rational.denominator);
+//    }
+//
+//    @Override
+//    public void subtractFromThis(Arithmetic y) {
+//        BigIntRational rational = (BigIntRational) y;
+//        numerator = numerator.multiply(rational.denominator).subtract(rational.numerator.multiply(denominator));
+//        denominator = denominator.multiply(rational.denominator);
+//    }
+//
+//    @Override
+//    public void negateThis() {
+//        numerator = numerator.negate();
+//    }
+//
+//    @Override
+//    public void invertThis() {
+//        BigInteger temp = numerator;
+//
+//        numerator = denominator;
+//        denominator = temp;
+//    }
+//
+//    @Override
+//    public void absThis() {
+//        numerator = numerator.abs();
+//    }
 
     @Override
     public boolean equals(Object o) {
@@ -217,4 +233,5 @@ public class BigIntRational implements Arithmetic {
         result = 31 * result + denominator.hashCode();
         return result;
     }
+
 }

@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.Arit
 
 public interface ArithmeticFactory {
     public Arithmetic create(int numerator, int denominator);
+    public Arithmetic create(long numerator, long denominator);
     public Arithmetic one();
     public Arithmetic zero();
 }
