@@ -11,9 +11,11 @@ public class ParamSimplexData {
     public Map<Object, Integer> variableIndices;
     public Map<Object, Integer> constraintIndices;
     public List<Integer> basis;
+    public Indices firstPhaseSlacks;
 
-    public ParamSimplexData(EpsilonPolynomial[][] tableau, List<Integer> basis) {
+    public ParamSimplexData(EpsilonPolynomial[][] tableau, List<Integer> basis, Indices firstPhaseSlacks) {
         this.tableau = tableau;
         this.basis = basis;
+        this.firstPhaseSlacks = firstPhaseSlacks;
     }
 }

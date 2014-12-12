@@ -3,6 +3,8 @@ package cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers;
 import org.apfloat.Apint;
 import org.apfloat.ApintMath;
 
+import java.math.BigInteger;
+
 public class ApIntRational implements Arithmetic {
 
     public static ApIntRational ONE = new ApIntRational(Apint.ONE);
@@ -108,7 +110,7 @@ public class ApIntRational implements Arithmetic {
      * @return -1 if x < y, 0 if x=y, and 1 if x>y where x is this Rational
      */
     public int compareTo(Arithmetic y) {
-        return subtract(y).compareTo(ZERO);
+        return ((ApIntRational)subtract(y)).numerator.compareTo(Apint.ZERO);
     }
 
     public ApIntRational negate() {

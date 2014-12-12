@@ -36,19 +36,19 @@ public class BigIntRational implements Arithmetic {
     public BigIntRational(BigInteger n, BigInteger d) {
         numerator = n;
         denominator = d;
-//        normalize();
+        normalize();
     }
 
     public BigIntRational(int n, int d) {
         numerator = new BigInteger(Integer.toString(n));
         denominator = new BigInteger(Integer.toString(d));
-//        normalize();
+        normalize();
     }
 
     public BigIntRational(long n, long d) {
         numerator = new BigInteger(Long.toString(n));
         denominator = new BigInteger(Long.toString(d));
-//        normalize();
+        normalize();
     }
 
     /**
@@ -71,11 +71,7 @@ public class BigIntRational implements Arithmetic {
      * returns a String representation of this Rational
      */
     public String toString() {
-        if (denominator.compareTo(BigInteger.ONE) == 0) {
-            return numerator.toString();
-        } else {
-            return numerator.toString() + "/" + denominator.toString();
-        }
+        return numerator.toString() + "/" + denominator.toString();
     }
 
     /**
@@ -138,7 +134,7 @@ public class BigIntRational implements Arithmetic {
      * @return -1 if x < y, 0 if x=y, and 1 if x>y where x is this Rational
      */
     public int compareTo(Arithmetic y) {
-        return ((BigIntRational)subtract(y)).numerator.compareTo(BigInteger.ZERO);
+        return ((BigIntRational) subtract(y)).numerator.compareTo(BigInteger.ZERO);
     }
 
     public BigIntRational negate() {
@@ -163,7 +159,15 @@ public class BigIntRational implements Arithmetic {
         return numerator.equals(denominator);
     }
 
-//    @Override
+    public BigInteger getDenominator() {
+        return denominator;
+    }
+
+    public BigInteger getNumerator() {
+        return numerator;
+    }
+
+    //    @Override
 //    public void multiplyThis(Arithmetic y) {
 //        BigIntRational rational = (BigIntRational) y;
 //

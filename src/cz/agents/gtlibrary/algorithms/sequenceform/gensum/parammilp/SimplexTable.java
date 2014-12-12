@@ -1,10 +1,11 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.Arithmetic;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.BigIntRational;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.EpsilonPolynomial;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.factory.EpsilonPolynomialFactory;
-import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.EpsilonReal;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 
@@ -15,6 +16,7 @@ public class SimplexTable {
     protected EpsilonPolynomialFactory factory;
 
     private Set<Object> binaryVariables;
+    private Map<Object, Object> binaryVariableLimitConstraints;
 
     protected Map<Object, EpsilonPolynomial> objective;
     protected Map<Object, Map<Object, EpsilonPolynomial>> constraints;
@@ -31,6 +33,8 @@ public class SimplexTable {
     protected Map<Object, EpsilonPolynomial> ub;
 
     protected List<Integer> basis;
+    protected Indices firstPhaseSlack;
+    protected Set<Object> firstPhaseSlackVariables;
 
     public SimplexTable(EpsilonPolynomialFactory factory) {
         this.factory = factory;
@@ -45,11 +49,14 @@ public class SimplexTable {
         dualWatch = new LinkedHashMap<>();
         relaxableConstraints = new HashSet<>();
         binaryVariables = new HashSet<>();
+        binaryVariableLimitConstraints = new HashMap<>();
 
         constraintTypes = new LinkedHashMap<>();
         lb = new LinkedHashMap<>();
         ub = new LinkedHashMap<>();
         basis = new ArrayList<>();
+        firstPhaseSlack = new Indices();
+        firstPhaseSlackVariables = new HashSet<>();
     }
 
     public SimplexTable(int m, int n, EpsilonPolynomialFactory factory) {
@@ -65,11 +72,14 @@ public class SimplexTable {
         dualWatch = new LinkedHashMap<>();
         relaxableConstraints = new HashSet<>();
         binaryVariables = new HashSet<>();
+        binaryVariableLimitConstraints = new HashMap<>();
 
         constraintTypes = new LinkedHashMap<>(m);
         lb = new LinkedHashMap<>(n);
         ub = new LinkedHashMap<>(n);
         basis = new ArrayList<>(m);
+        firstPhaseSlack = new Indices();
+        firstPhaseSlackVariables = new HashSet<>();
     }
 
     public EpsilonPolynomial get(Object eqKey, Object varKey) {
@@ -272,7 +282,7 @@ public class SimplexTable {
         }
         addObjective(tableau);
         addConstraints(tableau);
-        return new ParamSimplexData(tableau, basis);
+        return new ParamSimplexData(tableau, basis, firstPhaseSlack);
     }
 
     public ParamSimplexData toFirstPhaseSimplex() {
@@ -285,11 +295,52 @@ public class SimplexTable {
         }
         addFirstPhaseObjective(tableau);
         addConstraints(tableau);
-        return new ParamSimplexData(tableau, basis);
+        return new ParamSimplexData(tableau, new ArrayList<>(basis), firstPhaseSlack);
+    }
+
+    public GTFSimplexData toGtfSimplex() {
+        EpsilonReal[][] tableau = new EpsilonReal[rowCount() + 1][columnCount() + 1];
+
+        for (int i = 0; i < tableau.length; i++) {
+            for (int j = 0; j < tableau[0].length; j++) {
+                tableau[i][j] = EpsilonReal.ZERO;
+            }
+        }
+        addFirstPhaseObjective(tableau);
+        addConstraints(tableau);
+        return new GTFSimplexData(tableau, new ArrayList<>(basis), firstPhaseSlack);
+    }
+
+    private void addConstraints(EpsilonReal[][] tableau) {
+        for (Map.Entry<Object, Map<Object, EpsilonPolynomial>> constraintEntry : constraints.entrySet()) {
+            for (Map.Entry<Object, EpsilonPolynomial> memberEntry : constraintEntry.getValue().entrySet()) {
+                tableau[getEquationIndex(constraintEntry.getKey()) + 1][getVariableIndex(memberEntry.getKey()) + 1] = getEpsilonReal(memberEntry.getValue());
+            }
+        }
+        for (Map.Entry<Object, EpsilonPolynomial> constantEntry : constants.entrySet()) {
+            tableau[getEquationIndex(constantEntry.getKey()) + 1][0] = getEpsilonReal(constantEntry.getValue());
+        }
+    }
+
+    private EpsilonReal getEpsilonReal(EpsilonPolynomial value) {
+        Rational[] polynomial = new Rational[value.getPolynomial().length];
+
+        for (int i = 0; i < polynomial.length; i++) {
+            BigIntRational bigIntValue = (BigIntRational) value.getPolynomial()[i];
+
+            polynomial[i] = new Rational(bigIntValue.getNumerator(), bigIntValue.getDenominator());
+        }
+        return new EpsilonReal(polynomial);
+    }
+
+    private void addFirstPhaseObjective(EpsilonReal[][] tableau) {
+        for (Integer member : firstPhaseSlack.getColumns()) {
+            tableau[0][member + 1] = EpsilonReal.ONE.negate();
+        }
     }
 
     private void addFirstPhaseObjective(EpsilonPolynomial[][] tableau) {
-        for (Integer member : basis) {
+        for (Integer member : firstPhaseSlack.getColumns()) {
             tableau[0][member] = factory.one();
         }
     }
@@ -313,8 +364,34 @@ public class SimplexTable {
     }
 
     public void setInitBasis(Object eqKey, Object varKey) {
-        int varIndex = getVariableIndex(varKey);
+        assert getEquationIndex(eqKey) == basis.size();
+        basis.add(getVariableIndex(varKey));
+    }
 
-        basis.add(getEquationIndex(eqKey));
+    public void markFirstPhaseSlack(Object eqKey, Object varKey) {
+        firstPhaseSlack.addEntry(getEquationIndex(eqKey) + 1, getVariableIndex(varKey));
+        firstPhaseSlackVariables.add(varKey);
+    }
+
+    public Map<Object, Integer> getVariableIndices() {
+        return variableIndices;
+    }
+
+    public Set<Object> getBinaryVariables() {
+        return binaryVariables;
+    }
+
+    public Map<Object, Object> getBinaryVariableLimitConstraints() {
+        return binaryVariableLimitConstraints;
+    }
+
+    public void markBinaryVariableLimitConstraint(Object eqKey, Object slackVariable) {
+        binaryVariableLimitConstraints.put(eqKey, slackVariable);
+
+    }
+
+    public void removeFirstPhaseSlack(Object eqKey, Object varKey) {
+        firstPhaseSlackVariables.remove(varKey);
+        firstPhaseSlack.removeEntry(getEquationIndex(eqKey) + 1, getVariableIndex(varKey));
     }
 }

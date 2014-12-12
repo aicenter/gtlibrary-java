@@ -100,4 +100,9 @@ public class DoubleRational implements Arithmetic {
     public double doubleValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return value + "";
+    }
 }

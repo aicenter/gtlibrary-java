@@ -76,10 +76,10 @@ public class QuasiPerfectBuilder extends TreeVisitor {
     protected GameInfo gameInfo;
 
     public static void main(String[] args) {
-//        runAoS();
+        runAoS();
 //		runGoofSpiel();
 //        runIIGoofSpiel();
-		runKuhnPoker();
+//		runKuhnPoker();
 //        runMPoCHM();
 //        runBPG();
 //        runUD();
