@@ -34,6 +34,9 @@ public class EpsilonPolynomialFactory {
             polynomial[coefEntry.getKey()] = arithmeticFactory.create(coefEntry.getValue(), 1);
         }
         return create(polynomial);
+//        Integer value = coefMap.get(0);
+//
+//        return create(value == null ? 0 : value);
     }
 
     public EpsilonPolynomial create(double value) {

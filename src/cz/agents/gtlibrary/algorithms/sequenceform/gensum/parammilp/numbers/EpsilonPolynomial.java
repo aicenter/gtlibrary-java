@@ -48,7 +48,7 @@ public class EpsilonPolynomial implements Comparable<EpsilonPolynomial> {
 
     public EpsilonPolynomial divide(EpsilonPolynomial y) {
         assert y.polynomial.length == 1;
-        if (isOne())
+        if (y.isOne())
             return this;
         Arithmetic[] polynomial = new Arithmetic[this.polynomial.length];
 
@@ -59,49 +59,58 @@ public class EpsilonPolynomial implements Comparable<EpsilonPolynomial> {
     }
 
     public EpsilonPolynomial add(EpsilonPolynomial y) {
-        if (polynomial.length < y.polynomial.length)
-            adjustPolynomial(y);
         if (y.isZero())
             return this;
         if (isZero())
             return y;
-        Arithmetic[] polynomial = new Arithmetic[this.polynomial.length];
+        if(this.polynomial.length >= y.polynomial.length)
+            return new EpsilonPolynomial(getAdditionResult(this.polynomial, y.polynomial), factory);
+        return new EpsilonPolynomial(getAdditionResult(y.polynomial, this.polynomial), factory);
+    }
 
-        for (int i = 0; i < y.polynomial.length; i++) {
-            polynomial[i] = this.polynomial[i].add(y.polynomial[i]);
+    private Arithmetic[] getAdditionResult(Arithmetic[] longerPolynomial, Arithmetic[] shorterPolynomial) {
+        Arithmetic[] result = new Arithmetic[longerPolynomial.length];
+
+        for (int i = 0; i < shorterPolynomial.length; i++) {
+            result[i] = longerPolynomial[i].add(shorterPolynomial[i]);
         }
-        for (int i = y.polynomial.length; i < this.polynomial.length; i++) {
-            polynomial[i] = this.polynomial[i];
+        for (int i = shorterPolynomial.length; i < longerPolynomial.length; i++) {
+            result[i] = longerPolynomial[i];
         }
-        return new EpsilonPolynomial(polynomial, factory);
+        return result;
     }
 
     public EpsilonPolynomial subtract(EpsilonPolynomial y) {
-        if (polynomial.length < y.polynomial.length)
-            adjustPolynomial(y);
-        if (isZero())
+        if (y.isZero())
             return this;
-        Arithmetic[] polynomial = new Arithmetic[this.polynomial.length];
+        Arithmetic[] result = new Arithmetic[Math.max(polynomial.length, y.polynomial.length)];
 
-        for (int i = 0; i < y.polynomial.length; i++) {
-            polynomial[i] = this.polynomial[i].subtract(y.polynomial[i]);
+        if(polynomial.length >= y.polynomial.length) {
+            for (int i = 0; i < y.polynomial.length; i++) {
+                result[i] = this.polynomial[i].subtract(y.polynomial[i]);
+            }
+            for (int i = y.polynomial.length; i < this.polynomial.length; i++) {
+                result[i] = this.polynomial[i];
+            }
+        } else {
+            for (int i = 0; i < polynomial.length; i++) {
+                result[i] = polynomial[i].subtract(y.polynomial[i]);
+            }
+            for (int i = polynomial.length; i < y.polynomial.length; i++) {
+                result[i] = y.polynomial[i].negate();
+            }
         }
-        for (int i = y.polynomial.length; i < this.polynomial.length; i++) {
-            polynomial[i] = this.polynomial[i];
-        }
-        return new EpsilonPolynomial(polynomial, factory);
+//        clean(result);
+        return new EpsilonPolynomial(result, factory);
     }
 
-    private void adjustPolynomial(EpsilonPolynomial y) {
-        Arithmetic[] newPolynomial = new Arithmetic[y.polynomial.length];
-
-        for (int i = 0; i < polynomial.length; i++) {
-            newPolynomial[i] = polynomial[i];
+    private void clean(Arithmetic[] result) {
+        for (int i = 0; i < result.length; i++) {
+            if(result[i].isZero())
+                result[i] = factory.getArithmeticFactory().zero();
+            else if(result[i].isOne())
+                result[i] = factory.getArithmeticFactory().one();
         }
-        for (int i = polynomial.length; i < y.polynomial.length; i++) {
-            newPolynomial[i] = factory.getArithmeticFactory().zero();
-        }
-        polynomial = newPolynomial;
     }
 
     public EpsilonPolynomial negate() {
@@ -158,12 +167,26 @@ public class EpsilonPolynomial implements Comparable<EpsilonPolynomial> {
     }
 
     public int compareTo(EpsilonPolynomial y) {
-        assert polynomial.length == y.polynomial.length;
-        for (int i = 0; i < polynomial.length; i++) {
+        for (int i = 0; i < Math.min(polynomial.length, y.polynomial.length); i++) {
             int difference = polynomial[i].compareTo(y.polynomial[i]);
 
             if (difference != 0)
                 return difference;
+        }
+        if(polynomial.length > y.polynomial.length){
+            for (int i = y.polynomial.length; i < polynomial.length; i++) {
+                int difference = polynomial[i].compareTo(factory.getArithmeticFactory().zero());
+
+                if(difference != 0)
+                    return difference;
+            }
+        } else if( polynomial.length < y.polynomial.length) {
+            for (int i = polynomial.length; i < y.polynomial.length; i++) {
+                int difference = factory.getArithmeticFactory().zero().compareTo(y.polynomial[i]);
+
+                if(difference != 0)
+                    return difference;
+            }
         }
         return 0;
     }

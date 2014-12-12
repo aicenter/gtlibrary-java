@@ -192,4 +192,80 @@ public class BigIntEpsilonPolynomialTest {
         assertEquals(true, factory.one().add(factory.one()).multiply(factory.create(2)).divide(factory.create(4)).subtract(factory.create(2)).negate().isOne());
     }
 
+    @Test
+    public void  compareToSimpleTest() {
+        EpsilonPolynomialFactory factory = new EpsilonPolynomialFactory(new BigIntRationalFactory());
+
+        assertEquals(true, factory.one().compareTo(factory.zero()) > 0);
+    }
+
+    @Test
+    public void  compareToSimpleTest1() {
+        EpsilonPolynomialFactory factory = new EpsilonPolynomialFactory(new BigIntRationalFactory());
+
+        assertEquals(true, factory.one().compareTo(factory.create(5)) < 0);
+    }
+
+    @Test
+    public void  compareToSimpleTest2() {
+        EpsilonPolynomialFactory factory = new EpsilonPolynomialFactory(new BigIntRationalFactory());
+
+        assertEquals(true, factory.one().compareTo(factory.one()) == 0);
+    }
+
+    @Test
+    public void  compareToLongTest() {
+        EpsilonPolynomial polynomial1 = new EpsilonPolynomial(new int[]{2, 3, 4}, new int[]{6, 7, 8}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial polynomial2 = new EpsilonPolynomial(new int[]{1, 3, 1}, new int[]{3, 7, 2}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+
+        assertEquals(true, polynomial1.compareTo(polynomial2) == 0);
+    }
+
+    @Test
+    public void  compareToLongTest1() {
+        EpsilonPolynomial polynomial1 = new EpsilonPolynomial(new int[]{2, 4, 4}, new int[]{6, 7, 8}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial polynomial2 = new EpsilonPolynomial(new int[]{1, 3, 1}, new int[]{3, 7, 2}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+
+        assertEquals(true, polynomial1.compareTo(polynomial2) > 0);
+    }
+
+    @Test
+    public void  compareToLongTest2() {
+        EpsilonPolynomial polynomial1 = new EpsilonPolynomial(new int[]{2, 3, 4}, new int[]{6, 7, 9}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial polynomial2 = new EpsilonPolynomial(new int[]{1, 3, 1}, new int[]{3, 7, 2}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+
+        assertEquals(true, polynomial1.compareTo(polynomial2) < 0);
+    }
+
+    @Test
+    public void  compareToDifferentLengthsTest() {
+        EpsilonPolynomial polynomial1 = new EpsilonPolynomial(new int[]{2, 3}, new int[]{6, 7}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial polynomial2 = new EpsilonPolynomial(new int[]{1, 3, 1}, new int[]{3, 7, 2}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+
+        assertEquals(true, polynomial1.compareTo(polynomial2) < 0);
+    }
+
+    @Test
+    public void  compareToDifferentLengthsTest1() {
+        EpsilonPolynomial polynomial1 = new EpsilonPolynomial(new int[]{2, 3}, new int[]{6, 7}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial polynomial2 = new EpsilonPolynomial(new int[]{1, 3, -1}, new int[]{3, 7, 2}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+
+        assertEquals(true, polynomial1.compareTo(polynomial2) > 0);
+    }
+
+    @Test
+    public void  compareToDifferentLengthsTest2() {
+        EpsilonPolynomial polynomial1 = new EpsilonPolynomial(new int[]{2, 2}, new int[]{6, 7}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial polynomial2 = new EpsilonPolynomial(new int[]{1, 3, -1}, new int[]{3, 7, 2}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+
+        assertEquals(true, polynomial1.compareTo(polynomial2) < 0);
+    }
+
+    @Test
+    public void  compareToDifferentLengthsTest3() {
+        EpsilonPolynomial polynomial1 = new EpsilonPolynomial(new int[]{2, 3}, new int[]{6, 7}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+        EpsilonPolynomial polynomial2 = new EpsilonPolynomial(new int[]{1, 3, 0}, new int[]{3, 7, 2}, new EpsilonPolynomialFactory(new BigIntRationalFactory()));
+
+        assertEquals(true, polynomial1.compareTo(polynomial2) == 0);
+    }
 }
