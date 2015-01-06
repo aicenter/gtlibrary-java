@@ -6,8 +6,6 @@ import cz.agents.gtlibrary.algorithms.sequenceform.gensum.SolverResult;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.EpsilonPolynomial;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.factory.BigIntRationalFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.numbers.factory.EpsilonPolynomialFactory;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.lp.LPDictionary;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.EpsilonReal;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -51,14 +49,8 @@ public class Simplex implements Algorithm {
         System.out.println(calculator.computeUtility(new NoMissingSeqStrategy(result.p1RealPlan), new NoMissingSeqStrategy(result.p2RealPlan)));
 
         System.out.println("------------------------");
-        for (Map.Entry<Sequence, Double> entry : result.p1RealPlan.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
-        for (Map.Entry<Sequence, Double> entry : result.p2RealPlan.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
+        printRealPlan(result.p1RealPlan);
+        printRealPlan(result.p2RealPlan);
     }
 
     protected static void runAoS() {
@@ -75,14 +67,8 @@ public class Simplex implements Algorithm {
         System.out.println(calculator.computeUtility(new NoMissingSeqStrategy(result.p1RealPlan), new NoMissingSeqStrategy(result.p2RealPlan)));
 
         System.out.println("------------------------");
-        for (Map.Entry<Sequence, Double> entry : result.p1RealPlan.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
-        for (Map.Entry<Sequence, Double> entry : result.p2RealPlan.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
+        printRealPlan(result.p1RealPlan);
+        printRealPlan(result.p2RealPlan);
     }
 
     protected static void runKuhnPoker() {
@@ -98,14 +84,8 @@ public class Simplex implements Algorithm {
         System.out.println(calculator.computeUtility(new NoMissingSeqStrategy(result.p1RealPlan), new NoMissingSeqStrategy(result.p2RealPlan)));
 
         System.out.println("------------------------");
-        for (Map.Entry<Sequence, Double> entry : result.p1RealPlan.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
-        for (Map.Entry<Sequence, Double> entry : result.p2RealPlan.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
+        printRealPlan(result.p1RealPlan);
+        printRealPlan(result.p2RealPlan);
     }
 
     public static final int M = 1000000;
@@ -115,9 +95,6 @@ public class Simplex implements Algorithm {
     protected SimplexTable lpTable;
     protected EpsilonPolynomialFactory factory;
     protected GameInfo info;
-
-    protected FirstPhaseParametricSolverResult min;
-    protected FirstPhaseParametricSolverResult epsilonMax;
 
     public Simplex(Player[] players, GenSumSequenceFormConfig config, EpsilonPolynomialFactory factory, GameInfo info) {
         this.players = players;
@@ -130,55 +107,140 @@ public class Simplex implements Algorithm {
     @Override
     public SolverResult compute() {
         build();
-        solve();
+        SimplexSolverResult result = solveFirstPhase();
 
-        System.out.println("min: " + min.value);
-        for (Map.Entry<Sequence, Double> entry : min.p1Rp.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
+//        result.tableau = lpTable.toFirstPhaseSimplex().tableau;
+        if (!lpTable.getObjective().isEmpty()) {
+            lpTable.addSecondPhaseObjective(result.tableau);
+            removeFirstPhaseSlacks(result);
+            result = solveSecondPhase(factory.bigM().negate(), toParamSimplexData(result));
         }
-        for (Map.Entry<Sequence, Double> entry : min.p2Rp.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
-        System.out.println("epsilonMax: " + epsilonMax.value);
-        for (Map.Entry<Sequence, Double> entry : epsilonMax.p1Rp.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
-        for (Map.Entry<Sequence, Double> entry : epsilonMax.p2Rp.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
-        return wrap(min);
+        return toSolverResult(result);
     }
 
-    protected SolverResult wrap(FirstPhaseParametricSolverResult solve) {
+    private void removeFirstPhaseSlacks(SimplexSolverResult result) {
+        Set<Integer> blackList = new HashSet<>(result.firstPhaseSlacks.getColumns());
+        EpsilonPolynomial[][] secondPhaseTableau = new EpsilonPolynomial[result.tableau.length][result.tableau[0].length - blackList.size()];
+        int[] differenceArray = new int[result.tableau[0].length - 1];
+        int offset = 0;
+
+        for (int j = 0; j < result.tableau[0].length - 1; j++) {
+            if (blackList.contains(j))
+                offset++;
+            else
+                for (int i = 0; i < result.tableau.length; i++) {
+                    secondPhaseTableau[i][j - offset] = result.tableau[i][j];
+                }
+            differenceArray[j] = offset;
+        }
+        for (int i = 0; i < result.tableau.length; i++) {
+            secondPhaseTableau[i][secondPhaseTableau[0].length - 1] = result.tableau[i][result.tableau[0].length - 1];
+        }
+        result.tableau = secondPhaseTableau;
+
+        removeFirstPhaseSlacksFromBasis(result, differenceArray);
+        removeFirstPhaseSlacksFromVariableIndices(result, blackList, differenceArray);
+    }
+
+    private void removeFirstPhaseSlacksFromVariableIndices(SimplexSolverResult result, Set<Integer> blackList, int[] differenceArray) {
+        for (Map.Entry<Object, Integer> entry : lpTable.getVariableIndices().entrySet()) {
+            if (blackList.contains(entry.getValue()))
+                result.variableIndices.remove(entry.getKey());
+            else
+                result.variableIndices.put(entry.getKey(), entry.getValue() - differenceArray[entry.getValue()]);
+        }
+    }
+
+    private void removeFirstPhaseSlacksFromBasis(SimplexSolverResult result, int[] differenceArray) {
+        for (int i = 0; i < result.basis.size(); i++) {
+            int oldMember = result.basis.get(i);
+
+            result.basis.set(i, oldMember - differenceArray[oldMember]);
+        }
+    }
+
+    private ParamSimplexData toParamSimplexData(SimplexSolverResult result) {
+        return new ParamSimplexData(result.tableau, result.basis, null, result.variableIndices);
+    }
+
+    protected SolverResult toSolverResult(SimplexSolverResult solve) {
         return new SolverResult(solve.p1Rp, solve.p2Rp, 0);
     }
 
-    protected void solve() {
-        FirstPhaseParametricSolverResult currentResult = runSimplex();
+    protected SimplexSolverResult solveFirstPhase() {
+        SimplexSolverResult currentResult = runFirstPhaseSimplex();
 
-        if (currentResult.value.getPolynomial()[0].compareTo(factory.getArithmeticFactory().zero()) > 0)
-            return;
-        if (lpTable.getBinaryVariableLimitConstraints().isEmpty())
-            return;
-        Iterator<Map.Entry<Object, Object>> iterator = lpTable.getBinaryVariableLimitConstraints().entrySet().iterator();
-        Map.Entry<Object, Object> entry = iterator.next();
+        if (currentResult.value.compareTo(factory.zero()) > 0)
+            return null;
+        Object nonBinaryVarKey = getNonBinaryVariable(currentResult);
 
-        iterator.remove();
-        lpTable.markFirstPhaseSlack(entry.getKey(), entry.getValue());
-        solve();
-        lpTable.setConstant(entry.getKey(), factory.zero());
-        solve();
-        lpTable.removeFirstPhaseSlack(entry.getKey(), entry.getValue());
-        lpTable.markBinaryVariableLimitConstraint(entry.getKey(), entry.getValue());
-        lpTable.setConstant(entry.getKey(), factory.one());
+        if(nonBinaryVarKey == null)
+            return currentResult;
+        Object binaryVarLimitConstraintKey = lpTable.getLimitConstraintOf(nonBinaryVarKey);
+        Object slackKey = lpTable.getBinaryLimitSlackOf(binaryVarLimitConstraintKey);
+
+        lpTable.markFirstPhaseSlack(binaryVarLimitConstraintKey, slackKey);
+        currentResult = solveFirstPhase();
+        if (currentResult != null)
+            return currentResult;
+        lpTable.setConstant(binaryVarLimitConstraintKey, factory.zero());
+        currentResult = solveFirstPhase();
+        revertChanges(binaryVarLimitConstraintKey, slackKey, nonBinaryVarKey);
+        return currentResult;
     }
 
-    protected FirstPhaseParametricSolverResult choose(FirstPhaseParametricSolverResult currentResult, FirstPhaseParametricSolverResult result0, FirstPhaseParametricSolverResult result1) {
-        FirstPhaseParametricSolverResult min = currentResult;
+    private Object getNonBinaryVariable(SimplexSolverResult currentResult) {
+        for (Object binaryVariable : lpTable.getBinaryVariables()) {
+            EpsilonPolynomial value = currentResult.variableValues.get(binaryVariable);
+
+            if(!value.isZero() && !value.isOne())
+                return binaryVariable;
+        }
+        return null;
+    }
+
+    private SimplexSolverResult solveSecondPhase(EpsilonPolynomial currentBest, ParamSimplexData paramSimplexData) {
+        SimplexSolverResult currentResult = runSecondPhaseSimplex(paramSimplexData.copy());
+        Object nonBinaryVarKey = getNonBinaryVariable(currentResult);
+
+        if (nonBinaryVarKey == null && currentResult.value.compareTo(currentBest) > 0)
+            return currentResult;
+        if (currentResult.value.compareTo(currentBest) <= 0)
+            return null;
+        Object binaryVarLimitConstraintKey = lpTable.getLimitConstraintOf(nonBinaryVarKey);
+        Object slackKey = lpTable.getBinaryLimitSlackOf(binaryVarLimitConstraintKey);
+
+        paramSimplexData.tableau[lpTable.getEquationIndex(binaryVarLimitConstraintKey) + 1][paramSimplexData.variableIndices.get(slackKey)] = factory.zero();
+//        lpTable.markFirstPhaseSlack(binaryVarLimitConstraintKey, slackKey);
+        SimplexSolverResult recursiveResult = solveSecondPhase(currentBest, paramSimplexData);
+
+        if (currentResult != null)
+            currentBest = currentResult.value;
+        paramSimplexData.tableau[lpTable.getEquationIndex(binaryVarLimitConstraintKey) + 1][paramSimplexData.tableau[0].length] = factory.zero();
+//        lpTable.setConstant(binaryVarLimitConstraintKey, factory.zero()); update tableau not from table
+        SimplexSolverResult recursiveResult1 = solveSecondPhase(currentBest, paramSimplexData);
+
+        revertChanges(paramSimplexData, binaryVarLimitConstraintKey, slackKey, nonBinaryVarKey);
+        return chooseMax(recursiveResult, recursiveResult1);
+    }
+
+    private void revertChanges(ParamSimplexData paramSimplexData, Object binaryVarLimitConstraintKey, Object slackKey, Object nonBinaryVarKey) {
+        paramSimplexData.tableau[lpTable.getEquationIndex(binaryVarLimitConstraintKey) + 1][paramSimplexData.variableIndices.get(slackKey)] = factory.one();
+        paramSimplexData.tableau[lpTable.getEquationIndex(binaryVarLimitConstraintKey) + 1][paramSimplexData.tableau[0].length] = factory.one();
+    }
+
+    private void revertChanges(Object eqKey, Object varKey, Object nonBinaryVarKey) {
+        lpTable.removeFirstPhaseSlack(eqKey, varKey);
+        lpTable.markBinaryVariableLimitConstraint(eqKey, varKey, nonBinaryVarKey);
+        lpTable.setConstant(eqKey, factory.one());
+    }
+
+    private SimplexSolverResult chooseMax(SimplexSolverResult result, SimplexSolverResult result1) {
+        return result.value.compareTo(result1.value) > 0 ? result : result1;
+    }
+
+    protected SimplexSolverResult choose(SimplexSolverResult currentResult, SimplexSolverResult result0, SimplexSolverResult result1) {
+        SimplexSolverResult min = currentResult;
 
         if (min.value.compareTo(result0.value) > 0)
             min = result0;
@@ -187,85 +249,171 @@ public class Simplex implements Algorithm {
         return min;
     }
 
-    protected FirstPhaseParametricSolverResult runSimplex() {
+    protected SimplexSolverResult runFirstPhaseSimplex() {
         ParamSimplexData data = lpTable.toFirstPhaseSimplex();
-        EpsilonPolynomial[][] tableau = data.tableau;
-        List<Integer> basis = data.basis;
 
-//        System.out.println("init c " + Arrays.toString(tableau[0]));
-//        System.out.println(data.firstPhaseSlacks);
-        for (int i = 0; i < data.firstPhaseSlacks.getRows().size(); i++) {
-            Integer member = data.firstPhaseSlacks.getRows().get(i);
-
-            assert tableau[0][data.firstPhaseSlacks.getColumns().get(i)].equals(factory.one());
-            assert oneAtZerosOtherwiseWithoutObj(tableau, data.firstPhaseSlacks.getRows().get(i), data.firstPhaseSlacks.getColumns().get(i));
-            for (int j = 0; j < tableau[0].length; j++) {
-                tableau[0][j] = tableau[0][j].subtract(tableau[member][j]);
-            }
-            assert oneAtZerosOtherwise(tableau, data.firstPhaseSlacks.getRows().get(i), data.firstPhaseSlacks.getColumns().get(i));
-        }
-
-//        System.out.println("c after " + Arrays.toString(tableau[0]));
-        while (hasNegativeEntryInObjective(tableau)) {
-//            System.out.println("c: " + Arrays.toString(tableau[0]));
-            int enteringVarIndex = chooseEnteringVarIndex(tableau);
-            int leavingVarRow = chooseLeavingVarRowBland(tableau, basis, enteringVarIndex);
-
-            assert oneAtZerosOtherwise(tableau, leavingVarRow, basis.get(leavingVarRow - 1));
-//            System.out.println("entering var index: " + enteringVarIndex);
-//            System.out.println("leaving var row: " + leavingVarRow);
-//            printColumn(tableau, enteringVarIndex, "entering var column: ");
-//            printColumn(tableau, tableau[0].length - 1, "b");
-            updateBasis(basis, enteringVarIndex, leavingVarRow);
-            EpsilonPolynomial enteringVariableValue = tableau[leavingVarRow][enteringVarIndex];
-
-            assert enteringVariableValue.compareTo(factory.zero()) > 0;
-            if (!enteringVariableValue.isOne())
-                for (int i = 0; i < tableau[0].length; i++) {
-                    tableau[leavingVarRow][i] = tableau[leavingVarRow][i].divide(enteringVariableValue);
-                }
-            assert tableau[leavingVarRow][enteringVarIndex].isOne();
-            for (int i = 0; i < tableau.length; i++) {
-                if (i == leavingVarRow)
-                    continue;
-                EpsilonPolynomial tempValue = tableau[i][enteringVarIndex];
-
-                for (int j = 0; j < tableau[0].length; j++) {
-                    tableau[i][j] = tableau[i][j].subtract(tableau[leavingVarRow][j].multiply(tempValue));
-                }
-            }
-            for (int i = 0; i < basis.size(); i++) {
-                assert oneAtZerosOtherwise(tableau, i + 1, basis.get(i));
-            }
-        }
+        subtractFromFirstPhaseObjective(data);
+        runSimplex(data);
         Map<Object, EpsilonPolynomial> variableValues = getVariableValues(data);
         Map<Sequence, Double> p1Rp = getRealizationPlanFor(players[0], variableValues);
         Map<Sequence, Double> p2Rp = getRealizationPlanFor(players[1], variableValues);
-        EpsilonPolynomial value = tableau[0][tableau[0].length - 1].negate();
+        EpsilonPolynomial value = data.tableau[0][data.tableau[0].length - 1].negate();
 
         if (allBinary(variableValues) && value.getPolynomial()[0].isZero()) {
+            printVariableValues(variableValues);
+            Indices slacksInBasis = getFirstPhaseSlacksInBasis(data.basis);
+
+            if (!slacksInBasis.isEmpty())
+                fixBasis(data, slacksInBasis);
+            variableValues = getVariableValues(data);
+            p1Rp = getRealizationPlanFor(players[0], variableValues);
+            p2Rp = getRealizationPlanFor(players[1], variableValues);
+            value = data.tableau[0][data.tableau[0].length - 1].negate();
+            assert getFirstPhaseSlacksInBasis(data.basis).isEmpty();
+            System.out.println("***************************");
+            System.out.println("First phase results: ");
             System.out.println("value: " + value);
-            for (Map.Entry<Sequence, Double> entry : p1Rp.entrySet()) {
-                if (entry.getValue() > 0)
-                    System.out.println(entry);
-            }
-            for (Map.Entry<Sequence, Double> entry : p2Rp.entrySet()) {
-                if (entry.getValue() > 0)
-                    System.out.println(entry);
-            }
-            if (min == null || min.value.compareTo(value) > 0)
-                min = new FirstPhaseParametricSolverResult(p1Rp, p2Rp, value);
-            if (epsilonMax == null || epsilonMax.value.compareTo(value) < 0)
-                epsilonMax = new FirstPhaseParametricSolverResult(p1Rp, p2Rp, value);
+            printRealPlan(p1Rp);
+            printRealPlan(p2Rp);
         }
-        return new FirstPhaseParametricSolverResult(p1Rp, p2Rp, value);
+        return new SimplexSolverResult(p1Rp, p2Rp, value, data.tableau, data.basis, variableValues, data.firstPhaseSlacks, data.variableIndices);
+    }
+
+    private void subtractFromFirstPhaseObjective(ParamSimplexData data) {
+        for (int i = 0; i < data.firstPhaseSlacks.getRows().size(); i++) {
+            Integer member = data.firstPhaseSlacks.getRows().get(i);
+
+            assert data.tableau[0][data.firstPhaseSlacks.getColumns().get(i)].equals(factory.one());
+            assert oneAtZerosOtherwiseWithoutObj(data.tableau, data.firstPhaseSlacks.getRows().get(i), data.firstPhaseSlacks.getColumns().get(i));
+            for (int j = 0; j < data.tableau[0].length; j++) {
+                data.tableau[0][j] = data.tableau[0][j].subtract(data.tableau[member][j]);
+            }
+            assert oneAtZerosOtherwise(data.tableau, data.firstPhaseSlacks.getRows().get(i), data.firstPhaseSlacks.getColumns().get(i));
+        }
+    }
+
+    protected SimplexSolverResult runSecondPhaseSimplex(ParamSimplexData data) {
+        subtractFromSecondPhaseObjective(data);
+        runSimplex(data);
+        Map<Object, EpsilonPolynomial> variableValues = getVariableValues(data);
+        Map<Sequence, Double> p1Rp = getRealizationPlanFor(players[0], variableValues);
+        Map<Sequence, Double> p2Rp = getRealizationPlanFor(players[1], variableValues);
+        EpsilonPolynomial value = data.tableau[0][data.tableau[0].length - 1].negate();
+
+        if (allBinary(variableValues)) {
+            printVariableValues(variableValues);
+            System.out.println("***************************");
+            System.out.println("Second phase results: ");
+            System.out.println("value: " + value);
+            printRealPlan(p1Rp);
+            printRealPlan(p2Rp);
+        }
+        return new SimplexSolverResult(p1Rp, p2Rp, value, data.tableau, data.basis, variableValues, data.firstPhaseSlacks, data.variableIndices);
+    }
+
+    private void subtractFromSecondPhaseObjective(ParamSimplexData data) {
+        for (int row = 1; row <= data.basis.size(); row++) {
+            int column = data.basis.get(row - 1);
+
+            assert oneAtZerosOtherwiseWithoutObj(data.tableau, row, column);
+            EpsilonPolynomial tempValue = data.tableau[0][column];
+            for (int i = 0; i < data.tableau[0].length; i++) {
+                data.tableau[0][i] = data.tableau[0][i].subtract(data.tableau[row][i].multiply(tempValue));
+            }
+            assert oneAtZerosOtherwise(data.tableau, row, column);
+        }
+    }
+
+    private void runSimplex(ParamSimplexData data) {
+        while (hasNegativeEntryInObjective(data.tableau)) {
+            int enteringVarIndex = chooseEnteringVarIndex(data.tableau);
+            int leavingVarRow = chooseLeavingVarRowBland(data.tableau, data.basis, enteringVarIndex);
+
+            assert oneAtZerosOtherwise(data.tableau, leavingVarRow, data.basis.get(leavingVarRow - 1));
+            updateBasis(data.basis, enteringVarIndex, leavingVarRow);
+            updateTableau(data, enteringVarIndex, leavingVarRow);
+        }
+    }
+
+    private static void printRealPlan(Map<Sequence, Double> p1Rp) {
+        for (Map.Entry<Sequence, Double> entry : p1Rp.entrySet()) {
+            if (entry.getValue() > 0)
+                System.out.println(entry);
+        }
+    }
+
+    private void printVariableValues(Map<Object, EpsilonPolynomial> variableValues) {
+        System.out.println("------------------------");
+        for (Map.Entry<Object, EpsilonPolynomial> entry : variableValues.entrySet()) {
+            if (!entry.getValue().isZero())
+                System.out.println(entry);
+        }
+    }
+
+    private void fixBasis(ParamSimplexData data, Indices slacksInBasis) {
+        System.out.println("First phase slack in basis");
+        for (int i = 0; i < slacksInBasis.size(); i++) {
+            int leavingVarRow = slacksInBasis.getRows().get(i);
+            int enteringVarIndex = findVarIndexWithNonzeroCoefInRow(data.tableau, leavingVarRow, slacksInBasis.getColumns().get(i));
+
+            if (enteringVarIndex != -1) {
+                updateBasis(data.basis, enteringVarIndex, leavingVarRow);
+                updateTableau(data, enteringVarIndex, leavingVarRow);
+            } else {
+                System.err.println("No suitable replacement");
+            }
+        }
+    }
+
+    private int findVarIndexWithNonzeroCoefInRow(EpsilonPolynomial[][] tableau, int row, int forbiddenIndex) {
+        for (int i = 0; i < tableau[0].length - 1; i++) {
+            if (i != forbiddenIndex)
+                if (!tableau[row][i].isZero())
+                    return i;
+        }
+        return -1;
+    }
+
+    private void updateTableau(ParamSimplexData data, int enteringVarIndex, int leavingVarRow) {
+        EpsilonPolynomial enteringVariableValue = data.tableau[leavingVarRow][enteringVarIndex];
+
+//        assert enteringVariableValue.compareTo(factory.zero()) > 0;
+        if (!enteringVariableValue.isOne())
+            for (int i = 0; i < data.tableau[0].length; i++) {
+                data.tableau[leavingVarRow][i] = data.tableau[leavingVarRow][i].divide(enteringVariableValue);
+            }
+        assert data.tableau[leavingVarRow][enteringVarIndex].isOne();
+        for (int i = 0; i < data.tableau.length; i++) {
+            if (i == leavingVarRow)
+                continue;
+            EpsilonPolynomial tempValue = data.tableau[i][enteringVarIndex];
+
+            for (int j = 0; j < data.tableau[0].length; j++) {
+                data.tableau[i][j] = data.tableau[i][j].subtract(data.tableau[leavingVarRow][j].multiply(tempValue));
+            }
+        }
+        for (int i = 0; i < data.basis.size(); i++) {
+            assert oneAtZerosOtherwise(data.tableau, i + 1, data.basis.get(i));
+        }
+    }
+
+    private Indices getFirstPhaseSlacksInBasis(List<Integer> basis) {
+        Indices slacksInBasis = new Indices();
+
+        for (Integer slackVariableIndex : lpTable.getFirstPhaseSlacks().getColumns()) {
+            int rowIndex = basis.lastIndexOf(slackVariableIndex);
+
+            if (rowIndex != -1)
+                slacksInBasis.addEntry(rowIndex + 1, slackVariableIndex);
+        }
+        return slacksInBasis;
     }
 
     protected boolean allBinary(Map<Object, EpsilonPolynomial> variableValues) {
         for (Object binaryVariable : lpTable.getBinaryVariables()) {
             EpsilonPolynomial value = variableValues.get(binaryVariable);
 
-            if (!value.getPolynomial()[0].isOne() && !value.getPolynomial()[0].isZero())
+            if (!value.isOne() && !value.isZero())
                 return false;
         }
         return true;
@@ -279,7 +427,7 @@ public class Simplex implements Algorithm {
         }
         Map<Object, EpsilonPolynomial> variableValues = new HashMap<>(result.size());
 
-        for (Map.Entry<Object, Integer> entry : lpTable.getVariableIndices().entrySet()) {
+        for (Map.Entry<Object, Integer> entry : data.variableIndices.entrySet()) {
             EpsilonPolynomial value = result.get(entry.getValue());
 
             if (value != null)
@@ -410,6 +558,11 @@ public class Simplex implements Algorithm {
     protected void build() {
         generateSequenceConstraints();
         generateISConstraints();
+        addObjective();
+    }
+
+    private void addObjective() {
+        lpTable.addToObjective(new Pair<>("v", 0), factory.one());
     }
 
     protected void generateISConstraints() {
@@ -437,7 +590,7 @@ public class Simplex implements Algorithm {
         lpTable.setConstraint(eqKey, slackKey, factory.one());
         lpTable.setInitBasis(eqKey, slackKey);
         lpTable.markAsBinary(new Pair<>("b", sequence));
-        lpTable.markBinaryVariableLimitConstraint(eqKey, slackKey);
+        lpTable.markBinaryVariableLimitConstraint(eqKey, slackKey, new Pair<>("b", sequence));
         lpTable.setConstant(eqKey, factory.one());
     }
 
@@ -492,8 +645,9 @@ public class Simplex implements Algorithm {
         Object infSetVarKey = new Pair<>("v", (sequence.size() == 0 ? sequence.getPlayer().getId() : sequence.getLastInformationSet()));
         Pair<String, Sequence> slackKey = new Pair<>("s_v", sequence);
 
-        lpTable.setConstraint(sequence, infSetVarKey, factory.one());
-        lpTable.setConstraint(sequence, new Pair<>("s", sequence), factory.oneNeg());
+        lpTable.setConstraint(sequence, infSetVarKey, factory.oneNeg());
+        lpTable.setConstraint(sequence, new Pair<>("s", sequence), factory.one());
+//        lpTable.setInitBasis(sequence, new Pair<>("s", sequence));
         lpTable.setConstraint(sequence, slackKey, factory.one());
         lpTable.setConstant(sequence, getEpsilonPolynomial(sequence));
         lpTable.setInitBasis(sequence, slackKey);
@@ -502,11 +656,11 @@ public class Simplex implements Algorithm {
             Double utility = config.getUtilityFor(sequence, compatibleSequence, sequence.getPlayer());
 
             if (utility != null)
-                lpTable.setConstraint(sequence, compatibleSequence, factory.create(-(info.getUtilityStabilizer() * utility)));
+                lpTable.setConstraint(sequence, compatibleSequence, factory.create(info.getUtilityStabilizer() * utility));
         }
         for (SequenceInformationSet reachableIS : config.getReachableSets(sequence)) {
             if (!reachableIS.getOutgoingSequences().isEmpty())
-                lpTable.setConstraint(sequence, new Pair<>("v", reachableIS), factory.oneNeg());
+                lpTable.setConstraint(sequence, new Pair<>("v", reachableIS), factory.one());
         }
     }
 

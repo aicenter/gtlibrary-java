@@ -12,9 +12,15 @@ import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSExpander;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameInfo;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
+import cz.agents.gtlibrary.domain.mpochm.MPoCHMExpander;
+import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameInfo;
+import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.stacktest.StackTestExpander;
+import cz.agents.gtlibrary.domain.stacktest.StackTestGameInfo;
+import cz.agents.gtlibrary.domain.stacktest.StackTestGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -28,9 +34,11 @@ import java.util.Map;
 public class MiltersenSimplex extends Simplex {
 
     public static void main(String[] args) {
-        runAoS();
+//        runAoS();
 //        runKuhnPoker();
 //        runIAoS();
+//        runMPoCHM();
+        runStackTest();
     }
 
     protected static void runIAoS() {
@@ -82,6 +90,58 @@ public class MiltersenSimplex extends Simplex {
             if (entry.getValue() > 0)
                 System.out.println(entry);
         }
+    }
+
+    protected static void runMPoCHM() {
+        GameState root = new MPoCHMGameState();
+        GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
+        Expander<SequenceInformationSet> expander = new MPoCHMExpander<>(config);
+
+        GeneralSumGameBuilder.buildWithUtilityShift(root, config, expander, 10);
+        Simplex simplex = new MiltersenSimplex(root.getAllPlayers(), config, new EpsilonPolynomialFactory(new BigIntRationalFactory()), new MPoCHMGameInfo());
+
+        SolverResult result = simplex.compute();
+        UtilityCalculator calculator = new UtilityCalculator(root, expander);
+
+        System.out.println(calculator.computeUtility(new NoMissingSeqStrategy(result.p1RealPlan), new NoMissingSeqStrategy(result.p2RealPlan)));
+
+        System.out.println("------------------------");
+        for (Map.Entry<Sequence, Double> entry : result.p1RealPlan.entrySet()) {
+            if (entry.getValue() > 0)
+                System.out.println(entry);
+        }
+        for (Map.Entry<Sequence, Double> entry : result.p2RealPlan.entrySet()) {
+            if (entry.getValue() > 0)
+                System.out.println(entry);
+        }
+    }
+
+    protected static void runStackTest() {
+        GameState root = new StackTestGameState();
+        GenSumSequenceFormConfig config = new GenSumSequenceFormConfig();
+        Expander<SequenceInformationSet> expander = new StackTestExpander<>(config);
+
+        GeneralSumGameBuilder.buildWithUtilityShift(root, config, expander, 10);
+        Simplex simplex = new MiltersenSimplex(root.getAllPlayers(), config, new EpsilonPolynomialFactory(new BigIntRationalFactory()), new StackTestGameInfo());
+
+        SolverResult result = simplex.compute();
+        UtilityCalculator calculator = new UtilityCalculator(root, expander);
+
+        System.out.println(calculator.computeUtility(new NoMissingSeqStrategy(result.p1RealPlan), new NoMissingSeqStrategy(result.p2RealPlan)));
+
+        System.out.println("------------------------");
+        for (Map.Entry<Sequence, Double> entry : result.p1RealPlan.entrySet()) {
+            if (entry.getValue() > 0)
+                System.out.println(entry);
+        }
+        for (Map.Entry<Sequence, Double> entry : result.p2RealPlan.entrySet()) {
+            if (entry.getValue() > 0)
+                System.out.println(entry);
+        }
+
+        GambitEFG writer = new GambitEFG();
+
+        writer.write("StackTest.gbt", root, expander);
     }
 
     protected static void runKuhnPoker() {
@@ -150,8 +210,13 @@ public class MiltersenSimplex extends Simplex {
         lpTable.setConstraint(eqKey, slackKey, factory.one());
         lpTable.setInitBasis(eqKey, slackKey);
         lpTable.markAsBinary(new Pair<>("b", sequence));
-        lpTable.markBinaryVariableLimitConstraint(eqKey, slackKey);
+
         lpTable.setConstant(eqKey, factory.one());
+
+        if(sequence.size() == 0)
+            lpTable.markFirstPhaseSlack(eqKey, slackKey);
+        else
+            lpTable.markBinaryVariableLimitConstraint(eqKey, slackKey, new Pair<>("b", sequence));
     }
 
     protected void createSlackConstraint(Sequence sequence) {
