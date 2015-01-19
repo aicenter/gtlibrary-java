@@ -24,7 +24,7 @@ public class GenSumGoofSpielGameState extends GoofSpielGameState {
 
     @Override
     public GameState copy() {
-        return new GenSumGoofSpielGameState();
+        return new GenSumGoofSpielGameState(this);
     }
 
 
