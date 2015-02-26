@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.interfaces;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -41,4 +42,15 @@ public interface History extends Serializable {
 	public void addActionOf(Action action, Player player);
 
     public int getLength();
+
+	public Action getLastAction();
+
+	public void reverse();
+
+	public Player getLastPlayer();
+
+	public int getSequencesLength();
+
+	public List<Integer> getPlayersSequences();
+
 }

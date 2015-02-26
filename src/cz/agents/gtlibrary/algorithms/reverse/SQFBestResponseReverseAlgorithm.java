@@ -17,20 +17,35 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.sequenceform;
+package cz.agents.gtlibrary.algorithms.reverse;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
+import java.util.TreeMap;
+
+import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
-import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameInfo;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.InformationSet;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.strategy.FirstActionStrategyForMissingSequences;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.ValueComparator;
-import org.apache.wicket.util.collections.ArrayListStack;
-
-import java.util.*;
 
 /**
  *
@@ -38,35 +53,16 @@ import java.util.*;
  * game described by the root state and the expander.
  *
  */
-public class SQFBestResponseAlgorithm {
+public class SQFBestResponseReverseAlgorithm extends SQFBestResponseAlgorithm {
+	
+	protected ORComparator comparator;
 
-    public long nodes = 0;
-    protected Expander expander;
-    protected Map<GameState, Double> cachedValuesForNodes = new HashMap<GameState, Double>();
-    protected Map<Sequence, Double> opponentRealizationPlan = new HashMap<Sequence, Double>();
-    protected Map<Sequence, Double> myRealizationPlan = new HashMap<Sequence, Double>();
-    protected HashMap<Sequence, HashSet<Sequence>> BRresult = new HashMap<Sequence, HashSet<Sequence>>();
-    protected HashSet<Sequence> bestResponseSequences = new HashSet<Sequence>();
-    final protected int searchingPlayerIndex;
-    final protected int opponentPlayerIndex;
-    final protected Player[] players;
-    final protected AlgorithmConfig<? extends InformationSet> algConfig;
-    final protected GameInfo gameInfo;
-    protected double MAX_UTILITY_VALUE;
-    final protected double EPS_CONSTANT = 0.000000001; // zero for numerical-stability reasons 
-    protected ORComparator comparator;
-    protected GameState gameTreeRoot = null;
+    public SQFBestResponseReverseAlgorithm(Expander expander,
+			int searchingPlayerIndex, Player[] actingPlayers,
+			ConfigImpl algConfig, GameInfo gameInfo) {
+		super(expander, searchingPlayerIndex, actingPlayers, algConfig, gameInfo);
+	}
 
-    public SQFBestResponseAlgorithm(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo) {
-        this.searchingPlayerIndex = searchingPlayerIndex;
-        this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
-        this.players = actingPlayers;
-        assert players.length == 2;
-        this.expander = expander;
-        this.algConfig = algConfig;
-        this.gameInfo = gameInfo;
-        this.MAX_UTILITY_VALUE = gameInfo.getMaxUtility();
-    }
 
     public Double calculateBR(GameState root, Map<Sequence, Double> opponentRealizationPlan) {
         return calculateBR(root, opponentRealizationPlan, new HashMap<Sequence, Double>());
@@ -83,7 +79,7 @@ public class SQFBestResponseAlgorithm {
         this.cachedValuesForNodes.clear();
         this.gameTreeRoot = root;
 
-        comparator = new ORComparator(opponentRealizationPlan);
+        this.comparator = new ORComparator(opponentRealizationPlan);
 
         return bestResponse(root, -MAX_UTILITY_VALUE);
     }
@@ -144,6 +140,7 @@ public class SQFBestResponseAlgorithm {
             if (currentIS != null) {
                 alternativeNodes.addAll(currentIS.getAllStates());
                 if (!alternativeNodes.contains(gameState)) {
+                	assert gameState.getPlayerToMove().equals(currentIS.getPlayer());
                     alternativeNodes.add(gameState);
                 }
                 if (alternativeNodes.size() == 1 && !nonZeroOppRP) {
@@ -156,11 +153,14 @@ public class SQFBestResponseAlgorithm {
             }
 
             assert (alternativeNodes.contains(gameState));
-            HashMap<GameState, Double> alternativeNodesProbs = new HashMap<GameState, Double>();
+            	
+            	
+            HashMap<GameState, Double> alternativeNodesProbsMap = new HashMap<GameState, Double>();
 
             double ISProbability = 0;
 
             for (GameState currentNode : alternativeNodes) {
+            	assert currentNode.getPlayerToMove().equals(gameState.getPlayerToMove());
                 double currentNodeProb = currentNode.getNatureProbability();
                 if (nonZeroOppRP) {
                     if (getOpponentRealizationPlan().containsKey(currentNode.getHistory().getSequenceOf(players[opponentPlayerIndex]))) {
@@ -174,72 +174,61 @@ public class SQFBestResponseAlgorithm {
                     }
                 }
                 ISProbability += currentNodeProb;
-                alternativeNodesProbs.put(currentNode, currentNodeProb);
+                alternativeNodesProbsMap.put(currentNode, currentNodeProb);
             }
 
-//            if (!nonZeroOppRP && !nonZeroOppRPAlt && ISProbability > gameState.getNatureProbability()) {
-//                // if there is zero OppRP prob we keep only those nodes in IS that are caused by the moves of nature
-//                // i.e., -> we keep all the nodes that share the same history of the opponent
-//                for (GameState state : new ArrayList<GameState>(alternativeNodes)) {
-//                    if (!state.getHistory().getSequenceOf(players[opponentPlayerIndex]).equals(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex]))) {
-//                        alternativeNodes.remove(state);
-//                        alternativeNodesProbs.remove(state);
-//                    }
-//                }
-//            }
-
+            Double[] alternativeNodesProbs = new Double[alternativeNodes.size()];
             BRSrchSelection sel = new BRSrchSelection(lowerBound, ISProbability, alternativeNodesProbs, nonZeroOppRP);
             Collections.sort(alternativeNodes, comparator);
 
-            List<Action> actionsToExplore = expander.getActions(gameState);
+            List<Action> actionsToExplore = expander.getActions(gameState.copy());
+            assert actionsToExplore.get(0).getInformationSet()!=null;
             actionsToExplore = sel.sortActions(gameState, actionsToExplore);
-
+            
             for (GameState currentNode : alternativeNodes) {
-                sel.setCurrentNode(currentNode);
+            	sel.setCurrentNode(currentNode);
+            	alternativeNodesProbs[sel.alternativeNodesIndex] = alternativeNodesProbsMap.get(currentNode);
                 selectAction(currentNode, sel, actionsToExplore);
                 sel.abandonCurrentNode();
                 if (sel.allNodesProbability < EPS_CONSTANT) {
                     break;
                 }
-//                if ((sel.getResult().getRight() + sel.allNodesProbability * MAX_UTILITY_VALUE) < lowerBound) { //
-//                    break;
-//                }
                 if (currentNode.equals(gameState)) {
-                    if (Collections.max(sel.actionRealValues.get(currentNode).values()) < lowerBound)
+                    if (Collections.max(sel.actionRealValues[sel.alternativeNodesIndex].values()) < lowerBound){
                         break;
+                    }
                 }
             }
-
+            
+            
             Action resultAction = sel.getResult().getLeft(); //selected action for the searching player
 
+            sel.alternativeNodesIndex = 0;
             for (GameState currentNode : alternativeNodes) { // storing the results based on the action
-                if (sel.actionRealValues.get(currentNode) == null) {
+            	if (sel.actionRealValues[sel.alternativeNodesIndex] == null) {
                     if (currentNode.equals(gameState)) {
-//                        returnValue = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
                         returnValue = Double.NEGATIVE_INFINITY;
                     }
+                    sel.alternativeNodesIndex++;
                     continue;
                 }
                 double v;
                 if (resultAction == null) {
-//                    v = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
                     v = Double.NEGATIVE_INFINITY;
                 } else {
-                    v = sel.actionRealValues.get(currentNode).get(resultAction);
+                    v = sel.actionRealValues[sel.alternativeNodesIndex].get(resultAction);
                 }
 
                 cachedValuesForNodes.put(currentNode, v);
                 if (currentNode.equals(gameState)) {
                     returnValue = v;
                 }
+                sel.alternativeNodesIndex++;
             }
 
-//            if (returnValue == null) {
-//                System.out.println();
-//            }
             assert (returnValue != null);
 
-            Sequence resultSequence = new ArrayListSequenceImpl(currentHistory.get(players[searchingPlayerIndex]));
+            Sequence resultSequence =  new ArrayListSequenceImpl(currentHistory.get(players[searchingPlayerIndex]));
             resultSequence.addLast(resultAction);
 
             HashSet<Sequence> tmpBRSet = BRresult.get(currentHistory.get(players[searchingPlayerIndex]));
@@ -248,7 +237,7 @@ public class SQFBestResponseAlgorithm {
             }
 
             tmpBRSet.add(resultSequence);
-            BRresult.put(currentHistory.get(players[searchingPlayerIndex]), tmpBRSet);
+            BRresult.put(new ArrayListSequenceImpl(currentHistory.get(players[searchingPlayerIndex])), tmpBRSet);
 
         } else { // nature player or the opponent is to move
             double nodeProbability = gameState.getNatureProbability();
@@ -284,26 +273,24 @@ public class SQFBestResponseAlgorithm {
     }
 
     public void selectAction(GameState state, BRActionSelection selection, List<Action> actionsToExplore) {
-//        List<Action> actionsToExplore = expander.getActions(state);
-//        actionsToExplore = selection.sortActions(state, actionsToExplore);
-        for (Action act : actionsToExplore) {
-            Action action = act;
 
-            GameState newState = state.performAction(action);
+      for (Action action : actionsToExplore) {
+          state.performActionModifyingThisState(action);
 
-            double natureProb = newState.getNatureProbability(); // TODO extract these probabilities from selection Map
-            Double oppRP = getOpponentRealizationPlan().get(newState.getHistory().getSequenceOf(players[opponentPlayerIndex]));
-            if (oppRP == null) {
-                oppRP = 0d;
-            }
+          double natureProb = state.getNatureProbability(); // TODO extract these probabilities from selection Map
+          Double oppRP = getOpponentRealizationPlan().get(state.getHistory().getSequenceOf(players[opponentPlayerIndex]));
+          if (oppRP == null) {
+              oppRP = 0d;
+          }
 
-            double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
-            if (newLowerBound <= MAX_UTILITY_VALUE) {
-                double value = bestResponse(newState, newLowerBound);
-                selection.addValue(action, value, natureProb, oppRP);
-            }
-        }
-    }
+          double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
+          if (newLowerBound <= MAX_UTILITY_VALUE) {
+              double value = bestResponse(state, newLowerBound);
+              selection.addValue(action, value, natureProb, oppRP);
+          }
+          state.reverseAction();
+      }
+  }
 
     public Map<Sequence, Double> getOpponentRealizationPlan() {
         return opponentRealizationPlan;
@@ -437,39 +424,38 @@ public class SQFBestResponseAlgorithm {
 
         public double allNodesProbability;
         protected HashMap<Action, Double> actionExpectedValues = new HashMap<Action, Double>();
-        public HashMap<GameState, HashMap<Action, Double>> actionRealValues = new HashMap<GameState, HashMap<Action, Double>>();
+        public HashMap<Action, Double>[] actionRealValues;
         protected double maxValue = Double.NEGATIVE_INFINITY;
         protected double previousMaxValue = Double.NEGATIVE_INFINITY;
         protected Action maxAction = null;
-        protected GameState currentNode = null;
-        protected HashMap<GameState, Double> alternativeNodesProbs = null;
+        protected Double[] alternativeNodesProbs = null;
         protected boolean nonZeroORP;
+        protected int alternativeNodesIndex;
 
-        public BRSrchSelection(double lowerBound, double allNodesProbability, HashMap<GameState, Double> alternativeNodesProbs, boolean nonZeroORP) {
+        public BRSrchSelection(double lowerBound, double allNodesProbability, Double[] alternativeNodesProbs, boolean nonZeroORP) {
             super(lowerBound);
             this.allNodesProbability = allNodesProbability;
             this.alternativeNodesProbs = alternativeNodesProbs;
+            this.actionRealValues = new HashMap[alternativeNodesProbs.length];
             this.nonZeroORP = nonZeroORP;
+            this.alternativeNodesIndex = -1;
         }
 
         public void setCurrentNode(GameState currentNode) {
-//			allNodesProbability -= nodeProbability;
-            this.currentNode = currentNode;
-            actionRealValues.put(currentNode, new HashMap<Action, Double>());
-            maxValue = Double.NEGATIVE_INFINITY;
+        	alternativeNodesIndex++;
+            actionRealValues[alternativeNodesIndex] = new HashMap<Action, Double>();
+        	maxValue = Double.NEGATIVE_INFINITY;
         }
 
         public void abandonCurrentNode() {
-            allNodesProbability -= alternativeNodesProbs.get(currentNode);
-            this.currentNode = null;
+            allNodesProbability -= alternativeNodesProbs[alternativeNodesIndex];
             previousMaxValue = actionExpectedValues.get(maxAction);
         }
 
         @Override
         public void addValue(Action action, double value, double natureProb, double orpProb) {
-            assert (currentNode != null);
 
-            HashMap<Action, Double> currentNodeActionValues = actionRealValues.get(currentNode);
+            HashMap<Action, Double> currentNodeActionValues = actionRealValues[alternativeNodesIndex];
             assert (currentNodeActionValues != null);
             assert (!currentNodeActionValues.containsKey(action));
             currentNodeActionValues.put(action, value);
@@ -505,10 +491,8 @@ public class SQFBestResponseAlgorithm {
                 if (this.allNodesProbability < EPS_CONSTANT) {
                     return Double.POSITIVE_INFINITY;
                 } else {
-//					double probability = natureProb;
-//					if (nonZeroORP) probability *= orpProb;
                     return ((previousMaxValue + this.allNodesProbability * (-MAX_UTILITY_VALUE))
-                            - (actionExpectedValues.get(action) + (this.allNodesProbability - alternativeNodesProbs.get(currentNode)) * MAX_UTILITY_VALUE));
+                            - (actionExpectedValues.get(action) + (this.allNodesProbability - alternativeNodesProbs[alternativeNodesIndex]) * MAX_UTILITY_VALUE));
                 }
             }
         }
@@ -520,7 +504,7 @@ public class SQFBestResponseAlgorithm {
             }
 
             List<Action> result = new ArrayList<Action>();
-            // sort according to my old realizaiton plan
+            // sort according to my old realization plan
             Sequence currentSequence = state.getSequenceFor(players[searchingPlayerIndex]);
             Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
             boolean hasPositiveProb = false;

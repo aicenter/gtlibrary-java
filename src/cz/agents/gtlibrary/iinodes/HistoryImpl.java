@@ -19,16 +19,19 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.iinodes;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
-
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 
 public class HistoryImpl implements History {
@@ -37,22 +40,31 @@ public class HistoryImpl implements History {
 	
 	private Map<Player, Sequence> sequencesOfPlayers;
 	private int hashCode = -1;
+	private List<Integer> playersSequence;
 	final private Player[] players;
 
 	public HistoryImpl(Player[] players) {
 		this.players = players;
+		playersSequence = new ArrayList<>();
 		sequencesOfPlayers = new LinkedHashMap<Player, Sequence>(players.length);
 		for (Player player : players) {
 			sequencesOfPlayers.put(player, new ArrayListSequenceImpl(player));
 		}
 	}
 
-	public HistoryImpl(Map<Player, Sequence> sequencesOfPlayers, Player[] players) {
+	public HistoryImpl(Map<Player, Sequence> sequencesOfPlayers, Player[] players, List<Integer> playersSequence) {
 		this.sequencesOfPlayers = new LinkedHashMap<Player, Sequence>(sequencesOfPlayers.size());
 		this.players = players;
 		for (Entry<Player, Sequence> entry : sequencesOfPlayers.entrySet()) {
 			this.sequencesOfPlayers.put(entry.getKey(), new ArrayListSequenceImpl(entry.getValue()));
 		}
+		this.playersSequence = new ArrayList<>(playersSequence);
+		/*
+		this.playersSequence = new int[playersSequence.length+1];
+		for (int i = 0; i< playersSequence.length; i++) {
+			this.playersSequence[i] = playersSequence[i];
+		}
+		*/
 	}
 
 	public Sequence getSequenceOf(Player player) {
@@ -61,14 +73,17 @@ public class HistoryImpl implements History {
 
 	@Override
 	public History copy() {
-		return new HistoryImpl(sequencesOfPlayers, players);
+		return new HistoryImpl(sequencesOfPlayers, players, playersSequence );
 	}
 
 	@Override
 	public void addActionOf(Action action, Player player) {
 		sequencesOfPlayers.get(player).addLast(action);
 		hashCode = -1;
+		
+		playersSequence.add(player.getId());
 	}
+	
 
     @Override
     public int getLength() {
@@ -131,6 +146,40 @@ public class HistoryImpl implements History {
 	public String toString() {
 		return sequencesOfPlayers.toString();
 	}
-
+	
+	@Override
+	public Player getLastPlayer(){
+		return players[playersSequence.get(playersSequence.size()-1)];
+	}
+	
+	@Override
+	public Action getLastAction(){
+		return sequencesOfPlayers.get(getLastPlayer()).getLast();
+	}
+	
+	@Override
+	public void reverse(){
+		hashCode = -1;
+		if(sequencesOfPlayers.get(getLastPlayer()).removeLast()==null)
+			System.err.println("Unable to reverse the action. Empty history.");;
+		if(playersSequence.remove(playersSequence.size()-1) == null)
+			System.err.println("Unable to reverse the action. Empty history.");
+	}
+	
+	private void printPlayersSequence(){
+		for(int i : playersSequence)
+			System.out.printf("%d",i);
+		System.out.println();
+	}
+	
+	@Override
+	public int getSequencesLength(){
+		return playersSequence.size();
+	}
+	
+	@Override
+	public List<Integer> getPlayersSequences(){
+		return playersSequence;
+	}
 
 }
