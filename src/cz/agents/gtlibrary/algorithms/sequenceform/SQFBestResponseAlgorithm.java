@@ -43,8 +43,8 @@ public class SQFBestResponseAlgorithm {
     public long nodes = 0;
     protected Expander expander;
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<GameState, Double>();
-    private Map<Sequence, Double> opponentRealizationPlan = new HashMap<Sequence, Double>();
-    private Map<Sequence, Double> myRealizationPlan = new HashMap<Sequence, Double>();
+    protected Map<Sequence, Double> opponentRealizationPlan = new HashMap<Sequence, Double>();
+    protected Map<Sequence, Double> myRealizationPlan = new HashMap<Sequence, Double>();
     protected HashMap<Sequence, HashSet<Sequence>> BRresult = new HashMap<Sequence, HashSet<Sequence>>();
     protected HashSet<Sequence> bestResponseSequences = new HashSet<Sequence>();
     final protected int searchingPlayerIndex;

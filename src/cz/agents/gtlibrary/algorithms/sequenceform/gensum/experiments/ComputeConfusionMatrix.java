@@ -11,24 +11,14 @@ import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.*;
-import cz.agents.gtlibrary.algorithms.sequenceform.gensum.quantalresponse.QREResult;
-import cz.agents.gtlibrary.algorithms.sequenceform.gensum.quantalresponse.QRESolver;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DataBuilder;
 import cz.agents.gtlibrary.algorithms.stackelberg.*;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
-import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
-import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
-import cz.agents.gtlibrary.domain.poker.generic.GenSumGPGameState;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
-import cz.agents.gtlibrary.domain.poker.kuhn.GenSumKuhnPokerGameState;
-import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
-import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.pursuit.GenSumPursuitGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
@@ -36,7 +26,6 @@ import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.strategy.Strategy;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -139,16 +128,26 @@ public class ComputeConfusionMatrix {
         for (Map.Entry<String, Map<Sequence, Double>> p1Entry : p1Rps.entrySet()) {
             Iterator<Map.Entry<String, Map<Sequence, Double>>> iterator = p2Rps.entrySet().iterator();
 
-            while(iterator.hasNext()) {
+            while (iterator.hasNext()) {
                 Map.Entry<String, Map<Sequence, Double>> p2Entry = iterator.next();
                 double absExpVal = computeExpectedValue(p1Entry.getValue(), p2Entry.getValue(), root, expander)[0];
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 0, getActingPlayers(root), algConfig, info);
                 GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 0, getActingPlayers(root), algConfig, info);
-                double brAbsVal = br.calculateBR(root, p2Entry.getValue());
-                double wrAbsVal = -wr.calculateBR(root, p2Entry.getValue());
+                double brAbsVal = br.calculateBR(root, filterLow(p2Entry.getValue(), 1e-4));
+                double wrAbsVal = -wr.calculateBR(root, filterLow(p2Entry.getValue(), 1e-4));
 
-                writer.write("" + (absExpVal - wrAbsVal)/(brAbsVal - wrAbsVal));
-                if(iterator.hasNext())
+                if (brAbsVal < absExpVal) {
+                    writer.write("1");
+                    System.out.println("!!br: " + brAbsVal + " expVal: " + absExpVal);
+                } else if(absExpVal < wrAbsVal) {
+                    writer.write("0");
+                    System.out.println("!!wr: " + wrAbsVal + " expVal: " + absExpVal);
+                } else {
+                    double relValue = (absExpVal - wrAbsVal) / (brAbsVal - wrAbsVal);
+
+                    writer.write("" + (Double.isNaN(relValue)?1:relValue));
+                }
+                if (iterator.hasNext())
                     writer.write(", ");
             }
             writer.newLine();
@@ -162,16 +161,26 @@ public class ComputeConfusionMatrix {
         for (Map.Entry<String, Map<Sequence, Double>> p1Entry : p1Rps.entrySet()) {
             Iterator<Map.Entry<String, Map<Sequence, Double>>> iterator = p2Rps.entrySet().iterator();
 
-            while(iterator.hasNext()) {
+            while (iterator.hasNext()) {
                 Map.Entry<String, Map<Sequence, Double>> p2Entry = iterator.next();
                 double absExpVal = computeExpectedValue(p1Entry.getValue(), p2Entry.getValue(), root, expander)[1];
                 GeneralSumBestResponse br = new GeneralSumBestResponse(expander, 1, getActingPlayers(root), algConfig, info);
                 GeneralSumWorstResponse wr = new GeneralSumWorstResponse(expander, 1, getActingPlayers(root), algConfig, info);
-                double brAbsVal = br.calculateBR(root, p2Entry.getValue());
-                double wrAbsVal = -wr.calculateBR(root, p2Entry.getValue());
+                double brAbsVal = br.calculateBR(root, filterLow(p1Entry.getValue(), 1e-4));
+                double wrAbsVal = -wr.calculateBR(root, filterLow(p1Entry.getValue(), 1e-4));
 
-                writer.write("" + (absExpVal - wrAbsVal)/(brAbsVal - wrAbsVal));
-                if(iterator.hasNext())
+                if (brAbsVal < absExpVal) {
+                    writer.write("");
+                    System.out.println("!!br: " + brAbsVal + " expVal: " + absExpVal);
+                } else if(absExpVal < wrAbsVal) {
+                    writer.write("0");
+                    System.out.println("!!wr: " + wrAbsVal + " expVal: " + absExpVal);
+                } else {
+                    double relValue = (absExpVal - wrAbsVal) / (brAbsVal - wrAbsVal);
+
+                    writer.write("" + (Double.isNaN(relValue)?1:relValue));
+                }
+                if (iterator.hasNext())
                     writer.write(", ");
             }
             writer.newLine();
@@ -408,7 +417,7 @@ public class ComputeConfusionMatrix {
         GenSumISMCTSNestingRunner.alg = new GenSumISMCTSAlgorithm(player, new DefaultSimulator(expander), factory, root, expander);
 
         buildMCTSCompleteTree(GenSumISMCTSNestingRunner.alg.getRootNode(), factory);
-        InnerNode rootNode =  GenSumISMCTSNestingRunner.alg.getRootNode();
+        InnerNode rootNode = GenSumISMCTSNestingRunner.alg.getRootNode();
 //        GenSumISMCTSNestingRunner.alg.runMiliseconds(300);
         GenSumISMCTSNestingRunner.clear();
         GenSumISMCTSNestingRunner.buildStichedStrategy(player, GenSumISMCTSNestingRunner.alg.getRootNode().getInformationSet(),
@@ -424,8 +433,6 @@ public class ComputeConfusionMatrix {
         cfr.runIterations(100000);
         return StrategyCollector.getStrategyFor(cfr.getRootNode(), player, new MeanStratDist());
     }
-
-
 
 
     private static Map<Sequence, Double> filterLow(Map<Sequence, Double> realPlan, double filter) {

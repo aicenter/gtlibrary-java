@@ -19,18 +19,18 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.poker.generic;
 
-import java.util.Arrays;
-
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
+
+import java.util.Arrays;
 
 public class GPGameInfo implements GameInfo {
 
     public static final Player FIRST_PLAYER = new PlayerImpl(0);
     public static final Player SECOND_PLAYER = new PlayerImpl(1);
     public static final Player NATURE = new PlayerImpl(2);
-    public static final Player[] ALL_PLAYERS = new Player[] {FIRST_PLAYER, SECOND_PLAYER, NATURE};
+    public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
 
     /**
      * value of ante for one player
@@ -150,6 +150,6 @@ public class GPGameInfo implements GameInfo {
 
     @Override
     public double getUtilityStabilizer() {
-        return 120;
+        return DECK.length * (DECK.length - 1) * (DECK.length - 2) * 10;
     }
 }

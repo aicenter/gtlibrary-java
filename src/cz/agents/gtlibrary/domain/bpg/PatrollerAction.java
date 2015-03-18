@@ -61,6 +61,10 @@ public class PatrollerAction extends ActionImpl {
 	public Node getToNodeForP2() {
 		return toNodeP2;
 	}
+	
+	public Set<Node> getFlaggedNodes(){
+		return flaggedNodes;
+	}
 
 	@Override
 	public void perform(GameState gameState) {

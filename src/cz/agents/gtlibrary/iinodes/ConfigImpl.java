@@ -32,7 +32,7 @@ public abstract class ConfigImpl<I extends InformationSetImpl> implements Algori
 	protected HashMap<Pair<Integer, Sequence>, I> allInformationSets;
 
 	public ConfigImpl() {
-		allInformationSets = new LinkedHashMap<Pair<Integer, Sequence>, I>();
+		allInformationSets = new LinkedHashMap<>();
 	}
 
 	@Override

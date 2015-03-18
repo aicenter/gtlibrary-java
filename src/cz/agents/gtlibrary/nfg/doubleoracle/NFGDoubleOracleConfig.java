@@ -23,6 +23,8 @@ import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
+import java.util.HashMap;
+
 /**
  * Created with IntelliJ IDEA.
  * User: bosansky
@@ -30,7 +32,7 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
  * Time: 2:55 PM
  * To change this template use File | Settings | File Templates.
  */
-public class NFGDoubleOracleConfig implements AlgorithmConfig{
+public class NFGDoubleOracleConfig implements AlgorithmConfig {
     @Override
     public InformationSet getInformationSetFor(GameState gameState) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
@@ -54,5 +56,10 @@ public class NFGDoubleOracleConfig implements AlgorithmConfig{
     @Override
     public void setUtility(GameState gameState, double utility) {
 
+    }
+
+    @Override
+    public HashMap getAllInformationSets() {
+        return null;
     }
 }
