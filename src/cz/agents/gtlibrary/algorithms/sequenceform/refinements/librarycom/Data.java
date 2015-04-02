@@ -333,6 +333,7 @@ public class Data {
 		entryList.addAll(map.entrySet());
 		Collections.sort(entryList, new EntryComparator());
 		for (Map.Entry<Pair<Integer, Integer>, Double> entry : entryList) {
+			assert entry.getValue() == entry.getValue().intValue();
 			writer.write("(");
 			writer.write(Integer.toString(entry.getKey().getLeft()));
 			writer.write(",");
@@ -353,6 +354,7 @@ public class Data {
         entryList.addAll(map.entrySet());
         Collections.sort(entryList, new EntryComparator());
         for (Map.Entry<Pair<Integer, Integer>, Double> entry : entryList) {
+			assert entry.getValue() == entry.getValue().intValue();
             writer.write("(");
             writer.write(Integer.toString(entry.getKey().getLeft()));
             writer.write(",");

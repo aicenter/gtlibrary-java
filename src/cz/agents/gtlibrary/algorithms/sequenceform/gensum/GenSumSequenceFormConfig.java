@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.gensum;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -83,5 +84,15 @@ public class GenSumSequenceFormConfig extends SequenceFormConfig<SequenceInforma
 
     public Map<Map<Player, Sequence>, Double[]> getUtilityForSequenceCombinationGenSum() {
         return utilityForSequenceCombination;
+    }
+
+    @Override
+    public Double getUtilityFor(Sequence sequence1, Sequence sequence2) {
+        return getUtilityFor(sequence1, sequence2, new PlayerImpl(0));
+    }
+
+    @Override
+    public Double getUtilityFor(Map<Player, Sequence> sequenceCombination) {
+        return getUtilityFor(sequenceCombination, new PlayerImpl(0));
     }
 }
