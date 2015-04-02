@@ -47,14 +47,14 @@ import cz.agents.gtlibrary.utils.Pair;
  */
 public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends SequenceFormConfig<I> {
 
-	private GameState rootState;
-	private GameInfo gameInfo;
+	protected GameState rootState;
+	protected GameInfo gameInfo;
 
-	private Map<Player, Set<Sequence>> fullBRSequences = new HashMap<Player, Set<Sequence>>();
-	private Set<GameState> temporaryLeafs = new HashSet<GameState>();
+	protected Map<Player, Set<Sequence>> fullBRSequences = new HashMap<Player, Set<Sequence>>();
+	protected Set<GameState> temporaryLeafs = new HashSet<GameState>();
 	private Map<Map<Player, Sequence>, Set<GameState>> temporaryLeafsForSequenceCombinations = new HashMap<Map<Player, Sequence>, Set<GameState>>();
 
-	private Set<Sequence> newSequences = new HashSet<Sequence>();
+	protected Set<Sequence> newSequences = new HashSet<Sequence>();
 
 //    private int currentIteration = 1;
 
@@ -96,14 +96,15 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 		fullBRSequences.put(player, currentPlayerFullBRSet);
 	}
 
-	public void createValidRestrictedGame(Player addingPlayer, Set<Sequence> newBRSequences, SQFBestResponseAlgorithm[] bestResponseAlgorithms, Expander<DoubleOracleInformationSet> expander) {
+	public void createValidRestrictedGame(Player addingPlayer, Set<Sequence> newBRSequences, SQFBestResponseAlgorithm[] bestResponseAlgorithms, Expander<? extends DoubleOracleInformationSet> expander) {
 		Map<Player, Set<Sequence>> tmpMap = new HashMap<Player, Set<Sequence>>();
 		tmpMap.put(addingPlayer, newBRSequences);
 		tmpMap.put(gameInfo.getOpponent(addingPlayer), fullBRSequences.get(gameInfo.getOpponent(addingPlayer)));
 		initializeRG(tmpMap, bestResponseAlgorithms, expander);
 	}
+	
 
-	public void initializeRG(Map<Player, Set<Sequence>> sequences, SQFBestResponseAlgorithm[] bestResponseAlgorithms, Expander<DoubleOracleInformationSet> expander) {
+	public void initializeRG(Map<Player, Set<Sequence>> sequences, SQFBestResponseAlgorithm[] bestResponseAlgorithms, Expander<? extends DoubleOracleInformationSet> expander) {
 
 		assert (sequences.keySet().size() == 2);
 
@@ -166,6 +167,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 					if (s.size() == 0)
 						continue;
 					Action action = s.getFirst();
+					//System.out.println("Outcheck");
 					if (currentState.checkConsistency(action)) {
 						GameState newState = currentState.performAction(action);
 						Map<Player, Set<Sequence>> tmpNewUsefulSequences = tmpNewStatesMap.get(newState);
@@ -217,6 +219,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 						int brPlayerIdx = gameInfo.getOpponent(currentState.getPlayerToMove()).getId();
 						Double exactValue = bestResponseAlgorithms[brPlayerIdx].getCachedValueForState(currentState);
 						if (exactValue == null) {
+							System.out.println("IS null :/");
 							exactValue = bestResponseAlgorithms[brPlayerIdx].calculateBRNoClear(currentState);
 						}
 						if (brPlayerIdx != 0)
@@ -233,9 +236,10 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 			} else
 				assert false;
 		}
+		//System.out.println("TLF: " + temporaryLeafs);
 	}
 
-	private void addToTempLeafsForSeqComb(GameState currentState) {
+	protected void addToTempLeafsForSeqComb(GameState currentState) {
 		Map<Player, Sequence> activePlayerMap = createActivePlayerMap(currentState);
 		Set<GameState> tempLeafs = temporaryLeafsForSequenceCombinations.get(activePlayerMap);
 
@@ -253,7 +257,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 //        sequencesInIterations.put(state.getSequenceFor(rootState.getAllPlayers()[1]), currentIteration);
 	}
 
-	public void validateRestrictedGameStructure(Expander<DoubleOracleInformationSet> expander, SQFBestResponseAlgorithm[] bestResponseAlgorithms) {
+	public void validateRestrictedGameStructure(Expander<? extends DoubleOracleInformationSet> expander, SQFBestResponseAlgorithm[] bestResponseAlgorithms) {
 		Player player1 = rootState.getAllPlayers()[0];
 		Player player2 = rootState.getAllPlayers()[1];
 
