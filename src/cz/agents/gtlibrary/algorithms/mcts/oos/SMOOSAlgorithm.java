@@ -33,14 +33,11 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
-import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
 import java.lang.management.ThreadMXBean;
 import java.util.Map;
 import java.util.Random;
-import java.util.Scanner;
 
 
 /**
@@ -55,7 +52,6 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
     protected Expander expander;
     private double epsilon = 0.6;
     public boolean dropTree = false;
-    public boolean useMatchProbs = false;
 
     private Random rnd;
 
@@ -73,22 +69,16 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         this.expander = expander;
         String s = System.getProperty("DROPTREE");
         if (s != null) dropTree = Boolean.getBoolean(s);
-        s = System.getProperty("INMATCHPROBS");
-        if (s != null) useMatchProbs = Boolean.getBoolean(s);
     }
 
-    double match_p1=1;
-    double match_p2=1;
-    double match_pc=1;
-    
     @Override
     public Action runMiliseconds(int miliseconds) {
         int iters = 0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
-            iteration(rootNode, match_p1, match_p2, match_p1*match_p2*match_pc,rootNode.getGameState().getAllPlayers()[0]);
+            iteration(rootNode, rootNode.getGameState().getAllPlayers()[0]);
             iters++;
-            iteration(rootNode, match_p1, match_p2, match_p1*match_p2*match_pc,rootNode.getGameState().getAllPlayers()[1]);
+            iteration(rootNode, rootNode.getGameState().getAllPlayers()[1]);
             iters++;
         }
         System.out.println();
@@ -102,8 +92,8 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
 
     public Action runIterations(int iterations) {
         for (int i = 0; i < iterations / 2; i++) {
-            iteration(rootNode, 1, 1, 1, rootNode.getGameState().getAllPlayers()[0]);
-            iteration(rootNode, 1, 1, 1, rootNode.getGameState().getAllPlayers()[1]);
+            iteration(rootNode, rootNode.getGameState().getAllPlayers()[0]);
+            iteration(rootNode, rootNode.getGameState().getAllPlayers()[1]);
         }
         if (!rootNode.getInformationSet().getPlayer().equals(searchingPlayer)) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData());
@@ -113,77 +103,100 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
 
     //additional iteration return values
     private double x = -1;
-    private double l = -1;
+    private double q = -1;
 
     /**
      * The main function for OOS iteration.
      *
      * @param node      current node
-     * @param pi        probability with which the searching player wants to reach the current node
-     * @param pi_       probability with which the opponent of the searching player and chance want to reach the current node
-     * @param us        probability that the unbiased sample reaches this node
      * @param expPlayer the exploring player for this iteration
      * @return iteration game value is actually returned. Other return values are in global x and l
      */
-    protected double iteration(Node node, double pi, double pi_, double us, Player expPlayer) {
+    protected double iteration(Node node, Player expPlayer) {
         if (node instanceof LeafNode) {
             x = 1;
-            l = us;
+            q = 1;
             return ((LeafNode) node).getUtilities()[expPlayer.getId()];
         }
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode) node;
             Action a = cn.getRandomAction();
             double p = cn.getGameState().getProbabilityOfNatureFor(a);
-            double u = iteration(cn.getChildFor(a), pi, p * pi_, p * us, expPlayer);
-            x *= p;
+            double u = iteration(cn.getChildFor(a), expPlayer);
+            x *= p; q *= p;
             return u;
         }
         InnerNode in = (InnerNode) node;
         MCTSInformationSet is = in.getInformationSet();
-        OOSAlgorithmData data;
+        OOSAlgorithmData data1,data2;
         Action selectedA;
         double u = 0;
-        int ai = -1;
-        double pai = -1;
+        int a1 = -1,a2 = -1;
+        double pa1 = -1,pa2 = -1;
         if (is.getAlgorithmData() == null) {//this is a new Information Set
-            data = new OOSAlgorithmData(in.getActions());
-            is.setAlgorithmData(data);
-            ai = rnd.nextInt(in.getActions().size());
-            pai = 1.0 / in.getActions().size();
-            selectedA = in.getActions().get(ai);
-            Node child = in.getChildFor(selectedA);
+            data1 = new OOSAlgorithmData(in.getActions());
+            is.setAlgorithmData(data1);
+            a1 = rnd.nextInt(in.getActions().size());
+            pa1 = 1.0 / in.getActions().size();
+            selectedA = in.getActions().get(a1);
+            InnerNode in2 = (InnerNode) in.getChildFor(selectedA);
+            is = in2.getInformationSet();
+            data2 = new OOSAlgorithmData(in2.getActions());
+            is.setAlgorithmData(data2);
+            a2 = rnd.nextInt(in2.getActions().size());
+            pa2 = 1.0 / in2.getActions().size();
+            selectedA = in2.getActions().get(a2);
+            
+            Node child = in2.getChildFor(selectedA);
             u = simulator.simulate(child.getGameState())[expPlayer.getId()];
-            x = simulator.playersProb * (1.0 / in.getActions().size());
-            l = us * simulator.playOutProb * (1.0 / in.getActions().size());
+            x = simulator.playersProb * pa1 * pa2;
+            q = x;
         } else {
-            data = (OOSAlgorithmData) is.getAlgorithmData();
-            data.getRMStrategy(rmProbs);
-
-            if (is.getPlayer().equals(expPlayer)) {
-                if (rnd.nextDouble() < epsilon) ai = rnd.nextInt(in.getActions().size());
-                else ai = randomChoice(rmProbs, 1);
-                pai = rmProbs[ai];
-                u = iteration(in.getChildFor(in.getActions().get(ai)),
-                        pi * pai, pi_, us * ((1 - epsilon) * pai + (epsilon / in.getActions().size())), expPlayer);
+            if (expPlayer.getId()==0) {//first player is exploring
+                data1 = (OOSAlgorithmData) is.getAlgorithmData();
+                data1.getRMStrategy(rmProbs);
+                if (rnd.nextDouble() < epsilon) a1 = rnd.nextInt(in.getActions().size());
+                else a1 = randomChoice(rmProbs, 1);
+                pa1 = rmProbs[a1];
+                selectedA = in.getActions().get(a1);
+                InnerNode in2 = (InnerNode) in.getChildFor(selectedA);
+                is = in2.getInformationSet();
+                data2 = (OOSAlgorithmData) is.getAlgorithmData();
+                data2.getRMStrategy(rmProbs);
+                a2 = randomChoice(rmProbs, 1);
+                pa2 = rmProbs[a2];
+                u = iteration(in2.getChildFor(in2.getActions().get(a2)), expPlayer);
+                q *= ((1 - epsilon) * pa1 + (epsilon / in.getActions().size()))*pa2;
+                
+                double c = x*pa2;
+                x = c*pa1;
+                data1.updateRegret(a1, u/q, c, x);
+                data2.getRMStrategy(rmProbs);
+                data2.updateMeanStrategy(rmProbs, 1);
+                
             } else {
-                ai = randomChoice(rmProbs, 1);
-                pai = rmProbs[ai];
-                u = iteration(in.getChildFor(in.getActions().get(ai)),
-                        pi, pi_ * pai, us * pai, expPlayer);
+                data1 = (OOSAlgorithmData) is.getAlgorithmData();
+                data1.getRMStrategy(rmProbs);
+                a1 = randomChoice(rmProbs, 1);
+                pa1 = rmProbs[a1];
+                selectedA = in.getActions().get(a1);
+                InnerNode in2 = (InnerNode) in.getChildFor(selectedA);
+                is = in2.getInformationSet();
+                data2 = (OOSAlgorithmData) is.getAlgorithmData();
+                data2.getRMStrategy(rmProbs);
+                if (rnd.nextDouble() < epsilon) a2 = rnd.nextInt(in2.getActions().size());
+                else a2 = randomChoice(rmProbs, 1);
+                pa2 = rmProbs[a2];
+                u = iteration(in2.getChildFor(in2.getActions().get(a2)), expPlayer);
+                q *= ((1 - epsilon) * pa2 + (epsilon / in2.getActions().size()))*pa1;
+                
+                double c = x;
+                x = c*pa2;
+                data2.updateRegret(a2, pa1*u/q, c, x);
+                data1.getRMStrategy(rmProbs);
+                data1.updateMeanStrategy(rmProbs, 1);
+                x *= pa1;
             }
-        }
-
-        //regret/mean strategy update
-        double s = us;
-        double c = x;
-        x *= pai;
-
-        if (is.getPlayer().equals(expPlayer)) {
-            data.updateRegret(ai, u * pi_ / l, c, x);
-        } else {
-            data.getRMStrategy(rmProbs);
-            data.updateMeanStrategy(rmProbs, pi_ / s);
         }
         return u;
     }
@@ -239,33 +252,27 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
 
             is = in.getInformationSet();
             is.setAlgorithmData(new OOSAlgorithmData(in.getActions()));
+            InnerNode child = (InnerNode) in.getChildFor(in.getActions().get(0));
+            child.getInformationSet().setAlgorithmData(new OOSAlgorithmData(child.getActions()));
             assert !is.getAllNodes().isEmpty();
         }
         assert is.getAllNodes().size() == 1;
         Map<Action, Double> distribution;
-        //update the match position probabilities
-        if (useMatchProbs && gameState.getSequenceFor(gameState.getAllPlayers()[0]).size()>0){
-            Action p1action = gameState.getSequenceFor(gameState.getAllPlayers()[0]).getLast();
-            Action p2action = gameState.getSequenceFor(gameState.getAllPlayers()[1]).getLast();
-            match_p1 *= Math.max(0.01,lastP1dist.get(p1action));
-            match_p2 *= Math.max(0.01,lastP2dist.get(p2action));
-        }
+
         //move to the right subtree
         rootNode = is.getAllNodes().iterator().next();
         rootNode.setParent(null);
         Action action = runMiliseconds(miliseconds);
-        if (useMatchProbs){
-            lastP1dist = (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData());
-            lastP2dist = (new MeanStratDist()).getDistributionFor(((InnerNode)rootNode.getChildFor(rootNode.getActions().get(0))).getInformationSet().getAlgorithmData());
-        }
         System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
+            System.out.println("OOS: " + (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData()));
             clean(action);
             return action;
         } else {
             InnerNode child = (InnerNode) rootNode.getChildFor(rootNode.getActions().get(0));
             is = child.getInformationSet();
             distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
+            System.out.println("OOS: " + distribution);
             action = Strategy.selectAction(distribution, rnd);
             clean(action);
             return action;

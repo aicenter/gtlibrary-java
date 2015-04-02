@@ -183,11 +183,13 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
             clean(action);
+            System.out.println("SMMCTS: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
             return action;
         } else {
             InnerNode child = (InnerNode) rootNode.getChildFor(rootNode.getActions().get(0));
             is = child.getInformationSet();
             Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
+            System.out.println("SMMCTS: " + distribution);
             action = Strategy.selectAction(distribution, fact.getRandom());
             clean(action);
             return action;

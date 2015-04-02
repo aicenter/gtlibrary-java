@@ -109,6 +109,7 @@ public class SMJournalOnlineExperiments {
             int depth = new Integer(args[4]);
             GSGameInfo.depth = depth;
             GSGameInfo.regenerateCards = true;
+            //GSGameInfo.useFixedNatureSequence = false;
         } else if (args[2].equalsIgnoreCase("OZ")) { // Oshi Zumo
             if (args.length != 7) {
                 throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {COINS} {LOC_K} {MIN_BID}");
