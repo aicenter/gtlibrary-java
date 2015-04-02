@@ -19,14 +19,22 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
+import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
+import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
+import cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceExpander;
+import cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState;
+import cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceInfo;
+import cz.agents.gtlibrary.domain.mpochm.MPoCHMExpander;
+import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameInfo;
+import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.GameInfo;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.interfaces.*;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -52,6 +60,84 @@ public class FullNFPSolver implements FullSequenceFormLP {
     private Set<Sequence> p1SequencesToAdd;
     private Set<Sequence> p2SequencesToAdd;
     private GameInfo info;
+
+    public static void main(String[] args) {
+        runClairvoyanceGame();
+//        runAoS();
+//        runMPoCHM();
+    }
+
+    private static void runAoS() {
+        GameState root = new AoSGameState();
+        SequenceFormConfig<SequenceInformationSet> config = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> expander = new AoSExpander<>(config);
+
+        FullSequenceEFG efg = new FullSequenceEFG(root, expander, new AoSGameInfo(), config);
+
+        efg.generateCompleteGame();
+        FullNFPSolver solver = new FullNFPSolver(root.getAllPlayers(), new AoSGameInfo());
+
+        solver.calculateBothPlStrategy(root, config);
+
+        System.out.println("---------------------");
+        for (Map.Entry<Sequence, Double> entry : solver.getResultStrategiesForPlayer(AoSGameInfo.FIRST_PLAYER).entrySet()) {
+            if(entry.getValue() > 0)
+                System.out.println(entry);
+        }
+        System.out.println("---------------------");
+        for (Map.Entry<Sequence, Double> entry : solver.getResultStrategiesForPlayer(AoSGameInfo.SECOND_PLAYER).entrySet()) {
+            if(entry.getValue() > 0)
+                System.out.println(entry);
+        }
+    }
+
+    private static void runMPoCHM() {
+        GameState root = new MPoCHMGameState();
+        SequenceFormConfig<SequenceInformationSet> config = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> expander = new MPoCHMExpander<>(config);
+
+        FullSequenceEFG efg = new FullSequenceEFG(root, expander, new MPoCHMGameInfo(), config);
+
+        efg.generateCompleteGame();
+        FullNFPSolver solver = new FullNFPSolver(root.getAllPlayers(), new MPoCHMGameInfo());
+
+        solver.calculateBothPlStrategy(root, config);
+
+        System.out.println("---------------------");
+        for (Map.Entry<Sequence, Double> entry : solver.getResultStrategiesForPlayer(MPoCHMGameInfo.FIRST_PLAYER).entrySet()) {
+            if(entry.getValue() > 0)
+                System.out.println(entry);
+        }
+        System.out.println("---------------------");
+        for (Map.Entry<Sequence, Double> entry : solver.getResultStrategiesForPlayer(MPoCHMGameInfo.SECOND_PLAYER).entrySet()) {
+            if(entry.getValue() > 0)
+                System.out.println(entry);
+        }
+    }
+
+    private static void runClairvoyanceGame() {
+        GameState root = new ClairvoyanceGameState();
+        SequenceFormConfig<SequenceInformationSet> config = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> expander = new ClairvoyanceExpander<>(config);
+
+        FullSequenceEFG efg = new FullSequenceEFG(root, expander, new ClairvoyanceInfo(), config);
+
+        efg.generateCompleteGame();
+        FullNFPSolver solver = new FullNFPSolver(root.getAllPlayers(), new ClairvoyanceInfo());
+
+        solver.calculateBothPlStrategy(root, config);
+
+        System.out.println("---------------------");
+        for (Map.Entry<Sequence, Double> entry : solver.getResultStrategiesForPlayer(ClairvoyanceInfo.FIRST_PLAYER).entrySet()) {
+            if(entry.getValue() > 0)
+                System.out.println(entry);
+        }
+        System.out.println("---------------------");
+        for (Map.Entry<Sequence, Double> entry : solver.getResultStrategiesForPlayer(ClairvoyanceInfo.SECOND_PLAYER).entrySet()) {
+            if(entry.getValue() > 0)
+                System.out.println(entry);
+        }
+    }
 
     public FullNFPSolver(Player[] players, GameInfo info) {
         this.players = players;

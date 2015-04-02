@@ -102,6 +102,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 		tmpMap.put(gameInfo.getOpponent(addingPlayer), fullBRSequences.get(gameInfo.getOpponent(addingPlayer)));
 		initializeRG(tmpMap, bestResponseAlgorithms, expander);
 	}
+	
 
 	public void initializeRG(Map<Player, Set<Sequence>> sequences, SQFBestResponseAlgorithm[] bestResponseAlgorithms, Expander<? extends DoubleOracleInformationSet> expander) {
 
@@ -166,6 +167,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 					if (s.size() == 0)
 						continue;
 					Action action = s.getFirst();
+					//System.out.println("Outcheck");
 					if (currentState.checkConsistency(action)) {
 						GameState newState = currentState.performAction(action);
 						Map<Player, Set<Sequence>> tmpNewUsefulSequences = tmpNewStatesMap.get(newState);
@@ -217,6 +219,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 						int brPlayerIdx = gameInfo.getOpponent(currentState.getPlayerToMove()).getId();
 						Double exactValue = bestResponseAlgorithms[brPlayerIdx].getCachedValueForState(currentState);
 						if (exactValue == null) {
+							System.out.println("IS null :/");
 							exactValue = bestResponseAlgorithms[brPlayerIdx].calculateBRNoClear(currentState);
 						}
 						if (brPlayerIdx != 0)
@@ -233,6 +236,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 			} else
 				assert false;
 		}
+		//System.out.println("TLF: " + temporaryLeafs);
 	}
 
 	protected void addToTempLeafsForSeqComb(GameState currentState) {

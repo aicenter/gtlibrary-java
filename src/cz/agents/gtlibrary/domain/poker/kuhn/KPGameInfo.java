@@ -22,6 +22,10 @@ package cz.agents.gtlibrary.domain.poker.kuhn;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.utils.Pair;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class KPGameInfo implements GameInfo {
 	public static final Player FIRST_PLAYER = new PlayerImpl(0);
@@ -32,6 +36,18 @@ public class KPGameInfo implements GameInfo {
 	
 	public static int ANTE = 1;
 	public static int BET = 1;
+
+	public static Map<String, Integer> p1cardBounties = new HashMap<>();
+	public static Map<String, Integer> p2cardBounties = new HashMap<>();
+
+	static {
+		p1cardBounties.put("0", 0);
+		p1cardBounties.put("1", 3);
+		p1cardBounties.put("2", 1);
+		p2cardBounties.put("2", 0);
+		p2cardBounties.put("0", 4);
+		p2cardBounties.put("1", 1);
+	}
 
 	@Override
 	public double getMaxUtility() {
