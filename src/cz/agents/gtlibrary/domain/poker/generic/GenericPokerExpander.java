@@ -143,7 +143,7 @@ public class GenericPokerExpander<I extends InformationSet> extends ExpanderImpl
 	}
 
 	protected PokerAction createAction(GenericPokerGameState state, int action, String actionString, I informationSet) {
-		return new GenericPokerAction(actionString, informationSet, state.getPlayerToMove(), action, state.getRound());
+		return new GenericPokerAction(actionString, informationSet, state.getPlayerToMove(), action);
 	}
 
 	protected boolean isCardAvailableInState(int cardValue, GenericPokerGameState state) {

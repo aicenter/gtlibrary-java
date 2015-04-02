@@ -17,19 +17,16 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
+package cz.agents.gtlibrary.algorithms.reverse;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Sequence;
 
-public class DoubleOracleInformationSet extends SequenceInformationSet {
+public class DoubleOracleReverseInformationSet extends DoubleOracleInformationSet {
 
-	public DoubleOracleInformationSet(GameState state) {
-		super(state);
+	public DoubleOracleReverseInformationSet(GameState state) {
+		super(state, state.getSequenceForPlayerToMove());
 	}
 
-    public DoubleOracleInformationSet(GameState state, Sequence sequence) {
-        super(state, sequence);
-    }
 }

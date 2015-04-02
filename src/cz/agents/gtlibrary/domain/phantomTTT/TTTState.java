@@ -49,7 +49,7 @@ public class TTTState extends GameStateImpl {
 
     //bitmap with 4 bits per board field. First two are the symbol: 00 -> ' ', 10 -> 'o', 11 -> 'x'. The next two bits are if the field has been tries out by x player and o player.
     //could be reimplemented with 9x3 fields and a primitive type
-    BitSet s = new BitSet(36);
+    public BitSet s = new BitSet(36);
     public char toMove = 'x';
     public byte moveNum = 0;
 
@@ -85,6 +85,10 @@ public class TTTState extends GameStateImpl {
 
     public void setTried(char p, int field) {
         s.set(4 * field + (p == 'x' ? 2 : 3), true);
+    }
+    
+    private void deleteTried(char p, int field) {
+        s.set(4 * field + (p == 'x' ? 2 : 3), false);
     }
 
     public TTTState() {
@@ -122,7 +126,7 @@ public class TTTState extends GameStateImpl {
     private static double[] xLargeWin = new double[]{3.0, -3.0};
     private static double[] oLargeWin = new double[]{-3.0, 3.0};
     public static boolean skewed = false;
-    public static boolean forceFirstMoves = false;
+    public static boolean forceFirstMoves = true;
 
     @Override
     public double[] getUtilities() {
@@ -312,4 +316,30 @@ public class TTTState extends GameStateImpl {
             ex.printStackTrace();
         }
     }
+    
+    @Override
+    public void reverseAction() {
+    	TTTAction lastAction = (TTTAction)history.getLastAction();
+    	toMove = history.getLastPlayer().equals(TTTInfo.XPlayer) ? 'x' : 'o';
+    	if(toMove == 'x')
+    		reverseXAction(lastAction);
+    	else
+    		reverseOAction(lastAction);
+    	moveNum--;	
+    	super.reverseAction();
+    }
+
+	private void reverseOAction(TTTAction lastAction) {
+		deleteTried('o', lastAction.fieldID);
+		if ('o' == getSymbol(lastAction.fieldID)){
+			setSymbol(lastAction.fieldID, ' ');
+		}
+	}
+
+	private void reverseXAction(TTTAction lastAction) {
+		deleteTried('x', lastAction.fieldID);
+		if ('x' == getSymbol(lastAction.fieldID)){
+			setSymbol(lastAction.fieldID, ' ');
+		}	
+	}
 }

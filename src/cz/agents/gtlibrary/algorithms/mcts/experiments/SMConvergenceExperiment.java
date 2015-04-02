@@ -93,19 +93,28 @@ public class SMConvergenceExperiment {
     public static void setupRnd(int depth) {
         RandomGameInfo.MAX_DEPTH = depth;
         RandomGameInfo.MAX_BF = 3;
+        String s = System.getProperty("RNDG_BF");
+        if (s != null) RandomGameInfo.MAX_BF = Integer.parseInt(s);
         RandomGameInfo.MAX_CENTER_MODIFICATION=1;
-        RandomGameInfo.UTILITY_CORRELATION = true;
+        RandomGameInfo.UTILITY_CORRELATION = false;
+        RandomGameInfo.MAX_UTILITY=1;
         RandomGameInfo.BINARY_UTILITY = false;
         RandomGameInfo.FIXED_SIZE_BF = false;
+        if (s != null) RandomGameInfo.FIXED_SIZE_BF = true;
         RandomGameInfo.seed = 792;
+        s = null;
+        s = System.getProperty("RNDG_SEED");
+        if (s != null) RandomGameInfo.seed = Integer.parseInt(s);
         gameInfo = new RandomGameInfo();
         rootState = new SimRandomGameState();
         expander = new RandomGameExpander<MCTSInformationSet> (new MCTSConfig());
-        sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-        sfExpander = new RandomGameExpander<SequenceInformationSet>(sfAlgConfig);
-        efg = new FullSequenceEFG(rootState, sfExpander, gameInfo, sfAlgConfig);
-        optStrategies = efg.generate();
-        new GambitEFG().write("RND" + RandomGameInfo.MAX_BF + RandomGameInfo.MAX_DEPTH + "_" +RandomGameInfo.seed +".efg", rootState, sfExpander);
+        if (sfAlgConfig == null){
+            sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+            sfExpander = new RandomGameExpander<SequenceInformationSet>(sfAlgConfig);
+            efg = new FullSequenceEFG(rootState, sfExpander, gameInfo, sfAlgConfig);
+            optStrategies = efg.generate();
+            new GambitEFG().write("RND" + RandomGameInfo.MAX_BF + RandomGameInfo.MAX_DEPTH + "_" +RandomGameInfo.seed +".efg", rootState, sfExpander);
+        }
     }
     
     public static void setupAntiExploration() {
@@ -141,11 +150,11 @@ public class SMConvergenceExperiment {
         gameInfo = new AntiMCTSInfo();
         rootState = new AntiMCTSState();
         expander = new AntiMCTSExpander<MCTSInformationSet>(new MCTSConfig());
-//        sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
-//        sfExpander = new AntiMCTSExpander<SequenceInformationSet>(sfAlgConfig);
-//        efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
-//        efg.generate();
-//        (new GambitEFG()).write("AntiMCTS" + AntiMCTSInfo.gameDepth + ".efg", rootState, sfExpander);
+        sfAlgConfig = new SequenceFormConfig<SequenceInformationSet>();
+        sfExpander = new AntiMCTSExpander<SequenceInformationSet>(sfAlgConfig);
+        efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
+        efg.generate();
+        (new GambitEFG()).write("AntiMCTS" + AntiMCTSInfo.gameDepth + ".efg", rootState, sfExpander);
     }
     
     public static void setupOshiZumo(int coins, int locs){
