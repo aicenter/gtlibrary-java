@@ -350,6 +350,9 @@ public class SimplexTable {
     }
 
     public void addSecondPhaseObjective(EpsilonPolynomial[][] tableau) {
+        for (int i = 0; i < tableau[0].length; i++) {
+            tableau[0][i] = factory.zero();
+        }
         for (Map.Entry<Object, EpsilonPolynomial> entry : objective.entrySet()) {
             tableau[0][getVariableIndex(entry.getKey())] = entry.getValue().negate();
         }

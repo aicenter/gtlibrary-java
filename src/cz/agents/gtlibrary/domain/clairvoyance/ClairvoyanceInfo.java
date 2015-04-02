@@ -12,7 +12,7 @@ public class ClairvoyanceInfo implements GameInfo {
 
     public static final Player[] ALL_PLAYERS = {FIRST_PLAYER, SECOND_PLAYER, NATURE};
 
-    public static int betCount = 3;
+    public static int betCount = 5;
 
     @Override
     public double getMaxUtility() {

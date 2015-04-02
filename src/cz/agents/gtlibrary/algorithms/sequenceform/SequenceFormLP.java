@@ -120,7 +120,7 @@ public class SequenceFormLP implements FullSequenceFormLP{
 			}
 		}
 		for (SequenceInformationSet informationSet : algConfig.getAllInformationSets().values()) {
-			if (!variables.containsKey(informationSet)) {
+			if (!variables.containsKey(informationSet) && informationSet.getPlayer().getId() != 2) {
 				createVariableForIS(modelsForPlayers.get(players[0]), informationSet);
 				createVariableForIS(modelsForPlayers.get(players[1]), informationSet);
 				informationSets.get(informationSet.getPlayer()).add(informationSet);

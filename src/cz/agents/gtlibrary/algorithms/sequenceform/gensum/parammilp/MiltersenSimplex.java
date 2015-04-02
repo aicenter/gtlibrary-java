@@ -34,11 +34,11 @@ import java.util.Map;
 public class MiltersenSimplex extends Simplex {
 
     public static void main(String[] args) {
-//        runAoS();
+        runAoS();
 //        runKuhnPoker();
 //        runIAoS();
 //        runMPoCHM();
-        runStackTest();
+//        runStackTest();
     }
 
     protected static void runIAoS() {
