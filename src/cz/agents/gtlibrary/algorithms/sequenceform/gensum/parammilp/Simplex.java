@@ -181,11 +181,13 @@ public class Simplex implements Algorithm {
 
         lpTable.markFirstPhaseSlack(binaryVarLimitConstraintKey, slackKey);
         currentResult = solveFirstPhase();
-        if (currentResult != null)
+        if (currentResult != null) {
+            revertChanges(binaryVarLimitConstraintKey, slackKey, nonBinaryVarKey, currentResult);
             return currentResult;
+        }
         lpTable.setConstant(binaryVarLimitConstraintKey, factory.zero());
         currentResult = solveFirstPhase();
-        revertChanges(binaryVarLimitConstraintKey, slackKey, nonBinaryVarKey);
+        revertChanges(binaryVarLimitConstraintKey, slackKey, nonBinaryVarKey, currentResult);
         return currentResult;
     }
 
@@ -211,13 +213,11 @@ public class Simplex implements Algorithm {
         Object slackKey = lpTable.getBinaryLimitSlackOf(binaryVarLimitConstraintKey);
 
         paramSimplexData.tableau[lpTable.getEquationIndex(binaryVarLimitConstraintKey) + 1][paramSimplexData.variableIndices.get(slackKey)] = factory.zero();
-//        lpTable.markFirstPhaseSlack(binaryVarLimitConstraintKey, slackKey);
         SimplexSolverResult recursiveResult = solveSecondPhase(currentBest, paramSimplexData);
 
         if (currentResult != null)
             currentBest = currentResult.value;
         paramSimplexData.tableau[lpTable.getEquationIndex(binaryVarLimitConstraintKey) + 1][paramSimplexData.tableau[0].length] = factory.zero();
-//        lpTable.setConstant(binaryVarLimitConstraintKey, factory.zero()); update tableau not from table
         SimplexSolverResult recursiveResult1 = solveSecondPhase(currentBest, paramSimplexData);
 
         revertChanges(paramSimplexData, binaryVarLimitConstraintKey, slackKey, nonBinaryVarKey);
@@ -229,10 +229,12 @@ public class Simplex implements Algorithm {
         paramSimplexData.tableau[lpTable.getEquationIndex(binaryVarLimitConstraintKey) + 1][paramSimplexData.tableau[0].length] = factory.one();
     }
 
-    private void revertChanges(Object eqKey, Object varKey, Object nonBinaryVarKey) {
+    private void revertChanges(Object eqKey, Object varKey, Object nonBinaryVarKey, SimplexSolverResult currentResult) {
         lpTable.removeFirstPhaseSlack(eqKey, varKey);
         lpTable.markBinaryVariableLimitConstraint(eqKey, varKey, nonBinaryVarKey);
         lpTable.setConstant(eqKey, factory.one());
+//        currentResult.firstPhaseSlacks.removeEntry(lpTable.getEquationIndex(eqKey) + 1, lpTable.getVariableIndex(varKey));
+        currentResult.tableau[lpTable.getEquationIndex(eqKey) + 1][currentResult.tableau[0].length - 1] = factory.one();
     }
 
     private SimplexSolverResult chooseMax(SimplexSolverResult result, SimplexSolverResult result1) {
@@ -317,6 +319,7 @@ public class Simplex implements Algorithm {
 
             assert oneAtZerosOtherwiseWithoutObj(data.tableau, row, column);
             EpsilonPolynomial tempValue = data.tableau[0][column];
+
             for (int i = 0; i < data.tableau[0].length; i++) {
                 data.tableau[0][i] = data.tableau[0][i].subtract(data.tableau[row][i].multiply(tempValue));
             }
@@ -363,6 +366,7 @@ public class Simplex implements Algorithm {
                 System.err.println("No suitable replacement");
             }
         }
+        assert getFirstPhaseSlacksInBasis(data.basis).isEmpty();
     }
 
     private int findVarIndexWithNonzeroCoefInRow(EpsilonPolynomial[][] tableau, int row, int forbiddenIndex) {
@@ -562,7 +566,7 @@ public class Simplex implements Algorithm {
     }
 
     private void addObjective() {
-        lpTable.addToObjective(new Pair<>("v", 0), factory.one());
+        lpTable.addToObjective(new Pair<>("v", 0), factory.oneNeg());
     }
 
     protected void generateISConstraints() {
