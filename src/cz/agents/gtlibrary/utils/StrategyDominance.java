@@ -161,5 +161,10 @@ public class StrategyDominance<S> {
         public void addStronglyDominatedStrategy(S strategy) {
             stronglyDominatedStrategies.add(strategy);
         }
+
+        @Override
+        public String toString() {
+            return "[Weakly: " + weaklyDominatedStrategies + ", Strongly: " + stronglyDominatedStrategies + "]";
+        }
     }
 }
