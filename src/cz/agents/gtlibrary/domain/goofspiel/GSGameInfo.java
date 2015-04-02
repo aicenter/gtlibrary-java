@@ -19,11 +19,17 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.goofspiel;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
+import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 public class GSGameInfo implements GameInfo {
 
@@ -37,6 +43,8 @@ public class GSGameInfo implements GameInfo {
 	public static boolean useFixedNatureSequence = true;
     public static boolean regenerateCards = false;
 	public static int depth = CARDS_FOR_PLAYER.length;
+	
+    public static Sequence natureSequence;
 
 
     public GSGameInfo() {
@@ -46,6 +54,8 @@ public class GSGameInfo implements GameInfo {
                 CARDS_FOR_PLAYER[i]=i;
             }
         }
+        
+        natureSequence = createRandomSequence();
     }
 
     @Override
@@ -58,6 +68,17 @@ public class GSGameInfo implements GameInfo {
 //		return value - 1 - value/2.;
 		return 1;
 	}
+    
+    private Sequence createRandomSequence() {
+        ArrayList<Action> actions = new ArrayList(GSGameInfo.CARDS_FOR_PLAYER.length);
+        for (int card : GSGameInfo.CARDS_FOR_PLAYER)
+            actions.add(new GoofSpielAction(card, GSGameInfo.NATURE, null));
+        if (GSGameInfo.useFixedNatureSequence && GSGameInfo.seed == 1) Collections.reverse(actions);
+        else Collections.shuffle(actions, new HighQualityRandom(GSGameInfo.seed));
+        Sequence natureSequence = new LinkedListSequenceImpl(GSGameInfo.NATURE);
+        natureSequence.addAllAsLast(actions);
+        return natureSequence;
+    }
 
 	@Override
 	public Player getFirstPlayerToMove() {

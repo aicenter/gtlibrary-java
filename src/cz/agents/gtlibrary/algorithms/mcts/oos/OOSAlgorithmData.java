@@ -35,7 +35,8 @@ import java.util.List;
  * @author vilo
  */
 public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider {
-    public static boolean useEpsilonRM = false; 
+    public static boolean useEpsilonRM = false;
+    public static double epsilon = 0.001;
     List<Action> actions;
     /** Mean strategy. */
     double[] mp;
@@ -58,7 +59,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         if (R <= 0){
             Arrays.fill(output,0,K,1.0/K);
         } else {
-            for (int i=0; i<r.length; i++) output[i] = useEpsilonRM ? 0.99*Math.max(0,r[i])/R + 0.01/K : Math.max(0,r[i])/R;
+            for (int i=0; i<r.length; i++) output[i] = useEpsilonRM ? 1-epsilon*Math.max(0,r[i])/R + epsilon/K : Math.max(0,r[i])/R;
         }
     }
     

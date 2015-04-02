@@ -21,16 +21,16 @@ public class ClairvoyanceGameState extends GameStateImpl {
 
     private Boolean winningCard;
     private int currentPlayerIndex;
-    private int p1Money;
-    private int p2Money;
+    private double p1Money;
+    private double p2Money;
     private boolean isGameEnd;
     private boolean fold;
 
     public ClairvoyanceGameState() {
         super(ClairvoyanceInfo.ALL_PLAYERS);
         currentPlayerIndex = 2;
-        p1Money = 1;
-        p2Money = 1;
+        p1Money = 0.5;
+        p2Money = 0.5;
         isGameEnd = false;
         fold = false;
     }
@@ -79,10 +79,10 @@ public class ClairvoyanceGameState extends GameStateImpl {
 
     @Override
     public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-        if(currentPlayerIndex == 0)
+        if (currentPlayerIndex == 0)
             return new Pair<>(winningCard.hashCode(), getSequenceForPlayerToMove());
         if (currentPlayerIndex == 1)
-            return new Pair<>(p1Money, getSequenceForPlayerToMove());
+            return new Pair<>((int) (2 * p1Money), getSequenceForPlayerToMove());
         return null;
     }
 
@@ -91,12 +91,12 @@ public class ClairvoyanceGameState extends GameStateImpl {
         currentPlayerIndex = 0;
     }
 
-    public void addP1Money(int bet) {
+    public void addP1Money(double bet) {
         p1Money += bet;
         currentPlayerIndex = 1;
     }
 
-    public void addP2Money(int bet) {
+    public void addP2Money(double bet) {
         p2Money += bet;
     }
 
@@ -122,14 +122,14 @@ public class ClairvoyanceGameState extends GameStateImpl {
         int result = winningCard != null ? winningCard.hashCode() : 0;
 
         result = 31 * result + currentPlayerIndex;
-        result = 31 * result + p1Money;
-        result = 31 * result + p2Money;
+        result = 31 * result + (int) (2 * p1Money);
+        result = 31 * result + (int) (2 * p2Money);
         result = 31 * result + history.hashCode();
         return result;
     }
 
     public void call() {
-        addP2Money(p1Money - 1);
+        addP2Money(p1Money - 0.5);
         isGameEnd = true;
     }
 
@@ -147,11 +147,11 @@ public class ClairvoyanceGameState extends GameStateImpl {
         return winningCard;
     }
 
-    public int getP2Money() {
+    public double getP2Money() {
         return p2Money;
     }
 
-    public int getP1Money() {
+    public double getP1Money() {
         return p1Money;
     }
 }
