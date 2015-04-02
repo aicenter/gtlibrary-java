@@ -47,7 +47,7 @@ public class StrategyDominance<S> {
         try {
             LPData data = lpTable.toCplex();
 
-            data.getSolver().exportModel("wdom.lp");
+//            data.getSolver().exportModel("wdom.lp");
             data.getSolver().solve();
             return data.getSolver().getStatus() == IloCplex.Status.Optimal && data.getSolver().getObjValue() > 1e-9;
         } catch (IloException e) {
@@ -77,7 +77,7 @@ public class StrategyDominance<S> {
         try {
             LPData data = lpTable.toCplex();
 
-            data.getSolver().exportModel("sdom.lp");
+//            data.getSolver().exportModel("sdom.lp");
             data.getSolver().solve();
             return data.getSolver().getStatus() == IloCplex.Status.Optimal && data.getSolver().getObjValue() > 1e-9;
         } catch (IloException e) {
