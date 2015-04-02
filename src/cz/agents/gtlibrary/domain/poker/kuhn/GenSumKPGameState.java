@@ -2,13 +2,14 @@ package cz.agents.gtlibrary.domain.poker.kuhn;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 
-public class GenSumKuhnPokerGameState extends KuhnPokerGameState {
-    private final double rake = .1;
+public class GenSumKPGameState extends KuhnPokerGameState {
+    protected double rake;
 
-    public GenSumKuhnPokerGameState() {
+    public GenSumKPGameState(double rake) {
+        this.rake = rake;
     }
 
-    public GenSumKuhnPokerGameState(GenSumKuhnPokerGameState gameState) {
+    public GenSumKPGameState(GenSumKPGameState gameState) {
         super(gameState);
     }
 
@@ -31,7 +32,7 @@ public class GenSumKuhnPokerGameState extends KuhnPokerGameState {
         return new double[]{0};
     }
 
-    private double[] copy(double[] utilities) {
+    protected double[] copy(double[] utilities) {
         double[] copy = new double[utilities.length];
 
         for (int i = 0; i < utilities.length; i++) {
@@ -43,6 +44,6 @@ public class GenSumKuhnPokerGameState extends KuhnPokerGameState {
 
     @Override
     public GameState copy() {
-        return new GenSumKuhnPokerGameState(this);
+        return new GenSumKPGameState(this);
     }
 }

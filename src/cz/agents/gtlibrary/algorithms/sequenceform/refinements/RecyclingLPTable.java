@@ -227,7 +227,7 @@ public class RecyclingLPTable extends LPTable {
 
     private void modifyExistingConstraint(IloNumVar[] x, IloRange[] cplexConstraints, Entry<Object, Map<Object, Double>> rowEntry, int equationIndex) throws IloException {
         for (Entry<Object, Double> update : rowEntry.getValue().entrySet()) {
-            cplex.setLinearCoef(cplexConstraints[equationIndex], x[getVariableIndex(update.getKey()) - 1], update.getValue());
+            cplex.setLinearCoef(cplexConstraints[equationIndex], x[getVariableIndex(update.getKey())], update.getValue());
         }
     }
 
@@ -270,7 +270,7 @@ public class RecyclingLPTable extends LPTable {
         IloLinearNumExpr rowExpr = cplex.linearNumExpr();
 
         for (Entry<Object, Double> memberEntry : row.entrySet()) {
-            rowExpr.addTerm(memberEntry.getValue().doubleValue(), x[getVariableIndex(memberEntry.getKey()) - 1]);
+            rowExpr.addTerm(memberEntry.getValue().doubleValue(), x[getVariableIndex(memberEntry.getKey())]);
         }
         return rowExpr;
     }
@@ -279,7 +279,7 @@ public class RecyclingLPTable extends LPTable {
         IloLinearNumExpr objExpr = cplex.linearNumExpr();
 
         for (Entry<Object, Double> entry : newObjective.entrySet()) {
-            objExpr.addTerm(entry.getValue(), x[getVariableIndex(entry.getKey()) - 1]);
+            objExpr.addTerm(entry.getValue(), x[getVariableIndex(entry.getKey())]);
         }
         if (lpObj == null)
             lpObj = cplex.addMaximize(objExpr);
