@@ -1,8 +1,14 @@
 package cz.agents.gtlibrary.utils;
 
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.ActionPureStrategy;
@@ -10,13 +16,11 @@ import cz.agents.gtlibrary.nfg.simalphabeta.Data;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.factory.AlphaBetaFactory;
-import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.factory.NoCacheAlphaBetaFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.alphabeta.factory.NullAlphaBetaFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.NatureCacheImpl;
 import cz.agents.gtlibrary.nfg.simalphabeta.comparators.factory.LowerBoundComparatorFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.DoubleOracleFactory;
-import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.LocalCacheDoubleOracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.factory.LocalCacheFullLPFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.OracleFactory;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.factory.SimABOracleFactory;
@@ -30,9 +34,28 @@ import java.util.Map;
 public class SimGameStrategyDominance {
 
     public static void main(String[] args) {
-        Map<Player, StrategyDominance.DominanceResult> result = getDominatedStrategies(new OshiZumoGameState(), new OshiZumoExpander<>(new SimABConfig()), new OZGameInfo());
+//        Map<Player, StrategyDominance.DominanceResult> result = runOshiZumo();
+//        Map<Player, StrategyDominance.DominanceResult> result = runSimRnd();
+        Map<Player, StrategyDominance.DominanceResult> result = runGoofspiel();
 
         System.out.println(result);
+    }
+
+    private static Map<Player, StrategyDominance.DominanceResult> runOshiZumo() {
+        return getDominatedStrategies(new OshiZumoGameState(), new OshiZumoExpander<>(new SimABConfig()), new OZGameInfo());
+    }
+
+    private static Map<Player, StrategyDominance.DominanceResult> runSimRnd() {
+        return getDominatedStrategies(new SimRandomGameState(), new RandomGameExpander<>(new SimABConfig()), new RandomGameInfo());
+    }
+
+    private static Map<Player, StrategyDominance.DominanceResult> runGoofspiel() {
+        GoofSpielGameState root = new GoofSpielGameState();
+        Expander<SimABInformationSet> expander = new GoofSpielExpander<>(new SimABConfig());
+        GameInfo gameInfo = new GSGameInfo();
+
+        root.performActionModifyingThisState(expander.getActions(root).get(0));
+        return getDominatedStrategies(root, expander, gameInfo);
     }
 
     public static Map<Player, StrategyDominance.DominanceResult> getDominatedStrategies(SimultaneousGameState rootState, Expander<SimABInformationSet> expander, GameInfo gameInfo) {
