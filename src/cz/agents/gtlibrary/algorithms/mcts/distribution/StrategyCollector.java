@@ -35,6 +35,7 @@ import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,9 @@ public class StrategyCollector {
         
 	static public Strategy getStrategyFor(InnerNode rootNode, Player player, Distribution distribution, int cutOffDepth) {
             Strategy strategy = new UniformStrategyForMissingSequences();
+            for (Sequence sq : rootNode.getGameState().getSequenceFor(player).getAllPrefixes()){
+                strategy.put(sq,1.0);
+            }
             strategy.put(new ArrayListSequenceImpl(player),1.0);
             HashSet<MCTSInformationSet> processed = new HashSet<>();
             ArrayDeque<InnerNode> q = new ArrayDeque<>();
@@ -128,13 +132,63 @@ public class StrategyCollector {
         while (!q.isEmpty()){
             InnerNode curNode = q.removeFirst();
             if (curNode.getChildren().size()==0){
+                assert curNode.getDepth() > 0 || curNode==rootNode;
                 bs.onBackPropagate(curNode.getDepth());
-            }
-            for(Node n : curNode.getChildren().values()){
-                if ((n instanceof InnerNode)) q.addLast((InnerNode)n);
+            } else {
+                for(Node n : curNode.getChildren().values()){
+                    if ((n instanceof InnerNode)) q.addLast((InnerNode)n);
+                    else bs.onBackPropagate(curNode.getDepth());
+                }
             }
         }
         return bs.getEV();
     }
-
+    
+    static public double meanSupportSize(Strategy strategy) {
+        HashMap<InformationSet,Integer> counts = new HashMap<>(strategy.size());
+        
+        for (Map.Entry<Sequence, Double> en : strategy.entrySet()){
+            if (en.getKey().size() == 0) continue;
+            Sequence par = new ArrayListSequenceImpl(en.getKey());
+            Action last = par.removeLast();
+            if (en.getValue() / strategy.get(par) > 0.01){
+                Integer i = counts.get(last.getInformationSet());
+                if (i == null) i=1;
+                else i = i+1;
+                counts.put(last.getInformationSet(),i);
+            }
+        }
+        
+        double wSumSupp=0, sumW=0;
+        for (Map.Entry<InformationSet, Integer> en : counts.entrySet()){
+            double w = strategy.get(en.getKey().getPlayersHistory());
+            wSumSupp += en.getValue()*w;
+            sumW += w;
+        }
+        
+        return wSumSupp/sumW;
+    }
+    
+    static public double meanPercentileSamplesActions(Strategy strategy) {
+        HashMap<InformationSet,Double> maxes = new HashMap<>(strategy.size());
+        
+        for (Map.Entry<Sequence, Double> en : strategy.entrySet()){
+            if (en.getKey().size() == 0) continue;
+            Sequence par = new ArrayListSequenceImpl(en.getKey());
+            Action last = par.removeLast();
+            double aProb = en.getValue() / strategy.get(par);
+            if (aProb > 0.01){
+                
+            }
+        }
+        
+        double wSumSupp=0, sumW=0;
+        for (Map.Entry<InformationSet, Double> en : maxes.entrySet()){
+            double w = strategy.get(en.getKey().getPlayersHistory());
+            wSumSupp += en.getValue()*w;
+            sumW += w;
+        }
+        
+        return wSumSupp/sumW;
+    }
 }
