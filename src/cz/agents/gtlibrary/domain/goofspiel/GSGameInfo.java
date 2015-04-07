@@ -50,6 +50,8 @@ public class GSGameInfo implements GameInfo {
     public GSGameInfo() {
         if (regenerateCards) {
             CARDS_FOR_PLAYER = new int[depth];
+            //for (int i=1; i<=depth; i++) {
+            //    CARDS_FOR_PLAYER[i-1]=i;
             for (int i=0; i<depth; i++) {
                 CARDS_FOR_PLAYER[i]=i;
             }
@@ -73,8 +75,9 @@ public class GSGameInfo implements GameInfo {
         ArrayList<Action> actions = new ArrayList(GSGameInfo.CARDS_FOR_PLAYER.length);
         for (int card : GSGameInfo.CARDS_FOR_PLAYER)
             actions.add(new GoofSpielAction(card, GSGameInfo.NATURE, null));
-        if (GSGameInfo.useFixedNatureSequence && GSGameInfo.seed == 1) Collections.reverse(actions);
-        else Collections.shuffle(actions, new HighQualityRandom(GSGameInfo.seed));
+        if (GSGameInfo.useFixedNatureSequence){
+            if (GSGameInfo.seed == 1) Collections.reverse(actions);
+        } else Collections.shuffle(actions, new HighQualityRandom(GSGameInfo.seed));
         Sequence natureSequence = new LinkedListSequenceImpl(GSGameInfo.NATURE);
         natureSequence.addAllAsLast(actions);
         return natureSequence;

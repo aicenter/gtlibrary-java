@@ -166,7 +166,7 @@ public class SimAlphaBeta {
                     new DOCacheImpl(),
                     new NatureCacheImpl(),
                     new LowerBoundComparatorFactory());
-            System.out.println(data.gameInfo.getInfo());
+//            System.out.println(data.gameInfo.getInfo());
             double beta = -data.getAlphaBetaFor(rootState.getAllPlayers()[1]).getUnboundedValue(rootState);
             double alpha = data.getAlphaBetaFor(rootState.getAllPlayers()[0]).getUnboundedValue(rootState);
             DoubleOracle oracle = data.getDoubleOracle(rootState, beta, alpha);
@@ -178,9 +178,9 @@ public class SimAlphaBeta {
                 result = alpha;
             }
 
-            System.out.println("****************");
-			System.out.println("root state: " + rootState);
-            System.out.println("game value: " + result);
+//            System.out.println("****************");
+//			System.out.println("root state: " + rootState);
+//            System.out.println("game value: " + result);
 //            System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //            System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
         }

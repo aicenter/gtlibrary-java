@@ -33,6 +33,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
+import cz.agents.gtlibrary.utils.Pair;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -263,16 +264,19 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         rootNode = is.getAllNodes().iterator().next();
         rootNode.setParent(null);
         Action action = runMiliseconds(miliseconds);
-        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        //System.out.println("Mean OOS leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        //Pair<Double,Double> supportSize = StrategyCollector.meanSupportSize(rootNode, new MeanStratDist());
+        //System.out.println("Mean OOS support size : " + supportSize.getLeft() + ", mean num of actions: " + supportSize.getRight());
+        //System.out.println("Mean OOS support size: " + StrategyCollector.meanSupportSize(StrategyCollector.getStrategyFor(rootNode, searchingPlayer, new MeanStratDist())));
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
-            System.out.println("OOS: " + (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData()));
+            //System.out.println("OOS: " + (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData()));
             clean(action);
             return action;
         } else {
             InnerNode child = (InnerNode) rootNode.getChildFor(rootNode.getActions().get(0));
             is = child.getInformationSet();
             distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
-            System.out.println("OOS: " + distribution);
+            //System.out.println("OOS: " + distribution);
             action = Strategy.selectAction(distribution, rnd);
             clean(action);
             return action;
