@@ -323,10 +323,10 @@ public class SMJournalExperiments {
 //            System.out.println("BR1: " + br1Val);
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
-            System.out.println("Mean OOS leaf depth: " + StrategyCollector.meanLeafDepth(alg.getRootNode()));
+            //System.out.println("Mean OOS leaf depth: " + StrategyCollector.meanLeafDepth(alg.getRootNode()));
             //Pair<Double,Double> supportSize = StrategyCollector.meanSupportSize(alg.getRootNode(), new MeanStratDist());
             //System.out.println("Mean OOS support size : " + supportSize.getLeft() + ", mean num of actions: " + supportSize.getRight());
-            System.out.println("Mean OOS support size : " + StrategyCollector.meanSupportSize(strategy0) + "; " + StrategyCollector.meanSupportSize(strategy1));
+            //System.out.println("Mean OOS support size : " + StrategyCollector.meanSupportSize(strategy0) + "; " + StrategyCollector.meanSupportSize(strategy1));
             System.out.flush();
             secondsIteration *= 1.2;
         }
@@ -437,10 +437,10 @@ public class SMJournalExperiments {
 //            System.out.println("BR1: " + br1Val);
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
-            System.out.println("Mean SMMCTS leaf depth: " + StrategyCollector.meanLeafDepth(alg.getRootNode()));
+            //System.out.println("Mean SMMCTS leaf depth: " + StrategyCollector.meanLeafDepth(alg.getRootNode()));
             //Pair<Double,Double> supportSize = StrategyCollector.meanSupportSize(alg.getRootNode(), new MeanStratDist());
             //System.out.println("Mean SMMCTS support size : " + supportSize.getLeft() + ", mean num of actions: " + supportSize.getRight());
-            System.out.println("Mean SMMCTS support size : " + StrategyCollector.meanSupportSize(strategy0) + "; " + StrategyCollector.meanSupportSize(strategy1));
+            //System.out.println("Mean SMMCTS support size : " + StrategyCollector.meanSupportSize(strategy0) + "; " + StrategyCollector.meanSupportSize(strategy1));
             System.out.flush();
             secondsIteration *= 1.2;
         }
