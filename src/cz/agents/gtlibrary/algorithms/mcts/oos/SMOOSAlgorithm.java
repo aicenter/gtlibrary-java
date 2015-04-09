@@ -51,10 +51,11 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
     protected ThreadMXBean threadBean;
     protected MCTSConfig config;
     protected Expander expander;
-    private double epsilon = 0.6;
+    protected double epsilon = 0.6;
     public boolean dropTree = false;
+    public boolean parallel = false;
 
-    private Random rnd;
+    protected Random rnd;
 
     public SMOOSAlgorithm(Player searchingPlayer, OOSSimulator simulator, GameState rootState, Expander expander, double epsilon, Random random) {
         this.searchingPlayer = searchingPlayer;
@@ -70,17 +71,28 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         this.expander = expander;
         String s = System.getProperty("DROPTREE");
         if (s != null) dropTree = Boolean.getBoolean(s);
+        s = System.getProperty("OOSPARALLEL");
+        if (s != null) parallel = Boolean.getBoolean(s);
     }
 
     @Override
     public Action runMiliseconds(int miliseconds) {
         int iters = 0;
         long start = threadBean.getCurrentThreadCpuTime();
-        for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
-            iteration(rootNode, rootNode.getGameState().getAllPlayers()[0]);
-            iters++;
-            iteration(rootNode, rootNode.getGameState().getAllPlayers()[1]);
-            iters++;
+        if (parallel){
+            for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
+                iteration2(rootNode, rootNode.getGameState().getAllPlayers()[0]);
+                iters++;
+                iteration2(rootNode, rootNode.getGameState().getAllPlayers()[1]);
+                iters++;
+            }
+        } else {
+            for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
+                iteration(rootNode, rootNode.getGameState().getAllPlayers()[0]);
+                iters++;
+                iteration(rootNode, rootNode.getGameState().getAllPlayers()[1]);
+                iters++;
+            }
         }
         System.out.println();
         System.out.println("OOS Iters: " + iters);
@@ -92,9 +104,16 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
     }
 
     public Action runIterations(int iterations) {
-        for (int i = 0; i < iterations / 2; i++) {
-            iteration(rootNode, rootNode.getGameState().getAllPlayers()[0]);
-            iteration(rootNode, rootNode.getGameState().getAllPlayers()[1]);
+        if (parallel){
+            for (int i = 0; i < iterations / 2; i++) {
+                iteration2(rootNode, rootNode.getGameState().getAllPlayers()[0]);
+                iteration2(rootNode, rootNode.getGameState().getAllPlayers()[1]);
+            }
+        } else {
+            for (int i = 0; i < iterations / 2; i++) {
+                iteration(rootNode, rootNode.getGameState().getAllPlayers()[0]);
+                iteration(rootNode, rootNode.getGameState().getAllPlayers()[1]);
+            }
         }
         if (!rootNode.getInformationSet().getPlayer().equals(searchingPlayer)) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData());
@@ -122,8 +141,87 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode) node;
             Action a = cn.getRandomAction();
+            return iteration(cn.getChildFor(a), expPlayer);
+        }
+        InnerNode in = (InnerNode) node;
+        MCTSInformationSet is = in.getInformationSet();
+        OOSAlgorithmData data1,data2;
+        Action selectedA;
+        double u;
+        int a1,a2;
+        double pa1,pa2,sa1,sa2;
+        if (is.getAlgorithmData() == null) {//this is a new Information Set
+            data1 = new OOSAlgorithmData(in.getActions());
+            is.setAlgorithmData(data1);
+            a1 = rnd.nextInt(in.getActions().size());
+            sa1 = pa1 = 1.0 / in.getActions().size();
+            selectedA = in.getActions().get(a1);
+            InnerNode in2 = (InnerNode) in.getChildFor(selectedA);
+            is = in2.getInformationSet();
+            data2 = new OOSAlgorithmData(in2.getActions());
+            is.setAlgorithmData(data2);
+            a2 = rnd.nextInt(in2.getActions().size());
+            sa2 = pa2 = 1.0 / in2.getActions().size();
+            selectedA = in2.getActions().get(a2);
+            
+            Node child = in2.getChildFor(selectedA);
+            u = simulator.simulate(child.getGameState())[expPlayer.getId()];
+            x = q = simulator.playerProb[expPlayer.getId()];
+            if (expPlayer.getId()==0) data2.updateMeanStrategy(ones, pa2);
+            else data1.updateMeanStrategy(ones, pa1);
+        } else {
+            data1 = (OOSAlgorithmData) is.getAlgorithmData();
+            data1.getRMStrategy(rmProbs);
+            if (expPlayer.getId()==0){ //is first player exploring?
+                if (rnd.nextDouble() < epsilon) a1 = rnd.nextInt(in.getActions().size());
+                else a1 = randomChoice(rmProbs, 1);
+                pa1 = rmProbs[a1];
+                sa1 = (1 - epsilon) * pa1 + (epsilon / in.getActions().size());
+            } else {
+                data1.updateMeanStrategy(rmProbs, 1);
+                a1 = randomChoice(rmProbs, 1);
+                pa1 = rmProbs[a1];
+                sa1 = pa1;
+            }
+            InnerNode in2 = (InnerNode) in.getChildFor(in.getActions().get(a1));
+            is = in2.getInformationSet();
+            data2 = (OOSAlgorithmData) is.getAlgorithmData();
+            data2.getRMStrategy(rmProbs);
+            if (expPlayer.getId()==1){ //is second player exploring?
+                if (rnd.nextDouble() < epsilon) a2 = rnd.nextInt(in2.getActions().size());
+                else a2 = randomChoice(rmProbs, 1);
+                pa2 = rmProbs[a2];
+                sa2 = (1 - epsilon) * pa2 + (epsilon / in2.getActions().size());
+            } else {
+                data2.updateMeanStrategy(rmProbs, 1);
+                a2 = randomChoice(rmProbs, 1);
+                pa2 = rmProbs[a2];
+                sa2 = pa2;
+            }
+            u = iteration(in2.getChildFor(in2.getActions().get(a2)), expPlayer);
+        }
+        if (expPlayer.getId()==0){
+            data1.updateRegretSM(a1, u*x/q, pa1, sa1);
+            x *= pa1; q *= sa1;
+        } else {
+            data2.updateRegretSM(a2, u*x/q, pa2, sa2);
+            x *= pa2; q *= sa2;
+        }
+        return u;
+    }
+    
+    //parallel OOS - updates both strategies
+    protected double iteration2(Node node, Player expPlayer) {
+        if (node instanceof LeafNode) {
+            x = 1;
+            q = 1;
+            return ((LeafNode) node).getUtilities()[0];
+        }
+        if (node instanceof ChanceNode) {
+            ChanceNode cn = (ChanceNode) node;
+            Action a = cn.getRandomAction();
             double p = cn.getGameState().getProbabilityOfNatureFor(a);
-            double u = iteration(cn.getChildFor(a), expPlayer);
+            double u = iteration2(cn.getChildFor(a), expPlayer);
             x *= p; q *= p;
             return u;
         }
@@ -131,79 +229,72 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         MCTSInformationSet is = in.getInformationSet();
         OOSAlgorithmData data1,data2;
         Action selectedA;
-        double u = 0;
-        int a1 = -1,a2 = -1;
-        double pa1 = -1,pa2 = -1;
+        double u;
+        int a1,a2;
+        double pa1,pa2,sa1,sa2;
         if (is.getAlgorithmData() == null) {//this is a new Information Set
             data1 = new OOSAlgorithmData(in.getActions());
             is.setAlgorithmData(data1);
             a1 = rnd.nextInt(in.getActions().size());
-            pa1 = 1.0 / in.getActions().size();
+            sa1 = pa1 = 1.0 / in.getActions().size();
             selectedA = in.getActions().get(a1);
             InnerNode in2 = (InnerNode) in.getChildFor(selectedA);
             is = in2.getInformationSet();
             data2 = new OOSAlgorithmData(in2.getActions());
             is.setAlgorithmData(data2);
             a2 = rnd.nextInt(in2.getActions().size());
-            pa2 = 1.0 / in2.getActions().size();
+            sa2 = pa2 = 1.0 / in2.getActions().size();
             selectedA = in2.getActions().get(a2);
             
             Node child = in2.getChildFor(selectedA);
-            u = simulator.simulate(child.getGameState())[expPlayer.getId()];
-            x = simulator.playersProb * pa1 * pa2;
-            q = x;
+            u = simulator.simulate(child.getGameState())[0];
+            x = q = simulator.playersProb;
+            data1.updateMeanStrategy(ones, pa1);
+            data2.updateMeanStrategy(ones, pa2);
         } else {
-            if (expPlayer.getId()==0) {//first player is exploring
-                data1 = (OOSAlgorithmData) is.getAlgorithmData();
-                data1.getRMStrategy(rmProbs);
+            data1 = (OOSAlgorithmData) is.getAlgorithmData();
+            data1.getRMStrategy(rmProbs);
+            data1.updateMeanStrategy(rmProbs, 1);
+            if (expPlayer.getId()==0){ //is first player exploring?
                 if (rnd.nextDouble() < epsilon) a1 = rnd.nextInt(in.getActions().size());
                 else a1 = randomChoice(rmProbs, 1);
                 pa1 = rmProbs[a1];
-                selectedA = in.getActions().get(a1);
-                InnerNode in2 = (InnerNode) in.getChildFor(selectedA);
-                is = in2.getInformationSet();
-                data2 = (OOSAlgorithmData) is.getAlgorithmData();
-                data2.getRMStrategy(rmProbs);
-                a2 = randomChoice(rmProbs, 1);
-                pa2 = rmProbs[a2];
-                u = iteration(in2.getChildFor(in2.getActions().get(a2)), expPlayer);
-                q *= ((1 - epsilon) * pa1 + (epsilon / in.getActions().size()))*pa2;
-                
-                double c = x*pa2;
-                x = c*pa1;
-                data1.updateRegret(a1, u/q, c, x);
-                data2.getRMStrategy(rmProbs);
-                data2.updateMeanStrategy(rmProbs, 1);
-                
+                sa1 = (1 - epsilon) * pa1 + (epsilon / in.getActions().size());
             } else {
-                data1 = (OOSAlgorithmData) is.getAlgorithmData();
-                data1.getRMStrategy(rmProbs);
                 a1 = randomChoice(rmProbs, 1);
                 pa1 = rmProbs[a1];
-                selectedA = in.getActions().get(a1);
-                InnerNode in2 = (InnerNode) in.getChildFor(selectedA);
-                is = in2.getInformationSet();
-                data2 = (OOSAlgorithmData) is.getAlgorithmData();
-                data2.getRMStrategy(rmProbs);
+                sa1 = pa1;
+            }
+            InnerNode in2 = (InnerNode) in.getChildFor(in.getActions().get(a1));
+            is = in2.getInformationSet();
+            data2 = (OOSAlgorithmData) is.getAlgorithmData();
+            data2.getRMStrategy(rmProbs);
+            data2.updateMeanStrategy(rmProbs, 1);
+            if (expPlayer.getId()==1){ //is second player exploring?
                 if (rnd.nextDouble() < epsilon) a2 = rnd.nextInt(in2.getActions().size());
                 else a2 = randomChoice(rmProbs, 1);
                 pa2 = rmProbs[a2];
-                u = iteration(in2.getChildFor(in2.getActions().get(a2)), expPlayer);
-                q *= ((1 - epsilon) * pa2 + (epsilon / in2.getActions().size()))*pa1;
-                
-                double c = x;
-                x = c*pa2;
-                data2.updateRegret(a2, pa1*u/q, c, x);
-                data1.getRMStrategy(rmProbs);
-                data1.updateMeanStrategy(rmProbs, 1);
-                x *= pa1;
+                sa2 = (1 - epsilon) * pa2 + (epsilon / in2.getActions().size());
+            } else {
+                a2 = randomChoice(rmProbs, 1);
+                pa2 = rmProbs[a2];
+                sa2 = pa2;
             }
+            u = iteration2(in2.getChildFor(in2.getActions().get(a2)), expPlayer);    
         }
+        data1.updateRegretSM(a1, u*x/q, pa1, sa1);
+        data2.updateRegretSM(a2, -u*x/q, pa2, sa2);
+        q *= sa1*sa2;
+        x *= pa1*pa2;
+        
         return u;
     }
-
+    
+    
 
     private double[] rmProbs = new double[1000];
+    private static double[] ones = new double[1000];
+    static { for (int i=0;i<ones.length;i++) ones[i]=1;}
 
     private int randomChoice(double[] dArray, double sum) {
         double r = rnd.nextDouble() * sum;

@@ -76,6 +76,13 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         }
     }
     
+    public void updateRegretSM(int ai, double W, double pa, double sa){
+        for (int i=0; i<r.length; i++){
+            if (i==ai) r[i] += W*(1-pa)/sa;
+            else r[i] += -W*pa/sa;
+        }
+    }
+    
     public void updateAllRegrets(double[] Vs, double meanV, double w){
         for (int i=0; i<r.length; i++){
             r[i] += w*(Vs[i]-meanV);
