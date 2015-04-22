@@ -19,14 +19,20 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.bpg;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.improvedBR.DoubleOracleWithBestMinmaxImprovement.PlayerSelection;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.bpg.AttackerAction.AttackerMovementType;
 import cz.agents.gtlibrary.domain.bpg.data.BorderPatrollingGraph;
+import cz.agents.gtlibrary.domain.poker.PokerAction;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -47,6 +53,9 @@ public class BPGGameState extends GameStateImpl {
 
 	protected Set<Node> flaggedNodesObservedByPatroller;
 	protected Set<Node> flaggedNodes;
+	
+	protected Set<Action> addedToFlagged;
+	protected Map<Action, boolean[]> addedToObserved;
 
 	protected boolean slowAttackerMovement;
 
@@ -67,6 +76,8 @@ public class BPGGameState extends GameStateImpl {
         this.graph = graph;
         flaggedNodesObservedByPatroller = new HashSet<Node>();
         flaggedNodes = new HashSet<Node>();
+        addedToFlagged = new HashSet<Action>();
+        addedToObserved = new HashMap<Action,boolean[]>();
         attackerPosition = graph.getOrigin();
         p1Position = graph.getP1Start();
         p2Position = graph.getP2Start();
@@ -79,6 +90,8 @@ public class BPGGameState extends GameStateImpl {
 		this.playerToMove = gameState.playerToMove;
 		this.flaggedNodes = new HashSet<Node>(gameState.flaggedNodes);
 		this.flaggedNodesObservedByPatroller = new HashSet<Node>(gameState.flaggedNodesObservedByPatroller);
+		this.addedToFlagged = new HashSet<Action>(gameState.addedToFlagged);
+		this.addedToObserved = new HashMap<Action, boolean[]>(gameState.addedToObserved);
 		this.attackerPosition = gameState.attackerPosition;
 		this.p1Position = gameState.p1Position;
 		this.p2Position = gameState.p2Position;
@@ -103,7 +116,10 @@ public class BPGGameState extends GameStateImpl {
 		attackerPosition = action.getToNode();
 
 		if ((action.getType() == AttackerMovementType.QUICK) && (action.getToNode().getIntID() >= 4 && action.getToNode().getIntID() <= 6)) {
-			flaggedNodes.add(action.getToNode());
+			if(flaggedNodes.add(action.getToNode())){
+				addedToFlagged.add(action);
+			}
+			//System.out.println(action.getToNode());
 		} else if (action.getType() == AttackerMovementType.SLOW) {
 			slowAttackerMovement = true;
 		}
@@ -114,13 +130,21 @@ public class BPGGameState extends GameStateImpl {
 		clearCache();
 		p1Position = action.getToNodeForP1();
 		p2Position = action.getToNodeForP2();
+		boolean[] added = new boolean[2];
 
+		//mapu
 		if (flaggedNodes.contains(action.getToNodeForP1())) {
-			flaggedNodesObservedByPatroller.add(action.getToNodeForP1());
+			if (flaggedNodesObservedByPatroller.add(action.getToNodeForP1())){
+				added[0] = true;
+			}
+				
 		}
 		if (flaggedNodes.contains(action.getToNodeForP2())) {
-			flaggedNodesObservedByPatroller.add(action.getToNodeForP2());
+			if (flaggedNodesObservedByPatroller.add(action.getToNodeForP2()))
+				added[1] = true;
 		}
+		if(added[0] || added[1])
+			addedToObserved.put(action, added);
 		playerToMove = BPGGameInfo.ATTACKER;
 	}
 
@@ -241,9 +265,9 @@ public class BPGGameState extends GameStateImpl {
 		if (key != null)
 			return key;
 		if (playerToMove.equals(BPGGameInfo.ATTACKER)) {
-			key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).toHashCode(), history.getSequenceOf(playerToMove));
+			key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).toHashCode(), new ArrayListSequenceImpl(history.getSequenceOf(playerToMove)));
 		} else {
-			key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).append(flaggedNodesObservedByPatroller).toHashCode(), history.getSequenceOf(playerToMove));
+			key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).append(flaggedNodesObservedByPatroller).toHashCode(), new ArrayListSequenceImpl(history.getSequenceOf(playerToMove)));
 		}
 		return key;
 	}
@@ -251,8 +275,7 @@ public class BPGGameState extends GameStateImpl {
 	@Override
 	public int hashCode() {
 		if (hashCode == -1) {
-			final int prime = 31;
-			
+			final int prime = 31;		
 			hashCode = 1;
 			hashCode = prime * hashCode + ((history == null) ? 0 : history.hashCode());
 		}
@@ -268,10 +291,59 @@ public class BPGGameState extends GameStateImpl {
 		if (getClass() != obj.getClass())
 			return false;
 		BPGGameState other = (BPGGameState) obj;
-
+		
 		if (!history.equals(other.history))
 			return false;
 		return true;
+	}
+	
+	@Override
+	public void reverseAction(){
+		if (playerToMove.equals(BPGGameInfo.ATTACKER)){
+			reversePatrollerAction();
+		}
+		else{
+			reverseAttackerAction();
+		}
+		clearCache();
+		super.reverseAction();	
+	}
+
+	private void reverseAttackerAction() {
+		playerToMove = BPGGameInfo.ATTACKER;
+		AttackerAction action = (AttackerAction)history.getLastAction();
+		attackerPosition = action.getFromNode();
+		checkFlaggedByAttacker(action);
+		if(action.getType() == AttackerMovementType.WAIT)
+			slowAttackerMovement=true;
+		else
+			slowAttackerMovement=false;
+	}
+
+	private void reversePatrollerAction() {
+		playerToMove = BPGGameInfo.DEFENDER;
+		PatrollerAction action = (PatrollerAction)history.getLastAction();
+		p1Position = action.getFromNodeForP1();
+		p2Position = action.getFromNodeForP2();
+		checkFlaggedByPatroller(action);
+	}
+	
+	private void checkFlaggedByAttacker(AttackerAction action){
+		if(addedToFlagged.contains(action)){
+			addedToFlagged.remove(action);
+			flaggedNodes.remove(action.getToNode());
+		}
+	}
+	
+	private void checkFlaggedByPatroller(PatrollerAction action){
+		boolean[] added = addedToObserved.get(action);
+		if(added != null){
+			if(added[0])
+				flaggedNodesObservedByPatroller.remove(action.getToNodeForP1());
+			if(added[1])
+				flaggedNodesObservedByPatroller.remove(action.getToNodeForP2());
+			addedToObserved.remove(action);
+		}
 	}
 
 }

@@ -45,8 +45,8 @@ public class StackTestGameState extends GameStateImpl {
             return new double[]{1, 1};
         else if (((StackTestAction) getSequenceFor(players[0]).getLast()).getType().startsWith("R")
                 && ((StackTestAction) getSequenceFor(players[1]).getLast()).getType().startsWith("L"))
-            return new double[]{5, 1};
-        return new double[]{1, 3};
+            return new double[]{1, 1};
+        return new double[]{2, 4};
     }
 
     @Override

@@ -19,18 +19,24 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.poker.generic;
 
-import java.util.Arrays;
-
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 public class GPGameInfo implements GameInfo {
 
     public static final Player FIRST_PLAYER = new PlayerImpl(0);
     public static final Player SECOND_PLAYER = new PlayerImpl(1);
     public static final Player NATURE = new PlayerImpl(2);
-    public static final Player[] ALL_PLAYERS = new Player[] {FIRST_PLAYER, SECOND_PLAYER, NATURE};
+    public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
+
+    public static Map<String, Integer> p1cardBounties = new HashMap<>();
+    public static Map<String, Integer> p2cardBounties = new HashMap<>();
 
     /**
      * value of ante for one player
@@ -66,6 +72,15 @@ public class GPGameInfo implements GameInfo {
         CARD_TYPES = new int[MAX_CARD_TYPES];
         for (int i = 0; i < MAX_CARD_TYPES; i++)
             CARD_TYPES[i] = i;
+    }
+
+    {
+        Random random = new Random(1);
+
+        for (int cardType : CARD_TYPES) {
+            p1cardBounties.put(String.valueOf(cardType), random.nextInt(5));
+            p2cardBounties.put(String.valueOf(cardType), random.nextInt(5));
+        }
     }
 
     public static int MAX_CARD_OF_EACH_TYPE = 2;
@@ -150,6 +165,6 @@ public class GPGameInfo implements GameInfo {
 
     @Override
     public double getUtilityStabilizer() {
-        return 120;
+        return DECK.length * (DECK.length - 1) * (DECK.length - 2) * 10;
     }
 }

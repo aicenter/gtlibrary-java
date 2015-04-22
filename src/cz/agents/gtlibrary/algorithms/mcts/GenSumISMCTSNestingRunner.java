@@ -29,8 +29,9 @@ public class GenSumISMCTSNestingRunner {
 
     public static void buildStichedStrategy(Player pl, MCTSInformationSet parentIS, InnerNode curNode, int iterations) {
         MCTSInformationSet curNodeIS = curNode.getInformationSet();
-        if (curNodeIS.getPlayer().equals(pl) && !processed.contains(curNode.getInformationSet())) {
-            alg.setCurrentIS(parentIS);
+        if (curNodeIS != null && curNodeIS.getPlayer().equals(pl) && !processed.contains(curNode.getInformationSet())) {
+            if (parentIS != null)
+                alg.setCurrentIS(parentIS);
             alg.runIterations(iterations);
             Map<Action, Double> actionDistribution = dist.getDistributionFor(curNodeIS.getAlgorithmData());
             double prefix = strategy.get(curNodeIS.getPlayersHistory());
@@ -52,6 +53,11 @@ public class GenSumISMCTSNestingRunner {
                 continue;
             buildStichedStrategy(pl, curNodeIS, (InnerNode) n, iterations);
         }
+    }
+
+    public static void clear() {
+        processed = new HashSet();
+        strategy = new UniformStrategyForMissingSequences.Factory().create();
     }
 
     public static Map<Sequence, Double> filterLow(Map<Sequence, Double> s) {

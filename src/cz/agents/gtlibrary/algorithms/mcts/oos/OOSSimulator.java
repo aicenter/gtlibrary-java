@@ -62,12 +62,14 @@ public class OOSSimulator implements Simulator {
 
     public double playOutProb;
     public double playersProb;
+    public double[] playerProb = new double[]{1,1};
     
     @Override
     public double[] simulate(GameState gameState) {
         //fact.l = (fact.bs == 1 && fact.us == 1 ? fact.s : fact.delta*fact.bs + (1-fact.delta)*fact.us);
         playOutProb = 1;
         playersProb = 1;
+        playerProb[0]=playerProb[1]=1;
 
         GameStateImpl state = (GameStateImpl) gameState.copy();
         
@@ -78,6 +80,7 @@ public class OOSSimulator implements Simulator {
                 playOutProb *= 1.0/actions.size();//TODO: use correct chance probability
                 if (!state.isPlayerToMoveNature()) {
                         playersProb *= 1.0/actions.size();
+                        playerProb[state.getPlayerToMove().getId()] *= 1.0/actions.size();
                 }
                 state.performActionModifyingThisState(actions.get(rnd.nextInt(actions.size())));
                 step++;

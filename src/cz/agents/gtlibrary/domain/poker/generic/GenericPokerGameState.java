@@ -144,6 +144,7 @@ public class GenericPokerGameState extends PokerGameState {
 
 	@Override
 	protected boolean isRaiseValid() {
+		//System.out.println(super.isRaiseValid() && continuousRaiseCount < GPGameInfo.MAX_RAISES_IN_ROW);
 		return super.isRaiseValid() && continuousRaiseCount < GPGameInfo.MAX_RAISES_IN_ROW;
 	}
 
@@ -203,6 +204,69 @@ public class GenericPokerGameState extends PokerGameState {
 	
 	private int getCardCount() {
 		return GPGameInfo.MAX_CARD_TYPES*GPGameInfo.MAX_CARD_OF_EACH_TYPE;
+	}
+	
+	private boolean isSpecificAction(PokerAction action){
+		String actionType = action.getActionType();
+		return actionType.equals("b") ||
+				actionType.equals("ch");
+		}
+	
+	public void reverseAction(){
+		
+		PokerAction lastAction = (PokerAction)history.getLastAction();
+		if (history.getLastPlayer().getId()==2 || (!sequenceForAllPlayers.isEmpty() && lastAction.equals(sequenceForAllPlayers.getLast()))){
+			if (lastAction.getActionType().equals("c")) {
+				reverseCall();
+			} else if (lastAction.getActionType().equals("f")) {
+				reverseFold();
+			} else if (lastAction.getActionType().equals("r")) {
+				reverseRaise();
+			} else if (! isSpecificAction(lastAction)){
+				reverseAttend();
+			}
+		}
+		super.reverseAction();
+	}
+
+	private void reverseCall() {
+		continuousRaiseCount = countContinousRaiseCount();
+	}
+
+	private void reverseFold() {
+		if(table==null)
+			round=1;
+		else
+			round=3;
+	}
+
+	private void reverseRaise() {
+		continuousRaiseCount--;
+	}
+
+	private void reverseAttend() {
+		if (round == 3){
+			table=null;
+			round--;
+		}
+		else if (round == 1){
+			playerCards[1]=null;
+			round--;
+		}
+		else{
+			playerCards[0]=null;
+		}
+	}
+	
+	private int countContinousRaiseCount(){
+		int raiseCount = 0;
+		for(int i = sequenceForAllPlayers.size()-2; i>=0; i--){
+			if(sequenceForAllPlayers.get(i).getActionType()=="r")
+				raiseCount++;
+			else
+				break;
+		}
+		return raiseCount;
 	}
 
 }

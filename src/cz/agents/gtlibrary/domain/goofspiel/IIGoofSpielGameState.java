@@ -31,8 +31,8 @@ public class IIGoofSpielGameState extends GoofSpielGameState {
         super(gameState);
     }
 
-    public IIGoofSpielGameState(Sequence natureSequence) {
-        super(natureSequence);
+    public IIGoofSpielGameState(Sequence natureSequence, int sequenceIndex) {
+        super(natureSequence, sequenceIndex);
     }
 
     public IIGoofSpielGameState() {

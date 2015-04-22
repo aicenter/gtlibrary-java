@@ -7,6 +7,7 @@
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.Expander;
@@ -26,8 +27,8 @@ import java.util.List;
 public class NextOppISsTargeting extends ISTargeting{
     Expander expander;
 
-    public NextOppISsTargeting(Player[] allPlayers, Expander expander) {
-        super(allPlayers);
+    public NextOppISsTargeting(InnerNode rootNode, double delta, Expander expander) {
+        super(rootNode,delta);
         this.expander = expander;
     }
     

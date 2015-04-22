@@ -33,7 +33,7 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>{
 
-	private static final long serialVersionUID = -5389882092681466870L;
+	protected static final long serialVersionUID = -5389882092681466870L;
 
 	public KuhnPokerExpander(AlgorithmConfig<I> algConfig) {
 		super(algConfig);
@@ -44,7 +44,7 @@ public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>
 		KuhnPokerGameState kpState = (KuhnPokerGameState) gameState;
 		List<Action> actions = new ArrayList<Action>();
 
-		if (kpState.getRound() == 0) {			
+		if (kpState.getRound() == 0) {
 			addActionsOfNature(kpState, actions, getAlgorithmConfig().getInformationSetFor(gameState));
 			return actions;
 		}
@@ -52,7 +52,7 @@ public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>
 		return actions;
 	}
 
-	private void addActionsOfRegularPlayer(KuhnPokerGameState kpState, List<Action> actions, I informationSet) {
+	protected void addActionsOfRegularPlayer(KuhnPokerGameState kpState, List<Action> actions, I informationSet) {
 		LinkedList<PokerAction> history = kpState.getSequenceForAllPlayers();
 
 		if (!kpState.isGameEnd()) {
@@ -68,17 +68,17 @@ public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>
 		}
 	}
 
-	private void addActionsAfterAggressiveAction(KuhnPokerGameState kpState, List<Action> actions, I informationSets) {
+	protected void addActionsAfterAggressiveAction(KuhnPokerGameState kpState, List<Action> actions, I informationSets) {
 		actions.add(createAction(kpState, "c", informationSets));
 		actions.add(createAction(kpState, "f", informationSets));
 	}
 
-	private void addActionsAfterPasiveAction(KuhnPokerGameState kpState, List<Action> actions, I informationSet) {
+	protected void addActionsAfterPasiveAction(KuhnPokerGameState kpState, List<Action> actions, I informationSet) {
 		actions.add(createAction(kpState, "b", informationSet));
 		actions.add(createAction(kpState, "ch", informationSet));
 	}
 
-	private void addActionsOfNature(KuhnPokerGameState kpState, List<Action> actions, I informationSet) {
+	protected void addActionsOfNature(KuhnPokerGameState kpState, List<Action> actions, I informationSet) {
 		if (isCardAvailableInState("0", kpState))
 			actions.add(new KuhnPokerAction("0", informationSet, kpState.getPlayerToMove()));
 		if (isCardAvailableInState("1", kpState))
@@ -87,11 +87,11 @@ public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>
 			actions.add(new KuhnPokerAction("2", informationSet, kpState.getPlayerToMove()));
 	}
 
-	private PokerAction createAction(KuhnPokerGameState state, String action, I informationSet) {
+	protected PokerAction createAction(KuhnPokerGameState state, String action, I informationSet) {
 		return new KuhnPokerAction(action, informationSet, state.getPlayerToMove());
 	}
 
-	private boolean isCardAvailableInState(String card, KuhnPokerGameState state) {
+	protected boolean isCardAvailableInState(String card, KuhnPokerGameState state) {
 		return state.getPlayerCards()[0] == null || !card.equals(state.getPlayerCards()[0].getActionType());
 	}
 }

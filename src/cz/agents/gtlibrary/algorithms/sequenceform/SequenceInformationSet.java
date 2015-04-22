@@ -33,6 +33,10 @@ public class SequenceInformationSet extends InformationSetImpl {
 		super(state);
 	}
 
+    public SequenceInformationSet(GameState state, Sequence sequence) {
+        super(state, sequence);
+    }
+
 	public void addOutgoingSequences(Sequence outgoingSeq) {
 		outgoingSequences.add(outgoingSeq);
 	}

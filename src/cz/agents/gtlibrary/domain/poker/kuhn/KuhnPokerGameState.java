@@ -102,5 +102,34 @@ public class KuhnPokerGameState extends PokerGameState {
 			dealCardToPlayer(action);
 		}
 	}
+	
+	private boolean isSpecificKuhnPokerAction(PokerAction action){
+		String actionType = action.getActionType();
+		return !(actionType.equals("b") || actionType.equals("c") || 
+				actionType.equals("ch") || actionType.equals("r"));
+		}
+	
+	@Override
+	public void reverseAction(){	
+		PokerAction lastAction = (PokerAction)history.getLastAction();
+		if (history.getLastPlayer().getId()==2 || (!sequenceForAllPlayers.isEmpty() && lastAction.equals(sequenceForAllPlayers.getLast()))){
+			if (lastAction.getActionType().equals("f")) {
+				reverseFold();
+			} else if (isSpecificKuhnPokerAction(lastAction)) {
+				if(round==1){
+					playerCards[1]=null;
+					round--;
+				}
+				else
+					playerCards[0]=null;
+				}
+			}		
+	
+		super.reverseAction();
+	}
+
+	private void reverseFold() {
+		round=1;
+	}
 
 }

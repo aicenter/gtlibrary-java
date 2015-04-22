@@ -2,20 +2,21 @@ package cz.agents.gtlibrary.domain.poker.kuhn;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 
-public class GenSumKuhnPokerGameState extends KuhnPokerGameState {
-    private final double rake = .1;
+public class GenSumKPGameState extends KuhnPokerGameState {
+    protected double rake;
 
-    public GenSumKuhnPokerGameState() {
+    public GenSumKPGameState(double rake) {
+        this.rake = rake;
     }
 
-    public GenSumKuhnPokerGameState(GenSumKuhnPokerGameState gameState) {
+    public GenSumKPGameState(GenSumKPGameState gameState) {
         super(gameState);
     }
 
     @Override
     public double[] getUtilities() {
         if (utilities != null) {
-            return utilities;
+            return copy(utilities);
         }
         if (isGameEnd()) {
             int result = hasPlayerOneWon();
@@ -26,13 +27,23 @@ public class GenSumKuhnPokerGameState extends KuhnPokerGameState {
                 utilities = new double[]{0, 0, 0};
             else
                 utilities = new double[]{gainForFirstPlayer - pot, (1 - rake) * (pot - gainForFirstPlayer), 0};
-            return utilities;
+            return copy(utilities);
         }
         return new double[]{0};
     }
 
+    protected double[] copy(double[] utilities) {
+        double[] copy = new double[utilities.length];
+
+        for (int i = 0; i < utilities.length; i++) {
+            copy[i] = utilities[i];
+        }
+        return copy;
+    }
+
+
     @Override
     public GameState copy() {
-        return new GenSumKuhnPokerGameState(this);
+        return new GenSumKPGameState(this);
     }
 }

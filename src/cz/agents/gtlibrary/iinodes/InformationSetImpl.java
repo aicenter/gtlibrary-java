@@ -43,6 +43,13 @@ public abstract class InformationSetImpl implements InformationSet {
 		this.statesInInformationSet.add(state);
 		this.hashCode = state.getISKeyForPlayerToMove().getLeft();
 	}
+	
+	public InformationSetImpl(GameState state, Sequence sequence) {
+		this.playerHistory = new ArrayListSequenceImpl(sequence);
+		this.player = state.getPlayerToMove();
+		this.statesInInformationSet.add(state);
+		this.hashCode = state.getISKeyForPlayerToMove().getLeft();
+	}
 
 	@Override
 	public Player getPlayer() {
@@ -61,7 +68,6 @@ public abstract class InformationSetImpl implements InformationSet {
 
 	@Override
 	public boolean equals(Object obj) {
-            if (obj==null) return false;
 		if (this.hashCode != obj.hashCode())
 			return false;
         if (!(obj instanceof InformationSet))
@@ -76,10 +82,14 @@ public abstract class InformationSetImpl implements InformationSet {
 	}
 
 	public void addStateToIS(GameState state) {
+		assert state.getPlayerToMove().equals(player);
 		statesInInformationSet.add(state);
 	}
 
     public void addAllStateToIS(Collection<GameState> states) {
+    	for (GameState gameState : states) {
+			assert gameState.getPlayerToMove().equals(player);
+		}
         statesInInformationSet.addAll(states);
     }
 

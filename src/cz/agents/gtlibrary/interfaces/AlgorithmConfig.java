@@ -19,7 +19,10 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.interfaces;
 
+import cz.agents.gtlibrary.utils.Pair;
+
 import java.io.Serializable;
+import java.util.HashMap;
 
 public interface AlgorithmConfig<I extends InformationSet> extends Serializable {
 	
@@ -28,5 +31,11 @@ public interface AlgorithmConfig<I extends InformationSet> extends Serializable 
 	public void addInformationSetFor(GameState gameState, I informationSet);
 
 	public I createInformationSetFor(GameState gameState);
-	
+
+    public Double getActualNonzeroUtilityValues(GameState gameState);
+
+    public void setUtility(GameState gameState, double utility);
+
+	public HashMap<Pair<Integer, Sequence>, I> getAllInformationSets();
+
 }
