@@ -66,11 +66,11 @@ public class SimAlphaBeta {
 //    public double gameValue = Double.NaN;
 
     public static void main(String[] args) {
-//		runGoofSpielWithNature(true,false,false,false);
+		runGoofSpielWithNature(false,true,false,false);
 //		runGoofSpielWithNatureWithLocalCache();
 //        runGoofSpielWithFixedNatureSequence(false, false, false, false, 7);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
-	    runPursuit(false,false,false,false);
+//	    runPursuit(false,false,false,false);
 //        runSimRandomGame(false, false, false, false);
 //        runOshiZumo(false,false,false,false);
 //        runTron(false,false,false,false);
