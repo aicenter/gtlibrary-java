@@ -96,12 +96,12 @@ public class GeneralDoubleOracle {
 	public static void main(String[] args) {
 //		runAC();
 //        runBP();
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runRandomGame();
 //		runSimRandomGame();
-                runLiarsDice();
+//                runLiarsDice();
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
@@ -462,6 +462,7 @@ public class GeneralDoubleOracle {
 //                System.out.println("ERROR : NOT CONVERGED");
 //                break;
 //            }
+//            break;
 		}
 
 

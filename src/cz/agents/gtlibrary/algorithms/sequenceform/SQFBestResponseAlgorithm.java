@@ -642,7 +642,7 @@ public class SQFBestResponseAlgorithm {
         while (!queue.isEmpty()) {
             GameState currentState = queue.pop();
             if (currentState.getHistory().getLength() == length) {
-                if (currentState.getISKeyForPlayerToMove().equals(state.getISKeyForPlayerToMove()) && !currentState.equals(state)) {
+                if (currentState.getISKeyForPlayerToMove().equals(state.getISKeyForPlayerToMove()) && !currentState.equals(state) && !opponentRealizationPlan.containsKey(currentState.getSequenceFor(gameInfo.getOpponent(mainPlayer)))) {
                     alternativeNodes.add(currentState);
                 }
                 continue;
@@ -658,6 +658,7 @@ public class SQFBestResponseAlgorithm {
                 }
             } else if (!currentState.getPlayerToMove().equals(mainPlayer)) {
                 List<Action> tmp = expander.getActions(currentState);
+                boolean noUpdate = true;
                 if (!neverCheckOppAgain && opponentRealizationPlan.containsKey(currentState.getSequenceForPlayerToMove())) {
                     Sequence s = new ArrayListSequenceImpl(currentState.getSequenceForPlayerToMove());
                     for (Action a : tmp) {
@@ -667,12 +668,19 @@ public class SQFBestResponseAlgorithm {
                             GameState newState = currentState.performAction(a);
                             if (newState != null) {
                                 queue.push(newState);
+                                noUpdate = false;
                             }
                         }
                         s.removeLast();
                     }
+                    if (noUpdate) {
+                        GameState newState = currentState.performAction(tmp.get(0));
+                        if (newState != null) {
+                            queue.push(newState);
+                        }
+                    }
                 } else {
-                    neverCheckOppAgain = true;
+//                    neverCheckOppAgain = true;
                     GameState newState = currentState.performAction(tmp.get(0));
                     if (newState != null) {
                         queue.push(newState);
