@@ -246,8 +246,8 @@ public class IIGConvergenceExperiment {
         }
         if (initializeSfConfig && sfAlgConfig.getAllSequences().isEmpty()){
             FullSequenceEFG efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
-            //efg.generateCompleteGame();
-            sfStrategy = efg.generate();
+            efg.generateCompleteGame();
+            //sfStrategy = efg.enerate();
             //(new GambitEFG()).write(domain + ".efg", rootState, sfExpander);
             //computeGameStatistics();
             System.out.println();
@@ -281,7 +281,7 @@ public class IIGConvergenceExperiment {
                         UCTSelector.useDeterministicUCT = true;
                     String cS = System.getProperty("EXPL");
                     Double c = 2d*gameInfo.getMaxUtility();
-                    if (cS != null) c = Double.parseDouble(cS)*gameInfo.getMaxUtility();
+                    //if (cS != null) c = Double.parseDouble(cS)*gameInfo.getMaxUtility();
                     bpFactory = new UCTBackPropFactory(c);
                     break;
                 case "MCTS-EXP3":
@@ -299,7 +299,7 @@ public class IIGConvergenceExperiment {
                 case "MCTS-RM":
                     cS = System.getProperty("EXPL");
                     c = 0.1d;
-                    if (cS != null) c = new Double(cS);
+//                    if (cS != null) c = new Double(cS);
                     bpFactory = new RMBackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), c);
                     break;
             }

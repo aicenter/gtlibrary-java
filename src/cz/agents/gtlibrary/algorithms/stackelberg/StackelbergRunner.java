@@ -243,7 +243,12 @@ public class StackelbergRunner {
 
             algConfig.addStateToSequenceForm(currentState);
             if (currentState.isGameEnd()) {
-                algConfig.setUtility(currentState);
+                final double[] utilities = currentState.getUtilities();
+                Double[] u = new Double[utilities.length];
+
+                for (Player p : currentState.getAllPlayers())
+                    u[p.getId()] = utilities[p.getId()] * currentState.getNatureProbability()*gameConfig.getUtilityStabilizer();
+                algConfig.setUtility(currentState, u);
                 continue;
             }
             for (Action action : expander.getActions(currentState)) {

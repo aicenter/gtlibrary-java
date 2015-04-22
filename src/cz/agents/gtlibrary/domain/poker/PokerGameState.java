@@ -24,8 +24,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -48,6 +50,8 @@ public abstract class PokerGameState extends GameStateImpl {
 
 	protected double[] utilities;
 	
+	private final double coef = 1;
+
 	public PokerGameState(Player[] players, int ante) {
 		super(players);
 		this.playerCards = new PokerAction[2];
@@ -93,11 +97,11 @@ public abstract class PokerGameState extends GameStateImpl {
 			int result = hasPlayerOneWon();
 
 			if (result > 0)
-				utilities = new double[] { gainForFirstPlayer, -gainForFirstPlayer, 0 };
+				utilities = new double[] { coef*gainForFirstPlayer, -coef*gainForFirstPlayer, 0 };
 			else if (result == 0)
 				utilities = new double[] { 0, 0, 0 };
 			else
-				utilities = new double[] { gainForFirstPlayer - pot, pot - gainForFirstPlayer, 0 };
+				utilities = new double[] { coef*(gainForFirstPlayer - pot), coef*(pot - gainForFirstPlayer), 0 };
 			return utilities;
 		}
 		return new double[] { 0 };
@@ -241,6 +245,7 @@ public abstract class PokerGameState extends GameStateImpl {
 	}
 
 	protected boolean isRaiseValid() {
+		//System.out.println(isRoundForRegularPlayers() && !sequenceForAllPlayers.isEmpty() && isLastMoveAggressive());
 		return isRoundForRegularPlayers() && !sequenceForAllPlayers.isEmpty() && isLastMoveAggressive();
 	}
 
@@ -280,6 +285,10 @@ public abstract class PokerGameState extends GameStateImpl {
 			throw new UnsupportedOperationException("Nature doesn't hold any cards...");
 		return playerCards[currentPlayerIndex];
 	}
+	
+	public PokerAction getCardFor(Player player) {
+		return playerCards[player.getId()];
+	}
 
 	@Override
 	public boolean isGameEnd() {
@@ -287,9 +296,18 @@ public abstract class PokerGameState extends GameStateImpl {
 	}
 
 	protected void addToPot(int bet) {
+		//System.out.println("adding to pot : "+bet);
 		pot += bet;
 		if (currentPlayerIndex == 1) {
 			gainForFirstPlayer += bet;
+		}
+	}
+	
+	protected void removeFromPot(int bet) {
+		//System.out.println("removing from pot: "+bet);
+		pot -= bet;
+		if (history.getLastPlayer().getId() == 1) {
+			gainForFirstPlayer -= bet;
 		}
 	}
 
@@ -307,7 +325,7 @@ public abstract class PokerGameState extends GameStateImpl {
 		if (cachedISKey != null)
 			return cachedISKey;
 		if (isPlayerToMoveNature()) {
-			cachedISKey = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+			cachedISKey = new Pair<Integer, Sequence>(0, new ArrayListSequenceImpl(history.getSequenceOf(getPlayerToMove())));
 			return cachedISKey;
 		}
 
@@ -365,5 +383,48 @@ public abstract class PokerGameState extends GameStateImpl {
 	public String toString() {
 		return history.toString();
 	}
+	
+	@Override
+	public void reverseAction(){
+		
+		PokerAction lastAction = (PokerAction)history.getLastAction();
+		if (!sequenceForAllPlayers.isEmpty() && lastAction.equals(sequenceForAllPlayers.getLast())){
+			
+			sequenceForAllPlayers.removeLast();
+			
+			if (lastAction.getActionType().equals("b")) {
+				reverseBet(lastAction);
+			} else if (lastAction.getActionType().equals("c")) {
+				reverseCall();
+			} else if (lastAction.getActionType().equals("ch")) {
+				reverseCheck();
+			} else if (lastAction.getActionType().equals("r")) {
+				reverseRaise(lastAction);
+			}		
+		}
+		clearCachedValues();
+		currentPlayerIndex = history.getLastPlayer().getId();
+		super.reverseAction();
+	}
+
+	private void reverseRaise(PokerAction lastAction) {
+		removeFromPot(getValueOfCall() + getValueOfAggressive(lastAction));
+	}
+
+	private void reverseCheck() {
+		if(sequenceForAllPlayers.size() > 0 && sequenceForAllPlayers.get(sequenceForAllPlayers.size()-1).getActionType().equals("ch"))
+			round--;
+	}
+
+	private void reverseCall() {
+		removeFromPot(getValueOfCall());
+		round--;
+	}
+
+	private void reverseBet(PokerAction lastAction) {
+		removeFromPot(getValueOfAggressive(lastAction));
+	}
+	
+	
 
 }

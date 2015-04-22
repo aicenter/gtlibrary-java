@@ -61,6 +61,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     private double delta = 0.9;
     private double epsilon = 0.6;
     public boolean dropTree = false;
+    public boolean useCurrentStrategy = true;
     
     private MCTSInformationSet curIS;
     private Random rnd = new HighQualityRandom();
@@ -89,11 +90,13 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         if (s != null) dropTree = Boolean.getBoolean(s);
         s = System.getProperty("INCTREEBUILD");
         if (s != null && !Boolean.parseBoolean(s)) SMConvergenceExperiment.buildCompleteTree(rootNode);
+        s = System.getProperty("CURSTRAT");
+        if (s != null ) useCurrentStrategy = Boolean.getBoolean(s);
         s = System.getProperty("TARGTYPE");
         if (s != null){
-            if (s.equals("IST")) targeting = new ISTargeting(rootState.getAllPlayers());
-            else if (s.equals("PST")) targeting = new PSTargeting();
-        } else targeting = new ISTargeting(rootState.getAllPlayers());
+            if (s.equals("IST")) targeting = new ISTargeting(rootNode, delta);
+            else if (s.equals("PST")) targeting = new PSTargeting(rootNode, delta);
+        } else targeting = new ISTargeting(rootNode, delta);
     }
     
     @Override
@@ -105,24 +108,29 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         for (;(threadBean.getCurrentThreadCpuTime()-start)/1e6 < miliseconds;) {
             if (curIS!=rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble()<=delta);
             underTargetIS =  (curIS == null || curIS==rootNode.getInformationSet());
-            iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[0]);
+            iteration(rootNode,1,1,1/targeting.getSampleProbMultiplayer(),1/targeting.getSampleProbMultiplayer(),rootNode.getGameState().getAllPlayers()[0]);//originally started by 1/10^d
             iters++;
             if (underTargetIS) targISHits++;
             underTargetIS =  (curIS == null || curIS==rootNode.getInformationSet());
-            iteration(rootNode,1,1,1,1,rootNode.getGameState().getAllPlayers()[1]);
+            iteration(rootNode,1,1,1/targeting.getSampleProbMultiplayer(),1/targeting.getSampleProbMultiplayer(),rootNode.getGameState().getAllPlayers()[1]);
             iters++;
             if (underTargetIS) targISHits++;
         }
-        System.out.println();
-        System.out.println("OOS Iters: " + iters);
-        System.out.println("OOS Targeted IS Hits: " + targISHits);
+//        System.out.println();
+//        System.out.println("Multiplyer: " + targeting.getSampleProbMultiplayer());
+//        System.out.println("OOS Iters: " + iters);
+//        System.out.println("OOS Targeted IS Hits: " + targISHits);
 //        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
-        System.out.println("CurIS size: " + (curIS==null ? "null" : curIS.getAllNodes().size()));
+//        System.out.println("CurIS size: " + (curIS==null ? "null" : curIS.getAllNodes().size()));
         if (curIS == null || !curIS.getPlayer().equals(searchingPlayer)) return null;
         if (curIS.getAlgorithmData() == null) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
-//        System.out.println("CurIS strategy: " + distribution.toString());
-        return Strategy.selectAction(distribution, rnd);
+//        System.out.println("CurIS Mean Strategy: " + distribution.toString());
+//        System.out.println("CurIS Cur Strategy: " + Arrays.toString(((OOSAlgorithmData)curIS.getAlgorithmData()).getRMStrategy()));
+//        System.out.println("CurIS Actions: " + curIS.getAllNodes().iterator().next().getActions().toString());
+        if (useCurrentStrategy) return curIS.getAllNodes().iterator().next().getActions().get(randomChoice(((OOSAlgorithmData)curIS.getAlgorithmData()).getRMStrategy(), 1));
+        else return Strategy.selectAction(distribution, rnd);
+        
     }
     
     public Action runIterations(int iterations){

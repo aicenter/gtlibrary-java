@@ -18,6 +18,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
+import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.History;
@@ -31,6 +32,13 @@ import cz.agents.gtlibrary.interfaces.PublicAction;
  */
 public class PSTargeting implements OOSTargeting {
     History sampleHist;
+    InnerNode rootNode;
+    double delta;
+
+    public PSTargeting(InnerNode rootNode, double delta) {
+        this.rootNode = rootNode;
+        this.delta = delta;
+    }
     
     @Override
     public boolean isAllowedAction(InnerNode node, Action action) {
@@ -40,10 +48,44 @@ public class PSTargeting implements OOSTargeting {
         Action histAct = sampleHist.getSequenceOf(pl).get(node.getGameState().getSequenceFor(pl).size());//in other games, this might need to be more sophisticated
         return ((PublicAction)action).publicEquals(histAct);
     }
+    
+    private double probMultiplayer = 1;
+    @Override
+    public double getSampleProbMultiplayer(){
+        return probMultiplayer;
+    }
+    
+    private Action getSingleAllowedAction(InnerNode n){
+        Action out=null;
+        for (Action a : n.getActions()){
+            if (isAllowedAction(n, a)){
+                if (out == null) out = a;
+                else return null;
+            }
+        }
+        return out;
+    }
 
+    
+    private MeanStratDist meanDist = new MeanStratDist();
     @Override
     public void update(InformationSet curIS) {
         sampleHist = curIS.getAllStates().iterator().next().getHistory();
+        
+        probMultiplayer = 1;
+        InnerNode n = rootNode;
+        while (n.getGameState().getHistory().getLength() < sampleHist.getLength()){
+            final Action selected = getSingleAllowedAction(n);
+            if (selected != null){
+                double p;
+                if (n.getGameState().isPlayerToMoveNature()) p = delta / n.getGameState().getProbabilityOfNatureFor(selected);
+                else p = delta / meanDist.getDistributionFor(n.getInformationSet().getAlgorithmData()).get(selected);
+                p += (1-delta);
+                probMultiplayer *= p;
+            }
+            final Action played = sampleHist.getSequenceOf(n.getGameState().getPlayerToMove()).get(n.getGameState().getSequenceForPlayerToMove().size());
+            n = (InnerNode) n.getChildOrNull(played);
+        }
     }
 
     @Override

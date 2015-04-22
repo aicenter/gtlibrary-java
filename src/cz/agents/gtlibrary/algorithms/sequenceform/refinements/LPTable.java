@@ -25,12 +25,8 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class LPTable {
 
@@ -114,6 +110,13 @@ public class LPTable {
         updateVariableIndices(varKey);
     }
 
+    public void addToObjective(Object varKey, double value) {
+        Double oldValue = objective.get(varKey);
+
+        objective.put(varKey, oldValue == null ? value : oldValue + value);
+        updateVariableIndices(varKey);
+    }
+
     public double getObjective(Object varKey) {
         Double value = objective.get(varKey);
 
@@ -193,6 +196,7 @@ public class LPTable {
         cplex.clearModel();
         cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
         cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+        cplex.setParam(IloCplex.IntParam.MIPEmphasis, IloCplex.MIPEmphasis.Optimality);
 //        cplex.setParam(IloCplex.DoubleParam.EpMrk, 0.99999);
 //		cplex.setParam(IloCplex.DoubleParam.BarEpComp, 1e-4);
 //		System.out.println("BarEpComp: " + cplex.getParam(IloCplex.DoubleParam.BarEpComp));
@@ -323,6 +327,7 @@ public class LPTable {
 
     /**
      * Mark constraint, which might cause infeasibility due to numeric instability
+     *
      * @param eqKey
      */
     public void markRelaxableConstraint(Object eqKey) {
@@ -331,6 +336,7 @@ public class LPTable {
 
     /**
      * Remove constraint from relaxable constraints
+     *
      * @param eqKey
      */
     public void unmarkRelaxableConstraint(Object eqKey) {
@@ -341,8 +347,7 @@ public class LPTable {
      * Set constraint for equation represented by eqObject, default constraint is ge
      *
      * @param eqKey
-     * @param type
-     *            0 ... le, 1 .. eq, 2 ... ge
+     * @param type  0 ... le, 1 .. eq, 2 ... ge
      */
     public void setConstraintType(Object eqKey, int type) {
         constraintTypes.put(eqKey, type);

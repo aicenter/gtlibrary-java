@@ -131,7 +131,7 @@ public abstract class PokerAction extends ActionImpl {
 
     public String getPlayersCard() {
         if (informationSet != null && player.getId() != 2 && !informationSet.getAllStates().isEmpty()) {
-            return ((PokerGameState)informationSet.getAllStates().iterator().next()).getCardForActingPlayer().getActionType();
+            return ((PokerGameState)informationSet.getAllStates().iterator().next()).getCardFor(player).getActionType();
         } else
             return "none";
     }

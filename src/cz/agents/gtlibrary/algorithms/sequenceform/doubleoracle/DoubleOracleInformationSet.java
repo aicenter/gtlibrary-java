@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Sequence;
 
 public class DoubleOracleInformationSet extends SequenceInformationSet {
 
@@ -28,4 +29,7 @@ public class DoubleOracleInformationSet extends SequenceInformationSet {
 		super(state);
 	}
 
+    public DoubleOracleInformationSet(GameState state, Sequence sequence) {
+        super(state, sequence);
+    }
 }

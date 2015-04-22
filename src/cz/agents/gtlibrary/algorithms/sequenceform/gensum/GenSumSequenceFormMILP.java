@@ -160,6 +160,7 @@ public class GenSumSequenceFormMILP {
     protected Player[] players;
     protected ThreadMXBean threadMXBean;
     protected long lpTime;
+    private double objectiveValue;
 
     public GenSumSequenceFormMILP(GenSumSequenceFormConfig config, Player[] players, GameInfo info) {
         lpTable = new MILPTable();
@@ -220,6 +221,8 @@ public class GenSumSequenceFormMILP {
             System.out.println(data.getSolver().getStatus());
             System.out.println("p0 value: " + data.getSolver().getValue(data.getVariables()[lpTable.getVariableIndex(new Pair<>("v", 0))]) / info.getUtilityStabilizer());
             System.out.println("p1 value: " + data.getSolver().getValue(data.getVariables()[lpTable.getVariableIndex(new Pair<>("v", 1))]) / info.getUtilityStabilizer());
+            System.out.println("obj. value: " + data.getSolver().getObjValue());
+            objectiveValue =  data.getSolver().getObjValue();
 //            System.out.println("Strategies: ");
             for (Map<Sequence, Double> realPan : getStrategyProfile(data).values()) {
                 printNonZero(System.out, realPan);
@@ -371,5 +374,9 @@ public class GenSumSequenceFormMILP {
 
     public long getLpTime() {
         return lpTime;
+    }
+
+    public double getObjectiveValue() {
+        return objectiveValue;
     }
 }

@@ -43,21 +43,21 @@ public class SQFBestResponseAlgorithm {
     public long nodes = 0;
     protected Expander expander;
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<GameState, Double>();
-    private Map<Sequence, Double> opponentRealizationPlan = new HashMap<Sequence, Double>();
-    private Map<Sequence, Double> myRealizationPlan = new HashMap<Sequence, Double>();
+    protected Map<Sequence, Double> opponentRealizationPlan = new HashMap<Sequence, Double>();
+    protected Map<Sequence, Double> myRealizationPlan = new HashMap<Sequence, Double>();
     protected HashMap<Sequence, HashSet<Sequence>> BRresult = new HashMap<Sequence, HashSet<Sequence>>();
     protected HashSet<Sequence> bestResponseSequences = new HashSet<Sequence>();
     final protected int searchingPlayerIndex;
     final protected int opponentPlayerIndex;
     final protected Player[] players;
-    final protected ConfigImpl algConfig;
+    final protected AlgorithmConfig<? extends InformationSet> algConfig;
     final protected GameInfo gameInfo;
     protected double MAX_UTILITY_VALUE;
     final protected double EPS_CONSTANT = 0.000000001; // zero for numerical-stability reasons 
     protected ORComparator comparator;
     protected GameState gameTreeRoot = null;
 
-    public SQFBestResponseAlgorithm(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, ConfigImpl algConfig, GameInfo gameInfo) {
+    public SQFBestResponseAlgorithm(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo) {
         this.searchingPlayerIndex = searchingPlayerIndex;
         this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
         this.players = actingPlayers;

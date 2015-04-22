@@ -336,7 +336,7 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
             sumG = cplex.sum(sumG, cplex.prod(e.getKey().getNatureProbability(), cplex.prod(e.getValue()[leader.getId()], variables.get(e.getKey()))));
         }
         for (GameState gs : algConfig.getAllLeafs()) {
-            sumP = cplex.sum(sumP, variables.get(gs));
+            sumP = cplex.sum(sumP, cplex.prod(gs.getNatureProbability(), variables.get(gs)));
         }
         leaderObj = cplex.addEq(cplex.diff(v0, sumG), 0);
         cplex.addEq(sumP, 1);
