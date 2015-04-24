@@ -113,12 +113,18 @@ public class SMJournalExperiments {
 
     public void handleDomain(String[] args) {
         if (args[1].equalsIgnoreCase("GS")) {  // Goofspiel
-            if (args.length != 4) {
-                throw new IllegalArgumentException("Illegal domain arguments count: 2 parameters are required {SEED} {DEPTH}");
+            if (args.length != 6) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {DEPTH} {BIN_UTIL} {FIXED_CARDS}");
             }
             GSGameInfo.seed = new Integer(args[2]);
             int depth = new Integer(args[3]);
             GSGameInfo.depth = depth;
+            boolean binUtil = new Boolean(args[4]);
+            GSGameInfo.BINARY_UTILITIES = binUtil;
+
+            boolean fixedCards = new Boolean(args[5]);
+            GSGameInfo.useFixedNatureSequence = fixedCards;
+
             GSGameInfo.regenerateCards = true;
         } else if (args[1].equalsIgnoreCase("OZ")) { // Oshi Zumo
             if (args.length != 6) {
@@ -237,7 +243,10 @@ public class SMJournalExperiments {
                 throw new IllegalArgumentException("Illegal Argument Combination for Algorithm");
             }
             if (domain.equals("GS"))
-                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB, DO, SORT, CACHE, Integer.MAX_VALUE);
+                if (GSGameInfo.useFixedNatureSequence)
+                    SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB, DO, SORT, CACHE, Integer.MAX_VALUE);
+                else
+                    SimAlphaBeta.runGoofSpielWithNature(AB, DO, SORT, CACHE);
             else if (domain.equals("PE"))
                 SimAlphaBeta.runPursuit(AB, DO, SORT, CACHE);
             else if (domain.equals("RG"))
