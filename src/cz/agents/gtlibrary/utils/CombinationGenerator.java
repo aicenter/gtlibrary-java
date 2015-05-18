@@ -19,7 +19,9 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,8 +32,10 @@ import java.util.Arrays;
  */
 public class CombinationGenerator {
        public static void main (String[] args) {
-           for (int i=0; i<10; i++)
+           for (int i=0; i<20; i++)
                 System.out.println(Arrays.toString(generateCombinationWithoutRepeating(new int[] {1,2,3,4,5,6}, 3, i)));
+
+           System.out.println(whichCombinationItIs(Arrays.asList(new Integer[] {1,2,3,4,5,6}), Arrays.asList(new Integer[] {3,5,6})));
        }
 
        public static int[] generateCombinationWithoutRepeating(int[] orderedSet, int whatK, int which) {
@@ -40,7 +44,9 @@ public class CombinationGenerator {
                if (which >= orderedSet.length) return null; // impossible
                else result[0] = orderedSet[which];
                return result;
-           } else {
+           }  else if (whatK == 0) {
+               return result;
+           }  else {
                for (int nIdx = 0; nIdx < orderedSet.length; nIdx++) {
                    int bincof = binomCoef(orderedSet.length - 1 - nIdx, whatK - 1);
                    if (which < bincof) {
@@ -64,6 +70,27 @@ public class CombinationGenerator {
                }
            }
            return null;
+       }
+
+       public static int whichCombinationItIs(List<Integer> orderedSet, List<Integer> combination) {
+           int K = combination.size();
+           if (K == 1) {
+               return Arrays.binarySearch(orderedSet.toArray(),combination.get(0));
+           } else {
+               int currentIdx = Arrays.binarySearch(orderedSet.toArray(), combination.get(0));
+               int which = 0;
+               for (int c=0; c<currentIdx; c++)
+                    which += binomCoef(orderedSet.size()-1-c,combination.size()-1);
+               assert (which >= 0);
+               ArrayList<Integer> newComb = new ArrayList<>(combination);
+               Integer toRemove = combination.get(0);
+               newComb.remove(0);
+               ArrayList<Integer> newOS = new ArrayList<>();
+               for (Integer i : orderedSet) {
+                   if (i > toRemove) newOS.add(i);
+               }
+               return which + whichCombinationItIs(newOS, newComb);
+           }
        }
 
        public static int binomCoef(int n, int k) {

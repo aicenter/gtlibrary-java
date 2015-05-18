@@ -66,11 +66,11 @@ public class SimAlphaBeta {
 //    public double gameValue = Double.NaN;
 
     public static void main(String[] args) {
-//		runGoofSpielWithNature(true,false,false,false);
+		runGoofSpielWithNature(true,true,false,false);
 //		runGoofSpielWithNatureWithLocalCache();
-//        runGoofSpielWithFixedNatureSequence(false, false, false, false, 7);
+//        runGoofSpielWithFixedNatureSequence(true, true, false, false, 7);
 //		runGoofSpielWithFixedNatureSequenceWithLocalCache();
-	    runPursuit(false,false,false,false);
+//	    runPursuit(false,false,false,false);
 //        runSimRandomGame(false, false, false, false);
 //        runOshiZumo(false,false,false,false);
 //        runTron(false,false,false,false);
@@ -96,9 +96,10 @@ public class SimAlphaBeta {
         Stats.getInstance().startTime();
         GSGameInfo.useFixedNatureSequence = false;
         SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
+        GameInfo gameInfo = new GSGameInfo();
         GoofSpielGameState root = new GoofSpielGameState();
 
-        simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, new GSGameInfo());
+        simAlphaBeta.runSimAlpabeta(root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()), alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
         Stats.getInstance().stopTime();
         Stats.getInstance().printOverallInfo();
 //		CSVExporter.export(Stats.getInstance(), "NatureGoofspielStats.csv",  "Full LP");

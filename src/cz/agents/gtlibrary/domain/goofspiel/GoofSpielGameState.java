@@ -230,11 +230,15 @@ public class GoofSpielGameState extends SimultaneousGameState {
 	}
 
 	protected double[] getEndGameUtilities() {
-		if (playerScore[0] > playerScore[1])
-			return new double[] { 1, -1, 0 };
-		if (playerScore[0] < playerScore[1])
-			return new double[] { -1, 1, 0 };
-		return new double[] { 0, 0, 0 };
+        if (!GSGameInfo.BINARY_UTILITIES) {
+            return new double[] {playerScore[0]-playerScore[1],playerScore[1]-playerScore[0],0};
+        } else {
+            if (playerScore[0] > playerScore[1])
+                return new double[]{1, -1, 0};
+            if (playerScore[0] < playerScore[1])
+                return new double[]{-1, 1, 0};
+            return new double[]{0, 0, 0};
+        }
 	}
 
 	@Override

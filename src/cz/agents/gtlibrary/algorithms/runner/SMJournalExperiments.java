@@ -69,6 +69,7 @@ import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
 import cz.agents.gtlibrary.nfg.simalphabeta.oracle.SimOracleImpl;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import cz.agents.gtlibrary.utils.Pair;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -98,7 +99,7 @@ public class SMJournalExperiments {
     ;
 
     public static void main(String[] args) {
-        System.setProperty("EXPLOIT", "TRUE");
+        System.setProperty("EXPLOIT", "FALSE");
         if (args.length < 2) {
             System.err.println("Missing Arguments: SMJournalExperiments {BI|BIAB|DO|DOAB|DOSAB|CFR|OOS|MCTS} {GS|OZ|PE|RG|RPS|Tron} [domain parameters].");
             System.exit(-1);
@@ -112,12 +113,18 @@ public class SMJournalExperiments {
 
     public void handleDomain(String[] args) {
         if (args[1].equalsIgnoreCase("GS")) {  // Goofspiel
-            if (args.length != 4) {
-                throw new IllegalArgumentException("Illegal domain arguments count: 2 parameters are required {SEED} {DEPTH}");
+            if (args.length != 6) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {DEPTH} {BIN_UTIL} {FIXED_CARDS}");
             }
             GSGameInfo.seed = new Integer(args[2]);
             int depth = new Integer(args[3]);
             GSGameInfo.depth = depth;
+            boolean binUtil = new Boolean(args[4]);
+            GSGameInfo.BINARY_UTILITIES = binUtil;
+
+            boolean fixedCards = new Boolean(args[5]);
+            GSGameInfo.useFixedNatureSequence = fixedCards;
+
             GSGameInfo.regenerateCards = true;
         } else if (args[1].equalsIgnoreCase("OZ")) { // Oshi Zumo
             if (args.length != 6) {
@@ -200,6 +207,7 @@ public class SMJournalExperiments {
             expander = newExpander;
             gameInfo = newGameInfo;
         }
+        System.out.println(gameInfo.getInfo());
     }
 
     public void runAlgorithm(String alg, String domain) {
@@ -235,7 +243,10 @@ public class SMJournalExperiments {
                 throw new IllegalArgumentException("Illegal Argument Combination for Algorithm");
             }
             if (domain.equals("GS"))
-                SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB, DO, SORT, CACHE, Integer.MAX_VALUE);
+                if (GSGameInfo.useFixedNatureSequence)
+                    SimAlphaBeta.runGoofSpielWithFixedNatureSequence(AB, DO, SORT, CACHE, Integer.MAX_VALUE);
+                else
+                    SimAlphaBeta.runGoofSpielWithNature(AB, DO, SORT, CACHE);
             else if (domain.equals("PE"))
                 SimAlphaBeta.runPursuit(AB, DO, SORT, CACHE);
             else if (domain.equals("RG"))
@@ -292,7 +303,7 @@ public class SMJournalExperiments {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         long start = threadBean.getCurrentThreadCpuTime();
 //        buildCompleteTree(alg.getRootNode());
-        System.out.println("Building GT: " + ((threadBean.getCurrentThreadCpuTime() - start) / 1000000));
+//        System.out.println("Building GT: " + ((threadBean.getCurrentThreadCpuTime() - start) / 1000000));
 
         alg.runMiliseconds(100);
 
@@ -321,6 +332,10 @@ public class SMJournalExperiments {
 //            System.out.println("BR1: " + br1Val);
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
+            //System.out.println("Mean OOS leaf depth: " + StrategyCollector.meanLeafDepth(alg.getRootNode()));
+            //Pair<Double,Double> supportSize = StrategyCollector.meanSupportSize(alg.getRootNode(), new MeanStratDist());
+            //System.out.println("Mean OOS support size : " + supportSize.getLeft() + ", mean num of actions: " + supportSize.getRight());
+            //System.out.println("Mean OOS support size : " + StrategyCollector.meanSupportSize(strategy0) + "; " + StrategyCollector.meanSupportSize(strategy1));
             System.out.flush();
             secondsIteration *= 1.2;
         }
@@ -431,6 +446,10 @@ public class SMJournalExperiments {
 //            System.out.println("BR1: " + br1Val);
 //            System.out.println("BR0: " + br0Val);
             System.out.println("Precision: " + (br0Val + br1Val));
+            //System.out.println("Mean SMMCTS leaf depth: " + StrategyCollector.meanLeafDepth(alg.getRootNode()));
+            //Pair<Double,Double> supportSize = StrategyCollector.meanSupportSize(alg.getRootNode(), new MeanStratDist());
+            //System.out.println("Mean SMMCTS support size : " + supportSize.getLeft() + ", mean num of actions: " + supportSize.getRight());
+            //System.out.println("Mean SMMCTS support size : " + StrategyCollector.meanSupportSize(strategy0) + "; " + StrategyCollector.meanSupportSize(strategy1));
             System.out.flush();
             secondsIteration *= 1.2;
         }

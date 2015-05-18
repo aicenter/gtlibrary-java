@@ -100,13 +100,13 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
 
                 maxValue = v;
 
-//                for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
-//                    try {
-//                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-//                    } catch (IloCplex.UnknownObjectException e) {
-//                        continue;
-//                    }
-//                }
+                for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
+                    try {
+                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
+                    } catch (IloCplex.UnknownObjectException e) {
+                        continue;
+                    }
+                }
 //                debugOutput.println("-------");
 //                for (Map.Entry<Object, IloNumVar> ee : slackVariables.entrySet()) {
 //                    try {

@@ -43,6 +43,7 @@ public class GSGameInfo implements GameInfo {
 	public static boolean useFixedNatureSequence = true;
     public static boolean regenerateCards = false;
 	public static int depth = CARDS_FOR_PLAYER.length;
+    public static boolean BINARY_UTILITIES = false;
 	
     public static Sequence natureSequence;
 
@@ -50,8 +51,10 @@ public class GSGameInfo implements GameInfo {
     public GSGameInfo() {
         if (regenerateCards) {
             CARDS_FOR_PLAYER = new int[depth];
+            //for (int i=1; i<=depth; i++) {
+            //    CARDS_FOR_PLAYER[i-1]=i;
             for (int i=0; i<depth; i++) {
-                CARDS_FOR_PLAYER[i]=i;
+                CARDS_FOR_PLAYER[i]=i+1;
             }
         }
         
@@ -60,21 +63,26 @@ public class GSGameInfo implements GameInfo {
 
     @Override
 	public double getMaxUtility() {
-//		double value = 0;
-//		
-//		for (int cardValue : CARDS_FOR_PLAYER) {
-//			value += cardValue;
-//		}
-//		return value - 1 - value/2.;
-		return 1;
+
+		if (BINARY_UTILITIES)
+            return 1;
+        else {
+            double value = 0;
+
+            for (int cardValue : CARDS_FOR_PLAYER) {
+                value += cardValue;
+            }
+            return value;
+        }
 	}
     
     private Sequence createRandomSequence() {
         ArrayList<Action> actions = new ArrayList(GSGameInfo.CARDS_FOR_PLAYER.length);
         for (int card : GSGameInfo.CARDS_FOR_PLAYER)
             actions.add(new GoofSpielAction(card, GSGameInfo.NATURE, null));
-        if (GSGameInfo.useFixedNatureSequence && GSGameInfo.seed == 1) Collections.reverse(actions);
-        else Collections.shuffle(actions, new HighQualityRandom(GSGameInfo.seed));
+        if (GSGameInfo.useFixedNatureSequence){
+            if (GSGameInfo.seed == 1) Collections.reverse(actions);
+        } else Collections.shuffle(actions, new HighQualityRandom(GSGameInfo.seed));
         Sequence natureSequence = new LinkedListSequenceImpl(GSGameInfo.NATURE);
         natureSequence.addAllAsLast(actions);
         return natureSequence;

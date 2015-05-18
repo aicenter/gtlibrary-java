@@ -35,7 +35,7 @@ public class LRAction extends ImperfectRecallAction {
         final int prime = 31;
         int hashCode = 1;
 
-        hashCode = prime * hashCode + type.hashCode();
+        hashCode = prime * hashCode + type.substring(0,1).hashCode();
         return hashCode;
     }
 
