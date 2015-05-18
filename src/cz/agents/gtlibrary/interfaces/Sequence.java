@@ -60,4 +60,7 @@ public interface Sequence extends Iterable<Action>, Serializable {
 	public InformationSet getLastInformationSet();
 	
 	public List<Action> getAsList();
+
+    public boolean isEmpty();
+
 }

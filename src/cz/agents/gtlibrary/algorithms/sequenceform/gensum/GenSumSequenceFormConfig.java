@@ -71,12 +71,9 @@ public class GenSumSequenceFormConfig extends SequenceFormConfig<SequenceInforma
     }
 
     public Double getUtilityFor(Sequence sequence1, Sequence sequence2, Player player) {
-        Map<Player, Sequence> sequenceCombination = new HashMap<>(2);
-
-        sequenceCombination.put(sequence1.getPlayer(), sequence1);
-        sequenceCombination.put(sequence2.getPlayer(), sequence2);
-        return getUtilityFor(sequenceCombination, player);
+        return getUtilityFor(getPlayerSequenceMap(sequence1, sequence2), player);
     }
+
 
     public Map<GameState, Double[]> getActualNonZeroUtilityValuesInLeafsGenSum() {
         return actualNonZeroUtilityValuesInLeafs;
@@ -84,6 +81,10 @@ public class GenSumSequenceFormConfig extends SequenceFormConfig<SequenceInforma
 
     public Map<Map<Player, Sequence>, Double[]> getUtilityForSequenceCombinationGenSum() {
         return utilityForSequenceCombination;
+    }
+
+    public Double[] getGenSumSequenceCombinationUtility(Sequence sequence1, Sequence sequence2) {
+        return utilityForSequenceCombination.get(getPlayerSequenceMap(sequence1, sequence2));
     }
 
     @Override

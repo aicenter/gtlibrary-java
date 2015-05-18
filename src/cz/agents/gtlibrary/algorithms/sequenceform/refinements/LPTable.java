@@ -382,18 +382,18 @@ public class LPTable {
             e.printStackTrace();
         }
         cplex.setOut(null);
-        constants = new LinkedHashMap<Object, Double>();
-        constraints = new LinkedHashMap<Object, Map<Object, Double>>();
-        objective = new LinkedHashMap<Object, Double>();
+        constants = new LinkedHashMap<>();
+        constraints = new LinkedHashMap<>();
+        objective = new LinkedHashMap<>();
 
-        equationIndices = new LinkedHashMap<Object, Integer>();
-        variableIndices = new LinkedHashMap<Object, Integer>();
-        primalWatch = new LinkedHashMap<Object, Integer>();
-        dualWatch = new LinkedHashMap<Object, Integer>();
+        equationIndices = new LinkedHashMap<>();
+        variableIndices = new LinkedHashMap<>();
+        primalWatch = new LinkedHashMap<>();
+        dualWatch = new LinkedHashMap<>();
 
-        constraintTypes = new LinkedHashMap<Object, Integer>();
-        lb = new LinkedHashMap<Object, Double>();
-        ub = new LinkedHashMap<Object, Double>();
+        constraintTypes = new LinkedHashMap<>();
+        lb = new LinkedHashMap<>();
+        ub = new LinkedHashMap<>();
     }
 
     public void removeFromConstraint(Object eqKey, Object varKey) {
@@ -401,5 +401,11 @@ public class LPTable {
 
         if (row != null)
             row.remove(varKey);
+    }
+
+    public void watchAllPrimalVariables() {
+        for (Object varKey : variableIndices.keySet()) {
+            watchPrimalVariable(varKey, varKey);
+        }
     }
 }
