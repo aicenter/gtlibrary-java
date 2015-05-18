@@ -240,19 +240,11 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	}
 
 	public Double getUtilityFor(Sequence sequence1, Sequence sequence2) {
-		Map<Player, Sequence> sequenceMap = new HashMap<Player, Sequence>();
-
-		sequenceMap.put(sequence1.getPlayer(), sequence1);
-		sequenceMap.put(sequence2.getPlayer(), sequence2);
-		return getUtilityFor(sequenceMap);
+		return getUtilityFor(getPlayerSequenceMap(sequence1, sequence2));
 	}
 
 	public Double getUtilityFromAllFor(Sequence sequence1, Sequence sequence2) {
-		Map<Player, Sequence> sequenceMap = new HashMap<Player, Sequence>();
-
-		sequenceMap.put(sequence1.getPlayer(), sequence1);
-		sequenceMap.put(sequence2.getPlayer(), sequence2);
-		return getUtilityFromAllFor(sequenceMap);
+		return getUtilityFromAllFor(getPlayerSequenceMap(sequence1, sequence2));
 	}
 
 	protected Double getUtilityFromAllFor(Map<Player, Sequence> sequenceMap) {
@@ -264,11 +256,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	}
 
 	public Double getNatureProbabilityFor(Sequence sequence1, Sequence sequence2) {
-		Map<Player, Sequence> sequenceMap = new HashMap<Player, Sequence>();
-
-		sequenceMap.put(sequence1.getPlayer(), sequence1);
-		sequenceMap.put(sequence2.getPlayer(), sequence2);
-		return getNatureProbabilityFor(sequenceMap);
+		return getNatureProbabilityFor(getPlayerSequenceMap(sequence1, sequence2));
 	}
 
 	public Collection<Sequence> getAllSequences() {
@@ -358,4 +346,12 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	public I createInformationSetFor(GameState gameState) {
 		return (I) new SequenceInformationSet(gameState);
 	}
+
+    protected Map<Player, Sequence> getPlayerSequenceMap(Sequence sequence1, Sequence sequence2) {
+        Map<Player, Sequence> sequenceCombination = new HashMap<>(2);
+
+        sequenceCombination.put(sequence1.getPlayer(), sequence1);
+        sequenceCombination.put(sequence2.getPlayer(), sequence2);
+        return sequenceCombination;
+    }
 }

@@ -84,10 +84,13 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
-//            cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+            cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
             startTime = threadBean.getCurrentThreadCpuTime();
             debugOutput.println("Solving");
+            long cplexTime = threadBean.getCurrentThreadCpuTime();
             cplex.solve();
+
+            System.out.println("cplex solving time: " + (threadBean.getCurrentThreadCpuTime() - cplexTime)/1e6);;
             overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
             debugOutput.println("Status: " + cplex.getCplexStatus());
 

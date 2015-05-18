@@ -216,4 +216,9 @@ public class ArrayListSequenceImpl implements Sequence {
 	public List<Action> getAsList() {
 		return actions;
 	}
+
+    @Override
+    public boolean isEmpty() {
+        return actions.isEmpty();
+    }
 }
