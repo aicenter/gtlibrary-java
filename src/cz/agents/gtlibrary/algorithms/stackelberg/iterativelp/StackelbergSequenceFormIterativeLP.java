@@ -46,7 +46,7 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
         createISActionConstraints(algConfig, expander);
 
         System.out.println("LP build...");
-//        lpTable.watchAllPrimalVariables();
+        lpTable.watchAllPrimalVariables();
         try {
             LPData lpData = lpTable.toCplex();
 
@@ -71,8 +71,8 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                 for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
                     double variableValue = lpData.getSolver().getValue(entry.getValue());
 
-                    if (variableValue > 0)
-                        System.out.println(entry.getKey() + ": " + variableValue);
+//                    if (variableValue > 0)
+                    System.out.println(entry.getKey() + ": " + variableValue);
                 }
                 return value;
             }
@@ -125,16 +125,16 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
             }
         }
         for (SequenceInformationSet informationSet : algConfig.getAllInformationSets().values()) {
-            if (informationSet.getPlayer().equals(follower) && !informationSet.getOutgoingSequences().isEmpty()) {
-                for (Action action : expander.getActions(informationSet)) {
-                    Object eqKey = new Triplet<>(informationSet, action, "eq");
-                    Sequence sequenceCopy = new ArrayListSequenceImpl(informationSet.getPlayersHistory());
+            if (informationSet.getPlayer().equals(follower)) {
+                for (Sequence sequence : informationSet.getOutgoingSequences()) {
+                    Object eqKey = new Triplet<>(informationSet, sequence, "eq");
+                    Object varKey = new Pair<>(informationSet, sequence);
+                    Object contVarKey = new Pair<>("v", sequence);
 
-                    sequenceCopy.addLast(action);
-                    Object varKey = new Pair<>(informationSet, sequenceCopy);
-
+                    lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+                    lpTable.setLowerBound(contVarKey, Double.NEGATIVE_INFINITY);
                     lpTable.setConstraint(eqKey, varKey, 1);
-                    lpTable.setConstraint(eqKey, new Pair<>("v", sequenceCopy), -1);
+                    lpTable.setConstraint(eqKey, contVarKey, -1);
                     lpTable.setConstraintType(eqKey, 1);
                 }
             }
@@ -142,16 +142,15 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
     }
 
     private void createISActionConstraint(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander, Sequence followerSequence, SequenceInformationSet informationSet) {
-        for (Action action : expander.getActions(informationSet)) {
-            Object eqKey = new Triplet<>(informationSet, action, followerSequence);
+        for (Sequence sequence : informationSet.getOutgoingSequences()) {
+            Object eqKey = new Triplet<>(informationSet, sequence, followerSequence);
             Object varKey = new Pair<>(informationSet, followerSequence);
-            Sequence sequenceCopy = new ArrayListSequenceImpl(informationSet.getPlayersHistory());
 
-            sequenceCopy.addLast(action);
+            lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
             lpTable.setConstraint(eqKey, varKey, 1);
             lpTable.setConstraintType(eqKey, 2);
             for (Sequence leaderSequence : algConfig.getCompatibleSequencesFor(informationSet.getPlayersHistory())) {
-                Double[] seqCombUtilities = algConfig.getGenSumSequenceCombinationUtility(leaderSequence, sequenceCopy);
+                Double[] seqCombUtilities = algConfig.getGenSumSequenceCombinationUtility(leaderSequence, sequence);
 
                 if (seqCombUtilities != null) {
                     double utility = seqCombUtilities[follower.getId()];
@@ -161,9 +160,10 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                 }
             }
 
-            if (algConfig.getReachableSets(sequenceCopy) != null)
-                for (SequenceInformationSet reachableSet : algConfig.getReachableSets(sequenceCopy)) {
-                    lpTable.setConstraint(eqKey, new Pair<>(reachableSet, followerSequence), -1);
+            if (algConfig.getReachableSets(sequence) != null)
+                for (SequenceInformationSet reachableSet : algConfig.getReachableSets(sequence)) {
+                    if (reachableSet.getOutgoingSequences() != null && !reachableSet.getOutgoingSequences().isEmpty())
+                        lpTable.setConstraint(eqKey, new Pair<>(reachableSet, followerSequence), -1);
                 }
         }
     }
@@ -177,8 +177,11 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
 
     private void createSequenceConstraints(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         for (Sequence followerSequence : algConfig.getSequencesFor(follower)) {
+            Object varKey = new Pair<>("v", followerSequence);
+
+            lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
             lpTable.setConstraintType(followerSequence, 1);
-            lpTable.setConstraint(followerSequence, new Pair<>("v", followerSequence), 1);
+            lpTable.setConstraint(followerSequence, varKey, 1);
             for (Sequence leaderSequence : algConfig.getCompatibleSequencesFor(followerSequence)) {
                 Double[] seqCombValue = algConfig.getGenSumSequenceCombinationUtility(leaderSequence, followerSequence);
 
@@ -190,17 +193,24 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                 }
             }
             for (SequenceInformationSet reachableSet : algConfig.getReachableSets(followerSequence)) {
-                if (!reachableSet.getOutgoingSequences().isEmpty())
-                    for (Action action : expander.getActions(reachableSet)) {
-                        Sequence sequenceCopy = new ArrayListSequenceImpl(followerSequence);
+                for (Sequence sequence : reachableSet.getOutgoingSequences()) {
+                    Object contVarKey = new Pair<>("v", sequence);
 
-                        sequenceCopy.addLast(action);
-                        lpTable.setConstraint(followerSequence, new Pair<>("v", sequenceCopy), -1);
-                    }
+                    lpTable.setLowerBound(contVarKey, Double.NEGATIVE_INFINITY);
+                    lpTable.setConstraint(followerSequence, contVarKey, -1);
+                }
+//                if (!reachableSet.getOutgoingSequences().isEmpty())
+//                    for (Action action : expander.getActions(reachableSet)) {
+//                        Sequence sequenceCopy = new ArrayListSequenceImpl(followerSequence);
+//
+//                        sequenceCopy.addLast(action);
+//                        lpTable.setConstraint(followerSequence, new Pair<>("v", sequenceCopy), -1);
+//                    }
             }
         }
 
     }
+
 
     private void createPContinuationConstraints(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         createInitPConstraint();
@@ -248,6 +258,4 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
         lpTable.setConstant("initP", 1);
         lpTable.setConstraintType("initP", 1);
     }
-
-
 }
