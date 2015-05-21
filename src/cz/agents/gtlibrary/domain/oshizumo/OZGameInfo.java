@@ -38,13 +38,18 @@ public class OZGameInfo implements GameInfo {
     public static int locK = 3;                 // locations (2K+1)
     public static int minBid = 1;               // B from paper
 
+    public static boolean BINARY_UTILITIES = false;
 
     public OZGameInfo() {
     }
 
     @Override
     public double getMaxUtility() {
-        return 1;
+        if (BINARY_UTILITIES) {
+            return 1;
+        } else {
+            return locK;
+        }
     }
 
     @Override

@@ -219,7 +219,6 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 						int brPlayerIdx = gameInfo.getOpponent(currentState.getPlayerToMove()).getId();
 						Double exactValue = bestResponseAlgorithms[brPlayerIdx].getCachedValueForState(currentState);
 						if (exactValue == null) {
-							System.out.println("IS null :/");
 							exactValue = bestResponseAlgorithms[brPlayerIdx].calculateBRNoClear(currentState);
 						}
 						if (brPlayerIdx != 0)
