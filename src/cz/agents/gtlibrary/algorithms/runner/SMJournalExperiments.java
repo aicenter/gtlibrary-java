@@ -127,13 +127,17 @@ public class SMJournalExperiments {
 
             GSGameInfo.regenerateCards = true;
         } else if (args[1].equalsIgnoreCase("OZ")) { // Oshi Zumo
-            if (args.length != 6) {
-                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {COINS} {LOC_K} {MIN_BID}");
+            if (args.length != 7) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {COINS} {LOC_K} {MIN_BID} {BIN_UTIL}");
             }
             OZGameInfo.seed = new Integer(args[2]);
             OZGameInfo.startingCoins = new Integer(args[3]);
             OZGameInfo.locK = new Integer(args[4]);
             OZGameInfo.minBid = new Integer(args[5]);
+
+            boolean binUtil = new Boolean(args[6]);
+            OZGameInfo.BINARY_UTILITIES = binUtil;
+
         } else if (args[1].equalsIgnoreCase("PE")) { // Pursuit Evasion Game
             if (args.length != 5) {
                 throw new IllegalArgumentException("Illegal PEG domain arguments count: 3 parameters are required {SEED} {DEPTH} {GRAPH}");
