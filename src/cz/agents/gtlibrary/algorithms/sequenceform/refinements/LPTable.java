@@ -159,7 +159,7 @@ public class LPTable {
     }
 
     public int rowCount() {
-        return constraints.size();
+        return equationIndices.size();
     }
 
     public int columnCount() {
@@ -407,5 +407,9 @@ public class LPTable {
         for (Object varKey : variableIndices.keySet()) {
             watchPrimalVariable(varKey, varKey);
         }
+    }
+
+    public boolean exists(Object varKey) {
+        return variableIndices.containsKey(varKey);
     }
 }

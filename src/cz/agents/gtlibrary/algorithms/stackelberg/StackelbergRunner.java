@@ -76,6 +76,7 @@ public class StackelbergRunner {
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
 //        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
         runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormIterativeLP(rootState.getAllPlayers()[0], gameInfo));
         new GambitEFG().write("randomGame.gbt", rootState, expander);
     }
@@ -87,8 +88,8 @@ public class StackelbergRunner {
         Expander<SequenceInformationSet> expander = new BPGExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormIterativeLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormIterativeLP(rootState.getAllPlayers()[0], gameInfo));
 
     }
 

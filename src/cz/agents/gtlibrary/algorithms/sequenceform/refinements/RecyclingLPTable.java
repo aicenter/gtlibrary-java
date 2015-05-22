@@ -304,7 +304,7 @@ public class RecyclingLPTable extends LPTable {
                 Map<Object, Double> updatedRow = updatedConstraints.get(eqKey);
 
                 if (updatedRow == null)
-                    updatedRow = new LinkedHashMap<Object, Double>();
+                    updatedRow = new LinkedHashMap<>();
                 updatedRow.put(varKey, 0d);
                 updatedConstraints.put(eqKey, updatedRow);
             }
@@ -312,8 +312,8 @@ public class RecyclingLPTable extends LPTable {
 
     }
 
-    public void removeConstant(Sequence eqKey) {
-        constants.put(eqKey, 0d);
-        updatedConstants.put(eqKey, 0d);
+    public void removeConstant(Object eqKey) {
+        constants.remove(eqKey, 0d);
+        updatedConstants.remove(eqKey, 0d);
     }
 }
