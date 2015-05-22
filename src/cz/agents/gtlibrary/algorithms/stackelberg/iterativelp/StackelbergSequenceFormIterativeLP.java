@@ -71,6 +71,15 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                 Set<Sequence> brokenStrategyCauses = getShallowestBrokenStrategyCauses(lpData);
 
                 if (brokenStrategyCauses == null) {
+                    System.out.println("Found solution candidate with value: " + value);
+                    System.out.println("Leader real. plan:");
+                    for (Map.Entry<Sequence, Double> entry : behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader)).entrySet()) {
+                        System.out.println(entry);
+                    }
+                    System.out.println("Follower real. plan:");
+                    for (Map.Entry<Sequence, Double> entry : behavioralToRealizationPlan(getBehavioralStrategy(lpData, follower)).entrySet()) {
+                        System.out.println(entry);
+                    }
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                 } else {
                     Pair<Map<Sequence, Double>, Double> currentBest = dummyResult;
@@ -114,6 +123,7 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
     }
 
     private void removeRestriction(Sequence brokenStrategyCause, Set<Sequence> brokenStrategyCauses, LPData lpData) {
+        System.out.println(brokenStrategyCause + " released");
         for (Object varKey : lpData.getWatchedPrimalVariables().keySet()) {
             if (varKey instanceof Pair) {
                 if (((Pair) varKey).getLeft() instanceof Sequence && ((Pair) varKey).getRight() instanceof Sequence) {
@@ -131,6 +141,10 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
     }
 
     private Set<Sequence> getShallowestBrokenStrategyCauses(LPData lpData) {
+        return findShallowestBrokenStrategyCause(getBehavioralStrategy(lpData, follower));
+    }
+
+    private Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
         Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
 
         for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
@@ -138,27 +152,76 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                 Pair varKey = (Pair) entry.getKey();
 
                 if (varKey.getLeft() instanceof Sequence && varKey.getRight() instanceof Sequence) {
-                    Sequence followerSequence = (Sequence) varKey.getRight();
-                    Map<Sequence, Double> isStrategy = strategy.get(followerSequence.getLastInformationSet());
+                    Sequence playerSequence = player.equals(leader) ? (Sequence) varKey.getLeft() : (Sequence) varKey.getRight();
+                    Map<Sequence, Double> isStrategy = strategy.get(playerSequence.getLastInformationSet());
                     Double currentValue = getValueFromCplex(lpData, entry);
 
-                    if (isStrategy == null) {
-                        if (currentValue > 1e-8) {
-                            isStrategy = new HashMap<>();
-                            isStrategy.put(followerSequence, currentValue);
-                            strategy.put(followerSequence.getLastInformationSet(), isStrategy);
+                    if (isSequenceFrom(player.equals(leader) ? (Sequence) varKey.getRight() : (Sequence) varKey.getLeft(), playerSequence.getLastInformationSet()))
+                        if (isStrategy == null) {
+                            if (currentValue > 1e-8) {
+                                isStrategy = new HashMap<>();
+                                double behavioralStrat = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
+
+                                isStrategy.put(playerSequence, behavioralStrat);
+                                strategy.put(playerSequence.getLastInformationSet(), isStrategy);
+                            }
+                        } else {
+                            Double oldValue = isStrategy.get(playerSequence);
+                            double behavioralStrategy = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
+
+                            if (behavioralStrategy > 1e-8) {
+                                assert oldValue == null || Math.abs(oldValue - behavioralStrategy) < 1e-8;
+                                isStrategy.put(playerSequence, behavioralStrategy);
+                            }
                         }
-                    } else {
-                        Double oldValue = isStrategy.get(followerSequence);
-
-                        if (oldValue == null && currentValue > 1e-8)
-                            isStrategy.put(followerSequence, currentValue);
-
-                    }
                 }
             }
         }
-        return findShallowestBrokenStrategyCause(strategy);
+        return strategy;
+    }
+
+    private double getBehavioralStrategy(LPData lpData, Pair varKey, Sequence playerSequence, Double currentValue) {
+        double behavioralStrat = currentValue;
+
+        if (!playerSequence.isEmpty()) {
+            Sequence sequenceCopy = new ArrayListSequenceImpl(playerSequence);
+
+            sequenceCopy.removeLast();
+            behavioralStrat /= getValueFromCplex(lpData, playerSequence.getPlayer().equals(leader) ? new Pair<>(sequenceCopy, varKey.getRight()) : new Pair<>(varKey.getLeft(), sequenceCopy));
+        }
+        return behavioralStrat;
+    }
+
+    private boolean isSequenceFrom(Sequence sequence, InformationSet informationSet) {
+        if (informationSet == null)
+            return sequence.isEmpty();
+        assert !sequence.getPlayer().equals(informationSet.getPlayer());
+        for (GameState gameState : informationSet.getAllStates()) {
+            if (gameState.getSequenceFor(sequence.getPlayer()).equals(sequence))
+                return true;
+        }
+        return false;
+    }
+
+    private Map<Sequence, Double> behavioralToRealizationPlan(Map<InformationSet, Map<Sequence, Double>> behavioral) {
+        Map<Sequence, Double> realizationPlan = new HashMap<>();
+
+        for (Map<Sequence, Double> map : behavioral.values()) {
+            for (Map.Entry<Sequence, Double> entry : map.entrySet()) {
+                if (entry.getKey().isEmpty()) {
+                    assert entry.getValue() == 1;
+                    realizationPlan.put(entry.getKey(), entry.getValue());
+                } else {
+                    double probability = 1;
+
+                    for (Sequence prefix : entry.getKey().getAllPrefixes()) {
+                        probability *= behavioral.get(prefix.getLastInformationSet()).get(prefix);
+                    }
+                    realizationPlan.put(entry.getKey(), probability);
+                }
+            }
+        }
+        return realizationPlan;
     }
 
     private Set<Sequence> findShallowestBrokenStrategyCause(Map<InformationSet, Map<Sequence, Double>> strategy) {
@@ -173,7 +236,9 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                     Sequence bestSoFar = shallowestBrokenStrategyCause.iterator().next();
 
                     if (candidate.size() < bestSoFar.size())
-                        shallowestBrokenStrategyCause = isStrategy.keySet();
+                        shallowestBrokenStrategyCause = new HashSet<>(isStrategy.keySet());
+                    else if (candidate.size() == bestSoFar.size())
+                        shallowestBrokenStrategyCause.addAll(isStrategy.keySet());
                 }
             }
         }
@@ -185,6 +250,17 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
 
         try {
             currentValue = lpData.getSolver().getValue(entry.getValue());
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+        return currentValue;
+    }
+
+    private Double getValueFromCplex(LPData lpData, Object varKey) {
+        Double currentValue = null;
+
+        try {
+            currentValue = lpData.getSolver().getValue(lpData.getWatchedPrimalVariables().get(varKey));
         } catch (IloException e) {
             e.printStackTrace();
         }
