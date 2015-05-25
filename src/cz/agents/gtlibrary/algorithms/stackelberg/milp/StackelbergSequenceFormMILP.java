@@ -32,15 +32,15 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
-    protected final double M = 1e6;
+    protected final double M = 1e4;
 
     protected Player[] players;
     protected GameInfo info;
 
     protected IloRange leaderObj = null;
 
-    protected Map<Object, IloNumVar> slackVariables = new HashMap<Object, IloNumVar>();
-    protected Map<Object, IloRange[]> slackConstraints = new HashMap<Object, IloRange[]>(); // constraints for slack variables and p(h)
+    protected Map<Object, IloNumVar> slackVariables = new HashMap<>();
+    protected Map<Object, IloRange[]> slackConstraints = new HashMap<>(); // constraints for slack variables and p(h)
     protected Expander<SequenceInformationSet> expander;
 
     protected ThreadMXBean threadBean;
