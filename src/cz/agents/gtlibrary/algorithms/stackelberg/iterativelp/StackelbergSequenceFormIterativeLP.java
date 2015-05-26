@@ -1,12 +1,16 @@
 package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
+import cz.agents.gtlibrary.algorithms.stackelberg.GeneralSumBestResponse;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
+import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
@@ -44,49 +48,59 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
 
         System.out.println("LP build...");
         lpTable.watchAllPrimalVariables();
-        Pair<Map<Sequence, Double>, Double> result = solve(-info.getMaxUtility(), info.getMaxUtility());
+        Pair<Map<Sequence, Double>, Double> result = solve(-info.getMaxUtility(), info.getMaxUtility(), algConfig, expander);
 
         resultStrategies.put(leader, result.getLeft());
         resultValues.put(leader, result.getRight());
         return result.getRight();
     }
 
-    private Pair<Map<Sequence, Double>, Double> solve(double lowerBound, double upperBound) {
+    private Pair<Map<Sequence, Double>, Double> solve(double lowerBound, double upperBound, StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         //TODO: use bounds
         try {
             LPData lpData = lpTable.toCplex();
-            lpData.getSolver().exportModel("SSEIter.lp");
+//            lpData.getSolver().exportModel("SSEIter.lp");
             lpData.getSolver().solve();
             if (lpData.getSolver().getStatus() == IloCplex.Status.Optimal) {
                 double value = lpData.getSolver().getObjValue();
 
                 System.out.println("LP value: " + value);
 
-                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
-                    double variableValue = lpData.getSolver().getValue(entry.getValue());
-
-                    System.out.println(entry.getKey() + ": " + variableValue);
-                }
+//                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
+//                    double variableValue = lpData.getSolver().getValue(entry.getValue());
+//
+//                    System.out.println(entry.getKey() + ": " + variableValue);
+//                }
                 System.out.println("-----------------------");
                 Set<Sequence> brokenStrategyCauses = getShallowestBrokenStrategyCauses(lpData);
 
                 if (brokenStrategyCauses == null) {
                     System.out.println("Found solution candidate with value: " + value);
+                    Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
+                    Map<Sequence, Double> followerRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, follower));
+
                     System.out.println("Leader real. plan:");
-                    for (Map.Entry<Sequence, Double> entry : behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader)).entrySet()) {
+                    for (Map.Entry<Sequence, Double> entry : leaderRealPlan.entrySet()) {
                         System.out.println(entry);
                     }
                     System.out.println("Follower real. plan:");
-                    for (Map.Entry<Sequence, Double> entry : behavioralToRealizationPlan(getBehavioralStrategy(lpData, follower)).entrySet()) {
+                    for (Map.Entry<Sequence, Double> entry : followerRealPlan.entrySet()) {
                         System.out.println(entry);
                     }
+                    SQFBestResponseAlgorithm br = new GeneralSumBestResponse(expander, 1, algConfig.getRootState().getAllPlayers(), algConfig, info);
+
+                    System.out.println("BR value: " + br.calculateBR(algConfig.getRootState(), leaderRealPlan));
+                    System.out.println("BR: " + br.getBRStategy());
+                    UtilityCalculator calculator = new UtilityCalculator(algConfig.getRootState(), expander);
+
+                    assert Math.abs(calculator.computeUtility(new NoMissingSeqStrategy(leaderRealPlan), new NoMissingSeqStrategy(followerRealPlan)) - value) < 1e-8;
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                 } else {
                     Pair<Map<Sequence, Double>, Double> currentBest = dummyResult;
 
                     for (Sequence brokenStrategyCause : brokenStrategyCauses) {
                         restrictFollowerPlay(brokenStrategyCause, brokenStrategyCauses, lpData);
-                        Pair<Map<Sequence, Double>, Double> result = solve(lowerBound, upperBound);
+                        Pair<Map<Sequence, Double>, Double> result = solve(lowerBound, upperBound, algConfig, expander);
 
                         if (result.getRight() > currentBest.getRight())
                             currentBest = result;
@@ -170,7 +184,6 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                             double behavioralStrategy = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
 
                             if (behavioralStrategy > 1e-8) {
-                                assert oldValue == null || Math.abs(oldValue - behavioralStrategy) < 1e-8;
                                 isStrategy.put(playerSequence, behavioralStrategy);
                             }
                         }
@@ -187,7 +200,15 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
             Sequence sequenceCopy = new ArrayListSequenceImpl(playerSequence);
 
             sequenceCopy.removeLast();
-            behavioralStrat /= getValueFromCplex(lpData, playerSequence.getPlayer().equals(leader) ? new Pair<>(sequenceCopy, varKey.getRight()) : new Pair<>(varKey.getLeft(), sequenceCopy));
+            double previousValue = getValueFromCplex(lpData, playerSequence.getPlayer().equals(leader) ? new Pair<>(sequenceCopy, varKey.getRight()) : new Pair<>(varKey.getLeft(), sequenceCopy));
+
+            if (previousValue == 0) {
+                Sequence opponentSequence = new ArrayListSequenceImpl((Sequence) (playerSequence.getPlayer().equals(leader) ? varKey.getRight() : varKey.getLeft()));
+
+                opponentSequence.removeLast();
+                previousValue = getValueFromCplex(lpData, playerSequence.getPlayer().equals(leader) ? new Pair<>(sequenceCopy, opponentSequence) : new Pair<>(opponentSequence, sequenceCopy));
+            }
+            behavioralStrat /= previousValue;
         }
         return behavioralStrat;
     }
@@ -230,7 +251,7 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
         for (Map<Sequence, Double> isStrategy : strategy.values()) {
             if (isStrategy.size() > 1) {
                 if (shallowestBrokenStrategyCause == null) {
-                    shallowestBrokenStrategyCause = isStrategy.keySet();
+                    shallowestBrokenStrategyCause = new HashSet<>(isStrategy.keySet());
                 } else {
                     Sequence candidate = isStrategy.keySet().iterator().next();
                     Sequence bestSoFar = shallowestBrokenStrategyCause.iterator().next();
@@ -365,10 +386,10 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
         }
     }
 
-
     private void createPContinuationConstraints(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         createInitPConstraint();
         Set<Object> blackList = new HashSet<>();
+        Set<Pair<Sequence, Sequence>> pStops = new HashSet<>();
 
         for (SequenceInformationSet informationSet : algConfig.getAllInformationSets().values()) {
             List<Action> actions = expander.getActions(informationSet);
@@ -376,33 +397,56 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
 
             for (GameState gameState : informationSet.getAllStates()) {
                 if (!gameState.isGameEnd())
-                    createPContinuationConstraint(actions, opponent, gameState, blackList);
+                    createPContinuationConstraint(actions, opponent, gameState, blackList, pStops);
             }
         }
 
         for (Sequence leaderSequence : algConfig.getSequencesFor(leader)) {
             for (Sequence compatibleFollowerSequence : algConfig.getCompatibleSequencesFor(leaderSequence)) {
                 for (Action action : compatibleFollowerSequence) {
-                    Object eqKeyFollower = new Triplet<>(leaderSequence, action.getInformationSet().getPlayersHistory(), follower);
+                    Object eqKeyFollower = new Triplet<>(leaderSequence, action.getInformationSet().getPlayersHistory(), action.getInformationSet());
 
                     if (!blackList.contains(eqKeyFollower)) {
                         blackList.add(eqKeyFollower);
+                        Pair<Sequence, Sequence> varKey = createSeqPairVarKey(leaderSequence, action.getInformationSet().getPlayersHistory());
+
                         lpTable.setConstraintType(eqKeyFollower, 1);
-                        lpTable.setConstraint(eqKeyFollower, createSeqPairVarKey(leaderSequence, action.getInformationSet().getPlayersHistory()), -1);
+                        lpTable.setConstraint(eqKeyFollower, varKey, -1);
                         for (Sequence followerSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
                             lpTable.setConstraint(eqKeyFollower, createSeqPairVarKey(leaderSequence, followerSequence), 1);
                         }
                     }
 
-                    for (Action leaderAction : leaderSequence) {
-                        Object eqKeyLeader = new Triplet<>(leaderAction.getInformationSet().getPlayersHistory(), action.getInformationSet().getPlayersHistory(), leader);
+                    ListIterator<Action> leaderSeqIterator = leaderSequence.listIterator(leaderSequence.size());
+                    Action leaderAction;
 
-                        if (!blackList.contains(eqKeyLeader)) {
+                    while (leaderSeqIterator.hasPrevious()) {
+                        leaderAction = leaderSeqIterator.previous();
+                        Object eqKeyLeader = new Triplet<>(leaderAction.getInformationSet().getPlayersHistory(), action.getInformationSet().getPlayersHistory(), leaderAction.getInformationSet().getPlayersHistory());
+
+                       if (!blackList.contains(eqKeyLeader)) {
                             blackList.add(eqKeyLeader);
+                           Pair<Sequence, Sequence> varKey = createSeqPairVarKey(leaderAction.getInformationSet().getPlayersHistory(), action.getInformationSet().getPlayersHistory());
+
                             lpTable.setConstraintType(eqKeyLeader, 1);
-                            lpTable.setConstraint(eqKeyLeader, createSeqPairVarKey(leaderAction.getInformationSet().getPlayersHistory(), action.getInformationSet().getPlayersHistory()), -1);
-                            for (Sequence leaderContinutation : ((SequenceInformationSet) leaderAction.getInformationSet()).getOutgoingSequences()) {
-                                lpTable.setConstraint(eqKeyLeader, createSeqPairVarKey(leaderContinutation, action.getInformationSet().getPlayersHistory()), 1);
+                            lpTable.setConstraint(eqKeyLeader, varKey, -1);
+                            for (Sequence leaderContinuation : ((SequenceInformationSet) leaderAction.getInformationSet()).getOutgoingSequences()) {
+                                lpTable.setConstraint(eqKeyLeader, createSeqPairVarKey(leaderContinuation, action.getInformationSet().getPlayersHistory()), 1);
+                            }
+                        }
+
+                        for (Sequence followerSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
+                            Object eqKeyLeaderCont = new Triplet<>(leaderAction.getInformationSet().getPlayersHistory(), followerSequence, leaderAction.getInformationSet());
+
+                            if (!blackList.contains(eqKeyLeaderCont)) {
+                                blackList.add(eqKeyLeaderCont);
+                                Pair<Sequence, Sequence> varKeyCont = createSeqPairVarKey(leaderAction.getInformationSet().getPlayersHistory(), followerSequence);
+
+                                lpTable.setConstraintType(eqKeyLeaderCont, 1);
+                                lpTable.setConstraint(eqKeyLeaderCont, varKeyCont, -1);
+                                for (Sequence leaderContinuation : ((SequenceInformationSet) leaderAction.getInformationSet()).getOutgoingSequences()) {
+                                    lpTable.setConstraint(eqKeyLeaderCont, createSeqPairVarKey(leaderContinuation, followerSequence), 1);
+                                }
                             }
                         }
                     }
@@ -412,14 +456,15 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
     }
 
 
-    private void createPContinuationConstraint(List<Action> actions, Player opponent, GameState gameState, Set<Object> blackList) {
+    private void createPContinuationConstraint(List<Action> actions, Player opponent, GameState gameState, Set<Object> blackList, Set<Pair<Sequence, Sequence>> pStops) {
         Triplet<Sequence, Sequence, Player> eqKey = new Triplet<>(gameState.getSequenceFor(leader), gameState.getSequenceFor(follower), gameState.getPlayerToMove());
 
         if (blackList.contains(eqKey))
             return;
         blackList.add(eqKey);
-        Object varKey = createSeqPairVarKey(gameState);
+        Pair<Sequence, Sequence> varKey = createSeqPairVarKey(gameState);
 
+        pStops.add(varKey);
         lpTable.setConstraint(eqKey, varKey, -1);
         lpTable.setConstraintType(eqKey, 1);
         for (Action action : actions) {
@@ -428,6 +473,7 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
             sequenceCopy.addLast(action);
             Pair<Sequence, Sequence> contVarKey = createSeqPairVarKey(sequenceCopy, gameState.getSequenceFor(opponent));
 
+            pStops.add(contVarKey);
             lpTable.setConstraint(eqKey, contVarKey, 1);
         }
     }

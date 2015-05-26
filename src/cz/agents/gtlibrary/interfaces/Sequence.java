@@ -22,6 +22,7 @@ package cz.agents.gtlibrary.interfaces;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 
 public interface Sequence extends Iterable<Action>, Serializable {
 	
@@ -62,5 +63,9 @@ public interface Sequence extends Iterable<Action>, Serializable {
 	public List<Action> getAsList();
 
     public boolean isEmpty();
+
+    public ListIterator<Action> listIterator();
+
+    public ListIterator<Action> listIterator(int index);
 
 }
