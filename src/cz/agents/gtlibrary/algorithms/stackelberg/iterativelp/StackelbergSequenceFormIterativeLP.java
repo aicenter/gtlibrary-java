@@ -43,7 +43,7 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         addObjective(algConfig);
         createPContinuationConstraints(algConfig, expander);
-        createSequenceConstraints(algConfig, expander);
+        createSequenceConstraints(algConfig);
         createISActionConstraints(algConfig);
 
         System.out.println("LP build...");
@@ -65,7 +65,6 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                 double value = lpData.getSolver().getObjValue();
 
                 System.out.println("LP value: " + value);
-
 //                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
 //                    double variableValue = lpData.getSolver().getValue(entry.getValue());
 //
@@ -87,20 +86,24 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                     for (Map.Entry<Sequence, Double> entry : followerRealPlan.entrySet()) {
                         System.out.println(entry);
                     }
-                    SQFBestResponseAlgorithm br = new GeneralSumBestResponse(expander, 1, algConfig.getRootState().getAllPlayers(), algConfig, info);
-
-                    System.out.println("BR value: " + br.calculateBR(algConfig.getRootState(), leaderRealPlan));
-                    System.out.println("BR: " + br.getBRStategy());
+//                    SQFBestResponseAlgorithm br = new GeneralSumBestResponse(expander, 1, algConfig.getRootState().getAllPlayers(), algConfig, info);
+//
+//                    System.out.println("BR value: " + br.calculateBR(algConfig.getRootState(), leaderRealPlan));
+//                    System.out.println("BR: " + br.getBRStategy());
                     UtilityCalculator calculator = new UtilityCalculator(algConfig.getRootState(), expander);
 
                     assert Math.abs(calculator.computeUtility(new NoMissingSeqStrategy(leaderRealPlan), new NoMissingSeqStrategy(followerRealPlan)) - value) < 1e-8;
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                 } else {
+                    if(value <= lowerBound) {
+                        System.out.println("***********lower bound " + lowerBound + " not exceeded, cutting***********");
+                        return dummyResult;
+                    }
                     Pair<Map<Sequence, Double>, Double> currentBest = dummyResult;
 
                     for (Sequence brokenStrategyCause : brokenStrategyCauses) {
                         restrictFollowerPlay(brokenStrategyCause, brokenStrategyCauses, lpData);
-                        Pair<Map<Sequence, Double>, Double> result = solve(lowerBound, upperBound, algConfig, expander);
+                        Pair<Map<Sequence, Double>, Double> result = solve(getLowerBound(lowerBound, currentBest), upperBound, algConfig, expander);
 
                         if (result.getRight() > currentBest.getRight())
                             currentBest = result;
@@ -115,6 +118,10 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
             e.printStackTrace();
         }
         return dummyResult;
+    }
+
+    private double getLowerBound(double lowerBound, Pair<Map<Sequence, Double>, Double> currentBest) {
+        return Math.max(lowerBound, currentBest.getRight());
     }
 
 
@@ -353,7 +360,7 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
     }
 
 
-    private void createSequenceConstraints(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
+    private void createSequenceConstraints(StackelbergConfig algConfig) {
         createSequenceConstraint(algConfig, new ArrayListSequenceImpl(follower));
         for (Sequence followerSequence : algConfig.getSequencesFor(follower)) {
             createSequenceConstraint(algConfig, followerSequence);
@@ -424,9 +431,9 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                         leaderAction = leaderSeqIterator.previous();
                         Object eqKeyLeader = new Triplet<>(leaderAction.getInformationSet().getPlayersHistory(), action.getInformationSet().getPlayersHistory(), leaderAction.getInformationSet().getPlayersHistory());
 
-                       if (!blackList.contains(eqKeyLeader)) {
+                        if (!blackList.contains(eqKeyLeader)) {
                             blackList.add(eqKeyLeader);
-                           Pair<Sequence, Sequence> varKey = createSeqPairVarKey(leaderAction.getInformationSet().getPlayersHistory(), action.getInformationSet().getPlayersHistory());
+                            Pair<Sequence, Sequence> varKey = createSeqPairVarKey(leaderAction.getInformationSet().getPlayersHistory(), action.getInformationSet().getPlayersHistory());
 
                             lpTable.setConstraintType(eqKeyLeader, 1);
                             lpTable.setConstraint(eqKeyLeader, varKey, -1);
