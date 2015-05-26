@@ -24,10 +24,7 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class LinkedListSequenceImpl implements Sequence {
 
@@ -220,5 +217,15 @@ public class LinkedListSequenceImpl implements Sequence {
     @Override
     public boolean isEmpty() {
         return actions.isEmpty();
+    }
+
+    @Override
+    public ListIterator<Action> listIterator() {
+        return actions.listIterator();
+    }
+
+    @Override
+    public ListIterator<Action> listIterator(int index) {
+        return actions.listIterator(index);
     }
 }

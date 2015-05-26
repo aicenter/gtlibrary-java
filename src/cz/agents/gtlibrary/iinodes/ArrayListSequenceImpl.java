@@ -19,10 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.iinodes;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -221,4 +218,12 @@ public class ArrayListSequenceImpl implements Sequence {
     public boolean isEmpty() {
         return actions.isEmpty();
     }
+
+	public ListIterator<Action> listIterator() {
+		 return actions.listIterator();
+	}
+
+	public ListIterator<Action> listIterator(int index) {
+		return actions.listIterator(index);
+	}
 }
