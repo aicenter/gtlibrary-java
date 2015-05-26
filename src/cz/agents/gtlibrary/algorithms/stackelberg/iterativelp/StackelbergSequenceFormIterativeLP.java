@@ -1,16 +1,12 @@
 package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
-import cz.agents.gtlibrary.algorithms.stackelberg.GeneralSumBestResponse;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
-import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
@@ -41,6 +37,8 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
 
     @Override
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
+        long startTime = threadBean.getCurrentThreadCpuTime();
+
         addObjective(algConfig);
         createPContinuationConstraints(algConfig, expander);
         createSequenceConstraints(algConfig);
@@ -48,19 +46,24 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
 
         System.out.println("LP build...");
         lpTable.watchAllPrimalVariables();
-        Pair<Map<Sequence, Double>, Double> result = solve(-info.getMaxUtility(), info.getMaxUtility(), algConfig, expander);
+        overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
+        Pair<Map<Sequence, Double>, Double> result = solve(-info.getMaxUtility(), info.getMaxUtility());
 
         resultStrategies.put(leader, result.getLeft());
         resultValues.put(leader, result.getRight());
         return result.getRight();
     }
 
-    private Pair<Map<Sequence, Double>, Double> solve(double lowerBound, double upperBound, StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
+    private Pair<Map<Sequence, Double>, Double> solve(double lowerBound, double upperBound) {
         //TODO: use bounds
         try {
+            long startTime = threadBean.getCurrentThreadCpuTime();
             LPData lpData = lpTable.toCplex();
+            overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 //            lpData.getSolver().exportModel("SSEIter.lp");
+            startTime = threadBean.getCurrentThreadCpuTime();
             lpData.getSolver().solve();
+            overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
             if (lpData.getSolver().getStatus() == IloCplex.Status.Optimal) {
                 double value = lpData.getSolver().getObjValue();
 
@@ -78,21 +81,14 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                     Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
                     Map<Sequence, Double> followerRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, follower));
 
-                    System.out.println("Leader real. plan:");
-                    for (Map.Entry<Sequence, Double> entry : leaderRealPlan.entrySet()) {
-                        System.out.println(entry);
-                    }
-                    System.out.println("Follower real. plan:");
-                    for (Map.Entry<Sequence, Double> entry : followerRealPlan.entrySet()) {
-                        System.out.println(entry);
-                    }
-//                    SQFBestResponseAlgorithm br = new GeneralSumBestResponse(expander, 1, algConfig.getRootState().getAllPlayers(), algConfig, info);
-//
-//                    System.out.println("BR value: " + br.calculateBR(algConfig.getRootState(), leaderRealPlan));
-//                    System.out.println("BR: " + br.getBRStategy());
-                    UtilityCalculator calculator = new UtilityCalculator(algConfig.getRootState(), expander);
-
-                    assert Math.abs(calculator.computeUtility(new NoMissingSeqStrategy(leaderRealPlan), new NoMissingSeqStrategy(followerRealPlan)) - value) < 1e-8;
+//                    System.out.println("Leader real. plan:");
+//                    for (Map.Entry<Sequence, Double> entry : leaderRealPlan.entrySet()) {
+//                        System.out.println(entry);
+//                    }
+//                    System.out.println("Follower real. plan:");
+//                    for (Map.Entry<Sequence, Double> entry : followerRealPlan.entrySet()) {
+//                        System.out.println(entry);
+//                    }
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                 } else {
                     if(value <= lowerBound) {
@@ -103,10 +99,15 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
 
                     for (Sequence brokenStrategyCause : brokenStrategyCauses) {
                         restrictFollowerPlay(brokenStrategyCause, brokenStrategyCauses, lpData);
-                        Pair<Map<Sequence, Double>, Double> result = solve(getLowerBound(lowerBound, currentBest), upperBound, algConfig, expander);
+                        Pair<Map<Sequence, Double>, Double> result = solve(getLowerBound(lowerBound, currentBest), upperBound);
 
-                        if (result.getRight() > currentBest.getRight())
+                        if (result.getRight() > currentBest.getRight()) {
                             currentBest = result;
+                            if(currentBest.getRight() >= value - 1e-8) {
+                                System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent value " + value + "----------------");
+                                return currentBest;
+                            }
+                        }
                         removeRestriction(brokenStrategyCause, brokenStrategyCauses, lpData);
                     }
                     return currentBest;
@@ -187,7 +188,6 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
                                 strategy.put(playerSequence.getLastInformationSet(), isStrategy);
                             }
                         } else {
-                            Double oldValue = isStrategy.get(playerSequence);
                             double behavioralStrategy = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
 
                             if (behavioralStrategy > 1e-8) {
