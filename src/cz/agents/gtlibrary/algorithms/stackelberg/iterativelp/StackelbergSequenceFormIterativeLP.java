@@ -59,7 +59,7 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
             long startTime = threadBean.getCurrentThreadCpuTime();
             LPData lpData = lpTable.toCplex();
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
-//            lpData.getSolver().exportModel("SSEIter.lp");
+            lpData.getSolver().exportModel("SSEIter.lp");
             startTime = threadBean.getCurrentThreadCpuTime();
             lpData.getSolver().solve();
             overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
@@ -266,8 +266,8 @@ public class StackelbergSequenceFormIterativeLP extends StackelbergSequenceFormL
 
                     if (candidate.size() < bestSoFar.size())
                         shallowestBrokenStrategyCause = new HashSet<>(isStrategy.keySet());
-                    else if (candidate.size() == bestSoFar.size())
-                        shallowestBrokenStrategyCause.addAll(isStrategy.keySet());
+//                    else if (candidate.size() == bestSoFar.size())
+//                        shallowestBrokenStrategyCause.addAll(isStrategy.keySet());
                 }
             }
         }
