@@ -32,7 +32,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
-    protected final double M = 1e4;
+    protected double M;
 
     protected Player[] players;
     protected GameInfo info;
@@ -52,6 +52,7 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
         this.expander = expander;
         this.info = info;
         this.threadBean = ManagementFactory.getThreadMXBean();
+        M = info.getMaxUtility()*2 + 1;
     }
 
 
@@ -84,7 +85,7 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
-            cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
+//            cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
             startTime = threadBean.getCurrentThreadCpuTime();
             debugOutput.println("Solving");
             long cplexTime = threadBean.getCurrentThreadCpuTime();
