@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.StackelbergSequenceFormIterativeLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenceFormMultipleLPs;
 import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
@@ -36,6 +37,8 @@ public class RandomGameFromConfigRunner {
         RandomGameInfo.CORRELATION = Double.parseDouble(args[3]);
         BufferedWriter timeWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(args[0] + " " + RandomGameInfo.CORRELATION + " finalTime.csv", true)));
         BufferedWriter cutsWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(args[0] + " " + RandomGameInfo.CORRELATION +  " cuts.csv", true)));
+        BufferedWriter lpCountWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(args[0] + " " + RandomGameInfo.CORRELATION +  " LPInvocation.csv", true)));
+
         int lineIndex = Integer.parseInt(args[4]);
         int count = 0;
 
@@ -44,22 +47,21 @@ public class RandomGameFromConfigRunner {
         }
         if(line == null)
             return;
-//        while ((line = reader.readLine()) != null) {
+        while ((line = reader.readLine()) != null) {
             StringTokenizer tokenizer = new StringTokenizer(line);
             RandomGameInfo.seed = Integer.parseInt(tokenizer.nextToken());
             RandomGameInfo.MAX_OBSERVATION = Integer.parseInt(tokenizer.nextToken());
             RandomGameInfo.MAX_DEPTH = Integer.parseInt(tokenizer.nextToken());
             RandomGameInfo.MAX_BF = Integer.parseInt(tokenizer.nextToken());
 //            System.out.println("!!!!stored: " + tokenizer.nextToken());
-            runRandomGame(timeWriter, cutsWriter, args[0], Integer.parseInt(args[2]), Integer.parseInt(tokenizer.nextToken()));
-
-//        }
+            runRandomGame(timeWriter, cutsWriter, lpCountWriter, args[0], Integer.parseInt(args[2]), Integer.parseInt(tokenizer.nextToken()));
+        }
         timeWriter.close();
         cutsWriter.close();
         reader.close();
     }
 
-    public static void runRandomGame(BufferedWriter timeWriter, BufferedWriter cutsWriter, String algType, int leaderIndex, int expectedRPCount) {
+    public static void runRandomGame(BufferedWriter timeWriter, BufferedWriter cutsWriter, BufferedWriter lpCountWriter, String algType, int leaderIndex, int expectedRPCount) {
         try {
             GameState rootState = new GeneralSumRandomGameState();
             GameInfo gameInfo = new RandomGameInfo();
@@ -88,7 +90,14 @@ public class RandomGameFromConfigRunner {
                 cutsWriter.newLine();
                 cutsWriter.flush();
                 assert ((StackelbergSequenceFormMultipleLPs) solver).getAllRPCount(algConfig) == expectedRPCount;
+            } else if(algType.startsWith("IterLP")) {
+                int lpCount = ((StackelbergSequenceFormIterativeLP)solver).getLPInvocationCount();
+
+                lpCountWriter.write(String.valueOf(lpCount));
+                lpCountWriter.newLine();
+                lpCountWriter.flush();
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }

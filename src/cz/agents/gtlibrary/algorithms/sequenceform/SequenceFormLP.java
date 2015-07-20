@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.utils.DummyPrintStream;
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
@@ -62,7 +63,7 @@ public class SequenceFormLP implements FullSequenceFormLP{
 	protected Map<Player, Set<Sequence>> sequences = new FixedSizeMap<Player, Set<Sequence>>(2);
 	protected Map<Player, Set<SequenceInformationSet>> informationSets = new FixedSizeMap<Player, Set<SequenceInformationSet>>(2);
 
-    protected PrintStream debugOutput = System.out;
+    protected PrintStream debugOutput = DummyPrintStream.getDummyPS();
 
 	public SequenceFormLP(Player[] players) {
 		for (Player player : players) {

@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.CplexBBStackelbergSequenceFormIterativeLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.StackelbergSequenceFormIterativeLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.DOBSS;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
@@ -140,6 +141,8 @@ public class StackelbergExperiments {
             return new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
         if (algType.equals("IterLP"))
             return new StackelbergSequenceFormIterativeLP(leader, gameInfo);
+        if (algType.equals("IterLPCplex"))
+            return new CplexBBStackelbergSequenceFormIterativeLP(leader, gameInfo);
         if (algType.startsWith("MultLP")) {
             StackelbergConfig.USE_FEASIBILITY_CUT = algType.startsWith("MultLPFeas");
             StackelbergConfig.USE_UPPERBOUND_CUT = !algType.endsWith("NoCut");
