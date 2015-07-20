@@ -22,7 +22,7 @@ import java.util.StringTokenizer;
 public class ComputeRPCount {
 
     public static void main(String[] args) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("seqConfig")));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("config150kto350k")));
         RandomGameInfo.FIXED_SIZE_BF = false;
         RandomGameInfo.BINARY_UTILITY = true;
         RandomGameInfo.UTILITY_CORRELATION = false;
@@ -39,9 +39,9 @@ public class ComputeRPCount {
             Expander<SequenceInformationSet> expander = new RandomGameExpander<>(config);
             FullSequenceEFG builder = new FullSequenceEFG(root, expander, new RandomGameInfo(), config);
 
-            System.out.println(line);
             builder.generateCompleteGame();
-            System.out.println(getRPCount(root, root.getAllPlayers()[1], config, expander));
+            System.out.println(RandomGameInfo.seed + " " + RandomGameInfo.MAX_OBSERVATION + " " + RandomGameInfo.MAX_DEPTH + " " + RandomGameInfo.MAX_BF + " " + getRPCount(root, root.getAllPlayers()[0], config, expander));
+//            System.out.println(getRPCount(root, root.getAllPlayers()[1], config, expander));
 //            System.out.println("!!!!stored: " + tokenizer.nextToken());
         }
     }
