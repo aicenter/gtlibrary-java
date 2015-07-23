@@ -48,6 +48,7 @@ public class RandomGameFromConfigRunner {
         if(line == null)
             return;
         while ((line = reader.readLine()) != null) {
+            System.out.println("line: " + ++count);
             StringTokenizer tokenizer = new StringTokenizer(line);
             RandomGameInfo.seed = Integer.parseInt(tokenizer.nextToken());
             RandomGameInfo.MAX_OBSERVATION = Integer.parseInt(tokenizer.nextToken());
