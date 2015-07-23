@@ -15,6 +15,7 @@ public class CplexBBStackelbergSequenceFormIterativeLP extends StackelbergSequen
 
     public CplexBBStackelbergSequenceFormIterativeLP(Player leader, GameInfo info) {
         super(leader, info);
+        this.eps = 1e-5;
     }
 
     @Override
@@ -22,28 +23,17 @@ public class CplexBBStackelbergSequenceFormIterativeLP extends StackelbergSequen
         SequenceInformationSet lastSet = (SequenceInformationSet) brokenStrategyCauses.iterator().next().getLastInformationSet();
         Set<Sequence> outgoingSequences = lastSet.getOutgoingSequences();
 
-        for (Sequence outgoingSequence : outgoingSequences) {
+        for (Sequence outgoingSequence : brokenStrategyCauses) {
             addEqualityToBinaryVariableFor(outgoingSequence, lpData);
-//            restrictFollowerPlay(brokenStrategyCause, brokenStrategyCauses, lpData);
-//            Pair<Map<Sequence, Double>, Double> result = solve(getLowerBound(lowerBound, currentBest), upperBound);
-//
-//            if (result.getRight() > currentBest.getRight()) {
-//                currentBest = result;
-//                if(currentBest.getRight() >= value - 1e-8) {
-//                    System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent value " + value + "----------------");
-//                    return currentBest;
-//                }
-//            }
-//            removeRestriction(brokenStrategyCause, brokenStrategyCauses, lpData);
         }
-        forceOnlyOneBinaryToBeActive(outgoingSequences);
+        controlBinaryVariables(brokenStrategyCauses);
         Pair<Map<Sequence, Double>, Double> currentBest = solve(lowerBound, upperBound);
 
-        removeBinaryConstraints(outgoingSequences, lpData);
+        removeBinaryConstraints(brokenStrategyCauses, lpData);
         return currentBest;
     }
 
-    private void removeBinaryConstraints(Set<Sequence> brokenStrategyCauses, LPData lpData) {
+    protected void removeBinaryConstraints(Set<Sequence> brokenStrategyCauses, LPData lpData) {
         Pair<String, InformationSet> binarySumKey = new Pair<>("binarySum", brokenStrategyCauses.iterator().next().getLastInformationSet());
 
         for (Sequence brokenStrategyCause : brokenStrategyCauses) {
@@ -68,7 +58,7 @@ public class CplexBBStackelbergSequenceFormIterativeLP extends StackelbergSequen
         }
     }
 
-    private void forceOnlyOneBinaryToBeActive(Set<Sequence> brokenStrategyCauses) {
+    protected void controlBinaryVariables(Set<Sequence> brokenStrategyCauses) {
         Pair<String, InformationSet> binarySumKey = new Pair<>("binarySum", brokenStrategyCauses.iterator().next().getLastInformationSet());
 
         for (Sequence brokenStrategyCause : brokenStrategyCauses) {
@@ -78,7 +68,7 @@ public class CplexBBStackelbergSequenceFormIterativeLP extends StackelbergSequen
         lpTable.setConstant(binarySumKey, 1);
     }
 
-    private void addEqualityToBinaryVariableFor(Sequence brokenStrategyCause, LPData lpData) {
+    protected void addEqualityToBinaryVariableFor(Sequence brokenStrategyCause, LPData lpData) {
         Pair<String, Sequence> binaryVarKey = new Pair<>("binary", brokenStrategyCause);
 
         for (Object varKey : lpData.getWatchedPrimalVariables().keySet()) {
@@ -92,6 +82,7 @@ public class CplexBBStackelbergSequenceFormIterativeLP extends StackelbergSequen
                         lpTable.setConstraint(eqKey, p, 1);
                         lpTable.setConstraint(eqKey, binaryVarKey, -1);
                         lpTable.markAsBinary(binaryVarKey);
+                        lpTable.watchPrimalVariable(binaryVarKey, binaryVarKey);
                         lpTable.setConstraintType(eqKey, 0);
                     }
                 }
