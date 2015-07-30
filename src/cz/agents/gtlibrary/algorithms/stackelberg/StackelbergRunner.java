@@ -21,8 +21,8 @@ package cz.agents.gtlibrary.algorithms.stackelberg;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.CplexBBStackelbergSequenceFormIterativeLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.StackelbergSequenceFormIterativeLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.EnforcingStackelbergLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.ForbiddingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenceFormMultipleLPs;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
@@ -74,9 +74,10 @@ public class StackelbergRunner {
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
 //        runner.generate(rootState.getAllPlayers()[1], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[1], rootState.getAllPlayers()[0], gameInfo, expander));
-//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormIterativeLP(rootState.getAllPlayers()[0], gameInfo));
-        runner.generate(rootState.getAllPlayers()[0], new CplexBBStackelbergSequenceFormIterativeLP(rootState.getAllPlayers()[0], gameInfo));
+        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new EnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergSLP(rootState.getAllPlayers()[0], gameInfo));
         new GambitEFG().write("randomGame.gbt", rootState, expander);
     }
 
@@ -88,7 +89,7 @@ public class StackelbergRunner {
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
 //        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormIterativeLP(rootState.getAllPlayers()[0], gameInfo));
+        runner.generate(rootState.getAllPlayers()[0], new ForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 
     }
 
@@ -123,7 +124,7 @@ public class StackelbergRunner {
 
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 //        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormIterativeLP(rootState.getAllPlayers()[0], gameInfo));
+        runner.generate(rootState.getAllPlayers()[0], new ForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
         new GambitEFG().write("stackTest.gbt", rootState, expander);
     }
 

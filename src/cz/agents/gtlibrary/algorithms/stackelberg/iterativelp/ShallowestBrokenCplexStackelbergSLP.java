@@ -11,9 +11,9 @@ import cz.agents.gtlibrary.utils.Pair;
 import java.util.Map;
 import java.util.Set;
 
-public class CplexBBStackelbergSequenceFormIterativeLP extends StackelbergSequenceFormIterativeLP {
+public class ShallowestBrokenCplexStackelbergSLP extends ForbiddingStackelbergLP {
 
-    public CplexBBStackelbergSequenceFormIterativeLP(Player leader, GameInfo info) {
+    public ShallowestBrokenCplexStackelbergSLP(Player leader, GameInfo info) {
         super(leader, info);
         this.eps = 1e-5;
     }
@@ -21,7 +21,6 @@ public class CplexBBStackelbergSequenceFormIterativeLP extends StackelbergSequen
     @Override
     protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Set<Sequence> brokenStrategyCauses) {
         SequenceInformationSet lastSet = (SequenceInformationSet) brokenStrategyCauses.iterator().next().getLastInformationSet();
-        Set<Sequence> outgoingSequences = lastSet.getOutgoingSequences();
 
         for (Sequence outgoingSequence : brokenStrategyCauses) {
             addEqualityToBinaryVariableFor(outgoingSequence, lpData);

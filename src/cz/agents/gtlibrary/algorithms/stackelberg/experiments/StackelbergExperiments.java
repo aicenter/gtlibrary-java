@@ -4,8 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.CplexBBStackelbergSequenceFormIterativeLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.StackelbergSequenceFormIterativeLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.*;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.DOBSS;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergMultipleLPs;
@@ -133,16 +132,23 @@ public class StackelbergExperiments {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public static StackelbergSequenceFormLP getStackelbergSolver(String algType, GameState rootState, Player leader, Player follower, GameInfo gameInfo, Expander<SequenceInformationSet> expander) {
         if (algType.equals("MILP"))
             return new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
         if (algType.equals("IterLP"))
-            return new StackelbergSequenceFormIterativeLP(leader, gameInfo);
-        if (algType.equals("IterLPCplex"))
-            return new CplexBBStackelbergSequenceFormIterativeLP(leader, gameInfo);
+            return new ForbiddingStackelbergLP(leader, gameInfo);
+        if (algType.equals("IterLPCplexBroken"))
+            return new ShallowestBrokenCplexStackelbergSLP(leader, gameInfo);
+        if (algType.equals("IterLPCplexBrokenAll"))
+            return new CompleteBrokenCplexStackelbergLP(leader, gameInfo);
+        if (algType.equals("IterLPCplexCompleteAll"))
+            return new CompleteAllCplexStackelbergLP(leader, gameInfo);
+        if (algType.equals("IterLPCplexComplete"))
+            return new ShallowestAllCplexStackelbergLP(leader, gameInfo);
+        if(algType.equals("IterLPEnforcing"))
+            return new EnforcingStackelbergLP(leader, gameInfo);
         if (algType.startsWith("MultLP")) {
             StackelbergConfig.USE_FEASIBILITY_CUT = algType.startsWith("MultLPFeas");
             StackelbergConfig.USE_UPPERBOUND_CUT = !algType.endsWith("NoCut");
