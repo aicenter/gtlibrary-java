@@ -4,7 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.StackelbergSequenceFormIterativeLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.ForbiddingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenceFormMultipleLPs;
 import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
@@ -47,7 +47,7 @@ public class RandomGameFromConfigRunner {
         }
         if(line == null)
             return;
-        while ((line = reader.readLine()) != null) {
+//        while ((line = reader.readLine()) != null) {
             System.out.println("line: " + ++count);
             StringTokenizer tokenizer = new StringTokenizer(line);
             RandomGameInfo.seed = Integer.parseInt(tokenizer.nextToken());
@@ -56,7 +56,7 @@ public class RandomGameFromConfigRunner {
             RandomGameInfo.MAX_BF = Integer.parseInt(tokenizer.nextToken());
 //            System.out.println("!!!!stored: " + tokenizer.nextToken());
             runRandomGame(timeWriter, cutsWriter, lpCountWriter, args[0], Integer.parseInt(args[2]), Integer.parseInt(tokenizer.nextToken()));
-        }
+//        }
         timeWriter.close();
         cutsWriter.close();
         reader.close();
@@ -92,7 +92,7 @@ public class RandomGameFromConfigRunner {
                 cutsWriter.flush();
                 assert ((StackelbergSequenceFormMultipleLPs) solver).getAllRPCount(algConfig) == expectedRPCount;
             } else if(algType.startsWith("IterLP")) {
-                int lpCount = ((StackelbergSequenceFormIterativeLP)solver).getLPInvocationCount();
+                int lpCount = ((ForbiddingStackelbergLP)solver).getLPInvocationCount();
 
                 lpCountWriter.write(String.valueOf(lpCount));
                 lpCountWriter.newLine();
