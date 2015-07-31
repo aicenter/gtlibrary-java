@@ -4,7 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.ForbiddingStackelbergLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.SumForbiddingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenceFormMultipleLPs;
 import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
@@ -92,7 +92,7 @@ public class RandomGameFromConfigRunner {
                 cutsWriter.flush();
                 assert ((StackelbergSequenceFormMultipleLPs) solver).getAllRPCount(algConfig) == expectedRPCount;
             } else if(algType.startsWith("IterLP")) {
-                int lpCount = ((ForbiddingStackelbergLP)solver).getLPInvocationCount();
+                int lpCount = ((SumForbiddingStackelbergLP)solver).getLPInvocationCount();
 
                 lpCountWriter.write(String.valueOf(lpCount));
                 lpCountWriter.newLine();

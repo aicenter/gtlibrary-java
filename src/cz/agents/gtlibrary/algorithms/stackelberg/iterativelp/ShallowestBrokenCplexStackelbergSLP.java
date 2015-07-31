@@ -9,9 +9,8 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.Map;
-import java.util.Set;
 
-public class ShallowestBrokenCplexStackelbergSLP extends ForbiddingStackelbergLP {
+public class ShallowestBrokenCplexStackelbergSLP extends SumForbiddingStackelbergLP {
 
     public ShallowestBrokenCplexStackelbergSLP(Player leader, GameInfo info) {
         super(leader, info);
@@ -19,7 +18,7 @@ public class ShallowestBrokenCplexStackelbergSLP extends ForbiddingStackelbergLP
     }
 
     @Override
-    protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Set<Sequence> brokenStrategyCauses) {
+    protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Iterable<Sequence> brokenStrategyCauses) {
         SequenceInformationSet lastSet = (SequenceInformationSet) brokenStrategyCauses.iterator().next().getLastInformationSet();
 
         for (Sequence outgoingSequence : brokenStrategyCauses) {
@@ -32,7 +31,7 @@ public class ShallowestBrokenCplexStackelbergSLP extends ForbiddingStackelbergLP
         return currentBest;
     }
 
-    protected void removeBinaryConstraints(Set<Sequence> brokenStrategyCauses, LPData lpData) {
+    protected void removeBinaryConstraints(Iterable<Sequence> brokenStrategyCauses, LPData lpData) {
         Pair<String, InformationSet> binarySumKey = new Pair<>("binarySum", brokenStrategyCauses.iterator().next().getLastInformationSet());
 
         for (Sequence brokenStrategyCause : brokenStrategyCauses) {
@@ -57,7 +56,7 @@ public class ShallowestBrokenCplexStackelbergSLP extends ForbiddingStackelbergLP
         }
     }
 
-    protected void controlBinaryVariables(Set<Sequence> brokenStrategyCauses) {
+    protected void controlBinaryVariables(Iterable<Sequence> brokenStrategyCauses) {
         Pair<String, InformationSet> binarySumKey = new Pair<>("binarySum", brokenStrategyCauses.iterator().next().getLastInformationSet());
 
         for (Sequence brokenStrategyCause : brokenStrategyCauses) {
