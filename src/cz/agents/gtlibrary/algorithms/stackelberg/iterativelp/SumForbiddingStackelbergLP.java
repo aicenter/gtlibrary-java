@@ -16,7 +16,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
-public class ForbiddingStackelbergLP extends StackelbergSequenceFormLP {
+public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
     protected double eps;
     protected RecyclingMILPTable lpTable;
@@ -28,7 +28,7 @@ public class ForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
     protected int lpInvocationCount;
 
-    public ForbiddingStackelbergLP(Player leader, GameInfo info) {
+    public SumForbiddingStackelbergLP(Player leader, GameInfo info) {
         super(info.getAllPlayers(), leader, info.getOpponent(leader));
         lpTable = new RecyclingMILPTable();
         this.leader = leader;
@@ -84,7 +84,7 @@ public class ForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //                    System.out.println(entry.getKey() + ": " + variableValue);
 //                }
                 Map<InformationSet, Map<Sequence, Double>> behavStrat = getBehavioralStrategy(lpData, follower);
-                Set<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat);
+                Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat);
 
                 System.out.println("follower behav. strat.");
                 for (Map.Entry<InformationSet, Map<Sequence, Double>> entry : behavStrat.entrySet()) {
@@ -120,23 +120,38 @@ public class ForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         return dummyResult;
     }
 
-    protected Set<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy) {
-        Set<Sequence> shallowestBrokenStrategyCause = null;
+    protected Iterable<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy) {
+        Map<Sequence, Double> shallowestBrokenStrategyCause = null;
 
-        for (Map<Sequence, Double> isStrategy : strategy.values()) {
-            if (isStrategy.size() > 1) {
+        for (Map.Entry<InformationSet, Map<Sequence, Double>> isStrategy : strategy.entrySet()) {
+            if (isStrategy.getValue().size() > 1) {
                 if (shallowestBrokenStrategyCause == null) {
-                    shallowestBrokenStrategyCause = new HashSet<>(isStrategy.keySet());
+                    shallowestBrokenStrategyCause = new HashMap<>(isStrategy.getValue());
                 } else {
-                    Sequence candidate = isStrategy.keySet().iterator().next();
-                    Sequence bestSoFar = shallowestBrokenStrategyCause.iterator().next();
+                    Sequence candidate = isStrategy.getValue().keySet().iterator().next();
+                    Sequence bestSoFar = shallowestBrokenStrategyCause.keySet().iterator().next();
 
-                    if (candidate.size() < bestSoFar.size())
-                        shallowestBrokenStrategyCause = new HashSet<>(isStrategy.keySet());
+                    if (candidate.size() < bestSoFar.size()) {
+                        shallowestBrokenStrategyCause = new HashMap<>(isStrategy.getValue());
+                    }
                 }
             }
         }
-        return shallowestBrokenStrategyCause;
+        if(shallowestBrokenStrategyCause == null)
+            return null;
+        return sort(shallowestBrokenStrategyCause, shallowestBrokenStrategyCause.keySet());
+    }
+
+    protected Iterable<Sequence> sort(final Map<Sequence, Double> shallowestBrokenStrategyCause, final Collection<Sequence> allSeq) {
+        List<Sequence> list = new ArrayList<>(allSeq);
+
+        Collections.sort(list, new Comparator<Sequence>() {
+            @Override
+            public int compare(Sequence o1, Sequence o2) {
+                return Double.compare(shallowestBrokenStrategyCause.get(o1), shallowestBrokenStrategyCause.get(o2));
+            }
+        });
+        return list;
     }
 
     private void printBinaryVariableValues(LPData data) {
@@ -154,7 +169,7 @@ public class ForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         }
     }
 
-    protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Set<Sequence> brokenStrategyCauses) {
+    protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Iterable<Sequence> brokenStrategyCauses) {
         Pair<Map<Sequence, Double>, Double> currentBest = dummyResult;
 
         for (Sequence brokenStrategyCause : brokenStrategyCauses) {
@@ -182,7 +197,7 @@ public class ForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     }
 
 
-    protected void restrictFollowerPlay(Sequence brokenStrategyCause, Set<Sequence> brokenStrategyCauses, LPData lpData) {
+    protected void restrictFollowerPlay(Sequence brokenStrategyCause, Iterable<Sequence> brokenStrategyCauses, LPData lpData) {
         System.out.println(brokenStrategyCause + " fixed to zero");
         for (Object varKey : lpData.getWatchedPrimalVariables().keySet()) {
             if (varKey instanceof Pair) {
@@ -200,7 +215,7 @@ public class ForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         }
     }
 
-    protected void removeRestriction(Sequence brokenStrategyCause, Set<Sequence> brokenStrategyCauses, LPData lpData) {
+    protected void removeRestriction(Sequence brokenStrategyCause, Iterable<Sequence> brokenStrategyCauses, LPData lpData) {
         System.out.println(brokenStrategyCause + " released");
         for (Object varKey : lpData.getWatchedPrimalVariables().keySet()) {
             if (varKey instanceof Pair) {
@@ -217,6 +232,41 @@ public class ForbiddingStackelbergLP extends StackelbergSequenceFormLP {
             }
         }
     }
+
+//    protected Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
+//        Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
+//
+//        for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
+//            if (entry.getKey() instanceof Pair) {
+//                Pair varKey = (Pair) entry.getKey();
+//
+//                if (varKey.getLeft() instanceof Sequence && varKey.getRight() instanceof Sequence) {
+//                    Sequence playerSequence = player.equals(leader) ? (Sequence) varKey.getLeft() : (Sequence) varKey.getRight();
+//                    Map<Sequence, Double> isStrategy = strategy.get(playerSequence.getLastInformationSet());
+//                    Double currentValue = getValueFromCplex(lpData, entry);
+//
+//                    if (currentValue > eps)
+//                        if (isSequenceFrom(player.equals(leader) ? (Sequence) varKey.getRight() : (Sequence) varKey.getLeft(), playerSequence.getLastInformationSet()))
+//                            if (isStrategy == null) {
+//                                if (currentValue > eps) {
+//                                    isStrategy = new HashMap<>();
+//                                    double behavioralStrat = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
+//
+//                                    isStrategy.put(playerSequence, behavioralStrat);
+//                                    strategy.put(playerSequence.getLastInformationSet(), isStrategy);
+//                                }
+//                            } else {
+//                                double behavioralStrategy = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
+//
+//                                if (behavioralStrategy > eps) {
+//                                    isStrategy.put(playerSequence, behavioralStrategy);
+//                                }
+//                            }
+//                }
+//            }
+//        }
+//        return strategy;
+//    }
 
     protected Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
         Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
@@ -241,10 +291,11 @@ public class ForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                                     strategy.put(playerSequence.getLastInformationSet(), isStrategy);
                                 }
                             } else {
+                                Double oldValue = isStrategy.get(playerSequence);
                                 double behavioralStrategy = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
 
                                 if (behavioralStrategy > eps) {
-                                    isStrategy.put(playerSequence, behavioralStrategy);
+                                    isStrategy.put(playerSequence, oldValue == null ? behavioralStrategy : behavioralStrategy + oldValue);
                                 }
                             }
                 }

@@ -138,7 +138,7 @@ public class StackelbergExperiments {
         if (algType.equals("MILP"))
             return new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
         if (algType.equals("IterLP"))
-            return new ForbiddingStackelbergLP(leader, gameInfo);
+            return new SumForbiddingStackelbergLP(leader, gameInfo);
         if (algType.equals("IterLPCplexBroken"))
             return new ShallowestBrokenCplexStackelbergSLP(leader, gameInfo);
         if (algType.equals("IterLPCplexBrokenAll"))
@@ -148,7 +148,11 @@ public class StackelbergExperiments {
         if (algType.equals("IterLPCplexComplete"))
             return new ShallowestAllCplexStackelbergLP(leader, gameInfo);
         if(algType.equals("IterLPEnforcing"))
-            return new EnforcingStackelbergLP(leader, gameInfo);
+            return new SumEnforcingStackelbergLP(leader, gameInfo);
+        if(algType.equals("MaxIterLPEnforcing"))
+            return new MaxEnforcingStackelbergLP(leader, gameInfo);
+        if (algType.equals("MaxIterLP"))
+            return new MaxForbiddingStackelbergLP(leader, gameInfo);
         if (algType.startsWith("MultLP")) {
             StackelbergConfig.USE_FEASIBILITY_CUT = algType.startsWith("MultLPFeas");
             StackelbergConfig.USE_UPPERBOUND_CUT = !algType.endsWith("NoCut");

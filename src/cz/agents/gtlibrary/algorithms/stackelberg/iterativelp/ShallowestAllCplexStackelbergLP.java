@@ -17,7 +17,7 @@ public class ShallowestAllCplexStackelbergLP extends ShallowestBrokenCplexStacke
     }
 
     @Override
-    protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Set<Sequence> brokenStrategyCauses) {
+    protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Iterable<Sequence> brokenStrategyCauses) {
         SequenceInformationSet lastSet = (SequenceInformationSet) brokenStrategyCauses.iterator().next().getLastInformationSet();
         Set<Sequence> outgoingSequences = lastSet.getOutgoingSequences();
 
