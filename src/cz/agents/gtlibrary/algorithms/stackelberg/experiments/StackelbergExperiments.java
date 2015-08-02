@@ -151,6 +151,10 @@ public class StackelbergExperiments {
             return new SumEnforcingStackelbergLP(leader, gameInfo);
         if(algType.equals("MaxIterLPEnforcing"))
             return new MaxEnforcingStackelbergLP(leader, gameInfo);
+        if(algType.equals("ExpValIterLPEnforcing"))
+            return new ExpValEnforcingStackelbergLP(leader, gameInfo);
+        if(algType.equals("ExpValIterLPForbidding"))
+            return new ExpValForbiddingStackelbergLP(leader, gameInfo);
         if (algType.equals("MaxIterLP"))
             return new MaxForbiddingStackelbergLP(leader, gameInfo);
         if (algType.startsWith("MultLP")) {

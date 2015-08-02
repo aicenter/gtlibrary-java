@@ -78,11 +78,16 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
                 System.out.println("-----------------------");
                 System.out.println("LP value: " + value);
-//                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
-//                    double variableValue = lpData.getSolver().getValue(entry.getValue());
-//
-//                    System.out.println(entry.getKey() + ": " + variableValue);
-//                }
+                System.out.println("n it: " + lpData.getSolver().getNiterations());
+                System.out.println("n nodes: " + lpData.getSolver().getNnodes());
+                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
+                    if (entry.getKey() instanceof Pair && ((Pair) entry.getKey()).getLeft().equals("v")) {
+                        double variableValue = lpData.getSolver().getValue(entry.getValue());
+
+                        if (variableValue != 0)
+                            System.out.println(entry.getKey() + ": " + variableValue);
+                    }
+                }
                 Map<InformationSet, Map<Sequence, Double>> behavStrat = getBehavioralStrategy(lpData, follower);
                 Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat);
 
@@ -137,7 +142,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                 }
             }
         }
-        if(shallowestBrokenStrategyCause == null)
+        if (shallowestBrokenStrategyCause == null)
             return null;
         return sort(shallowestBrokenStrategyCause, shallowestBrokenStrategyCause.keySet());
     }
@@ -233,7 +238,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         }
     }
 
-//    protected Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
+    //    protected Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
 //        Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
 //
 //        for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
@@ -267,7 +272,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //        }
 //        return strategy;
 //    }
-
+//           zksuit se zamyslet jestli je to opravdu BR nebo jestli nemůže být s nějakými nulovými P
     protected Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
         Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
 
