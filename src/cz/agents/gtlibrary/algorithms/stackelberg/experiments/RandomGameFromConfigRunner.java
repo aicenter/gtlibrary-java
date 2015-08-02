@@ -91,7 +91,7 @@ public class RandomGameFromConfigRunner {
                 cutsWriter.newLine();
                 cutsWriter.flush();
                 assert ((StackelbergSequenceFormMultipleLPs) solver).getAllRPCount(algConfig) == expectedRPCount;
-            } else if(algType.startsWith("IterLP")) {
+            } else if(solver instanceof SumForbiddingStackelbergLP) {
                 int lpCount = ((SumForbiddingStackelbergLP)solver).getLPInvocationCount();
 
                 lpCountWriter.write(String.valueOf(lpCount));
