@@ -102,13 +102,21 @@ public class SMJournalOnlineExperiments {
 
     public void handleDomain(String[] args) {
         if (args[2].equalsIgnoreCase("GS")) {  // Goofspiel
-            if (args.length != 5) {
+            if (args.length != 7) {
                 throw new IllegalArgumentException("Illegal domain arguments count: 2 parameters are required {SEED} {DEPTH}");
             }
             GSGameInfo.seed = new Integer(args[3]);
             int depth = new Integer(args[4]);
             GSGameInfo.depth = depth;
+
+            boolean binUtil = new Boolean(args[5]);
+            GSGameInfo.BINARY_UTILITIES = binUtil;
+
+            boolean fixedCards = new Boolean(args[6]);
+            GSGameInfo.useFixedNatureSequence = fixedCards;
+
             GSGameInfo.regenerateCards = true;
+
             //GSGameInfo.useFixedNatureSequence = false;
         } else if (args[2].equalsIgnoreCase("OZ")) { // Oshi Zumo
             if (args.length != 7) {
