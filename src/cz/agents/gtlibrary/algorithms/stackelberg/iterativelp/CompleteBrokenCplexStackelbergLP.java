@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -14,7 +15,7 @@ public class CompleteBrokenCplexStackelbergLP extends ShallowestBrokenCplexStack
         super(leader, info);
     }
 
-    protected Set<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy) {
+    protected Set<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy, LPData lpData) {
         Set<Sequence> shallowestBrokenStrategyCause = null;
 
         for (Map<Sequence, Double> isStrategy : strategy.values()) {
