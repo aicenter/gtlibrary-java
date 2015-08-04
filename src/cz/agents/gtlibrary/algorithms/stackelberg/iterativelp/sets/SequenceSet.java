@@ -38,7 +38,8 @@ public class SequenceSet {
     }
 
     public void setValue(double value) {
-        this.value = value;
+        if (value < this.value)
+            this.value = value;
     }
 
     public Set<SequenceSet> getDirectSuperSets() {
@@ -71,7 +72,7 @@ public class SequenceSet {
 
     @Override
     public String toString() {
-        return "{"  + value +
+        return "{" + value +
                 ", " + sequence +
                 '}';
     }

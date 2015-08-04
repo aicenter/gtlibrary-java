@@ -1,6 +1,8 @@
-package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
+package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.SumEnforcingStackelbergLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.sets.SequenceSet;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -15,8 +17,9 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
-public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
-    public BFSForbiddingStackelbergLP(Player leader, GameInfo info) {
+public class BFSEnforcingStackelbergLP extends SumEnforcingStackelbergLP {
+
+    public BFSEnforcingStackelbergLP(Player leader, GameInfo info) {
         super(leader, info);
     }
 
@@ -30,11 +33,24 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
             }
         });
 
+//        current.setValue(value);
         for (Sequence brokenStrategyCause : brokenStrategyCauses) {
             restrictFollowerPlay(brokenStrategyCause, brokenStrategyCauses, lpData);
+//            currentSequences.add(brokenStrategyCause);
+//            double bestFit = getBestFit(initSet, lowerBound);
+//
+//            System.err.println("best fit: " + bestFit + ". lower bound: " + lowerBound);
+//            if (bestFit <= lowerBound) {
+//                System.err.println("duplicity cut");
+//                return dummyResult;
+//            }
+//            SequenceSet temp = current;
+//
+//            current = current.createSuperSet(brokenStrategyCause, value);
             Pair<Iterable<Sequence>, Double> result = probe();
 
             if (result.getRight() > Double.NEGATIVE_INFINITY) {
+//                current.setValue(result.getRight());
                 if (result.getLeft() == null) {
                     if (lowerBound <= result.getRight()) {
                         lowerBound = result.getRight();
@@ -42,21 +58,48 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
                             currentBest = new Pair<>(null, result.getRight());
                     }
                 } else {
-                    queue.add(new Triplet<>(result.getLeft(), brokenStrategyCause, result.getRight()));
+                    if (result.getRight() > lowerBound)
+                        queue.add(new Triplet<>(result.getLeft(), brokenStrategyCause, result.getRight()));
                 }
             }
+//            current = temp;
+//            currentSequences.remove(brokenStrategyCause);
             removeRestriction(brokenStrategyCause, brokenStrategyCauses, lpData);
         }
         while (!queue.isEmpty()) {
             Triplet<Iterable<Sequence>, Sequence, Double> current = queue.poll();
 
+//            currentSequences.add(current.getSecond());
+//            double bestFit = getBestFit(initSet, getLowerBound(lowerBound, currentBest));
+//
+//            System.err.println("best fit: " + bestFit + ". lower bound: " + getLowerBound(lowerBound, currentBest));
+//            if (bestFit <= lowerBound) {
+//                System.err.println("duplicity cut");
+//                return dummyResult;
+//            }
+//            SequenceSet temp = this.current;
+//
+//            this.current = this.current.createSuperSet(current.getSecond(), current.getThird() == Double.NEGATIVE_INFINITY ? value : current.getThird());
             restrictFollowerPlay(current.getSecond(), brokenStrategyCauses, lpData);
             if (current.getThird() > lowerBound)
                 for (Sequence brokenStrategyCause : current.getFirst()) {
                     restrictFollowerPlay(brokenStrategyCause, current.getFirst(), lpData);
                     lowerBound = getLowerBound(lowerBound, currentBest);
+//                    currentSequences.add(brokenStrategyCause);
+//                    bestFit = getBestFit(initSet, lowerBound);
+//
+//                    System.err.println("best fit: " + bestFit + ". lower bound: " + getLowerBound(lowerBound, currentBest));
+//                    if (bestFit <= lowerBound) {
+//                        System.err.println("duplicity cut");
+//                        return dummyResult;
+//                    }
+//                    SequenceSet tempTemp = this.current;
+//
+//                    this.current = this.current.createSuperSet(brokenStrategyCause, current.getThird() == Double.NEGATIVE_INFINITY ? value : current.getThird());
 
                     Pair<Map<Sequence, Double>, Double> result = solve(lowerBound, upperBound);
+
+//                    this.current.setValue(result.getRight());
                     if (result.getRight() > currentBest.getRight()) {
                         currentBest = result;
                         if (currentBest.getRight() >= value - eps) {
@@ -64,8 +107,12 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
                             return currentBest;
                         }
                     }
+//                    this.current = tempTemp;
+//                    currentSequences.remove(brokenStrategyCause);
                     removeRestriction(brokenStrategyCause, current.getFirst(), lpData);
                 }
+//            this.current = temp;
+//            currentSequences.remove(current.getSecond());
             removeRestriction(current.getSecond(), brokenStrategyCauses, lpData);
         }
         return currentBest;
