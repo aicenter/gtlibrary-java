@@ -648,6 +648,9 @@ public class SQFBestResponseAlgorithm {
                 continue;
             }
 
+            if (currentState.isGameEnd())
+                continue;
+
             if (currentState.isPlayerToMoveNature()) {
                 List<Action> tmp = expander.getActions(currentState);
                 for (Action a : tmp) {
@@ -673,7 +676,7 @@ public class SQFBestResponseAlgorithm {
                         }
                         s.removeLast();
                     }
-                    if (noUpdate) {
+                    if (noUpdate && !tmp.isEmpty()) {
                         GameState newState = currentState.performAction(tmp.get(0));
                         if (newState != null) {
                             queue.push(newState);
