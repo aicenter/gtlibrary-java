@@ -137,6 +137,10 @@ public class StackelbergExperiments {
     public static StackelbergSequenceFormLP getStackelbergSolver(String algType, GameState rootState, Player leader, Player follower, GameInfo gameInfo, Expander<SequenceInformationSet> expander) {
         if (algType.equals("MILP"))
             return new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
+        if (algType.equals("BFSEnforcingIterLP"))
+            return new BFSEnforcingStackelbergLP(leader, gameInfo);
+        if (algType.equals("BFSForbiddingIterLP"))
+            return new BFSForbiddingStackelbergLP(leader, gameInfo);
         if (algType.equals("IterLP"))
             return new SumForbiddingStackelbergLP(leader, gameInfo);
         if (algType.equals("IterLPCplexBroken"))

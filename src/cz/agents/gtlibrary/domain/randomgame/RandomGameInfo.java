@@ -45,7 +45,7 @@ public class RandomGameInfo implements GameInfo {
     //    public static double KEEP_OBS_PROB = 0.9;
     public static int[] ACTIONS;
 
-    public static long seed = 6;
+    public static long seed = 1;
 
     public static Random rnd = new HighQualityRandom(seed);
 

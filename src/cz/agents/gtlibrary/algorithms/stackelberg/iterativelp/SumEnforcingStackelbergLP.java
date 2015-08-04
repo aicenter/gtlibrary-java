@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.sets.SequenceSet;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -11,18 +12,38 @@ import cz.agents.gtlibrary.utils.Pair;
 import java.util.*;
 
 public class SumEnforcingStackelbergLP extends SumForbiddingStackelbergLP {
+
+    protected SequenceSet initSet = SequenceSet.empty;
+    protected SequenceSet current = SequenceSet.empty;
+    protected LinkedHashSet<Sequence> currentSequences;
+
     public SumEnforcingStackelbergLP(Player leader, GameInfo info) {
         super(leader, info);
+        currentSequences = new LinkedHashSet<>();
     }
 
     @Override
     protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Iterable<Sequence> brokenStrategyCauses) {
         Pair<Map<Sequence, Double>, Double> currentBest = dummyResult;
 
+//        current.setValue(value);
         for (Sequence brokenStrategyCause : brokenStrategyCauses) {
             restrictFollowerPlay(brokenStrategyCause, brokenStrategyCauses, lpData);
+//            currentSequences.add(brokenStrategyCause);
+//            double bestFit = getBestFit(initSet, getLowerBound(lowerBound, currentBest));
+//
+//            System.err.println("best fit: " + bestFit + ". lower bound: " + getLowerBound(lowerBound, currentBest));
+//            if (bestFit <= lowerBound) {
+//                System.err.println("duplicity cut");
+//                return dummyResult;
+//            }
+//            SequenceSet temp = current;
+//
+//            current = current.createSuperSet(brokenStrategyCause, value);
+//            temp.setValue(value);
             Pair<Map<Sequence, Double>, Double> result = solve(getLowerBound(lowerBound, currentBest), upperBound);
 
+//            current.setValue(result.getRight());
             if (result.getRight() > currentBest.getRight()) {
                 currentBest = result;
                 if (currentBest.getRight() >= value - eps) {
@@ -30,6 +51,9 @@ public class SumEnforcingStackelbergLP extends SumForbiddingStackelbergLP {
                     return currentBest;
                 }
             }
+
+//            current = temp;
+//            currentSequences.remove(brokenStrategyCause);
             removeRestriction(brokenStrategyCause, brokenStrategyCauses, lpData);
         }
         return currentBest;
@@ -79,7 +103,7 @@ public class SumEnforcingStackelbergLP extends SumForbiddingStackelbergLP {
     }
 
     @Override
-    protected Iterable<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy) {
+    protected Iterable<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy, LPData lpData) {
         SequenceInformationSet set = null;
         Map<Sequence, Double> shallowestBrokenStrategyCause = null;
 
@@ -99,7 +123,7 @@ public class SumEnforcingStackelbergLP extends SumForbiddingStackelbergLP {
                 }
             }
         }
-        if(set == null)
+        if (set == null)
             return null;
         return sort(shallowestBrokenStrategyCause, set.getOutgoingSequences());
     }
@@ -113,13 +137,25 @@ public class SumEnforcingStackelbergLP extends SumForbiddingStackelbergLP {
                 Double o1Value = shallowestBrokenStrategyCause.get(o1);
                 Double o2Value = shallowestBrokenStrategyCause.get(o2);
 
-                if(o1Value == null)
+                if (o1Value == null)
                     o1Value = 0d;
-                if(o2Value == null)
+                if (o2Value == null)
                     o2Value = 0d;
                 return Double.compare(o2Value, o1Value);
             }
         });
         return list;
+    }
+
+    public double getBestFit(SequenceSet set, double currentBest) {
+        double min = set.getValue();
+
+        if (min < currentBest)
+            return min;
+        for (SequenceSet superSet : set.getDirectSuperSets()) {
+            if (currentSequences.contains(superSet.getSequence()))
+                min = Math.min(min, getBestFit(superSet, min));
+        }
+        return min;
     }
 }

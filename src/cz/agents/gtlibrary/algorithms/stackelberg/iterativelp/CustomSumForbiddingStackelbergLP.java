@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -15,7 +16,7 @@ public class CustomSumForbiddingStackelbergLP extends SumForbiddingStackelbergLP
     }
 
     @Override
-    protected Iterable<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy) {
+    protected Iterable<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy, LPData lpData) {
         Map<Sequence, Double> chosenBrokenStrategyCause = null;
         double maxDifference = Double.NEGATIVE_INFINITY;
 

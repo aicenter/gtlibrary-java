@@ -77,13 +77,14 @@ public class StackelbergRunner {
 //        runner.generate(rootState.getAllPlayers()[0], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new ExpValEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new ExpValEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new ExpValForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new SumEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //          runner.generate(rootState.getAllPlayers()[0], new CustomMaxEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new CustomSumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new MaxForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new CustomMaxForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
-        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergSLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergSLP(rootState.getAllPlayers()[0], gameInfo));
         new GambitEFG().write("randomGame.gbt", rootState, expander);
     }
 
@@ -188,15 +189,15 @@ public class StackelbergRunner {
         finalTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
 
         int[] support_size = new int[]{0, 0};
-        for (Player player : actingPlayers) {
-            for (Sequence sequence : realizationPlans.get(player).keySet()) {
-                if (realizationPlans.get(player).get(sequence) > 0) {
-                    support_size[player.getId()]++;
-                    if (DEBUG)
-                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
-                }
-            }
-        }
+//        for (Player player : actingPlayers) {
+//            for (Sequence sequence : realizationPlans.get(player).keySet()) {
+//                if (realizationPlans.get(player).get(sequence) > 0) {
+//                    support_size[player.getId()]++;
+//                    if (DEBUG)
+//                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+//                }
+//            }
+//        }
 
         try {
             Runtime.getRuntime().gc();

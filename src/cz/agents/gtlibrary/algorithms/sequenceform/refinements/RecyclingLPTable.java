@@ -200,7 +200,7 @@ public class RecyclingLPTable extends LPTable {
                 createNewConstraint(x, cplexConstraints, rowEntry.getKey(), rowEntry.getValue(), equationIndex);
             } else {
                 //				modifyExistingConstraint(x, cplexConstraints, rowEntry, equationIndex);
-                assert false;
+//                assert false;
             }
         }
         updateConstants(cplexConstraints);

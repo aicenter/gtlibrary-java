@@ -25,6 +25,8 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     protected GameInfo info;
     protected ThreadMXBean threadBean;
     protected Pair<Map<Sequence, Double>, Double> dummyResult = new Pair<>(null, Double.NEGATIVE_INFINITY);
+    protected StackelbergConfig algConfig;
+    protected Expander<SequenceInformationSet> expander;
 
     protected int lpInvocationCount;
 
@@ -41,13 +43,15 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
     @Override
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
+        this.algConfig = algConfig;
+        this.expander = expander;
         long startTime = threadBean.getCurrentThreadCpuTime();
 
-        addObjective(algConfig);
+        addObjective();
 //        addObjectiveViaConstraint(algConfig);
-        createPContinuationConstraints(algConfig, expander);
-        createSequenceConstraints(algConfig);
-        createISActionConstraints(algConfig);
+        createPContinuationConstraints();
+        createSequenceConstraints();
+        createISActionConstraints();
 
         System.out.println("LP build...");
         lpTable.watchAllPrimalVariables();
@@ -78,23 +82,23 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
                 System.out.println("-----------------------");
                 System.out.println("LP value: " + value);
-                System.out.println("n it: " + lpData.getSolver().getNiterations());
-                System.out.println("n nodes: " + lpData.getSolver().getNnodes());
-                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
-                    if (entry.getKey() instanceof Pair && ((Pair) entry.getKey()).getLeft().equals("v")) {
-                        double variableValue = lpData.getSolver().getValue(entry.getValue());
+//                System.out.println("n it: " + lpData.getSolver().getNiterations());
+//                System.out.println("n nodes: " + lpData.getSolver().getNnodes());
+//                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
+//                    if (entry.getKey() instanceof Pair && ((Pair) entry.getKey()).getLeft().equals("v")) {
+//                        double variableValue = lpData.getSolver().getValue(entry.getValue());
+//
+//                        if (variableValue != 0)
+//                            System.out.println(entry.getKey() + ": " + variableValue);
+//                    }
+//                }
+                Map<InformationSet, Map<Sequence, Double>> behavStrat = getSequenceEvaluation(lpData, follower);
+                Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat, lpData);
 
-                        if (variableValue != 0)
-                            System.out.println(entry.getKey() + ": " + variableValue);
-                    }
-                }
-                Map<InformationSet, Map<Sequence, Double>> behavStrat = getBehavioralStrategy(lpData, follower);
-                Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat);
-
-                System.out.println("follower behav. strat.");
-                for (Map.Entry<InformationSet, Map<Sequence, Double>> entry : behavStrat.entrySet()) {
-                    System.out.println(entry);
-                }
+//                System.out.println("follower behav. strat.");
+//                for (Map.Entry<InformationSet, Map<Sequence, Double>> entry : behavStrat.entrySet()) {
+//                    System.out.println(entry);
+//                }
                 if (brokenStrategyCauses == null) {
 //                    System.out.println("Found solution candidate with value: " + value);
 //                    Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
@@ -111,7 +115,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                 } else {
                     if (value <= lowerBound) {
-                        System.out.println("***********lower bound " + lowerBound + " not exceeded, cutting***********");
+//                        System.out.println("***********lower bound " + lowerBound + " not exceeded, cutting***********");
                         return dummyResult;
                     }
                     return handleBrokenStrategyCause(lowerBound, upperBound, lpData, value, brokenStrategyCauses);
@@ -125,7 +129,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         return dummyResult;
     }
 
-    protected Iterable<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy) {
+    protected Iterable<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy, LPData lpData) {
         Map<Sequence, Double> shallowestBrokenStrategyCause = null;
 
         for (Map.Entry<InformationSet, Map<Sequence, Double>> isStrategy : strategy.entrySet()) {
@@ -159,7 +163,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         return list;
     }
 
-    private void printBinaryVariableValues(LPData data) {
+    protected void printBinaryVariableValues(LPData data) {
         for (Map.Entry<Object, IloNumVar> entry : data.getWatchedPrimalVariables().entrySet()) {
             if (entry.getKey() instanceof Pair) {
                 Pair key = (Pair) entry.getKey();
@@ -272,8 +276,8 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //        }
 //        return strategy;
 //    }
-//           zksuit se zamyslet jestli je to opravdu BR nebo jestli nemůže být s nějakými nulovými P
-    protected Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
+
+    protected Map<InformationSet, Map<Sequence, Double>> getSequenceEvaluation(LPData lpData, Player player) {
         Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
 
         for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
@@ -394,7 +398,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         return currentValue;
     }
 
-    protected void createISActionConstraints(StackelbergConfig algConfig) {
+    protected void createISActionConstraints() {
         for (SequenceInformationSet informationSet : algConfig.getAllInformationSets().values()) {
             if (informationSet.getPlayer().equals(follower)) {
                 if (!informationSet.getOutgoingSequences().isEmpty()) {
@@ -467,13 +471,13 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         lpTable.setConstant("obj_const", -info.getMaxUtility());
     }
 
-    protected void addObjective(StackelbergConfig algConfig) {
+    protected void addObjective() {
         for (GameState leaf : algConfig.getAllLeafs()) {
             lpTable.setObjective(createSeqPairVarKey(leaf), leaf.getUtilities()[leader.getId()] * leaf.getNatureProbability());
         }
     }
 
-    protected void createSequenceConstraints(StackelbergConfig algConfig) {
+    protected void createSequenceConstraints() {
         createSequenceConstraint(algConfig, new ArrayListSequenceImpl(follower));
         for (Sequence followerSequence : algConfig.getSequencesFor(follower)) {
             createSequenceConstraint(algConfig, followerSequence);
@@ -506,7 +510,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         }
     }
 
-    protected void createPContinuationConstraints(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
+    protected void createPContinuationConstraints() {
         createInitPConstraint();
         Set<Object> blackList = new HashSet<>();
         Set<Pair<Sequence, Sequence>> pStops = new HashSet<>();
