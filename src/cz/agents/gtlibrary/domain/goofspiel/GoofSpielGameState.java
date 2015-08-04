@@ -299,6 +299,7 @@ public class GoofSpielGameState extends SimultaneousGameState {
 
 	@Override
 	public double[] evaluate() {
+        double scale = (GSGameInfo.BINARY_UTILITIES) ? 1 : (GSGameInfo.CARDS_FOR_PLAYER.length * (GSGameInfo.CARDS_FOR_PLAYER.length + 1) / 2);
 		if (round == GSGameInfo.depth)
 			return getEndGameUtilities();
 		double sum = playerScore[0] + playerScore[1];
@@ -306,9 +307,9 @@ public class GoofSpielGameState extends SimultaneousGameState {
 		if (sum == 0)
 			return new double[] { 0, 0, 0 };
 		if (unwinnableFor(players[0]))
-			return new double[] { -1, 1, 0 };
+			return new double[] { -scale, scale, 0 };
 		if (unwinnableFor(players[1]))
-			return new double[] { 1, -1, 0 };
+			return new double[] { scale, -scale, 0 };
 		// double value = (playerScore[0] - sum / 2) / (sum / 2);
 		// if(value > 0)
 		// value -= 1e-3;
@@ -325,12 +326,12 @@ public class GoofSpielGameState extends SimultaneousGameState {
 		double value = FastTanh
 				.tanh((playerScore[0] - playerScore[1])
 						/ sum
-						* round
+						* round * 0.0
 						/ GSGameInfo.CARDS_FOR_PLAYER.length
 						+ (getSumOfRemainingCards() / (GSGameInfo.CARDS_FOR_PLAYER.length
 								* (GSGameInfo.CARDS_FOR_PLAYER.length + 1) / 2))
 						* (sumRemCardsP1 - sumRemCardsP2)
-						/ (sumRemCardsP1 + sumRemCardsP2 + 1));
+						/ (sumRemCardsP1 + sumRemCardsP2 + 1))*scale;
 		return new double[] { value, -value, 0 };
 	}
 
