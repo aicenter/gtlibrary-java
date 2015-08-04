@@ -16,7 +16,7 @@ public class MaxEnforcingStackelbergLP extends SumEnforcingStackelbergLP {
         super(leader, info);
     }
 
-    protected Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
+    protected Map<InformationSet, Map<Sequence, Double>> getSequenceEvaluation(LPData lpData, Player player) {
         Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
 
         for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
