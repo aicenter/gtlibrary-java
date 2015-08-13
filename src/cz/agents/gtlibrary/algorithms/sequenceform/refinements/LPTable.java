@@ -30,8 +30,8 @@ import java.util.Map.Entry;
 
 public class LPTable {
 
-    public int CPLEXALG = IloCplex.Algorithm.Barrier;
-    public int CPLEXTHREADS = 1; // change to 0 to have no restrictions
+    public static int CPLEXALG = IloCplex.Algorithm.Auto;
+    public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
 
     protected Map<Object, Double> objective;
     protected Map<Object, Map<Object, Double>> constraints;
