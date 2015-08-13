@@ -31,7 +31,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     protected int lpInvocationCount;
 
     public SumForbiddingStackelbergLP(Player leader, GameInfo info) {
-        super(info.getAllPlayers(), leader, info.getOpponent(leader));
+        super(new Player[]{info.getAllPlayers()[0], info.getAllPlayers()[1]}, leader, info.getOpponent(leader));
         lpTable = new RecyclingMILPTable();
         this.leader = leader;
         this.follower = info.getOpponent(leader);
@@ -92,7 +92,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //                            System.out.println(entry.getKey() + ": " + variableValue);
 //                    }
 //                }
-                Map<InformationSet, Map<Sequence, Double>> behavStrat = getSequenceEvaluation(lpData, follower);
+                Map<InformationSet, Map<Sequence, Double>> behavStrat = getBehavioralStrategy(lpData, follower);
                 Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat, lpData);
 
 //                System.out.println("follower behav. strat.");
@@ -101,17 +101,17 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //                }
                 if (brokenStrategyCauses == null) {
 //                    System.out.println("Found solution candidate with value: " + value);
-//                    Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
-//                    Map<Sequence, Double> followerRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, follower));
+                    Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
+                    Map<Sequence, Double> followerRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, follower));
 //
-//                    System.out.println("Leader real. plan:");
-//                    for (Map.Entry<Sequence, Double> entry : leaderRealPlan.entrySet()) {
-//                        System.out.println(entry);
-//                    }
-//                    System.out.println("Follower real. plan:");
-//                    for (Map.Entry<Sequence, Double> entry : followerRealPlan.entrySet()) {
-//                        System.out.println(entry);
-//                    }
+                    System.out.println("Leader real. plan:");
+                    for (Map.Entry<Sequence, Double> entry : leaderRealPlan.entrySet()) {
+                        System.out.println(entry);
+                    }
+                    System.out.println("Follower real. plan:");
+                    for (Map.Entry<Sequence, Double> entry : followerRealPlan.entrySet()) {
+                        System.out.println(entry);
+                    }
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                 } else {
                     if (value <= lowerBound) {
@@ -313,6 +313,41 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         return strategy;
     }
 
+    protected Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
+        Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
+
+        for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
+            if (entry.getKey() instanceof Pair) {
+                Pair varKey = (Pair) entry.getKey();
+
+                if (varKey.getLeft() instanceof Sequence && varKey.getRight() instanceof Sequence) {
+                    Sequence playerSequence = player.equals(leader) ? (Sequence) varKey.getLeft() : (Sequence) varKey.getRight();
+                    Map<Sequence, Double> isStrategy = strategy.get(playerSequence.getLastInformationSet());
+                    Double currentValue = getValueFromCplex(lpData, entry);
+
+                    if (currentValue > eps)
+                        if (isSequenceFrom(player.equals(leader) ? (Sequence) varKey.getRight() : (Sequence) varKey.getLeft(), playerSequence.getLastInformationSet()))
+                            if (isStrategy == null) {
+                                if (currentValue > eps) {
+                                    isStrategy = new HashMap<>();
+                                    double behavioralStrat = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
+
+                                    isStrategy.put(playerSequence, behavioralStrat);
+                                    strategy.put(playerSequence.getLastInformationSet(), isStrategy);
+                                }
+                            } else {
+                                double behavioralStrategy = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
+
+                                if (behavioralStrategy > eps) {
+                                    isStrategy.put(playerSequence, behavioralStrategy);
+                                }
+                            }
+                }
+            }
+        }
+        return strategy;
+    }
+
     protected double getBehavioralStrategy(LPData lpData, Pair varKey, Sequence playerSequence, Double currentValue) {
         double behavioralStrat = currentValue;
 
@@ -472,9 +507,12 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     }
 
     protected void addObjective() {
-        for (GameState leaf : algConfig.getAllLeafs()) {
-            lpTable.setObjective(createSeqPairVarKey(leaf), leaf.getUtilities()[leader.getId()] * leaf.getNatureProbability());
+        for (Map.Entry<GameState, Double[]> entry : algConfig.getActualNonZeroUtilityValuesInLeafsGenSum().entrySet()) {
+            lpTable.setObjective(createSeqPairVarKey(entry.getKey()), entry.getValue()[leader.getId()]);
         }
+//        for (GameState leaf : algConfig.getAllLeafs()) {
+//            lpTable.setObjective(createSeqPairVarKey(leaf), leaf.getUtilities()[leader.getId()] * leaf.getNatureProbability());
+//        }
     }
 
     protected void createSequenceConstraints() {
