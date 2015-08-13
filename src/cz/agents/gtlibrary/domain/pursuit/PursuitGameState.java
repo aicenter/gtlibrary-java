@@ -292,7 +292,8 @@ public class PursuitGameState extends SimultaneousGameState {
 
     @Override
     public String toString() {
-        return history.toString();
+//        return history.toString();
+        return "{"+evaderPosition.toString()+" | "+p1Position.toString()+","+p2Position.toString()+"}";
     }
 
 }
