@@ -20,10 +20,10 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class RPConfigurationGenerator {
-    public static final int bucketCount = 20;
-    public static final int bucketSize = 1000000;
-    public static final int countPerBucket = 20;
-    public static final int start = 1000000;
+    public static final int bucketCount = 19;
+    public static final int bucketSize = 100000;
+    public static final int countPerBucket = 50;
+    public static final int start = 100000;
     public static BufferedWriter writer;
 
     public static void main(String[] args) throws IOException {
@@ -36,7 +36,7 @@ public class RPConfigurationGenerator {
                 if(depth == 3 && branchingFactor == 3)
                     continue;
                 for (int obs = 2; obs < 4; obs++) {
-                    for (int seed = 0; seed < 1000000; seed++) {
+                    for (int seed = 0; seed < 100000; seed++) {
                         RandomGameInfo.seed = seed;
                         RandomGameInfo.MAX_OBSERVATION = obs;
                         RandomGameInfo.MAX_DEPTH = depth;
@@ -47,7 +47,7 @@ public class RPConfigurationGenerator {
                         FullSequenceEFG builder = new FullSequenceEFG(root, expander, new RandomGameInfo(), config);
 
                         builder.generateCompleteGame();
-                        long rpCount = RPCounter.count(config, expander, config.getInformationSetFor(root), root.getAllPlayers()[1]);//getRPCount(root.getAllPlayers()[0], root.getAllPlayers()[1], config, expander);
+                        long rpCount = RPCounter.count(config, expander, config.getInformationSetFor(root), root.getAllPlayers()[0]);//getRPCount(root.getAllPlayers()[0], root.getAllPlayers()[1], config, expander);
 
                         System.out.println(rpCount);
                         if (rpCount > start) {
@@ -119,7 +119,7 @@ public class RPConfigurationGenerator {
     private static void storeConfiguration(long rpCount) {
         try {
             if (writer == null)
-                writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("config1mto20m"), true)));
+                writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("config100kto2000k"), true)));
             writer.write(RandomGameInfo.seed + " " + RandomGameInfo.MAX_OBSERVATION + " " + RandomGameInfo.MAX_DEPTH + " " + RandomGameInfo.MAX_BF + " " + rpCount);
             writer.newLine();
             writer.flush();

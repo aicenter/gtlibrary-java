@@ -161,10 +161,10 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
         resultStrategies.put(leader, leaderResult);
         resultValues.put(leader, maxValue);
         System.out.println("final result with value " + maxValue + ": ");
-//        for (Map.Entry<Sequence, Double> entry : leaderResult.entrySet()) {
-//            if (entry.getValue() > 0)
-//                System.out.println(entry);
-//        }
+        for (Map.Entry<Sequence, Double> entry : leaderResult.entrySet()) {
+            if (entry.getValue() > 0)
+                System.out.println(entry);
+        }
         System.out.println("Upper bound cuts: " + upperBoundCut);
         System.out.println("Feasibility cuts: " + feasibilityCut);
         System.out.println("Total RP count: " + totalRPCount);
