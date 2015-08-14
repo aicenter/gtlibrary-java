@@ -12,10 +12,7 @@ import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
 import ilog.cplex.IloCplex;
 
-import java.util.Comparator;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 
 public class BFSEnforcingStackelbergLP extends SumEnforcingStackelbergLP {
 
@@ -33,73 +30,36 @@ public class BFSEnforcingStackelbergLP extends SumEnforcingStackelbergLP {
             }
         });
 
-//        current.setValue(value);
         for (Sequence brokenStrategyCause : brokenStrategyCauses) {
             restrictFollowerPlay(brokenStrategyCause, brokenStrategyCauses, lpData);
-//            currentSequences.add(brokenStrategyCause);
-//            double bestFit = getBestFit(initSet, lowerBound);
-//
-//            System.err.println("best fit: " + bestFit + ". lower bound: " + lowerBound);
-//            if (bestFit <= lowerBound) {
-//                System.err.println("duplicity cut");
-//                return dummyResult;
-//            }
-//            SequenceSet temp = current;
-//
-//            current = current.createSuperSet(brokenStrategyCause, value);
             Pair<Iterable<Sequence>, Double> result = probe();
 
             if (result.getRight() > Double.NEGATIVE_INFINITY) {
-//                current.setValue(result.getRight());
                 if (result.getLeft() == null) {
                     if (lowerBound <= result.getRight()) {
                         lowerBound = result.getRight();
                         if (result.getRight() > currentBest.getRight())
                             currentBest = new Pair<>(null, result.getRight());
                     }
+                } else if(result.getLeft().equals(Collections.EMPTY_LIST)) {
+                    return new Pair<>(null, result.getRight());
                 } else {
                     if (result.getRight() > lowerBound)
                         queue.add(new Triplet<>(result.getLeft(), brokenStrategyCause, result.getRight()));
                 }
             }
-//            current = temp;
-//            currentSequences.remove(brokenStrategyCause);
             removeRestriction(brokenStrategyCause, brokenStrategyCauses, lpData);
         }
         while (!queue.isEmpty()) {
             Triplet<Iterable<Sequence>, Sequence, Double> current = queue.poll();
 
-//            currentSequences.add(current.getSecond());
-//            double bestFit = getBestFit(initSet, getLowerBound(lowerBound, currentBest));
-//
-//            System.err.println("best fit: " + bestFit + ". lower bound: " + getLowerBound(lowerBound, currentBest));
-//            if (bestFit <= lowerBound) {
-//                System.err.println("duplicity cut");
-//                return dummyResult;
-//            }
-//            SequenceSet temp = this.current;
-//
-//            this.current = this.current.createSuperSet(current.getSecond(), current.getThird() == Double.NEGATIVE_INFINITY ? value : current.getThird());
             restrictFollowerPlay(current.getSecond(), brokenStrategyCauses, lpData);
             if (current.getThird() > lowerBound)
                 for (Sequence brokenStrategyCause : current.getFirst()) {
                     restrictFollowerPlay(brokenStrategyCause, current.getFirst(), lpData);
                     lowerBound = getLowerBound(lowerBound, currentBest);
-//                    currentSequences.add(brokenStrategyCause);
-//                    bestFit = getBestFit(initSet, lowerBound);
-//
-//                    System.err.println("best fit: " + bestFit + ". lower bound: " + getLowerBound(lowerBound, currentBest));
-//                    if (bestFit <= lowerBound) {
-//                        System.err.println("duplicity cut");
-//                        return dummyResult;
-//                    }
-//                    SequenceSet tempTemp = this.current;
-//
-//                    this.current = this.current.createSuperSet(brokenStrategyCause, current.getThird() == Double.NEGATIVE_INFINITY ? value : current.getThird());
-
                     Pair<Map<Sequence, Double>, Double> result = solve(lowerBound, upperBound);
 
-//                    this.current.setValue(result.getRight());
                     if (result.getRight() > currentBest.getRight()) {
                         currentBest = result;
                         if (currentBest.getRight() >= value - eps) {
@@ -107,12 +67,8 @@ public class BFSEnforcingStackelbergLP extends SumEnforcingStackelbergLP {
                             return currentBest;
                         }
                     }
-//                    this.current = tempTemp;
-//                    currentSequences.remove(brokenStrategyCause);
                     removeRestriction(brokenStrategyCause, current.getFirst(), lpData);
                 }
-//            this.current = temp;
-//            currentSequences.remove(current.getSecond());
             removeRestriction(current.getSecond(), brokenStrategyCauses, lpData);
         }
         return currentBest;
@@ -129,7 +85,7 @@ public class BFSEnforcingStackelbergLP extends SumEnforcingStackelbergLP {
             lpData.getSolver().solve();
             lpInvocationCount++;
             overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
-            printBinaryVariableValues(lpData);
+//            printBinaryVariableValues(lpData);
             if (lpData.getSolver().getStatus() == IloCplex.Status.Optimal) {
                 double value = lpData.getSolver().getObjValue();
 
@@ -143,6 +99,13 @@ public class BFSEnforcingStackelbergLP extends SumEnforcingStackelbergLP {
 //                            System.out.println(entry.getKey() + ": " + variableValue);
 //                    }
 //                }
+                Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getLeaderBehavioralStrategy(lpData, leader));
+                Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
+
+                if(Math.abs(result.getRight() - value) < eps) {
+                    System.out.println("solution found in probe BR");
+                    return new Pair<Iterable<Sequence>, Double>(Collections.EMPTY_LIST, value);
+                }
                 Map<InformationSet, Map<Sequence, Double>> behavStrat = getSequenceEvaluation(lpData, follower);
 //                Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat);
 //
