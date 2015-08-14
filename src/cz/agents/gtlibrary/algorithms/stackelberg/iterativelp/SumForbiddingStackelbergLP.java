@@ -4,8 +4,11 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.br.FollowerBestResponse;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
+import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
@@ -27,6 +30,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     protected Pair<Map<Sequence, Double>, Double> dummyResult = new Pair<>(null, Double.NEGATIVE_INFINITY);
     protected StackelbergConfig algConfig;
     protected Expander<SequenceInformationSet> expander;
+    protected FollowerBestResponse followerBestResponse;
 
     protected int lpInvocationCount;
 
@@ -45,6 +49,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         this.algConfig = algConfig;
         this.expander = expander;
+        followerBestResponse = new FollowerBestResponse(algConfig.getRootState(), expander, algConfig, leader, follower);
         long startTime = threadBean.getCurrentThreadCpuTime();
 
         addObjective();
@@ -85,33 +90,47 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //                System.out.println("n it: " + lpData.getSolver().getNiterations());
 //                System.out.println("n nodes: " + lpData.getSolver().getNnodes());
 //                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
-//                    if (entry.getKey() instanceof Pair && ((Pair) entry.getKey()).getLeft().equals("v")) {
+//                    if (entry.getKey() instanceof Pair && ((Pair) entry.getKey()).getLeft() instanceof Sequence && ((Pair) entry.getKey()).getRight() instanceof Sequence) {
 //                        double variableValue = lpData.getSolver().getValue(entry.getValue());
 //
 //                        if (variableValue != 0)
 //                            System.out.println(entry.getKey() + ": " + variableValue);
 //                    }
 //                }
-                Map<InformationSet, Map<Sequence, Double>> behavStrat = getBehavioralStrategy(lpData, follower);
-                Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat, lpData);
+                Map<InformationSet, Map<Sequence, Double>> followerBehavStrat = getBehavioralStrategy(lpData, follower);
+                Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(followerBehavStrat, lpData);
+                Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getLeaderBehavioralStrategy(lpData, leader));
+                Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
 
+                if(lowerBound < result.getRight()) {
+                    System.out.println("lower bound increased from " + lowerBound + " to " + result.getRight());
+                    lowerBound = result.getRight();
+                }
+
+                if(Math.abs(lowerBound - value) < eps) {
+                    System.out.println("solution found BR");
+                    return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
+                }
+//                GenSumUtilityCalculator calculator = new GenSumUtilityCalculator(algConfig.getRootState(), expander);
+//
+//                System.out.println(Arrays.toString(calculator.computeUtility(getP1Strategy(leaderRealPlan, followerRealPlan), getP2Strategy(leaderRealPlan, followerRealPlan))));
 //                System.out.println("follower behav. strat.");
-//                for (Map.Entry<InformationSet, Map<Sequence, Double>> entry : behavStrat.entrySet()) {
+//                for (Map.Entry<InformationSet, Map<Sequence, Double>> entry : followerBehavStrat.entrySet()) {
 //                    System.out.println(entry);
 //                }
                 if (brokenStrategyCauses == null) {
 //                    System.out.println("Found solution candidate with value: " + value);
-                    Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
-                    Map<Sequence, Double> followerRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, follower));
-//
-                    System.out.println("Leader real. plan:");
-                    for (Map.Entry<Sequence, Double> entry : leaderRealPlan.entrySet()) {
-                        System.out.println(entry);
-                    }
-                    System.out.println("Follower real. plan:");
-                    for (Map.Entry<Sequence, Double> entry : followerRealPlan.entrySet()) {
-                        System.out.println(entry);
-                    }
+//                    Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
+//                    Map<Sequence, Double> followerRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, follower));
+////
+//                    System.out.println("Leader real. plan:");
+//                    for (Map.Entry<Sequence, Double> entry : leaderRealPlan.entrySet()) {
+//                        System.out.println(entry);
+//                    }
+//                    System.out.println("Follower real. plan:");
+//                    for (Map.Entry<Sequence, Double> entry : followerRealPlan.entrySet()) {
+//                        System.out.println(entry);
+//                    }
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                 } else {
                     if (value <= lowerBound) {
@@ -127,6 +146,14 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
             e.printStackTrace();
         }
         return dummyResult;
+    }
+
+    private Strategy getP1Strategy(Map<Sequence, Double> leaderRealPlan, Map<Sequence, Double> followerRealPlan) {
+        return new NoMissingSeqStrategy(leader.getId() == 0 ? leaderRealPlan : followerRealPlan);
+    }
+
+    private Strategy getP2Strategy(Map<Sequence, Double> leaderRealPlan, Map<Sequence, Double> followerRealPlan) {
+        return new NoMissingSeqStrategy(leader.getId() == 1 ? leaderRealPlan : followerRealPlan);
     }
 
     protected Iterable<Sequence> getBrokenStrategyCauses(Map<InformationSet, Map<Sequence, Double>> strategy, LPData lpData) {
@@ -348,6 +375,58 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         return strategy;
     }
 
+    protected Map<InformationSet, Map<Sequence, Double>> getLeaderBehavioralStrategy(LPData lpData, Player player) {
+        Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
+//        Map<Pair<Sequence, Sequence>, Double> normalProcessedPairs = new HashMap<>();
+//        Map<Pair<Sequence, Sequence>, Double> additionalProcessedPairs = new HashMap<>();
+
+        for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
+            if (entry.getKey() instanceof Pair) {
+                Pair varKey = (Pair) entry.getKey();
+
+                if (varKey.getLeft() instanceof Sequence && varKey.getRight() instanceof Sequence) {
+                    Sequence playerSequence = player.equals(leader) ? (Sequence) varKey.getLeft() : (Sequence) varKey.getRight();
+                    Map<Sequence, Double> isStrategy = strategy.get(playerSequence.getLastInformationSet());
+                    Double currentValue = getValueFromCplex(lpData, entry);
+
+                    if (currentValue > eps)
+                        if (isRelevantTo(player.equals(leader) ? (Sequence) varKey.getRight() : (Sequence) varKey.getLeft(), playerSequence.getLastInformationSet())) {
+                            if (isStrategy == null) {
+                                if (currentValue > eps) {
+                                    isStrategy = new HashMap<>();
+                                    double behavioralStrat = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
+
+                                    isStrategy.put(playerSequence, behavioralStrat);
+                                    strategy.put(playerSequence.getLastInformationSet(), isStrategy);
+                                }
+                            } else {
+                                double behavioralStrategy = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
+
+                                if (behavioralStrategy > eps) {
+                                    isStrategy.put(playerSequence, behavioralStrategy);
+                                }
+                            }
+//                            if (isSequenceFrom(player.equals(leader) ? (Sequence) varKey.getRight() : (Sequence) varKey.getLeft(), playerSequence.getLastInformationSet(), followerRealPlan)) {
+//                                try {
+//                                    normalProcessedPairs.put(varKey, lpData.getSolver().getValue(entry.getValue()));
+//                                } catch (IloException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            } else {
+//                                try {
+//                                    additionalProcessedPairs.put(varKey, lpData.getSolver().getValue(entry.getValue()));
+//                                } catch (IloException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+                        }
+                }
+            }
+        }
+        return strategy;
+    }
+
+
     protected double getBehavioralStrategy(LPData lpData, Pair varKey, Sequence playerSequence, Double currentValue) {
         double behavioralStrat = currentValue;
 
@@ -376,6 +455,21 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         assert !sequence.getPlayer().equals(informationSet.getPlayer());
         for (GameState gameState : informationSet.getAllStates()) {
             if (gameState.getSequenceFor(sequence.getPlayer()).equals(sequence))
+                return true;
+        }
+        return false;
+    }
+
+    protected boolean isRelevantTo(Sequence sequence, InformationSet informationSet) {
+        if (informationSet == null)
+            return sequence.isEmpty();
+        assert !sequence.getPlayer().equals(informationSet.getPlayer());
+        for (GameState gameState : informationSet.getAllStates()) {
+            if (gameState.getSequenceFor(sequence.getPlayer()).equals(sequence))
+                return true;
+        }
+        for (GameState gameState : informationSet.getAllStates()) {
+            if(sequence.isPrefixOf(gameState.getSequenceFor(sequence.getPlayer())))
                 return true;
         }
         return false;
