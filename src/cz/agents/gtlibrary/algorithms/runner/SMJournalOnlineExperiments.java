@@ -103,7 +103,7 @@ public class SMJournalOnlineExperiments {
     public void handleDomain(String[] args) {
         if (args[2].equalsIgnoreCase("GS")) {  // Goofspiel
             if (args.length != 7) {
-                throw new IllegalArgumentException("Illegal domain arguments count: 2 parameters are required {SEED} {DEPTH}");
+                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {DEPTH} {BIN_UTIL} {FIXED_CARDS}");
             }
             GSGameInfo.seed = new Integer(args[3]);
             int depth = new Integer(args[4]);
@@ -119,13 +119,16 @@ public class SMJournalOnlineExperiments {
 
             //GSGameInfo.useFixedNatureSequence = false;
         } else if (args[2].equalsIgnoreCase("OZ")) { // Oshi Zumo
-            if (args.length != 7) {
-                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {COINS} {LOC_K} {MIN_BID}");
+            if (args.length != 8) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 5 parameters are required {SEED} {COINS} {LOC_K} {MIN_BID} {BIN_UTIL}");
             }
             OZGameInfo.seed = new Integer(args[3]);
             OZGameInfo.startingCoins = new Integer(args[4]);
             OZGameInfo.locK = new Integer(args[5]);
             OZGameInfo.minBid = new Integer(args[6]);
+            
+            boolean binUtil = new Boolean(args[7]);
+            OZGameInfo.BINARY_UTILITIES = binUtil;
         } else if (args[2].equalsIgnoreCase("PE")) { // Pursuit evasion
             if (args.length != 6) {
                 throw new IllegalArgumentException("Illegal pursuit evasion domain arguments count: 3 parameters are required {SEED} {DEPTH} {GRAPH}");
