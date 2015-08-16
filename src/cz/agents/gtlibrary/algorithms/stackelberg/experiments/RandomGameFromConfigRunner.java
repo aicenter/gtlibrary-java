@@ -114,6 +114,10 @@ public class RandomGameFromConfigRunner {
             LPTable.CPLEXALG = IloCplex.Algorithm.Primal;
         else if (cplexAlg.equals("NetworkSimplex"))
             LPTable.CPLEXALG = IloCplex.Algorithm.Network;
+        else if (cplexAlg.equals("Barrier"))
+            LPTable.CPLEXALG = IloCplex.Algorithm.Barrier;
+        else if (cplexAlg.equals("Auto"))
+            LPTable.CPLEXALG = IloCplex.Algorithm.Auto;
         else
             throw new UnsupportedOperationException("Cplex algorithm unsupported");
     }
