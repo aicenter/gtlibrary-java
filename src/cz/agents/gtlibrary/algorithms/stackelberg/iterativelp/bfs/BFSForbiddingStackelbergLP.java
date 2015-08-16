@@ -11,10 +11,7 @@ import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
 import ilog.cplex.IloCplex;
 
-import java.util.Comparator;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 
 public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
     public BFSForbiddingStackelbergLP(Player leader, GameInfo info) {
@@ -55,6 +52,8 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
                         if (result.getRight() > currentBest.getRight())
                             currentBest = new Pair<>(null, result.getRight());
                     }
+                } else if(result.getLeft().equals(Collections.EMPTY_LIST)) {
+                    return new Pair<>(null, result.getRight());
                 } else {
                     if (result.getRight() > lowerBound)
                         queue.add(new Triplet<>(result.getLeft(), brokenStrategyCause, result.getRight()));
@@ -141,6 +140,13 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
 //                            System.out.println(entry.getKey() + ": " + variableValue);
 //                    }
 //                }
+                Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getLeaderBehavioralStrategy(lpData, leader));
+                Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
+
+                if(Math.abs(result.getRight() - value) < eps) {
+                    System.out.println("solution found in probe BR");
+                    return new Pair<Iterable<Sequence>, Double>(Collections.EMPTY_LIST, value);
+                }
                 Map<InformationSet, Map<Sequence, Double>> behavStrat = getSequenceEvaluation(lpData, follower);
 //                Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat);
 //
