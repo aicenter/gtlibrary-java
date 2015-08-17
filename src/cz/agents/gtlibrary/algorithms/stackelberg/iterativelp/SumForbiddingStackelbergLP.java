@@ -33,6 +33,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     protected FollowerBestResponse followerBestResponse;
 
     protected int lpInvocationCount;
+    protected boolean solved = false;
 
     public SumForbiddingStackelbergLP(Player leader, GameInfo info) {
         super(new Player[]{info.getAllPlayers()[0], info.getAllPlayers()[1]}, leader, info.getOpponent(leader));
@@ -86,7 +87,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                 double value = lpData.getSolver().getObjValue();
 
                 System.out.println("-----------------------");
-                System.out.println("LP value: " + value);
+                System.out.println("LP value: " + value + " lower bound: " + lowerBound);
 //                System.out.println("n it: " + lpData.getSolver().getNiterations());
 //                System.out.println("n nodes: " + lpData.getSolver().getNnodes());
 //                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
@@ -100,17 +101,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                 Map<InformationSet, Map<Sequence, Double>> followerBehavStrat = getBehavioralStrategy(lpData, follower);
                 Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(followerBehavStrat, lpData);
                 Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getLeaderBehavioralStrategy(lpData, leader));
-                Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
 
-                if(lowerBound < result.getRight()) {
-                    System.out.println("lower bound increased from " + lowerBound + " to " + result.getRight());
-                    lowerBound = result.getRight();
-                }
-
-                if(Math.abs(lowerBound - value) < eps) {
-                    System.out.println("solution found BR");
-                    return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
-                }
 //                GenSumUtilityCalculator calculator = new GenSumUtilityCalculator(algConfig.getRootState(), expander);
 //
 //                System.out.println(Arrays.toString(calculator.computeUtility(getP1Strategy(leaderRealPlan, followerRealPlan), getP2Strategy(leaderRealPlan, followerRealPlan))));
@@ -133,8 +124,19 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //                    }
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                 } else {
+                    Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
+
+                    if(lowerBound < result.getRight()) {
+                        System.out.println("lower bound increased from " + lowerBound + " to " + result.getRight());
+                        lowerBound = result.getRight();
+                    }
+
+                    if(Math.abs(lowerBound - value) < eps) {
+                        System.out.println("solution found BR");
+                        return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
+                    }
                     if (value <= lowerBound) {
-//                        System.out.println("***********lower bound " + lowerBound + " not exceeded, cutting***********");
+                        System.out.println("***********lower bound " + lowerBound + " not exceeded, cutting***********");
                         return dummyResult;
                     }
                     return handleBrokenStrategyCause(lowerBound, upperBound, lpData, value, brokenStrategyCauses);

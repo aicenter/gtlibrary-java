@@ -52,8 +52,6 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
                         if (result.getRight() > currentBest.getRight())
                             currentBest = new Pair<>(null, result.getRight());
                     }
-                } else if(result.getLeft().equals(Collections.EMPTY_LIST)) {
-                    return new Pair<>(null, result.getRight());
                 } else {
                     if (result.getRight() > lowerBound)
                         queue.add(new Triplet<>(result.getLeft(), brokenStrategyCause, result.getRight()));
@@ -145,7 +143,7 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
 
                 if(Math.abs(result.getRight() - value) < eps) {
                     System.out.println("solution found in probe BR");
-                    return new Pair<Iterable<Sequence>, Double>(Collections.EMPTY_LIST, value);
+                    return new Pair<>(null, value);
                 }
                 Map<InformationSet, Map<Sequence, Double>> behavStrat = getSequenceEvaluation(lpData, follower);
 //                Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat);
