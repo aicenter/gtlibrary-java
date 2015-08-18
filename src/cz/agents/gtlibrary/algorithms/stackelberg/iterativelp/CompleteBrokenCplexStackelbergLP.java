@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class CompleteBrokenCplexStackelbergLP extends ShallowestBrokenCplexStackelbergSLP {
+public class CompleteBrokenCplexStackelbergLP extends ShallowestBrokenCplexStackelbergLP {
     public CompleteBrokenCplexStackelbergLP(Player leader, GameInfo info) {
         super(leader, info);
     }
@@ -23,7 +23,7 @@ public class CompleteBrokenCplexStackelbergLP extends ShallowestBrokenCplexStack
                 if (shallowestBrokenStrategyCause == null)
                     shallowestBrokenStrategyCause = new HashSet<>(isStrategy.keySet());
                 else
-                    shallowestBrokenStrategyCause = new HashSet<>(isStrategy.keySet());
+                    shallowestBrokenStrategyCause.addAll(isStrategy.keySet());
             }
         }
         return shallowestBrokenStrategyCause;

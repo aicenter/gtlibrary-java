@@ -10,7 +10,7 @@ import cz.agents.gtlibrary.utils.Pair;
 import java.util.Map;
 import java.util.Set;
 
-public class ShallowestAllCplexStackelbergLP extends ShallowestBrokenCplexStackelbergSLP {
+public class ShallowestAllCplexStackelbergLP extends ShallowestBrokenCplexStackelbergLP {
 
     public ShallowestAllCplexStackelbergLP(Player leader, GameInfo info) {
         super(leader, info);

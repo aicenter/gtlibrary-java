@@ -146,7 +146,9 @@ public class StackelbergExperiments {
         if (algType.equals("IterLP"))
             return new SumForbiddingStackelbergLP(leader, gameInfo);
         if (algType.equals("IterLPCplexBroken"))
-            return new ShallowestBrokenCplexStackelbergSLP(leader, gameInfo);
+            return new ShallowestBrokenCplexStackelbergLP(leader, gameInfo);
+        if (algType.equals("IterLPCplexBrokenAllShallowest"))
+            return new AllShallowestBrokenCplexStackelbergLP(leader, gameInfo);
         if (algType.equals("IterLPCplexBrokenAll"))
             return new CompleteBrokenCplexStackelbergLP(leader, gameInfo);
         if (algType.equals("IterLPCplexCompleteAll"))

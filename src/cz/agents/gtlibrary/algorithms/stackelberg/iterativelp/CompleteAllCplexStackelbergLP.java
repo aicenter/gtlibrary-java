@@ -24,7 +24,7 @@ public class CompleteAllCplexStackelbergLP extends CompleteBrokenCplexStackelber
                 if (shallowestBrokenStrategyCause == null)
                     shallowestBrokenStrategyCause = new HashSet<>(isStrategy.keySet());
                 else
-                    shallowestBrokenStrategyCause = new HashSet<>(isStrategy.keySet());
+                    shallowestBrokenStrategyCause.addAll(isStrategy.keySet());
             }
         }
         return shallowestBrokenStrategyCause;
