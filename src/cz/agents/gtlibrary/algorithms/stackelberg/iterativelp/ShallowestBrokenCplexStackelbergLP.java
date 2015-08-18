@@ -2,17 +2,14 @@ package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
-import cz.agents.gtlibrary.interfaces.GameInfo;
-import cz.agents.gtlibrary.interfaces.InformationSet;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.Map;
 
-public class ShallowestBrokenCplexStackelbergSLP extends SumForbiddingStackelbergLP {
+public class ShallowestBrokenCplexStackelbergLP extends SumForbiddingStackelbergLP {
 
-    public ShallowestBrokenCplexStackelbergSLP(Player leader, GameInfo info) {
+    public ShallowestBrokenCplexStackelbergLP(Player leader, GameInfo info) {
         super(leader, info);
         this.eps = 1e-5;
     }
