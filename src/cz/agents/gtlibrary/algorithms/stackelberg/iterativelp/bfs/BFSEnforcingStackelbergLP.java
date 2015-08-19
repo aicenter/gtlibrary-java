@@ -98,11 +98,13 @@ public class BFSEnforcingStackelbergLP extends SumEnforcingStackelbergLP {
 //                    }
 //                }
                 Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getLeaderBehavioralStrategy(lpData, leader));
-                Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
+                if(USE_BR_CUT) {
+                    Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
 
-                if(Math.abs(result.getRight() - value) < eps) {
-                    System.out.println("solution found in probe BR");
-                    return new Pair<>(null, value);
+                    if (Math.abs(result.getRight() - value) < eps) {
+                        System.out.println("solution found in probe BR");
+                        return new Pair<>(null, value);
+                    }
                 }
                 Map<InformationSet, Map<Sequence, Double>> behavStrat = getSequenceEvaluation(lpData, follower);
 //                Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(behavStrat);

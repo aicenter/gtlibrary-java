@@ -21,6 +21,8 @@ import java.util.*;
 
 public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
+    public static boolean USE_BR_CUT = true;
+
     protected double eps;
     protected RecyclingMILPTable lpTable;
     protected Player leader;
@@ -124,18 +126,20 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //                    }
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                 } else {
-                    Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
+                    if (USE_BR_CUT) {
+                        Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
 
-                    if(lowerBound < result.getRight()) {
-                        System.out.println("lower bound increased from " + lowerBound + " to " + result.getRight());
-                        lowerBound = result.getRight();
-                    }
+                        if (lowerBound < result.getRight()) {
+                            System.out.println("lower bound increased from " + lowerBound + " to " + result.getRight());
+                            lowerBound = result.getRight();
+                        }
 
-                    if(Math.abs(lowerBound - value) < eps) {
-                        System.out.println("solution found BR");
-                        return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
+                        if (Math.abs(lowerBound - value) < eps) {
+                            System.out.println("solution found BR");
+                            return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
+                        }
                     }
-                    if (value <= lowerBound) {
+                    if (value <= lowerBound + eps) {
                         System.out.println("***********lower bound " + lowerBound + " not exceeded, cutting***********");
                         return dummyResult;
                     }
@@ -471,7 +475,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                 return true;
         }
         for (GameState gameState : informationSet.getAllStates()) {
-            if(sequence.isPrefixOf(gameState.getSequenceFor(sequence.getPlayer())))
+            if (sequence.isPrefixOf(gameState.getSequenceFor(sequence.getPlayer())))
                 return true;
         }
         return false;

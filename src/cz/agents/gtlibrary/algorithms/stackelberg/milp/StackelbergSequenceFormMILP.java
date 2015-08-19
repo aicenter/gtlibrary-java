@@ -52,7 +52,7 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
         this.expander = expander;
         this.info = info;
         this.threadBean = ManagementFactory.getThreadMXBean();
-        M = info.getMaxUtility()*2 + 1;
+        M = info.getMaxUtility()*info.getUtilityStabilizer()*2 + 1;
     }
 
 
