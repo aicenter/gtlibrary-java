@@ -65,10 +65,10 @@ import java.util.Map;
 public class StackelbergRunner {
 
     public static void main(String[] args) {
-        runKuhn();
+//        runKuhn();
 //        runGenSumRandom();
 //        runIAoS();
-//        runBPG(args[0], Integer.parseInt(args[1]));
+        runBPG(args[0], Integer.parseInt(args[1]));
 //        runSGSG();
 //        runPEG();
 //        runStackTest();
@@ -151,7 +151,7 @@ public class StackelbergRunner {
 //        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
 //        runner.generate(rootState.getAllPlayers()[0], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
-        runner.generate(rootState.getAllPlayers()[0], StackelbergExperiments.getStackelbergSolver(alg, rootState, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[1], StackelbergExperiments.getStackelbergSolver(alg, rootState, rootState.getAllPlayers()[1], rootState.getAllPlayers()[0], gameInfo, expander));
 
     }
 

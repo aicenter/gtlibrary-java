@@ -15,13 +15,14 @@ import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
+import javax.sound.midi.MidiDevice;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
-    public static boolean USE_BR_CUT = true;
+    public static boolean USE_BR_CUT = false;
 
     protected double eps;
     protected RecyclingMILPTable lpTable;
@@ -719,7 +720,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
 
     protected void createPContinuationConstraint(List<Action> actions, Player opponent, GameState gameState, Set<Object> blackList, Set<Pair<Sequence, Sequence>> pStops) {
-        Triplet<Sequence, Sequence, Player> eqKey = new Triplet<>(gameState.getSequenceFor(leader), gameState.getSequenceFor(follower), gameState.getPlayerToMove());
+        Triplet<Sequence, Sequence, InformationSet> eqKey = new Triplet<Sequence, Sequence, InformationSet>(gameState.getSequenceFor(leader), gameState.getSequenceFor(follower), algConfig.getInformationSetFor(gameState));
 
         if (blackList.contains(eqKey))
             return;
