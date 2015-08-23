@@ -15,11 +15,14 @@ import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 
+import javax.sound.midi.MidiDevice;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
+
+    public static boolean USE_BR_CUT = false;
 
     protected double eps;
     protected RecyclingMILPTable lpTable;
@@ -124,18 +127,20 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //                    }
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                 } else {
-                    Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
+                    if (USE_BR_CUT) {
+                        Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
 
-                    if(lowerBound < result.getRight()) {
-                        System.out.println("lower bound increased from " + lowerBound + " to " + result.getRight());
-                        lowerBound = result.getRight();
-                    }
+                        if (lowerBound < result.getRight()) {
+                            System.out.println("lower bound increased from " + lowerBound + " to " + result.getRight());
+                            lowerBound = result.getRight();
+                        }
 
-                    if(Math.abs(lowerBound - value) < eps) {
-                        System.out.println("solution found BR");
-                        return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
+                        if (Math.abs(lowerBound - value) < eps) {
+                            System.out.println("solution found BR");
+                            return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
+                        }
                     }
-                    if (value <= lowerBound) {
+                    if (value <= lowerBound + eps) {
                         System.out.println("***********lower bound " + lowerBound + " not exceeded, cutting***********");
                         return dummyResult;
                     }
@@ -471,7 +476,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                 return true;
         }
         for (GameState gameState : informationSet.getAllStates()) {
-            if(sequence.isPrefixOf(gameState.getSequenceFor(sequence.getPlayer())))
+            if (sequence.isPrefixOf(gameState.getSequenceFor(sequence.getPlayer())))
                 return true;
         }
         return false;
@@ -715,7 +720,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
 
     protected void createPContinuationConstraint(List<Action> actions, Player opponent, GameState gameState, Set<Object> blackList, Set<Pair<Sequence, Sequence>> pStops) {
-        Triplet<Sequence, Sequence, Player> eqKey = new Triplet<>(gameState.getSequenceFor(leader), gameState.getSequenceFor(follower), gameState.getPlayerToMove());
+        Triplet<Sequence, Sequence, InformationSet> eqKey = new Triplet<Sequence, Sequence, InformationSet>(gameState.getSequenceFor(leader), gameState.getSequenceFor(follower), algConfig.getInformationSetFor(gameState));
 
         if (blackList.contains(eqKey))
             return;

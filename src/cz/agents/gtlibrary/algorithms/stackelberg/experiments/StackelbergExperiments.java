@@ -139,14 +139,26 @@ public class StackelbergExperiments {
     public static StackelbergSequenceFormLP getStackelbergSolver(String algType, GameState rootState, Player leader, Player follower, GameInfo gameInfo, Expander<SequenceInformationSet> expander) {
         if (algType.equals("MILP"))
             return new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
-        if (algType.equals("BFSEnforcingIterLP"))
+        if (algType.equals("BFSEnforcingIterLP")) {
+            SumForbiddingStackelbergLP.USE_BR_CUT = false;
             return new BFSEnforcingStackelbergLP(leader, gameInfo);
+        }
+        if (algType.equals("BFSEnforcingIterLPBR")) {
+            SumEnforcingStackelbergLP.USE_BR_CUT = true;
+            return new BFSEnforcingStackelbergLP(leader, gameInfo);
+        }
         if (algType.equals("BFSForbiddingIterLP"))
             return new BFSForbiddingStackelbergLP(leader, gameInfo);
         if (algType.equals("IterLP"))
             return new SumForbiddingStackelbergLP(leader, gameInfo);
-        if (algType.equals("IterLPCplexBroken"))
+        if (algType.equals("IterLPCplexBroken")) {
+            SumForbiddingStackelbergLP.USE_BR_CUT = false;
             return new ShallowestBrokenCplexStackelbergLP(leader, gameInfo);
+        }
+        if (algType.equals("IterLPCplexBrokenBR")) {
+            SumForbiddingStackelbergLP.USE_BR_CUT = true;
+            return new ShallowestBrokenCplexStackelbergLP(leader, gameInfo);
+        }
         if (algType.equals("IterLPCplexBrokenAllShallowest"))
             return new AllShallowestBrokenCplexStackelbergLP(leader, gameInfo);
         if (algType.equals("IterLPCplexBrokenAll"))
