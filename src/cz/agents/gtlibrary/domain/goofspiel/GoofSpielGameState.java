@@ -299,7 +299,7 @@ public class GoofSpielGameState extends SimultaneousGameState {
 
 	@Override
 	public double[] evaluate() {
-        double scale = (GSGameInfo.BINARY_UTILITIES) ? 1 : (GSGameInfo.CARDS_FOR_PLAYER.length * (GSGameInfo.CARDS_FOR_PLAYER.length + 1) / 2);
+        double scale = (GSGameInfo.BINARY_UTILITIES) ? 1 : (Math.max(1,GSGameInfo.CARDS_FOR_PLAYER.length * (GSGameInfo.CARDS_FOR_PLAYER.length - 1) / 2));
 		if (round == GSGameInfo.depth)
 			return getEndGameUtilities();
 		double sum = playerScore[0] + playerScore[1];
