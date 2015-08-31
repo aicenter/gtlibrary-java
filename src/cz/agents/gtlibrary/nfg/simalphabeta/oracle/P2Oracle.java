@@ -41,7 +41,7 @@ public class P2Oracle extends SimOracleImpl {
 	public Pair<ActionPureStrategy, Double> getBestResponse(MixedStrategy<ActionPureStrategy> mixedStrategy, double alpha, double beta) {
 		ActionPureStrategy bestStrategy = null;
 		Collection<ActionPureStrategy> possibleActions = getActions();
-		double bestValue = -beta - 1e-8;
+		double bestValue = -beta + 1e-8;
 
 		for (ActionPureStrategy strategy : possibleActions) {
 			double utilityValue = getValueForAction(mixedStrategy, strategy, bestValue);
