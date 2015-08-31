@@ -52,7 +52,7 @@ public class TGConfig extends MDPConfigImpl{
 //    public static int WIDTH_OF_GRID = 3;
     public static int MAX_TIME_STEP = 14;
     public static int LENGTH_OF_GRID = 10;
-    public static int WIDTH_OF_GRID = 6;
+    public static int WIDTH_OF_GRID = 5;
 //    public static int MAX_TIME_STEP = 24;
 //    public static int LENGTH_OF_GRID = 22;
 //    public static int WIDTH_OF_GRID = 11;
@@ -63,6 +63,7 @@ public class TGConfig extends MDPConfigImpl{
     public static double MOVEMENT_UNCERTAINTY = 0.1;
     public static boolean SHUFFLE = false;
     public static int SHUFFLE_ID = 0;
+    public static double PATROLLER_NOT_RETURNED_PENALTY = 1000d;
 
     public TGConfig() {
         allPlayers = new ArrayList<Player>(2);
@@ -145,9 +146,8 @@ public class TGConfig extends MDPConfigImpl{
             result = result - attState.getTimeStep() * 0.02;
 //            result = UTILITY_MULTIPLIER+1d;
 //            result = result - attState.getTimeStep() * (0.01 + UTILITY_MULTIPLIER/100d);
-        }
-        else if (defState.getTimeStep()+1 == getMaxTimeStep() && !((defState.getRow()[0] == 0 && defState.getCol()[0] != TGConfig.PATROLLER_BASES[0]) || (defAction.getTargetCol()[0] == TGConfig.PATROLLER_BASES[0] && defAction.getTargetRow()[0] == 0))) {
-            result = 1000d;
+        } else if (defState.getTimeStep()+1 == getMaxTimeStep() && !((defState.getRow()[0] == 0 && defState.getCol()[0] != TGConfig.PATROLLER_BASES[0]) || (defAction.getTargetCol()[0] == TGConfig.PATROLLER_BASES[0] && defAction.getTargetRow()[0] == 0))) {
+            result = PATROLLER_NOT_RETURNED_PENALTY;
         }
         return result;
     }
@@ -169,4 +169,13 @@ public class TGConfig extends MDPConfigImpl{
     public static int getMaxTimeStep() {
         return MAX_TIME_STEP;
     }
+
+    @Override
+    public String toString() {
+        return "TG" + WIDTH_OF_GRID + "x" + LENGTH_OF_GRID + "|" + MAX_TIME_STEP + "; Penalty=" +
+          PATROLLER_NOT_RETURNED_PENALTY + "; Uncertainty=" + (useUncertainty ? MOVEMENT_UNCERTAINTY : "NA") + "; "
+                + (rememberHistory ? "Full Game" : "");
+    }
+    
+    
 }
