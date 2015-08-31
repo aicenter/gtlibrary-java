@@ -224,7 +224,7 @@ public class SMJournalOnlineExperiments {
                         explorationString = System.getProperty("EXPL"+(posIndex+1));
                         exploration = 0.2d;
                         if (explorationString != null) exploration = new Double(explorationString);
-                        fact = new Exp3BackPropFactory(-1, 1, exploration, random);
+                        fact = new Exp3BackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), exploration, random);
                         break;
                 }
                 ISMCTSAlgorithm player = new ISMCTSAlgorithm(
