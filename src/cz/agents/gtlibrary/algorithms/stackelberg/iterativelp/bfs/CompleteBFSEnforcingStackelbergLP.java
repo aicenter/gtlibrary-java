@@ -104,7 +104,7 @@ public class CompleteBFSEnforcingStackelbergLP extends BFSEnforcingStackelbergLP
                         lowerBound = value;
                         currentBest = new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
                     }
-                } else {
+                } else if(value > lowerBound + eps){
                     handleBrokenStrategyCause(lowerBound, upperBound, lpData, value, brokenStrategyCauses);
                 }
             } else {

@@ -130,6 +130,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                     if (USE_BR_CUT) {
                         Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
 
+                        System.out.println("BR: " + result.getRight());
                         if (lowerBound < result.getRight()) {
                             System.out.println("lower bound increased from " + lowerBound + " to " + result.getRight());
                             lowerBound = result.getRight();
