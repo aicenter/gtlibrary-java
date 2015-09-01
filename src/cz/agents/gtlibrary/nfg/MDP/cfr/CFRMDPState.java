@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.nfg.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPState;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import java.util.ArrayList;
@@ -22,6 +23,8 @@ import org.apache.commons.lang3.ArrayUtils;
  * @author viliam
  */
 public class CFRMDPState {
+    static boolean NOISY_INIT=false;
+    
     MDPState mdpState;
     MDPStateActionMarginal[] allActions;
     FixedSizeMap<CFRMDPState, Double>[] outcomes;
@@ -43,9 +46,22 @@ public class CFRMDPState {
         regrets = new double[allActions.size()];
         curStrategy = new double[allActions.size()];
         Arrays.fill(curStrategy, 1.0/allActions.size());
+        if (NOISY_INIT) addNoise(curStrategy, 1e-3);
         meanStrategy = new double[allActions.size()];
         relatedOpActions = new ArrayList[allActions.size()];
         for (i=0;i<allActions.size();i++) relatedOpActions[i] = new ArrayList<>();
+    }
+    
+    public static HighQualityRandom noiseRandom = new HighQualityRandom();
+    private static void addNoise(double[] array, double level){
+        if (array.length<2) return;
+        double sum = 0;
+        for (int i=0; i<array.length-1;i++) {
+            double r = (noiseRandom.nextDouble()-0.5) * level;
+            array[i]+=r;
+            sum += r;
+        }
+        array[array.length-1]-=sum;
     }
 
     @Override

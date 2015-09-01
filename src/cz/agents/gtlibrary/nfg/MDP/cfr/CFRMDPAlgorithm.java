@@ -16,6 +16,7 @@ import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPExpander;
 import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPState;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import java.lang.management.ManagementFactory;
@@ -51,9 +52,20 @@ public class CFRMDPAlgorithm {
         String revOrd = System.getProperty("CFR_REV_ORD");
         if (revOrd != null)
             REVERSE_UPDATE_ORDER = Boolean.parseBoolean(revOrd);
+        String nInit = System.getProperty("NOISY_INIT");
+        if (nInit != null){
+            CFRMDPState.NOISY_INIT = true;
+            CFRMDPState.noiseRandom = new HighQualityRandom(Integer.parseInt(nInit));
+        }
         
+        long bulidStart = threadBean.getCurrentThreadCpuTime();
         for (Player p : config.getAllPlayers()) buildMDP(p, config.getDomainRootState(p));
-        if (CACHE_RELATED_ACTIONS) initUtilityLinks();
+        System.out.println("MDP bulding time: " + (threadBean.getCurrentThreadCpuTime()-bulidStart)/1000000l);
+        if (CACHE_RELATED_ACTIONS){ 
+            long linkStart = threadBean.getCurrentThreadCpuTime();
+            initUtilityLinks();
+            System.out.println("MDP linking time: " + (threadBean.getCurrentThreadCpuTime()-linkStart)/1000000l);
+        }
     }
     
     final void buildMDP(Player pl, MDPState rootState){
@@ -285,7 +297,7 @@ public class CFRMDPAlgorithm {
                 brTime += threadBean.getCurrentThreadCpuTime() - startTime;
                 //System.out.println("BR Time: " + (brTime/1e6));
                 System.out.println("Convergence: " + it + "; " + (timeUsed/1e6) + "; " + res.getLeft() + "; " + res.getRight());
-                printIt *= 1.2;
+                printIt *= 1.1;
                 if (res.getLeft()-res.getRight() < 0.001) break;
                 startTime = threadBean.getCurrentThreadCpuTime();
             }

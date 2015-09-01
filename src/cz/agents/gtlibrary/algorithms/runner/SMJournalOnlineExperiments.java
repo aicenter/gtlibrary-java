@@ -315,13 +315,13 @@ public class SMJournalOnlineExperiments {
 
                 if (printDebugInfo)
                     System.out.println("Searching player 1...");
-                Action a1 = p1.runMiliseconds(compTime, curState);
+                Action a1 = p1.runMiliseconds(compTime, curState.copy());
                 if (printDebugInfo)
                     System.out.println("P1 chose: " + a1);
 
                 if (printDebugInfo)
                     System.out.println("Searching player 2...");
-                Action a2 = p2.runMiliseconds(compTime, curState);
+                Action a2 = p2.runMiliseconds(compTime, curState.copy());
                 if (printDebugInfo)
                     System.out.println("P2 chose: " + a2);
 

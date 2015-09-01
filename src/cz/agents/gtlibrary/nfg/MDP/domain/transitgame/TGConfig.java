@@ -70,6 +70,11 @@ public class TGConfig extends MDPConfigImpl{
         allPlayers.add(new PlayerImpl(0));
         allPlayers.add(new PlayerImpl(1));
         PATROLLER_BASES = new int[] {Math.max(LENGTH_OF_GRID/2-1,0)};
+        String shuffle = System.getProperty("ACTION_SHUFFLE");
+        if (shuffle != null){
+            SHUFFLE = true;
+            SHUFFLE_ID = Integer.parseInt(shuffle);
+        }
     }
 
     @Override
