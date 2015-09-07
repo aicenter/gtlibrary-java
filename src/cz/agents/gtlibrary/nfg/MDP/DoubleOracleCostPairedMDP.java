@@ -33,6 +33,8 @@ import cz.agents.gtlibrary.nfg.MDP.domain.bpg.BPConfig;
 import cz.agents.gtlibrary.nfg.MDP.domain.bpg.BPExpander;
 import cz.agents.gtlibrary.nfg.MDP.domain.randomgame.RGMDPConfig;
 import cz.agents.gtlibrary.nfg.MDP.domain.randomgame.RGMDPExpander;
+import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGConfig;
+import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGExpander;
 import cz.agents.gtlibrary.nfg.MDP.domain.transitgame.TGConfig;
 import cz.agents.gtlibrary.nfg.MDP.domain.transitgame.TGExpander;
 
@@ -83,7 +85,8 @@ public class DoubleOracleCostPairedMDP {
     public static void main(String[] args) {
 //		runRG();
 //        runBPG();
-        runTG();
+//        runTG();
+        runTIG();
     }
 
 
@@ -104,6 +107,16 @@ public class DoubleOracleCostPairedMDP {
 
     public static void runTG() {
         DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(new TGExpander(), new TGConfig());
+        mdp.test();
+    }
+    
+    public static void runTIG() {
+        DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(new TIGExpander(), new TIGConfig());
+        mdp.test();
+    }
+    
+     public static void testGame(MDPExpander expander, MDPConfig config) {
+        DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(expander, config);
         mdp.test();
     }
 
