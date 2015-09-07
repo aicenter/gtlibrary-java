@@ -95,6 +95,13 @@ public class FullCostPairedMDP {
         FullCostPairedMDP mdp = new FullCostPairedMDP(expander, config);
         mdp.test();
     }
+    
+        
+     public static void testGame(MDPExpander expander, MDPConfig config) {
+        FullCostPairedMDP mdp = new FullCostPairedMDP(expander, config);
+        mdp.test();
+    }
+
 
     private void test() {
         threadBean = ManagementFactory.getThreadMXBean();

@@ -7,7 +7,12 @@ package cz.agents.gtlibrary.nfg.MDP.cfr;
 
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.MDP.DoubleOracleCostPairedMDP;
+import cz.agents.gtlibrary.nfg.MDP.FullCostPairedMDP;
 import cz.agents.gtlibrary.nfg.MDP.core.MDPBestResponse;
+import cz.agents.gtlibrary.nfg.MDP.core.MDPCoreLP;
+import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGConfig;
+import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGExpander;
+import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGPassangerState;
 import cz.agents.gtlibrary.nfg.MDP.domain.transitgame.TGConfig;
 import cz.agents.gtlibrary.nfg.MDP.domain.transitgame.TGExpander;
 import cz.agents.gtlibrary.nfg.MDP.implementations.MDPStateActionMarginal;
@@ -24,6 +29,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -59,7 +65,11 @@ public class CFRMDPAlgorithm {
         }
         
         long bulidStart = threadBean.getCurrentThreadCpuTime();
-        for (Player p : config.getAllPlayers()) buildMDP(p, config.getDomainRootState(p));
+        for (Player p : config.getAllPlayers()) {
+            buildMDP(p, config.getDomainRootState(p));
+            int actions = 0;
+            System.out.println("MDP " + p.getId() + " states: " + allStates.get(p).size());
+        }
         System.out.println("MDP bulding time: " + (threadBean.getCurrentThreadCpuTime()-bulidStart)/1000000l);
         if (CACHE_RELATED_ACTIONS){ 
             long linkStart = threadBean.getCurrentThreadCpuTime();
@@ -95,11 +105,21 @@ public class CFRMDPAlgorithm {
                 state.outcomes[i++]=newOutcomes;
             }
         }
-        ArrayList<CFRMDPState> postOrderList = new ArrayList<>(statesMap.values());
-        postOrderList.sort((CFRMDPState o1, CFRMDPState o2) -> {return o1.mdpState.horizon()-o2.mdpState.horizon();});
+        ArrayList<CFRMDPState> postOrderList = new ArrayList<>();
+        postOrder(rootCFRState,postOrderList,new HashSet<>());
         postOrderList.get(postOrderList.size()-1).stateProb=1;
         allStates.put(pl, postOrderList);
-        System.out.println("MDP for " + pl + "built");
+        System.out.println("MDP for " + pl + " built");
+    }
+    
+    private void postOrder(CFRMDPState state, ArrayList<CFRMDPState> output, HashSet<CFRMDPState> closed){
+        for (int i=0;i<state.allActions.length;i++){
+            for (CFRMDPState outcome : state.outcomes[i].keySet()){
+                if (!closed.contains(outcome)) postOrder(outcome, output, closed);
+            }
+        }
+        closed.add(state);
+        output.add(state);
     }
     
     final void initUtilityLinks(){
@@ -368,14 +388,33 @@ public class CFRMDPAlgorithm {
             expander = new TGExpander();
             config = new TGConfig();
             CACHE_RELATED_ACTIONS = true;
+        } else  if (args[0].startsWith("TIG")){
+            assert args[0].charAt(3)=='s';
+            int tPos = args[0].indexOf('t');
+            int pPos = args[0].indexOf('p');
+            TIGConfig.NUM_STOPS = Integer.parseInt(args[0].substring(4, tPos));
+            TIGConfig.NUM_TRAINS = Integer.parseInt(args[0].substring(tPos+1, pPos));
+            TIGConfig.APPROXIMATE_PASSANGERS = Integer.parseInt(args[0].substring(pPos+1));
+            
+            expander = new TIGExpander();
+            config = new TIGConfig();
+            CACHE_RELATED_ACTIONS = true;
+            REVERSE_UPDATE_ORDER = true;
+            if (args[1].startsWith("LP")){
+                TIGExpander.MAINTAIN_PREDECESSORS = true;
+            }
         } else {
              throw new IllegalArgumentException("Wrong domain definition");
         }
        
         if (args[1].startsWith("DO")){
-            DoubleOracleCostPairedMDP.main(args);
+            DoubleOracleCostPairedMDP.testGame(expander, config);
             return;
-        } else if (args[1].startsWith("CFRP")) {
+        } else if (args[1].startsWith("LP")) {
+            if (args[1].length()>2 && args[1].charAt(2)=='B') MDPCoreLP.USE_BARRIER = true;
+            FullCostPairedMDP.testGame(expander, config);
+            return;
+        }else if (args[1].startsWith("CFRP")) {
             if (args[1].equals("CFRP_Cur")) USE_CURRENT_STRATEGY = true;
             else if (!args[1].equals("CFRP_Mean")){
                 throw new IllegalArgumentException("Wrong CFRP variant");
@@ -395,6 +434,18 @@ public class CFRMDPAlgorithm {
         
         Pair<Double,Double> res = alg.computeExploitability();
         
+        if (args[0].startsWith("TIG")){
+            int tickets = 0;
+            int allTypes = 0;
+            for (CFRMDPState s : alg.allStates.get(config.getAllPlayers().get(1))){
+                if (s.mdpState instanceof TIGPassangerState){
+                    if (s.allActions.length == 2 && s.meanStrategy[0] > 10*s.meanStrategy[1])
+                        tickets += 1;
+                    allTypes += 1;
+                }
+            }
+            System.out.println("Tickets: " + tickets + " out of " + (allTypes-2) + " bought tickets.");
+        }
         System.out.println("P1 BR: " + res.getLeft());
         System.out.println("P2 BR: " + res.getRight());
         System.out.println("Result: " + (res.getLeft()-res.getRight()));

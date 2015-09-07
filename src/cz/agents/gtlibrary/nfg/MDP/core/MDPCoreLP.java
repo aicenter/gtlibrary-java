@@ -58,6 +58,8 @@ public class MDPCoreLP {
     protected long SOLVING_LP_TIME = 0;
 //    private Collection<Player> allPlayers = null;
     protected ThreadMXBean threadBean;
+    
+    public static boolean USE_BARRIER = false;
 
 
 
@@ -71,11 +73,17 @@ public class MDPCoreLP {
             try {
 
                 IloCplex cplex = new IloCplex();
-                cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Primal);
+                if (USE_BARRIER){
+                    cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Barrier);
+                } else {
+                    cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Primal);
+                }
+//                cplex.setParam(IloCplex.DoubleParam.BarEpComp, 0.1);
+//                cplex.setParam(IloCplex.DoubleParam.EpOpt, 0.1);
 //                cplex.setParam(IloCplex.BooleanParam.PerInd, true);
 //                cplex.setParam(IloCplex.IntParam.PerLim, 1000000);
 //                cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Auto);
-//                cplex.setParam(IloCplex.IntParam.Threads, 1);
+                cplex.setParam(IloCplex.IntParam.Threads, 1);
 //                cplex.setParam(IloCplex.IntParam.CraInd, 1);
 //                cplex.setParam(IloCplex.IntParam.ParallelMode, 1);
 //                cplex.setParam(IloCplex.IntParam.AuxRootThreads, -1);
