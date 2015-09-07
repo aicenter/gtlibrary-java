@@ -22,6 +22,8 @@ package cz.agents.gtlibrary.nfg.MDP;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.MDP.core.MDPBestResponse;
 import cz.agents.gtlibrary.nfg.MDP.core.MDPCoreLP;
+import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGConfig;
+import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGExpander;
 import cz.agents.gtlibrary.nfg.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.MDP.implementations.MDPStateActionMarginal;
 import cz.agents.gtlibrary.nfg.MDP.implementations.MDPStrategy;
@@ -66,8 +68,9 @@ public class FullCostPairedMDP {
 
     public static void main(String[] args) {
 //		runRG();
-      runBPG();
+//      runBPG();
 //        runTG();
+        runTIG();
     }
 
     public FullCostPairedMDP(MDPExpander expander, MDPConfig config) {
@@ -95,7 +98,11 @@ public class FullCostPairedMDP {
         FullCostPairedMDP mdp = new FullCostPairedMDP(expander, config);
         mdp.test();
     }
-    
+
+    public static void runTIG() {
+        FullCostPairedMDP mdp = new FullCostPairedMDP(new TIGExpander(), new TIGConfig());
+        mdp.test();
+    }
         
      public static void testGame(MDPExpander expander, MDPConfig config) {
         FullCostPairedMDP mdp = new FullCostPairedMDP(expander, config);
