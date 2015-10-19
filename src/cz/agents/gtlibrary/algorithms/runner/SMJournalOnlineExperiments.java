@@ -224,7 +224,7 @@ public class SMJournalOnlineExperiments {
                         explorationString = System.getProperty("EXPL"+(posIndex+1));
                         exploration = 0.2d;
                         if (explorationString != null) exploration = new Double(explorationString);
-                        fact = new Exp3BackPropFactory(-1, 1, exploration, random);
+                        fact = new Exp3BackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), exploration, random);
                         break;
                 }
                 ISMCTSAlgorithm player = new ISMCTSAlgorithm(
@@ -315,13 +315,13 @@ public class SMJournalOnlineExperiments {
 
                 if (printDebugInfo)
                     System.out.println("Searching player 1...");
-                Action a1 = p1.runMiliseconds(compTime, curState);
+                Action a1 = p1.runMiliseconds(compTime, curState.copy());
                 if (printDebugInfo)
                     System.out.println("P1 chose: " + a1);
 
                 if (printDebugInfo)
                     System.out.println("Searching player 2...");
-                Action a2 = p2.runMiliseconds(compTime, curState);
+                Action a2 = p2.runMiliseconds(compTime, curState.copy());
                 if (printDebugInfo)
                     System.out.println("P2 chose: " + a2);
 

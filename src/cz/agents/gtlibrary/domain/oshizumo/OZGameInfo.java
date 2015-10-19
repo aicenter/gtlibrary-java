@@ -48,7 +48,7 @@ public class OZGameInfo implements GameInfo {
         if (BINARY_UTILITIES) {
             return 1;
         } else {
-            return locK;
+            return startingCoins + locK;
         }
     }
 

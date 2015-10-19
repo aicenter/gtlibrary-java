@@ -286,7 +286,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
             if (iterator.previousIndex() > index)
                 utility += state.getProbabilityOfNatureFor(action) * -gameInfo.getMaxUtility();
         }
-        return (upperBound - utility) / probability;
+        return (upperBound - utility) / probability + 1e-8;
     }
 
     private double getLowerBound(List<Action> actions, GameState state, double lowerBound, double probability, double utilityValue, int index) {
@@ -299,7 +299,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
             if (iterator.previousIndex() > index)
                 utility += state.getProbabilityOfNatureFor(action) * gameInfo.getMaxUtility();
         }
-        return (lowerBound - utility) / probability;
+        return (lowerBound - utility) / probability - 1e-8;
     }
 
     public Action getTopLevelAction(Player player) {
