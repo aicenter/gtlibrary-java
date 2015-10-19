@@ -87,6 +87,8 @@ public class GeneralDoubleOracle {
     final private static boolean MY_RP_BR_ORDERING = false;
     private ThreadMXBean threadBean ;
 
+    private double gameValue;
+
     public enum PlayerSelection {
         BOTH,SINGLE_ALTERNATING,SINGLE_IMPROVED
     }
@@ -504,9 +506,14 @@ public class GeneralDoubleOracle {
         debugOutput.println("LP GenerationTime:" + doRestrictedGameSolver.getOverallGenerationTime());
         debugOutput.println("LP Constraint GenerationTime:" + doRestrictedGameSolver.getOverallConstraintGenerationTime());
         debugOutput.println("LP ComputationTime:" + doRestrictedGameSolver.getOverallConstraintLPSolvingTime());
-        
+
+        gameValue = doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]);
         return realizationPlans;
 	}
+
+    public double getGameValue() {
+        return gameValue;
+    }
 
     public GameState findFirstNonNatureState(GameState rootState, Expander<DoubleOracleInformationSet> expander) {
         GameState tmpState = rootState.copy();
