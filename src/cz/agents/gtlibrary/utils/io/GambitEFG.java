@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.utils.io;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.GeneralSumGameBuilder;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
@@ -47,7 +48,7 @@ public class GambitEFG {
     public static void exportRandomGame() {
         GambitEFG exporter = new GambitEFG();
 
-        exporter.write("RGGambit", new RandomGameState(), new RandomGameExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
+        exporter.buildAndWrite("RGGambit", new RandomGameState(), new RandomGameExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
     }
 
     public GambitEFG() {
@@ -115,6 +116,11 @@ public class GambitEFG {
                 writeRec(out, next, expander, cut_off_depth - 1);
             }
         }
+    }
+
+    public void buildAndWrite(String filename, GameState root, Expander<SequenceInformationSet> expander) {
+        GeneralSumGameBuilder.build(root, (SequenceFormConfig<? extends SequenceInformationSet>) expander.getAlgorithmConfig(), expander);
+        write(filename, root, expander, Integer.MAX_VALUE);
     }
 
     private Integer getUniqueHash(Pair<Integer, Sequence> key) {

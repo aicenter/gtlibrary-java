@@ -20,9 +20,9 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class RPConfigurationGenerator {
-    public static final int bucketCount = 19;
+    public static final int bucketCount = 4;
     public static final int bucketSize = 100000;
-    public static final int countPerBucket = 50;
+    public static final int countPerBucket = 200;
     public static final int start = 100000;
     public static BufferedWriter writer;
 
@@ -31,14 +31,14 @@ public class RPConfigurationGenerator {
         int count = 0;
 
         RandomGameInfo.FIXED_SIZE_BF = false;
-        for (int branchingFactor = 3; branchingFactor < 6; branchingFactor++) {
-            for (int depth = 3; depth < 6; depth++) {
-                if(depth == 3 && branchingFactor == 3)
-                    continue;
-                for (int obs = 2; obs < 4; obs++) {
-                    for (int seed = 0; seed < 100000; seed++) {
+        for (int branchingFactor = 3; branchingFactor < 5; branchingFactor++) {
+            for (int depth = 3; depth < 4; depth++) {
+//                if(depth == 3 && branchingFactor == 3)
+//                    continue;
+//                for (int obs = 2; obs < 4; obs++) {
+                    for (int seed = 0; seed < 1000000; seed++) {
                         RandomGameInfo.seed = seed;
-                        RandomGameInfo.MAX_OBSERVATION = obs;
+                        RandomGameInfo.MAX_OBSERVATION = 2;
                         RandomGameInfo.MAX_DEPTH = depth;
                         RandomGameInfo.MAX_BF = branchingFactor;
                         GameState root = new GeneralSumRandomGameState();
@@ -47,7 +47,7 @@ public class RPConfigurationGenerator {
                         FullSequenceEFG builder = new FullSequenceEFG(root, expander, new RandomGameInfo(), config);
 
                         builder.generateCompleteGame();
-                        long rpCount = RPCounter.count(config, expander, config.getInformationSetFor(root), root.getAllPlayers()[0]);//getRPCount(root.getAllPlayers()[0], root.getAllPlayers()[1], config, expander);
+                        long rpCount = RPCounter.count(config, expander, config.getInformationSetFor(root), root.getAllPlayers()[1]);//getRPCount(root.getAllPlayers()[0], root.getAllPlayers()[1], config, expander);
 
                         System.out.println(rpCount);
                         if (rpCount > start) {
@@ -66,7 +66,7 @@ public class RPConfigurationGenerator {
                                 }
                             }
                         }
-                    }
+//                    }
                 }
             }
         }
@@ -119,7 +119,7 @@ public class RPConfigurationGenerator {
     private static void storeConfiguration(long rpCount) {
         try {
             if (writer == null)
-                writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("config100kto2000k"), true)));
+                writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("config100kto400ksmall"), true)));
             writer.write(RandomGameInfo.seed + " " + RandomGameInfo.MAX_OBSERVATION + " " + RandomGameInfo.MAX_DEPTH + " " + RandomGameInfo.MAX_BF + " " + rpCount);
             writer.newLine();
             writer.flush();
