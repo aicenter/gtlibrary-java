@@ -33,6 +33,8 @@ import cz.agents.gtlibrary.nfg.MDP.domain.bpg.BPConfig;
 import cz.agents.gtlibrary.nfg.MDP.domain.bpg.BPExpander;
 import cz.agents.gtlibrary.nfg.MDP.domain.randomgame.RGMDPConfig;
 import cz.agents.gtlibrary.nfg.MDP.domain.randomgame.RGMDPExpander;
+import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGConfig;
+import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGExpander;
 import cz.agents.gtlibrary.nfg.MDP.domain.transitgame.TGConfig;
 import cz.agents.gtlibrary.nfg.MDP.domain.transitgame.TGExpander;
 
@@ -83,7 +85,8 @@ public class DoubleOracleCostPairedMDP {
     public static void main(String[] args) {
 //		runRG();
 //        runBPG();
-        runTG();
+//        runTG();
+        runTIG();
     }
 
 
@@ -104,6 +107,16 @@ public class DoubleOracleCostPairedMDP {
 
     public static void runTG() {
         DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(new TGExpander(), new TGConfig());
+        mdp.test();
+    }
+    
+    public static void runTIG() {
+        DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(new TIGExpander(), new TIGConfig());
+        mdp.test();
+    }
+    
+     public static void testGame(MDPExpander expander, MDPConfig config) {
+        DoubleOracleCostPairedMDP mdp = new DoubleOracleCostPairedMDP(expander, config);
         mdp.test();
     }
 
@@ -149,12 +162,12 @@ public class DoubleOracleCostPairedMDP {
 //        MDPContractingBR br1 = null;
 //        MDPContractingBR br2 = null;
 
-//        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
-//        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
+        MDPBestResponse br1 = new MDPBestResponse(config, config.getAllPlayers().get(0));
+        MDPBestResponse br2 = new MDPBestResponse(config, config.getAllPlayers().get(1));
 
 //        if (USE_ROBUST_BR) {
-        MDPEpsilonFristBetterResponse br1 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(0));
-        MDPEpsilonFristBetterResponse br2 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(1));
+//        MDPEpsilonFristBetterResponse br1 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(0));
+//        MDPEpsilonFristBetterResponse br2 = new MDPEpsilonFristBetterResponse(config, config.getAllPlayers().get(1));
 //        } else if (USE_REORDER_ACTIONS) {
 //            br1 = new MDPFBRActionOrdering(config, config.getAllPlayers().get(0));
 //            br2 = new MDPFBRActionOrdering(config, config.getAllPlayers().get(1));
@@ -176,7 +189,8 @@ public class DoubleOracleCostPairedMDP {
         Set<MDPState> statesToExpand2 = new HashSet<MDPState>();
 
 
-        while ( Math.abs(UB - LB) > END_EPSILON && UB > LB) {
+        while (true) {
+//        while ( Math.abs(UB - LB) > END_EPSILON && UB > LB) {
 //        while ( ((Math.abs(UB-LB)/Math.abs(LB)) > 0.001 || LB/UB < 0 || LB == Double.NEGATIVE_INFINITY || UB == Double.POSITIVE_INFINITY) && UB > LB) {
 //        for (int i=0; i<8; i++) {
 
@@ -209,10 +223,10 @@ public class DoubleOracleCostPairedMDP {
 
 //            br1.setMDPUpperBound(UB);
 //            br1.setMDPLowerBound(LB);
-            ((MDPEpsilonFristBetterResponse)br1).setCurrentBest(r1);
+//            ((MDPEpsilonFristBetterResponse)br1).setCurrentBest(r1);
 //            br2.setMDPUpperBound(LB);
 //            br2.setMDPLowerBound(UB);
-            ((MDPEpsilonFristBetterResponse)br2).setCurrentBest(r2);
+//            ((MDPEpsilonFristBetterResponse)br2).setCurrentBest(r2);
 
 //            firstPlayerStrategy.sanityCheck();
 //            secondPlayerStrategy.sanityCheck();

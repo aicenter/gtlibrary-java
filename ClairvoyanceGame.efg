@@ -1,0 +1,22 @@
+EFG 2 R "class cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameStateclass cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceExpander" {"Pl0" "Pl1"}
+c "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@106d6dbe" 1 "" { "" 0.5 "" 0.5 } 0
+p "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@5430026f" 1 1 "" { "" "" "" } 0
+p "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@4e59f3de" 2 2 "" { "" "" } 0
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@502afb7f" 1 "" { 0.5, -0.5}
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@502a8720" 2 "" { 0.5, -0.5}
+p "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@500ed3ff" 2 3 "" { "" "" } 0
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@51fc0ae0" 3 "" { 1.5, -1.5}
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@51fb9643" 4 "" { 0.5, -0.5}
+p "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@51c3b420" 2 4 "" { "" "" } 0
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@53cd1a41" 5 "" { 2.5, -2.5}
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@53cca566" 6 "" { 0.5, -0.5}
+p "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@54848f56" 1 5 "" { "" "" "" } 0
+p "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@8c13e44b" 2 2 "" { "" "" } 0
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@8de4ebec" 7 "" { -0.5, 0.5}
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@8de4778d" 8 "" { 0.5, -0.5}
+p "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@8dc8c46c" 2 3 "" { "" "" } 0
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@8fb5fb4d" 9 "" { -1.5, 1.5}
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@8fb586b0" 10 "" { 0.5, -0.5}
+p "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@8f7da48d" 2 4 "" { "" "" } 0
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@91870aae" 11 "" { -2.5, 2.5}
+t "cz.agents.gtlibrary.domain.clairvoyance.ClairvoyanceGameState@918695d3" 12 "" { 0.5, -0.5}

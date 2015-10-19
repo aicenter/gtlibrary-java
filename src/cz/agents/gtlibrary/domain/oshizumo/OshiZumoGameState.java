@@ -233,7 +233,10 @@ public class OshiZumoGameState extends SimultaneousGameState {
         double delta = p1base + p1bonus;
         
         // seems to play too gredily with this
-        double p1eval = FastTanh.tanh(delta);
+        double p1eval = 0;
+        if (OZGameInfo.BINARY_UTILITIES)
+                p1eval = FastTanh.tanh(delta);
+        else p1eval = delta;
         //double p1eval = delta;
 
         return new double[]{p1eval, -p1eval, 0};
