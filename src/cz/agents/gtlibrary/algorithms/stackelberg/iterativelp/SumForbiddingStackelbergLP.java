@@ -668,11 +668,12 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         for (Sequence leaderSequence : algConfig.getSequencesFor(leader)) {
             for (Sequence compatibleFollowerSequence : algConfig.getCompatibleSequencesFor(leaderSequence)) {
                 for (Action action : compatibleFollowerSequence) {
-                    Object eqKeyFollower = new Triplet<>(leaderSequence, action.getInformationSet().getPlayersHistory(), action.getInformationSet());
+                    Sequence actionHistory = ((PerfectRecallInformationSet)action.getInformationSet()).getPlayersHistory();
+                    Object eqKeyFollower = new Triplet<>(leaderSequence, actionHistory, action.getInformationSet());
 
                     if (!blackList.contains(eqKeyFollower)) {
                         blackList.add(eqKeyFollower);
-                        Pair<Sequence, Sequence> varKey = createSeqPairVarKey(leaderSequence, action.getInformationSet().getPlayersHistory());
+                        Pair<Sequence, Sequence> varKey = createSeqPairVarKey(leaderSequence, actionHistory);
 
                         lpTable.setConstraintType(eqKeyFollower, 1);
                         lpTable.setConstraint(eqKeyFollower, varKey, -1);
@@ -686,25 +687,26 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
                     while (leaderSeqIterator.hasPrevious()) {
                         leaderAction = leaderSeqIterator.previous();
-                        Object eqKeyLeader = new Triplet<>(leaderAction.getInformationSet().getPlayersHistory(), action.getInformationSet().getPlayersHistory(), leaderAction.getInformationSet().getPlayersHistory());
+                        Sequence leaderHistory = ((PerfectRecallInformationSet)leaderAction.getInformationSet()).getPlayersHistory();
+                        Object eqKeyLeader = new Triplet<>(leaderHistory, actionHistory, leaderAction);
 
                         if (!blackList.contains(eqKeyLeader)) {
                             blackList.add(eqKeyLeader);
-                            Pair<Sequence, Sequence> varKey = createSeqPairVarKey(leaderAction.getInformationSet().getPlayersHistory(), action.getInformationSet().getPlayersHistory());
+                            Pair<Sequence, Sequence> varKey = createSeqPairVarKey(leaderHistory, actionHistory);
 
                             lpTable.setConstraintType(eqKeyLeader, 1);
                             lpTable.setConstraint(eqKeyLeader, varKey, -1);
                             for (Sequence leaderContinuation : ((SequenceInformationSet) leaderAction.getInformationSet()).getOutgoingSequences()) {
-                                lpTable.setConstraint(eqKeyLeader, createSeqPairVarKey(leaderContinuation, action.getInformationSet().getPlayersHistory()), 1);
+                                lpTable.setConstraint(eqKeyLeader, createSeqPairVarKey(leaderContinuation, actionHistory), 1);
                             }
                         }
 
                         for (Sequence followerSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
-                            Object eqKeyLeaderCont = new Triplet<>(leaderAction.getInformationSet().getPlayersHistory(), followerSequence, leaderAction.getInformationSet());
+                            Object eqKeyLeaderCont = new Triplet<>(leaderHistory, followerSequence, leaderAction.getInformationSet());
 
                             if (!blackList.contains(eqKeyLeaderCont)) {
                                 blackList.add(eqKeyLeaderCont);
-                                Pair<Sequence, Sequence> varKeyCont = createSeqPairVarKey(leaderAction.getInformationSet().getPlayersHistory(), followerSequence);
+                                Pair<Sequence, Sequence> varKeyCont = createSeqPairVarKey(leaderHistory, followerSequence);
 
                                 lpTable.setConstraintType(eqKeyLeaderCont, 1);
                                 lpTable.setConstraint(eqKeyLeaderCont, varKeyCont, -1);

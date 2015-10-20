@@ -162,7 +162,7 @@ public class StrategyCollector {
         
         double wSumSupp=0, sumW=0;
         for (Map.Entry<InformationSet, Integer> en : counts.entrySet()){
-            double w = strategy.get(en.getKey().getPlayersHistory());
+            double w = strategy.get(((MCTSInformationSet)en.getKey()).getPlayersHistory());
             wSumSupp += en.getValue()*w;
             sumW += w;
         }
@@ -185,7 +185,7 @@ public class StrategyCollector {
         
         double wSumSupp=0, sumW=0;
         for (Map.Entry<InformationSet, Double> en : maxes.entrySet()){
-            double w = strategy.get(en.getKey().getPlayersHistory());
+            double w = strategy.get(((MCTSInformationSet)en.getKey()).getPlayersHistory());
             wSumSupp += en.getValue()*w;
             sumW += w;
         }

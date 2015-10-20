@@ -6,6 +6,7 @@
 
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
@@ -57,8 +58,8 @@ public class ISTargeting implements OOSTargeting{
     protected void addPlayersAction(Action a){
         final Player p = a.getInformationSet().getPlayer();
         playerAllowedActions.get(p).add(a);
-        if (a.getInformationSet().getPlayersHistory().size() > maxSequenceLength.get(p))
-            maxSequenceLength.put(p, a.getInformationSet().getPlayersHistory().size());
+        if (((MCTSInformationSet)a.getInformationSet()).getPlayersHistory().size() > maxSequenceLength.get(p))
+            maxSequenceLength.put(p, ((MCTSInformationSet)a.getInformationSet()).getPlayersHistory().size());
     }
     
     

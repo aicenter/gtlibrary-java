@@ -54,7 +54,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 			Sequence s = state.getSequenceFor(p);
 			if (s.size() == 0)
 				continue;
-			I i = getAllInformationSets().get(new PerfectRecallISKey(s.getLast().getInformationSet().hashCode(), s.getLast().getInformationSet().getPlayersHistory()));
+			I i = getAllInformationSets().get(s.getLastInformationSet().getISKey());
 			if (i != null) { // if there is a particular IS in the algConfig for the previous state, we set it to be the IS in the stored sequences
 				Set<GameState> oldStates = s.getLast().getInformationSet().getAllStates();
 				i.addAllStateToIS(oldStates);

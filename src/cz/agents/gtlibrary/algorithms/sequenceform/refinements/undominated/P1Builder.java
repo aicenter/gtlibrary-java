@@ -277,9 +277,7 @@ public class P1Builder extends TreeVisitor {
     }
 
     protected Object getLastISKey(Sequence sequence) {
-        InformationSet informationSet = sequence.getLastInformationSet();
-
-        return new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory());
+        return sequence.getLastInformationSet().getISKey();
     }
 
 }

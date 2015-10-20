@@ -19,9 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.iinodes;
 
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
+import cz.agents.gtlibrary.interfaces.*;
 
 public abstract class ActionImpl implements Action {
 
@@ -57,26 +55,32 @@ public abstract class ActionImpl implements Action {
             return false;
         if (this.hashCode() != obj.hashCode())
             return false;
-        if (informationSet == null) {
-            if (((ActionImpl) obj).informationSet != null)
-                return false;
-        } else if(informationSet != null && ((ActionImpl) obj).informationSet == null) {
+        if (informationSet == null && ((ActionImpl) obj).informationSet != null)
             return false;
-        } else if (informationSet.hashCode() != ((ActionImpl) obj).informationSet.hashCode()) {
+        if (informationSet != null && ((ActionImpl) obj).informationSet == null)
             return false;
-        } else if (informationSet.getPlayersHistory().size() != ((ActionImpl) obj).informationSet.getPlayersHistory().size()) {
+        if (informationSet.hashCode() != ((ActionImpl) obj).informationSet.hashCode())
             return false;
-        } else for (int l = 0; l < informationSet.getPlayersHistory().size(); l++) {
-            Action myAction = informationSet.getPlayersHistory().get(l);
-            Action otherAction = ((ActionImpl) obj).informationSet.getPlayersHistory().get(l);
-            if (myAction.hashCode() != otherAction.hashCode())
+        if (informationSet instanceof PerfectRecallInformationSet) {
+            Sequence thisHistory = ((PerfectRecallInformationSet) informationSet).getPlayersHistory();
+            Sequence otherHistory = ((PerfectRecallInformationSet) ((ActionImpl) obj).informationSet).getPlayersHistory();
+
+            if (thisHistory.size() != otherHistory.size())
                 return false;
-            if ((myAction.getInformationSet() == null && otherAction.getInformationSet() != null) ||
-                    (myAction.getInformationSet() != null && otherAction.getInformationSet() == null))
-                return false;
-            if (myAction.getInformationSet() != null)
-                if (myAction.getInformationSet().hashCode() != otherAction.getInformationSet().hashCode())
+            for (int l = 0; l < thisHistory.size(); l++) { //TODO: There is no equals call here
+                Action myAction = thisHistory.get(l);
+                Action otherAction = otherHistory.get(l);
+                if (myAction.hashCode() != otherAction.hashCode())
                     return false;
+                if ((myAction.getInformationSet() == null && otherAction.getInformationSet() != null) ||
+                        (myAction.getInformationSet() != null && otherAction.getInformationSet() == null))
+                    return false;
+                if (myAction.getInformationSet() != null)
+                    if (myAction.getInformationSet().hashCode() != otherAction.getInformationSet().hashCode())
+                        return false;
+            }
+        } else if(!informationSet.equals(((ActionImpl) obj).informationSet)) {
+            return false;
         }
 //        } else if (!informationSet.equals(((ActionImpl) obj).informationSet))
 //            return false;
