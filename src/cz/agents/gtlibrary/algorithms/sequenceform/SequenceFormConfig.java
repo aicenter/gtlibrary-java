@@ -22,6 +22,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform;
 import java.util.*;
 
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
@@ -53,7 +54,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 			Sequence s = state.getSequenceFor(p);
 			if (s.size() == 0)
 				continue;
-			I i = getAllInformationSets().get(new Pair<Integer, Sequence>(s.getLast().getInformationSet().hashCode(), s.getLast().getInformationSet().getPlayersHistory()));
+			I i = getAllInformationSets().get(new PerfectRecallISKey(s.getLast().getInformationSet().hashCode(), s.getLast().getInformationSet().getPlayersHistory()));
 			if (i != null) { // if there is a particular IS in the algConfig for the previous state, we set it to be the IS in the stored sequences
 				Set<GameState> oldStates = s.getLast().getInformationSet().getAllStates();
 				i.addAllStateToIS(oldStates);

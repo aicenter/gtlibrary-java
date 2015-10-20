@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 public abstract class ISKey {
     protected Object[] objects;
+    private int hashCode = -1;
 
     public ISKey(Object... objects) {
         this.objects = objects;
@@ -21,6 +22,13 @@ public abstract class ISKey {
 
     @Override
     public int hashCode() {
-        return objects != null ? Arrays.hashCode(objects) : 0;
+        if(hashCode == -1)
+            hashCode = objects != null ? Arrays.hashCode(objects) : 0;
+        return hashCode;
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(objects);
     }
 }

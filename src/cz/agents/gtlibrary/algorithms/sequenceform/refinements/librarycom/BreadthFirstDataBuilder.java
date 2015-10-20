@@ -40,6 +40,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
@@ -288,7 +289,7 @@ public class BreadthFirstDataBuilder {
         InformationSet informationSet = sequence.getLastInformationSet();
         String string = sequence.getPlayer().equals(players[0]) ? "P" : "Q";
 
-        return new Key(string, new Key(new Pair<>(informationSet.hashCode(), informationSet.getPlayersHistory())));
+        return new Key(string, new Key(new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory())));
     }
 
     public void updateSequences(GameState state) {

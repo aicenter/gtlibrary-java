@@ -23,6 +23,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -116,7 +117,7 @@ public class P1Builder {
                 if (utility == null) {
                     lpTable.removeFromConstraint(compatibleSequence, p1Sequence);
                 } else {
-                    Pair<Sequence, Sequence> sequencePair = new Pair<Sequence, Sequence>(p1Sequence, compatibleSequence);
+                    Pair<Sequence, Sequence> sequencePair = new Pair<>(p1Sequence, compatibleSequence);
 
                     lpTable.setConstraint(compatibleSequence, p1Sequence, -utility);
 //                    lpTable.addToObjective(p1Sequence, fullyMixedStrategy.get(compatibleSequence) * utility);
@@ -165,8 +166,6 @@ public class P1Builder {
                 Double utility = config.getUtilityFor(p1Sequence, compatibleSequence);
 
                 if (utility != null) {
-                    Pair<Sequence, Sequence> sequencePair = new Pair<Sequence, Sequence>(p1Sequence, compatibleSequence);
-
                     lpTable.addToObjective(p1Sequence, fullyMixedStrategy.get(compatibleSequence) * utility);
                 }
             }
@@ -209,7 +208,7 @@ public class P1Builder {
     }
 
     private Object getKey(SequenceInformationSet informationSet) {
-        return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+        return new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory());
     }
 
     protected Sequence getSubsequence(Sequence sequence) {
@@ -343,7 +342,7 @@ public class P1Builder {
     protected Object getLastISKey(Sequence sequence) {
         InformationSet informationSet = sequence.getLastInformationSet();
 
-        return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+        return new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory());
     }
 
     public void maximize() {

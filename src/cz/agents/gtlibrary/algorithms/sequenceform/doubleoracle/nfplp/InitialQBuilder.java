@@ -25,6 +25,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.Key;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -166,7 +167,7 @@ public class InitialQBuilder {
     }
 
     private Object getKey(SequenceInformationSet informationSet) {
-        return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+        return new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory());
     }
 
 //    protected void updateForP1(Sequence p1Sequence) {
@@ -513,7 +514,7 @@ public class InitialQBuilder {
     protected Object getLastISKey(Sequence sequence) {
         InformationSet informationSet = sequence.getLastInformationSet();
 
-        return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+        return new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory());
     }
 
 }
