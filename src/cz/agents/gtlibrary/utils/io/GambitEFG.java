@@ -24,6 +24,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.GeneralSumGameBuilder;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 
@@ -38,7 +39,7 @@ import java.util.Map;
  */
 public class GambitEFG {
     private boolean wActionLabels = false;
-    private Map<Pair<Integer, Sequence>, Integer> infSetIndices;
+    private Map<ISKey, Integer> infSetIndices;
     private int maxIndex;
 
     public static void main(String[] args) {
@@ -48,11 +49,11 @@ public class GambitEFG {
     public static void exportRandomGame() {
         GambitEFG exporter = new GambitEFG();
 
-        exporter.buildAndWrite("RGGambit", new RandomGameState(), new RandomGameExpander<SequenceInformationSet>(new SequenceFormConfig<SequenceInformationSet>()));
+        exporter.buildAndWrite("RGGambit", new RandomGameState(), new RandomGameExpander<>(new SequenceFormConfig<>()));
     }
 
     public GambitEFG() {
-        infSetIndices = new HashMap<Pair<Integer, Sequence>, Integer>();
+        infSetIndices = new HashMap<>();
         maxIndex = 0;
     }
 
@@ -123,7 +124,7 @@ public class GambitEFG {
         write(filename, root, expander, Integer.MAX_VALUE);
     }
 
-    private Integer getUniqueHash(Pair<Integer, Sequence> key) {
+    private Integer getUniqueHash(ISKey key) {
         if (!infSetIndices.containsKey(key))
             infSetIndices.put(key, ++maxIndex);
         return infSetIndices.get(key);

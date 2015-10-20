@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.domain.ir.leftright;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.ir.ImperfectRecallGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -69,10 +71,10 @@ public class LRGameState extends ImperfectRecallGameState {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         if(getSequenceFor(LRGameInfo.SECOND_PLAYER).size() == 1)
-            return new Pair<>(0, getSequenceForPlayerToMove());
-        return new Pair<>(hashCode(), getSequenceForPlayerToMove());
+            return new PerfectRecallISKey(0, getSequenceForPlayerToMove());
+        return new PerfectRecallISKey(hashCode(), getSequenceForPlayerToMove());
     }
 
     @Override

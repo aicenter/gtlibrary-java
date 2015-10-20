@@ -31,6 +31,8 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInfo
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -223,7 +225,7 @@ public class TTTState extends GameStateImpl {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         int hash;
         if (isGameEnd()) {
             hash = 0;
@@ -234,7 +236,7 @@ public class TTTState extends GameStateImpl {
                 hash |= getSymbol(((TTTAction) a).fieldID) == toMove ? 1 : 0;
             }
         }
-        return new Pair<Integer, Sequence>(hash, history.getSequenceOf(getPlayerToMove()));
+        return new PerfectRecallISKey(hash, history.getSequenceOf(getPlayerToMove()));
     }
 
 

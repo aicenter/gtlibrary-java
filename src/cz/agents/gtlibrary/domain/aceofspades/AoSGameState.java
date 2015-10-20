@@ -20,6 +20,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.domain.aceofspades;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
@@ -37,13 +39,13 @@ public class AoSGameState extends GameStateImpl {
 	private int currentPlayer;
 	private boolean isGameEnd;
 
-	private Pair<Integer, Sequence>[] playerISKeys;
+	private ISKey[] playerISKeys;
 
 	public AoSGameState() {
 		super(AoSGameInfo.ALL_PLAYERS);
 		currentPlayer = 2;
 		isGameEnd = false;
-		playerISKeys = new Pair[2];
+		playerISKeys = new ISKey[2];
 		for (int i = 0; i < 4; i++) {
 			calculateISKeyFor(players[i % 2]);
 		}
@@ -76,13 +78,13 @@ public class AoSGameState extends GameStateImpl {
     }
 
 	public void calculateISKeyFor(Player player) {
-		playerISKeys[player.getId()] = new Pair<Integer, Sequence>(0, getSequenceFor(player));
+		playerISKeys[player.getId()] = new PerfectRecallISKey(0, getSequenceFor(player));
 	}
 
 	@Override
-	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+	public ISKey getISKeyForPlayerToMove() {
 		if (isPlayerToMoveNature())
-			return new Pair<Integer, Sequence>(0, getSequenceFor(players[2]));
+			return new PerfectRecallISKey(0, getSequenceFor(players[2]));
 		return playerISKeys[getPlayerToMove().getId()];
 	}
 

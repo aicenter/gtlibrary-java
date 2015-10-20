@@ -30,6 +30,8 @@ import java.util.Map.Entry;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -53,7 +55,7 @@ public class GoofSpielGameState extends SimultaneousGameState {
 	protected int round;
 	private int currentPlayerIndex;
 
-	protected Pair<Integer, Sequence> key;
+	protected ISKey key;
 	private int hashCode = -1;
 
 	public GoofSpielGameState() {
@@ -439,13 +441,13 @@ public class GoofSpielGameState extends SimultaneousGameState {
 	}
 
 	@Override
-	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+	public ISKey getISKeyForPlayerToMove() {
 		if (key == null) {
 			if (isPlayerToMoveNature())
-				key = new Pair<Integer, Sequence>(0, new ArrayListSequenceImpl(
+				key = new PerfectRecallISKey(0, new ArrayListSequenceImpl(
 						getSequenceForPlayerToMove()));
 			else
-				key = new Pair<Integer, Sequence>(
+				key = new PerfectRecallISKey(
 						sequenceForAllPlayers.hashCode(),
 						new ArrayListSequenceImpl(getSequenceForPlayerToMove()));
 		}

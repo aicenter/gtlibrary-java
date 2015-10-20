@@ -21,6 +21,8 @@ package cz.agents.gtlibrary.domain.mpochm;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -126,12 +128,12 @@ public class MPoCHMGameState extends GameStateImpl {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         HashCodeBuilder hcb = new HashCodeBuilder();
 
         if (currentPlayerIndex == 1)
             hcb.append(giftState);
-        return new Pair<Integer, Sequence>(hcb.hashCode(), getSequenceForPlayerToMove());
+        return new PerfectRecallISKey(hcb.hashCode(), getSequenceForPlayerToMove());
     }
 
     @Override

@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.IloException;
@@ -16,8 +17,8 @@ import java.util.*;
 public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceFormMILP {
     private Map<GameState, BoundLeafInfo> boundLeafMap;
     private Set<GameState> tempLeafs;
-    Map<Pair<Integer, Sequence>, Set<GameState>> tempLeafMap;
-    Map<Pair<Integer, Sequence>, Set<GameState>> addedNonTerminals;
+    Map<ISKey, Set<GameState>> tempLeafMap;
+    Map<ISKey, Set<GameState>> addedNonTerminals;
 
     public StackelbergSequenceFormMILPBuilding(Player[] players, Player leader, Player follower, GameInfo info, Expander<SequenceInformationSet>expander) {
         super(players, leader, follower, info, expander);
@@ -181,7 +182,7 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
     }
 
     private void expandTempLeafsFromISOf(BoundLeafInfo info, StackelbergConfig algConfig, GameState state) {
-        Pair<Integer, Sequence> key = state.getISKeyForPlayerToMove();
+        ISKey key = state.getISKeyForPlayerToMove();
         Set<GameState> tempLeafsInIS = tempLeafMap.get(key);
 
         if (tempLeafsInIS != null) {
@@ -195,8 +196,8 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
         }
     }
 
-    private void removeFrom(Map<Pair<Integer, Sequence>, Set<GameState>> map, GameState state) {
-        Pair<Integer, Sequence> key = state.getISKeyForPlayerToMove();
+    private void removeFrom(Map<ISKey, Set<GameState>> map, GameState state) {
+        ISKey key = state.getISKeyForPlayerToMove();
         Set<GameState> states = map.get(key);
 
         if (states == null)
@@ -206,8 +207,8 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
             map.remove(key);
     }
 
-    private void addToMap(Map<Pair<Integer, Sequence>, Set<GameState>> map, GameState tempLeaf) {
-        Pair<Integer, Sequence> key = tempLeaf.getISKeyForPlayerToMove();
+    private void addToMap(Map<ISKey, Set<GameState>> map, GameState tempLeaf) {
+        ISKey key = tempLeaf.getISKeyForPlayerToMove();
         Set<GameState> tempLeafs = map.get(key);
 
         if (tempLeafs == null) {
@@ -367,7 +368,7 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
 
     public class PartialGambitEFG {
         private boolean wActionLabels = false;
-        private Map<Pair<Integer, Sequence>, Integer> infSetIndices;
+        private Map<ISKey, Integer> infSetIndices;
         private int maxIndex;
 
 
@@ -439,7 +440,7 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
             }
         }
 
-        private Integer getUniqueHash(Pair<Integer, Sequence> key) {
+        private Integer getUniqueHash(ISKey key) {
             if (!infSetIndices.containsKey(key))
                 infSetIndices.put(key, ++maxIndex);
             return infSetIndices.get(key);
