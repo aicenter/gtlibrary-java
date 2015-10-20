@@ -20,6 +20,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 
@@ -70,7 +71,7 @@ public abstract class TreeVisitor {
 		InformationSet informationSet = sequence.getLastInformationSet();
 		String string = sequence.getPlayer().equals(players[0]) ? "P" : "Q";
 
-		return new Key(string, new Key(new Pair<>(informationSet.hashCode(), informationSet.getPlayersHistory())));
+		return new Key(string, new Key(new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory())));
 	}
 
 }

@@ -25,6 +25,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.IloException;
@@ -329,7 +330,7 @@ public class InitialP2QBuilder extends TreeVisitor {
 	protected Object getLastISKey(Sequence sequence) {
 		InformationSet informationSet = sequence.getLastInformationSet();
 
-		return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+		return new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory());
 	}
 
 }

@@ -24,6 +24,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -211,7 +212,7 @@ public class InitialP2Builder {
     }
 
     private Object getKey(SequenceInformationSet informationSet) {
-        return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+        return new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory());
     }
 
 
@@ -420,6 +421,6 @@ public class InitialP2Builder {
     protected Object getLastISKey(Sequence sequence) {
         InformationSet informationSet = sequence.getLastInformationSet();
 
-        return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+        return new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory());
     }
 }
