@@ -286,10 +286,9 @@ public class BreadthFirstDataBuilder {
     }
 
     public Object getLastISKey(Sequence sequence) {
-        InformationSet informationSet = sequence.getLastInformationSet();
         String string = sequence.getPlayer().equals(players[0]) ? "P" : "Q";
 
-        return new Key(string, new Key(new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory())));
+        return new Key(string, new Key(sequence.getLastInformationSet().getISKey()));
     }
 
     public void updateSequences(GameState state) {

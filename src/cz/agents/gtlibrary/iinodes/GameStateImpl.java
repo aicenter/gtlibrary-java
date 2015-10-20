@@ -80,10 +80,9 @@ public abstract class GameStateImpl implements GameState {
 
     @Override
     public boolean checkConsistency(Action action) {
-        if (action == null || action.getInformationSet() == null) {
+        if (action == null || action.getInformationSet() == null)
             return false;
-        }
-        return this.getISKeyForPlayerToMove().equals(new PerfectRecallISKey(action.getInformationSet().hashCode(), action.getInformationSet().getPlayersHistory()));
+        return this.getISKeyForPlayerToMove().equals(action.getInformationSet().getISKey());
 //		return action.getInformationSet().getAllStates().contains(this);
     }
 

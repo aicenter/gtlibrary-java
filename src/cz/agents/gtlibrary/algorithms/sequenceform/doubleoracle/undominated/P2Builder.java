@@ -529,7 +529,7 @@ public class P2Builder {
     protected Object getLastISKey(Sequence sequence) {
         InformationSet informationSet = sequence.getLastInformationSet();
 
-        return new PerfectRecallISKey(informationSet.hashCode(), informationSet.getPlayersHistory());
+        return sequence.getLastInformationSet().getISKey();
     }
 
     public void maximize() {
