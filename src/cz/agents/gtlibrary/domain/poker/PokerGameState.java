@@ -25,6 +25,8 @@ import java.util.LinkedList;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
@@ -40,7 +42,7 @@ public abstract class PokerGameState extends GameStateImpl {
 	protected LinkedList<PokerAction> sequenceForAllPlayers;
 
 	protected PokerAction[] playerCards;
-	protected Pair<Integer, Sequence> cachedISKey = null;
+	protected ISKey cachedISKey = null;
 
 	protected int round;
 	protected int pot;
@@ -321,11 +323,11 @@ public abstract class PokerGameState extends GameStateImpl {
 	}
 
 	@Override
-	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+	public ISKey getISKeyForPlayerToMove() {
 		if (cachedISKey != null)
 			return cachedISKey;
 		if (isPlayerToMoveNature()) {
-			cachedISKey = new Pair<Integer, Sequence>(0, new ArrayListSequenceImpl(history.getSequenceOf(getPlayerToMove())));
+			cachedISKey = new PerfectRecallISKey(0, new ArrayListSequenceImpl(history.getSequenceOf(getPlayerToMove())));
 			return cachedISKey;
 		}
 
@@ -338,7 +340,7 @@ public abstract class PokerGameState extends GameStateImpl {
 			hcb.append(iterator.next().observableISHash());
 			hcb.append(moveNum++);
 		}
-		cachedISKey = new Pair<Integer, Sequence>(hcb.toHashCode(), history.getSequenceOf(getPlayerToMove()));
+		cachedISKey = new PerfectRecallISKey(hcb.toHashCode(), history.getSequenceOf(getPlayerToMove()));
 		return cachedISKey;
 	}
 

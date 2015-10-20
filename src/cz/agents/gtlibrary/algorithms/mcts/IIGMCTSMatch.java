@@ -43,6 +43,8 @@ import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 
@@ -239,8 +241,8 @@ public class IIGMCTSMatch {
             return val;
         }
         
-        private static HashMap<Pair<Integer,Sequence>, Map<Action,Double>> stitchedStrategy = new HashMap();
-        public static void addToStichedStrategy(Pair<Integer,Sequence> isKey, Map<Action,Double> distribution){
+        private static HashMap<ISKey, Map<Action,Double>> stitchedStrategy = new HashMap();
+        public static void addToStichedStrategy(ISKey isKey, Map<Action,Double> distribution){
             double sum=0;
             for (double d : distribution.values()) sum += d;
             if (sum==0)return;
@@ -253,7 +255,7 @@ public class IIGMCTSMatch {
                 
                 Map<Action,Double> d = new FixedSizeMap(actions.size());
                 for (Action a : actions) d.put(a, distribution.get(a));
-                stitchedStrategy.put(new Pair<Integer,Sequence>(isKey.getLeft(),sfAlgConfig.getInformationSetFor(s).getPlayersHistory()), d);
+                stitchedStrategy.put(new PerfectRecallISKey(((PerfectRecallISKey)isKey).getLeft(),sfAlgConfig.getInformationSetFor(s).getPlayersHistory()), d);
             } else {
                 for (Map.Entry<Action,Double> en : old.entrySet()){
                     en.setValue(en.getValue() + distribution.get(en.getKey()));
@@ -266,7 +268,7 @@ public class IIGMCTSMatch {
         public static void addAllToStichedStrategy(Collection<InnerNode> isNodes){
             if (isNodes.isEmpty()) return;
             Player pl = isNodes.iterator().next().getGameState().getPlayerToMove();
-            HashSet<Pair> added = new HashSet();
+            HashSet<ISKey> added = new HashSet();
             ArrayDeque<Node> q = new ArrayDeque(isNodes);
             while (!q.isEmpty()){
                 Node n = q.removeFirst();

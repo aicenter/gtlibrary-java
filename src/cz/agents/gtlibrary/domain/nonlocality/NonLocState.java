@@ -2,6 +2,8 @@ package cz.agents.gtlibrary.domain.nonlocality;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -74,8 +76,8 @@ public class NonLocState extends GameStateImpl {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-        return new Pair<>(0, getSequenceForPlayerToMove());
+    public ISKey getISKeyForPlayerToMove() {
+        return new PerfectRecallISKey(0, getSequenceForPlayerToMove());
     }
 
     @Override

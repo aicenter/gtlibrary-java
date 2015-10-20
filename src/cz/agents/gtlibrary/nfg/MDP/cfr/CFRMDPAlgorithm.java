@@ -106,7 +106,7 @@ public class CFRMDPAlgorithm {
             }
         }
         ArrayList<CFRMDPState> postOrderList = new ArrayList<>();
-        postOrder(rootCFRState,postOrderList,new HashSet<>());
+        postOrder(rootCFRState,postOrderList,new HashSet<CFRMDPState>());
         postOrderList.get(postOrderList.size()-1).stateProb=1;
         allStates.put(pl, postOrderList);
         System.out.println("MDP for " + pl + " built");

@@ -19,6 +19,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.goofspiel;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -42,10 +44,10 @@ public class IIGoofSpielGameState extends GoofSpielGameState {
     
     
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
             if (key == null) {
                     if (isPlayerToMoveNature())
-                            key = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+                            key = new PerfectRecallISKey(0, history.getSequenceOf(getPlayerToMove()));
                     else {
                             int code=playerScore[0];
                             Iterator<Action> it = sequenceForAllPlayers.iterator();
@@ -56,7 +58,7 @@ public class IIGoofSpielGameState extends GoofSpielGameState {
                                 code *=3;
                                 code +=1+Math.signum(a0.compareTo(a1));
                             }
-                            key = new Pair<Integer, Sequence>(code, getSequenceForPlayerToMove());
+                            key = new PerfectRecallISKey(code, getSequenceForPlayerToMove());
                     }
             }
             return key;

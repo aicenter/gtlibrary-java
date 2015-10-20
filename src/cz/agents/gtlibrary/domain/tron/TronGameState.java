@@ -32,9 +32,7 @@ import java.util.Random;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
-import cz.agents.gtlibrary.iinodes.GameStateImpl;
-import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
+import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -63,7 +61,7 @@ public class TronGameState extends SimultaneousGameState {
     protected int[] playerActions;
     private int currentPlayerIndex;
 
-    protected Pair<Integer, Sequence> key;
+    protected ISKey key;
     private int hashCode = -1;
 
     // needed for efficient computation of floodfill eval func
@@ -504,12 +502,12 @@ public class TronGameState extends SimultaneousGameState {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         if (key == null) {
             if (isPlayerToMoveNature())
-                key = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+                key = new PerfectRecallISKey(0, history.getSequenceOf(getPlayerToMove()));
             else
-                key = new Pair<Integer, Sequence>(sequenceForAllPlayers.hashCode(), getSequenceForPlayerToMove());
+                key = new PerfectRecallISKey(sequenceForAllPlayers.hashCode(), getSequenceForPlayerToMove());
         }
         return key;
     }

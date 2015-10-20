@@ -23,6 +23,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.domain.randomgame;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
@@ -49,9 +51,9 @@ public class FIRandomGameState extends RandomGameState {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public cz.agents.gtlibrary.iinodes.ISKey getISKeyForPlayerToMove() {
         if (ISKey == null) {
-            ISKey = new Pair<Integer, Sequence>(
+            ISKey = new PerfectRecallISKey(
                     hashCode(),
                     getHistory().getSequenceOf(getPlayerToMove()));
         }

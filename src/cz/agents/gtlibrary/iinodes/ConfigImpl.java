@@ -29,7 +29,7 @@ import cz.agents.gtlibrary.utils.Pair;
 
 public abstract class ConfigImpl<I extends InformationSetImpl> implements AlgorithmConfig<I> {
 
-	protected HashMap<Pair<Integer, Sequence>, I> allInformationSets;
+	protected HashMap<ISKey, I> allInformationSets;
 
 	public ConfigImpl() {
 		allInformationSets = new LinkedHashMap<>();
@@ -46,7 +46,7 @@ public abstract class ConfigImpl<I extends InformationSetImpl> implements Algori
 		return allInformationSets.get(gameState.getISKeyForPlayerToMove());
 	}
 
-	public HashMap<Pair<Integer, Sequence>, I> getAllInformationSets() {
+	public HashMap<ISKey, I> getAllInformationSets() {
 		return allInformationSets;
 	}
 

@@ -97,13 +97,13 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
-        runLiarsDice();
+//        runLiarsDice();
 //		runPursuit();
 //      runPhantomTTT();
 //		runUpOrDown();
