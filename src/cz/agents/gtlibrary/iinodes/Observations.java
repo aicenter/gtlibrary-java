@@ -8,8 +8,13 @@ public class Observations implements List<Observation> {
 
     private ArrayList<Observation> observationList;
 
+    public Observations() {
+        observationList = new ArrayList<>();
+    }
+
     public Observations(List<Observation> observationList) {
-        this.observationList = new ArrayList<>(observationList);
+        this.observationList = new ArrayList<>(observationList.size());
+        addAll(observationList);
     }
 
     @Override
@@ -44,7 +49,7 @@ public class Observations implements List<Observation> {
 
     @Override
     public boolean add(Observation observation) {
-        return observationList.add(observation);
+        return observation.isEmpty() || observationList.add(observation);
     }
 
     @Override
@@ -59,12 +64,15 @@ public class Observations implements List<Observation> {
 
     @Override
     public boolean addAll(Collection<? extends Observation> c) {
-        return observationList.addAll(c);
+        for (Observation observation : c) {
+            add(observation);
+        }
+        return !c.isEmpty();
     }
 
     @Override
     public boolean addAll(int index, Collection<? extends Observation> c) {
-        return observationList.addAll(index, c);
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override
@@ -84,12 +92,16 @@ public class Observations implements List<Observation> {
 
     @Override
     public boolean equals(Object o) {
-        return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Observations that = (Observations) o;
+        return observationList.equals(that.observationList);
     }
 
     @Override
     public int hashCode() {
-        return 0;
+        return observationList.hashCode();
     }
 
     @Override
@@ -99,12 +111,13 @@ public class Observations implements List<Observation> {
 
     @Override
     public Observation set(int index, Observation element) {
-        return observationList.set(index, element);
+        return element.isEmpty() ? remove(index) : observationList.set(index, element);
     }
 
     @Override
     public void add(int index, Observation element) {
-        observationList.add(index, element);
+        if (!element.isEmpty())
+            observationList.add(index, element);
     }
 
     @Override
@@ -135,5 +148,10 @@ public class Observations implements List<Observation> {
     @Override
     public List<Observation> subList(int fromIndex, int toIndex) {
         throw new UnsupportedOperationException("Sublist not implemented");
+    }
+
+    @Override
+    public String toString() {
+        return observationList.toString();
     }
 }

@@ -36,6 +36,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	protected Map<Player, Set<Sequence>> playerSequences = new HashMap<Player, Set<Sequence>>();
 	protected Map<Map<Player, Sequence>, Double> allUtilitiesForSeqComb = new HashMap<Map<Player, Sequence>, Double>();
 
+	//TODO: This method should override addInformationSetFor(GameState)
 	public void addStateToSequenceForm(GameState state) {
 		if (state.isPlayerToMoveNature())
 			return;
