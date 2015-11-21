@@ -26,16 +26,18 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 public interface AlgorithmConfig<I extends InformationSet> extends Serializable {
-	
+
 	public I getInformationSetFor(GameState gameState);
 
 	public void addInformationSetFor(GameState gameState, I informationSet);
 
+	public void addInformationSetFor(GameState gameState);
+
 	public I createInformationSetFor(GameState gameState);
 
-    public Double getActualNonzeroUtilityValues(GameState gameState);
+	public Double getActualNonzeroUtilityValues(GameState gameState);
 
-    public void setUtility(GameState gameState, double utility);
+	public void setUtility(GameState gameState, double utility);
 
 	public HashMap<ISKey, I> getAllInformationSets();
 

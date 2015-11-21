@@ -43,6 +43,17 @@ public abstract class ConfigImpl<I extends InformationSet> implements AlgorithmC
 	}
 
 	@Override
+	public void addInformationSetFor(GameState gameState) {
+		if(gameState.isPlayerToMoveNature())
+			return;
+		I informationSet = getInformationSetFor(gameState);
+
+		if(informationSet == null)
+			informationSet = createInformationSetFor(gameState);
+		addInformationSetFor(gameState, informationSet);
+	}
+
+	@Override
 	public I getInformationSetFor(GameState gameState) {
 		return allInformationSets.get(gameState.getISKeyForPlayerToMove());
 	}
