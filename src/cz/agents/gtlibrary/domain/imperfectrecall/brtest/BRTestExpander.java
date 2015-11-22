@@ -27,24 +27,24 @@ public class BRTestExpander<I extends InformationSet> extends ExpanderImpl<I> {
     public List<Action> getFirstRoundActions(GameState gameState) {
         List<Action> actions = new ArrayList<>(2);
 
-        actions.add(new BRTestGameAction(getAlgorithmConfig().getInformationSetFor(gameState), "a", 0, 0));
-        actions.add(new BRTestGameAction(getAlgorithmConfig().getInformationSetFor(gameState), "b", 0, 0));
+        actions.add(new BRTestAction(getAlgorithmConfig().getInformationSetFor(gameState), "a", 0, 0));
+        actions.add(new BRTestAction(getAlgorithmConfig().getInformationSetFor(gameState), "b", 0, 0));
         return actions;
     }
 
     public List<Action> getSecondRoundActions(GameState gameState) {
         List<Action> actions = new ArrayList<>(2);
 
-        actions.add(new BRTestGameAction(getAlgorithmConfig().getInformationSetFor(gameState), "c", 0, 0));
-        actions.add(new BRTestGameAction(getAlgorithmConfig().getInformationSetFor(gameState), "d", 0, 0));
+        actions.add(new BRTestAction(getAlgorithmConfig().getInformationSetFor(gameState), "c", 0, 0));
+        actions.add(new BRTestAction(getAlgorithmConfig().getInformationSetFor(gameState), "d", 0, 0));
         return actions;
     }
 
     public List<Action> getThirdRoundActions(GameState gameState) {
         List<Action> actions = new ArrayList<>(2);
 
-        actions.add(new BRTestGameAction(getAlgorithmConfig().getInformationSetFor(gameState), "e", 0, 0));
-        actions.add(new BRTestGameAction(getAlgorithmConfig().getInformationSetFor(gameState), "f", 0, 0));
+        actions.add(new BRTestAction(getAlgorithmConfig().getInformationSetFor(gameState), "e", 0, 0));
+        actions.add(new BRTestAction(getAlgorithmConfig().getInformationSetFor(gameState), "f", 0, 0));
         return actions;
     }
 }

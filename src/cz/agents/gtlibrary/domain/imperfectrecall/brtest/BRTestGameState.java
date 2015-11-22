@@ -54,6 +54,14 @@ public class BRTestGameState extends GameStateImpl {
         return copy;
     }
 
+    public void addP1ObservationFor(Player player, int p1Observation) {
+        observations.get(player).get(players[0]).add(new ObservationImpl(p1Observation));
+    }
+
+    public void addP2ObservationFor(Player player, int p2Observation) {
+        observations.get(player).get(players[1]).add(new ObservationImpl(p2Observation));
+    }
+
     @Override
     public Player getPlayerToMove() {
         if (history.getSequenceOf(players[0]).size() == 0 || history.getSequenceOf(players[0]).size() == 1)
@@ -71,16 +79,16 @@ public class BRTestGameState extends GameStateImpl {
         Sequence p1Sequence = history.getSequenceOf(players[0]);
         Sequence p2Sequence = history.getSequenceOf(players[1]);
 
-        if(((BRTestGameAction)p1Sequence.get(0)).getId().equals("a")) {
-            if(((BRTestGameAction)p1Sequence.get(1)).getId().equals("c")) {
-                if(((BRTestGameAction)p2Sequence.get(0)).getId().equals("e"))
+        if(((BRTestAction)p1Sequence.get(0)).getId().equals("a")) {
+            if(((BRTestAction)p1Sequence.get(1)).getId().equals("c")) {
+                if(((BRTestAction)p2Sequence.get(0)).getId().equals("e"))
                     return new double[]{5, -5};
                 return new double[]{0, 0};
             }
         }
-        if(((BRTestGameAction)p1Sequence.get(0)).getId().equals("b")) {
-            if(((BRTestGameAction)p1Sequence.get(1)).getId().equals("d")) {
-                if(((BRTestGameAction)p2Sequence.get(0)).getId().equals("f"))
+        if(((BRTestAction)p1Sequence.get(0)).getId().equals("b")) {
+            if(((BRTestAction)p1Sequence.get(1)).getId().equals("d")) {
+                if(((BRTestAction)p2Sequence.get(0)).getId().equals("f"))
                     return new double[]{5, -5};
                 return new double[]{0, 0};
             }
@@ -122,11 +130,8 @@ public class BRTestGameState extends GameStateImpl {
         return history.equals(other.history);
     }
 
-    public void addP1ObservationFor(Player player, int p1Observation) {
-        observations.get(player).get(players[0]).add(new ObservationImpl(p1Observation));
-    }
-
-    public void addP2ObservationFor(Player player, int p2Observation) {
-        observations.get(player).get(players[1]).add(new ObservationImpl(p2Observation));
+    @Override
+    public String toString() {
+        return history.toString();
     }
 }

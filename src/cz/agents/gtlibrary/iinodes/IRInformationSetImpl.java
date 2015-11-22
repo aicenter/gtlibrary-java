@@ -40,9 +40,9 @@ public class IRInformationSetImpl implements InformationSet {
             return false;
         if (this.hashCode != obj.hashCode())
             return false;
-        if (!(obj instanceof PerfectRecallInformationSet))
+        if (!(obj instanceof IRInformationSetImpl))
             return false;
-        PerfectRecallInformationSet other = (PerfectRecallInformationSet) obj;
+        IRInformationSetImpl other = (IRInformationSetImpl) obj;
 
         if (!this.player.equals(other.getPlayer()))
             return false;
