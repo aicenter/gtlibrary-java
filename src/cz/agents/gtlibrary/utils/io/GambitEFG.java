@@ -19,14 +19,10 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.utils.io;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.GeneralSumGameBuilder;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.BasicGameBuilder;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -35,22 +31,11 @@ import java.util.Map;
 
 /**
  * Assumes a two player game.
- * Assumes that nodes with the same hashCode() of information set key pair belong to the same information set (without check on equals())
  */
 public class GambitEFG {
     private boolean wActionLabels = false;
     private Map<ISKey, Integer> infSetIndices;
     private int maxIndex;
-
-    public static void main(String[] args) {
-        exportRandomGame();
-    }
-
-    public static void exportRandomGame() {
-        GambitEFG exporter = new GambitEFG();
-
-        exporter.buildAndWrite("RGGambit", new RandomGameState(), new RandomGameExpander<>(new SequenceFormConfig<>()));
-    }
 
     public GambitEFG() {
         infSetIndices = new HashMap<>();
@@ -113,21 +98,21 @@ public class GambitEFG {
             out.println("} 0");
             for (Action a : actions) {
                 GameState next = node.performAction(a);
-                ((SequenceFormConfig<SequenceInformationSet>) expander.getAlgorithmConfig()).addStateToSequenceForm(next);
+                expander.getAlgorithmConfig().addInformationSetFor(next);
                 writeRec(out, next, expander, cut_off_depth - 1);
             }
         }
-    }
-
-    public void buildAndWrite(String filename, GameState root, Expander<SequenceInformationSet> expander) {
-        GeneralSumGameBuilder.build(root, (SequenceFormConfig<? extends SequenceInformationSet>) expander.getAlgorithmConfig(), expander);
-        write(filename, root, expander, Integer.MAX_VALUE);
     }
 
     private Integer getUniqueHash(ISKey key) {
         if (!infSetIndices.containsKey(key))
             infSetIndices.put(key, ++maxIndex);
         return infSetIndices.get(key);
+    }
+
+    public void buildAndWrite(String filename, GameState root, Expander<? extends InformationSet> expander) {
+        BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+        write(filename, root, expander, Integer.MAX_VALUE);
     }
 }
 
