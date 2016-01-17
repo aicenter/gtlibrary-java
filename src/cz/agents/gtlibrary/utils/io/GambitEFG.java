@@ -19,8 +19,13 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.utils.io;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.ImperfectRecallAlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 
@@ -31,11 +36,25 @@ import java.util.Map;
 
 /**
  * Assumes a two player game.
+ * Assumes that nodes with the same hashCode() of information set key pair belong to the same information set (without check on equals())
  */
 public class GambitEFG {
     private boolean wActionLabels = false;
     private Map<ISKey, Integer> infSetIndices;
     private int maxIndex;
+
+    public static void main(String[] args) {
+        exportRandomGame();
+    }
+
+    public static void exportRandomGame() {
+        GambitEFG exporter = new GambitEFG();
+
+        if (RandomGameInfo.IMPERFECT_RECALL)
+            exporter.buildAndWrite("RGGambit.gbt", new RandomGameState(), new RandomGameExpander<>(new ImperfectRecallAlgorithmConfig()));
+        else
+            exporter.buildAndWrite("RGGambit.gbt", new RandomGameState(), new RandomGameExpander<>(new SequenceFormConfig<>()));
+    }
 
     public GambitEFG() {
         infSetIndices = new HashMap<>();
