@@ -10,8 +10,8 @@ public class ImperfectRecallISKey extends ISKey {
      * player must be the same as the number of actions made by this player (need not be this way for the rest of observations)
      */
 
-    public ImperfectRecallISKey(Observations ownObservations, Observations opponentObservations, Observations natureObservations, Player player) {
-        super(ownObservations, opponentObservations, natureObservations, player);
+    public ImperfectRecallISKey(Observations ownObservations, Observations opponentObservations, Observations natureObservations) {
+        super(ownObservations, opponentObservations, natureObservations);
     }
 
     public Observations getOwnObservations() {

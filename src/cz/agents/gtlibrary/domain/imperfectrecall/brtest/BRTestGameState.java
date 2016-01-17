@@ -29,7 +29,7 @@ public class BRTestGameState extends GameStateImpl {
             Map<Player, Observations> playerObservations = new HashMap<>(players.length);
 
             for (Player player1 : players) {
-                playerObservations.put(player1, new Observations());
+                playerObservations.put(player1, new Observations(player, player1));
             }
             observations.put(player, playerObservations);
         }
@@ -47,7 +47,7 @@ public class BRTestGameState extends GameStateImpl {
             Map<Player, Observations> playerObservationsCopy = new HashMap<>(playerObservationsEntry.getValue().size());
 
             for (Map.Entry<Player, Observations> observationsEntry : playerObservationsEntry.getValue().entrySet()) {
-                playerObservationsCopy.put(observationsEntry.getKey(), new Observations(observationsEntry.getValue()));
+                playerObservationsCopy.put(observationsEntry.getKey(), observationsEntry.getValue());
             }
             copy.put(playerObservationsEntry.getKey(), playerObservationsCopy);
         }
@@ -115,7 +115,7 @@ public class BRTestGameState extends GameStateImpl {
     public ISKey getISKeyForPlayerToMove() {
         Map<Player, Observations> playerObservations = observations.get(getPlayerToMove());
 
-        return new ImperfectRecallISKey(playerObservations.get(getPlayerToMove()), playerObservations.get(players[1 - getPlayerToMove().getId()]), new Observations(), getPlayerToMove());
+        return new ImperfectRecallISKey(playerObservations.get(getPlayerToMove()), playerObservations.get(players[1 - getPlayerToMove().getId()]), null);
     }
 
     @Override
