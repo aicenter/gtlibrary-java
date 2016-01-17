@@ -24,7 +24,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ KPGameStateTest.class, KPGameInfoTest.class })
+@SuiteClasses({ KPGameStateTest.class})
 public class AllTests {
 
 }
