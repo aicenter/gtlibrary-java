@@ -24,7 +24,7 @@ import cz.agents.gtlibrary.iinodes.ISKey;
 import java.io.Serializable;
 import java.util.Set;
 
-public interface InformationSet extends Serializable{
+public interface InformationSet extends Serializable {
 	public Player getPlayer();
 	public Set<GameState> getAllStates();
 	public void addStateToIS(GameState state);

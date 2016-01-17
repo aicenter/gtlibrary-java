@@ -1,19 +1,27 @@
 package cz.agents.gtlibrary.iinodes;
 
 import cz.agents.gtlibrary.interfaces.Observation;
+import cz.agents.gtlibrary.interfaces.Player;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.*;
 
 public class Observations implements List<Observation> {
 
-    private ArrayList<Observation> observationList;
+    private List<Observation> observationList;
+    private Player observingPlayer;
+    private Player observedPlayer;
 
-    public Observations() {
-        observationList = new ArrayList<>();
+    public Observations(Player observingPlayer, Player observedPlayer) {
+        this.observingPlayer = observingPlayer;
+        this.observedPlayer = observedPlayer;
+        observationList = new LinkedList<>();
     }
 
-    public Observations(List<Observation> observationList) {
-        this.observationList = new ArrayList<>(observationList.size());
+    public Observations(List<Observation> observationList, Player observingPlayer, Player observedPlayer) {
+        this.observingPlayer = observingPlayer;
+        this.observedPlayer = observedPlayer;
+        this.observationList = new LinkedList<>();
         addAll(observationList);
     }
 
@@ -96,12 +104,14 @@ public class Observations implements List<Observation> {
         if (o == null || getClass() != o.getClass()) return false;
 
         Observations that = (Observations) o;
+        if (!observedPlayer.equals(that.observedPlayer)) return false;
+        if (!observingPlayer.equals(that.observingPlayer)) return false;
         return observationList.equals(that.observationList);
     }
 
     @Override
     public int hashCode() {
-        return observationList.hashCode();
+        return new HashCodeBuilder(17, 31).append(observedPlayer).append(observingPlayer).append(observationList).toHashCode();
     }
 
     @Override
@@ -152,6 +162,22 @@ public class Observations implements List<Observation> {
 
     @Override
     public String toString() {
-        return observationList.toString();
+        return observingPlayer + " obs " + observedPlayer + ":" + observationList.toString();
+    }
+
+    public Observations copy() {
+        return new Observations(this, observingPlayer, observedPlayer);
+    }
+
+    public void performDepthChangingOperations(int seed) {
+        //intentionally empty
+    }
+
+    public Player getObservingPlayer() {
+        return observingPlayer;
+    }
+
+    public Player getObservedPlayer() {
+        return observedPlayer;
     }
 }
