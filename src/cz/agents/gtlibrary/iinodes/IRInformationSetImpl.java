@@ -54,7 +54,7 @@ public class IRInformationSetImpl implements InformationSet {
         statesInInformationSet.add(state);
     }
 
-    public void addAllStateToIS(Collection<GameState> states) {
+    public void addAllStatesToIS(Collection<GameState> states) {
         for (GameState gameState : states) {
             assert gameState.getPlayerToMove().equals(player);
         }
