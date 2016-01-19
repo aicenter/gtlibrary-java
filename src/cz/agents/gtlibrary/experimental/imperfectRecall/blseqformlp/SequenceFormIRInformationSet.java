@@ -9,6 +9,7 @@ import java.util.*;
 
 public class SequenceFormIRInformationSet extends IRInformationSetImpl {
     private Map<Sequence, Set<Sequence>> outgoingSequences;
+    private boolean hasIR = false;
 
     public SequenceFormIRInformationSet(GameState state) {
         super(state);
@@ -52,4 +53,11 @@ public class SequenceFormIRInformationSet extends IRInformationSetImpl {
         return actions;
     }
 
+    public boolean isHasIR() {
+        return hasIR;
+    }
+
+    public void setHasIR(boolean hasIR) {
+        this.hasIR = hasIR;
+    }
 }

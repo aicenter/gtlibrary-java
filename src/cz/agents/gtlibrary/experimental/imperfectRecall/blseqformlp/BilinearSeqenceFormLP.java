@@ -15,6 +15,7 @@ import cz.agents.gtlibrary.utils.Triplet;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,6 +23,8 @@ public class BilinearSeqenceFormLP {
     private final Player player;
     private final Player opponent;
     private BilinearTable table;
+
+    private final double BILINEAR_PRECISION = 0.00001;
 
     public static void main(String[] args) {
         runRandomGame();
@@ -42,6 +45,12 @@ public class BilinearSeqenceFormLP {
 
         exporter.write("RG.gbt", root, expander);
 
+//        System.out.println("IR SETS");
+//        for (SequenceFormIRInformationSet is : config.getAllInformationSets().values()) {
+//            if (is.isHasIR()) {
+//                System.out.println(is.getISKey());
+//            }
+//        }
     }
 
     private static void runBRTest() {
@@ -73,9 +82,17 @@ public class BilinearSeqenceFormLP {
             lpData.getSolver().solve();
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
-            for (Sequence sequence : config.getSequencesFor(player)) {
-                System.out.println(sequence + ": " + lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(sequence)]));
+
+            Map<Sequence, Double> mapa = findMostViolatedBilinearConstraints(lpData);
+            if (!mapa.isEmpty()) {
+                System.out.println("GAME " + RandomGameInfo.seed);
+                System.out.println(mapa);
+                System.out.println("----------------------------");
             }
+
+//            for (Sequence sequence : config.getSequencesFor(player)) {
+//                System.out.println(sequence + ": " + lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(sequence)]));
+//            }
         } catch (IloException e) {
             e.printStackTrace();
         }
@@ -85,6 +102,10 @@ public class BilinearSeqenceFormLP {
         for (Sequence sequence : config.getSequencesFor(player)) {
             if (sequence.isEmpty())
                 continue;
+
+            if (!((SequenceFormIRInformationSet)sequence.getLastInformationSet()).isHasIR())
+                continue;
+
             Object eqKey = sequence;
             Object bilinVarKey = new Pair<>(sequence.getSubSequence(sequence.size() - 1), sequence.getLast());
 
@@ -175,5 +196,22 @@ public class BilinearSeqenceFormLP {
         table.setObjective(new Pair<>("root", new ArrayListSequenceImpl(opponent)), 1);
     }
 
+    private Map<Sequence, Double> findMostViolatedBilinearConstraints(LPData data) throws IloException{
+        Map<Sequence, Double> result = new HashMap<>();
 
+        for (Object productSequence : table.getBilinearVars().keySet()) {
+            Object sequence = table.getBilinearVars().get(productSequence).getLeft();
+            Object action = table.getBilinearVars().get(productSequence).getRight();
+
+            Double prodValue = data.getSolver().getValue(data.getVariables()[table.getVariableIndex(productSequence)]);
+            Double seqValue = data.getSolver().getValue(data.getVariables()[table.getVariableIndex(sequence)]);
+            Double actValue = data.getSolver().getValue(data.getVariables()[table.getVariableIndex(action)]);
+
+            if (Math.abs(prodValue - seqValue*actValue) > BILINEAR_PRECISION) {
+                result.put((Sequence)productSequence, prodValue - seqValue*actValue);
+            }
+        }
+
+        return result;
+    }
 }

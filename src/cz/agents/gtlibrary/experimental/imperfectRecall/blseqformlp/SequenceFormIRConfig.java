@@ -134,8 +134,19 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     protected SequenceFormIRInformationSet getOrCreateInformationSet(GameState state) {
         SequenceFormIRInformationSet infoSet = getInformationSetFor(state);
 
-        if (infoSet == null)
+        if (infoSet == null) {
             infoSet = createInformationSetFor(state);
+        } else if (!state.isGameEnd() && !infoSet.isHasIR()) {
+            Player plToMove = infoSet.getPlayer();
+            Sequence currentHistory = state.getHistory().getSequenceOf(plToMove);
+            for (GameState existingStates : infoSet.getAllStates()) {
+                if (existingStates.isGameEnd()) continue;
+                if (!existingStates.getHistory().getSequenceOf(plToMove).equals(currentHistory)) {
+                    infoSet.setHasIR(true);
+                    break;
+                }
+            }
+        }
         addInformationSetFor(state, infoSet);
         return infoSet;
     }
