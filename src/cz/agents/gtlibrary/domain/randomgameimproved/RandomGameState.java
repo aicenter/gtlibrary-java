@@ -353,10 +353,11 @@ public class RandomGameState extends GameStateImpl{
         playerToMove = players[randomPlayerIndex(ID)];
     }
 
-    private static int randomPlayerIndex(long seed) {
+    private int randomPlayerIndex(long seed) {
         double p = new HighQualityRandom(seed).nextDouble();
         int natureIndex = RandomGameInfo.ALL_PLAYERS.length-1;
-        return p < RandomGameInfo.NATURE_STATE_PROBABILITY ? natureIndex : (int) (natureIndex*(p - RandomGameInfo.NATURE_STATE_PROBABILITY)/(1 - RandomGameInfo.NATURE_STATE_PROBABILITY));
+
+        return ((p < RandomGameInfo.NATURE_STATE_PROBABILITY) && !isGameEnd())? natureIndex : (int) (natureIndex*(p - RandomGameInfo.NATURE_STATE_PROBABILITY)/(1 - RandomGameInfo.NATURE_STATE_PROBABILITY));
     }
 
     @Override
