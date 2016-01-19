@@ -24,7 +24,7 @@ public class BilinearTermsMDT {
 
 
 
-            cplex.addLe(V, cplex.sum(cplex.prod(-1, x), cplex.prod(-1, y), cplex.prod(1,z)));
+            cplex.addLe(V, cplex.sum(cplex.prod(-1.2, x), cplex.prod(-1, y), cplex.prod(1,z)));
             cplex.addGe(z,0.5);
 //            cplex.addLe(x, 0.9);
 
@@ -34,7 +34,7 @@ public class BilinearTermsMDT {
 
             cplex.addMaximize(V);
 
-            final int precision = 4;
+            final int precision = 1;
             addMDTConstraints(cplex,x,y,z,precision);
 
             cplex.exportModel("IR2.lp");
