@@ -63,7 +63,10 @@ public class RandomGameState extends GameStateImpl{
         modificationGenerator = gameState.modificationGenerator.copy();
         centers = Arrays.copyOf(gameState.centers, gameState.centers.length);
         depth = gameState.depth;
-        if (gameState.isPlayerToMoveNature()) actionProbabilities = new ArrayList<>(gameState.actionProbabilities);
+        if (gameState.isPlayerToMoveNature()) {
+            actionProbabilities = new ArrayList<>(gameState.actionProbabilities);
+            probabilitySum = gameState.probabilitySum;
+        }
     }
 
     private void copyObservationLists(Map<Player, Map<Player, Observations>> originalObservations) {
