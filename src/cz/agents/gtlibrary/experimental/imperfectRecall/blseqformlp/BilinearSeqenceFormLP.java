@@ -115,7 +115,7 @@ public class BilinearSeqenceFormLP {
             table.setConstraint(eqKey, varKey, 1);
             table.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
             for (SequenceFormIRInformationSet reachableSet : config.getReachableSets(sequence)) {
-                if (!reachableSet.getActions().isEmpty())
+                if (!reachableSet.getActions().isEmpty() && reachableSet.getPlayer().equals(opponent))
                     table.setConstraint(eqKey, new Pair<>(reachableSet, sequence), -1);
             }
             for (Sequence compatibleSequence : config.getCompatibleSequencesFor(sequence)) {

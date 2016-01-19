@@ -14,9 +14,8 @@ public class BasicGameBuilder {
             GameState currentState = queue.removeLast();
 
             algConfig.addInformationSetFor(currentState);
-            if (currentState.isGameEnd()) {
+            if (currentState.isGameEnd())
                 continue;
-            }
             for (Action action : expander.getActions(currentState)) {
                 queue.add(currentState.performAction(action));
             }
