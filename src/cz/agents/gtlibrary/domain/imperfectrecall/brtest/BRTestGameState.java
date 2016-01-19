@@ -47,7 +47,7 @@ public class BRTestGameState extends GameStateImpl {
             Map<Player, Observations> playerObservationsCopy = new HashMap<>(playerObservationsEntry.getValue().size());
 
             for (Map.Entry<Player, Observations> observationsEntry : playerObservationsEntry.getValue().entrySet()) {
-                playerObservationsCopy.put(observationsEntry.getKey(), observationsEntry.getValue());
+                playerObservationsCopy.put(observationsEntry.getKey(), observationsEntry.getValue().copy());
             }
             copy.put(playerObservationsEntry.getKey(), playerObservationsCopy);
         }
