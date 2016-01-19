@@ -4,14 +4,15 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.GameInfo;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
 
 import java.util.Map;
@@ -23,11 +24,31 @@ public class BilinearSeqenceFormLP {
     private BilinearTable table;
 
     public static void main(String[] args) {
+        runRandomGame();
+//        runBRTest();
+    }
+
+    private static void runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
-
         SequenceFormIRConfig config = new SequenceFormIRConfig();
-        builder.build(new BRTestGameState(), config, new BRTestExpander<>(config));
+        GameState root = new RandomGameState();
+        Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
+        builder.build(root, config, expander);
+        BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
+
+        solver.solve(config);
+        GambitEFG exporter = new GambitEFG();
+
+        exporter.write("RG.gbt", root, expander);
+
+    }
+
+    private static void runBRTest() {
+        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SequenceFormIRConfig();
+
+        builder.build(new BRTestGameState(), config, new BRTestExpander<>(config));
         BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());
 
         solver.solve(config);

@@ -61,7 +61,7 @@ public class GambitEFG {
         maxIndex = 0;
     }
 
-    public void write(String filename, GameState root, Expander<SequenceInformationSet> expander) {
+    public void write(String filename, GameState root, Expander<? extends InformationSet> expander) {
         write(filename, root, expander, Integer.MAX_VALUE);
     }
 
