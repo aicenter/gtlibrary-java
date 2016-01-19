@@ -25,8 +25,8 @@ public class RandomGameExpander<I extends InformationSet> extends ExpanderImpl<I
         List<Action> actions = new LinkedList<Action>();
 
         String newVal = gsState.getRootID() + "";
-        if (gsState.getHistory().getSequenceOf(gameState.getPlayerToMove()).size() > 0)
-            newVal = ((RandomGameAction) gsState.getHistory().getSequenceOf(gameState.getPlayerToMove()).getLast()).getValue();
+//        if (gsState.getHistory().getSequenceOf(gameState.getPlayerToMove()).size() > 0)
+//            newVal = ((RandomGameAction) gsState.getHistory().getSequenceOf(gameState.getPlayerToMove()).getLast()).getValue();
         for (int i=0; i<gsState.getActionsCount(); i++) {
             RandomGameAction action = new RandomGameAction(informationSet, newVal + "_" + i, i);
             actions.add(action);
