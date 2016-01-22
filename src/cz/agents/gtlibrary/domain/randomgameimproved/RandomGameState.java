@@ -88,7 +88,7 @@ public class RandomGameState extends GameStateImpl{
         for (Player player : players) {
             for (Player pl : players) {
                 Observations newObservations;
-                if (RandomGameInfo.IMPERFECT_RECALL) {
+                if (RandomGameInfo.IMPERFECT_RECALL && (!RandomGameInfo.IMPERFECT_RECALL_ONLYFORP1 || player.getId() == 0)) {
                     newObservations = RandomGameInfo.OBSERVATIONS_TYPE.getObservations(player, pl);
                 } else {
                     newObservations = new Observations(player, pl);
@@ -159,7 +159,7 @@ public class RandomGameState extends GameStateImpl{
     protected void generateObservations(int newID, RandomGameAction action) {
         for (Player player : players) {
             int newObservation;
-            if (RandomGameInfo.IMPERFECT_RECALL) {
+            if (RandomGameInfo.IMPERFECT_RECALL && (!RandomGameInfo.IMPERFECT_RECALL_ONLYFORP1 || player.getId() == 0)) {
                 double p = new HighQualityRandom(newID+action.getOrder()).nextDouble();
                 if (player.equals(getPlayerToMove()) && !RandomGameInfo.ABSENT_MINDEDNESS) {
                     newObservation = (int) (p*RandomGameInfo.MAX_OBSERVATION);

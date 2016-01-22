@@ -16,6 +16,7 @@ import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,7 +25,7 @@ public class BilinearSeqenceFormLP {
     private final Player opponent;
     private BilinearTable table;
 
-    private final double BILINEAR_PRECISION = 0.00001;
+    private final double BILINEAR_PRECISION = 0.001;
 
     public static void main(String[] args) {
         runRandomGame();
@@ -40,10 +41,10 @@ public class BilinearSeqenceFormLP {
         builder.build(root, config, expander);
         BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
 
-        solver.solve(config);
         GambitEFG exporter = new GambitEFG();
-
         exporter.write("RG.gbt", root, expander);
+
+        solver.solve(config);
 
 //        System.out.println("IR SETS");
 //        for (SequenceFormIRInformationSet is : config.getAllInformationSets().values()) {
@@ -82,12 +83,23 @@ public class BilinearSeqenceFormLP {
             lpData.getSolver().solve();
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
+            double lastSolution = lpData.getSolver().getObjValue();
 
-            Map<Sequence, Double> mapa = findMostViolatedBilinearConstraints(lpData);
-            if (!mapa.isEmpty()) {
-                System.out.println("GAME " + RandomGameInfo.seed);
-                System.out.println(mapa);
-                System.out.println("----------------------------");
+            Set<Object> sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
+
+            while (!sequencesToTighten.isEmpty()) {
+
+                for (Object s : sequencesToTighten) {
+                    table.refinePrecision(lpData, s);
+                }
+                lpData.getSolver().exportModel("bilinSQF.lp");
+                lpData.getSolver().solve();
+                System.out.println(lpData.getSolver().getObjValue());
+                if (Math.abs(lastSolution - lpData.getSolver().getObjValue()) < BILINEAR_PRECISION)
+                    break;
+                else
+                    lastSolution = lpData.getSolver().getObjValue();
+                sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
             }
 
 //            for (Sequence sequence : config.getSequencesFor(player)) {
@@ -150,6 +162,8 @@ public class BilinearSeqenceFormLP {
 
     private void addBehaviorStrategyConstraints(SequenceFormIRConfig config) {
         for (SequenceFormIRInformationSet informationSet : config.getAllInformationSets().values()) {
+            if (!informationSet.isHasIR())
+                continue;
             if (informationSet.getPlayer().equals(player)) {
                 for (Action action : informationSet.getActions()) {
                     table.setConstraint(informationSet, action, 1);
@@ -196,8 +210,8 @@ public class BilinearSeqenceFormLP {
         table.setObjective(new Pair<>("root", new ArrayListSequenceImpl(opponent)), 1);
     }
 
-    private Map<Sequence, Double> findMostViolatedBilinearConstraints(LPData data) throws IloException{
-        Map<Sequence, Double> result = new HashMap<>();
+    private Set<Object> findMostViolatedBilinearConstraints(LPData data) throws IloException{
+        HashSet<Object> result = new HashSet<>();
 
         for (Object productSequence : table.getBilinearVars().keySet()) {
             Object sequence = table.getBilinearVars().get(productSequence).getLeft();
@@ -208,7 +222,10 @@ public class BilinearSeqenceFormLP {
             Double actValue = data.getSolver().getValue(data.getVariables()[table.getVariableIndex(action)]);
 
             if (Math.abs(prodValue - seqValue*actValue) > BILINEAR_PRECISION) {
-                result.put((Sequence)productSequence, prodValue - seqValue*actValue);
+//                System.out.println("Sequence to IS ( " + sequence + "): " + seqValue);
+//                System.out.println("Behavioral action( " + action + "): " + actValue);
+//                System.out.println("Sequence from IS: (" + productSequence + "): " + prodValue);
+                result.add(productSequence);
             }
         }
 
