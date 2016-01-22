@@ -12,6 +12,7 @@ public class IRExperiments {
         for (int seed = 1; seed<50; seed++) {
             RandomGameInfo.seed = seed;
             BilinearSeqenceFormLP.main(null);
+            System.out.println("-----------------------");
         }
     }
 }
