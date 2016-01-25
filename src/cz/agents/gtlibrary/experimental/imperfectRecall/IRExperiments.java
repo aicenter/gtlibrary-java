@@ -9,7 +9,7 @@ import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.BilinearSeqe
 public class IRExperiments {
 
     public static void main(String[] args) {
-        for (int seed = 1; seed<50; seed++) {
+        for (int seed = 2; seed<50; seed++) {
             RandomGameInfo.seed = seed;
             BilinearSeqenceFormLP.main(null);
             System.out.println("-----------------------");

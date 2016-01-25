@@ -16,15 +16,18 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     protected Map<Sequence, Set<Sequence>> compatibleSequences = new HashMap<>();
     protected Map<Player, Set<Sequence>> playerSequences = new HashMap<>();
 
+    private Set<GameState> terminalStates = new HashSet<>();
+
     @Override
     public SequenceFormIRInformationSet createInformationSetFor(GameState gameState) {
         return new SequenceFormIRInformationSet(gameState);
     }
 
     public void addInformationSetFor(GameState state) {
-        if (state.isGameEnd())
+        if (state.isGameEnd()) {
             setUtility(state);
-        else
+            terminalStates.add(state);
+        } else
             super.addInformationSetFor(state);
         if (state.isPlayerToMoveNature())
             return;
@@ -268,5 +271,9 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         sequenceCombination.put(sequence1.getPlayer(), sequence1);
         sequenceCombination.put(sequence2.getPlayer(), sequence2);
         return sequenceCombination;
+    }
+
+    public Set<GameState> getTerminalStates() {
+        return terminalStates;
     }
 }

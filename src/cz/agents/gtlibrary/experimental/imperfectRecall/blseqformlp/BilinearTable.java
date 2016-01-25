@@ -104,6 +104,7 @@ public class BilinearTable extends LPTable {
                 if (rHat[k][l] == null) {
                     rHat[k][l] = cplex.numVar(0, 1, IloNumVarType.Float, "RHAT_" + rSequenceFromIS.getName() + "_" + k + "_" + l);
                     cplex.addLe(rHat[k][l], w[k][l]);
+                    cplex.addLe(rHat[k][l], rSequenceToIS);
                     thisPrecisionExists = true;
                 }
 
@@ -119,6 +120,7 @@ public class BilinearTable extends LPTable {
 
         result[0] = cplex.addEq(cplex.diff(xBehStrategy,approxSum),0);
         result[1] = cplex.addLe(cplex.diff(rSequenceFromIS,cplex.sum(productSum, cplex.constant(Math.pow(10, -(precision-1))))),0);
+//        result[1] = cplex.addEq(cplex.diff(rSequenceFromIS,productSum),0);
 
         wVariables.put(behavioral, w);
         rHatVariables.put(product, rHat);
@@ -131,5 +133,13 @@ public class BilinearTable extends LPTable {
 
     public void refinePrecision(LPData data, Object productSequence) throws IloException{
         addBilinearConstraint(data, productSequence , bilinearVars.get(productSequence).getLeft(),bilinearVars.get(productSequence).getRight(),bilinearPrecision.get(productSequence)+1);
+    }
+
+    public Map<Object, IloNumVar[][]> getwVariables() {
+        return wVariables;
+    }
+
+    public Map<Object, IloNumVar[][]> getrHatVariables() {
+        return rHatVariables;
     }
 }
