@@ -18,6 +18,8 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
 
     private Set<GameState> terminalStates = new HashSet<>();
 
+    private int[] countIS = {0,0};
+
     @Override
     public SequenceFormIRInformationSet createInformationSetFor(GameState gameState) {
         return new SequenceFormIRInformationSet(gameState);
@@ -139,6 +141,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
 
         if (infoSet == null) {
             infoSet = createInformationSetFor(state);
+            countIS[state.getPlayerToMove().getId()]++;
         } else if (!state.isGameEnd() && !infoSet.isHasIR()) {
             Player plToMove = infoSet.getPlayer();
             Sequence currentHistory = state.getHistory().getSequenceOf(plToMove);
@@ -275,5 +278,9 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
 
     public Set<GameState> getTerminalStates() {
         return terminalStates;
+    }
+
+    public int getCountIS(int playerID) {
+        return countIS[playerID];
     }
 }

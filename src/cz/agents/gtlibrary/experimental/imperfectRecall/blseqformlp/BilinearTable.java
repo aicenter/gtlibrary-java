@@ -20,7 +20,10 @@ public class BilinearTable extends LPTable {
     private Map<Object, IloNumVar[][]> rHatVariables; // sequence -> rHat variables for sequence
     private Map<Object, IloRange> outgoingBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
     private Map<Object, IloRange> behavioralBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
+    private Map<Object, double[][]> wValues;
     private final int INITIAL_MDT_PRECISION = 2;
+    private boolean fixPreviousDigits = true;
+    final int digits = 10;
 
     public BilinearTable() {
         outgoingBilinearConstraints = new HashMap<>();
@@ -64,9 +67,6 @@ public class BilinearTable extends LPTable {
         IloNumVar xBehStrategy = data.getVariables()[getVariableIndex(behavioral)];
         IloNumVar rSequenceFromIS = data.getVariables()[getVariableIndex(product)];
 
-
-
-        final int digits = 10;
         IloRange[] result = new IloRange[2];
         IloNumVar[][] w;
 
@@ -119,12 +119,12 @@ public class BilinearTable extends LPTable {
             }
             if (!thisPrecisionExists) {
                 cplex.addEq(rSequenceToIS, xSum);
-                cplex.addEq(wSum,1);
+                cplex.addEq(wSum, 1);
             }
         }
 
         result[0] = cplex.addEq(cplex.diff(xBehStrategy,approxSum),0);
-        result[1] = cplex.addLe(cplex.diff(rSequenceFromIS,cplex.sum(productSum, cplex.constant(Math.pow(10, -(precision))))),0);
+        result[1] = cplex.addLe(cplex.diff(rSequenceFromIS,cplex.sum(productSum, cplex.constant(Math.pow(50, -(precision))))),0);
 //        result[1] = cplex.addEq(cplex.diff(rSequenceFromIS,productSum),0);
 
         wVariables.put(behavioral, w);
@@ -137,6 +137,9 @@ public class BilinearTable extends LPTable {
     }
 
     public void refinePrecision(LPData data, Object productSequence) throws IloException{
+        if (fixPreviousDigits) {
+            fixDigits(data, productSequence);
+        }
         addBilinearConstraint(data, productSequence , bilinearVars.get(productSequence).getLeft(),bilinearVars.get(productSequence).getRight(),bilinearPrecision.get(productSequence)+1);
     }
 
@@ -146,5 +149,66 @@ public class BilinearTable extends LPTable {
 
     public Map<Object, IloNumVar[][]> getrHatVariables() {
         return rHatVariables;
+    }
+
+    public boolean isFixPreviousDigits() {
+        return fixPreviousDigits;
+    }
+
+    public void setFixPreviousDigits(boolean fixPreviousDigits) {
+        this.fixPreviousDigits = fixPreviousDigits;
+    }
+
+    private void fixDigits(LPData data, Object productSequence) throws IloException {
+        int precision;
+        Object behavioral = bilinearVars.get(productSequence).getRight();
+        if (wVariables.containsKey(behavioral)) {
+            IloNumVar[][] existingWs = wVariables.get(behavioral);
+            precision = wValues.get(behavioral)[0].length;
+            boolean overflowPossible = false;
+            for (int k=0; k < digits; k++) {
+                for (int l = 0; l < precision; l++) {
+                    if ((l == 0) && (k > 1)) continue;
+                    existingWs[k][l].setUB(0);
+                }
+            }
+            for (int k=0; k < digits; k++) {
+                for (int l = 0; l < precision; l++) {
+                    if ((l == 0) && (k > 1)) continue;
+                    if (wValues.get(behavioral)[k][l] > 0.5) {
+                        existingWs[k][l].setUB(1);
+                        if ((l > 0 && k < 9) || (l == 0 && k == 0)) existingWs[k+1][l].setUB(1);
+                        if (k > 0) existingWs[k-1][l].setUB(1);
+                        if (l > 0 && k == 0) existingWs[9][l].setUB(1);
+
+                    }
+//                    if (wValues.get(behavioral)[k][l] > 0.5) {
+//                        existingWs[k][l].setLB(1);
+//                    } else {
+//                        existingWs[k][l].setUB(0);
+//                    }
+                }
+            }
+        } else {
+            return;
+        }
+    }
+
+    public void storeWValues(LPData data) throws IloException {
+        wValues = new HashMap<>();
+        for (Object productSequence : bilinearVars.keySet()) {
+            Object behavioral = bilinearVars.get(productSequence).getRight();
+            if (wVariables.containsKey(behavioral)) {
+                IloNumVar[][] existingWs = wVariables.get(behavioral);
+                double[][] wVals = new double[digits][existingWs[9].length];
+                for (int k = 0; k < digits; k++) {
+                    for (int l = 0; l < existingWs[k].length; l++) {
+                        if ((l == 0) && (k > 1)) continue;
+                        wVals[k][l] = data.getSolver().getValue(existingWs[k][l]);
+                    }
+                }
+                wValues.put(behavioral, wVals);
+            }
+        }
     }
 }
