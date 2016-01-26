@@ -49,7 +49,9 @@ public class BilinearSeqenceFormLP {
         exporter.write("RG.gbt", root, expander);
 
         solver.setExpander(expander);
-
+        System.out.println("GAME ID " + RandomGameInfo.seed);
+        System.out.println("Information sets: " + config.getCountIS(0));
+        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
         solver.solve(config);
 
 //        System.out.println("IR SETS");
@@ -107,9 +109,23 @@ public class BilinearSeqenceFormLP {
             while (!sequencesToTighten.isEmpty()) {
 //            while (sequenceToTighten != null) {
 //                System.out.println("Refining " + sequencesToTighten);
+
+//                for (Map.Entry<Object, IloNumVar[][]> entry : table.getwVariables().entrySet()) {
+//                    System.out.println(entry.getKey());
+//                    for (IloNumVar[] v : entry.getValue())
+//                        for (IloNumVar w : v) {
+//                            if (w == null) continue;
+//                            double value = lpData.getSolver().getValue(w);
+//                            if (value > 0) System.out.println(w + " = " + value);
+//                        }
+//                }
+
+
+                if (table.isFixPreviousDigits()) table.storeWValues(lpData);
                 for (Object s : sequencesToTighten) {
-                table.refinePrecision(lpData, s);
+                    table.refinePrecision(lpData, s);
                 }
+//                System.out.println("----------------------------------------------------------------------------------------------------------");
                 lpData.getSolver().exportModel("bilinSQF.lp");
                 lpData.getSolver().solve();
                 System.out.println(lpData.getSolver().getObjValue());
@@ -233,7 +249,6 @@ public class BilinearSeqenceFormLP {
     }
 
     private Set<Object> findMostViolatedBilinearConstraints(LPData data) throws IloException{
-//        Object result = null;
         HashSet<Object> result = new HashSet<>();
 //        double maxDifference = Double.NEGATIVE_INFINITY;
 
@@ -248,28 +263,26 @@ public class BilinearSeqenceFormLP {
 //            if ((Math.abs(prodValue - seqValue*actValue) > BILINEAR_PRECISION) && (Math.abs(prodValue - seqValue*actValue) > maxDifference)) {
 //                maxDifference = Math.abs(prodValue - seqValue*actValue);
             if (Math.abs(prodValue - seqValue*actValue) > BILINEAR_PRECISION) {
-//                result = productSequence;
+                result.add(productSequence);
+
 //                System.out.println("Sequence to IS ( " + sequence + "): " + seqValue);
 //                System.out.println("Behavioral action( " + action + "): " + actValue);
 //                System.out.println("Sequence from IS: (" + productSequence + "): " + prodValue);
 //                System.out.println("Other Sequences in that IS:");
-//                for (Sequence s : ((SequenceFormIRInformationSet)(((Action)action).getInformationSet())).getOutgoingSequencesFor((Sequence)sequence)) {
-//                    System.out.println(s + " = " + data.getSolver().getValue(data.getVariables()[table.getVariableIndex(s)]));
-////                    for (Map.Entry<Object, IloNumVar[][]> entry : table.getrHatVariables().entrySet()) {
-//                        IloNumVar[][] vars = table.getrHatVariables().get(productSequence);
-//                        for (int l=0; l<vars[0].length; l++) {
-//                            for (int d=0; d<10; d++) {
-//                                Double val = (vars[d][l] == null) ? null :(data.getSolver().getValue(vars[d][l]));
-//                                System.out.println("\t" + sequence + "[" + d + "][" + l + "] = " + val);
-//                            }
-//                        }
-//                        vars = table.getwVariables().get(action);
-//                        for (int l=0; l<vars[0].length; l++) {
-//                            for (int d=0; d<10; d++) {
-//                                Double val = (vars[d][l] == null) ? null :(data.getSolver().getValue(vars[d][l]));
-//                                System.out.println("\t" + action + "[" + d + "][" + l + "] = " + val);
-//                            }
-//                        }
+//                IloNumVar[][] vars = table.getrHatVariables().get(productSequence);
+//                for (int l=0; l<vars[0].length; l++) {
+//                    for (int d=0; d<10; d++) {
+//                        Double val = (vars[d][l] == null) ? null :(data.getSolver().getValue(vars[d][l]));
+//                        if (val == null) continue;
+//                        System.out.println("\t" + sequence + "[" + d + "][" + l + "] = " + val);
+//                    }
+//                }
+//                vars = table.getwVariables().get(action);
+//                for (int l=0; l<vars[0].length; l++) {
+//                    for (int d=0; d<10; d++) {
+//                        Double val = (vars[d][l] == null) ? null :(data.getSolver().getValue(vars[d][l]));
+//                        System.out.println("\t" + action + "[" + d + "][" + l + "] = " + val);
+//                    }
 //                }
 //                System.out.println("Other Behavioral in that IS:");
 //                for (Sequence s : ((SequenceFormIRInformationSet)(((Action)action).getInformationSet())).getOutgoingSequencesFor((Sequence)sequence)) {
@@ -277,7 +290,6 @@ public class BilinearSeqenceFormLP {
 //                }
 //
 //                System.out.println();
-                result.add(productSequence);
 //                break;
             }
         }
