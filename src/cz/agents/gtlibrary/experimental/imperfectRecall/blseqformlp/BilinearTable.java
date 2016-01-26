@@ -96,15 +96,18 @@ public class BilinearTable extends LPTable {
         IloNumExpr approxSum = cplex.numExpr();
         for (int l=0; l<precision; l++) {
             IloNumExpr xSum = cplex.numExpr();
+            IloNumExpr wSum = cplex.numExpr();
             boolean thisPrecisionExists = false;
             for (int k = 0; k < digits; k++) {
                 if ((l == 0) && (k > 1)) continue;
                 if (w[k][l] == null)
                     w[k][l] = cplex.numVar(0,1, IloNumVarType.Bool,"W_" + behavioral.toString() + "_"+ k + "_"+ l );
+                    wSum = cplex.sum(wSum,w[k][l]);
                 if (rHat[k][l] == null) {
-                    rHat[k][l] = cplex.numVar(0, 1, IloNumVarType.Float, "RHAT_" + rSequenceFromIS.getName() + "_" + k + "_" + l);
+                    rHat[k][l] = cplex.numVar(0, 1, IloNumVarType.Float, "RHAT_" + product + "_" + k + "_" + l);
                     cplex.addLe(rHat[k][l], w[k][l]);
                     cplex.addLe(rHat[k][l], rSequenceToIS);
+                } else {
                     thisPrecisionExists = true;
                 }
 
@@ -114,12 +117,14 @@ public class BilinearTable extends LPTable {
 
 
             }
-            if (!thisPrecisionExists)
-                cplex.addEq(rSequenceToIS,xSum);
+            if (!thisPrecisionExists) {
+                cplex.addEq(rSequenceToIS, xSum);
+                cplex.addEq(wSum,1);
+            }
         }
 
         result[0] = cplex.addEq(cplex.diff(xBehStrategy,approxSum),0);
-        result[1] = cplex.addLe(cplex.diff(rSequenceFromIS,cplex.sum(productSum, cplex.constant(Math.pow(10, -(precision-1))))),0);
+        result[1] = cplex.addLe(cplex.diff(rSequenceFromIS,cplex.sum(productSum, cplex.constant(Math.pow(10, -(precision))))),0);
 //        result[1] = cplex.addEq(cplex.diff(rSequenceFromIS,productSum),0);
 
         wVariables.put(behavioral, w);
