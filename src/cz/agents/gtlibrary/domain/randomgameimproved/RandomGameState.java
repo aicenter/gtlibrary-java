@@ -377,4 +377,7 @@ public class RandomGameState extends GameStateImpl{
         return rootID;
     }
 
+    public int getID() {
+        return ID;
+    }
 }

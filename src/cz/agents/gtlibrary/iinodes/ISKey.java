@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.iinodes;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import java.util.Arrays;
 
 public abstract class ISKey {
@@ -22,8 +24,14 @@ public abstract class ISKey {
 
     @Override
     public int hashCode() {
-        if(hashCode == -1)
-            hashCode = objects != null ? Arrays.hashCode(objects) : 0;
+        if(hashCode == -1) {
+            HashCodeBuilder hcb = new HashCodeBuilder(17,31);
+            if (objects != null) {
+                for (Object o : objects)
+                    hcb.append(o);
+                hashCode = hcb.toHashCode();
+            } else hashCode = 0;
+        }
         return hashCode;
     }
 

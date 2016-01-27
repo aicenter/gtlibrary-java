@@ -34,7 +34,7 @@ public class ObservationImpl implements Observation {
 
     @Override
     public int hashCode() {
-        return index;
+        return index*31 + 17;
     }
 
     @Override

@@ -27,7 +27,7 @@ public class RandomGameInfo implements GameInfo {
     public static int MAX_OBSERVATION = 2;
     public static int MAX_UTILITY = 1;
     public static boolean BINARY_UTILITY = false;
-    public static boolean UTILITY_CORRELATION = false;
+    public static boolean UTILITY_CORRELATION = true;
     public static int MAX_CENTER_MODIFICATION = 2;
     public static boolean FIXED_SIZE_BF = false;
     public static double NATURE_STATE_PROBABILITY = 0.0;
@@ -40,7 +40,7 @@ public class RandomGameInfo implements GameInfo {
     public static ObservationsType OBSERVATIONS_TYPE = ObservationsType.FORGETFUL;
     public static double FORGET_OBSERVATION_PROBABILITY = 0.5;
 
-    public static long seed = 70;
+    public static long seed = 7;
 
     public static Random rnd = new HighQualityRandom(seed);
     public static ModificationGenerator modificationGenerator = new UniformModificationGenerator(MAX_CENTER_MODIFICATION);
