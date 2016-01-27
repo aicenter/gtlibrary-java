@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.BilinearSeqenceFormLP;
 import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.iinodes.IRInformationSetImpl;
@@ -122,16 +123,16 @@ public class ImperfectRecallBestResponse {
         for (GameState terminalState : algConfig.getTerminalStates()) {
             milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * getProbability(terminalState, opponentStrategy));
         }
-        milpTable.setConstant("pSum", 1);
-        milpTable.setConstraintType("pSum", 1);
+        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
+        milpTable.setConstraintType("pSum", 2);
     }
 
     private void addPEqualitySequence(Map<Sequence, Double> opponentStrategy) {
         for (GameState terminalState : algConfig.getTerminalStates()) {
             milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * opponentStrategy.get(terminalState.getSequenceFor(opponent)));
         }
-        milpTable.setConstant("pSum", 1);
-        milpTable.setConstraintType("pSum", 1);
+        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
+        milpTable.setConstraintType("pSum", 2);
     }
 
     private void addPUpperBounds() {

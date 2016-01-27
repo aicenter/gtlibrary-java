@@ -29,7 +29,7 @@ public class BilinearSeqenceFormLP {
     private Double finalValue = null;
 
 
-    private final double BILINEAR_PRECISION = 0.0001;
+    static public final double BILINEAR_PRECISION = 0.0001;
     private final double EPS = 0.000001;
 
     public static void main(String[] args) {
