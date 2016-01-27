@@ -124,7 +124,7 @@ public class BilinearTable extends LPTable {
         }
 
         result[0] = cplex.addEq(cplex.diff(xBehStrategy,approxSum),0);
-        result[1] = cplex.addLe(cplex.diff(rSequenceFromIS,cplex.sum(productSum, cplex.constant(Math.pow(50, -(precision))))),0);
+        result[1] = cplex.addLe(cplex.diff(rSequenceFromIS,cplex.sum(productSum, cplex.constant(Math.pow(100, -(precision))))),0);
 //        result[1] = cplex.addEq(cplex.diff(rSequenceFromIS,productSum),0);
 
         wVariables.put(behavioral, w);
@@ -211,4 +211,6 @@ public class BilinearTable extends LPTable {
             }
         }
     }
+
+
 }

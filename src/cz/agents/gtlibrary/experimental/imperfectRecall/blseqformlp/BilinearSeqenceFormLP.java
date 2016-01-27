@@ -26,6 +26,7 @@ public class BilinearSeqenceFormLP {
     private BilinearTable table;
     private Expander expander;
     private GameInfo gameInfo;
+    private Double finalValue = null;
 
 
     private final double BILINEAR_PRECISION = 0.0001;
@@ -49,10 +50,12 @@ public class BilinearSeqenceFormLP {
         exporter.write("RG.gbt", root, expander);
 
         solver.setExpander(expander);
-        System.out.println("GAME ID " + RandomGameInfo.seed);
         System.out.println("Information sets: " + config.getCountIS(0));
         System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
         solver.solve(config);
+
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+
 
 //        System.out.println("IR SETS");
 //        for (SequenceFormIRInformationSet is : config.getAllInformationSets().values()) {
@@ -97,15 +100,6 @@ public class BilinearSeqenceFormLP {
             Set<Object> sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
 //            Object sequenceToTighten = findMostViolatedBilinearConstraints(lpData);
 
-            ImperfectRecallBestResponse br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
-            Map<Sequence, Double> P1Strategy = new HashMap<>();
-            for (Sequence s : config.getSequencesFor(player)) {
-                double prob = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]);
-                P1Strategy.put(s,prob);
-            }
-            br.getBestResponseSequence(P1Strategy);
-            System.out.println("BR Value: " + br.getValue());
-
             while (!sequencesToTighten.isEmpty()) {
 //            while (sequenceToTighten != null) {
 //                System.out.println("Refining " + sequencesToTighten);
@@ -137,7 +131,38 @@ public class BilinearSeqenceFormLP {
 //                sequenceToTighten = findMostViolatedBilinearConstraints(lpData);
 //                break;
             }
+//            System.out.println("-------------------\nP1 Strategy");
+            ImperfectRecallBestResponse br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+            Map<Action, Double> P1Strategy = new HashMap<>();
+            for (Sequence s : config.getSequencesFor(player)) {
+                if (s.isEmpty()) continue;
+                Action a = s.getLast();
+//                System.out.println(s + " = " + lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]));
+                double value = 0;
+                if (((SequenceFormIRInformationSet)a.getInformationSet()).isHasIR()) value = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(a)]);
+                else {
+                    Sequence subS = s.getSubSequence(s.size() - 1);
+                    double subSValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]);
+                    if (subSValue < 1e-6) value = 0;
+                    else value = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]) / subSValue;
+                }
+                P1Strategy.put(a,value);
+            }
+//            System.out.println("-------------------");
+//            for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
+//                for (Map.Entry<Sequence, Set<Sequence>> entry : i.getOutgoingSequences().entrySet()) {
+//                        Sequence s = entry.getKey();
+//                        Object o = new Pair<>(i, s);
+//                        if (table.exists(o)) {
+//                            System.out.println(i + " = " + lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(o)]));
+//                        }
+//                }
+//            }
+            br.getBestResponse(P1Strategy);
+//            System.out.println("-------------------\nP1 Actions " + P1Strategy);
+            finalValue = -br.getValue();
 
+//            finalValue = lpData.getSolver().getObjValue();
 
 //            for (Sequence sequence : config.getSequencesFor(player)) {
 //                System.out.println(sequence + ": " + lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(sequence)]));

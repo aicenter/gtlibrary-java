@@ -73,6 +73,6 @@ public class IRInformationSetImpl implements InformationSet {
 
     @Override
     public String toString() {
-        return "IS:(" + player + ")";
+        return "IS:(" + statesInInformationSet + ")";
     }
 }
