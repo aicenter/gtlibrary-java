@@ -22,7 +22,7 @@ public class BilinearTable extends LPTable {
     private Map<Object, IloRange> behavioralBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
     private Map<Object, double[][]> wValues;
     private final int INITIAL_MDT_PRECISION = 2;
-    private boolean fixPreviousDigits = true;
+    private boolean fixPreviousDigits = false;
     final int digits = 10;
 
     public BilinearTable() {
