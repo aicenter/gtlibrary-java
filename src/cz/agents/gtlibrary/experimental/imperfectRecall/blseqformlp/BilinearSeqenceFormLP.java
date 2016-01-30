@@ -163,7 +163,6 @@ public class BilinearSeqenceFormLP {
             finalValue = -br.getValue();
 
 //            finalValue = lpData.getSolver().getObjValue();
-
 //            for (Sequence sequence : config.getSequencesFor(player)) {
 //                System.out.println(sequence + ": " + lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(sequence)]));
 //            }
