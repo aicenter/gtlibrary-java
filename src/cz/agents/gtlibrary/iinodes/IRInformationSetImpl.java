@@ -6,7 +6,6 @@ package cz.agents.gtlibrary.iinodes;
 
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
-import cz.agents.gtlibrary.interfaces.PerfectRecallInformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 
 import java.util.Collection;
@@ -17,11 +16,13 @@ public class IRInformationSetImpl implements InformationSet {
     protected Player player;
     protected LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<GameState>();
     private final int hashCode;
+    private final ImperfectRecallISKey key;
 
     public IRInformationSetImpl(GameState state) {
         this.player = state.getPlayerToMove();
         this.statesInInformationSet.add(state);
-        this.hashCode = state.getISKeyForPlayerToMove().hashCode();
+        this.key = (ImperfectRecallISKey) state.getISKeyForPlayerToMove();
+        this.hashCode = key.hashCode();
     }
 
     @Override
@@ -46,6 +47,8 @@ public class IRInformationSetImpl implements InformationSet {
 
         if (!this.player.equals(other.getPlayer()))
             return false;
+        if (!this.key.equals(other.key))
+            return false;
         return true;
     }
 
@@ -68,7 +71,7 @@ public class IRInformationSetImpl implements InformationSet {
 
     @Override
     public ISKey getISKey() {
-        return statesInInformationSet.iterator().next().getISKeyForPlayerToMove();
+        return key;
     }
 
     @Override
