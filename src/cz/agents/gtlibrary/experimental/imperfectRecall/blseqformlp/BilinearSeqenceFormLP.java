@@ -144,12 +144,13 @@ public class BilinearSeqenceFormLP {
                     }
                 }
             }
-//            IRSequenceBestResponse br2 = new IRSequenceBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
-//            br2.getBestResponseSequence(null);
+            IRSequenceBestResponse br2 = new IRSequenceBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+            System.out.println(br2.getBestResponseSequence(extractRPStrategy(config, lpData)));
             br.getBestResponse(P1Strategy);
 //            br.getBestResponseSequence(P1StrategySeq);
-            if (DEBUG) System.out.println("-------------------\nP1 Actions " + P1Strategy);
+            System.out.println("-------------------\nP1 Actions " + extractRPStrategy(config, lpData));
             finalValue = -br.getValue();
+            System.out.println("NEW BR = " + br2.getValue());
 
 //            finalValue = lpData.getSolver().getObjValue();
 //            for (Sequence sequence : config.getSequencesFor(player)) {
@@ -311,7 +312,7 @@ public class BilinearSeqenceFormLP {
             if (s.isEmpty()) continue;
             Action a = s.getLast();
             double seqValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]);
-            System.out.println(s + " = " + seqValue);
+            if (DEBUG) System.out.println(s + " = " + seqValue);
 
             P1StrategySeq.put(s, lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]));
         }
