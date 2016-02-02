@@ -18,11 +18,13 @@ public class BilinearTable extends LPTable {
     private Map<Object, Integer> bilinearPrecision; // infromation set -> precision
     private Map<Object, IloNumVar[][]> wVariables; // information set -> binary variables for the bilinear terms for that IS
     private Map<Object, IloNumVar[][]> rHatVariables; // sequence -> rHat variables for sequence
+    private Map<Object, IloNumVar> deltaBehavioralVariables; // action -> delta x variable
+    private Map<Object, IloNumVar> deltaSequenceVariables; // sequence -> delta x variable
     private Map<Object, IloRange> outgoingBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
     private Map<Object, IloRange> behavioralBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
     private Map<Object, double[][]> wValues;
     private final int INITIAL_MDT_PRECISION = 2;
-    private boolean fixPreviousDigits = false;
+    private boolean fixPreviousDigits = true;
     final int digits = 10;
 
     public BilinearTable() {
@@ -32,6 +34,8 @@ public class BilinearTable extends LPTable {
         bilinearPrecision = new HashMap<>();
         wVariables = new HashMap<>();
         rHatVariables = new HashMap<>();
+        deltaBehavioralVariables = new HashMap<>();
+        deltaSequenceVariables = new HashMap<>();
     }
 
     public void markAsBilinear(Object bilinearVarKey, Object cause1Key, Object cause2Key) {
@@ -67,6 +71,19 @@ public class BilinearTable extends LPTable {
         IloNumVar xBehStrategy = data.getVariables()[getVariableIndex(behavioral)];
         IloNumVar rSequenceFromIS = data.getVariables()[getVariableIndex(product)];
 
+        IloNumVar xBehDelta = deltaBehavioralVariables.get(behavioral);
+        if (xBehDelta == null) {
+            xBehDelta = cplex.numVar(0,1,IloNumVarType.Float, "DELTA_" + behavioral.toString());
+            deltaBehavioralVariables.put(behavioral, xBehDelta);
+        }
+
+        IloNumVar xSeqDelta = deltaSequenceVariables.get(product);
+        if (xSeqDelta == null) {
+            xSeqDelta = cplex.numVar(0,1,IloNumVarType.Float, "DELTA_" + product.toString());
+            deltaSequenceVariables.put(product, xSeqDelta);
+            cplex.addLe(xSeqDelta,xBehDelta);
+        }
+
         IloRange[] result = new IloRange[2];
         IloNumVar[][] w;
 
@@ -92,8 +109,10 @@ public class BilinearTable extends LPTable {
                 }
         }
 
-        IloNumExpr productSum = cplex.numExpr();
-        IloNumExpr approxSum = cplex.numExpr();
+        IloNumExpr productSum = xSeqDelta;
+        IloNumExpr approxSum = xBehDelta;
+//        IloNumExpr productSum = cplex.numExpr();
+//        IloNumExpr approxSum = cplex.numExpr();
         for (int l=0; l<precision; l++) {
             IloNumExpr xSum = cplex.numExpr();
             IloNumExpr wSum = cplex.numExpr();
@@ -120,12 +139,14 @@ public class BilinearTable extends LPTable {
             if (!thisPrecisionExists) {
                 cplex.addEq(rSequenceToIS, xSum);
                 cplex.addEq(wSum, 1);
+                xBehDelta.setUB(Math.pow(10, -(precision-1)));
+                cplex.addLe(xSeqDelta, cplex.prod(Math.pow(10, -(precision-1)), rSequenceToIS));
             }
         }
 
         result[0] = cplex.addEq(cplex.diff(xBehStrategy,approxSum),0);
-        result[1] = cplex.addLe(cplex.diff(rSequenceFromIS,cplex.sum(productSum, cplex.constant(Math.pow(100, -(precision))))),0);
-//        result[1] = cplex.addEq(cplex.diff(rSequenceFromIS,productSum),0);
+//        result[1] = cplex.addLe(cplex.diff(rSequenceFromIS,cplex.sum(productSum, cplex.constant(Math.pow(100, -(precision))))),0);
+        result[1] = cplex.addEq(cplex.diff(rSequenceFromIS,productSum),0);
 
         wVariables.put(behavioral, w);
         rHatVariables.put(product, rHat);
@@ -212,5 +233,11 @@ public class BilinearTable extends LPTable {
         }
     }
 
+    public Map<Object, IloNumVar> getDeltaBehavioralVariables() {
+        return deltaBehavioralVariables;
+    }
 
+    public Map<Object, IloNumVar> getDeltaSequenceVariables() {
+        return deltaSequenceVariables;
+    }
 }
