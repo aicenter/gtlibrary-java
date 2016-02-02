@@ -28,6 +28,8 @@ public class BilinearSeqenceFormLP {
     private GameInfo gameInfo;
     private Double finalValue = null;
 
+    private boolean DEBUG = false;
+
 
     static public final double BILINEAR_PRECISION = 0.0001;
     private final double EPS = 0.000001;
@@ -44,6 +46,12 @@ public class BilinearSeqenceFormLP {
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
         builder.build(root, config, expander);
+
+//        if (config.isPlayer2IR()) {
+//            System.out.println(" Player 2 has IR ... skipping ...");
+//            return;
+//        }
+
         BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
 
         GambitEFG exporter = new GambitEFG();
@@ -98,22 +106,9 @@ public class BilinearSeqenceFormLP {
             double lastSolution = lpData.getSolver().getObjValue();
 
             Set<Object> sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
-//            Object sequenceToTighten = findMostViolatedBilinearConstraints(lpData);
+            Map<Action, Double> P1Strategy = extractBehavioralStrategy(config, lpData);
 
             while (!sequencesToTighten.isEmpty()) {
-//            while (sequenceToTighten != null) {
-//                System.out.println("Refining " + sequencesToTighten);
-
-//                for (Map.Entry<Object, IloNumVar[][]> entry : table.getwVariables().entrySet()) {
-//                    System.out.println(entry.getKey());
-//                    for (IloNumVar[] v : entry.getValue())
-//                        for (IloNumVar w : v) {
-//                            if (w == null) continue;
-//                            double value = lpData.getSolver().getValue(w);
-//                            if (value > 0) System.out.println(w + " = " + value);
-//                        }
-//                }
-
 
                 if (table.isFixPreviousDigits()) table.storeWValues(lpData);
                 for (Object s : sequencesToTighten) {
@@ -123,43 +118,37 @@ public class BilinearSeqenceFormLP {
                 lpData.getSolver().exportModel("bilinSQF.lp");
                 lpData.getSolver().solve();
                 System.out.println(lpData.getSolver().getObjValue());
-                if (Math.abs(lastSolution - lpData.getSolver().getObjValue()) < BILINEAR_PRECISION)
-                    break;
-                else
-                    lastSolution = lpData.getSolver().getObjValue();
-                sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
-//                sequenceToTighten = findMostViolatedBilinearConstraints(lpData);
-//                break;
-            }
-//            System.out.println("-------------------\nP1 Strategy");
-            ImperfectRecallBestResponse br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
-            Map<Action, Double> P1Strategy = new HashMap<>();
-            for (Sequence s : config.getSequencesFor(player)) {
-                if (s.isEmpty()) continue;
-                Action a = s.getLast();
-//                System.out.println(s + " = " + lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]));
-                double value = 0;
-                if (((SequenceFormIRInformationSet)a.getInformationSet()).isHasIR()) value = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(a)]);
-                else {
-                    Sequence subS = s.getSubSequence(s.size() - 1);
-                    double subSValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]);
-                    if (subSValue < 1e-6) value = 0;
-                    else value = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]) / subSValue;
-                }
-                P1Strategy.put(a,value);
-            }
-//            System.out.println("-------------------");
-//            for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
-//                for (Map.Entry<Sequence, Set<Sequence>> entry : i.getOutgoingSequences().entrySet()) {
-//                        Sequence s = entry.getKey();
-//                        Object o = new Pair<>(i, s);
-//                        if (table.exists(o)) {
-//                            System.out.println(i + " = " + lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(o)]));
-//                        }
+
+                P1Strategy = extractBehavioralStrategy(config, lpData);
+//                System.out.println("-------------------\nP1 Actions " + P1Strategy);
+
+
+//                if (Math.abs(lastSolution - lpData.getSolver().getObjValue()) < BILINEAR_PRECISION) {
+//                    break;
+//                } else {
+//                    lastSolution = lpData.getSolver().getObjValue();
 //                }
-//            }
+                sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
+            }
+            ImperfectRecallBestResponse br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+
+            if (DEBUG) System.out.println("-------------------");
+            if (DEBUG) {
+                for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
+                    for (Map.Entry<Sequence, Set<Sequence>> entry : i.getOutgoingSequences().entrySet()) {
+                        Sequence s = entry.getKey();
+                        Object o = new Pair<>(i, s);
+                        if (table.exists(o)) {
+                            System.out.println(i + " = " + lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(o)]));
+                        }
+                    }
+                }
+            }
+//            IRSequenceBestResponse br2 = new IRSequenceBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+//            br2.getBestResponseSequence(null);
             br.getBestResponse(P1Strategy);
-//            System.out.println("-------------------\nP1 Actions " + P1Strategy);
+//            br.getBestResponseSequence(P1StrategySeq);
+            if (DEBUG) System.out.println("-------------------\nP1 Actions " + P1Strategy);
             finalValue = -br.getValue();
 
 //            finalValue = lpData.getSolver().getObjValue();
@@ -179,13 +168,6 @@ public class BilinearSeqenceFormLP {
             if (!((SequenceFormIRInformationSet)sequence.getLastInformationSet()).isHasIR())
                 continue;
 
-//            Object eqKey = sequence;
-//            Object bilinVarKey = new Pair<>(sequence.getSubSequence(sequence.size() - 1), sequence.getLast());
-
-//            table.setConstraint(eqKey, bilinVarKey, 1);
-//            table.setConstraint(eqKey, sequence, -1);
-//            table.setConstraintType(eqKey, 1);
-//            table.markAsBilinear(bilinVarKey, sequence.getSubSequence(sequence.size() - 1), sequence.getLast());
             table.markAsBilinear(sequence, sequence.getSubSequence(sequence.size() - 1), sequence.getLast());
         }
     }
@@ -274,48 +256,21 @@ public class BilinearSeqenceFormLP {
 
     private Set<Object> findMostViolatedBilinearConstraints(LPData data) throws IloException{
         HashSet<Object> result = new HashSet<>();
-//        double maxDifference = Double.NEGATIVE_INFINITY;
 
         for (Object productSequence : table.getBilinearVars().keySet()) {
             Object sequence = table.getBilinearVars().get(productSequence).getLeft();
             Object action = table.getBilinearVars().get(productSequence).getRight();
 
-            Double prodValue = data.getSolver().getValue(data.getVariables()[table.getVariableIndex(productSequence)]);
-            Double seqValue = data.getSolver().getValue(data.getVariables()[table.getVariableIndex(sequence)]);
-            Double actValue = data.getSolver().getValue(data.getVariables()[table.getVariableIndex(action)]);
-
-//            if ((Math.abs(prodValue - seqValue*actValue) > BILINEAR_PRECISION) && (Math.abs(prodValue - seqValue*actValue) > maxDifference)) {
-//                maxDifference = Math.abs(prodValue - seqValue*actValue);
-            if (Math.abs(prodValue - seqValue*actValue) > BILINEAR_PRECISION) {
+            if (data.getSolver().getValue(table.getDeltaBehavioralVariables().get(action)) > BILINEAR_PRECISION) {
+                if (DEBUG) System.out.println("X DELTA " + action + " = " + data.getSolver().getValue(table.getDeltaBehavioralVariables().get(action)));
                 result.add(productSequence);
-
-//                System.out.println("Sequence to IS ( " + sequence + "): " + seqValue);
-//                System.out.println("Behavioral action( " + action + "): " + actValue);
-//                System.out.println("Sequence from IS: (" + productSequence + "): " + prodValue);
-//                System.out.println("Other Sequences in that IS:");
-//                IloNumVar[][] vars = table.getrHatVariables().get(productSequence);
-//                for (int l=0; l<vars[0].length; l++) {
-//                    for (int d=0; d<10; d++) {
-//                        Double val = (vars[d][l] == null) ? null :(data.getSolver().getValue(vars[d][l]));
-//                        if (val == null) continue;
-//                        System.out.println("\t" + sequence + "[" + d + "][" + l + "] = " + val);
-//                    }
-//                }
-//                vars = table.getwVariables().get(action);
-//                for (int l=0; l<vars[0].length; l++) {
-//                    for (int d=0; d<10; d++) {
-//                        Double val = (vars[d][l] == null) ? null :(data.getSolver().getValue(vars[d][l]));
-//                        System.out.println("\t" + action + "[" + d + "][" + l + "] = " + val);
-//                    }
-//                }
-//                System.out.println("Other Behavioral in that IS:");
-//                for (Sequence s : ((SequenceFormIRInformationSet)(((Action)action).getInformationSet())).getOutgoingSequencesFor((Sequence)sequence)) {
-//                    System.out.println(s.getLast() + " = " + data.getSolver().getValue(data.getVariables()[table.getVariableIndex(s.getLast())]));
-//                }
-//
-//                System.out.println();
-//                break;
             }
+
+            if (data.getSolver().getValue(table.getDeltaSequenceVariables().get(productSequence)) > BILINEAR_PRECISION) {
+                if (DEBUG) System.out.println("SEQ DELTA " + action + " = " + data.getSolver().getValue(table.getDeltaSequenceVariables().get(productSequence)));
+                result.add(productSequence);
+            }
+
         }
 
         return result;
@@ -328,4 +283,39 @@ public class BilinearSeqenceFormLP {
     public void setExpander(Expander expander) {
         this.expander = expander;
     }
+
+    public Map<Action, Double> extractBehavioralStrategy(SequenceFormIRConfig config, LPData lpData) throws IloException{
+        if (DEBUG) System.out.println("----- P1 Actions -----");
+        Map<Action, Double> P1Strategy = new HashMap<>();
+        for (Sequence s : config.getSequencesFor(player)) {
+            if (s.isEmpty()) continue;
+            Action a = s.getLast();
+            double seqValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]);
+            double value = 0;
+            if (((SequenceFormIRInformationSet)a.getInformationSet()).isHasIR()) value = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(a)]);
+            else {
+                Sequence subS = s.getSubSequence(s.size() - 1);
+                double subSValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]);
+                if (subSValue < 1e-10) value = 0;
+                else value = seqValue / subSValue;
+            }
+            if (DEBUG) System.out.println(a + " = " + value);
+            P1Strategy.put(a,value);
+        }
+        return P1Strategy;
+    }
+
+    public Map<Sequence, Double> extractRPStrategy(SequenceFormIRConfig config, LPData lpData) throws IloException{
+        Map<Sequence, Double> P1StrategySeq = new HashMap<>();
+        for (Sequence s : config.getSequencesFor(player)) {
+            if (s.isEmpty()) continue;
+            Action a = s.getLast();
+            double seqValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]);
+            System.out.println(s + " = " + seqValue);
+
+            P1StrategySeq.put(s, lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]));
+        }
+        return P1StrategySeq;
+    }
+
 }

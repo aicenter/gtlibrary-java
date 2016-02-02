@@ -123,7 +123,8 @@ public class ImperfectRecallBestResponse {
         for (GameState terminalState : algConfig.getTerminalStates()) {
             milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * getProbability(terminalState, opponentStrategy));
         }
-        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
+//        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
+        milpTable.setConstant("pSum", 1);
         milpTable.setConstraintType("pSum", 2);
     }
 
@@ -131,7 +132,8 @@ public class ImperfectRecallBestResponse {
         for (GameState terminalState : algConfig.getTerminalStates()) {
             milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * opponentStrategy.get(terminalState.getSequenceFor(opponent)));
         }
-        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
+//        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
+        milpTable.setConstant("pSum", 1);
         milpTable.setConstraintType("pSum", 2);
     }
 
