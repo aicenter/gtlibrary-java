@@ -3,11 +3,9 @@ package cz.agents.gtlibrary.domain.randomgameimproved;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.randomgameimproved.centers.ModificationGenerator;
 import cz.agents.gtlibrary.iinodes.*;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Observation;
-import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.*;
@@ -35,6 +33,12 @@ public class RandomGameState extends GameStateImpl{
     private ModificationGenerator modificationGenerator;
 
     private int actionsCount;
+
+    public static void main(String[] args) {
+        GambitEFG gambit = new GambitEFG();
+
+        gambit.buildAndWrite("RNDTest.gbt", new RandomGameState(), new RandomGameExpander<>(new ImperfectRecallAlgorithmConfig()));
+    }
 
     public RandomGameState() {
         super(RandomGameInfo.ALL_PLAYERS);
@@ -159,7 +163,7 @@ public class RandomGameState extends GameStateImpl{
     protected void generateObservations(int newID, RandomGameAction action) {
         for (Player player : players) {
             int newObservation;
-            if (RandomGameInfo.IMPERFECT_RECALL && (!RandomGameInfo.IMPERFECT_RECALL_ONLYFORP1 || player.getId() == 0)) {
+            if (RandomGameInfo.IMPERFECT_RECALL && (!RandomGameInfo.IMPERFECT_RECALL_ONLYFORP1 || player.getId() != 1 || action.getInformationSet().getPlayer().getId() != 1)) {
                 double p = new HighQualityRandom(newID+action.getOrder()).nextDouble();
                 if (player.equals(getPlayerToMove()) && !RandomGameInfo.ABSENT_MINDEDNESS) {
                     newObservation = (int) (p*RandomGameInfo.MAX_OBSERVATION);
@@ -172,7 +176,7 @@ public class RandomGameState extends GameStateImpl{
                     }
                 }
             } else {
-                newObservation = new HighQualityRandom(newID).nextInt(RandomGameInfo.MAX_OBSERVATION + 1);
+                newObservation = action.getOrder();
             }
             observations.get(player).get(getPlayerToMove()).add((newObservation == -1 ? ObservationImpl.EMPTY_OBSERVATION : new ObservationImpl(newObservation)));
         }
