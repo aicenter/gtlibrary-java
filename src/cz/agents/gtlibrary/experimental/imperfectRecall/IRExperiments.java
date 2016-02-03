@@ -15,7 +15,7 @@ public class IRExperiments {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         long start = threadBean.getCurrentThreadCpuTime();
 
-        for (int seed = 1; seed<100; seed++) {
+        for (int seed = 1; seed<50; seed++) {
             RandomGameInfo.seed = seed;
             BilinearSeqenceFormLP.main(null);
             System.out.println("-----------------------");

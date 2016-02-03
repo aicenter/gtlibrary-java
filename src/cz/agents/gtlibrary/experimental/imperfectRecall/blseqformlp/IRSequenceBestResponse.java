@@ -155,9 +155,9 @@ public class IRSequenceBestResponse {
         for (Sequence s : algConfig.getSequencesFor(player)) {
             if (s.isEmpty()) continue;
             Action action = s.getLast();
-            milpTable.setConstraint(s + "_UB", s, 1);
-            milpTable.setConstraint(s + "_UB", action, -1);
-            milpTable.setConstraintType(s + "_UB", 0);
+//            milpTable.setConstraint(s + "_UB", s, 1);
+//            milpTable.setConstraint(s + "_UB", action, -1);
+//            milpTable.setConstraintType(s + "_UB", 0);
 
             Object slackAI = new Pair<>((SequenceFormIRInformationSet)action.getInformationSet(), action);
             milpTable.setConstraint(slackAI + "_UB", slackAI, 1);

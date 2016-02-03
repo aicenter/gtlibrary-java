@@ -103,13 +103,15 @@ public class BilinearSeqenceFormLP {
             System.out.println(lpData.getSolver().getObjValue());
             double lastSolution = lpData.getSolver().getObjValue();
 
-            Set<Object> sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
+            Set<SequenceFormIRInformationSet> sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
             Map<Action, Double> P1Strategy = extractBehavioralStrategy(config, lpData);
 
             while (!sequencesToTighten.isEmpty()) {
 
+                if (DEBUG) System.out.println(sequencesToTighten);
+
                 if (table.isFixPreviousDigits()) table.storeWValues(lpData);
-                for (Object s : sequencesToTighten) {
+                for (SequenceFormIRInformationSet s : sequencesToTighten) {
                     table.refinePrecision(lpData, s);
                 }
 //                System.out.println("----------------------------------------------------------------------------------------------------------");
@@ -142,13 +144,13 @@ public class BilinearSeqenceFormLP {
                     }
                 }
             }
-            IRSequenceBestResponse br2 = new IRSequenceBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
-            System.out.println(br2.getBestResponseSequence(extractRPStrategy(config, lpData)));
+//            IRSequenceBestResponse br2 = new IRSequenceBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+//            br2.getBestResponseSequence(extractRPStrategy(config, lpData));
             br.getBestResponse(P1Strategy);
 //            br.getBestResponseSequence(P1StrategySeq);
-            System.out.println("-------------------\nP1 Actions " + extractRPStrategy(config, lpData));
+//            System.out.println("-------------------\nP1 Actions " + extractRPStrategy(config, lpData));
             finalValue = -br.getValue();
-            System.out.println("NEW BR = " + br2.getValue());
+//            System.out.println("NEW BR = " + br2.getValue());
 
 //            finalValue = lpData.getSolver().getObjValue();
 //            for (Sequence sequence : config.getSequencesFor(player)) {
@@ -253,8 +255,8 @@ public class BilinearSeqenceFormLP {
         table.setObjective(new Pair<>("root", new ArrayListSequenceImpl(opponent)), 1);
     }
 
-    private Set<Object> findMostViolatedBilinearConstraints(LPData data) throws IloException{
-        HashSet<Object> result = new HashSet<>();
+    private Set<SequenceFormIRInformationSet> findMostViolatedBilinearConstraints(LPData data) throws IloException{
+        HashSet<SequenceFormIRInformationSet> result = new HashSet<>();
 
         for (Object productSequence : table.getBilinearVars().keySet()) {
             Object sequence = table.getBilinearVars().get(productSequence).getLeft();
@@ -262,12 +264,12 @@ public class BilinearSeqenceFormLP {
 
             if (data.getSolver().getValue(table.getDeltaBehavioralVariables().get(action)) > BILINEAR_PRECISION) {
                 if (DEBUG) System.out.println("X DELTA " + action + " = " + data.getSolver().getValue(table.getDeltaBehavioralVariables().get(action)));
-                result.add(productSequence);
+                result.add((SequenceFormIRInformationSet)((Action)action).getInformationSet());
             }
 
             if (data.getSolver().getValue(table.getDeltaSequenceVariables().get(productSequence)) > BILINEAR_PRECISION) {
                 if (DEBUG) System.out.println("SEQ DELTA " + action + " = " + data.getSolver().getValue(table.getDeltaSequenceVariables().get(productSequence)));
-                result.add(productSequence);
+                result.add((SequenceFormIRInformationSet)((Action)action).getInformationSet());
             }
 
         }
