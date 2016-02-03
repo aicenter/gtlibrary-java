@@ -54,7 +54,7 @@ public class SequenceFormIRInformationSet extends IRInformationSetImpl {
     }
 
     public boolean isHasIR() {
-        return hasIR;
+        return outgoingSequences.size() > 1;
     }
 
     public void setHasIR(boolean hasIR) {

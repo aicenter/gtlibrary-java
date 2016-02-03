@@ -2,6 +2,8 @@ package cz.agents.gtlibrary.domain.randomgameimproved;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.randomgameimproved.centers.ModificationGenerator;
+import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.SequenceFormIRConfig;
+import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -10,7 +12,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.*;
 
-public class RandomGameState extends GameStateImpl{
+public class RandomGameState extends GameStateImpl {
 
     private static final long serialVersionUID = 6086530572992658181L;
     private static int rootID;
@@ -35,9 +37,18 @@ public class RandomGameState extends GameStateImpl{
     private int actionsCount;
 
     public static void main(String[] args) {
-        GambitEFG gambit = new GambitEFG();
+        for (int i = 0; i < 150; i++) {
+            GambitEFG gambit = new GambitEFG();
 
-        gambit.buildAndWrite("RNDTest.gbt", new RandomGameState(), new RandomGameExpander<>(new ImperfectRecallAlgorithmConfig()));
+            RandomGameInfo.seed = i;
+            Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(new SequenceFormIRConfig());
+            gambit.buildAndWrite("RNDTest.gbt", new RandomGameState(), expander);
+
+            for (SequenceFormIRInformationSet irInformationSet : expander.getAlgorithmConfig().getAllInformationSets().values()) {
+               if(irInformationSet.getPlayer().getId() == 1)
+                   assert !irInformationSet.isHasIR();
+            }
+        }
     }
 
     public RandomGameState() {
@@ -126,9 +137,9 @@ public class RandomGameState extends GameStateImpl{
     }
 
     private void changeObservationsLevels(int newID) {
-        for (Player pl: players) {
+        for (Player pl : players) {
             for (Map.Entry<Player, Observations> playerObservationsEntry : observations.get(pl).entrySet()) {
-                playerObservationsEntry.getValue().performDepthChangingOperations(newID + pl.getId()*players.length + playerObservationsEntry.getKey().getId());
+                playerObservationsEntry.getValue().performDepthChangingOperations(newID + pl.getId() * players.length + playerObservationsEntry.getKey().getId());
             }
         }
     }
@@ -136,7 +147,7 @@ public class RandomGameState extends GameStateImpl{
     private void generateActionsCount() {
         actionsCount = RandomGameInfo.MAX_BF;
         if (!RandomGameInfo.FIXED_SIZE_BF) {
-            actionsCount = new HighQualityRandom(rootID+(getISKeyForPlayerToMove()).hashCode()).nextInt(RandomGameInfo.MAX_BF-1)+2;
+            actionsCount = new HighQualityRandom(rootID + (getISKeyForPlayerToMove()).hashCode()).nextInt(RandomGameInfo.MAX_BF - 1) + 2;
         }
     }
 
@@ -164,9 +175,9 @@ public class RandomGameState extends GameStateImpl{
         for (Player player : players) {
             int newObservation;
             if (RandomGameInfo.IMPERFECT_RECALL && (!RandomGameInfo.IMPERFECT_RECALL_ONLYFORP1 || player.getId() != 1 || action.getInformationSet().getPlayer().getId() != 1)) {
-                double p = new HighQualityRandom(newID+action.getOrder()).nextDouble();
+                double p = new HighQualityRandom(newID + action.getOrder()).nextDouble();
                 if (player.equals(getPlayerToMove()) && !RandomGameInfo.ABSENT_MINDEDNESS) {
-                    newObservation = (int) (p*RandomGameInfo.MAX_OBSERVATION);
+                    newObservation = (int) (p * RandomGameInfo.MAX_OBSERVATION);
                 } else {
                     if (p < RandomGameInfo.EMPTY_OBSERVATION_PROBABILITY) {
                         newObservation = -1;
@@ -215,7 +226,7 @@ public class RandomGameState extends GameStateImpl{
             }
         } else {
             if (RandomGameInfo.BINARY_UTILITY) {
-                rndValue = new HighQualityRandom(ID).nextInt(2*RandomGameInfo.MAX_UTILITY + 1) - RandomGameInfo.MAX_UTILITY ; // totally random binary
+                rndValue = new HighQualityRandom(ID).nextInt(2 * RandomGameInfo.MAX_UTILITY + 1) - RandomGameInfo.MAX_UTILITY; // totally random binary
             } else {
                 rndValue = new HighQualityRandom(ID).nextDouble() * 2 * RandomGameInfo.MAX_UTILITY - RandomGameInfo.MAX_UTILITY; // totally random
             }
@@ -286,24 +297,24 @@ public class RandomGameState extends GameStateImpl{
 
     @Override
     public boolean isPlayerToMoveNature() {
-        return getPlayerToMove().getId() == RandomGameInfo.ALL_PLAYERS.length-1;
+        return getPlayerToMove().getId() == RandomGameInfo.ALL_PLAYERS.length - 1;
     }
 
     @Override
     public ISKey getISKeyForPlayerToMove() {
         if (informationSetKey == null) {
-                if (RandomGameInfo.IMPERFECT_RECALL) {
-                    Map<Player,Observations> playerObservationsMap = observations.get(getPlayerToMove());
-                    informationSetKey = new ImperfectRecallISKey(
-                            playerObservationsMap.get(getPlayerToMove()),
-                            playerObservationsMap.get(getOpponent(getPlayerToMove())),
-                            playerObservationsMap.get(players[players.length - 1]));
-                } else {
-                    informationSetKey = new PerfectRecallISKey(
-                            uniqueHash(observations.get(getPlayerToMove()).get(getPlayerToMove()), Math.max(RandomGameInfo.MAX_OBSERVATION, RandomGameInfo.MAX_BF)),
-                            getHistory().getSequenceOf(getPlayerToMove()));
-                }
+            if (RandomGameInfo.IMPERFECT_RECALL) {
+                Map<Player, Observations> playerObservationsMap = observations.get(getPlayerToMove());
+                informationSetKey = new ImperfectRecallISKey(
+                        playerObservationsMap.get(getPlayerToMove()),
+                        playerObservationsMap.get(getOpponent(getPlayerToMove())),
+                        playerObservationsMap.get(players[players.length - 1]));
+            } else {
+                informationSetKey = new PerfectRecallISKey(
+                        uniqueHash(observations.get(getPlayerToMove()).get(getPlayerToMove()), Math.max(RandomGameInfo.MAX_OBSERVATION, RandomGameInfo.MAX_BF)),
+                        getHistory().getSequenceOf(getPlayerToMove()));
             }
+        }
         return informationSetKey;
     }
 
@@ -359,9 +370,9 @@ public class RandomGameState extends GameStateImpl{
 
     private int randomPlayerIndex(long seed) {
         double p = new HighQualityRandom(seed).nextDouble();
-        int natureIndex = RandomGameInfo.ALL_PLAYERS.length-1;
+        int natureIndex = RandomGameInfo.ALL_PLAYERS.length - 1;
 
-        return ((p < RandomGameInfo.NATURE_STATE_PROBABILITY) && !isGameEnd())? natureIndex : (int) (natureIndex*(p - RandomGameInfo.NATURE_STATE_PROBABILITY)/(1 - RandomGameInfo.NATURE_STATE_PROBABILITY));
+        return ((p < RandomGameInfo.NATURE_STATE_PROBABILITY) && !isGameEnd()) ? natureIndex : (int) (natureIndex * (p - RandomGameInfo.NATURE_STATE_PROBABILITY) / (1 - RandomGameInfo.NATURE_STATE_PROBABILITY));
     }
 
     @Override
