@@ -9,14 +9,12 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.IRInformationSetImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
-import ilog.concert.IloNumVar;
 
 import java.util.*;
 
@@ -166,7 +164,7 @@ public class BilinearSeqenceFormLP {
             if (sequence.isEmpty())
                 continue;
 
-            if (!((SequenceFormIRInformationSet)sequence.getLastInformationSet()).isHasIR())
+            if (!((SequenceFormIRInformationSet)sequence.getLastInformationSet()).hasIR())
                 continue;
 
             table.markAsBilinear(sequence, sequence.getSubSequence(sequence.size() - 1), sequence.getLast());
@@ -207,7 +205,7 @@ public class BilinearSeqenceFormLP {
 
     private void addBehaviorStrategyConstraints(SequenceFormIRConfig config) {
         for (SequenceFormIRInformationSet informationSet : config.getAllInformationSets().values()) {
-            if (!informationSet.isHasIR())
+            if (!informationSet.hasIR())
                 continue;
             if (informationSet.getPlayer().equals(player)) {
                 for (Action action : informationSet.getActions()) {
@@ -293,7 +291,7 @@ public class BilinearSeqenceFormLP {
             Action a = s.getLast();
             double seqValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]);
             double value = 0;
-            if (((SequenceFormIRInformationSet)a.getInformationSet()).isHasIR()) value = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(a)]);
+            if (((SequenceFormIRInformationSet)a.getInformationSet()).hasIR()) value = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(a)]);
             else {
                 Sequence subS = s.getSubSequence(s.size() - 1);
                 double subSValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]);

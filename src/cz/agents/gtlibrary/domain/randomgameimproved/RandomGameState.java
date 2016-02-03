@@ -46,7 +46,7 @@ public class RandomGameState extends GameStateImpl {
 
             for (SequenceFormIRInformationSet irInformationSet : expander.getAlgorithmConfig().getAllInformationSets().values()) {
                if(irInformationSet.getPlayer().getId() == 1)
-                   assert !irInformationSet.isHasIR();
+                   assert !irInformationSet.hasIR();
             }
         }
     }
