@@ -11,7 +11,9 @@ import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class BilinearTable extends LPTable {
     private Map<Object, Pair<Object, Object>> bilinearVars;
@@ -24,7 +26,7 @@ public class BilinearTable extends LPTable {
     private Map<Object, IloRange> behavioralBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
     private Map<Object, double[][]> wValues;
     private final int INITIAL_MDT_PRECISION = 2;
-    private boolean fixPreviousDigits = true;
+    private boolean fixPreviousDigits = false;
     final int digits = 10;
 
     public BilinearTable() {
@@ -157,11 +159,14 @@ public class BilinearTable extends LPTable {
         return bilinearVars;
     }
 
-    public void refinePrecision(LPData data, Object productSequence) throws IloException{
+    public void refinePrecision(LPData data, SequenceFormIRInformationSet informationSet) throws IloException{
         if (fixPreviousDigits) {
-            fixDigits(data, productSequence);
+            fixDigits(informationSet);
         }
-        addBilinearConstraint(data, productSequence , bilinearVars.get(productSequence).getLeft(),bilinearVars.get(productSequence).getRight(),bilinearPrecision.get(productSequence)+1);
+        for (Set<Sequence> ss : informationSet.getOutgoingSequences().values())
+            for (Sequence productSequence : ss) {
+                addBilinearConstraint(data, productSequence, bilinearVars.get(productSequence).getLeft(), bilinearVars.get(productSequence).getRight(), bilinearPrecision.get(productSequence) + 1);
+        }
     }
 
     public Map<Object, IloNumVar[][]> getwVariables() {
@@ -180,38 +185,40 @@ public class BilinearTable extends LPTable {
         this.fixPreviousDigits = fixPreviousDigits;
     }
 
-    private void fixDigits(LPData data, Object productSequence) throws IloException {
+    private void fixDigits(SequenceFormIRInformationSet informationSet) throws IloException {
         int precision;
-        Object behavioral = bilinearVars.get(productSequence).getRight();
-        if (wVariables.containsKey(behavioral)) {
-            IloNumVar[][] existingWs = wVariables.get(behavioral);
-            precision = wValues.get(behavioral)[0].length;
-            boolean overflowPossible = false;
-            for (int k=0; k < digits; k++) {
-                for (int l = 0; l < precision; l++) {
-                    if ((l == 0) && (k > 1)) continue;
-                    existingWs[k][l].setUB(0);
-                }
-            }
-            for (int k=0; k < digits; k++) {
-                for (int l = 0; l < precision; l++) {
-                    if ((l == 0) && (k > 1)) continue;
-                    if (wValues.get(behavioral)[k][l] > 0.5) {
-                        existingWs[k][l].setUB(1);
-                        if ((l > 0 && k < 9) || (l == 0 && k == 0)) existingWs[k+1][l].setUB(1);
-                        if (k > 0) existingWs[k-1][l].setUB(1);
-                        if (l > 0 && k == 0) existingWs[9][l].setUB(1);
-
+        Set<Action> allActionsInSet = informationSet.getActions();
+        for (Object behavioral : allActionsInSet) {
+            if (wVariables.containsKey(behavioral)) {
+                IloNumVar[][] existingWs = wVariables.get(behavioral);
+                precision = wValues.get(behavioral)[0].length;
+                boolean overflowPossible = false;
+                for (int k = 0; k < digits; k++) {
+                    for (int l = 0; l < precision; l++) {
+                        if ((l == 0) && (k > 1)) continue;
+                        existingWs[k][l].setUB(0);
                     }
-//                    if (wValues.get(behavioral)[k][l] > 0.5) {
-//                        existingWs[k][l].setLB(1);
-//                    } else {
-//                        existingWs[k][l].setUB(0);
-//                    }
                 }
+                for (int k = 0; k < digits; k++) {
+                    for (int l = 0; l < precision; l++) {
+                        if ((l == 0) && (k > 1)) continue;
+                        if (wValues.get(behavioral)[k][l] > 0.5) {
+                            existingWs[k][l].setUB(1);
+                            if ((l > 0 && k < 9) || (l == 0 && k == 0)) existingWs[k + 1][l].setUB(1);
+                            if (k > 0) existingWs[k - 1][l].setUB(1);
+                            if (l > 0 && k == 0) existingWs[9][l].setUB(1);
+
+                        }
+                        //                    if (wValues.get(behavioral)[k][l] > 0.5) {
+                        //                        existingWs[k][l].setLB(1);
+                        //                    } else {
+                        //                        existingWs[k][l].setUB(0);
+                        //                    }
+                    }
+                }
+            } else {
+                continue;
             }
-        } else {
-            return;
         }
     }
 
