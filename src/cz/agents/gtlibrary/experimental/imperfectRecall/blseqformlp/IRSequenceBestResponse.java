@@ -4,6 +4,8 @@ import cz.agents.gtlibrary.algorithms.sequenceform.gensum.MILPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.IRInformationSetImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
@@ -11,6 +13,7 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
+import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 
 import java.util.*;
@@ -71,7 +74,7 @@ public class IRSequenceBestResponse {
         addVHatInequalities();
         addVIsSeqActionEqualities(opponentStrategy);
         addVSInequalities();
-        addObjective();
+        addObjective(opponentStrategy);
 
         try {
             LPData lpData = milpTable.toCplex();
@@ -80,6 +83,30 @@ public class IRSequenceBestResponse {
             lpData.getSolver().solve();
             setValue(lpData.getSolver().getObjValue());
 
+            for (Sequence s : algConfig.getSequencesFor(player)) {
+                System.out.println(s + " = " + lpData.getSolver().getValue(lpData.getVariables()[milpTable.getVariableIndex(s)]));
+            }
+
+            for (Sequence s : algConfig.getSequencesFor(player)) {
+                if (s.isEmpty()) continue;
+                if (milpTable.exists(s.getLastInformationSet()))
+                    System.out.println(s.getLastInformationSet() + " = " + lpData.getSolver().getValue(lpData.getVariables()[milpTable.getVariableIndex(s.getLastInformationSet())]));
+            }
+
+            for (Sequence s : algConfig.getSequencesFor(player)) {
+                if (s.isEmpty()) continue;
+                Object key = new Pair<>(s.getLastInformationSet(),s.getSubSequence(s.size() - 1));
+                if (milpTable.exists(key)) {
+                    System.out.println(key + " = " + lpData.getSolver().getValue(lpData.getVariables()[milpTable.getVariableIndex(key)]));
+                }
+                for (int i=0; i<2; i++) {
+                    key = new Pair<>(new Triplet<>(s.getLastInformationSet(), s.getSubSequence(s.size() - 1), s.getLast()), i);
+                    if (milpTable.exists(key))
+                        System.out.println(key + " = " + lpData.getSolver().getValue(lpData.getVariables()[milpTable.getVariableIndex(key)]));
+                }
+            }
+
+
             return createStrategy(lpData);
         } catch (IloException e) {
             e.printStackTrace();
@@ -87,12 +114,35 @@ public class IRSequenceBestResponse {
         return null;
     }
 
-    private void addObjective() {
+    private void addObjective(Map<Sequence, Double> opponentStrategy) {
         Sequence s = new ArrayListSequenceImpl(player);
+
+
+
+        HashSet<SequenceFormIRInformationSet> topSets = new HashSet<SequenceFormIRInformationSet>();
         for (SequenceFormIRInformationSet reachableSet : algConfig.getReachableSets(s)) {
             if (!reachableSet.getActions().isEmpty() && reachableSet.getOutgoingSequences().get(s) != null && !reachableSet.getOutgoingSequences().get(s).isEmpty() && reachableSet.getPlayer().equals(player))
-                milpTable.setObjective(new Pair<>(reachableSet, s), 1);
+                topSets.add(reachableSet);
         }
+        for (SequenceFormIRInformationSet i : topSets) {
+            milpTable.setConstraint("v_init", i, 1);
+        }
+        double sumUtility = 0;
+        for (Sequence ss : algConfig.getCompatibleSequencesFor(s)) {
+            Double utility = algConfig.getUtilityFor(s, ss);
+
+            if (utility != null) {
+                Double strategy = opponentStrategy.get(ss);
+                if (strategy == null) strategy = 0d;
+                sumUtility +=  strategy * (utility);
+            }
+        }
+        milpTable.setConstraint("v_init","V0",-1);
+        milpTable.setConstant("v_init", sumUtility);
+        milpTable.setConstraintType("v_init", 1);
+        milpTable.setLowerBound("V0", Double.NEGATIVE_INFINITY);
+        milpTable.setUpperBound("V0", Double.POSITIVE_INFINITY);
+        milpTable.setObjective("V0", 1);
     }
 
     private Map<Action, Double> createStrategy(LPData lpData) {
@@ -184,11 +234,15 @@ public class IRSequenceBestResponse {
                     milpTable.setConstraint(vSeqA + "_exp_value", new Pair<>(reachableSet, s), -1);
             }
             double sumUtility = 0;
-            for (Sequence compatibleSequence : algConfig.getCompatibleSequencesFor(s)) {
+            Set<Sequence> sequenceSet = algConfig.getCompatibleSequencesFor(s);
+            sequenceSet.add(new ArrayListSequenceImpl(opponent));
+            for (Sequence compatibleSequence : sequenceSet) {
                 Double utility = algConfig.getUtilityFor(s, compatibleSequence);
 
                 if (utility != null) {
-                     sumUtility += opponentStrategy.get(compatibleSequence) * (utility);
+                    Double strategy = opponentStrategy.get(compatibleSequence);
+                    if (strategy == null) strategy = 0d;
+                     sumUtility +=  strategy * (utility);
                 }
             }
             milpTable.setConstant(vSeqA + "_exp_value", sumUtility);
@@ -221,6 +275,28 @@ public class IRSequenceBestResponse {
 
             milpTable.setLowerBound(vSeq, Double.NEGATIVE_INFINITY);
             milpTable.setUpperBound(vSeq, Double.POSITIVE_INFINITY);
+
+            milpTable.setLowerBound(vSeqA, Double.NEGATIVE_INFINITY);
+            milpTable.setUpperBound(vSeqA, Double.POSITIVE_INFINITY);
+
+        }
+
+        for (SequenceFormIRInformationSet i : algConfig.getAllInformationSets().values()) {
+            if (i.getPlayer().equals(opponent)) continue;
+            for (Sequence s : i.getOutgoingSequences().keySet())
+                for (Sequence outS : i.getOutgoingSequences().get(s) ) {
+                    Object vSeq = new Pair<>(i, s);
+                    Object vSeqA = new Triplet<>(i, s, outS.getLast());
+
+                    milpTable.setConstraint(vSeqA + "notselected_sigmas", vSeq, 1);
+                    milpTable.setConstraint(vSeqA + "notselected_sigmas", vSeqA, -1);
+
+                    for (Sequence ss : i.getOutgoingSequences().keySet()) {
+                        milpTable.setConstraint(vSeqA + "notselected_sigmas",ss,-M*M);
+                    }
+
+                    milpTable.setConstraintType(vSeqA + "notselected_sigmas",0);
+            }
         }
     }
 
@@ -230,9 +306,11 @@ public class IRSequenceBestResponse {
         for (Sequence s : algConfig.getSequencesFor(player)) {
             if (s.isEmpty()) continue;
             SequenceFormIRInformationSet infoSet = (SequenceFormIRInformationSet) s.getLastInformationSet();
+
             Action action = s.getLast();
             Sequence subSequence = s.getSubSequence(s.size() - 1);
             Object slackAI = new Pair<>((SequenceFormIRInformationSet) action.getInformationSet(), action);
+            Object vHat0 = new Pair<>(new Triplet<>(infoSet, subSequence, action), 0);
             Object vHat1 = new Pair<>(new Triplet<>(infoSet, subSequence, action), 1);
 
             if (!addedSlacks.contains(slackAI)) {
@@ -240,9 +318,12 @@ public class IRSequenceBestResponse {
                 milpTable.setConstraint(infoSet + "_best_action_" + action, slackAI, -1);
                 milpTable.setConstraintType(infoSet + "_best_action_" + action, 1);
                 addedSlacks.add(slackAI);
+                milpTable.setLowerBound(infoSet,Double.NEGATIVE_INFINITY);
+                milpTable.setUpperBound(infoSet, Double.POSITIVE_INFINITY);
             }
 
             milpTable.setConstraint(infoSet + "_best_action_" + action, vHat1, 1);
+//            milpTable.setConstraint(infoSet + "_best_action_" + action, vHat0, 1/(info.getMaxUtility()* RandomGameInfo.MAX_BF));
         }
     }
 
@@ -259,6 +340,8 @@ public class IRSequenceBestResponse {
             milpTable.setLowerBound(vSeqA, Double.NEGATIVE_INFINITY);
             milpTable.setUpperBound(vSeqA, Double.POSITIVE_INFINITY);
             milpTable.setLowerBound(vHat0, Double.NEGATIVE_INFINITY);
+            milpTable.setUpperBound(vHat0, Double.POSITIVE_INFINITY);
+            milpTable.setLowerBound(vHat1, Double.NEGATIVE_INFINITY);
             milpTable.setUpperBound(vHat1, Double.POSITIVE_INFINITY);
 
             milpTable.setConstraint(s + "_VHAT1", vHat0, 1);

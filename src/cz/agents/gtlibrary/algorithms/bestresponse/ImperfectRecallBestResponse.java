@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.BilinearSeqenceFormLP;
+import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.BilinearSeqenceFormSingleOracle;
 import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.iinodes.IRInformationSetImpl;
@@ -74,7 +75,7 @@ public class ImperfectRecallBestResponse {
         try {
             LPData lpData = milpTable.toCplex();
 
-            lpData.getSolver().exportModel("BRMILP.lp");
+            if (BilinearSeqenceFormSingleOracle.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
             lpData.getSolver().solve();
             setValue(lpData.getSolver().getObjValue());
 
@@ -124,7 +125,7 @@ public class ImperfectRecallBestResponse {
             milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * getProbability(terminalState, opponentStrategy));
         }
 //        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
-        milpTable.setConstant("pSum", 1);
+        milpTable.setConstant("pSum", 1 - 0.1);
         milpTable.setConstraintType("pSum", 2);
     }
 
@@ -133,7 +134,7 @@ public class ImperfectRecallBestResponse {
             milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * opponentStrategy.get(terminalState.getSequenceFor(opponent)));
         }
 //        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
-        milpTable.setConstant("pSum", 1);
+        milpTable.setConstant("pSum", 1 - 0.1);
         milpTable.setConstraintType("pSum", 2);
     }
 

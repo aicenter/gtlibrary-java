@@ -26,7 +26,7 @@ public class BilinearTable extends LPTable {
     private Map<Object, IloRange> behavioralBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
     private Map<Object, double[][]> wValues;
     private final int INITIAL_MDT_PRECISION = 2;
-    private boolean fixPreviousDigits = false;
+    public static boolean fixPreviousDigits = false;
     final int digits = 10;
 
     public BilinearTable() {
@@ -77,13 +77,14 @@ public class BilinearTable extends LPTable {
         if (xBehDelta == null) {
             xBehDelta = cplex.numVar(0,1,IloNumVarType.Float, "DELTA_" + behavioral.toString());
             deltaBehavioralVariables.put(behavioral, xBehDelta);
+//            cplex.addMaximize(cplex.diff(cplex.getObjective().getExpr(), xBehDelta));
         }
 
         IloNumVar xSeqDelta = deltaSequenceVariables.get(product);
         if (xSeqDelta == null) {
             xSeqDelta = cplex.numVar(0,1,IloNumVarType.Float, "DELTA_" + product.toString());
             deltaSequenceVariables.put(product, xSeqDelta);
-            cplex.addLe(xSeqDelta,xBehDelta);
+//            cplex.getObjective().setExpr(cplex.diff(cplex.getObjective().getExpr(), cplex.prod(1,xSeqDelta)));
         }
 
         IloRange[] result = new IloRange[2];
@@ -159,13 +160,14 @@ public class BilinearTable extends LPTable {
         return bilinearVars;
     }
 
-    public void refinePrecision(LPData data, SequenceFormIRInformationSet informationSet) throws IloException{
+    public void refinePrecision(LPData data, Action action) throws IloException{
         if (fixPreviousDigits) {
-            fixDigits(informationSet);
+            fixDigits(action);
         }
-        for (Set<Sequence> ss : informationSet.getOutgoingSequences().values())
+        for (Set<Sequence> ss : ((SequenceFormIRInformationSet)action.getInformationSet()).getOutgoingSequences().values())
             for (Sequence productSequence : ss) {
-                addBilinearConstraint(data, productSequence, bilinearVars.get(productSequence).getLeft(), bilinearVars.get(productSequence).getRight(), bilinearPrecision.get(productSequence) + 1);
+                if (productSequence.getLast().equals(action))
+                    addBilinearConstraint(data, productSequence, bilinearVars.get(productSequence).getLeft(), bilinearVars.get(productSequence).getRight(), bilinearPrecision.get(productSequence) + 1);
         }
     }
 
@@ -185,10 +187,10 @@ public class BilinearTable extends LPTable {
         this.fixPreviousDigits = fixPreviousDigits;
     }
 
-    private void fixDigits(SequenceFormIRInformationSet informationSet) throws IloException {
+    private void fixDigits(Action behavioral) throws IloException {
         int precision;
-        Set<Action> allActionsInSet = informationSet.getActions();
-        for (Object behavioral : allActionsInSet) {
+//        Set<Action> allActionsInSet = informationSet.getActions();
+//        for (Object behavioral : allActionsInSet) {
             if (wVariables.containsKey(behavioral)) {
                 IloNumVar[][] existingWs = wVariables.get(behavioral);
                 precision = wValues.get(behavioral)[0].length;
@@ -216,9 +218,9 @@ public class BilinearTable extends LPTable {
                         //                    }
                     }
                 }
-            } else {
-                continue;
-            }
+//            } else {
+//                continue;
+//            }
         }
     }
 
