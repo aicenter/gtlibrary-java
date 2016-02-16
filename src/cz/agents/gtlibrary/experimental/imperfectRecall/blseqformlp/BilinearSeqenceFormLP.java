@@ -27,6 +27,7 @@ public class BilinearSeqenceFormLP {
     private Double finalValue = null;
 
     private boolean DEBUG = false;
+    public static boolean SAVE_LPS = false;
 
 
     static public final double BILINEAR_PRECISION = 0.0001;
@@ -97,7 +98,7 @@ public class BilinearSeqenceFormLP {
         try {
             LPData lpData = table.toCplex();
 
-            lpData.getSolver().exportModel("bilinSQF.lp");
+            if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
             lpData.getSolver().solve();
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
@@ -115,7 +116,7 @@ public class BilinearSeqenceFormLP {
                     table.refinePrecision(lpData, s);
                 }
 //                System.out.println("----------------------------------------------------------------------------------------------------------");
-                lpData.getSolver().exportModel("bilinSQF.lp");
+                if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
                 lpData.getSolver().solve();
                 System.out.println(lpData.getSolver().getObjValue());
 
@@ -257,6 +258,7 @@ public class BilinearSeqenceFormLP {
 
     private Set<Action> findMostViolatedBilinearConstraints(LPData data) throws IloException{
         HashSet<Action> result = new HashSet<>();
+        HashSet<Action> result2 = new HashSet<>();
 
         for (Object productSequence : table.getBilinearVars().keySet()) {
             Object sequence = table.getBilinearVars().get(productSequence).getLeft();
@@ -274,7 +276,47 @@ public class BilinearSeqenceFormLP {
 
         }
 
-        return result;
+//        if (1+1 == 2)
+//            return result;
+
+        double maxDifference = Double.NEGATIVE_INFINITY;
+
+        for (Action a : result) {
+            SequenceFormIRInformationSet is = (SequenceFormIRInformationSet)a.getInformationSet();
+            double average = 0;
+            ArrayList<Double> specValues = new ArrayList<>();
+
+            for (Map.Entry<Sequence, Set<Sequence>> entry : is.getOutgoingSequences().entrySet()) {
+                if (data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]) > 0) {
+                    Sequence productSequence = new ArrayListSequenceImpl(entry.getKey());
+                    productSequence.addLast(a);
+                    double sV = data.getSolver().getValue(data.getVariables()[table.getVariableIndex(productSequence)]);
+                    sV =  sV / data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]);
+                    average += sV;
+                    specValues.add(sV);
+                }
+            }
+            if (specValues.size() == 0) average = 0;
+            else average = average / specValues.size();
+
+            double error = 0;
+            for (double d : specValues) {
+                error += Math.abs(average - d);
+            }
+
+            if (error > maxDifference) {
+                result2.clear();
+                result2.add(a);
+                maxDifference = error;
+            }
+
+//            if (error > maxDifference || error > 1e-4) {
+//                result2.add(a);
+//                maxDifference = error;
+//            }
+        }
+
+        return result2;
     }
 
     public Expander getExpander() {
@@ -288,20 +330,34 @@ public class BilinearSeqenceFormLP {
     public Map<Action, Double> extractBehavioralStrategy(SequenceFormIRConfig config, LPData lpData) throws IloException{
         if (DEBUG) System.out.println("----- P1 Actions -----");
         Map<Action, Double> P1Strategy = new HashMap<>();
-        for (Sequence s : config.getSequencesFor(player)) {
-            if (s.isEmpty()) continue;
-            Action a = s.getLast();
-            double seqValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]);
-            double value = 0;
-            if (((SequenceFormIRInformationSet)a.getInformationSet()).hasIR()) value = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(a)]);
-            else {
-                Sequence subS = s.getSubSequence(s.size() - 1);
-                double subSValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]);
-                if (subSValue < 1e-10) value = 0;
-                else value = seqValue / subSValue;
+        for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
+            if (!i.getPlayer().equals(player)) continue;
+            boolean allZero = true;
+            for (Action a : i.getActions()) {
+                double average = 0;
+                int count = 0;
+                for (Sequence subS : i.getOutgoingSequences().keySet()) {
+                    Sequence s = new ArrayListSequenceImpl(subS);
+                    s.addLast(a);
+
+                    if (lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]) > 0) {
+                        double sV = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]);
+                        sV =  sV / lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]);
+                        average += sV;
+                        count++;
+                    }
+                }
+                if (count == 0) average = 0;
+                else average = average / count;
+
+                if (DEBUG) System.out.println(a + " = " + average);
+                P1Strategy.put(a, average);
+
+                if (average > 0) allZero = false;
             }
-            if (DEBUG) System.out.println(a + " = " + value);
-            P1Strategy.put(a,value);
+            if (allZero && i.getActions().size() > 0) {
+                P1Strategy.put(i.getActions().iterator().next(), 1d);
+            }
         }
         return P1Strategy;
     }

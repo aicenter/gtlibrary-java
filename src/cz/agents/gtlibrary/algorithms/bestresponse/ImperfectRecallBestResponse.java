@@ -125,8 +125,10 @@ public class ImperfectRecallBestResponse {
             milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * getProbability(terminalState, opponentStrategy));
         }
 //        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
-        milpTable.setConstant("pSum", 1 - 0.1);
+//        milpTable.setConstant("pSum", 1 - 0.1);
+        milpTable.setConstant("pSum", 1 );
         milpTable.setConstraintType("pSum", 2);
+
     }
 
     private void addPEqualitySequence(Map<Sequence, Double> opponentStrategy) {
@@ -134,7 +136,8 @@ public class ImperfectRecallBestResponse {
             milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * opponentStrategy.get(terminalState.getSequenceFor(opponent)));
         }
 //        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
-        milpTable.setConstant("pSum", 1 - 0.1);
+//        milpTable.setConstant("pSum", 1 - 0.1);
+        milpTable.setConstant("pSum", 1 );
         milpTable.setConstraintType("pSum", 2);
     }
 
