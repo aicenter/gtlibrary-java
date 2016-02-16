@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.experimental.imperfectRecall;
 
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.BilinearSeqenceFormBNB;
 import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.BilinearSeqenceFormLP;
 import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.BilinearSeqenceFormSingleOracle;
 import cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp.BilinearTable;
@@ -15,7 +16,7 @@ public class IRExperiments {
 
     public static void main(String[] args) {
         int startingSeed = (args.length > 0) ? new Integer(args[0]) : 1;
-        int endingSeed = (args.length > 1) ? new Integer(args[1]) : 50;
+        int endingSeed = (args.length > 1) ? new Integer(args[1]) : 10;
         boolean fixingDigits = (args.length > 2) ? new Boolean(args[2]) : BilinearTable.fixPreviousDigits;
 
         int BF = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_BF;
@@ -32,8 +33,9 @@ public class IRExperiments {
 
         for (int seed = startingSeed; seed<endingSeed; seed++) {
             RandomGameInfo.seed = seed;
-//            BilinearSeqenceFormLP.main(null);
-            BilinearSeqenceFormSingleOracle.main(null);
+            BilinearSeqenceFormLP.main(null);
+//            BilinearSeqenceFormSingleOracle.main(null);
+//            BilinearSeqenceFormBNB.main(null);
             System.out.println("-----------------------");
         }
 

@@ -5,7 +5,6 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
-import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameAction;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -16,23 +15,22 @@ import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
-import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
+import ilog.concert.IloRange;
+import ilog.cplex.IloCplex;
 
 import java.util.*;
 
-public class BilinearSeqenceFormSingleOracle {
+public class BilinearSeqenceFormBNB {
     private final Player player;
     private final Player opponent;
-    private BilinearTable table;
+    private BilinearTableBNB table;
     private Expander expander;
     private GameInfo gameInfo;
     private Double finalValue = null;
 
-    private static boolean DEBUG = false;
-    public static boolean SAVE_LPS = false;
-
-    private Set<Set<Action>> bestResponses = new HashSet<>();
+    private boolean DEBUG = false;
+    public static boolean SAVE_LPS = true;
 
 
     static public final double BILINEAR_PRECISION = 0.0001;
@@ -56,12 +54,10 @@ public class BilinearSeqenceFormSingleOracle {
 //            return;
 //        }
 
-        BilinearSeqenceFormSingleOracle solver = new BilinearSeqenceFormSingleOracle(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
+        BilinearSeqenceFormBNB solver = new BilinearSeqenceFormBNB(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
 
-        if (SAVE_LPS) {
-            GambitEFG exporter = new GambitEFG();
-            exporter.write("RG.gbt", root, expander);
-        }
+        GambitEFG exporter = new GambitEFG();
+        exporter.write("RG.gbt", root, expander);
 
         solver.setExpander(expander);
         System.out.println("Information sets: " + config.getCountIS(0));
@@ -84,13 +80,13 @@ public class BilinearSeqenceFormSingleOracle {
         SequenceFormIRConfig config = new SequenceFormIRConfig();
 
         builder.build(new BRTestGameState(), config, new BRTestExpander<>(config));
-        BilinearSeqenceFormSingleOracle solver = new BilinearSeqenceFormSingleOracle(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());
+        BilinearSeqenceFormBNB solver = new BilinearSeqenceFormBNB(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());
 
         solver.solve(config);
     }
 
-    public BilinearSeqenceFormSingleOracle(Player player, GameInfo info) {
-        this.table = new BilinearTable();
+    public BilinearSeqenceFormBNB(Player player, GameInfo info) {
+        this.table = new BilinearTableBNB();
         this.player = player;
         this.opponent = info.getOpponent(player);
         this.gameInfo = info;
@@ -107,79 +103,125 @@ public class BilinearSeqenceFormSingleOracle {
 
             if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
             lpData.getSolver().solve();
-//            System.out.println(lpData.getSolver().getStatus());
-            System.out.println("LP Value = " + lpData.getSolver().getObjValue());
+            System.out.println(lpData.getSolver().getStatus());
+            System.out.println(lpData.getSolver().getObjValue());
             double lastSolution = lpData.getSolver().getObjValue();
 
             Map<Action, Double> P1Strategy = extractBehavioralStrategy(config, lpData);
-
             ImperfectRecallBestResponse br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
-            Map<Action, Double> brActions = br.getBestResponse(P1Strategy);
+            br.getBestResponse(P1Strategy);
 
-            int iteration = 0;
+            TreeSet<BNBCandidate> fringe = new TreeSet<>();
+            double globalLB = -br.getValue();
+            double globalUB = lastSolution;
 
-            while (lastSolution - (-br.getValue()) > BILINEAR_PRECISION) {
-                if (!addNewBR(config, brActions, iteration, lpData)) {
-                   if (!tightenIntervals(lpData)) {
-                       break;
-                   }
-                }
 
-                if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
-                lpData.getSolver().solve();
-//                System.out.println(lpData.getSolver().getStatus());
-                System.out.println("LP Value = " + lpData.getSolver().getObjValue());
-                lastSolution = lpData.getSolver().getObjValue();
+            BNBCandidate c = new BNBCandidate(globalLB, globalUB);
+            BNBCandidate bestCandidate = c;
+            Set<Action> actionToFocus = findMostViolatedBilinearConstraints(config, lpData);
 
-                P1Strategy = extractBehavioralStrategy(config, lpData);
-
-                br.getBestResponse(P1Strategy);
-                brActions = br.getBestResponse(P1Strategy);
-                System.out.println("BR Value = " + -br.getValue());
-                iteration++;
+            if (!actionToFocus.isEmpty()) {
+                Action a = actionToFocus.iterator().next();
+//                double strategy = Math.floor(Math.pow(10, 2) * P1Strategy.get(a))/Math.pow(10, 2);
+                double strategy = P1Strategy.get(a);
+                c.setActionToFocusOn(a, strategy);
+                fringe.add(c);
             }
 
+            while (!fringe.isEmpty()) {
+
+                BNBCandidate node = null;
+                while (node == null || node.getUb() < bestCandidate.getLb()) {
+                    node = fringe.pollFirst();
+                }
+                if (node == null) break;
 
 
 
-            if (DEBUG) System.out.println("-------------------");
-            if (DEBUG) {
-                for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
-                    for (Map.Entry<Sequence, Set<Sequence>> entry : i.getOutgoingSequences().entrySet()) {
-                        Sequence s = entry.getKey();
-                        Object o = new Pair<>(i, s);
-                        if (table.exists(o)) {
-                            System.out.println(i + " = " + lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(o)]));
+                globalUB = Math.max(node.getUb(),bestCandidate.getUb());
+                for (BNBCandidate f : fringe) if (f.getUb() > globalUB) globalUB = f.getUb();
+
+                System.out.println("Node LB: " + node.getLb() + " \t\t Node UB: " + node.getUb());
+                System.out.println("Global LB: " + globalLB + " \t\t Global UB: " + globalUB);
+
+                System.out.println(node.getActionToFocusOn() + " = " + node.getCurrentProbOfAction());
+
+                if (Math.abs(globalUB - globalLB) < 0.001) break;
+
+
+                Set<IloRange> constraints = table.applyChanges(node.getChanges(), lpData);
+
+                int fixedDigits = 1;
+                for (Pair<BNBCandidate.ChangeType, Triplet<Integer, Action, Double>> x : node.getChanges()) {
+                    if (!x.getRight().getSecond().equals(node.getActionToFocusOn())) continue;
+                    if (!x.getLeft().equals(BNBCandidate.ChangeType.MIDDLE)) continue;
+                    fixedDigits = Math.max(x.getRight().getFirst(),fixedDigits);
+                }
+                int currentPrecision = table.getBilinearPrecision(node.getActionToFocusOn());
+                if (currentPrecision <= fixedDigits + 1 ) table.refinePrecision(lpData, node.getActionToFocusOn());
+
+                for (BNBCandidate.ChangeType t : BNBCandidate.ChangeType.values()) {
+                    Set<Pair<BNBCandidate.ChangeType, Triplet<Integer, Action, Double>>> newChanges = new HashSet<> (node.getChanges());
+                    double probability = node.getCurrentProbOfAction();
+                    if (t.equals(BNBCandidate.ChangeType.LEFT)) {
+                        probability = Math.floor(Math.pow(10, fixedDigits) * probability)/Math.pow(10, fixedDigits);
+                    } else if (t.equals(BNBCandidate.ChangeType.RIGHT)) {
+                        probability = (Math.floor(Math.pow(10, fixedDigits) * probability) + 1)/Math.pow(10, fixedDigits);
+                    }
+                    Pair<BNBCandidate.ChangeType, Triplet<Integer, Action, Double>> change = new Pair<>(t, new Triplet<>(fixedDigits + (t == BNBCandidate.ChangeType.MIDDLE ? 1 : 0), node.getActionToFocusOn(), probability));
+                    newChanges.add(change);
+                    Set<IloRange> r = table.applyChange(change, lpData);
+                    if (table.applyChangeW(change, lpData)) {
+
+                        if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
+                        lpData.getSolver().solve();
+                        if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
+                            lastSolution = lpData.getSolver().getObjValue();
+                            P1Strategy = extractBehavioralStrategy(config, lpData);
+                            br.getBestResponse(P1Strategy);
+
+                            table.storeWValues(lpData);
+
+                            c = new BNBCandidate(-br.getValue(), lastSolution, newChanges);
+                            if (Math.abs(c.getUb() - c.getLb()) < 0.001) {
+                                if (c.getLb() > globalLB) {
+                                    globalLB = c.getLb();
+                                    bestCandidate = c;
+                                }
+                            } else if (c.getUb() > globalLB) {
+                                actionToFocus = findMostViolatedBilinearConstraints(config, lpData);
+                                if (!actionToFocus.isEmpty()) {
+                                    Action a = actionToFocus.iterator().next();
+//                                    double strategy = (Math.floor(Math.pow(10, change.getRight().getFirst()+1) * P1Strategy.get(a)))/Math.pow(10, change.getRight().getFirst()+1);
+                                    double strategy = P1Strategy.get(a);
+                                    c.setActionToFocusOn(a, strategy);
+
+                                    fringe.add(c);
+                                }
+                            }
+                        } else {
+                            if (DEBUG) System.out.println("Infeasible");
                         }
                     }
+                    table.deleteSingleChange(node.getChanges(), r, node.getActionToFocusOn(), lpData);
                 }
+
+                table.deleteChanges(constraints, lpData);
+
             }
+
+            System.out.println("BEST LB: " + bestCandidate.getLb() + "\t\tUB: " + bestCandidate.getUb());
+            table.applyChanges(bestCandidate.getChanges(), lpData);
+            if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
+            lpData.getSolver().solve();
+            System.out.println(lpData.getSolver().getStatus());
+            P1Strategy = extractBehavioralStrategy(config,lpData);
+
+            br.getBestResponse(P1Strategy);
             finalValue = -br.getValue();
         } catch (IloException e) {
             e.printStackTrace();
         }
-    }
-
-    private boolean tightenIntervals(LPData lpData) throws IloException{
-        Set<Action> sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
-        if (sequencesToTighten.isEmpty())
-            return false;
-        while (!sequencesToTighten.isEmpty()) {
-
-            if (DEBUG) System.out.println(sequencesToTighten);
-
-            if (table.isFixPreviousDigits()) table.storeWValues(lpData);
-            for (Action s : sequencesToTighten) {
-                table.refinePrecision(lpData, s);
-            }
-
-            if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
-            lpData.getSolver().solve();
-            System.out.println("Refining LP : " + lpData.getSolver().getObjValue());
-
-            sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
-        }
-        return true;
     }
 
     private void addBilinearConstraints(SequenceFormIRConfig config) {
@@ -195,33 +237,34 @@ public class BilinearSeqenceFormSingleOracle {
     }
 
     private void addValueConstraints(SequenceFormIRConfig config) {
-        Object eqKey = "v_init";
-        Object informationSet = "root";
-        Object varKey = new Pair<>(informationSet, new ArrayListSequenceImpl(opponent));
-        table.setConstraint(eqKey,varKey,-1);
-        table.setConstraintType(eqKey, 2);
-        table.setLowerBound(varKey,Double.NEGATIVE_INFINITY);
-        table.setUpperBound(varKey, Double.POSITIVE_INFINITY);
-        for (GameState leaf : config.getTerminalStates()) {
+        for (Sequence sequence : config.getSequencesFor(opponent)) {
+            Object eqKey;
+            Object informationSet;
+            Sequence subsequence;
 
-            Sequence sequence = leaf.getSequenceFor(player);
-            Sequence oppSequence = leaf.getSequenceFor(opponent);
-
-            boolean first = true;
-            for (Action a : oppSequence) {
-                if (!((RandomGameAction)a).getValue().endsWith("_0")) {
-                    first = false;
-                    break;
-                }
+            if (sequence.isEmpty()) {
+                eqKey = "v_init";
+                informationSet = "root";
+                subsequence = new ArrayListSequenceImpl(opponent);
+            } else {
+                subsequence = sequence.getSubSequence(sequence.size() - 1);
+                informationSet = sequence.getLastInformationSet();
+                eqKey = new Triplet<>(informationSet, subsequence, sequence.getLast());
             }
+            Object varKey = new Pair<>(informationSet, subsequence);
 
-            if (first) {
-                Double utility = config.getUtilityFor(sequence, oppSequence);
+            table.setConstraint(eqKey, varKey, 1);
+            table.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+            for (SequenceFormIRInformationSet reachableSet : config.getReachableSets(sequence)) {
+                if (!reachableSet.getActions().isEmpty() && reachableSet.getOutgoingSequences().get(sequence) != null && !reachableSet.getOutgoingSequences().get(sequence).isEmpty() && reachableSet.getPlayer().equals(opponent))
+                    table.setConstraint(eqKey, new Pair<>(reachableSet, sequence), -1);
+            }
+            for (Sequence compatibleSequence : config.getCompatibleSequencesFor(sequence)) {
+                Double utility = config.getUtilityFor(sequence, compatibleSequence);
 
                 if (utility != null)
-                    table.setConstraint(eqKey, sequence, utility);
+                    table.setConstraint(eqKey, compatibleSequence, -utility);
             }
-
         }
     }
 
@@ -275,27 +318,31 @@ public class BilinearSeqenceFormSingleOracle {
         table.setObjective(new Pair<>("root", new ArrayListSequenceImpl(opponent)), 1);
     }
 
-    private Set<Action> findMostViolatedBilinearConstraints(LPData data) throws IloException{
+    private Set<Action> findMostViolatedBilinearConstraints(SequenceFormIRConfig config, LPData data) throws IloException{
         HashSet<Action> result = new HashSet<>();
         HashSet<Action> result2 = new HashSet<>();
 
-        for (Object productSequence : table.getBilinearVars().keySet()) {
-            Object sequence = table.getBilinearVars().get(productSequence).getLeft();
-            Object action = table.getBilinearVars().get(productSequence).getRight();
+//        for (Object productSequence : table.getBilinearVars().keySet()) {
+//            Object sequence = table.getBilinearVars().get(productSequence).getLeft();
+//            Object action = table.getBilinearVars().get(productSequence).getRight();
+//
+//            if (data.getSolver().getValue(table.getDeltaBehavioralVariables().get(action)) > BILINEAR_PRECISION) {
+//                if (DEBUG) System.out.println("X DELTA " + action + " = " + data.getSolver().getValue(table.getDeltaBehavioralVariables().get(action)));
+//                result.add((Action)action);
+//            }
+//
+//            if (data.getSolver().getValue(table.getDeltaSequenceVariables().get(productSequence)) > BILINEAR_PRECISION) {
+//                if (DEBUG) System.out.println("SEQ DELTA " + action + " = " + data.getSolver().getValue(table.getDeltaSequenceVariables().get(productSequence)));
+//                result.add((Action)action);
+//            }
 
-            if (data.getSolver().getValue(table.getDeltaBehavioralVariables().get(action)) > BILINEAR_PRECISION) {
-                if (DEBUG) System.out.println("X DELTA " + action + " = " + data.getSolver().getValue(table.getDeltaBehavioralVariables().get(action)));
-                result.add((Action)action);
-            }
-
-            if (data.getSolver().getValue(table.getDeltaSequenceVariables().get(productSequence)) > BILINEAR_PRECISION) {
-                if (DEBUG) System.out.println("SEQ DELTA " + action + " = " + data.getSolver().getValue(table.getDeltaSequenceVariables().get(productSequence)));
-                result.add((Action)action);
-            }
-
+        for (Sequence s : config.getSequencesFor(player)) {
+            if (s.isEmpty()) continue;
+            result.add(s.getLast());
         }
 
-//        return result;
+//        if (1+1 == 2)
+//            return result;
 
         double maxDifference = Double.NEGATIVE_INFINITY;
 
@@ -314,19 +361,26 @@ public class BilinearSeqenceFormSingleOracle {
                     specValues.add(sV);
                 }
             }
-
-            average = average / specValues.size();
+            if (specValues.size() == 0) average = 0;
+            else average = average / specValues.size();
 
             double error = 0;
             for (double d : specValues) {
                 error += Math.abs(average - d);
             }
 
+            if (error > 0) if (DEBUG) System.out.println("DIFF " + a + " = " + error);
+
             if (error > maxDifference) {
                 result2.clear();
                 result2.add(a);
                 maxDifference = error;
             }
+
+//            if (error > maxDifference || error > 1e-4) {
+//                result2.add(a);
+//                maxDifference = error;
+//            }
         }
 
         return result2;
@@ -373,7 +427,6 @@ public class BilinearSeqenceFormSingleOracle {
             }
         }
         return P1Strategy;
-
     }
 
     public Map<Sequence, Double> extractRPStrategy(SequenceFormIRConfig config, LPData lpData) throws IloException{
@@ -387,55 +440,6 @@ public class BilinearSeqenceFormSingleOracle {
             P1StrategySeq.put(s, lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]));
         }
         return P1StrategySeq;
-    }
-
-    private boolean addNewBR(SequenceFormIRConfig config, Map<Action, Double> brActions, int iteration, LPData lpData) throws IloException{
-        Set<Action> thisBR = new HashSet<>();
-        for (Map.Entry<Action, Double> e : brActions.entrySet()) {
-            if (e.getValue() > 0) {
-                thisBR.add(e.getKey());
-            }
-        }
-        if (bestResponses.contains(thisBR)) {
-            return false;
-        }
-
-
-        String eqKey = "v_init_" + iteration;
-        Object informationSet = "root";
-        IloNumVar rootValue = lpData.getVariables()[table.getVariableIndex(new Pair<>(informationSet, new ArrayListSequenceImpl(opponent)))];
-        IloNumExpr newBRExpr = lpData.getSolver().numExpr();
-
-        for (GameState leaf : config.getTerminalStates()) {
-
-            Sequence sequence = leaf.getSequenceFor(player);
-            Sequence oppSequence = leaf.getSequenceFor(opponent);
-
-            boolean positive = true;
-            for (Action a : oppSequence) {
-                if (!thisBR.contains(a)) {
-                    positive = false;
-                    break;
-                }
-            }
-
-            if (positive) {
-                Double utility = config.getUtilityFor(sequence, oppSequence);
-
-                if (utility != null) {
-                    IloNumVar seq =  lpData.getVariables()[table.getVariableIndex(sequence)];
-                    newBRExpr = lpData.getSolver().sum(lpData.getSolver().prod(utility, seq), newBRExpr);
-
-                    table.setConstraint(eqKey, sequence, utility);
-                }
-            }
-
-        }
-
-        lpData.getSolver().addLe(rootValue, newBRExpr, eqKey);
-
-        bestResponses.add(thisBR);
-        return true;
     }
 
 }
