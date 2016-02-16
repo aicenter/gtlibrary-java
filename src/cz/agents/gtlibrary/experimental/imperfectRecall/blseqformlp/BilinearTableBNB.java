@@ -292,9 +292,10 @@ public class BilinearTableBNB extends LPTable {
                 }
                 break;
             case MIDDLE:
-                makingAChange = true;
+//                makingAChange = true;
+
                 for (int k = 0; k < digits; k++) {
-                    for (int l = 0; l < fixedDigits; l++) {
+                    for (int l = 1; l < fixedDigits; l++) {
                         if ((l == 0) && (k > 1)) continue;
                         if (k != getLDigit(c.getRight().getThird(),l)) {
                             if (existingWs[k][l].getUB() > 0) {
@@ -333,11 +334,11 @@ public class BilinearTableBNB extends LPTable {
         switch (c.getLeft()) {
             case LEFT:
 //                double bound = Math.floor(Math.pow(10, fixedDigits) * c.getRight().getThird())/Math.pow(10, fixedDigits);
-//                result.add(lpData.getSolver().addLe(lpData.getSolver().diff(a,c.getRight().getThird()),0));
+                result.add(lpData.getSolver().addLe(lpData.getSolver().diff(a,c.getRight().getThird()),0));
                 break;
             case RIGHT:
 //                bound = Math.ceil(Math.pow(10, fixedDigits) * c.getRight().getThird())/Math.pow(10, fixedDigits);
-//                result.add(lpData.getSolver().addLe(lpData.getSolver().diff(c.getRight().getThird(),a),0));
+                result.add(lpData.getSolver().addLe(lpData.getSolver().diff(c.getRight().getThird(),a),0));
                 break;
             case MIDDLE:
 //                double Lbound = Math.floor(Math.pow(10, fixedDigits-1) * c.getRight().getThird())/Math.pow(10, fixedDigits-1);

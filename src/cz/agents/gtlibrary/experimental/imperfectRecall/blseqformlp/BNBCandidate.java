@@ -42,18 +42,43 @@ public class BNBCandidate implements Comparable<BNBCandidate>{
 
     @Override
     public int compareTo(BNBCandidate o) {
-//        if (this.numberOfMiddle > o.numberOfMiddle) return -1;
-//        else if (this.numberOfMiddle < o.numberOfMiddle) return 1;
+////        if (this.numberOfMiddle > o.numberOfMiddle) return -1;
+////        else if (this.numberOfMiddle < o.numberOfMiddle) return 1;
+////        else {
+//            if (this.lb > o.lb) return -1;
+//            else if (this.lb < o.lb) return 1;
+//            else {
+//                if (this.ub > o.ub) return -1;
+//                else if (this.ub < o.ub) return 1;
+//                else {
+//                    if (this.changes.size() < o.changes.size()) return -1;
+//                    else if (this.changes.size() > o.changes.size()) return 1;
+//                    else return Integer.compare(this.changes.hashCode(), o.changes.hashCode());
+//                }
+//            }
+////        }
+
+//        if (this.ub - this.lb > o.ub - o.lb) return -1;
+//        else if (this.ub - this.lb < o.ub - o.lb) return 1;
 //        else {
-            if (this.lb > o.lb) return -1;
-            else if (this.lb < o.lb) return 1;
+//            if (this.changes.size() < o.changes.size()) return -1;
+//            else if (this.changes.size() > o.changes.size()) return 1;
+//            else return Integer.compare(this.changes.hashCode(), o.changes.hashCode());
+//            }
+
+        if (this.ub > o.ub) return -1;
+            else if (this.ub < o.ub) return 1;
             else {
-                if (this.ub > o.ub) return -1;
-                else if (this.ub < o.ub) return 1;
+                if (this.lb > o.lb) return -1;
+                else if (this.lb < o.lb) return 1;
                 else {
-                    if (this.changes.size() < o.changes.size()) return -1;
-                    else if (this.changes.size() > o.changes.size()) return 1;
-                    else return Integer.compare(this.changes.hashCode(), o.changes.hashCode());
+                    if (this.ub - this.lb > o.ub - o.lb) return -1;
+                    else if (this.ub - this.lb < o.ub - o.lb) return 1;
+                    else {
+                        if (this.changes.size() > o.changes.size()) return -1;
+                        else if (this.changes.size() < o.changes.size()) return 1;
+                        else return Integer.compare(this.changes.hashCode(), o.changes.hashCode());
+                    }
                 }
             }
 //        }

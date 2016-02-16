@@ -30,7 +30,7 @@ public class BilinearSeqenceFormBNB {
     private Double finalValue = null;
 
     private boolean DEBUG = false;
-    public static boolean SAVE_LPS = true;
+    public static boolean SAVE_LPS = false;
 
 
     static public final double BILINEAR_PRECISION = 0.0001;
@@ -128,11 +128,14 @@ public class BilinearSeqenceFormBNB {
                 fringe.add(c);
             }
 
+
+
             while (!fringe.isEmpty()) {
 
                 BNBCandidate node = null;
-                while (node == null || node.getUb() < bestCandidate.getLb()) {
+                while (node == null && !fringe.isEmpty()) {
                     node = fringe.pollFirst();
+                    if (node.getUb() < bestCandidate.getLb()) node = null;
                 }
                 if (node == null) break;
 
@@ -141,12 +144,12 @@ public class BilinearSeqenceFormBNB {
                 globalUB = Math.max(node.getUb(),bestCandidate.getUb());
                 for (BNBCandidate f : fringe) if (f.getUb() > globalUB) globalUB = f.getUb();
 
-                System.out.println("Node LB: " + node.getLb() + " \t\t Node UB: " + node.getUb());
-                System.out.println("Global LB: " + globalLB + " \t\t Global UB: " + globalUB);
+//                System.out.println("Node LB: " + node.getLb() + " \t\t Node UB: " + node.getUb());
+//                System.out.println("Global LB: " + globalLB + " \t\t Global UB: " + globalUB);
+//
+//                System.out.println(node.getActionToFocusOn() + " = " + node.getCurrentProbOfAction());
 
-                System.out.println(node.getActionToFocusOn() + " = " + node.getCurrentProbOfAction());
-
-                if (Math.abs(globalUB - globalLB) < 0.001) break;
+                if (Math.abs(globalUB - globalLB) < 0.0001) break;
 
 
                 Set<IloRange> constraints = table.applyChanges(node.getChanges(), lpData);
@@ -158,7 +161,7 @@ public class BilinearSeqenceFormBNB {
                     fixedDigits = Math.max(x.getRight().getFirst(),fixedDigits);
                 }
                 int currentPrecision = table.getBilinearPrecision(node.getActionToFocusOn());
-                if (currentPrecision <= fixedDigits + 1 ) table.refinePrecision(lpData, node.getActionToFocusOn());
+                if (currentPrecision <= fixedDigits + 1 && currentPrecision < 7 ) table.refinePrecision(lpData, node.getActionToFocusOn());
 
                 for (BNBCandidate.ChangeType t : BNBCandidate.ChangeType.values()) {
                     Set<Pair<BNBCandidate.ChangeType, Triplet<Integer, Action, Double>>> newChanges = new HashSet<> (node.getChanges());
@@ -167,6 +170,8 @@ public class BilinearSeqenceFormBNB {
                         probability = Math.floor(Math.pow(10, fixedDigits) * probability)/Math.pow(10, fixedDigits);
                     } else if (t.equals(BNBCandidate.ChangeType.RIGHT)) {
                         probability = (Math.floor(Math.pow(10, fixedDigits) * probability) + 1)/Math.pow(10, fixedDigits);
+                    } else if (t.equals(BNBCandidate.ChangeType.MIDDLE)) {
+                        if (probability == 1) probability = probability - 0.000001;
                     }
                     Pair<BNBCandidate.ChangeType, Triplet<Integer, Action, Double>> change = new Pair<>(t, new Triplet<>(fixedDigits + (t == BNBCandidate.ChangeType.MIDDLE ? 1 : 0), node.getActionToFocusOn(), probability));
                     newChanges.add(change);
@@ -178,15 +183,21 @@ public class BilinearSeqenceFormBNB {
                         if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
                             lastSolution = lpData.getSolver().getObjValue();
                             P1Strategy = extractBehavioralStrategy(config, lpData);
+//                            Map<Action, Double> P1StrategyBF = extractBehavioralStrategyBestFirst(config, lpData);
+//                            br.getBestResponse(P1StrategyBF);
+
                             br.getBestResponse(P1Strategy);
+//                            System.out.println("BR DIFF = " + (BFBRvalue + br.getValue()));
+                            double BFBRvalue = -br.getValue();
 
                             table.storeWValues(lpData);
 
-                            c = new BNBCandidate(-br.getValue(), lastSolution, newChanges);
-                            if (Math.abs(c.getUb() - c.getLb()) < 0.001) {
+                            c = new BNBCandidate(BFBRvalue, lastSolution, newChanges);
+                            if (Math.abs(c.getUb() - c.getLb()) < 0.0001) {
                                 if (c.getLb() > globalLB) {
                                     globalLB = c.getLb();
                                     bestCandidate = c;
+                                    System.out.println("Global LB: " + globalLB + " \t\t Global UB: " + globalUB);
                                 }
                             } else if (c.getUb() > globalLB) {
                                 actionToFocus = findMostViolatedBilinearConstraints(config, lpData);
@@ -414,6 +425,48 @@ public class BilinearSeqenceFormBNB {
                         count++;
                     }
                 }
+                if (count == 0) average = 0;
+                else average = average / count;
+
+                if (DEBUG) System.out.println(a + " = " + average);
+                P1Strategy.put(a, average);
+
+                if (average > 0) allZero = false;
+            }
+            if (allZero && i.getActions().size() > 0) {
+                P1Strategy.put(i.getActions().iterator().next(), 1d);
+            }
+        }
+        return P1Strategy;
+    }
+
+    public Map<Action, Double> extractBehavioralStrategyBestFirst(SequenceFormIRConfig config, LPData lpData) throws IloException{
+        if (DEBUG) System.out.println("----- P1 Actions -----");
+        Map<Action, Double> P1Strategy = new HashMap<>();
+        for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
+            if (!i.getPlayer().equals(player)) continue;
+            boolean allZero = true;
+            for (Action a : i.getActions()) {
+                double average = 0;
+                int count = 0;
+                Sequence bestSubS = null;
+                double maxBestSubS = Double.NEGATIVE_INFINITY;
+                for (Sequence subS : i.getOutgoingSequences().keySet()) {
+                    if (lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]) > maxBestSubS) {
+                        maxBestSubS = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]);
+                        bestSubS = subS;
+                    }
+                }
+                    Sequence s = new ArrayListSequenceImpl(bestSubS);
+                    s.addLast(a);
+
+                    if (lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(bestSubS)]) > 0) {
+                        double sV = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]);
+                        sV =  sV / lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(bestSubS)]);
+                        average += sV;
+                        count++;
+                    }
+
                 if (count == 0) average = 0;
                 else average = average / count;
 
