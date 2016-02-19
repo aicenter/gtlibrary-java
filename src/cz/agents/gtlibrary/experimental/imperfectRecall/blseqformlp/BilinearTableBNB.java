@@ -272,6 +272,13 @@ public class BilinearTableBNB extends LPTable {
 
         switch (c.getLeft()) {
             case LEFT:
+                if (c.getRight().getThird() == 1) {
+                    existingWs[1][0].setLB(1);
+                    existingWs[0][0].setUB(0);
+                }  else {
+                    existingWs[0][0].setLB(1);
+                    existingWs[1][0].setUB(0);
+                }
                 for (int k = getLDigit(c.getRight().getThird(),fixedDigits); k < digits; k++) {
                     if (k == 0) return false;
                     if ((fixedDigits == 0) && (k > 1)) continue;
@@ -283,6 +290,13 @@ public class BilinearTableBNB extends LPTable {
 
                 break;
             case RIGHT:
+                if (c.getRight().getThird() == 1) {
+                    existingWs[1][0].setLB(1);
+                    existingWs[0][0].setUB(0);
+                }  else {
+                    existingWs[0][0].setLB(1);
+                    existingWs[1][0].setUB(0);
+                }
                 for (int k = 0; k < getLDigit(c.getRight().getThird(),fixedDigits); k++) {
                     if ((fixedDigits == 0) && (k > 1)) continue;
                     if (existingWs[k][fixedDigits].getLB() < 1) {
@@ -293,8 +307,13 @@ public class BilinearTableBNB extends LPTable {
                 break;
             case MIDDLE:
 //                makingAChange = true;
-                existingWs[0][0].setLB(1);
-                existingWs[1][0].setUB(0);
+                if (c.getRight().getThird() == 1) {
+                    existingWs[1][0].setLB(1);
+                    existingWs[0][0].setUB(0);
+                }  else {
+                    existingWs[0][0].setLB(1);
+                    existingWs[1][0].setUB(0);
+                }
                 for (int k = 0; k < digits; k++) {
                     for (int l = 1; l < fixedDigits; l++) {
                         if ((l == 0) && (k > 1)) continue;
@@ -362,11 +381,12 @@ public class BilinearTableBNB extends LPTable {
             IloNumVar[][] existingWs = wVariables.get(a);
             for (int k = 0; k < digits; k++) {
                 for (int l = 0; l < existingWs[0].length; l++) {
-                    if (l == 0) {
-                        if (k == 0) existingWs[k][l].setLB(1);
-                        if (k == 1) existingWs[k][l].setUB(0);
-                        continue;
-                    }
+//                    if (l == 0) {
+//                        if (k == 0) existingWs[k][l].setLB(1);
+//                        if (k == 1) existingWs[k][l].setUB(0);
+//                        continue;
+//                    }
+                    if (l == 0 && k > 1) continue;
                     existingWs[k][l].setLB(0);
                     existingWs[k][l].setUB(1);
                 }
@@ -381,11 +401,12 @@ public class BilinearTableBNB extends LPTable {
         IloNumVar[][] existingWs = wVariables.get(a);
         for (int k = 0; k < digits; k++) {
             for (int l = 0; l < existingWs[0].length; l++) {
-                if (l == 0) {
-                    if (k == 0) existingWs[k][l].setLB(1);
-                    if (k == 1) existingWs[k][l].setUB(0);
-                    continue;
-                }
+//                if (l == 0) {
+//                    if (k == 0) existingWs[k][l].setLB(1);
+//                    if (k == 1) existingWs[k][l].setUB(0);
+//                    continue;
+//                }
+                if (l == 0 && k > 1) continue;
                 existingWs[k][l].setLB(0);
                 existingWs[k][l].setUB(1);
             }
