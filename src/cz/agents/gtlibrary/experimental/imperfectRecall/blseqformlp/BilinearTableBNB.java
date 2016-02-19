@@ -293,7 +293,8 @@ public class BilinearTableBNB extends LPTable {
                 break;
             case MIDDLE:
 //                makingAChange = true;
-
+                existingWs[0][0].setLB(1);
+                existingWs[1][0].setUB(0);
                 for (int k = 0; k < digits; k++) {
                     for (int l = 1; l < fixedDigits; l++) {
                         if ((l == 0) && (k > 1)) continue;
