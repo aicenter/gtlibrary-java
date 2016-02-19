@@ -298,6 +298,8 @@ public class BilinearTableBNB extends LPTable {
                     for (int l = 1; l < fixedDigits; l++) {
                         if ((l == 0) && (k > 1)) continue;
                         if (k != getLDigit(c.getRight().getThird(),l)) {
+//                            System.out.println(existingWs.length + " vs " + k);
+//                            System.out.println(existingWs[0].length + " vs " + l);
                             if (existingWs[k][l].getUB() > 0) {
                                 makingAChange = true;
                                 existingWs[k][l].setUB(0);
@@ -395,16 +397,16 @@ public class BilinearTableBNB extends LPTable {
         }
     }
 
-    private static int getLDigit(double value, int digit) {
+    public static int getLDigit(double value, int digit) {
         int result = -1;
 
         int firstDigit = (int)Math.floor(value);
         if (digit == 0) return firstDigit;
 
         double v = value - firstDigit;
+
         v = Math.floor(v * Math.pow(10,digit));
         result = (int)(v - 10*(long)(v / 10));
-
         return result;
     }
 
