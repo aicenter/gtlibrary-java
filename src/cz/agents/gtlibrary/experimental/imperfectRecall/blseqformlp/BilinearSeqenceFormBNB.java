@@ -31,8 +31,10 @@ public class BilinearSeqenceFormBNB {
     private Action mostBrokenAction;
     private double mostBrokenActionValue = Double.NEGATIVE_INFINITY;
 
-    private boolean DEBUG = true;
-    public static boolean SAVE_LPS = true;
+    private static int MAX_REFINE = 6;
+
+    private boolean DEBUG = false;
+    public static boolean SAVE_LPS = false;
 
 
     static public final double BILINEAR_PRECISION = 0.0001;
@@ -181,7 +183,7 @@ public class BilinearSeqenceFormBNB {
                     } else if (t.equals(BNBCandidate.ChangeType.RIGHT)) {
                         probability = (Math.floor(Math.pow(10, fixedDigits) * probability) + 1) / Math.pow(10, fixedDigits);
                     } else if (t.equals(BNBCandidate.ChangeType.MIDDLE)) {
-                        if (probability == 1) probability = probability - 0.000001;
+//                        if (probability == 1) probability = probability - 0.00000001;
                     }
                     int currentDepth = fixedDigits + (t == BNBCandidate.ChangeType.MIDDLE ? 1 : 0);
 
@@ -211,7 +213,7 @@ public class BilinearSeqenceFormBNB {
                             table.storeWValues(lpData);
 
                             c = new BNBCandidate(BFBRvalue, lastSolution, newChanges);
-                            if (Math.abs(c.getUb() - c.getLb()) < 0.0001) {
+                            if (Math.abs(c.getUb() - c.getLb()) < 0.0001 || (change.getLeft().equals(BNBCandidate.ChangeType.MIDDLE) && change.getRight().getFirst() == MAX_REFINE)) {
                                 if (c.getLb() > globalLB) {
                                     globalLB = c.getLb();
                                     bestCandidate = c;
@@ -247,9 +249,9 @@ public class BilinearSeqenceFormBNB {
             System.out.println(lpData.getSolver().getStatus());
             P1Strategy = extractBehavioralStrategy(config, lpData);
 
-            assert definedEverywhere(P1Strategy, config);
-            assert equalsInPRInformationSets(P1Strategy, config, lpData);
-            assert isConvexCombination(P1Strategy, lpData, config);
+//            assert definedEverywhere(P1Strategy, config);
+//            assert equalsInPRInformationSets(P1Strategy, config, lpData);
+//            assert isConvexCombination(P1Strategy, lpData, config);
             br.getBestResponse(P1Strategy);
             finalValue = -br.getValue();
         } catch (IloException e) {
@@ -268,12 +270,12 @@ public class BilinearSeqenceFormBNB {
                 if (change.getLeft().equals(BNBCandidate.ChangeType.LEFT)) {
 //                    double truncValue = ((int) (change.getRight().getThird() * (10 ^ (change.getRight().getFirst())))) / ((double)((10 ^ change.getRight().getFirst())));
 
-                    if (strategy >= change.getRight().getThird())
+                    if (strategy - 1e-6 >= change.getRight().getThird())
                         return false;
                 } else if (change.getLeft().equals(BNBCandidate.ChangeType.RIGHT)) {
 //                    double truncValue = ((int) (change.getRight().getThird() * (10 ^ (change.getRight().getFirst())))) / ((double)(10 ^ change.getRight().getFirst()));
 
-                    if (strategy < change.getRight().getThird())
+                    if (strategy + 1e-6 < change.getRight().getThird())
                         return false;
                 } else {
                     assert change.getRight().getFirst() > 1;
@@ -355,7 +357,7 @@ public class BilinearSeqenceFormBNB {
             double lb = lbs.get(action);
             double ub = ubs.get(action);
 
-            if (strategy < lb || strategy > ub)
+            if (strategy + 1e-6 < lb || strategy - 1e-6 > ub)
                 return true;
         }
         return false;

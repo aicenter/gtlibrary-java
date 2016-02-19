@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloRange;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -107,5 +108,22 @@ public class BNBCandidate implements Comparable<BNBCandidate>{
 
     public double getCurrentProbOfAction() {
         return currentProbOfAction;
+    }
+
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hb = new HashCodeBuilder(17,31);
+        hb.append(lb);
+        hb.append(ub);
+        hb.append(actionToFocusOn);
+        hb.append(currentProbOfAction);
+        hb.append(changes);
+        return hb.toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof BNBCandidate)) return false;
+        return (this.compareTo((BNBCandidate)obj) == 0);
     }
 }

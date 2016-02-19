@@ -15,7 +15,7 @@ import java.lang.management.ThreadMXBean;
 public class IRExperiments {
 
     public static void main(String[] args) {
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 1;
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 26;
         int endingSeed = (args.length > 1) ? new Integer(args[1]) : 100;
         boolean fixingDigits = (args.length > 2) ? new Boolean(args[2]) : BilinearTable.fixPreviousDigits;
 
