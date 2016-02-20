@@ -201,11 +201,12 @@ public class BilinearSeqenceFormBNB {
                         if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
                             lastSolution = lpData.getSolver().getObjValue();
                             P1Strategy = extractBehavioralStrategy(config, lpData);
-//                            Map<Action, Double> P1StrategyBF = extractBehavioralStrategyBestFirst(config, lpData);
+//                           Map<Action, Double> P1StrategyBF = extractBehavioralStrategyBestFirst(config, lpData);
 //                            br.getBestResponse(P1StrategyBF);
                             assert definedEverywhere(P1Strategy, config);
                             assert equalsInPRInformationSets(P1Strategy, config, lpData);
                             assert isConvexCombination(P1Strategy, lpData, config);
+                            assert isConsistent(P1Strategy, c);
                             br.getBestResponse(P1Strategy);
 //                            System.out.println("BR DIFF = " + (BFBRvalue + br.getValue()));
                             double BFBRvalue = -br.getValue();
@@ -250,9 +251,9 @@ public class BilinearSeqenceFormBNB {
             System.out.println(lpData.getSolver().getStatus());
             P1Strategy = extractBehavioralStrategy(config, lpData);
 
-//            assert definedEverywhere(P1Strategy, config);
-//            assert equalsInPRInformationSets(P1Strategy, config, lpData);
-//            assert isConvexCombination(P1Strategy, lpData, config);
+            assert definedEverywhere(P1Strategy, config);
+            assert equalsInPRInformationSets(P1Strategy, config, lpData);
+            assert isConvexCombination(P1Strategy, lpData, config);
             br.getBestResponse(P1Strategy);
             finalValue = -br.getValue();
         } catch (IloException e) {
@@ -281,8 +282,10 @@ public class BilinearSeqenceFormBNB {
                         int stratDigit = BilinearTableBNB.getLDigit(strategy, i - 1);
                         int correctDigit = BilinearTableBNB.getLDigit(change.getRight().getThird(), i - 1);
 
-                        if (stratDigit != correctDigit)
-                            return false;
+                        if (stratDigit != correctDigit) {
+                            if (Math.abs(change.getRight().getThird() - strategy) > Math.pow(10, -(change.getRight().getFirst() - 1)) + Math.pow(10, -(change.getRight().getFirst())))
+                                return false;
+                        }
                     }
                 }
             }
