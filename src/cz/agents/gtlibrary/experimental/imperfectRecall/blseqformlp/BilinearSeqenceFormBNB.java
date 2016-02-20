@@ -112,7 +112,7 @@ public class BilinearSeqenceFormBNB {
             System.out.println(lpData.getSolver().getObjValue());
             double lastSolution = lpData.getSolver().getObjValue();
 
-            Map<Action, Double> P1Strategy = extractBehavioralStrategy(config, lpData);
+            Map<Action, Double> P1Strategy = extractBehavioralStrategyLP(config, lpData);
 
             assert definedEverywhere(P1Strategy, config);
             assert equalsInPRInformationSets(P1Strategy, config, lpData);
@@ -200,13 +200,13 @@ public class BilinearSeqenceFormBNB {
 //                        System.out.println(lpData.getSolver().getStatus());
                         if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
                             lastSolution = lpData.getSolver().getObjValue();
-                            P1Strategy = extractBehavioralStrategy(config, lpData);
+                            P1Strategy = extractBehavioralStrategyLP(config, lpData);
 //                           Map<Action, Double> P1StrategyBF = extractBehavioralStrategyBestFirst(config, lpData);
 //                            br.getBestResponse(P1StrategyBF);
                             assert definedEverywhere(P1Strategy, config);
                             assert equalsInPRInformationSets(P1Strategy, config, lpData);
                             assert isConvexCombination(P1Strategy, lpData, config);
-                            assert isConsistent(P1Strategy, c);
+
                             br.getBestResponse(P1Strategy);
 //                            System.out.println("BR DIFF = " + (BFBRvalue + br.getValue()));
                             double BFBRvalue = -br.getValue();
@@ -214,6 +214,7 @@ public class BilinearSeqenceFormBNB {
                             table.storeWValues(lpData);
 
                             c = new BNBCandidate(BFBRvalue, lastSolution, newChanges);
+                            assert isConsistent(P1Strategy, c);
                             if (Math.abs(c.getUb() - c.getLb()) < 0.0001 || (change.getLeft().equals(BNBCandidate.ChangeType.MIDDLE) && change.getRight().getFirst() == MAX_REFINE)) {
                                 if (c.getLb() > globalLB) {
                                     globalLB = c.getLb();
@@ -249,7 +250,7 @@ public class BilinearSeqenceFormBNB {
             if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
             lpData.getSolver().solve();
             System.out.println(lpData.getSolver().getStatus());
-            P1Strategy = extractBehavioralStrategy(config, lpData);
+            P1Strategy = extractBehavioralStrategyLP(config, lpData);
 
             assert definedEverywhere(P1Strategy, config);
             assert equalsInPRInformationSets(P1Strategy, config, lpData);
