@@ -228,6 +228,7 @@ public class BilinearSeqenceFormBNB {
                                     c.setActionToFocusOn(a, strategy);
 
                                     assert isConsistent(a, strategy, c);
+                                    assert isConsistent(P1Strategy, c);
                                     fringe.add(c);
                                 }
                             }
@@ -260,9 +261,6 @@ public class BilinearSeqenceFormBNB {
     }
 
     private boolean isConsistent(Action action, double strategy, BNBCandidate candidate) {
-        double lowerBound = 0;
-        double upperBound = 1;
-
         for (Pair<BNBCandidate.ChangeType, Triplet<Integer, Action, Double>> change : candidate.getChanges()) {
             Action changeAction = change.getRight().getSecond();
 
@@ -288,6 +286,14 @@ public class BilinearSeqenceFormBNB {
                     }
                 }
             }
+        }
+        return true;
+    }
+
+    private boolean isConsistent(Map<Action, Double> strategy, BNBCandidate candidate) {
+        for (Map.Entry<Action, Double> entry : strategy.entrySet()) {
+            if (!isConsistent(entry.getKey(), entry.getValue(), candidate))
+                return false;
         }
         return true;
     }
