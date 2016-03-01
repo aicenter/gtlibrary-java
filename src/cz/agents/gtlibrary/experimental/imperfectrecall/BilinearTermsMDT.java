@@ -1,11 +1,7 @@
-package cz.agents.gtlibrary.experimental.imperfectRecall;
+package cz.agents.gtlibrary.experimental.imperfectrecall;
 
-import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * Created by bosansky on 11/4/15.

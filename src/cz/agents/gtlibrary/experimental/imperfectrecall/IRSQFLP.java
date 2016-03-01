@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectRecall;
+package cz.agents.gtlibrary.experimental.imperfectrecall;
 
 import ilog.concert.IloException;
 import ilog.concert.IloNumExpr;
