@@ -1,9 +1,8 @@
-package cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;

@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 
 import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
@@ -207,7 +207,9 @@ public class BilinearSeqenceFormBNB {
                             assert equalsInPRInformationSets(P1Strategy, config, lpData);
                             assert isConvexCombination(P1Strategy, lpData, config);
 
-                            br.getBestResponse(P1Strategy);
+                            Map<Action, Double> bestResponse = br.getBestResponse(P1Strategy);
+
+//                            assert definedEverywhere(bestResponse, config);
 //                            System.out.println("BR DIFF = " + (BFBRvalue + br.getValue()));
                             double BFBRvalue = -br.getValue();
 
@@ -270,12 +272,12 @@ public class BilinearSeqenceFormBNB {
                 if (change.getLeft().equals(BNBCandidate.ChangeType.LEFT)) {
 //                    double truncValue = ((int) (change.getRight().getThird() * (10 ^ (change.getRight().getFirst())))) / ((double)((10 ^ change.getRight().getFirst())));
 
-                    if (strategy - 1e-6 >= change.getRight().getThird())
+                    if (strategy - 1e-5 >= change.getRight().getThird())
                         return false;
                 } else if (change.getLeft().equals(BNBCandidate.ChangeType.RIGHT)) {
 //                    double truncValue = ((int) (change.getRight().getThird() * (10 ^ (change.getRight().getFirst())))) / ((double)(10 ^ change.getRight().getFirst()));
 
-                    if (strategy + 1e-6 < change.getRight().getThird())
+                    if (strategy + 1e-5 < change.getRight().getThird())
                         return false;
                 } else {
                     assert change.getRight().getFirst() > 1;
@@ -586,7 +588,7 @@ public class BilinearSeqenceFormBNB {
                 error += Math.abs(average - d);
             }
 
-            if (error > 1e-8) {  //nesmis se zaseknout na malé chybě a furt jí vracet zkontorlovat když dávám more shallow, že ta chyba je alespoň něco
+            if (error > 1e-4) {  //nesmis se zaseknout na malé chybě a furt jí vracet zkontorlovat když dávám more shallow, že ta chyba je alespoň něco
                 double avgDepth = getAverageDepth(is);
 
                 if (avgDepth < currentShallowestDepth) {
@@ -741,7 +743,10 @@ public class BilinearSeqenceFormBNB {
             if (informationSet.getPlayer().equals(player) && informationSet.hasIR() && !informationSet.getActions().isEmpty())
                 return informationSet.getActions().iterator().next();
         }
-        assert false;
+        for (SequenceFormIRInformationSet informationSet : config.getAllInformationSets().values()) {
+            if(informationSet.hasIR())
+                assert false;
+        }
         return null;
     }
 

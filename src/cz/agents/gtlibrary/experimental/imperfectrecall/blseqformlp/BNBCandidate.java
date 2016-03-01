@@ -1,13 +1,10 @@
-package cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
-import ilog.concert.IloRange;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 

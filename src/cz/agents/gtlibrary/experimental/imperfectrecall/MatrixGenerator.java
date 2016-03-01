@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectRecall;
+package cz.agents.gtlibrary.experimental.imperfectrecall;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
@@ -8,9 +8,6 @@ import cz.agents.gtlibrary.domain.ir.leftright.LRGameState;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLExpander;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLGameInfo;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLGameState;
-import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 

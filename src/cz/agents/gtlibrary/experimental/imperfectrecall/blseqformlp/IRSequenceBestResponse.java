@@ -1,11 +1,9 @@
-package cz.agents.gtlibrary.experimental.imperfectRecall.blseqformlp;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.MILPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
-import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
-import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.IRInformationSetImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
@@ -13,7 +11,6 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
-import ilog.concert.IloNumExpr;
 import ilog.concert.IloNumVar;
 
 import java.util.*;
