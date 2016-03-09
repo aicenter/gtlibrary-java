@@ -21,6 +21,8 @@ package cz.agents.gtlibrary.domain.randomgame;
 
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -44,7 +46,7 @@ public class RandomGameState extends SimultaneousGameState {
     protected Map<Player, ArrayList<Integer>> observations = new FixedSizeMap<Player, ArrayList<Integer>>(2);
 
     private int hash = 0;
-    protected Pair<Integer, Sequence> ISKey = null;
+    protected ISKey ISKey = null;
     protected boolean changed = true;
 
     public RandomGameState() {
@@ -188,9 +190,9 @@ public class RandomGameState extends SimultaneousGameState {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public cz.agents.gtlibrary.iinodes.ISKey getISKeyForPlayerToMove() {
         if (ISKey == null) {
-            ISKey = new Pair<Integer, Sequence>(
+            ISKey = new PerfectRecallISKey(
                     uniqueHash(observations.get(getPlayerToMove()), Math.max(RandomGameInfo.MAX_OBSERVATION, RandomGameInfo.MAX_BF)),
                     getHistory().getSequenceOf(getPlayerToMove()));
         }

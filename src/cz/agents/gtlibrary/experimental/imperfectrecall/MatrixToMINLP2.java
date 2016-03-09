@@ -1,8 +1,7 @@
-package cz.agents.gtlibrary.experimental.imperfectRecall;
+package cz.agents.gtlibrary.experimental.imperfectrecall;
 
 import Jama.Matrix;
 import cz.agents.gtlibrary.utils.CombinationGenerator;
-import cz.agents.gtlibrary.utils.Pair;
 
 import java.io.BufferedWriter;
 import java.io.File;

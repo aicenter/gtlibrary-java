@@ -20,6 +20,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.domain.upordown;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
@@ -56,12 +58,12 @@ public class UDGameState extends GameStateImpl {
     }
 
 	@Override
-	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+	public ISKey getISKeyForPlayerToMove() {
 		HashCodeBuilder builder = new HashCodeBuilder(17, 31);
 		
 		builder.append(p1Action);
 		builder.append(p2Action);
-		return new Pair<Integer, Sequence>(builder.toHashCode(), getSequenceForPlayerToMove());
+		return new PerfectRecallISKey(builder.toHashCode(), getSequenceForPlayerToMove());
 	}
 
 	@Override

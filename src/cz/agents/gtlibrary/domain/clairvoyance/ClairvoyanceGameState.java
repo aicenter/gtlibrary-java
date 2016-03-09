@@ -4,6 +4,8 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -78,11 +80,11 @@ public class ClairvoyanceGameState extends GameStateImpl {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         if (currentPlayerIndex == 0)
-            return new Pair<>(winningCard.hashCode(), getSequenceForPlayerToMove());
+            return new PerfectRecallISKey(winningCard.hashCode(), getSequenceForPlayerToMove());
         if (currentPlayerIndex == 1)
-            return new Pair<>((int) (2 * p1Money), getSequenceForPlayerToMove());
+            return new PerfectRecallISKey((int) (2 * p1Money), getSequenceForPlayerToMove());
         return null;
     }
 

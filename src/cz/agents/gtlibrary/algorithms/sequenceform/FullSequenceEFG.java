@@ -99,11 +99,11 @@ public class FullSequenceEFG {
 //		runAoS();
 //		runKuhnPoker();
 //		runGenericPoker();
-//		runBPG();
+		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
-        runLiarsDice();
+//        runLiarsDice();
 //		runPursuit();
 //      runPhantomTTT();
 //		runUpOrDown();

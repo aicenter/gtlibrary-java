@@ -20,13 +20,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.iinodes;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
-import cz.agents.gtlibrary.domain.bpg.AttackerAction;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.History;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.interfaces.*;
 
 public abstract class GameStateImpl implements GameState {
 
@@ -86,10 +80,9 @@ public abstract class GameStateImpl implements GameState {
 
     @Override
     public boolean checkConsistency(Action action) {
-        if (action == null || action.getInformationSet() == null){
+        if (action == null || action.getInformationSet() == null)
             return false;
-                }
-        return this.getISKeyForPlayerToMove().equals(new Pair<>(action.getInformationSet().hashCode(), action.getInformationSet().getPlayersHistory()));
+        return this.getISKeyForPlayerToMove().equals(action.getInformationSet().getISKey());
 //		return action.getInformationSet().getAllStates().contains(this);
     }
 
@@ -152,13 +145,13 @@ public abstract class GameStateImpl implements GameState {
 
     @Override
     public void reverseAction() {
-    	Action lastAction;
-    	if(history.getLastPlayer().getId()==2){
-    		lastAction = history.getLastAction();
-    		natureProbability /= getProbabilityOfNatureFor(lastAction);
+        Action lastAction;
+        if (history.getLastPlayer().getId() == 2) {
+            lastAction = history.getLastAction();
+            natureProbability /= getProbabilityOfNatureFor(lastAction);
             exactNatureProbability = exactNatureProbability.divide(getExactProbabilityOfNatureFor(lastAction));
-    	}
-    	history.reverse();
+        }
+        history.reverse();
     }
 
     @Override

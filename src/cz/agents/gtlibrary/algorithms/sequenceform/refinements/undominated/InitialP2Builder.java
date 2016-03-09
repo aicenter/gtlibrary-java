@@ -24,6 +24,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.TreeVisitor;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.nfp.NFPTable;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -251,8 +252,6 @@ public class InitialP2Builder extends TreeVisitor {
     }
 
     protected Object getLastISKey(Sequence sequence) {
-        InformationSet informationSet = sequence.getLastInformationSet();
-
-        return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+        return sequence.getLastInformationSet().getISKey();
     }
 }

@@ -20,6 +20,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.domain.pursuit;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -286,8 +288,8 @@ public class PursuitGameState extends SimultaneousGameState {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-        return new Pair<>(sequence.hashCode(), getSequenceForPlayerToMove());
+    public ISKey getISKeyForPlayerToMove() {
+        return new PerfectRecallISKey(sequence.hashCode(), getSequenceForPlayerToMove());
     }
 
     @Override

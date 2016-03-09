@@ -21,6 +21,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Iterator;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
@@ -31,7 +33,7 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
 public class LiarsDiceGameState extends GameStateImpl {
-    protected Pair<Integer, Sequence> cachedISKey = null;
+    protected ISKey cachedISKey = null;
 
     protected int currentBid = 0;
     protected int previousBid = 0;
@@ -165,12 +167,12 @@ public class LiarsDiceGameState extends GameStateImpl {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         if (cachedISKey != null) {
             return cachedISKey;
         }
         if (isPlayerToMoveNature()) {
-            cachedISKey = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+            cachedISKey = new PerfectRecallISKey(0, history.getSequenceOf(getPlayerToMove()));
             return cachedISKey;
         }
         
@@ -193,7 +195,7 @@ public class LiarsDiceGameState extends GameStateImpl {
             hc |= 1 << ((LiarsDiceAction)a).getValue();
         }
         
-        cachedISKey = new Pair<Integer, Sequence>(hc, history.getSequenceOf(getPlayerToMove()));
+        cachedISKey = new PerfectRecallISKey(hc, history.getSequenceOf(getPlayerToMove()));
         return cachedISKey;
     }
 

@@ -22,6 +22,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform;
 import java.util.*;
 
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
@@ -35,6 +36,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	protected Map<Player, Set<Sequence>> playerSequences = new HashMap<Player, Set<Sequence>>();
 	protected Map<Map<Player, Sequence>, Double> allUtilitiesForSeqComb = new HashMap<Map<Player, Sequence>, Double>();
 
+	//TODO: This method should override addInformationSetFor(GameState)
 	public void addStateToSequenceForm(GameState state) {
 		if (state.isPlayerToMoveNature())
 			return;
@@ -53,7 +55,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 			Sequence s = state.getSequenceFor(p);
 			if (s.size() == 0)
 				continue;
-			I i = getAllInformationSets().get(new Pair<Integer, Sequence>(s.getLast().getInformationSet().hashCode(), s.getLast().getInformationSet().getPlayersHistory()));
+			I i = getAllInformationSets().get(s.getLastInformationSet().getISKey());
 			if (i != null) { // if there is a particular IS in the algConfig for the previous state, we set it to be the IS in the stored sequences
 				Set<GameState> oldStates = s.getLast().getInformationSet().getAllStates();
 				i.addAllStateToIS(oldStates);
