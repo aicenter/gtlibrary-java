@@ -46,6 +46,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.Pair;
@@ -133,7 +134,7 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
     protected Expander expander;
     protected AlgorithmConfig<MCTSInformationSet> config;
 
-    protected HashMap<Pair<Integer, Sequence>, MCTSInformationSet> informationSets = new HashMap<>();
+    protected HashMap<ISKey, MCTSInformationSet> informationSets = new HashMap<>();
     protected boolean firstIteration = true;
 
     public CFRISAlgorithm(Player searchingPlayer, GameState rootState, Expander expander) {
@@ -256,7 +257,7 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
         throw new NotImplementedException();
     }
 
-    public HashMap<Pair<Integer, Sequence>, MCTSInformationSet> getInformationSets() {
+    public HashMap<ISKey, MCTSInformationSet> getInformationSets() {
         return informationSets;
     }
 

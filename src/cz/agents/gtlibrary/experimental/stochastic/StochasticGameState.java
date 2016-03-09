@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.experimental.stochastic;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -39,7 +40,7 @@ public abstract class StochasticGameState extends GameStateImpl {
 	}
 
 	@Override
-	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+	public ISKey getISKeyForPlayerToMove() {
 		return null;
 	}
 	

@@ -34,6 +34,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.upordown.UDExpander;
 import cz.agents.gtlibrary.domain.upordown.UDGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.IloException;
@@ -267,9 +268,7 @@ public class InitialPBuilder extends TreeVisitor {
     }
 
     protected Object getLastISKey(Sequence sequence) {
-        InformationSet informationSet = sequence.getLastInformationSet();
-
-        return new Pair<Integer, Sequence>(informationSet.hashCode(), informationSet.getPlayersHistory());
+        return sequence.getLastInformationSet().getISKey();
     }
 
 }

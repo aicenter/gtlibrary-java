@@ -19,6 +19,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.oshizumo;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -45,7 +47,7 @@ public class OshiZumoGameState extends SimultaneousGameState {
     protected int p2Bid;
     private int currentPlayerIndex;
 
-    protected Pair<Integer, Sequence> key;
+    protected ISKey key;
     private int hashCode = -1;
 
     public OshiZumoGameState() {
@@ -303,12 +305,12 @@ public class OshiZumoGameState extends SimultaneousGameState {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         if (key == null) {
             if (isPlayerToMoveNature())
-                key = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+                key = new PerfectRecallISKey(0, history.getSequenceOf(getPlayerToMove()));
             else
-                key = new Pair<Integer, Sequence>(sequenceForAllPlayers.hashCode(), getSequenceForPlayerToMove());
+                key = new PerfectRecallISKey(sequenceForAllPlayers.hashCode(), getSequenceForPlayerToMove());
         }
         return key;
     }

@@ -27,6 +27,8 @@ import java.util.Set;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.improvedBR.DoubleOracleWithBestMinmaxImprovement.PlayerSelection;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.bpg.AttackerAction.AttackerMovementType;
@@ -63,7 +65,7 @@ public class BPGGameState extends GameStateImpl {
 	public final static int OPEN_POSITION = 0;
 
 	protected int hashCode = -1;
-	protected Pair<Integer, Sequence> key;
+	protected ISKey key;
 
 	public BPGGameState() {
 		this(new BorderPatrollingGraph(BPGGameInfo.graphFile));
@@ -261,13 +263,13 @@ public class BPGGameState extends GameStateImpl {
     }
 
 	@Override
-	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+	public ISKey getISKeyForPlayerToMove() {
 		if (key != null)
 			return key;
 		if (playerToMove.equals(BPGGameInfo.ATTACKER)) {
-			key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).toHashCode(), new ArrayListSequenceImpl(history.getSequenceOf(playerToMove)));
+			key = new PerfectRecallISKey(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).toHashCode(), new ArrayListSequenceImpl(history.getSequenceOf(playerToMove)));
 		} else {
-			key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).append(flaggedNodesObservedByPatroller).toHashCode(), new ArrayListSequenceImpl(history.getSequenceOf(playerToMove)));
+			key = new PerfectRecallISKey(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).append(flaggedNodesObservedByPatroller).toHashCode(), new ArrayListSequenceImpl(history.getSequenceOf(playerToMove)));
 		}
 		return key;
 	}

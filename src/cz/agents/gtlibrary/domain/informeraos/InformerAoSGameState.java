@@ -21,6 +21,8 @@ package cz.agents.gtlibrary.domain.informeraos;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -36,13 +38,13 @@ public class InformerAoSGameState extends GameStateImpl {
     private int currentPlayer;
     private boolean isGameEnd;
 
-    private Pair<Integer, Sequence>[] playerISKeys;
+    private ISKey[] playerISKeys;
 
     public InformerAoSGameState() {
         super(InformerAoSGameInfo.ALL_PLAYERS);
         currentPlayer = 2;
         isGameEnd = false;
-        playerISKeys = new Pair[2];
+        playerISKeys = new ISKey[2];
         for (int i = 0; i < 4; i++) {
             calculateISKeyFor(players[i % 2]);
         }
@@ -76,15 +78,15 @@ public class InformerAoSGameState extends GameStateImpl {
 
     public void calculateISKeyFor(Player player) {
         if (player.getId() == 1 && getSequenceFor(players[0]).size() > 0 && ((InformerAoSAction) getSequenceFor(players[0]).getLast()).getActionType().equals("H"))
-            playerISKeys[player.getId()] = new Pair<>(history.hashCode(), getSequenceFor(player));
+            playerISKeys[player.getId()] = new PerfectRecallISKey(history.hashCode(), getSequenceFor(player));
         else
-            playerISKeys[player.getId()] = new Pair<>(0, getSequenceFor(player));
+            playerISKeys[player.getId()] = new PerfectRecallISKey(0, getSequenceFor(player));
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         if (isPlayerToMoveNature())
-            return new Pair<>(0, getSequenceFor(players[2]));
+            return new PerfectRecallISKey(0, getSequenceFor(players[2]));
         return playerISKeys[getPlayerToMove().getId()];
     }
 

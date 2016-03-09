@@ -18,6 +18,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.interfaces.Action;
 
@@ -38,7 +39,7 @@ public class SMConjectureFactory extends SMDecoupledFactory {
     
     @Override
     public SMSelector createSlector(List<Action> actions1, List<Action> actions2) {
-        if (actions1.get(0).getInformationSet().getPlayersHistory().size()==0)
+        if (((MCTSInformationSet)actions1.get(0).getInformationSet()).getPlayersHistory().size()==0)
             return new SMConjuctureSelector(super.createSlector(actions1, actions2), actions1.size(), actions2.size());
         else
             return super.createSlector(actions1, actions2);

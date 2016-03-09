@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectRecall;
+package cz.agents.gtlibrary.experimental.imperfectrecall;
 
 import java.util.ArrayList;
 

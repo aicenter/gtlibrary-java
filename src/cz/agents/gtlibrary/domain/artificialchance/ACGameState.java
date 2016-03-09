@@ -25,6 +25,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.artificialchance.ACAction.ActionType;
@@ -52,7 +54,7 @@ public class ACGameState extends GameStateImpl {
 
 	private boolean folded;
 
-	private Pair<Integer, Sequence> cachedISKey;
+	private ISKey cachedISKey;
 	private List<ACAction> sequenceForAllPlayers;
 
 	public ACGameState() {
@@ -90,11 +92,11 @@ public class ACGameState extends GameStateImpl {
     }
 
 	@Override
-	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+	public ISKey getISKeyForPlayerToMove() {
 		if (cachedISKey != null)
 			return cachedISKey;
 		if (isPlayerToMoveNature()) {
-			cachedISKey = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+			cachedISKey = new PerfectRecallISKey(0, history.getSequenceOf(getPlayerToMove()));
 			return cachedISKey;
 		}
 
@@ -107,7 +109,7 @@ public class ACGameState extends GameStateImpl {
 			hcb.append(iterator.next());
 			hcb.append(moveNum++);
 		}
-		cachedISKey = new Pair<Integer, Sequence>(hcb.toHashCode(), history.getSequenceOf(getPlayerToMove()));
+		cachedISKey = new PerfectRecallISKey(hcb.toHashCode(), history.getSequenceOf(getPlayerToMove()));
 		return cachedISKey;
 	}
 

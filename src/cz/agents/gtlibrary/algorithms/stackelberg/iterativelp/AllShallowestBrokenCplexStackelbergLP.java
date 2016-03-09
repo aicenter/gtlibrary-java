@@ -19,8 +19,8 @@ public class AllShallowestBrokenCplexStackelbergLP extends ShallowestAllCplexSta
 
         for (Map.Entry<InformationSet, Map<Sequence, Double>> isStrategy : strategy.entrySet()) {
             if (isStrategy.getValue().size() > 1) {
-                if(!isContinuation(isStrategy.getKey().getPlayersHistory(), isSequences)) {
-                    isSequences.add(isStrategy.getKey().getPlayersHistory());
+                if(!isContinuation(((PerfectRecallInformationSet)isStrategy.getKey()).getPlayersHistory(), isSequences)) {
+                    isSequences.add(((PerfectRecallInformationSet)isStrategy.getKey()).getPlayersHistory());
                     if (shallowestBrokenStrategyCause == null)
                         shallowestBrokenStrategyCause = new HashSet<>(isStrategy.getValue().keySet());
                     else

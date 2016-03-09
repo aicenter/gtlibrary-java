@@ -44,6 +44,11 @@ public class NFGDoubleOracleConfig implements AlgorithmConfig {
     }
 
     @Override
+    public void addInformationSetFor(GameState gameState) {
+
+    }
+
+    @Override
     public InformationSet createInformationSetFor(GameState gameState) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }

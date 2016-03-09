@@ -21,6 +21,8 @@ package cz.agents.gtlibrary.domain.nfptest;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -77,8 +79,8 @@ public class TestGameState extends GameStateImpl {
     }
 
 	@Override
-	public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-		return new Pair<Integer, Sequence>(history.hashCode(), getSequenceForPlayerToMove());
+	public ISKey getISKeyForPlayerToMove() {
+		return new PerfectRecallISKey(history.hashCode(), getSequenceForPlayerToMove());
 	}
 
 	@Override

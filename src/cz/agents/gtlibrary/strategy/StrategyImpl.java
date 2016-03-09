@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.strategy;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
@@ -189,7 +190,7 @@ public class StrategyImpl extends Strategy {
     }
 
     private static boolean briefFancyTostring=true;
-    private HashSet<Pair> printed = new HashSet<Pair>();
+    private HashSet<ISKey> printed = new HashSet<ISKey>();
     @Override
     public String fancyToString(GameState root, Expander<? extends InformationSet> expander, Player player) {
             if (briefFancyTostring) printed.clear();

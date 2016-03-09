@@ -19,11 +19,14 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.interfaces;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
+
 import java.io.Serializable;
 import java.util.Set;
 
-public interface InformationSet extends Serializable{
+public interface InformationSet extends Serializable {
 	public Player getPlayer();
-	public Sequence getPlayersHistory();	
 	public Set<GameState> getAllStates();
+	public void addStateToIS(GameState state);
+    public ISKey getISKey();
 }

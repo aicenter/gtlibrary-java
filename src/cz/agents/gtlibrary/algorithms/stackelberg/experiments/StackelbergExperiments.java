@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.*;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.BFSEnforcingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.BFSForbiddingStackelbergLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.CompleteBFSEnforcingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.DOBSS;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergMultipleLPs;
@@ -146,6 +147,10 @@ public class StackelbergExperiments {
         if (algType.equals("BFSEnforcingIterLPBR")) {
             SumEnforcingStackelbergLP.USE_BR_CUT = true;
             return new BFSEnforcingStackelbergLP(leader, gameInfo);
+        }
+        if (algType.equals("BFSCompleteEnforcingIterLP")) {
+            SumEnforcingStackelbergLP.USE_BR_CUT = false;
+            return new CompleteBFSEnforcingStackelbergLP(leader, gameInfo);
         }
         if (algType.equals("BFSForbiddingIterLP"))
             return new BFSForbiddingStackelbergLP(leader, gameInfo);
