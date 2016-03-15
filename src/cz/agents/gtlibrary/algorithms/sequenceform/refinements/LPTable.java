@@ -30,6 +30,8 @@ import java.util.Map.Entry;
 
 public class LPTable {
 
+    public enum ConstraintType {LE, EQ, GE}
+
     public static int CPLEXALG = IloCplex.Algorithm.Auto;
     public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
 
@@ -351,6 +353,10 @@ public class LPTable {
      */
     public void setConstraintType(Object eqKey, int type) {
         constraintTypes.put(eqKey, type);
+    }
+
+    public void setConstraintType(Object eqKey, ConstraintType type) {
+        setConstraintType(eqKey, type.ordinal());
     }
 
     /**

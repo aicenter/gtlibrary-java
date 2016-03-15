@@ -1,9 +1,10 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
@@ -15,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class StrategyLP {
+
+    private static StrategyLP instance = null;
     private LPTable table;
     private SequenceFormIRConfig config;
     private Map<Sequence, Set<Triplet<String, Sequence, Action>>> sequenceToVars;
@@ -24,7 +27,13 @@ public class StrategyLP {
     private Map<Action, Double> lbs;
     private Map<Action, Double> ubs;
 
-    public StrategyLP(SequenceFormIRConfig config) {
+    public static StrategyLP getInstance(SequenceFormIRConfig config) {
+        if(instance == null)
+            instance = new StrategyLP(config);
+        return instance;
+    }
+
+    private StrategyLP(SequenceFormIRConfig config) {
         this.config = config;
         this.table = new LPTable();
         sequenceToVars = new HashMap<>();

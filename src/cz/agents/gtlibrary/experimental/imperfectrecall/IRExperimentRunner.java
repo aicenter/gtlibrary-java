@@ -1,9 +1,9 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall;
 
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSeqenceFormBNB;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSeqenceFormLP;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.BilinearSeqenceFormBNB;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.BilinearSeqenceFormLP;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.BilinearTable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;

@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl;
 
 import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
@@ -33,16 +33,16 @@ public class BilinearSeqenceFormBNB {
 
     private static int MAX_REFINE = 6;
 
-    private boolean DEBUG = false;
-    public static boolean SAVE_LPS = false;
+    private boolean DEBUG = true;
+    public static boolean SAVE_LPS = true;
 
 
     static public final double BILINEAR_PRECISION = 0.0001;
     private final double EPS = 0.000001;
 
     public static void main(String[] args) {
-        runRandomGame();
-//        runBRTest();
+//        runRandomGame();
+        runBRTest();
     }
 
     private static void runRandomGame() {
@@ -83,8 +83,11 @@ public class BilinearSeqenceFormBNB {
         BasicGameBuilder builder = new BasicGameBuilder();
         SequenceFormIRConfig config = new SequenceFormIRConfig();
 
-        builder.build(new BRTestGameState(), config, new BRTestExpander<>(config));
+        Expander expander = new BRTestExpander<>(config);
+
+        builder.build(new BRTestGameState(), config, expander);
         BilinearSeqenceFormBNB solver = new BilinearSeqenceFormBNB(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());
+        solver.setExpander(expander);
 
         solver.solve(config);
     }
@@ -97,7 +100,7 @@ public class BilinearSeqenceFormBNB {
     }
 
     public void solve(SequenceFormIRConfig config) {
-        this.strategyLP = new StrategyLP(config);
+        this.strategyLP = StrategyLP.getInstance(config);
         addObjective();
         addRPConstraints(config);
         addBehaviorStrategyConstraints(config);
@@ -129,6 +132,7 @@ public class BilinearSeqenceFormBNB {
             BNBCandidate bestCandidate = c;
             Set<Action> actionToFocus = findMostViolatedBilinearConstraints(config, lpData);
 
+            System.out.println("most violated action: " + actionToFocus);
             if (Math.abs(globalLB - globalUB) > 1e-4 && !actionToFocus.isEmpty()) {
                 Action a = actionToFocus.iterator().next();
 //                double strategy = Math.floor(Math.pow(10, 2) * P1Strategy.get(a))/Math.pow(10, 2);
@@ -137,10 +141,9 @@ public class BilinearSeqenceFormBNB {
                 fringe.add(c);
             }
 
-
             while (!fringe.isEmpty()) {
-
                 BNBCandidate node = null;
+
                 while (node == null && !fringe.isEmpty()) {
                     node = fringe.pollFirst();
                     if (node.getUb() < bestCandidate.getLb()) node = null;
@@ -176,7 +179,7 @@ public class BilinearSeqenceFormBNB {
                     table.refinePrecision(lpData, node.getActionToFocusOn());
 
                 for (BNBCandidate.ChangeType t : BNBCandidate.ChangeType.values()) {
-                    Set<Pair<BNBCandidate.ChangeType, Triplet<Integer, Action, Double>>> newChanges = new HashSet<>(node.getChanges());
+                    Set<Pair<BNBCandidate.ChangeType, Triplet<Integer, Action, Double>>> newChanges = new LinkedHashSet<>(node.getChanges());
                     double probability = node.getCurrentProbOfAction();
                     if (t.equals(BNBCandidate.ChangeType.LEFT)) {
                         probability = Math.floor(Math.pow(10, fixedDigits) * probability) / Math.pow(10, fixedDigits);
@@ -197,7 +200,9 @@ public class BilinearSeqenceFormBNB {
 
                         if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
                         lpData.getSolver().solve();
-//                        System.out.println(lpData.getSolver().getStatus());
+                        System.out.println(lpData.getSolver().getStatus());
+                        System.out.println(lpData.getSolver().getObjValue());
+                        System.out.println(newChanges);
                         if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
                             lastSolution = lpData.getSolver().getObjValue();
                             P1Strategy = extractBehavioralStrategyLP(config, lpData);
@@ -221,10 +226,12 @@ public class BilinearSeqenceFormBNB {
                                 if (c.getLb() > globalLB) {
                                     globalLB = c.getLb();
                                     bestCandidate = c;
+                                    System.out.println(c);
                                     System.out.println("Global LB: " + globalLB + " \t\t Global UB: " + globalUB);
                                 }
                             } else if (c.getUb() > globalLB) {
                                 actionToFocus = findMostViolatedBilinearConstraints(config, lpData);
+                                System.out.println("most violated action: " + actionToFocus);
                                 if (!actionToFocus.isEmpty()) {
                                     Action a = actionToFocus.iterator().next();
 //                                    double strategy = (Math.floor(Math.pow(10, change.getRight().getFirst()+1) * P1Strategy.get(a)))/Math.pow(10, change.getRight().getFirst()+1);
@@ -252,6 +259,7 @@ public class BilinearSeqenceFormBNB {
             if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
             lpData.getSolver().solve();
             System.out.println(lpData.getSolver().getStatus());
+            System.out.println(lpData.getSolver().getObjValue());
             P1Strategy = extractBehavioralStrategyLP(config, lpData);
 
             assert definedEverywhere(P1Strategy, config);

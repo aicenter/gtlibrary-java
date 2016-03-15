@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl;
 
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.Pair;
@@ -122,5 +122,13 @@ public class BNBCandidate implements Comparable<BNBCandidate>{
     public boolean equals(Object obj) {
         if (!(obj instanceof BNBCandidate)) return false;
         return (this.compareTo((BNBCandidate)obj) == 0);
+    }
+
+    @Override
+    public String toString() {
+        return "BNBCandidate{" +
+                "ub=" + ub +
+                ", lb=" + lb +
+                '}';
     }
 }

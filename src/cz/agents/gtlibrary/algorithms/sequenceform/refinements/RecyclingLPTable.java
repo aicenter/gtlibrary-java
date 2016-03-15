@@ -19,8 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
-import cz.agents.gtlibrary.interfaces.Sequence;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
@@ -41,20 +39,20 @@ public class RecyclingLPTable extends LPTable {
 
     public RecyclingLPTable() {
         super();
-        newConstraints = new LinkedHashMap<Object, Map<Object, Double>>();
-        newObjective = new LinkedHashMap<Object, Double>();
-        updatedConstraints = new LinkedHashMap<Object, Map<Object, Double>>();
-        removedConstraints = new HashSet<Object>();
-        updatedConstants = new HashMap<Object, Double>();
+        newConstraints = new LinkedHashMap<>();
+        newObjective = new LinkedHashMap<>();
+        updatedConstraints = new LinkedHashMap<>();
+        removedConstraints = new HashSet<>();
+        updatedConstants = new HashMap<>();
     }
 
     public RecyclingLPTable(int m, int n) {
         super(m, n);
-        newConstraints = new LinkedHashMap<Object, Map<Object, Double>>(m);
-        newObjective = new LinkedHashMap<Object, Double>(n);
-        updatedConstraints = new LinkedHashMap<Object, Map<Object, Double>>();
-        removedConstraints = new HashSet<Object>();
-        updatedConstants = new HashMap<Object, Double>();
+        newConstraints = new LinkedHashMap<>(m);
+        newObjective = new LinkedHashMap<>(n);
+        updatedConstraints = new LinkedHashMap<>();
+        removedConstraints = new HashSet<>();
+        updatedConstants = new HashMap<>();
     }
 
     public void setObjective(Object varKey, double value) {
@@ -103,7 +101,7 @@ public class RecyclingLPTable extends LPTable {
         Map<Object, Double> row = constraints.get(eqKey);
 
         if (row == null) {
-            row = new LinkedHashMap<Object, Double>();
+            row = new LinkedHashMap<>();
             constraints.put(eqKey, row);
             newConstraints.put(eqKey, row);
             row.put(varKey, value);
@@ -118,7 +116,7 @@ public class RecyclingLPTable extends LPTable {
                 Map<Object, Double> updatedRow = updatedConstraints.get(eqKey);
 
                 if (updatedRow == null)
-                    updatedRow = new HashMap<Object, Double>();
+                    updatedRow = new HashMap<>();
                 updatedRow.put(varKey, value);
                 updatedConstraints.put(eqKey, updatedRow);
                 row.put(varKey, value);
@@ -297,9 +295,7 @@ public class RecyclingLPTable extends LPTable {
             if (removedValue == null)
                 return;
             if (row.isEmpty()) {
-                constraints.remove(eqKey);
-                removedConstraints.add(eqKey);
-                updatedConstraints.remove(eqKey);
+                deleteConstraint(eqKey);
             } else {
                 Map<Object, Double> updatedRow = updatedConstraints.get(eqKey);
 
@@ -315,5 +311,21 @@ public class RecyclingLPTable extends LPTable {
     public void removeConstant(Object eqKey) {
         constants.remove(eqKey, 0d);
         updatedConstants.remove(eqKey, 0d);
+    }
+
+    public void deleteConstraint(Object eqKey) {
+        Map<Object, Double> row = constraints.get(eqKey);
+
+        if (row != null) {
+            constraints.remove(eqKey);
+            removedConstraints.add(eqKey);
+            updatedConstraints.remove(eqKey);
+        }
+    }
+
+    public void deleteConstraints(Set<Object> addedConstrKeys) {
+        for (Object eqKey : addedConstrKeys) {
+            deleteConstraint(eqKey);
+        }
     }
 }

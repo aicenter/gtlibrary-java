@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.MILPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
