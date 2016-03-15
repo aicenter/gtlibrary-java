@@ -414,12 +414,14 @@ public class CFRMDPAlgorithm {
             if (args[1].length()>2 && args[1].charAt(2)=='B') MDPCoreLP.USE_BARRIER = true;
             FullCostPairedMDP.testGame(expander, config);
             return;
-        }else if (args[1].startsWith("CFRP")) {
+        } else if (args[1].startsWith("CFRP")) {
             if (args[1].equals("CFRP_Cur")) USE_CURRENT_STRATEGY = true;
             else if (!args[1].equals("CFRP_Mean")){
                 throw new IllegalArgumentException("Wrong CFRP variant");
             } 
-        } else {
+        } else if (args[1].equals("CFR")) {
+                USE_RMPLUS=false;
+        }else {
             throw new IllegalArgumentException("Wrong algorithm definition");
         }
         
