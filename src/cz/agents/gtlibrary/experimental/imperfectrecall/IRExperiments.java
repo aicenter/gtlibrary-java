@@ -14,7 +14,7 @@ import java.lang.management.ThreadMXBean;
 public class IRExperiments {
 
     public static void main(String[] args) {
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 2;
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 3;
         int endingSeed = (args.length > 1) ? new Integer(args[1]) : 100;
         boolean fixingDigits = (args.length > 2) ? new Boolean(args[2]) : BilinearTable.fixPreviousDigits;
 
@@ -32,7 +32,9 @@ public class IRExperiments {
 
         for (int seed = startingSeed; seed<endingSeed; seed++) {
             RandomGameInfo.seed = seed;
-            BilinearSeqenceFormLP.main(null);
+            System.out.println("seed: " + seed);
+//            cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSeqenceFormBNB.main(null);
+//            BilinearSeqenceFormLP.main(null);
 //            BilinearSeqenceFormSingleOracle.main(null);
             BilinearSeqenceFormBNB.main(null);
             System.out.println("-----------------------");

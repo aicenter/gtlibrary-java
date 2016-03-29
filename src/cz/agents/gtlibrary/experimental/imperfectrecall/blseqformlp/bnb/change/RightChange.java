@@ -2,12 +2,11 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change;
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
 import cz.agents.gtlibrary.interfaces.Action;
-import ilog.concert.IloException;
 
 public class RightChange extends Change {
 
-    public RightChange(Action action, int[] fixedDigitArray, double fixedDigitNumber) {
-        super(action, fixedDigitArray, fixedDigitNumber);
+    public RightChange(Action action, int[] fixedDigitArray) {
+        super(action, fixedDigitArray);
     }
 
     @Override
@@ -29,12 +28,7 @@ public class RightChange extends Change {
 
     @Override
     public boolean updateW(BilinearTable table) {
-        try {
-            return table.updateWBoundsForRight(this);
-        } catch (IloException e) {
-            e.printStackTrace();
-        }
-        return false;
+        return table.updateWBoundsForRight(this);
     }
 
     @Override

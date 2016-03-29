@@ -2,12 +2,11 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change;
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
 import cz.agents.gtlibrary.interfaces.Action;
-import ilog.concert.IloException;
 
 public class MiddleChange extends Change {
 
-    public MiddleChange(Action action, int[] fixedDigitArray, double fixedDigitNumber) {
-        super(action, fixedDigitArray, fixedDigitNumber);
+    public MiddleChange(Action action, int[] fixedDigitArray) {
+        super(action, fixedDigitArray);
     }
 
     @Override
@@ -23,18 +22,20 @@ public class MiddleChange extends Change {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof MiddleChange))
-                return false;
+            return false;
         return super.equals(o);
     }
 
     @Override
     public boolean updateW(BilinearTable table) {
-        try {
-            return table.updateWBoundsForMiddle(this);
-        } catch (IloException e) {
-            e.printStackTrace();
-        }
-        return false;
+        table.refinePrecisionOfRelevantBilinearVars(action);
+        return table.updateWBoundsForMiddle(this);
+    }
+
+    @Override
+    public void removeWUpdate(BilinearTable table) {
+        table.resetPrecision(action);
+        super.removeWUpdate(table);
     }
 
     @Override

@@ -24,10 +24,10 @@ import ilog.concert.IloException;
 import ilog.cplex.IloCplex;
 
 import java.util.*;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 
 public class BilinearSeqenceFormBNB {
-    public static boolean DEBUG = true;
+    public static boolean DEBUG = false;
     public static boolean SAVE_LPS = true;
     public static double BILINEAR_PRECISION = 0.0001;
     public static double EPS = 0.000001;
@@ -102,9 +102,10 @@ public class BilinearSeqenceFormBNB {
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
             Queue<Candidate> fringe = new PriorityQueue<>();
+
             currentBest = createCandidate(lpData, config);
-            System.out.println("most violated action: " + currentBest.getAction());
-            if(DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+            if (DEBUG) System.out.println("most violated action: " + currentBest.getAction());
+            if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
 
             if (isConverged(currentBest))
                 return;
@@ -119,14 +120,15 @@ public class BilinearSeqenceFormBNB {
 //                }
                 if (isConverged(current)) {
                     currentBest = current;
+                    System.out.println(current);
                     return;
                 }
-                int precision = table.getPrecisionFor(current.getAction());
-                int fixedDigits = current.getFixedDigitsForCurrentAction() + 1;
                 current.getChanges().updateTable(table);
-
-                if (precision <= fixedDigits + 1 && precision < 7)
-                    table.refinePrecisionOfRelevantBilinearVars(current.getAction());
+                int precision = table.getPrecisionFor(current.getAction());
+//                int fixedDigits = current.getFixedDigitsForCurrentAction() + 1;
+//
+//                if (precision <= fixedDigits + 1 && precision < 7)
+//                    table.refinePrecisionOfRelevantBilinearVars(current.getAction());
                 if (precision < 7)
                     addMiddleChildOf(current, fringe, config);
                 addLeftChildOf(current, fringe, config);
@@ -134,121 +136,217 @@ public class BilinearSeqenceFormBNB {
                 current.getChanges().removeChanges(table);
             }
 
-            System.out.println(currentBest);
+            if (DEBUG) System.out.println(currentBest);
+            currentBest.getChanges().updateTable(table);
+            LPData data = table.toCplex();
 
+            data.getSolver().solve();
+            Map<Action, Double> p1Strategy = extractBehavioralStrategy(config, data);
+
+            finalValue = getLowerBound(p1Strategy);
         } catch (IloException e) {
             e.printStackTrace();
         }
     }
 
+//    public int[] getNonDeltaValue(Object object, LPData data) {
+//        double value = 0;
+//        IloNumVar[][] actionWValues = table.getWVariablesFor(object);
+//        int[] exactValue = new int[actionWValues[0].length];
+//
+//        try {
+//            for (int k = 0; k < 2; k++) {
+//                value += k*data.getSolver().getValue(actionWValues[k][0]);
+//            }
+//            for (int k = 1; k < 10; k++) {
+//                for (int i = 1; i < actionWValues[k].length; i++) {
+//                    value += k * data.getSolver().getValue(actionWValues[k][i]) * Math.pow(10, -i);
+//                }
+//            }
+//            int intValue = (int)Math.round(value*Math.pow(10, exactValue.length - 1));
+//
+//            for (int i = 0; i < exactValue.length; i++) {
+//                exactValue[i] = (int) (intValue/Math.pow(10, exactValue.length - 1 - i));
+//            }
+//            return exactValue;
+//        } catch (IloException e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
+
     //  this is not solved yet, rework to change providers or export the duplicity
-    private void addMiddleChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) throws IloException {
+    private void addMiddleChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
         Changes newChanges = new Changes(current.getChanges());
-        double probability = current.getActionProbability();
-        int[] fixedDigitArray = new int[Math.max(current.getFixedDigitsForCurrentAction() + 1, 2)];
-
-        IntStream.range(0, fixedDigitArray.length).forEach(i -> fixedDigitArray[i] = getDigit(probability, i));
-        Change change = new MiddleChange(current.getAction(), fixedDigitArray, probability);
+        int[] probability = getMiddleExactProbability(current);
+        Change change = new MiddleChange(current.getAction(), probability);
 
         newChanges.add(change);
-        if (change.updateW(table)) {
-            LPData lpData = table.toCplex();
+        try {
+            if (change.updateW(table)) {
+                LPData lpData = table.toCplex();
 
-            if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
-            lpData.getSolver().solve();
-            System.out.println(lpData.getSolver().getStatus());
-            System.out.println(lpData.getSolver().getObjValue());
-            System.out.println(newChanges);
-            if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
-                Candidate candidate = createCandidate(newChanges, lpData, config);
+                if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
+                lpData.getSolver().solve();
+                if (DEBUG) {
+                    System.out.println(lpData.getSolver().getStatus());
+                    System.out.println(lpData.getSolver().getObjValue());
+                    System.out.println(newChanges);
+                }
+                if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
+                    Candidate candidate = createCandidate(newChanges, lpData, config);
 
-                System.out.println("Candidate: " + candidate + " vs " + currentBest);
-                if (isConverged(candidate)) {
-                    if (candidate.getLb() > currentBest.getLb()) {
-                        currentBest = candidate;
-                        if(DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                    if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
+                    if (isConverged(candidate)) {
+                        if (candidate.getLb() > currentBest.getLb()) {
+                            currentBest = candidate;
+                            if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                        }
+                    } else if (candidate.getUb() > currentBest.getLb()) {
+                        if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
+                        fringe.add(candidate);
                     }
-                } else if (candidate.getUb() > currentBest.getLb()) {
-                    System.out.println("most violated action: " + candidate.getAction());
-                    fringe.add(candidate);
                 }
             }
+        } catch (IloException e) {
+            e.printStackTrace();
+        } finally {
+            change.removeWUpdate(table);
         }
-        change.removeWUpdate(table);
     }
 
-    private void addRightChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) throws IloException {
-        Changes newChanges = new Changes(current.getChanges());
-        int[] fixedDigitArray = new int[Math.max(current.getFixedDigitsForCurrentAction(), 2)];
-        double probability = (Math.floor(Math.pow(10, fixedDigitArray.length - 1) * current.getActionProbability()) + 1) /
-                Math.pow(10, fixedDigitArray.length - 1);
+    private int[] getMiddleExactProbability(Candidate current) {
+        int[] probability;
 
-        IntStream.range(0, fixedDigitArray.length).forEach(i -> fixedDigitArray[i] = getDigit(probability, i));
-        Change change = new RightChange(current.getAction(), fixedDigitArray, probability);
+        if (current.getActionProbability()[0] == 1) {
+            probability = new int[current.getActionProbability().length];
+            System.arraycopy(current.getActionProbability(), 0, probability, 0, probability.length);
+            probability[0] = 0;
+            for (int i = 1; i < probability.length; i++) {
+                probability[i] = 9;
+            }
+        } else {
+            probability = current.getActionProbability();
+        }
+        return probability;
+    }
+
+    private void addRightChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
+        if (current.getActionProbability()[0] == 1)
+            return;
+        Changes newChanges = new Changes(current.getChanges());
+        int[] probability = getRightExactProbability(current);
+        Change change = new RightChange(current.getAction(), probability);
 
         newChanges.add(change);
-        if (change.updateW(table)) {
-            LPData lpData = table.toCplex();
+        try {
+            if (change.updateW(table)) {
+                LPData lpData = table.toCplex();
 
-            if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
-            lpData.getSolver().solve();
-            System.out.println(lpData.getSolver().getStatus());
-            System.out.println(lpData.getSolver().getObjValue());
-            System.out.println(newChanges);
-            if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
-                Candidate candidate = createCandidate(newChanges, lpData, config);
+                if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
+                lpData.getSolver().solve();
+                if (DEBUG) {
+                    System.out.println(lpData.getSolver().getStatus());
+                    System.out.println(lpData.getSolver().getObjValue());
+                    System.out.println(newChanges);
+                }
+                if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
+                    Candidate candidate = createCandidate(newChanges, lpData, config);
 
-                System.out.println("Candidate: " + candidate + " vs " + currentBest);
-                if (isConverged(candidate)) {
-                    if (candidate.getLb() > currentBest.getLb()) {
-                        currentBest = candidate;
-                        if(DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                    if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
+                    if (isConverged(candidate)) {
+                        if (candidate.getLb() > currentBest.getLb()) {
+                            currentBest = candidate;
+                            if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                        }
+                    } else if (candidate.getUb() > currentBest.getLb()) {
+                        if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
+                        fringe.add(candidate);
                     }
-                } else if (candidate.getUb() > currentBest.getLb()) {
-                    System.out.println("most violated action: " + candidate.getAction());
-                    fringe.add(candidate);
                 }
             }
+        } catch (IloException e) {
+            e.printStackTrace();
+        } finally {
+            change.removeWUpdate(table);
         }
-        change.removeWUpdate(table);
     }
 
-    private void addLeftChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) throws IloException {
-        Changes newChanges = new Changes(current.getChanges());
-        int[] fixedDigitArray = new int[Math.max(current.getFixedDigitsForCurrentAction(), 2)];
-        double probability = Math.floor(Math.pow(10, fixedDigitArray.length - 1) * current.getActionProbability()) /
-                Math.pow(10, fixedDigitArray.length - 1);
+    private int[] getRightExactProbability(Candidate current) {
+        int[] probability = new int[current.getActionProbability().length];
 
-        IntStream.range(0, fixedDigitArray.length).forEach(i -> fixedDigitArray[i] = getDigit(probability, i));
-        Change change = new LeftChange(current.getAction(), fixedDigitArray, probability);
+        System.arraycopy(current.getActionProbability(), 0, probability, 0, probability.length);
+        probability[probability.length - 1]++;
+        return probability;
+    }
+
+    private void addLeftChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
+        Changes newChanges = new Changes(current.getChanges());
+        int[] probability = getLeftExactProbability(current);
+
+        if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && Arrays.equals(probability, change.getFixedDigitArrayValue()))))
+            probability[probability.length - 1]--;
+        Change change = new LeftChange(current.getAction(), probability);
 
         newChanges.add(change);
-        if (change.updateW(table)) {
-            LPData lpData = table.toCplex();
+        try {
+            if (change.updateW(table)) {
+                LPData lpData = table.toCplex();
 
-            if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
-            lpData.getSolver().solve();
-            System.out.println(lpData.getSolver().getStatus());
-            System.out.println(lpData.getSolver().getObjValue());
-            System.out.println(newChanges);
-            if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
-                Candidate candidate = createCandidate(newChanges, lpData, config);
+                if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
+                lpData.getSolver().solve();
+                if (DEBUG) {
+                    System.out.println(lpData.getSolver().getStatus());
+                    System.out.println(lpData.getSolver().getObjValue());
+                    System.out.println(newChanges);
+                }
+                if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
+                    Candidate candidate = createCandidate(newChanges, lpData, config);
 
-                System.out.println("Candidate: " + candidate + " vs " + currentBest);
-                if (isConverged(candidate)) {
-                    System.out.println("converged");
-                    if (candidate.getLb() > currentBest.getLb()) {
-                        currentBest = candidate;
-                        if(DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                    if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
+                    if (isConverged(candidate)) {
+                        if (DEBUG) System.out.println("converged");
+                        if (candidate.getLb() > currentBest.getLb()) {
+                            currentBest = candidate;
+                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                        }
+                    } else if (candidate.getUb() > currentBest.getLb()) {
+                        if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
+                        fringe.add(candidate);
                     }
-                } else if (candidate.getUb() > currentBest.getLb()) {
-                    System.out.println("most violated action: " + candidate.getAction());
-                    fringe.add(candidate);
                 }
             }
+        } catch (IloException e) {
+            e.printStackTrace();
+        } finally {
+            change.removeWUpdate(table);
         }
-        change.removeWUpdate(table);
     }
+
+    private int[] getLeftExactProbability(Candidate current) {
+        int[] probability;
+
+        if (current.getActionProbability()[0] == 1) {
+            probability = new int[current.getActionProbability().length];
+            System.arraycopy(current.getActionProbability(), 0, probability, 0, probability.length);
+            probability[0] = 0;
+            for (int i = 1; i < probability.length; i++) {
+                probability[i] = 9;
+            }
+        } else {
+            probability = current.getActionProbability();
+        }
+        return probability;
+    }
+
+//    private double updateProbabilityForLeft(Candidate current, int[] fixedDigitArray) {
+//        double probability = Math.floor(Math.pow(10, fixedDigitArray.length - 1) * current.getActionProbability()) /
+//                Math.pow(10, fixedDigitArray.length - 1);
+//
+//        if (probability == current.getActionProbability())
+//            probability -= Math.pow(10, -fixedDigitArray.length + 1);
+//        return probability;
+//    }
 
     private int getDigit(double value, int digit) {
         int result = -1;
@@ -296,8 +394,21 @@ public class BilinearSeqenceFormBNB {
         double lowerBound = getLowerBound(p1Strategy);
         double upperBound = getUpperBound(lpData);
         Action action = findMostViolatedBilinearConstraints(config, lpData);
+//        int[] nonDeltaValue = getNonDeltaValue(action, lpData);                 tohle ej zbytečně aložitý vzít pravděpodobnost z tý  p1Strategy a zaokrouhlit jí tak nějak jak dělám teď do pole , bacha že to zaokrouhlování je te asi čpatně(možná ne), v left bude potřeba ten test a jinak by to mělo být ok
+        int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action));
 
-        return new Candidate(lowerBound, upperBound, changes, action, p1Strategy.get(action));
+        return new Candidate(lowerBound, upperBound, changes, action, exactProbability);
+    }
+
+    private int[] getExactProbability(Double value, int precision) {
+        int[] exactValue = new int[precision];
+        int intValue = (int) Math.round(value * Math.pow(10, precision));
+
+        for (int i = 0; i < exactValue.length; i++) {
+            exactValue[i] = (int) (intValue / Math.pow(10, exactValue.length - i));
+            intValue -= exactValue[i] * Math.pow(10, exactValue.length - i);
+        }
+        return exactValue;
     }
 
     private Candidate createCandidate(LPData lpData, SequenceFormIRConfig config) throws IloException {
@@ -546,19 +657,15 @@ public class BilinearSeqenceFormBNB {
 
     //version with shallowest IS
     private Action findMostViolatedBilinearConstraints(SequenceFormIRConfig config, LPData data) throws IloException {
-        HashSet<Action> result = new HashSet<>();
-
-
-        for (Sequence s : config.getSequencesFor(player)) {
-            if (s.isEmpty()) continue;
-            result.add(s.getLast());
-        }
-
+        Set<Action> actions = config.getSequencesFor(player).stream()
+                .filter(s -> !s.isEmpty())
+                .filter(s -> ((SequenceFormIRInformationSet) s.getLastInformationSet()).hasIR())
+                .map(Sequence::getLast).collect(Collectors.toSet());
         double currentShallowestDepth = Double.POSITIVE_INFINITY;
         double currentShallowestError = Double.NEGATIVE_INFINITY;
         Action currentBest = null;
 
-        for (Action a : result) {
+        for (Action a : actions) {
             SequenceFormIRInformationSet is = (SequenceFormIRInformationSet) a.getInformationSet();
             double average = 0;
             ArrayList<Double> specValues = new ArrayList<>();
@@ -573,13 +680,12 @@ public class BilinearSeqenceFormBNB {
                     specValues.add(sV);
                 }
             }
-            if (specValues.size() == 0) average = 0;
-            else average = average / specValues.size();
+            if (specValues.size() == 0)
+                average = 0;
+            else
+                average = average / specValues.size();
 
-            double error = 0;
-            for (double d : specValues) {
-                error += Math.abs(average - d);
-            }
+            double error = getError(average, specValues);
 
             if (error > 1e-4) {  //nesmis se zaseknout na malé chybě a furt jí vracet zkontorlovat když dávám more shallow, že ta chyba je alespoň něco
                 double avgDepth = getAverageDepth(is);
@@ -598,8 +704,12 @@ public class BilinearSeqenceFormBNB {
             }
         }
         if (currentBest == null)
-            currentBest = result.iterator().next();
+            currentBest = actions.iterator().next();
         return currentBest;
+    }
+
+    private double getError(double average, ArrayList<Double> specValues) {
+        return specValues.stream().mapToDouble(d -> Math.abs(average - d)).sum();
     }
 
 //    private Set<Action> findMostViolatedBilinearConstraints(SequenceFormIRConfig config, LPData data) throws IloException {
@@ -730,8 +840,8 @@ public class BilinearSeqenceFormBNB {
         config.getAllInformationSets().values().stream()
                 .filter(informationSet -> informationSet.hasIR())
                 .forEach(informationSet -> {
-            assert false;
-        });
+                    assert false;
+                });
         return null;
     }
 
