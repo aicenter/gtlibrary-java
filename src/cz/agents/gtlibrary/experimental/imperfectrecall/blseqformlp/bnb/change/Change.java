@@ -11,10 +11,9 @@ public abstract class Change {
     protected int[] fixedDigitArrayValue;
     protected double fixedDigitNumericValue;
 
-    public Change(Action action, int[] fixedDigitArrayValue, double fixedDigitNumericValue) {
+    public Change(Action action, int[] fixedDigitArrayValue) {
         this.action = action;
         this.fixedDigitArrayValue = fixedDigitArrayValue;
-        this.fixedDigitNumericValue = fixedDigitNumericValue;
     }
 
     public Action getAction() {

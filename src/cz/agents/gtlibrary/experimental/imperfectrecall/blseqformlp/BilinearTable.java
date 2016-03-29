@@ -3,12 +3,15 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Change;
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class BilinearTable extends RecyclingLPTable {
 
@@ -17,12 +20,15 @@ public class BilinearTable extends RecyclingLPTable {
     private Map<Object, Integer> precision;
 
     private Map<Object, IloNumVar[][]> wVariables; // information set -> binary variables for the bilinear terms for that IS
+    private Map<Object, double[][]> wVariableLBs;
+    private Map<Object, double[][]> wVariableUBs;
     private Map<Object, IloNumVar[][]> rHatVariables; // sequence -> rHat variables for sequence
     private Map<Object, IloNumVar> deltaBehavioralVariables; // action -> delta x variable
     private Map<Object, IloNumVar> deltaSequenceVariables; // sequence -> delta x variable
     private Map<Object, IloRange> outgoingBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
     private Map<Object, IloRange> behavioralBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
     final int digits = 10;
+    final int maxPrecision = 7;
 
     private final int INITIAL_MDT_PRECISION = 2;
 
@@ -32,6 +38,8 @@ public class BilinearTable extends RecyclingLPTable {
         bilinearVarsToUpdate = new HashMap<>();
         precision = new HashMap<>();
         wVariables = new HashMap<>();
+        wVariableLBs = new HashMap<>();
+        wVariableUBs = new HashMap<>();
         rHatVariables = new HashMap<>();
         deltaBehavioralVariables = new HashMap<>();
         deltaSequenceVariables = new HashMap<>();
@@ -56,7 +64,25 @@ public class BilinearTable extends RecyclingLPTable {
                     getPrecisionFor(bilinKey.getValue().getRight()));
         }
         bilinearVarsToUpdate.clear();
+        updateWBounds();
         return data;
+    }
+
+    private void updateWBounds() throws IloException {
+        for (Map.Entry<Object, IloNumVar[][]> entry : wVariables.entrySet()) {
+            double[][] lbs = getLBs(entry.getKey());
+            double[][] ubs = getUBs(entry.getKey());
+            IloNumVar[][] wVariableArray = entry.getValue();
+
+            for (int i = 0; i < wVariableArray.length; i++) {
+                for (int j = 0; j <wVariableArray[0].length; j++) {
+                    if(wVariableArray[i][j] == null)
+                        continue;
+                    wVariableArray[i][j].setLB(lbs[i][j]);
+                    wVariableArray[i][j].setUB(ubs[i][j]);
+                }
+            }
+        }
     }
 
     private void addBilinearConstraint(LPData data, Object bilinVarKey, Object factor1, Object factor2, int precision) throws IloException {
@@ -75,12 +101,10 @@ public class BilinearTable extends RecyclingLPTable {
         int newPrecision = getPrecisionFor(factor2) + 1;
 
         precision.put(factor2, newPrecision);
-        for (Map.Entry<Object, Pair<Object, Object>> bilinearVar : bilinearVars.entrySet()) {
-            if (bilinearVar.getValue().getRight().equals(factor2))
-                bilinearVarsToUpdate.put(bilinearVar.getKey(), bilinearVar.getValue());
-        }
+        bilinearVars.entrySet().stream()
+                .filter(bilinearVar -> bilinearVar.getValue().getRight().equals(factor2))
+                .forEach(bilinearVar -> bilinearVarsToUpdate.put(bilinearVar.getKey(), bilinearVar.getValue()));
     }
-
 
     public IloRange[] addMDTConstraints(LPData data, Object product, Object sequence, Object behavioral, int precision) throws IloException {
         IloCplex cplex = data.getSolver();
@@ -107,10 +131,10 @@ public class BilinearTable extends RecyclingLPTable {
 
         if (wVariables.containsKey(behavioral)) {
             IloNumVar[][] existingWs = wVariables.get(behavioral);
-            precision = Math.max(precision, existingWs[0].length);
+//            precision = Math.max(precision, existingWs[0].length);
             w = new IloNumVar[digits][precision];
             for (int d = 0; d < digits; d++)
-                for (int existingPrecision = 0; existingPrecision < existingWs[d].length; existingPrecision++) {
+                for (int existingPrecision = 0; existingPrecision < Math.min(existingWs[d].length, precision); existingPrecision++) {
                     w[d][existingPrecision] = existingWs[d][existingPrecision];
                 }
         } else {
@@ -122,13 +146,15 @@ public class BilinearTable extends RecyclingLPTable {
         if (rHatVariables.containsKey(product)) {
             IloNumVar[][] existingRHat = rHatVariables.get(product);
             for (int d = 0; d < digits; d++)
-                for (int existingPrecision = 0; existingPrecision < existingRHat[d].length; existingPrecision++) {
+                for (int existingPrecision = 0; existingPrecision < Math.min(existingRHat[d].length, precision); existingPrecision++) {
                     rHat[d][existingPrecision] = existingRHat[d][existingPrecision];
                 }
         }
 
         IloNumExpr productSum = xSeqDelta;
         IloNumExpr approxSum = xBehDelta;
+        double[][] lbs = getLBs(behavioral);
+        double[][] ubs = getUBs(behavioral);
 //        IloNumExpr productSum = cplex.numExpr();
 //        IloNumExpr approxSum = cplex.numExpr();
         for (int l = 0; l < precision; l++) {
@@ -138,7 +164,7 @@ public class BilinearTable extends RecyclingLPTable {
             for (int k = 0; k < digits; k++) {
                 if ((l == 0) && (k > 1)) continue;
                 if (w[k][l] == null)
-                    w[k][l] = cplex.numVar(0, 1, IloNumVarType.Float, "W_" + behavioral.toString() + "_" + k + "_" + l);
+                    w[k][l] = cplex.numVar(lbs[k][l], ubs[k][l], IloNumVarType.Float, "W_" + behavioral.toString() + "_" + k + "_" + l);
                 wSum = cplex.sum(wSum, w[k][l]);
                 if (rHat[k][l] == null) {
                     rHat[k][l] = cplex.numVar(0, 1, IloNumVarType.Float, "RHAT_" + product + "_" + k + "_" + l);
@@ -171,12 +197,41 @@ public class BilinearTable extends RecyclingLPTable {
         return result;
     }
 
-    public boolean updateWBoundsForLeft(Change change) throws IloException {
-        IloNumVar[][] existingWs = wVariables.get(change.getAction());
+    public IloNumVar[][] getWVariablesFor(Object object) {
+        return wVariables.get(object);
+    }
+
+//    public boolean updateWBoundsForLeft(Change change) throws IloException {
+//        IloNumVar[][] existingWs = wVariables.get(change.getAction());
+//        boolean changed = false;
+//
+//        existingWs[1][0].setUB(0);
+//        existingWs[0][0].setLB(1);
+//        if (change.getFixedDigitArrayValue()[0] == 1)
+//            return true;
+//        int digitToFix = getLastFixedDigit(change);
+//
+//        if (digitToFix == 0)
+//            return false;
+//        for (int k = digitToFix; k < digits; k++) {
+//            if ((change.getFixedDigitArrayValue().length == 0) && (k > 1))
+//                continue;
+//            if (existingWs[k][change.getFixedDigitCount()].getLB() < 1) {
+//                if (existingWs[k][change.getFixedDigitCount()].getUB() == 1)
+//                    changed = true;
+//                existingWs[k][change.getFixedDigitCount()].setUB(0);
+//            }
+//        }
+//        return changed;
+//    }
+
+    public boolean updateWBoundsForLeft(Change change) {
+        double[][] lbs = getLBs(change.getAction());
+        double[][] ubs = getUBs(change.getAction());
         boolean changed = false;
 
-        existingWs[1][0].setUB(0);
-        existingWs[0][0].setLB(1);
+        ubs[1][0] = 0;
+        lbs[0][0] = 1;
         if (change.getFixedDigitArrayValue()[0] == 1)
             return true;
         int digitToFix = getLastFixedDigit(change);
@@ -186,66 +241,149 @@ public class BilinearTable extends RecyclingLPTable {
         for (int k = digitToFix; k < digits; k++) {
             if ((change.getFixedDigitArrayValue().length == 0) && (k > 1))
                 continue;
-            if (existingWs[k][change.getFixedDigitCount()].getLB() < 1) {
-                if (existingWs[k][change.getFixedDigitCount()].getUB() == 1)
+            if (lbs[k][change.getFixedDigitCount()] < 1) {
+                if (ubs[k][change.getFixedDigitCount()] == 1)
                     changed = true;
-                existingWs[k][change.getFixedDigitCount()].setUB(0);
+                ubs[k][change.getFixedDigitCount()] = 0;
             }
         }
         return changed;
     }
 
-    public boolean updateWBoundsForRight(Change change) throws IloException {
-        IloNumVar[][] existingWs = wVariables.get(change.getAction());
+//    public boolean updateWBoundsForRight(Change change) throws IloException {
+//        IloNumVar[][] existingWs = wVariables.get(change.getAction());
+//        boolean changed = false;
+//
+//        if (change.getFixedDigitArrayValue()[0] == 1) {
+//            existingWs[1][0].setLB(1);
+//            existingWs[0][0].setUB(0);
+//        } else {
+//            existingWs[0][0].setLB(1);
+//            existingWs[1][0].setUB(0);
+//        }
+//        int digitToFix = getLastFixedDigit(change);
+//
+//        for (int k = 0; k < digitToFix; k++) {
+//            if ((change.getFixedDigitCount() == 0) && (k > 1))
+//                continue;
+//            if (existingWs[k][change.getFixedDigitCount()].getLB() < 1) {
+//                if (existingWs[k][change.getFixedDigitCount()].getUB() == 1)
+//                    changed = true;
+//                existingWs[k][change.getFixedDigitCount()].setUB(0);
+//            }
+//        }
+//        return changed;
+//    }
+
+    public boolean updateWBoundsForRight(Change change) {
+        double[][] lbs = getLBs(change.getAction());
+        double[][] ubs = getUBs(change.getAction());
+
         boolean changed = false;
 
         if (change.getFixedDigitArrayValue()[0] == 1) {
-            existingWs[1][0].setLB(1);
-            existingWs[0][0].setUB(0);
+            lbs[1][0] = 1;
+            ubs[0][0] = 0;
         } else {
-            existingWs[0][0].setLB(1);
-            existingWs[1][0].setUB(0);
+            lbs[0][0] = 1;
+            ubs[1][0] = 0;
         }
         int digitToFix = getLastFixedDigit(change);
 
         for (int k = 0; k < digitToFix; k++) {
             if ((change.getFixedDigitCount() == 0) && (k > 1))
                 continue;
-            if (existingWs[k][change.getFixedDigitCount()].getLB() < 1) {
-                if (existingWs[k][change.getFixedDigitCount()].getUB() == 1)
+            if (lbs[k][change.getFixedDigitCount()] < 1) {
+                if (ubs[k][change.getFixedDigitCount()] == 1)
                     changed = true;
-                existingWs[k][change.getFixedDigitCount()].setUB(0);
+                ubs[k][change.getFixedDigitCount()] = 0;
             }
         }
         return changed;
     }
 
-    public boolean updateWBoundsForMiddle(Change change) throws IloException {
-        IloNumVar[][] existingWs = wVariables.get(change.getAction());
+    private double[][] getLBs(Object object) {
+        double[][] lbs = wVariableLBs.get(object);
+
+        if (lbs == null) {
+            lbs = new double[digits][maxPrecision];
+            Arrays.stream(lbs).forEach(array -> Arrays.fill(array, 0));
+            wVariableLBs.put(object, lbs);
+        }
+        return lbs;
+    }
+
+    private double[][] getUBs(Object object) {
+        double[][] ubs = wVariableUBs.get(object);
+
+        if (ubs == null) {
+            ubs = new double[digits][maxPrecision];
+            Arrays.stream(ubs).forEach(array -> Arrays.fill(array, 1));
+            wVariableUBs.put(object, ubs);
+        }
+        return ubs;
+    }
+
+//    public boolean updateWBoundsForMiddle(Change change) throws IloException {
+//        IloNumVar[][] existingWs = wVariables.get(change.getAction());
+//        boolean changed = false;
+//
+//        if (change.getFixedDigitArrayValue()[0] == 1) {
+//            existingWs[1][0].setLB(1);
+//            existingWs[0][0].setUB(0);
+//        } else {
+//            existingWs[0][0].setLB(1);
+//            existingWs[1][0].setUB(0);
+//        }
+//        for (int k = 0; k < digits; k++) {
+//            for (int l = 1; l < change.getFixedDigitArrayValue().length; l++) {
+//                if ((l == 0) && (k > 1)) continue;
+//                if (k != change.getFixedDigitArrayValue()[l]) {
+//                    if (existingWs[k][l].getUB() > 0) {
+//                        changed = true;
+//                        existingWs[k][l].setUB(0);
+//                    }
+//                } else {
+//                    if (existingWs[k][l].getUB() == 0)
+//                        return false;
+//                    else if (existingWs[k][l].getLB() == 0) {
+//                        changed = true;
+//                        existingWs[k][l].setLB(1);
+//                        existingWs[k][l].setUB(1);
+//                    }
+//                }
+//            }
+//        }
+//        return changed;
+//    }
+
+    public boolean updateWBoundsForMiddle(Change change) {
+        double[][] lbs = getLBs(change.getAction());
+        double[][] ubs = getUBs(change.getAction());
         boolean changed = false;
 
         if (change.getFixedDigitArrayValue()[0] == 1) {
-            existingWs[1][0].setLB(1);
-            existingWs[0][0].setUB(0);
+            lbs[1][0] = 1;
+            ubs[0][0] = 0;
         } else {
-            existingWs[0][0].setLB(1);
-            existingWs[1][0].setUB(0);
+            lbs[0][0] = 1;
+            ubs[1][0] = 0;
         }
         for (int k = 0; k < digits; k++) {
             for (int l = 1; l < change.getFixedDigitArrayValue().length; l++) {
                 if ((l == 0) && (k > 1)) continue;
                 if (k != change.getFixedDigitArrayValue()[l]) {
-                    if (existingWs[k][l].getUB() > 0) {
+                    if (ubs[k][l] > 0) {
                         changed = true;
-                        existingWs[k][l].setUB(0);
+                        ubs[k][l] = 0;
                     }
                 } else {
-                    if (existingWs[k][l].getUB() == 0)
+                    if (ubs[k][l] == 0)
                         return false;
-                    else if (existingWs[k][l].getLB() == 0) {
+                    else if (lbs[k][l] == 0) {
                         changed = true;
-                        existingWs[k][l].setLB(1);
-                        existingWs[k][l].setUB(1);
+                        lbs[k][l] = 1;
+                        ubs[k][l] = 1;
                     }
                 }
             }
@@ -266,15 +404,25 @@ public class BilinearTable extends RecyclingLPTable {
     }
 
     public void removeWUpdate(Change change) throws IloException {
-        IloNumVar[][] existingWs = wVariables.get(change.getAction());
+//        IloNumVar[][] existingWs = wVariables.get(change.getAction());
+//
+////        existingWs[1][0].setLB(0);
+////        existingWs[1][0].setUB(1);
+////        existingWs[0][0].setLB(0);
+////        existingWs[0][0].setUB(1);
+//        for (int k = 0; k < digits; k++) {
+//            for (int l = 0; l < existingWs[0].length; l++) {
+//                if (l == 0 && k > 1)
+//                    continue;
+//                existingWs[k][l].setLB(0);
+//                existingWs[k][l].setUB(1);
+//            }
+//        }
+        Arrays.stream(wVariableLBs.get(change.getAction())).forEach(array -> Arrays.fill(array, 0));
+        Arrays.stream(wVariableUBs.get(change.getAction())).forEach(array -> Arrays.fill(array, 1));
+    }
 
-        for (int k = 0; k < digits; k++) {
-            for (int l = 0; l < existingWs[0].length; l++) {
-                if (l == 0 && k > 1)
-                    continue;
-                existingWs[k][l].setLB(0);
-                existingWs[k][l].setUB(1);
-            }
-        }
+    public void resetPrecision(Action action) {
+        precision.remove(action);
     }
 }

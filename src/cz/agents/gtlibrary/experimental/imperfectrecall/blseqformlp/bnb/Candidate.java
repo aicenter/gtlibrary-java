@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.C
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.MiddleChange;
 import cz.agents.gtlibrary.interfaces.Action;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,14 +13,14 @@ public class Candidate implements Comparable<Candidate> {
 
     private Changes changes;
     private Action action;
-    private double actionProbability;
+    private int[] actionProbability;
     private int fixedDigitsForCurrentAction;
 
     private double lb = Double.NEGATIVE_INFINITY;
     private double ub = Double.POSITIVE_INFINITY;
 
     public Candidate(double lb, double ub, Changes changes,
-                     Action action, double actionProbability) {
+                     Action action, int[] actionProbability) {
         this.lb = lb;
         this.ub = ub;
         this.changes = changes;
@@ -27,7 +28,7 @@ public class Candidate implements Comparable<Candidate> {
         this.actionProbability = actionProbability;
     }
 
-    public Candidate(double lb, double ub, Action action, double actionProbability) {
+    public Candidate(double lb, double ub, Action action, int[] actionProbability) {
         this.lb = lb;
         this.ub = ub;
         this.changes = new Changes();
@@ -47,7 +48,7 @@ public class Candidate implements Comparable<Candidate> {
         return action;
     }
 
-    public double getActionProbability() {
+    public int[] getActionProbability() {
         return actionProbability;
     }
 
@@ -94,7 +95,7 @@ public class Candidate implements Comparable<Candidate> {
 
         Candidate candidate = (Candidate) o;
 
-        if (Double.compare(candidate.actionProbability, actionProbability) != 0) return false;
+        if (!Arrays.equals(candidate.actionProbability, actionProbability)) return false;
         if (Double.compare(candidate.lb, lb) != 0) return false;
         if (Double.compare(candidate.ub, ub) != 0) return false;
         if (!changes.equals(candidate.changes)) return false;
@@ -108,7 +109,7 @@ public class Candidate implements Comparable<Candidate> {
         long temp;
         result = changes.hashCode();
         result = 31 * result + (action != null ? action.hashCode() : 0);
-        temp = Double.doubleToLongBits(actionProbability);
+        temp = Arrays.hashCode(actionProbability);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         temp = Double.doubleToLongBits(lb);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
