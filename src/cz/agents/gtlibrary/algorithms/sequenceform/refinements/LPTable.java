@@ -198,7 +198,7 @@ public class LPTable {
         cplex.clearModel();
         cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
         cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
-        cplex.setParam(IloCplex.IntParam.MIPEmphasis, IloCplex.MIPEmphasis.Balanced);
+        cplex.setParam(IloCplex.IntParam.MIPEmphasis, IloCplex.MIPEmphasis.Optimality);
 //        cplex.setParam(IloCplex.DoubleParam.EpMrk, 0.99999);
 //		cplex.setParam(IloCplex.DoubleParam.BarEpComp, 1e-4);
 //		System.out.println("BarEpComp: " + cplex.getParam(IloCplex.DoubleParam.BarEpComp));
