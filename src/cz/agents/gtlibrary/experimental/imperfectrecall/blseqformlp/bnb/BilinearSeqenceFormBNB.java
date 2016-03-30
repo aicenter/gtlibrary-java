@@ -23,12 +23,14 @@ import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
 import ilog.cplex.IloCplex;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class BilinearSeqenceFormBNB {
     public static boolean DEBUG = false;
-    public static boolean SAVE_LPS = true;
+    public static boolean SAVE_LPS = false;
     public static double BILINEAR_PRECISION = 0.0001;
     public static double EPS = 0.000001;
 
@@ -46,6 +48,8 @@ public class BilinearSeqenceFormBNB {
 
     private double globalLB;
     private double globalUB;
+    private Action mostBrokenAction;
+    private double mostBrokenActionValue;
 
     public static void main(String[] args) {
         runRandomGame();
@@ -68,8 +72,11 @@ public class BilinearSeqenceFormBNB {
         solver.setExpander(expander);
         System.out.println("Information sets: " + config.getCountIS(0));
         System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
-        solver.solve(config);
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
 
+        solver.solve(config);
+        System.out.println((mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
     }
 
@@ -136,13 +143,14 @@ public class BilinearSeqenceFormBNB {
                 current.getChanges().removeChanges(table);
             }
 
-            if (DEBUG) System.out.println(currentBest);
+            System.out.println(currentBest);
             currentBest.getChanges().updateTable(table);
             LPData data = table.toCplex();
 
             data.getSolver().solve();
-            Map<Action, Double> p1Strategy = extractBehavioralStrategy(config, data);
+            Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, data);
 
+            p1Strategy.entrySet().stream().forEach(System.out::println);
             finalValue = getLowerBound(p1Strategy);
         } catch (IloException e) {
             e.printStackTrace();
@@ -200,7 +208,7 @@ public class BilinearSeqenceFormBNB {
                     if (isConverged(candidate)) {
                         if (candidate.getLb() > currentBest.getLb()) {
                             currentBest = candidate;
-                            if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
                         }
                     } else if (candidate.getUb() > currentBest.getLb()) {
                         if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
@@ -257,7 +265,7 @@ public class BilinearSeqenceFormBNB {
                     if (isConverged(candidate)) {
                         if (candidate.getLb() > currentBest.getLb()) {
                             currentBest = candidate;
-                            if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
                         }
                     } else if (candidate.getUb() > currentBest.getLb()) {
                         if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
@@ -284,6 +292,8 @@ public class BilinearSeqenceFormBNB {
         Changes newChanges = new Changes(current.getChanges());
         int[] probability = getLeftExactProbability(current);
 
+        if (isZero(probability))
+            return;
         if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && Arrays.equals(probability, change.getFixedDigitArrayValue()))))
             probability[probability.length - 1]--;
         Change change = new LeftChange(current.getAction(), probability);
@@ -323,6 +333,14 @@ public class BilinearSeqenceFormBNB {
         }
     }
 
+    private boolean isZero(int[] probability) {
+        for (int prob : probability) {
+            if (prob > 0)
+                return false;
+        }
+        return true;
+    }
+
     private int[] getLeftExactProbability(Candidate current) {
         int[] probability;
 
@@ -349,7 +367,6 @@ public class BilinearSeqenceFormBNB {
 //    }
 
     private int getDigit(double value, int digit) {
-        int result = -1;
         int firstDigit = (int) Math.floor(value);
 
         if (digit == 0)
@@ -357,8 +374,7 @@ public class BilinearSeqenceFormBNB {
         double tempValue = value - firstDigit;
 
         tempValue = Math.floor(tempValue * Math.pow(10, digit));
-        result = (int) (tempValue - 10 * (long) (tempValue / 10));
-        return result;
+        return (int) (tempValue - 10 * (long) (tempValue / 10));
     }
 
     private boolean isConverged(Candidate currentBest) {
@@ -394,7 +410,6 @@ public class BilinearSeqenceFormBNB {
         double lowerBound = getLowerBound(p1Strategy);
         double upperBound = getUpperBound(lpData);
         Action action = findMostViolatedBilinearConstraints(config, lpData);
-//        int[] nonDeltaValue = getNonDeltaValue(action, lpData);                 tohle ej zbytečně aložitý vzít pravděpodobnost z tý  p1Strategy a zaokrouhlit jí tak nějak jak dělám teď do pole , bacha že to zaokrouhlování je te asi čpatně(možná ne), v left bude potřeba ten test a jinak by to mělo být ok
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action));
 
         return new Candidate(lowerBound, upperBound, changes, action, exactProbability);
@@ -402,7 +417,7 @@ public class BilinearSeqenceFormBNB {
 
     private int[] getExactProbability(Double value, int precision) {
         int[] exactValue = new int[precision];
-        int intValue = (int) Math.round(value * Math.pow(10, precision));
+        int intValue = (int) Math.floor(value * Math.pow(10, precision));
 
         for (int i = 0; i < exactValue.length; i++) {
             exactValue[i] = (int) (intValue / Math.pow(10, exactValue.length - i));
@@ -708,6 +723,10 @@ public class BilinearSeqenceFormBNB {
         return currentBest;
     }
 
+//    private Action findMostViolatedBilinearConstraints(SequenceFormIRConfig config, LPData data) throws IloException {
+//        return mostBrokenAction;
+//    }
+
     private double getError(double average, ArrayList<Double> specValues) {
         return specValues.stream().mapToDouble(d -> Math.abs(average - d)).sum();
     }
@@ -771,8 +790,8 @@ public class BilinearSeqenceFormBNB {
         if (DEBUG) System.out.println("----- P1 Actions -----");
         Map<Action, Double> P1Strategy = new HashMap<>();
 
-//        mostBrokenAction = null;
-//        mostBrokenActionValue = Double.NEGATIVE_INFINITY;
+        mostBrokenAction = null;
+        mostBrokenActionValue = Double.NEGATIVE_INFINITY;
         for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
             if (!i.getPlayer().equals(player)) continue;
             boolean allZero = true;
@@ -798,10 +817,10 @@ public class BilinearSeqenceFormBNB {
                     P1Strategy.putAll(strategy);
                     Pair<Action, Double> actionCostPair = StrategyLP.getInstance(config).getMostExpensiveActionCostPair();
 
-//                    if (mostBrokenActionValue < actionCostPair.getRight()) {
-//                        mostBrokenActionValue = actionCostPair.getRight();
-//                        mostBrokenAction = actionCostPair.getLeft();
-//                    }
+                    if (mostBrokenActionValue < actionCostPair.getRight()) {
+                        mostBrokenActionValue = actionCostPair.getRight();
+                        mostBrokenAction = actionCostPair.getLeft();
+                    }
                 }
             } else if (!i.getOutgoingSequences().isEmpty()) {
                 assert i.getOutgoingSequences().size() == 1;
@@ -827,8 +846,8 @@ public class BilinearSeqenceFormBNB {
                         .forEach(action -> P1Strategy.put(action, 0d));
             }
         }
-//        if (mostBrokenAction == null)
-//            mostBrokenAction = addFirstAvailable(config);
+        if (mostBrokenAction == null)
+            mostBrokenAction = addFirstAvailable(config);
         return P1Strategy;
     }
 

@@ -232,8 +232,11 @@ public class BilinearTable extends RecyclingLPTable {
 
         ubs[1][0] = 0;
         lbs[0][0] = 1;
-        if (change.getFixedDigitArrayValue()[0] == 1)
+        if (change.getFixedDigitArrayValue()[0] == 1) {
+            assert false;
             return true;
+        }
+
         int digitToFix = getLastFixedDigit(change);
 
         if (digitToFix == 0)
@@ -365,6 +368,7 @@ public class BilinearTable extends RecyclingLPTable {
         if (change.getFixedDigitArrayValue()[0] == 1) {
             lbs[1][0] = 1;
             ubs[0][0] = 0;
+            assert false;
         } else {
             lbs[0][0] = 1;
             ubs[1][0] = 0;

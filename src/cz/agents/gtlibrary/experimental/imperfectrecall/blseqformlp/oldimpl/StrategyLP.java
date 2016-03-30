@@ -86,6 +86,7 @@ public class StrategyLP {
         table.setLowerBound(action, 0);
         table.setUpperBound(action, 1);
         table.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
+        table.watchPrimalVariable(varKey, varKey);
     }
 
     private void updateLBs(Action action, double behavStrat) {
@@ -161,7 +162,8 @@ public class StrategyLP {
 
                 if (currentValue == null)
                     currentValue = 0d;
-                currentValue += lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(triplet)]);
+                currentValue += incomingRealizationProbs.get(triplet.getSecond()) *
+                        lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(triplet)]);
                 actionCosts.put(triplet.getThird(), currentValue);
             }
         }
