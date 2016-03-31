@@ -11,13 +11,13 @@ import ilog.cplex.IloCplex;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.IntStream;
 
 public class BilinearTable extends RecyclingLPTable {
 
     private Map<Object, Pair<Object, Object>> bilinearVars;
     private Map<Object, Pair<Object, Object>> bilinearVarsToUpdate;
     private Map<Object, Integer> precision;
+    private Map<Object, Integer> highestPrecision;
 
     private Map<Object, IloNumVar[][]> wVariables; // information set -> binary variables for the bilinear terms for that IS
     private Map<Object, double[][]> wVariableLBs;
@@ -37,6 +37,7 @@ public class BilinearTable extends RecyclingLPTable {
         bilinearVars = new HashMap<>();
         bilinearVarsToUpdate = new HashMap<>();
         precision = new HashMap<>();
+        highestPrecision = new HashMap<>();
         wVariables = new HashMap<>();
         wVariableLBs = new HashMap<>();
         wVariableUBs = new HashMap<>();
@@ -59,9 +60,9 @@ public class BilinearTable extends RecyclingLPTable {
     public LPData toCplex() throws IloException {
         LPData data = super.toCplex();
 
-        for (Map.Entry<Object, Pair<Object, Object>> bilinKey : bilinearVarsToUpdate.entrySet()) {
+        for (Map.Entry<Object, Pair<Object, Object>> bilinKey : bilinearVars.entrySet()) {
             addBilinearConstraint(data, bilinKey.getKey(), bilinKey.getValue().getLeft(), bilinKey.getValue().getRight(),
-                    getPrecisionFor(bilinKey.getValue().getRight()));
+                    getPrecisionFor(bilinKey.getValue().getRight()), getHighestPrecisionFor(bilinKey.getValue().getRight()));
         }
         bilinearVarsToUpdate.clear();
         updateWBounds();
@@ -75,8 +76,8 @@ public class BilinearTable extends RecyclingLPTable {
             IloNumVar[][] wVariableArray = entry.getValue();
 
             for (int i = 0; i < wVariableArray.length; i++) {
-                for (int j = 0; j <wVariableArray[0].length; j++) {
-                    if(wVariableArray[i][j] == null)
+                for (int j = 0; j < wVariableArray[0].length; j++) {
+                    if (wVariableArray[i][j] == null)
                         continue;
                     wVariableArray[i][j].setLB(lbs[i][j]);
                     wVariableArray[i][j].setUB(ubs[i][j]);
@@ -85,13 +86,13 @@ public class BilinearTable extends RecyclingLPTable {
         }
     }
 
-    private void addBilinearConstraint(LPData data, Object bilinVarKey, Object factor1, Object factor2, int precision) throws IloException {
+    private void addBilinearConstraint(LPData data, Object bilinVarKey, Object factor1, Object factor2, int precision, int highestPrecision) throws IloException {
         if (outgoingBilinearConstraints.containsKey(bilinVarKey))
             data.getSolver().delete(outgoingBilinearConstraints.get(bilinVarKey));
 
         if (behavioralBilinearConstraints.containsKey(factor2))
             data.getSolver().delete(behavioralBilinearConstraints.get(factor2));
-        IloRange[] newConstraints = addMDTConstraints(data, bilinVarKey, factor1, factor2, precision);
+        IloRange[] newConstraints = addMDTConstraints(data, bilinVarKey, factor1, factor2, precision, highestPrecision);
 
         behavioralBilinearConstraints.put(factor2, newConstraints[0]);
         outgoingBilinearConstraints.put(bilinVarKey, newConstraints[1]);
@@ -101,12 +102,19 @@ public class BilinearTable extends RecyclingLPTable {
         int newPrecision = getPrecisionFor(factor2) + 1;
 
         precision.put(factor2, newPrecision);
+        updateHighestPrecision(factor2, newPrecision);
         bilinearVars.entrySet().stream()
                 .filter(bilinearVar -> bilinearVar.getValue().getRight().equals(factor2))
                 .forEach(bilinearVar -> bilinearVarsToUpdate.put(bilinearVar.getKey(), bilinearVar.getValue()));
     }
 
-    public IloRange[] addMDTConstraints(LPData data, Object product, Object sequence, Object behavioral, int precision) throws IloException {
+    private void updateHighestPrecision(Object factor2, int newPrecision) {
+        int current = getHighestPrecisionFor(factor2);
+
+        highestPrecision.put(factor2, Math.max(current, newPrecision));
+    }
+
+    public IloRange[] addMDTConstraints(LPData data, Object product, Object sequence, Object behavioral, int precision, int highestPrecision) throws IloException {
         IloCplex cplex = data.getSolver();
         IloNumVar rSequenceToIS = data.getVariables()[getVariableIndex(sequence)];
         IloNumVar xBehStrategy = data.getVariables()[getVariableIndex(behavioral)];
@@ -183,7 +191,7 @@ public class BilinearTable extends RecyclingLPTable {
             if (!thisPrecisionExists) {
                 cplex.addEq(rSequenceToIS, xSum);
                 cplex.addEq(wSum, 1);
-                xBehDelta.setUB(Math.pow(10, -(precision - 1)));
+                xBehDelta.setUB(Math.pow(10, -(highestPrecision - 1)));
                 cplex.addLe(xSeqDelta, cplex.prod(Math.pow(10, -(precision - 1)), rSequenceToIS));
             }
         }
@@ -407,6 +415,14 @@ public class BilinearTable extends RecyclingLPTable {
         return precisionValue;
     }
 
+    public int getHighestPrecisionFor(Object factor2) {
+        Integer precisionValue = highestPrecision.get(factor2);
+
+        if (precisionValue == null)
+            return INITIAL_MDT_PRECISION;
+        return precisionValue;
+    }
+
     public void removeWUpdate(Change change) throws IloException {
 //        IloNumVar[][] existingWs = wVariables.get(change.getAction());
 //
@@ -428,5 +444,30 @@ public class BilinearTable extends RecyclingLPTable {
 
     public void resetPrecision(Action action) {
         precision.remove(action);
+    }
+
+    public void removeWVariables() {
+        wVariables.values().stream().forEach(variables -> removeWVariables(variables));
+        wVariables = new HashMap<>();
+    }
+
+    private void removeWVariables(IloNumVar[][] wVariables) {
+        Arrays.stream(wVariables).forEach(array ->
+                Arrays.stream(array).forEach(wVariable -> {
+                    try {
+                        cplex.remove(wVariable);
+                    } catch (IloException e) {
+                        e.printStackTrace();
+                    }
+                }));
+    }
+
+    public void removeWVariableFor(Object key) {
+        IloNumVar[][] variables = wVariables.get(key);
+
+        if (variables != null) {
+            removeWVariables(variables);
+            wVariables.remove(key);
+        }
     }
 }

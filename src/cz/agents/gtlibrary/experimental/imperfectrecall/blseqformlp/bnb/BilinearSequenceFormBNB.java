@@ -28,7 +28,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class BilinearSeqenceFormBNB {
+public class BilinearSequenceFormBNB {
     public static boolean DEBUG = false;
     public static boolean SAVE_LPS = false;
     public static double BILINEAR_PRECISION = 0.0001;
@@ -47,7 +47,6 @@ public class BilinearSeqenceFormBNB {
     private Candidate currentBest;
 
     private double globalLB;
-    private double globalUB;
     private Action mostBrokenAction;
     private double mostBrokenActionValue;
 
@@ -64,7 +63,7 @@ public class BilinearSeqenceFormBNB {
 
         builder.build(root, config, expander);
 
-        BilinearSeqenceFormBNB solver = new BilinearSeqenceFormBNB(BRTestGameInfo.FIRST_PLAYER, expander, new RandomGameInfo());
+        BilinearSequenceFormBNB solver = new BilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, expander, new RandomGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -86,12 +85,12 @@ public class BilinearSeqenceFormBNB {
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
 
         builder.build(new BRTestGameState(), config, expander);
-        BilinearSeqenceFormBNB solver = new BilinearSeqenceFormBNB(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        BilinearSequenceFormBNB solver = new BilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         solver.solve(config);
     }
 
-    public BilinearSeqenceFormBNB(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
+    public BilinearSequenceFormBNB(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         this.table = new BilinearTable();
         this.player = player;
         this.opponent = info.getOpponent(player);
@@ -143,18 +142,51 @@ public class BilinearSeqenceFormBNB {
                 current.getChanges().removeChanges(table);
             }
 
+            LPData checkData = table.toCplex();
+
+            checkData.getSolver().exportModel("modelAfterAlg.lp");
             System.out.println(currentBest);
             currentBest.getChanges().updateTable(table);
-            LPData data = table.toCplex();
+            lpData = table.toCplex();
 
-            data.getSolver().solve();
-            Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, data);
+            lpData.getSolver().solve();
+            Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
+            assert definedEverywhere(p1Strategy, config);
+            assert equalsInPRInformationSets(p1Strategy, config, lpData);
+            assert isConvexCombination(p1Strategy, lpData, config);
+            double lowerBound = getLowerBound(p1Strategy);
+            double upperBound = getUpperBound(lpData);
 
+            System.out.println("UB: " + upperBound + " LB: " + lowerBound);
             p1Strategy.entrySet().stream().forEach(System.out::println);
-            finalValue = getLowerBound(p1Strategy);
+            finalValue = lowerBound;
+            checkCurrentBestOnCleanLP(config);
         } catch (IloException e) {
             e.printStackTrace();
         }
+    }
+
+    private void checkCurrentBestOnCleanLP(SequenceFormIRConfig config) throws IloException {
+        System.out.println("Check!!!!!!!!!!!!!!");
+        table = new BilinearTable();
+        buildBaseLP(config);
+        LPData checkData = table.toCplex();
+
+        checkData.getSolver().exportModel("cleanModel.lp");
+
+        currentBest.getChanges().updateTable(table);
+        LPData lpData = table.toCplex();
+
+        lpData.getSolver().solve();
+        Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
+
+        assert definedEverywhere(p1Strategy, config);
+        assert equalsInPRInformationSets(p1Strategy, config, lpData);
+        assert isConvexCombination(p1Strategy, lpData, config);
+        double lowerBound = getLowerBound(p1Strategy);
+        double upperBound = getUpperBound(lpData);
+        System.out.println("UB: " + upperBound + " LB: " + lowerBound);
+        p1Strategy.entrySet().stream().forEach(System.out::println);
     }
 
 //    public int[] getNonDeltaValue(Object object, LPData data) {
@@ -208,7 +240,7 @@ public class BilinearSeqenceFormBNB {
                     if (isConverged(candidate)) {
                         if (candidate.getLb() > currentBest.getLb()) {
                             currentBest = candidate;
-                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
                         }
                     } else if (candidate.getUb() > currentBest.getLb()) {
                         if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
@@ -265,7 +297,7 @@ public class BilinearSeqenceFormBNB {
                     if (isConverged(candidate)) {
                         if (candidate.getLb() > currentBest.getLb()) {
                             currentBest = candidate;
-                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
                         }
                     } else if (candidate.getUb() > currentBest.getLb()) {
                         if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
@@ -318,7 +350,7 @@ public class BilinearSeqenceFormBNB {
                         if (DEBUG) System.out.println("converged");
                         if (candidate.getLb() > currentBest.getLb()) {
                             currentBest = candidate;
-                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
                         }
                     } else if (candidate.getUb() > currentBest.getLb()) {
                         if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
