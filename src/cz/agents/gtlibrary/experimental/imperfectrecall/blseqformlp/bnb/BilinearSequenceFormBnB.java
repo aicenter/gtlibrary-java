@@ -10,8 +10,8 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 public class BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean SAVE_LPS = false;
-    public static double BILINEAR_PRECISION = 0.0001;
     public static double EPS = 1e-3;
 
     private final Player player;
@@ -45,11 +44,8 @@ public class BilinearSequenceFormBnB {
 
     private Candidate currentBest;
 
-    private double globalLB;
     private Action mostBrokenAction;
     private double mostBrokenActionValue;
-
-    private int nodeCount = 0;
 
     public static void main(String[] args) {
         runRandomGame();
@@ -678,7 +674,7 @@ public class BilinearSequenceFormBnB {
 
 
     private double getAverageDepth(SequenceFormIRInformationSet informationSet) {
-        return informationSet.getOutgoingSequences().keySet().stream().mapToInt(s -> s.size()).average().getAsDouble();
+        return informationSet.getOutgoingSequences().keySet().stream().mapToInt(Sequence::size).average().getAsDouble();
     }
 
 
@@ -690,7 +686,7 @@ public class BilinearSequenceFormBnB {
         this.expander = expander;
     }
 
-    public Map<Action, Double> extractBehavioralStrategy(SequenceFormIRConfig config, LPData lpData) throws IloException {
+    private Map<Action, Double> extractBehavioralStrategy(SequenceFormIRConfig config, LPData lpData) throws IloException {
         if (DEBUG) System.out.println("----- P1 Actions -----");
         Map<Action, Double> P1Strategy = new HashMap<>();
         for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
@@ -725,15 +721,17 @@ public class BilinearSequenceFormBnB {
         return P1Strategy;
     }
 
-    public Map<Action, Double> extractBehavioralStrategyLP(SequenceFormIRConfig config, LPData lpData) throws IloException {
+    private Map<Action, Double> extractBehavioralStrategyLP(SequenceFormIRConfig config, LPData lpData) throws IloException {
         if (DEBUG) System.out.println("----- P1 Actions -----");
         Map<Action, Double> P1Strategy = new HashMap<>();
 
         mostBrokenAction = null;
         mostBrokenActionValue = Double.NEGATIVE_INFINITY;
         for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
-            if (!i.getPlayer().equals(player)) continue;
+            if (!i.getPlayer().equals(player))
+                continue;
             boolean allZero = true;
+
             if (i.hasIR()) {
                 StrategyLP.getInstance(config).clear();
                 for (Map.Entry<Sequence, Set<Sequence>> entry : i.getOutgoingSequences().entrySet()) {
@@ -795,11 +793,7 @@ public class BilinearSequenceFormBnB {
             if (informationSet.getPlayer().equals(player) && informationSet.hasIR() && !informationSet.getActions().isEmpty())
                 return informationSet.getActions().iterator().next();
         }
-        config.getAllInformationSets().values().stream()
-                .filter(informationSet -> informationSet.hasIR())
-                .forEach(informationSet -> {
-                    assert false;
-                });
+        assert !config.getAllInformationSets().values().stream().anyMatch(SequenceFormIRInformationSet::hasIR);
         return null;
     }
 
@@ -807,7 +801,6 @@ public class BilinearSequenceFormBnB {
         Map<Sequence, Double> P1StrategySeq = new HashMap<>();
         for (Sequence s : config.getSequencesFor(player)) {
             if (s.isEmpty()) continue;
-            Action a = s.getLast();
             double seqValue = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]);
             if (DEBUG) System.out.println(s + " = " + seqValue);
 

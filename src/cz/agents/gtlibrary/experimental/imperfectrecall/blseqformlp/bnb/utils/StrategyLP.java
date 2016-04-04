@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearSequenceFormBNB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -122,9 +123,8 @@ public class StrategyLP {
         try {
             LPData lpData = table.toCplex();
 
-            if (BilinearSequenceFormBNB.SAVE_LPS) lpData.getSolver().exportModel("strategyLP.lp");
+            if (BilinearSequenceFormBnB.SAVE_LPS) lpData.getSolver().exportModel("strategyLP.lp");
             lpData.getSolver().solve();
-//            System.out.println(lpData.getSolver().getStatus());
             updateMostExpensiveActionCostPair(lpData);
             return extractStrategy(lpData);
         } catch (IloException e) {
@@ -185,9 +185,7 @@ public class StrategyLP {
     }
 
     private void addBehavSumConstraint() {
-        for (Action action : actions) {
-            table.setConstraint("sum", action, 1);
-        }
+        actions.stream().forEach(action -> table.setConstraint("sum", action, 1));
         table.setConstraintType("sum", 1);
         table.setConstant("sum", 1);
     }
