@@ -4,9 +4,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.gensum.MILPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.BilinearSeqenceFormBNB;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.SequenceFormIRConfig;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.SequenceFormIRInformationSet;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearSequenceFormBNB;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.iinodes.IRInformationSetImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
@@ -71,7 +71,7 @@ public class ImperfectRecallBestResponse {
         try {
             LPData lpData = milpTable.toCplex();
 
-            if (BilinearSeqenceFormBNB.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
+            if (BilinearSequenceFormBNB.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
             lpData.getSolver().solve();
             setValue(lpData.getSolver().getObjValue());
 

@@ -1,10 +1,11 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearSequenceFormBNB;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
@@ -121,7 +122,7 @@ public class StrategyLP {
         try {
             LPData lpData = table.toCplex();
 
-            if (BilinearSeqenceFormBNB.SAVE_LPS) lpData.getSolver().exportModel("strategyLP.lp");
+            if (BilinearSequenceFormBNB.SAVE_LPS) lpData.getSolver().exportModel("strategyLP.lp");
             lpData.getSolver().solve();
 //            System.out.println(lpData.getSolver().getStatus());
             updateMostExpensiveActionCostPair(lpData);

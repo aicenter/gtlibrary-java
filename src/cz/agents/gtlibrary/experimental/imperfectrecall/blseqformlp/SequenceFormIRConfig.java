@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -333,14 +333,14 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         return player2IR;
     }
 
-    double getHighestReachableUtilityFor(Sequence sequence) {
+    public double getHighestReachableUtilityFor(Sequence sequence) {
         assert sequence.getPlayer().getId() != 2;
         if (sequence.getPlayer().getId() == 0)
             return p1HighestReachableUtility.get(sequence);
         return p2HighestReachableUtility.get(sequence);
     }
 
-    double getLowestReachableUtilityFor(Sequence sequence) {
+    public double getLowestReachableUtilityFor(Sequence sequence) {
         assert sequence.getPlayer().getId() != 2;
         if (sequence.getPlayer().getId() == 0)
             return p1LowestReachableUtility.get(sequence);

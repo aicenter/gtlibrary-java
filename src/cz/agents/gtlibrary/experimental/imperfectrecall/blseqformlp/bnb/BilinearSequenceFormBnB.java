@@ -9,11 +9,10 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.BNBCandidate;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.SequenceFormIRConfig;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.SequenceFormIRInformationSet;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.StrategyLP;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -28,7 +27,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class RebuildingBilinearSequenceFormBnB {
+public class BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean SAVE_LPS = false;
     public static double BILINEAR_PRECISION = 0.0001;
@@ -65,7 +64,7 @@ public class RebuildingBilinearSequenceFormBnB {
 
         builder.build(root, config, expander);
 
-        RebuildingBilinearSequenceFormBnB solver = new RebuildingBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, expander, new RandomGameInfo());
+        BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, expander, new RandomGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -87,12 +86,12 @@ public class RebuildingBilinearSequenceFormBnB {
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
 
         builder.build(new BRTestGameState(), config, expander);
-        RebuildingBilinearSequenceFormBnB solver = new RebuildingBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         solver.solve(config);
     }
 
-    public RebuildingBilinearSequenceFormBnB(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
+    public BilinearSequenceFormBnB(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         this.table = new BilinearTable();
         this.player = player;
         this.opponent = info.getOpponent(player);
@@ -119,56 +118,40 @@ public class RebuildingBilinearSequenceFormBnB {
                 return;
             fringe.add(currentBest);
 
-//            table.clearTable();
             while (!fringe.isEmpty()) {
                 Candidate current = pollCandidateWithUBHigherThanBestLB(fringe);
 
-                System.out.println(current.getUb());
-
-//                if (currentBest.getLb() < current.getLb()) {
-//                    currentBest = current;
-//                    if(DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
-//                }
                 if (isConverged(current)) {
                     currentBest = current;
                     System.out.println(current);
                     return;
                 }
-
-//                int precision = table.getPrecisionFor(current.getAction());
-//                int fixedDigits = current.getFixedDigitsForCurrentAction() + 1;
-//
-//                if (precision <= fixedDigits + 1 && precision < 7)
-//                    table.refinePrecisionOfRelevantBilinearVars(current.getAction());
-
                 addMiddleChildOf(current, fringe, config);
                 addLeftChildOf(current, fringe, config);
                 addRightChildOf(current, fringe, config);
-                table.clearTable();
-//                current.getChanges().removeChanges(table);
-//                table.resetVariableBounds();
             }
-            table.clearTable();
-            buildBaseLP(config);
-            LPData checkData = table.toCplex();
-
-            checkData.getSolver().exportModel("modelAfterAlg.lp");
-            System.out.println(currentBest);
-            currentBest.getChanges().updateTable(table);
-            lpData = table.toCplex();
-
-            lpData.getSolver().solve();
-            Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
+            finalValue = currentBest.getLb();
+//            table.clearTable();
+//            buildBaseLP(config);
+//            LPData checkData = table.toCplex();
+//
+//            checkData.getSolver().exportModel("modelAfterAlg.lp");
+//            System.out.println(currentBest);
+//            currentBest.getChanges().updateTable(table);
+//            lpData = table.toCplex();
+//
+//            lpData.getSolver().solve();
+//            Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
 //            assert definedEverywhere(p1Strategy, config);
 //            assert equalsInPRInformationSets(p1Strategy, config, lpData);
 //            assert isConvexCombination(p1Strategy, lpData, config);
-            double lowerBound = getLowerBound(p1Strategy);
-            double upperBound = getUpperBound(lpData);
-
-            System.out.println("UB: " + upperBound + " LB: " + lowerBound);
-            p1Strategy.entrySet().stream().forEach(System.out::println);
-            finalValue = lowerBound;
-            checkCurrentBestOnCleanLP(config);
+//            double lowerBound = getLowerBound(p1Strategy);
+//            double upperBound = getUpperBound(lpData);
+//
+//            System.out.println("UB: " + upperBound + " LB: " + lowerBound);
+//            p1Strategy.entrySet().stream().forEach(System.out::println);
+//            finalValue = lowerBound;
+//            checkCurrentBestOnCleanLP(config);
         } catch (IloException e) {
             e.printStackTrace();
         }
@@ -197,33 +180,6 @@ public class RebuildingBilinearSequenceFormBnB {
         p1Strategy.entrySet().stream().forEach(System.out::println);
     }
 
-//    public int[] getNonDeltaValue(Object object, LPData data) {
-//        double value = 0;
-//        IloNumVar[][] actionWValues = table.getWVariablesFor(object);
-//        int[] exactValue = new int[actionWValues[0].length];
-//
-//        try {
-//            for (int k = 0; k < 2; k++) {
-//                value += k*data.getSolver().getValue(actionWValues[k][0]);
-//            }
-//            for (int k = 1; k < 10; k++) {
-//                for (int i = 1; i < actionWValues[k].length; i++) {
-//                    value += k * data.getSolver().getValue(actionWValues[k][i]) * Math.pow(10, -i);
-//                }
-//            }
-//            int intValue = (int)Math.round(value*Math.pow(10, exactValue.length - 1));
-//
-//            for (int i = 0; i < exactValue.length; i++) {
-//                exactValue[i] = (int) (intValue/Math.pow(10, exactValue.length - 1 - i));
-//            }
-//            return exactValue;
-//        } catch (IloException e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
-
-    //  this is not solved yet, rework to change providers or export the duplicity
     private void addMiddleChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
         Changes newChanges = new Changes(current.getChanges());
         int[] probability = getMiddleExactProbability(current);
@@ -265,8 +221,6 @@ public class RebuildingBilinearSequenceFormBnB {
             }
         } catch (IloException e) {
             e.printStackTrace();
-        } finally {
-//            change.removeWUpdate(table);
         }
     }
 
@@ -326,8 +280,6 @@ public class RebuildingBilinearSequenceFormBnB {
             }
         } catch (IloException e) {
             e.printStackTrace();
-        } finally {
-//            change.removeWUpdate(table);
         }
     }
 
@@ -382,8 +334,6 @@ public class RebuildingBilinearSequenceFormBnB {
             }
         } catch (IloException e) {
             e.printStackTrace();
-        } finally {
-            change.removeWUpdate(table);
         }
     }
 
@@ -409,14 +359,6 @@ public class RebuildingBilinearSequenceFormBnB {
         return probability;
     }
 
-//    private double updateProbabilityForLeft(Candidate current, int[] fixedDigitArray) {
-//        double probability = Math.floor(Math.pow(10, fixedDigitArray.length - 1) * current.getActionProbability()) /
-//                Math.pow(10, fixedDigitArray.length - 1);
-//
-//        if (probability == current.getActionProbability())
-//            probability -= Math.pow(10, -fixedDigitArray.length + 1);
-//        return probability;
-//    }
 
     private int getDigit(double value, int digit) {
         int firstDigit = (int) Math.floor(value);
@@ -491,46 +433,6 @@ public class RebuildingBilinearSequenceFormBnB {
 
         br.getBestResponse(p1Strategy);
         return -br.getValue();
-    }
-
-    private boolean isConsistent(Action action, double strategy, BNBCandidate candidate) {
-        for (Pair<BNBCandidate.ChangeType, Triplet<Integer, Action, Double>> change : candidate.getChanges()) {
-            Action changeAction = change.getRight().getSecond();
-
-            if (changeAction.equals(action)) {
-                if (change.getLeft().equals(BNBCandidate.ChangeType.LEFT)) {
-//                    double truncValue = ((int) (change.getRight().getThird() * (10 ^ (change.getRight().getFirst())))) / ((double)((10 ^ change.getRight().getFirst())));
-
-                    if (strategy - 1e-5 >= change.getRight().getThird())
-                        return false;
-                } else if (change.getLeft().equals(BNBCandidate.ChangeType.RIGHT)) {
-//                    double truncValue = ((int) (change.getRight().getThird() * (10 ^ (change.getRight().getFirst())))) / ((double)(10 ^ change.getRight().getFirst()));
-
-                    if (strategy + 1e-5 < change.getRight().getThird())
-                        return false;
-                } else {
-                    assert change.getRight().getFirst() > 1;
-                    for (int i = 2; i <= change.getRight().getFirst(); i++) {
-                        int stratDigit = getDigit(strategy, i - 1);
-                        int correctDigit = getDigit(change.getRight().getThird(), i - 1);
-
-                        if (stratDigit != correctDigit) {
-                            if (Math.abs(change.getRight().getThird() - strategy) > Math.pow(10, -(change.getRight().getFirst() - 1)) + Math.pow(10, -(change.getRight().getFirst())))
-                                return false;
-                        }
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
-    private boolean isConsistent(Map<Action, Double> strategy, BNBCandidate candidate) {
-        for (Map.Entry<Action, Double> entry : strategy.entrySet()) {
-            if (!isConsistent(entry.getKey(), entry.getValue(), candidate))
-                return false;
-        }
-        return true;
     }
 
     private boolean equalsInPRInformationSets(Map<Action, Double> p1Strategy, SequenceFormIRConfig config, LPData lpData) throws IloException {
@@ -619,19 +521,11 @@ public class RebuildingBilinearSequenceFormBnB {
     }
 
     private void markAllBilinearVariables(SequenceFormIRConfig config) {
-
         config.getSequencesFor(player)
                 .stream()
                 .filter(s -> !s.isEmpty())
                 .filter(s -> ((SequenceFormIRInformationSet) s.getLastInformationSet()).hasIR())
                 .forEach(s -> markBilinearFor(s));
-//        for (Sequence sequence : config.getSequencesFor(player)) {
-//            if (sequence.isEmpty())
-//                continue;
-//            if (!((SequenceFormIRInformationSet) sequence.getLastInformationSet()).hasIR())
-//                continue;
-//            markBilinearFor(sequence);
-//        }
     }
 
     private void markBilinearFor(Sequence sequence) {
@@ -722,7 +616,14 @@ public class RebuildingBilinearSequenceFormBnB {
         table.setObjective(new Pair<>("root", new ArrayListSequenceImpl(opponent)), 1);
     }
 
-    //version with shallowest IS
+    /**
+     * Chooses the action a causing the highest error * 10^(MAX_DEPTH - average depth of the IS where a is played)
+     *
+     * @param config
+     * @param data
+     * @return
+     * @throws IloException
+     */
     private Action findMostViolatedBilinearConstraints(SequenceFormIRConfig config, LPData data) throws IloException {
         Set<Action> actions = config.getSequencesFor(player).stream()
                 .filter(s -> !s.isEmpty())
@@ -756,10 +657,17 @@ public class RebuildingBilinearSequenceFormBnB {
             }
         }
         if (currentBest == null)
-            currentBest = actions.iterator().next();
+            currentBest = addFirstAvailable(config);
         return currentBest;
     }
 
+//    /**
+//     * Returns the action causing the highest error according to the StrategyLP
+//     * @param config
+//     * @param data
+//     * @return
+//     * @throws IloException
+//     */
 //    private Action findMostViolatedBilinearConstraints(SequenceFormIRConfig config, LPData data) throws IloException {
 //        return mostBrokenAction;
 //    }
@@ -768,12 +676,6 @@ public class RebuildingBilinearSequenceFormBnB {
         return specValues.stream().mapToDouble(d -> Math.abs(average - d)).sum();
     }
 
-//    private Set<Action> findMostViolatedBilinearConstraints(SequenceFormIRConfig config, LPData data) throws IloException {
-//        Set<Action> set = new HashSet<>(1);
-//
-//        set.add(mostBrokenAction);
-//        return set;
-//    }
 
     private double getAverageDepth(SequenceFormIRInformationSet informationSet) {
         return informationSet.getOutgoingSequences().keySet().stream().mapToInt(s -> s.size()).average().getAsDouble();
@@ -899,48 +801,6 @@ public class RebuildingBilinearSequenceFormBnB {
                     assert false;
                 });
         return null;
-    }
-
-    public Map<Action, Double> extractBehavioralStrategyBestFirst(SequenceFormIRConfig config, LPData lpData) throws IloException {
-        if (DEBUG) System.out.println("----- P1 Actions -----");
-        Map<Action, Double> P1Strategy = new HashMap<>();
-        for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
-            if (!i.getPlayer().equals(player)) continue;
-            boolean allZero = true;
-            for (Action a : i.getActions()) {
-                double average = 0;
-                int count = 0;
-                Sequence bestSubS = null;
-                double maxBestSubS = Double.NEGATIVE_INFINITY;
-                for (Sequence subS : i.getOutgoingSequences().keySet()) {
-                    if (lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]) > maxBestSubS) {
-                        maxBestSubS = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(subS)]);
-                        bestSubS = subS;
-                    }
-                }
-                Sequence s = new ArrayListSequenceImpl(bestSubS);
-                s.addLast(a);
-
-                if (lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(bestSubS)]) > 0) {
-                    double sV = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(s)]);
-                    sV = sV / lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(bestSubS)]);
-                    average += sV;
-                    count++;
-                }
-
-                if (count == 0) average = 0;
-                else average = average / count;
-
-                if (DEBUG) System.out.println(a + " = " + average);
-                P1Strategy.put(a, average);
-
-                if (average > 0) allZero = false;
-            }
-            if (allZero && i.getActions().size() > 0) {
-                P1Strategy.put(i.getActions().iterator().next(), 1d);
-            }
-        }
-        return P1Strategy;
     }
 
     public Map<Sequence, Double> extractRPStrategy(SequenceFormIRConfig config, LPData lpData) throws IloException {
