@@ -328,4 +328,17 @@ public class RecyclingLPTable extends LPTable {
             deleteConstraint(eqKey);
         }
     }
+
+    @Override
+    public void clearTable() {
+        super.clearTable();
+        newConstraints = new LinkedHashMap<>();
+        newObjective = new LinkedHashMap<>();
+        updatedConstraints = new LinkedHashMap<>();
+        removedConstraints = new HashSet<>();
+        updatedConstants = new HashMap<>();
+        lpObj = null;
+        lpConstraints = null;
+        lpVariables = null;
+    }
 }
