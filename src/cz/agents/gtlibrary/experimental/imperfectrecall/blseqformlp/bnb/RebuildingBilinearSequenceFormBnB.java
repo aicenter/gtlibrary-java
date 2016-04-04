@@ -28,11 +28,11 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class BilinearSequenceFormBNB {
+public class RebuildingBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean SAVE_LPS = false;
     public static double BILINEAR_PRECISION = 0.0001;
-    public static double EPS = 0.000001;
+    public static double EPS = 1e-3;
 
     private final Player player;
     private final Player opponent;
@@ -42,7 +42,7 @@ public class BilinearSequenceFormBNB {
     private Expander<SequenceFormIRInformationSet> expander;
     private GameInfo gameInfo;
     private Double finalValue = null;
-    private int maxRefinements = 6;
+    private int maxRefinements = 7;
 
     private Candidate currentBest;
 
@@ -65,7 +65,7 @@ public class BilinearSequenceFormBNB {
 
         builder.build(root, config, expander);
 
-        BilinearSequenceFormBNB solver = new BilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, expander, new RandomGameInfo());
+        RebuildingBilinearSequenceFormBnB solver = new RebuildingBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, expander, new RandomGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -87,12 +87,12 @@ public class BilinearSequenceFormBNB {
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
 
         builder.build(new BRTestGameState(), config, expander);
-        BilinearSequenceFormBNB solver = new BilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        RebuildingBilinearSequenceFormBnB solver = new RebuildingBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         solver.solve(config);
     }
 
-    public BilinearSequenceFormBNB(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
+    public RebuildingBilinearSequenceFormBnB(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         this.table = new BilinearTable();
         this.player = player;
         this.opponent = info.getOpponent(player);
@@ -119,8 +119,11 @@ public class BilinearSequenceFormBNB {
                 return;
             fringe.add(currentBest);
 
+//            table.clearTable();
             while (!fringe.isEmpty()) {
                 Candidate current = pollCandidateWithUBHigherThanBestLB(fringe);
+
+                System.out.println(current.getUb());
 
 //                if (currentBest.getLb() < current.getLb()) {
 //                    currentBest = current;
@@ -131,20 +134,22 @@ public class BilinearSequenceFormBNB {
                     System.out.println(current);
                     return;
                 }
-                current.getChanges().updateTable(table);
-                int precision = table.getPrecisionFor(current.getAction());
+
+//                int precision = table.getPrecisionFor(current.getAction());
 //                int fixedDigits = current.getFixedDigitsForCurrentAction() + 1;
 //
 //                if (precision <= fixedDigits + 1 && precision < 7)
 //                    table.refinePrecisionOfRelevantBilinearVars(current.getAction());
-                if (precision < 7)
-                    addMiddleChildOf(current, fringe, config);
+
+                addMiddleChildOf(current, fringe, config);
                 addLeftChildOf(current, fringe, config);
                 addRightChildOf(current, fringe, config);
-                current.getChanges().removeChanges(table);
-                table.resetVariableBounds();
+                table.clearTable();
+//                current.getChanges().removeChanges(table);
+//                table.resetVariableBounds();
             }
-
+            table.clearTable();
+            buildBaseLP(config);
             LPData checkData = table.toCplex();
 
             checkData.getSolver().exportModel("modelAfterAlg.lp");
@@ -224,6 +229,13 @@ public class BilinearSequenceFormBNB {
         int[] probability = getMiddleExactProbability(current);
         Change change = new MiddleChange(current.getAction(), probability);
 
+        table.clearTable();
+        buildBaseLP(config);
+        current.getChanges().updateTable(table);
+        int precision = table.getPrecisionFor(current.getAction());
+
+        if (precision >= maxRefinements)
+            return;
         newChanges.add(change);
         try {
             if (change.updateW(table)) {
@@ -245,7 +257,7 @@ public class BilinearSequenceFormBNB {
                             currentBest = candidate;
                             System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
                         }
-                    } else if (candidate.getUb() > currentBest.getLb()) {
+                    } else if (candidate.getUb() > currentBest.getLb() + EPS) {
                         if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
                         fringe.add(candidate);
                     }
@@ -254,7 +266,7 @@ public class BilinearSequenceFormBNB {
         } catch (IloException e) {
             e.printStackTrace();
         } finally {
-            change.removeWUpdate(table);
+//            change.removeWUpdate(table);
         }
     }
 
@@ -274,13 +286,16 @@ public class BilinearSequenceFormBNB {
         return probability;
     }
 
-    private void addRightChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) { // tady teď v remove nemažu všechnoa si ne? nebo jo když se to volá v toCplex
+    private void addRightChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
         if (current.getActionProbability()[0] == 1)
             return;
         Changes newChanges = new Changes(current.getChanges());
         int[] probability = getRightExactProbability(current);
         Change change = new RightChange(current.getAction(), probability);
 
+        table.clearTable();
+        buildBaseLP(config);
+        current.getChanges().updateTable(table);
         newChanges.add(change);
         try {
             if (change.updateW(table)) {
@@ -302,7 +317,7 @@ public class BilinearSequenceFormBNB {
                             currentBest = candidate;
                             System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
                         }
-                    } else if (candidate.getUb() > currentBest.getLb()) {
+                    } else if (candidate.getUb() > currentBest.getLb() + EPS) {
                         if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
 
                         fringe.add(candidate);
@@ -312,7 +327,7 @@ public class BilinearSequenceFormBNB {
         } catch (IloException e) {
             e.printStackTrace();
         } finally {
-            change.removeWUpdate(table);
+//            change.removeWUpdate(table);
         }
     }
 
@@ -334,6 +349,9 @@ public class BilinearSequenceFormBNB {
             probability[probability.length - 1]--;
         Change change = new LeftChange(current.getAction(), probability);
 
+        table.clearTable();
+        buildBaseLP(config);
+        current.getChanges().updateTable(table);
         newChanges.add(change);
         try {
             if (change.updateW(table)) {
@@ -356,7 +374,7 @@ public class BilinearSequenceFormBNB {
                             currentBest = candidate;
                             System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
                         }
-                    } else if (candidate.getUb() > currentBest.getLb()) {
+                    } else if (candidate.getUb() > currentBest.getLb() + EPS) {
                         if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
                         fringe.add(candidate);
                     }
@@ -370,7 +388,7 @@ public class BilinearSequenceFormBNB {
     }
 
     private boolean isZero(int[] probability) {
-        if(Arrays.stream(probability).anyMatch(prob -> prob > 0))
+        if (Arrays.stream(probability).anyMatch(prob -> prob > 0))
             return false;
         return true;
     }
@@ -710,46 +728,31 @@ public class BilinearSequenceFormBNB {
                 .filter(s -> !s.isEmpty())
                 .filter(s -> ((SequenceFormIRInformationSet) s.getLastInformationSet()).hasIR())
                 .map(Sequence::getLast).collect(Collectors.toSet());
-        double currentShallowestDepth = Double.POSITIVE_INFINITY;
-        double currentShallowestError = Double.NEGATIVE_INFINITY;
+        double currentError = Double.NEGATIVE_INFINITY;
         Action currentBest = null;
 
-        for (Action a : actions) {
-            SequenceFormIRInformationSet is = (SequenceFormIRInformationSet) a.getInformationSet();
-            double average = 0;
+        for (Action action : actions) {
+            SequenceFormIRInformationSet is = (SequenceFormIRInformationSet) action.getInformationSet();
             ArrayList<Double> specValues = new ArrayList<>();
 
             for (Map.Entry<Sequence, Set<Sequence>> entry : is.getOutgoingSequences().entrySet()) {
                 if (data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]) > 0) {
                     Sequence productSequence = new ArrayListSequenceImpl(entry.getKey());
-                    productSequence.addLast(a);
-                    double sV = data.getSolver().getValue(data.getVariables()[table.getVariableIndex(productSequence)]);
-                    sV = sV / data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]);
-                    average += sV;
-                    specValues.add(sV);
+
+                    productSequence.addLast(action);
+                    specValues.add(data.getSolver().getValue(data.getVariables()[table.getVariableIndex(productSequence)]) /
+                            data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]));
                 }
             }
-            if (specValues.size() == 0)
-                average = 0;
-            else
-                average = average / specValues.size();
+            OptionalDouble average = specValues.stream().mapToDouble(Double::doubleValue).average();
 
-            double error = getError(average, specValues);
+            if (!average.isPresent())
+                continue;
+            double error = getError(average.getAsDouble(), specValues) * Math.pow(10, gameInfo.getMaxDepth() - getAverageDepth(is));
 
-            if (error > 1e-4) {  //nesmis se zaseknout na malé chybě a furt jí vracet zkontorlovat když dávám more shallow, že ta chyba je alespoň něco
-                double avgDepth = getAverageDepth(is);
-
-                if (avgDepth < currentShallowestDepth) {
-                    currentShallowestDepth = avgDepth;
-                    currentShallowestError = error;
-                    currentBest = a;
-                } else if (avgDepth == currentShallowestDepth) {
-                    if (currentShallowestError <= error) {
-                        currentShallowestError = error;
-                        currentBest = a;
-                    }
-                }
-
+            if (error > currentError) {
+                currentError = error;
+                currentBest = action;
             }
         }
         if (currentBest == null)
@@ -952,5 +955,4 @@ public class BilinearSequenceFormBNB {
         }
         return P1StrategySeq;
     }
-
 }
