@@ -1,9 +1,8 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall;
 
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.BilinearSeqenceFormBNB;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.BilinearSeqenceFormLP;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.BilinearTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearSequenceFormBNB;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearTable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -36,7 +35,7 @@ public class IRExperiments {
 //            cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSeqenceFormBNB.main(null);
 //            BilinearSeqenceFormLP.main(null);
 //            BilinearSeqenceFormSingleOracle.main(null);
-            BilinearSeqenceFormBNB.main(null);
+            BilinearSequenceFormBNB.main(null);
             System.out.println("-----------------------");
         }
 

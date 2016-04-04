@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl;
 
 import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
@@ -8,6 +8,9 @@ import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -20,7 +23,8 @@ import ilog.cplex.IloCplex;
 
 import java.util.*;
 
-public class BilinearSeqenceFormBNB {
+@Deprecated
+public class BilinearSequenceFormBNB {
     private final Player player;
     private final Player opponent;
     private BilinearTableBNB table;
@@ -58,7 +62,7 @@ public class BilinearSeqenceFormBNB {
 //            return;
 //        }
 
-        BilinearSeqenceFormBNB solver = new BilinearSeqenceFormBNB(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
+        BilinearSequenceFormBNB solver = new BilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -86,13 +90,13 @@ public class BilinearSeqenceFormBNB {
         Expander expander = new BRTestExpander<>(config);
 
         builder.build(new BRTestGameState(), config, expander);
-        BilinearSeqenceFormBNB solver = new BilinearSeqenceFormBNB(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());
+        BilinearSequenceFormBNB solver = new BilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());
         solver.setExpander(expander);
 
         solver.solve(config);
     }
 
-    public BilinearSeqenceFormBNB(Player player, GameInfo info) {
+    public BilinearSequenceFormBNB(Player player, GameInfo info) {
         this.table = new BilinearTableBNB();
         this.player = player;
         this.opponent = info.getOpponent(player);

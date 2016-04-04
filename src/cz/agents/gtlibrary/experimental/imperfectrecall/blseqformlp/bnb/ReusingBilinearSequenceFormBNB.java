@@ -8,12 +8,12 @@ import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.ReusingBilinearTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.BNBCandidate;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.SequenceFormIRConfig;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.SequenceFormIRInformationSet;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl.StrategyLP;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BNBCandidate;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -28,7 +28,8 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class BilinearSequenceFormBNB {
+@Deprecated
+public class ReusingBilinearSequenceFormBNB {
     public static boolean DEBUG = false;
     public static boolean SAVE_LPS = false;
     public static double BILINEAR_PRECISION = 0.0001;
@@ -38,7 +39,7 @@ public class BilinearSequenceFormBNB {
     private final Player opponent;
 
 
-    private BilinearTable table;
+    private ReusingBilinearTable table;
     private Expander<SequenceFormIRInformationSet> expander;
     private GameInfo gameInfo;
     private Double finalValue = null;
@@ -65,7 +66,7 @@ public class BilinearSequenceFormBNB {
 
         builder.build(root, config, expander);
 
-        BilinearSequenceFormBNB solver = new BilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, expander, new RandomGameInfo());
+        ReusingBilinearSequenceFormBNB solver = new ReusingBilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, expander, new RandomGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -87,13 +88,13 @@ public class BilinearSequenceFormBNB {
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
 
         builder.build(new BRTestGameState(), config, expander);
-        BilinearSequenceFormBNB solver = new BilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        ReusingBilinearSequenceFormBNB solver = new ReusingBilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         solver.solve(config);
     }
 
-    public BilinearSequenceFormBNB(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
-        this.table = new BilinearTable();
+    public ReusingBilinearSequenceFormBNB(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
+        this.table = new ReusingBilinearTable();
         this.player = player;
         this.opponent = info.getOpponent(player);
         this.gameInfo = info;
@@ -171,7 +172,7 @@ public class BilinearSequenceFormBNB {
 
     private void checkCurrentBestOnCleanLP(SequenceFormIRConfig config) throws IloException {
         System.out.println("Check!!!!!!!!!!!!!!");
-        table = new BilinearTable();
+        table = new ReusingBilinearTable();
         buildBaseLP(config);
         LPData checkData = table.toCplex();
 

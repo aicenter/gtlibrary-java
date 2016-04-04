@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.oldimpl;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl;
 
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.Pair;
@@ -11,6 +11,7 @@ import java.util.Set;
 /**
  * Created by bosansky on 2/10/16.
  */
+@Deprecated
 public class BNBCandidate implements Comparable<BNBCandidate>{
     private double lb = Double.NEGATIVE_INFINITY;
     private double ub = Double.POSITIVE_INFINITY;
