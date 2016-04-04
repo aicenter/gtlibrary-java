@@ -29,13 +29,7 @@ public class StrategyLP {
     private Map<Action, Double> lbs;
     private Map<Action, Double> ubs;
 
-    public static StrategyLP getInstance(SequenceFormIRConfig config) {
-        if(instance == null)
-            instance = new StrategyLP(config);
-        return instance;
-    }
-
-    private StrategyLP(SequenceFormIRConfig config) {
+    public StrategyLP(SequenceFormIRConfig config) {
         this.config = config;
         this.table = new LPTable();
         sequenceToVars = new HashMap<>();
@@ -205,6 +199,7 @@ public class StrategyLP {
             double value = strategy.get(action);
             double lb = lbs.get(action);
             double ub = ubs.get(action);
+
             if (Math.abs(ub - lb) < 1e-8)
                 value = (lb + ub) / 2;
             else if (value < lbs.get(action))
@@ -217,11 +212,9 @@ public class StrategyLP {
     }
 
     private void addObjective() {
-        for (Sequence sequence : sequenceToVars.keySet()) {
-            Pair<String, Sequence> varKey = new Pair<>("L", sequence);
-
-            table.addToObjective(varKey, -incomingRealizationProbs.get(sequence));
-        }
+        sequenceToVars.keySet().stream()
+                .map(sequence -> new Pair<>("L", sequence))
+                .forEach(varKey -> table.addToObjective(varKey, -incomingRealizationProbs.get(varKey.getRight())));
     }
 
     private void addVarContinuationConstraints() {

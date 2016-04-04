@@ -1,6 +1,8 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall;
 
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSeqenceFormLP;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearSequenceFormBNB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearTable;
 
@@ -13,15 +15,14 @@ import java.lang.management.ThreadMXBean;
 public class IRExperiments {
 
     public static void main(String[] args) {
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 3;
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 77;
         int endingSeed = (args.length > 1) ? new Integer(args[1]) : 100;
-        boolean fixingDigits = (args.length > 2) ? new Boolean(args[2]) : BilinearTable.fixPreviousDigits;
 
         int BF = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_BF;
         int DEPTH = (args.length > 4) ? new Integer(args[4]) : RandomGameInfo.MAX_DEPTH;
         boolean onlyP1IR = (args.length > 5) ? new Boolean(args[5]) : RandomGameInfo.IMPERFECT_RECALL_ONLYFORP1;
 
-        BilinearTable.fixPreviousDigits = fixingDigits;
+//        BilinearTable.fixPreviousDigits = fixingDigits;
         RandomGameInfo.MAX_BF = BF;
         RandomGameInfo.MAX_DEPTH = DEPTH;
         RandomGameInfo.IMPERFECT_RECALL_ONLYFORP1 = onlyP1IR;
@@ -33,9 +34,10 @@ public class IRExperiments {
             RandomGameInfo.seed = seed;
             System.out.println("seed: " + seed);
 //            cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSeqenceFormBNB.main(null);
-//            BilinearSeqenceFormLP.main(null);
+            double lpValue = BilinearSeqenceFormLP.runRandomGame();
 //            BilinearSeqenceFormSingleOracle.main(null);
-            BilinearSequenceFormBNB.main(null);
+            double bnbValue = BilinearSequenceFormBnB.runRandomGame();
+            assert Math.abs(lpValue - bnbValue) < 1e-3;
             System.out.println("-----------------------");
         }
 
