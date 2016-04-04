@@ -46,13 +46,14 @@ public class BilinearSequenceFormBnB {
 
     private Action mostBrokenAction;
     private double mostBrokenActionValue;
+    private StrategyLP strategyLP;
 
     public static void main(String[] args) {
         runRandomGame();
 //        runBRTest();
     }
 
-    private static void runRandomGame() {
+    public static double runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
         SequenceFormIRConfig config = new SequenceFormIRConfig();
         GameState root = new RandomGameState();
@@ -74,6 +75,7 @@ public class BilinearSequenceFormBnB {
         solver.solve(config);
         System.out.println((mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        return solver.finalValue;
     }
 
     private static void runBRTest() {
@@ -96,6 +98,7 @@ public class BilinearSequenceFormBnB {
     }
 
     public void solve(SequenceFormIRConfig config) {
+        strategyLP = new StrategyLP(config);
         buildBaseLP(config);
         try {
             LPData lpData = table.toCplex();
@@ -110,8 +113,10 @@ public class BilinearSequenceFormBnB {
             if (DEBUG) System.out.println("most violated action: " + currentBest.getAction());
             if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
 
-            if (isConverged(currentBest))
+            if (isConverged(currentBest)) {
+                finalValue = currentBest.getLb();
                 return;
+            }
             fringe.add(currentBest);
 
             while (!fringe.isEmpty()) {
@@ -733,7 +738,7 @@ public class BilinearSequenceFormBnB {
             boolean allZero = true;
 
             if (i.hasIR()) {
-                StrategyLP.getInstance(config).clear();
+                strategyLP.clear();
                 for (Map.Entry<Sequence, Set<Sequence>> entry : i.getOutgoingSequences().entrySet()) {
                     for (Sequence outgoingSequence : entry.getValue()) {
                         double outgiongSeqProb = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(outgoingSequence)]);
@@ -741,18 +746,18 @@ public class BilinearSequenceFormBnB {
 
                         if (incomingSeqProb > 0) {
                             allZero = false;
-                            StrategyLP.getInstance(config).add(entry.getKey(), outgoingSequence, incomingSeqProb, outgiongSeqProb);
+                            strategyLP.add(entry.getKey(), outgoingSequence, incomingSeqProb, outgiongSeqProb);
                         }
                     }
                 }
                 if (!allZero) {
-                    Map<Action, Double> strategy = StrategyLP.getInstance(config).getStartegy();
+                    Map<Action, Double> strategy = strategyLP.getStartegy();
 
                     i.getActions().stream()
                             .filter(action -> !strategy.containsKey(action))
                             .forEach(action -> strategy.put(action, 0d));
                     P1Strategy.putAll(strategy);
-                    Pair<Action, Double> actionCostPair = StrategyLP.getInstance(config).getMostExpensiveActionCostPair();
+                    Pair<Action, Double> actionCostPair = strategyLP.getMostExpensiveActionCostPair();
 
                     if (mostBrokenActionValue < actionCostPair.getRight()) {
                         mostBrokenActionValue = actionCostPair.getRight();
@@ -794,7 +799,7 @@ public class BilinearSequenceFormBnB {
                 return informationSet.getActions().iterator().next();
         }
         assert !config.getAllInformationSets().values().stream().anyMatch(SequenceFormIRInformationSet::hasIR);
-        return null;
+        return config.getAllInformationSets().values().iterator().next().getActions().iterator().next();
     }
 
     public Map<Sequence, Double> extractRPStrategy(SequenceFormIRConfig config, LPData lpData) throws IloException {

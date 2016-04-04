@@ -104,7 +104,7 @@ public class BilinearSequenceFormBNB {
     }
 
     public void solve(SequenceFormIRConfig config) {
-        this.strategyLP = StrategyLP.getInstance(config);
+        this.strategyLP = new StrategyLP(config);
         addObjective();
         addRPConstraints(config);
         addBehaviorStrategyConstraints(config);

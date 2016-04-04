@@ -52,6 +52,7 @@ public class ReusingBilinearSequenceFormBNB {
     private double mostBrokenActionValue;
 
     private int nodeCount = 0;
+    private StrategyLP strategyLP;
 
     public static void main(String[] args) {
         runRandomGame();
@@ -102,6 +103,7 @@ public class ReusingBilinearSequenceFormBNB {
     }
 
     public void solve(SequenceFormIRConfig config) {
+        strategyLP = new StrategyLP(config);
         buildBaseLP(config);
         try {
             LPData lpData = table.toCplex();
@@ -831,7 +833,7 @@ public class ReusingBilinearSequenceFormBNB {
             if (!i.getPlayer().equals(player)) continue;
             boolean allZero = true;
             if (i.hasIR()) {
-                StrategyLP.getInstance(config).clear();
+                strategyLP.clear();
                 for (Map.Entry<Sequence, Set<Sequence>> entry : i.getOutgoingSequences().entrySet()) {
                     for (Sequence outgoingSequence : entry.getValue()) {
                         double outgiongSeqProb = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(outgoingSequence)]);
@@ -839,18 +841,18 @@ public class ReusingBilinearSequenceFormBNB {
 
                         if (incomingSeqProb > 0) {
                             allZero = false;
-                            StrategyLP.getInstance(config).add(entry.getKey(), outgoingSequence, incomingSeqProb, outgiongSeqProb);
+                            strategyLP.add(entry.getKey(), outgoingSequence, incomingSeqProb, outgiongSeqProb);
                         }
                     }
                 }
                 if (!allZero) {
-                    Map<Action, Double> strategy = StrategyLP.getInstance(config).getStartegy();
+                    Map<Action, Double> strategy = strategyLP.getStartegy();
 
                     i.getActions().stream()
                             .filter(action -> !strategy.containsKey(action))
                             .forEach(action -> strategy.put(action, 0d));
                     P1Strategy.putAll(strategy);
-                    Pair<Action, Double> actionCostPair = StrategyLP.getInstance(config).getMostExpensiveActionCostPair();
+                    Pair<Action, Double> actionCostPair = strategyLP.getMostExpensiveActionCostPair();
 
                     if (mostBrokenActionValue < actionCostPair.getRight()) {
                         mostBrokenActionValue = actionCostPair.getRight();
