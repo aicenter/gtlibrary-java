@@ -48,7 +48,13 @@ public class BilinearSequenceFormBnB {
     private double mostBrokenActionValue;
     private StrategyLP strategyLP;
 
+    private ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+    private long CPLEXTime = 0;
+    private long strategyLPTime = 0;
+    private long CPLEXInvocationCount = 0;
+
     public static void main(String[] args) {
+        new Scanner(System.in).next();
         runRandomGame();
 //        runBRTest();
     }
@@ -72,7 +78,11 @@ public class BilinearSequenceFormBnB {
         long start = mxBean.getCurrentThreadCpuTime();
 
         solver.solve(config);
-        System.out.println((mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
         return solver.finalValue;
     }
@@ -103,7 +113,11 @@ public class BilinearSequenceFormBnB {
             LPData lpData = table.toCplex();
 
             if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
+            long start = mxBean.getCurrentThreadCpuTime();
+
             lpData.getSolver().solve();
+            CPLEXInvocationCount++;
+            CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
             Queue<Candidate> fringe = new PriorityQueue<>();
@@ -121,6 +135,8 @@ public class BilinearSequenceFormBnB {
             while (!fringe.isEmpty()) {
                 Candidate current = pollCandidateWithUBHigherThanBestLB(fringe);
 
+//                System.out.println(current);
+//                System.out.println(current.getChanges());
                 if (isConverged(current)) {
                     currentBest = current;
                     System.out.println(current);
@@ -157,7 +173,19 @@ public class BilinearSequenceFormBnB {
         }
     }
 
-    private void checkCurrentBestOnCleanLP(SequenceFormIRConfig config) throws IloException {
+    public long getCPLEXTime() {
+        return CPLEXTime;
+    }
+
+    public long getStrategyLPTime() {
+        return strategyLPTime;
+    }
+
+    public long getCPLEXInvocationCount() {
+        return CPLEXInvocationCount;
+    }
+
+    private double checkOnCleanLP(SequenceFormIRConfig config, Candidate candidate) throws IloException {
         System.out.println("Check!!!!!!!!!!!!!!");
         table = new BilinearTable();
         buildBaseLP(config);
@@ -165,10 +193,11 @@ public class BilinearSequenceFormBnB {
 
         checkData.getSolver().exportModel("cleanModel.lp");
 
-        currentBest.getChanges().updateTable(table);
+        candidate.getChanges().updateTable(table);
         LPData lpData = table.toCplex();
 
         lpData.getSolver().solve();
+
         Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
 
         assert definedEverywhere(p1Strategy, config);
@@ -177,7 +206,8 @@ public class BilinearSequenceFormBnB {
         double lowerBound = getLowerBound(p1Strategy);
         double upperBound = getUpperBound(lpData);
         System.out.println("UB: " + upperBound + " LB: " + lowerBound);
-        p1Strategy.entrySet().stream().forEach(System.out::println);
+        p1Strategy.entrySet().forEach(System.out::println);
+        return upperBound;
     }
 
     private void addMiddleChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
@@ -186,42 +216,15 @@ public class BilinearSequenceFormBnB {
         Change change = new MiddleChange(current.getAction(), probability);
 
         table.clearTable();
-        buildBaseLP(config);
+        if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
+            buildBaseLP(config);
         current.getChanges().updateTable(table);
         int precision = table.getPrecisionFor(current.getAction());
 
         if (precision >= maxRefinements)
             return;
         newChanges.add(change);
-        try {
-            if (change.updateW(table)) {
-                LPData lpData = table.toCplex();
-
-                if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
-                lpData.getSolver().solve();
-                if (DEBUG) {
-                    System.out.println(lpData.getSolver().getStatus());
-                    System.out.println(lpData.getSolver().getObjValue());
-                    System.out.println(newChanges);
-                }
-                if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
-                    Candidate candidate = createCandidate(newChanges, lpData, config);
-
-                    if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
-                    if (isConverged(candidate)) {
-                        if (candidate.getLb() > currentBest.getLb()) {
-                            currentBest = candidate;
-                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
-                        }
-                    } else if (candidate.getUb() > currentBest.getLb() + EPS) {
-                        if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
-                        fringe.add(candidate);
-                    }
-                }
-            }
-        } catch (IloException e) {
-            e.printStackTrace();
-        }
+        applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
 
     private int[] getMiddleExactProbability(Candidate current) {
@@ -248,15 +251,25 @@ public class BilinearSequenceFormBnB {
         Change change = new RightChange(current.getAction(), probability);
 
         table.clearTable();
-        buildBaseLP(config);
+        if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
+            buildBaseLP(config);
         current.getChanges().updateTable(table);
         newChanges.add(change);
+        applyNewChangeAndSolve(fringe, config, newChanges, change);
+    }
+
+    private void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
         try {
             if (change.updateW(table)) {
                 LPData lpData = table.toCplex();
+                System.out.println("solved");
 
                 if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
+                long start = mxBean.getCurrentThreadCpuTime();
+
                 lpData.getSolver().solve();
+                CPLEXInvocationCount++;
+                CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
                 if (DEBUG) {
                     System.out.println(lpData.getSolver().getStatus());
                     System.out.println(lpData.getSolver().getObjValue());
@@ -265,6 +278,7 @@ public class BilinearSequenceFormBnB {
                 if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
                     Candidate candidate = createCandidate(newChanges, lpData, config);
 
+//                    assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
                     if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
                     if (isConverged(candidate)) {
                         if (candidate.getLb() > currentBest.getLb()) {
@@ -302,39 +316,11 @@ public class BilinearSequenceFormBnB {
         Change change = new LeftChange(current.getAction(), probability);
 
         table.clearTable();
-        buildBaseLP(config);
+        if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
+            buildBaseLP(config);
         current.getChanges().updateTable(table);
         newChanges.add(change);
-        try {
-            if (change.updateW(table)) {
-                LPData lpData = table.toCplex();
-
-                if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
-                lpData.getSolver().solve();
-                if (DEBUG) {
-                    System.out.println(lpData.getSolver().getStatus());
-                    System.out.println(lpData.getSolver().getObjValue());
-                    System.out.println(newChanges);
-                }
-                if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
-                    Candidate candidate = createCandidate(newChanges, lpData, config);
-
-                    if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
-                    if (isConverged(candidate)) {
-                        if (DEBUG) System.out.println("converged");
-                        if (candidate.getLb() > currentBest.getLb()) {
-                            currentBest = candidate;
-                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
-                        }
-                    } else if (candidate.getUb() > currentBest.getLb() + EPS) {
-                        if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
-                        fringe.add(candidate);
-                    }
-                }
-            }
-        } catch (IloException e) {
-            e.printStackTrace();
-        }
+        applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
 
     private boolean isZero(int[] probability) {
@@ -360,16 +346,16 @@ public class BilinearSequenceFormBnB {
     }
 
 
-    private int getDigit(double value, int digit) {
-        int firstDigit = (int) Math.floor(value);
-
-        if (digit == 0)
-            return firstDigit;
-        double tempValue = value - firstDigit;
-
-        tempValue = Math.floor(tempValue * Math.pow(10, digit));
-        return (int) (tempValue - 10 * (long) (tempValue / 10));
-    }
+//    private int getDigit(double value, int digit) {
+//        int firstDigit = (int) Math.floor(value);
+//
+//        if (digit == 0)
+//            return firstDigit;
+//        double tempValue = value - firstDigit;
+//
+//        tempValue = Math.floor(tempValue * Math.pow(10, digit));
+//        return (int) (tempValue - 10 * (long) (tempValue / 10));
+//    }
 
     private boolean isConverged(Candidate currentBest) {
         return isConverged(currentBest.getLb(), currentBest.getUb());
@@ -592,7 +578,7 @@ public class BilinearSequenceFormBnB {
     }
 
     private void addRPVarBounds(SequenceFormIRConfig config) {
-        config.getSequencesFor(player).stream().forEach(s -> setZeroOneBounds(s));
+        config.getSequencesFor(player).forEach(s -> setZeroOneBounds(s));
     }
 
     private void setZeroOneBounds(Object object) {
@@ -750,11 +736,11 @@ public class BilinearSequenceFormBnB {
                     }
                 }
                 if (!allZero) {
-                    Map<Action, Double> strategy = strategyLP.getStartegy();
+                    long start = mxBean.getCurrentThreadCpuTime();
 
-                    i.getActions().stream()
-                            .filter(action -> !strategy.containsKey(action))
-                            .forEach(action -> strategy.put(action, 0d));
+                    Map<Action, Double> strategy = strategyLP.getStartegy();
+                    strategyLPTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
+                    i.getActions().forEach(action -> strategy.putIfAbsent(action, 0d));
                     p1Strategy.putAll(strategy);
                     Pair<Action, Double> actionCostPair = strategyLP.getMostExpensiveActionCostPair();
 
@@ -778,7 +764,7 @@ public class BilinearSequenceFormBnB {
             }
             if (allZero && i.getActions().size() > 0)
                 p1Strategy.put(i.getActions().iterator().next(), 1d);
-            i.getActions().stream().forEach(action -> p1Strategy.putIfAbsent(action, 0d));
+            i.getActions().forEach(action -> p1Strategy.putIfAbsent(action, 0d));
         }
         if (mostBrokenAction == null)
             mostBrokenAction = addFirstAvailable(config);

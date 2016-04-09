@@ -32,6 +32,7 @@ public class LPTable {
 
     public enum ConstraintType {LE, EQ, GE}
 
+    public static boolean USE_CUSTOM_NAMES = false;
     public static int CPLEXALG = IloCplex.Algorithm.Auto;
     public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
 
@@ -215,9 +216,13 @@ public class LPTable {
     protected IloNumVar[] getVariables() throws IloException {
         double[] ub = getUpperBounds();
         double[] lb = getLowerBounds();
-        String[] variableNames = getVariableNames();
+        if(USE_CUSTOM_NAMES) {
+            String[] variableNames = getVariableNames();
 
-        return cplex.numVarArray(variableNames.length, lb, ub, variableNames);
+            return cplex.numVarArray(variableNames.length, lb, ub, variableNames);
+        } else {
+            return cplex.numVarArray(lb.length, lb, ub);
+        }
     }
 
     protected Map<Object, IloRange> getRelaxableConstraints(IloRange[] constraints) {
@@ -288,13 +293,22 @@ public class LPTable {
 
             switch (constraintType) {
                 case 0:
-                    cplexConstraints[equationIndex] = cplex.addLe(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    if (USE_CUSTOM_NAMES)
+                        cplexConstraints[equationIndex] = cplex.addLe(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    else
+                        cplexConstraints[equationIndex] = cplex.addLe(rowExpr, getConstant(rowEntry.getKey()));
                     break;
                 case 1:
-                    cplexConstraints[equationIndex] = cplex.addEq(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    if (USE_CUSTOM_NAMES)
+                        cplexConstraints[equationIndex] = cplex.addEq(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    else
+                        cplexConstraints[equationIndex] = cplex.addEq(rowExpr, getConstant(rowEntry.getKey()));
                     break;
                 case 2:
-                    cplexConstraints[equationIndex] = cplex.addGe(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    if (USE_CUSTOM_NAMES)
+                        cplexConstraints[equationIndex] = cplex.addGe(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    else
+                        cplexConstraints[equationIndex] = cplex.addGe(rowExpr, getConstant(rowEntry.getKey()));
                     break;
                 default:
                     break;
@@ -380,13 +394,6 @@ public class LPTable {
     }
 
     public void clearTable() {
-        try {
-            cplex.clearModel();
-            cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
-            cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
-        } catch (IloException e) {
-            e.printStackTrace();
-        }
         cplex.setOut(null);
         constants = new LinkedHashMap<>();
         constraints = new LinkedHashMap<>();
@@ -400,6 +407,13 @@ public class LPTable {
         constraintTypes = new LinkedHashMap<>();
         lb = new LinkedHashMap<>();
         ub = new LinkedHashMap<>();
+        try {
+            cplex.clearModel();
+            cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
+            cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
     }
 
     public void removeFromConstraint(Object eqKey, Object varKey) {

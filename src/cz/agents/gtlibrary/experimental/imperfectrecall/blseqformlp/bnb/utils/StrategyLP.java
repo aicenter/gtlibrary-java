@@ -19,7 +19,6 @@ import java.util.Set;
 
 public class StrategyLP {
 
-    private static StrategyLP instance = null;
     private LPTable table;
     private SequenceFormIRConfig config;
     private Map<Sequence, Set<Triplet<String, Sequence, Action>>> sequenceToVars;

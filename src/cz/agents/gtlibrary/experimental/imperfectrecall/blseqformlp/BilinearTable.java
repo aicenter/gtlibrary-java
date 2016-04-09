@@ -4,6 +4,8 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Change;
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.utils.DummyMap;
+import cz.agents.gtlibrary.utils.DummySet;
 import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
@@ -11,6 +13,8 @@ import ilog.cplex.IloCplex;
 import java.util.*;
 
 public class BilinearTable extends RecyclingLPTable {
+
+    public static final boolean DELETE_PRECISION_CONSTRAINTS_ONLY = true;
 
     protected Map<Object, Pair<Object, Object>> bilinearVars;
     protected Map<Object, Pair<Object, Object>> bilinearVarsToUpdate;
@@ -25,6 +29,12 @@ public class BilinearTable extends RecyclingLPTable {
     protected Map<Object, IloNumVar> deltaSequenceVariables; // sequence -> delta x variable
     protected Map<Object, IloRange> outgoingBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
     protected Map<Object, IloRange> behavioralBilinearConstraints; // information set -> all constraints for the bilinear terms for that IS
+
+    protected Map<Object, IloNumVar> bilinVariableBackup;
+    protected Map<Object, IloNumVar[][]> wVariableBackup;
+    protected Map<Object, IloNumVar[][]> rHatVariableBackup;
+
+    protected Set<IloConstraint> precisionConstraints;
 
     final int digits = 10;
     final int maxPrecision = 7;
@@ -45,6 +55,10 @@ public class BilinearTable extends RecyclingLPTable {
         deltaSequenceVariables = new HashMap<>();
         outgoingBilinearConstraints = new HashMap<>();
         behavioralBilinearConstraints = new HashMap<>();
+        bilinVariableBackup = USE_VAR_BACKUP ? new HashMap<>() : new DummyMap<>();
+        rHatVariableBackup = USE_VAR_BACKUP ? new HashMap<>() : new DummyMap<>();
+        wVariableBackup = USE_VAR_BACKUP ? new HashMap<>() : new DummyMap<>();
+        precisionConstraints = USE_VAR_BACKUP ? new HashSet<>() : new DummySet<>();
     }
 
     public void markAsBilinear(Object bilinearVarKey, Object factor1, Object factor2) {
@@ -97,10 +111,8 @@ public class BilinearTable extends RecyclingLPTable {
     }
 
 
-
     public void refinePrecisionOfRelevantBilinearVars(Object factor2) {
         int newPrecision = getPrecisionFor(factor2) + 1;
-
         precision.put(factor2, newPrecision);
         updateHighestPrecision(factor2, newPrecision);
         bilinearVars.entrySet().stream()
@@ -122,13 +134,21 @@ public class BilinearTable extends RecyclingLPTable {
 
         IloNumVar xBehDelta = deltaBehavioralVariables.get(behavioral);
         if (xBehDelta == null) {
-            xBehDelta = cplex.numVar(0, 1, IloNumVarType.Float, "DELTA_" + behavioral.toString());
+            if (USE_CUSTOM_NAMES)
+                xBehDelta = bilinVariableBackup.getOrDefault(behavioral, cplex.numVar(0, 1, IloNumVarType.Float, "DELTA_" + behavioral.toString()));
+            else
+                xBehDelta = bilinVariableBackup.getOrDefault(behavioral, cplex.numVar(0, 1, IloNumVarType.Float));
+            bilinVariableBackup.putIfAbsent(behavioral, xBehDelta);
             deltaBehavioralVariables.put(behavioral, xBehDelta);
         }
 
         IloNumVar xSeqDelta = deltaSequenceVariables.get(product);
         if (xSeqDelta == null) {
-            xSeqDelta = cplex.numVar(0, 1, IloNumVarType.Float, "DELTA_" + product.toString());
+            if (USE_CUSTOM_NAMES)
+                xSeqDelta = bilinVariableBackup.getOrDefault(product, cplex.numVar(0, 1, IloNumVarType.Float, "DELTA_" + product.toString()));
+            else
+                xSeqDelta = bilinVariableBackup.getOrDefault(product, cplex.numVar(0, 1, IloNumVarType.Float));
+            bilinVariableBackup.putIfAbsent(product, xSeqDelta);
             deltaSequenceVariables.put(product, xSeqDelta);
         }
 
@@ -160,7 +180,11 @@ public class BilinearTable extends RecyclingLPTable {
         IloNumExpr approxSum = xBehDelta;
         double[][] lbs = getLBs(behavioral);
         double[][] ubs = getUBs(behavioral);
+        IloNumVar[][] wBackup = wVariableBackup.getOrDefault(behavioral, new IloNumVar[digits][maxPrecision]);
+        IloNumVar[][] rHatBackup = rHatVariableBackup.getOrDefault(product, new IloNumVar[digits][maxPrecision]);
 
+        wVariableBackup.putIfAbsent(behavioral, wBackup);
+        rHatVariableBackup.putIfAbsent(product, rHatBackup);
         for (int l = 0; l < precision; l++) {
             IloNumExpr xSum = cplex.numExpr();
             IloNumExpr wSum = cplex.numExpr();
@@ -168,13 +192,32 @@ public class BilinearTable extends RecyclingLPTable {
 
             for (int k = 0; k < digits; k++) {
                 if ((l == 0) && (k > 1)) continue;
-                if (w[k][l] == null)
-                    w[k][l] = cplex.numVar(lbs[k][l], ubs[k][l], IloNumVarType.Float, "W_" + behavioral.toString() + "_" + k + "_" + l);
+                if (w[k][l] == null) {
+                    if (wBackup[k][l] == null) {
+                        if (USE_CUSTOM_NAMES)
+                            w[k][l] = cplex.numVar(lbs[k][l], ubs[k][l], IloNumVarType.Float, "W_" + behavioral.toString() + "_" + k + "_" + l);
+                        else
+                            w[k][l] = cplex.numVar(lbs[k][l], ubs[k][l], IloNumVarType.Float);
+                        wBackup[k][l] = w[k][l];
+                    } else {
+                        w[k][l] = wBackup[k][l];
+                        w[k][l].setUB(ubs[k][l]);
+                        w[k][l].setLB(lbs[k][l]);
+                    }
+                }
                 wSum = cplex.sum(wSum, w[k][l]);
                 if (rHat[k][l] == null) {
-                    rHat[k][l] = cplex.numVar(0, 1, IloNumVarType.Float, "RHAT_" + product + "_" + k + "_" + l);
-                    cplex.addLe(rHat[k][l], w[k][l]);
-                    cplex.addLe(rHat[k][l], rSequenceToIS);
+                    if (rHatBackup[k][l] == null) {
+                        if (USE_CUSTOM_NAMES)
+                            rHat[k][l] = cplex.numVar(0, 1, IloNumVarType.Float, "RHAT_" + product + "_" + k + "_" + l);
+                        else
+                            rHat[k][l] = cplex.numVar(0, 1, IloNumVarType.Float);
+                        rHatBackup[k][l] = rHat[k][l];
+                    } else {
+                        rHat[k][l] = rHatBackup[k][l];
+                    }
+                    precisionConstraints.add(cplex.addLe(rHat[k][l], w[k][l]));
+                    precisionConstraints.add(cplex.addLe(rHat[k][l], rSequenceToIS));
                 } else {
                     thisPrecisionExists = true;
                 }
@@ -183,14 +226,16 @@ public class BilinearTable extends RecyclingLPTable {
                 approxSum = cplex.sum(approxSum, cplex.prod(cplex.constant(Math.pow(10, -(l)) * k), w[k][l]));
             }
             if (!thisPrecisionExists) {
-                cplex.addEq(rSequenceToIS, xSum);
-                cplex.addEq(wSum, 1);
-                xBehDelta.setUB(Math.pow(10, -(precision - 1)));
-                cplex.addLe(xSeqDelta, cplex.prod(Math.pow(10, -(precision - 1)), rSequenceToIS));
+                precisionConstraints.add(cplex.addEq(rSequenceToIS, xSum));
+                precisionConstraints.add(cplex.addEq(wSum, 1));
+                precisionConstraints.add(cplex.addLe(xBehDelta, Math.pow(10, -(precision - 1))));
+                precisionConstraints.add(cplex.addLe(xSeqDelta, cplex.prod(Math.pow(10, -(precision - 1)), rSequenceToIS)));
             }
         }
         result[0] = cplex.addEq(cplex.diff(xBehStrategy, approxSum), 0);
         result[1] = cplex.addEq(cplex.diff(rSequenceFromIS, productSum), 0);
+        precisionConstraints.add(result[0]);
+        precisionConstraints.add(result[1]);
         wVariables.put(behavioral, w);
         rHatVariables.put(product, rHat);
         return result;
@@ -337,45 +382,74 @@ public class BilinearTable extends RecyclingLPTable {
         precision.remove(action);
     }
 
-    public void removeWVariables() {
-        wVariables.values().stream().forEach(variables -> removeWVariables(variables));
-        wVariables = new HashMap<>();
-    }
-
-    protected void removeWVariables(IloNumVar[][] wVariables) {
-        Arrays.stream(wVariables).forEach(array ->
-                Arrays.stream(array).forEach(wVariable -> {
-                    try {
-                        cplex.remove(wVariable);
-                    } catch (IloException e) {
-                        e.printStackTrace();
-                    }
-                }));
-    }
-
-    public void removeWVariableFor(Object key) {
-        IloNumVar[][] variables = wVariables.get(key);
-
-        if (variables != null) {
-            removeWVariables(variables);
-            wVariables.remove(key);
-        }
-    }
+//    public void removeWVariables() {
+//        wVariables.values().forEach(variables -> removeWVariables(variables));
+//        wVariables = new HashMap<>();
+//    }
+//
+//    protected void removeWVariables(IloNumVar[][] wVariables) {
+//        Arrays.stream(wVariables).forEach(array ->
+//                Arrays.stream(array).forEach(wVariable -> {
+//                    try {
+//                        cplex.remove(wVariable);
+//                    } catch (IloException e) {
+//                        e.printStackTrace();
+//                    }
+//                }));
+//    }
+//
+//    public void removeWVariableFor(Object key) {
+//        IloNumVar[][] variables = wVariables.get(key);
+//
+//        if (variables != null) {
+//            removeWVariables(variables);
+//            wVariables.remove(key);
+//        }
+//    }
 
     @Override
     public void clearTable() {
-        super.clearTable();
-        bilinearVars = new HashMap<>();
+//        bilinearVars = new HashMap<>();
         bilinearVarsToUpdate = new HashMap<>();
         precision = new HashMap<>();
         highestPrecision = new HashMap<>();
         wVariables = new HashMap<>();
-        wVariableLBs = new HashMap<>();
-        wVariableUBs = new HashMap<>();
         rHatVariables = new HashMap<>();
         deltaBehavioralVariables = new HashMap<>();
         deltaSequenceVariables = new HashMap<>();
         outgoingBilinearConstraints = new HashMap<>();
         behavioralBilinearConstraints = new HashMap<>();
+        for (Object key : wVariableLBs.keySet()) {
+            Arrays.stream(wVariableLBs.get(key)).forEach(array -> Arrays.fill(array, 0));
+            Arrays.stream(wVariableUBs.get(key)).forEach(array -> Arrays.fill(array, 1));
+        }
+        if (USE_VAR_BACKUP) {
+            try {
+                for (IloNumVar[][] wVars : wVariableBackup.values()) {
+                    for (int i = 0; i < wVars.length; i++) {
+                        for (int j = 0; j < wVars[0].length; j++) {
+                            if (wVars[i][j] != null) {
+                                wVars[i][j].setLB(0);
+                                wVars[i][j].setUB(1);
+                            }
+                        }
+                    }
+                }
+            } catch (IloException e) {
+                e.printStackTrace();
+            }
+            if (precisionConstraints != null)
+                try {
+                    for (IloConstraint precisionConstraint : precisionConstraints) {
+                        cplex.remove(precisionConstraint);
+                    }
+                } catch (IloException e) {
+                    e.printStackTrace();
+                }
+
+        }
+        precisionConstraints = new HashSet<>();
+        if (!DELETE_PRECISION_CONSTRAINTS_ONLY)
+            super.clearTable();
     }
 }
