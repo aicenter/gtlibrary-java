@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
+import cz.agents.gtlibrary.utils.DummyMap;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
@@ -27,11 +28,14 @@ import java.util.Map.Entry;
 
 public class RecyclingLPTable extends LPTable {
 
+    protected static final boolean USE_VAR_BACKUP = true;
     protected Map<Object, Double> newObjective;
     protected Map<Object, Map<Object, Double>> newConstraints;
     protected Map<Object, Map<Object, Double>> updatedConstraints;
     protected Set<Object> removedConstraints;
     protected Map<Object, Double> updatedConstants;
+
+    protected Map<Object, IloNumVar> variableBackup;
 
     protected IloObjective lpObj;
     protected IloRange[] lpConstraints;
@@ -44,6 +48,7 @@ public class RecyclingLPTable extends LPTable {
         updatedConstraints = new LinkedHashMap<>();
         removedConstraints = new HashSet<>();
         updatedConstants = new HashMap<>();
+        variableBackup = USE_VAR_BACKUP ? new HashMap<>() : new DummyMap<>();
     }
 
     public RecyclingLPTable(int m, int n) {
@@ -53,6 +58,7 @@ public class RecyclingLPTable extends LPTable {
         updatedConstraints = new LinkedHashMap<>();
         removedConstraints = new HashSet<>();
         updatedConstants = new HashMap<>();
+        variableBackup = USE_VAR_BACKUP ? new HashMap<>() : new DummyMap<>();
     }
 
     public void setObjective(Object varKey, double value) {
@@ -142,26 +148,34 @@ public class RecyclingLPTable extends LPTable {
     public LPData toCplex() throws IloException {
         double[] ub = getUpperBounds();
         double[] lb = getLowerBounds();
-        String[] variableNames = getVariableNames();
+        Object[] keys = getKeys();
 
         cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
         cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+        cplex.setOut(null);
+        if (USE_CUSTOM_NAMES) {
+            String[] variableNames = getVariableNames();
+
+
 //        cplex.setParam(IloCplex.BooleanParam.Parallel, IloCplex.ParallelMode.Opportunistic);
 //        cplex.setParam(IloCplex.DoubleParam.EpMrk, 0.99999);
-        //		cplex.setParam(IloCplex.DoubleParam.BarEpComp, 1e-4);
-        //		System.out.println("BarEpComp: " + cplex.getParam(IloCplex.DoubleParam.BarEpComp));
+            //		cplex.setParam(IloCplex.DoubleParam.BarEpComp, 1e-4);
+            //		System.out.println("BarEpComp: " + cplex.getParam(IloCplex.DoubleParam.BarEpComp));
 //        cplex.setParam(IloCplex.BooleanParam.NumericalEmphasis, true);
-        cplex.setOut(null);
-        lpVariables = updateVariables(variableNames, lb, ub);
+
+            lpVariables = updateVariables(keys, variableNames, lb, ub);
+        } else {
+            lpVariables = updateVariables(keys, lb, ub);
+        }
         lpConstraints = addConstraints(lpVariables);
 
         addObjective(lpVariables);
         return new LPData(cplex, lpVariables, lpConstraints, getRelaxableConstraints(lpConstraints), getWatchedPrimalVars(lpVariables), getWatchedDualVars(lpConstraints));
     }
 
-    protected IloNumVar[] updateVariables(String[] variableNames, double[] lb, double[] ub) throws IloException {
+    protected IloNumVar[] updateVariables(Object[] keys, String[] variableNames, double[] lb, double[] ub) throws IloException {
         if (lpVariables == null)
-            return cplex.numVarArray(variableNames.length, lb, ub, variableNames);
+            lpVariables = new IloNumVar[0];
 
         IloNumVar[] newVariables = new IloNumVar[variableNames.length];
 
@@ -169,7 +183,28 @@ public class RecyclingLPTable extends LPTable {
             newVariables[i] = lpVariables[i];
         }
         for (int i = lpVariables.length; i < newVariables.length; i++) {
-            newVariables[i] = cplex.numVar(lb[i], ub[i], variableNames[i]);
+            IloNumVar var = variableBackup.getOrDefault(keys[i], cplex.numVar(lb[i], ub[i], variableNames[i]));
+
+            variableBackup.putIfAbsent(keys[i], var);
+            newVariables[i] = var;
+        }
+        return newVariables;
+    }
+
+    protected IloNumVar[] updateVariables(Object[] keys, double[] lb, double[] ub) throws IloException {
+        if (lpVariables == null)
+            lpVariables = new IloNumVar[0];
+
+        IloNumVar[] newVariables = new IloNumVar[lb.length];
+
+        for (int i = 0; i < lpVariables.length; i++) {
+            newVariables[i] = lpVariables[i];
+        }
+        for (int i = lpVariables.length; i < newVariables.length; i++) {
+            IloNumVar var = variableBackup.getOrDefault(keys[i], cplex.numVar(lb[i], ub[i]));
+
+            variableBackup.putIfAbsent(keys[i], var);
+            newVariables[i] = var;
         }
         return newVariables;
     }
@@ -324,21 +359,71 @@ public class RecyclingLPTable extends LPTable {
     }
 
     public void deleteConstraints(Set<Object> addedConstrKeys) {
-        for (Object eqKey : addedConstrKeys) {
-            deleteConstraint(eqKey);
-        }
+        addedConstrKeys.forEach(this::deleteConstraint);
     }
 
     @Override
     public void clearTable() {
-        super.clearTable();
         newConstraints = new LinkedHashMap<>();
         newObjective = new LinkedHashMap<>();
         updatedConstraints = new LinkedHashMap<>();
         removedConstraints = new HashSet<>();
         updatedConstants = new HashMap<>();
+        if (USE_VAR_BACKUP)
+            try {
+                cplex.remove(lpObj);
+            } catch (IloException e) {
+                e.printStackTrace();
+            }
         lpObj = null;
+//        try {
+//            if (lpConstraints != null)
+//                for (IloConstraint lpConstraint : lpConstraints) {
+//                    cplex.delete(lpConstraint);
+////                    cplex.end(lpConstraint);
+//                }
+//            if (lpVariables != null)
+//                for (IloNumVar lpVariable : lpVariables) {
+//                    cplex.delete(lpVariable);
+////                    cplex.end(lpVariable);
+//                }
+//        } catch (IloException e) {
+//            e.printStackTrace();
+//        }
+        if (USE_VAR_BACKUP)
+            if (lpConstraints != null)
+                try {
+                    for (IloRange lpConstraint : lpConstraints) {
+                        cplex.delete(lpConstraint);
+                    }
+                } catch (IloException e) {
+                    e.printStackTrace();
+                }
         lpConstraints = null;
         lpVariables = null;
+        cplex.setOut(null);
+        constants = new LinkedHashMap<>();
+        constraints = new LinkedHashMap<>();
+        objective = new LinkedHashMap<>();
+
+        if(!USE_VAR_BACKUP) {
+            equationIndices = new LinkedHashMap<>();
+            variableIndices = new LinkedHashMap<>();
+        }
+        primalWatch = new LinkedHashMap<>();
+        dualWatch = new LinkedHashMap<>();
+
+        constraintTypes = new LinkedHashMap<>();
+        lb = new LinkedHashMap<>();
+        ub = new LinkedHashMap<>();
+        if (!USE_VAR_BACKUP)
+            super.clearTable();
+    }
+
+    protected Object[] getKeys() {
+        Object[] keys = new Object[columnCount()];
+
+        variableIndices.entrySet().forEach(entry -> keys[entry.getValue()] = entry.getKey());
+        return keys;
     }
 }

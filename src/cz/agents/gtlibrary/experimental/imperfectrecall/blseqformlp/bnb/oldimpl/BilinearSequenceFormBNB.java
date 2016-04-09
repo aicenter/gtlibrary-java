@@ -162,7 +162,8 @@ public class BilinearSequenceFormBNB {
                         globalUB = f.getUb();
                     }
 
-//                System.out.println("Node LB: " + node.getLb() + " \t\t Node UB: " + node.getUb());
+                System.out.println("Node LB: " + node.getLb() + " \t\t Node UB: " + node.getUb());
+                System.out.println(node.getChanges());
 //                System.out.println("Global LB: " + globalLB + " \t\t Global UB: " + globalUB);
 //
 //                System.out.println(node.getActionToFocusOn() + " = " + node.getCurrentProbOfAction());
@@ -262,6 +263,7 @@ public class BilinearSequenceFormBNB {
             }
 
             System.out.println("BEST LB: " + bestCandidate.getLb() + "\t\tUB: " + bestCandidate.getUb());
+            System.out.println(bestCandidate.getChanges());
             table.applyChanges(bestCandidate.getChanges(), lpData);
             if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQF.lp");
             lpData.getSolver().solve();
