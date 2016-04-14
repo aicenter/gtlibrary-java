@@ -36,6 +36,7 @@ public class BilinearSequenceFormBnB {
     private final Player opponent;
 
 
+    ImperfectRecallBestResponse br;
     private BilinearTable table;
     private Expander<SequenceFormIRInformationSet> expander;
     private GameInfo gameInfo;
@@ -52,9 +53,10 @@ public class BilinearSequenceFormBnB {
     private long CPLEXTime = 0;
     private long strategyLPTime = 0;
     private long CPLEXInvocationCount = 0;
+    private long BRTime = 0;
 
     public static void main(String[] args) {
-        new Scanner(System.in).next();
+//        new Scanner(System.in).next();
         runRandomGame();
 //        runBRTest();
     }
@@ -82,6 +84,8 @@ public class BilinearSequenceFormBnB {
         System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
         System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+
         System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
         return solver.finalValue;
@@ -104,11 +108,12 @@ public class BilinearSequenceFormBnB {
         this.opponent = info.getOpponent(player);
         this.gameInfo = info;
         this.expander = expander;
+        br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
     }
 
     public void solve(SequenceFormIRConfig config) {
         strategyLP = new StrategyLP(config);
-        buildBaseLP(config);
+        buildBaseLP(table, config);
         try {
             LPData lpData = table.toCplex();
 
@@ -135,7 +140,7 @@ public class BilinearSequenceFormBnB {
             while (!fringe.isEmpty()) {
                 Candidate current = pollCandidateWithUBHigherThanBestLB(fringe);
 
-//                System.out.println(current);
+//                System.out.println(current + " vs " + currentBest);
 //                System.out.println(current.getChanges());
                 if (isConverged(current)) {
                     currentBest = current;
@@ -185,10 +190,14 @@ public class BilinearSequenceFormBnB {
         return CPLEXInvocationCount;
     }
 
+    public long getBRTime() {
+        return BRTime;
+    }
+
     private double checkOnCleanLP(SequenceFormIRConfig config, Candidate candidate) throws IloException {
         System.out.println("Check!!!!!!!!!!!!!!");
-        table = new BilinearTable();
-        buildBaseLP(config);
+        BilinearTable table = new BilinearTable();
+        buildBaseLP(table, config);
         LPData checkData = table.toCplex();
 
         checkData.getSolver().exportModel("cleanModel.lp");
@@ -198,15 +207,15 @@ public class BilinearSequenceFormBnB {
 
         lpData.getSolver().solve();
 
-        Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
+//        Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
 
-        assert definedEverywhere(p1Strategy, config);
-        assert equalsInPRInformationSets(p1Strategy, config, lpData);
-        assert isConvexCombination(p1Strategy, lpData, config);
-        double lowerBound = getLowerBound(p1Strategy);
+//        assert definedEverywhere(p1Strategy, config);
+//        assert equalsInPRInformationSets(p1Strategy, config, lpData);
+//        assert isConvexCombination(p1Strategy, lpData, config);
+//        double lowerBound = getLowerBound(p1Strategy);
         double upperBound = getUpperBound(lpData);
-        System.out.println("UB: " + upperBound + " LB: " + lowerBound);
-        p1Strategy.entrySet().forEach(System.out::println);
+//        System.out.println("UB: " + upperBound + " LB: " + lowerBound);
+//        p1Strategy.entrySet().forEach(System.out::println);
         return upperBound;
     }
 
@@ -217,7 +226,7 @@ public class BilinearSequenceFormBnB {
 
         table.clearTable();
         if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
-            buildBaseLP(config);
+            buildBaseLP(table, config);
         current.getChanges().updateTable(table);
         int precision = table.getPrecisionFor(current.getAction());
 
@@ -252,7 +261,7 @@ public class BilinearSequenceFormBnB {
 
         table.clearTable();
         if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
-            buildBaseLP(config);
+            buildBaseLP(table, config);
         current.getChanges().updateTable(table);
         newChanges.add(change);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
@@ -262,13 +271,13 @@ public class BilinearSequenceFormBnB {
         try {
             if (change.updateW(table)) {
                 LPData lpData = table.toCplex();
-                System.out.println("solved");
+//                System.out.println("solved");
 
                 if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
                 long start = mxBean.getCurrentThreadCpuTime();
 
                 lpData.getSolver().solve();
-                CPLEXInvocationCount++;
+                System.out.println(CPLEXInvocationCount++);
                 CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
                 if (DEBUG) {
                     System.out.println(lpData.getSolver().getStatus());
@@ -278,7 +287,7 @@ public class BilinearSequenceFormBnB {
                 if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
                     Candidate candidate = createCandidate(newChanges, lpData, config);
 
-//                    assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
+                    assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
                     if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
                     if (isConverged(candidate)) {
                         if (candidate.getLb() > currentBest.getLb()) {
@@ -317,7 +326,7 @@ public class BilinearSequenceFormBnB {
 
         table.clearTable();
         if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
-            buildBaseLP(config);
+            buildBaseLP(table, config);
         current.getChanges().updateTable(table);
         newChanges.add(change);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
@@ -373,12 +382,12 @@ public class BilinearSequenceFormBnB {
         return Math.abs(globalUB - globalLB) < 1e-4;
     }
 
-    private void buildBaseLP(SequenceFormIRConfig config) {
-        addObjective();
-        addRPConstraints(config);
-        addBehaviorStrategyConstraints(config);
-        markAllBilinearVariables(config);
-        addValueConstraints(config);
+    private void buildBaseLP(BilinearTable table, SequenceFormIRConfig config) {
+        addObjective(table);
+        addRPConstraints(table, config);
+        addBehaviorStrategyConstraints(table, config);
+        markAllBilinearVariables(table, config);
+        addValueConstraints(table, config);
     }
 
     private Candidate createCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
@@ -392,6 +401,7 @@ public class BilinearSequenceFormBnB {
         Action action = findMostViolatedBilinearConstraints(config, lpData);
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action));
 
+        assert lowerBound <= upperBound + 1e-6;
         return new Candidate(lowerBound, upperBound, changes, action, exactProbability);
     }
 
@@ -415,9 +425,10 @@ public class BilinearSequenceFormBnB {
     }
 
     private double getLowerBound(Map<Action, Double> p1Strategy) {
-        ImperfectRecallBestResponse br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+        long start = mxBean.getCurrentThreadCpuTime();
 
         br.getBestResponse(p1Strategy);
+        BRTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
         return -br.getValue();
     }
 
@@ -506,19 +517,19 @@ public class BilinearSequenceFormBnB {
             lbs.put(action, behavStrat);
     }
 
-    private void markAllBilinearVariables(SequenceFormIRConfig config) {
+    private void markAllBilinearVariables(BilinearTable table, SequenceFormIRConfig config) {
         config.getSequencesFor(player)
                 .stream()
                 .filter(s -> !s.isEmpty())
                 .filter(s -> ((SequenceFormIRInformationSet) s.getLastInformationSet()).hasIR())
-                .forEach(s -> markBilinearFor(s));
+                .forEach(s -> markBilinearFor(table, s));
     }
 
-    private void markBilinearFor(Sequence sequence) {
+    private void markBilinearFor(BilinearTable table, Sequence sequence) {
         table.markAsBilinear(sequence, sequence.getSubSequence(sequence.size() - 1), sequence.getLast());
     }
 
-    private void addValueConstraints(SequenceFormIRConfig config) {
+    private void addValueConstraints(BilinearTable table, SequenceFormIRConfig config) {
         for (Sequence sequence : config.getSequencesFor(opponent)) {
             Object eqKey;
             Object informationSet;
@@ -553,7 +564,7 @@ public class BilinearSequenceFormBnB {
         }
     }
 
-    private void addBehaviorStrategyConstraints(SequenceFormIRConfig config) {
+    private void addBehaviorStrategyConstraints(BilinearTable table, SequenceFormIRConfig config) {
         for (SequenceFormIRInformationSet informationSet : config.getAllInformationSets().values()) {
             if (!informationSet.hasIR())
                 continue;
@@ -569,24 +580,24 @@ public class BilinearSequenceFormBnB {
         }
     }
 
-    private void addRPConstraints(SequenceFormIRConfig config) {
+    private void addRPConstraints(BilinearTable table, SequenceFormIRConfig config) {
         table.setConstraint("rpInit", new ArrayListSequenceImpl(player), 1);
         table.setConstant("rpInit", 1);
         table.setConstraintType("rpInit", 1);
-        config.getAllInformationSets().values().stream().filter(i -> i.getPlayer().equals(player)).forEach(i -> addRPConstraint(i));
-        addRPVarBounds(config);
+        config.getAllInformationSets().values().stream().filter(i -> i.getPlayer().equals(player)).forEach(i -> addRPConstraint(table, i));
+        addRPVarBounds(table, config);
     }
 
-    private void addRPVarBounds(SequenceFormIRConfig config) {
-        config.getSequencesFor(player).forEach(s -> setZeroOneBounds(s));
+    private void addRPVarBounds(BilinearTable table, SequenceFormIRConfig config) {
+        config.getSequencesFor(player).forEach(s -> setZeroOneBounds(table, s));
     }
 
-    private void setZeroOneBounds(Object object) {
+    private void setZeroOneBounds(BilinearTable table, Object object) {
         table.setLowerBound(object, 0);
         table.setUpperBound(object, 1);
     }
 
-    private void addRPConstraint(SequenceFormIRInformationSet informationSet) {
+    private void addRPConstraint(BilinearTable table, SequenceFormIRInformationSet informationSet) {
         for (Map.Entry<Sequence, Set<Sequence>> outgoingEntry : informationSet.getOutgoingSequences().entrySet()) {
             Object eqKey = new Pair<>(informationSet, outgoingEntry.getKey());
 
@@ -598,7 +609,7 @@ public class BilinearSequenceFormBnB {
         }
     }
 
-    private void addObjective() {
+    private void addObjective(BilinearTable table) {
         table.setObjective(new Pair<>("root", new ArrayListSequenceImpl(opponent)), 1);
     }
 
@@ -635,17 +646,80 @@ public class BilinearSequenceFormBnB {
 
             if (!average.isPresent())
                 continue;
-            double error = getError(average.getAsDouble(), specValues) * Math.pow(10, gameInfo.getMaxDepth() - getAverageDepth(is));
+            double exponent = gameInfo.getMaxDepth() + 1 - getAverageDepth(is);
 
-            if (error > currentError) {
-                currentError = error;
-                currentBest = action;
+            if(exponent < 1)
+                System.err.println("exponent malformed");
+            double error = getError(average.getAsDouble(), specValues);
+            if(error > 1e-4) {
+                error *= Math.pow(10, 5*exponent);
+                if (error > currentError) {
+                    currentError = error;
+                    currentBest = action;
+                }
             }
         }
         if (currentBest == null)
             currentBest = addFirstAvailable(config);
         return currentBest;
     }
+
+//    /**
+//     * Chooses the action a causing the highest error in the shallowest information set (according to average length of sequence leading to this IS)
+//     *
+//     * @param config
+//     * @param data
+//     * @return
+//     * @throws IloException
+//     */
+//    private Action findMostViolatedBilinearConstraints(SequenceFormIRConfig config, LPData data) throws IloException {
+//        Set<Action> actions = config.getSequencesFor(player).stream()
+//                .filter(s -> !s.isEmpty())
+//                .filter(s -> ((SequenceFormIRInformationSet) s.getLastInformationSet()).hasIR())
+//                .map(Sequence::getLast).collect(Collectors.toSet());
+//        double currentError = Double.NEGATIVE_INFINITY;
+//        double currentDepth = Double.POSITIVE_INFINITY;
+//        Action currentBest = null;
+//
+//        for (Action action : actions) {
+//            SequenceFormIRInformationSet is = (SequenceFormIRInformationSet) action.getInformationSet();
+//            ArrayList<Double> specValues = new ArrayList<>();
+//
+//            for (Map.Entry<Sequence, Set<Sequence>> entry : is.getOutgoingSequences().entrySet()) {
+//                if (data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]) > 0) {
+//                    Sequence productSequence = new ArrayListSequenceImpl(entry.getKey());
+//
+//                    productSequence.addLast(action);
+//                    specValues.add(data.getSolver().getValue(data.getVariables()[table.getVariableIndex(productSequence)]) /
+//                            data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]));
+//                }
+//            }
+//            OptionalDouble average = specValues.stream().mapToDouble(Double::doubleValue).average();
+//
+//            if (!average.isPresent())
+//                continue;
+//            double error = getError(average.getAsDouble(), specValues);
+//
+//            if (error > 1e-4) {
+//                double averageDepth = getAverageDepth(is);
+//
+//                if (averageDepth < currentDepth) {
+//                    currentDepth = averageDepth;
+//                    currentError = error;
+//                    currentBest = action;
+//                } else if (Math.abs(averageDepth - currentDepth) <= 0) {
+//                    if (error > currentError) {
+//                        currentError = error;
+//                        currentBest = action;
+//                    }
+//                }
+//            }
+//        }
+//        if (currentBest == null)
+//            currentBest = addFirstAvailable(config);
+//        return currentBest;
+//    }
+
 
 //    /**
 //     * Returns the action causing the highest error according to the StrategyLP
@@ -729,7 +803,7 @@ public class BilinearSequenceFormBnB {
                         double outgiongSeqProb = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(outgoingSequence)]);
                         double incomingSeqProb = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(entry.getKey())]);
 
-                        if (incomingSeqProb > 0) {
+                        if (incomingSeqProb > 1e-6) {
                             allZero = false;
                             strategyLP.add(entry.getKey(), outgoingSequence, incomingSeqProb, outgiongSeqProb);
                         }
