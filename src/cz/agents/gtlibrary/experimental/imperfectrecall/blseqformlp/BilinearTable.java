@@ -11,6 +11,7 @@ import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class BilinearTable extends RecyclingLPTable {
 
@@ -440,13 +441,10 @@ public class BilinearTable extends RecyclingLPTable {
             }
             if (precisionConstraints != null)
                 try {
-                    for (IloConstraint precisionConstraint : precisionConstraints) {
-                        cplex.remove(precisionConstraint);
-                    }
+                    cplex.remove(precisionConstraints.toArray(new IloAddable[precisionConstraints.size()]));
                 } catch (IloException e) {
                     e.printStackTrace();
                 }
-
         }
         precisionConstraints = new HashSet<>();
         if (!DELETE_PRECISION_CONSTRAINTS_ONLY)

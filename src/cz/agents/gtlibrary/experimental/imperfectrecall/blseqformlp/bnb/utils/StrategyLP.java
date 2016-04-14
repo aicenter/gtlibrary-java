@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearSequenceFormBNB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
@@ -11,6 +12,7 @@ import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
+import ilog.cplex.IloCplex;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -118,6 +120,8 @@ public class StrategyLP {
 
             if (BilinearSequenceFormBnB.SAVE_LPS) lpData.getSolver().exportModel("strategyLP.lp");
             lpData.getSolver().solve();
+            if(lpData.getSolver().getStatus() != IloCplex.Status.Optimal)
+                lpData.getSolver().exportModel("strategyLP" + RandomGameInfo.seed + ".lp");
             updateMostExpensiveActionCostPair(lpData);
             return extractStrategy(lpData);
         } catch (IloException e) {
@@ -147,6 +151,7 @@ public class StrategyLP {
     }
 
     private void updateMostExpensiveActionCostPair(LPData lpData) throws IloException {
+
         Map<Action, Double> actionCosts = new HashMap<>(actions.size());
 
         for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
