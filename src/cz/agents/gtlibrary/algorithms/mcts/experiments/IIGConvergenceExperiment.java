@@ -30,7 +30,6 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.SumMeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.NodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
@@ -40,9 +39,6 @@ import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
@@ -73,14 +69,11 @@ import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
-import cz.agents.gtlibrary.utils.Pair;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
+
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -366,7 +359,7 @@ public class IIGConvergenceExperiment {
                 
                 Map<Action,Double> d = new FixedSizeMap(actions.size());
                 for (Action a : actions) d.put(a, distribution.get(a));
-                stitchedStrategy.put(new PerfectRecallISKey(((PerfectRecallISKey)isKey).getLeft(),sfAlgConfig.getInformationSetFor(s).getPlayersHistory()), d);
+                stitchedStrategy.put(new PerfectRecallISKey(((PerfectRecallISKey)isKey).getHash(),sfAlgConfig.getInformationSetFor(s).getPlayersHistory()), d);
             } else {
                 for (Map.Entry<Action,Double> en : old.entrySet()){
                     en.setValue(en.getValue() + distribution.get(en.getKey()));

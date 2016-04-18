@@ -38,14 +38,14 @@ public abstract class InformationSetImpl implements PerfectRecallInformationSet 
 		this.playerHistory = state.getSequenceForPlayerToMove();
 		this.player = state.getPlayerToMove();
 		this.statesInInformationSet.add(state);
-		this.hashCode = ((PerfectRecallISKey)state.getISKeyForPlayerToMove()).getLeft();
+		this.hashCode = ((PerfectRecallISKey)state.getISKeyForPlayerToMove()).getHash();
 	}
 	
 	public InformationSetImpl(GameState state, Sequence sequence) {
 		this.playerHistory = new ArrayListSequenceImpl(sequence);
 		this.player = state.getPlayerToMove();
 		this.statesInInformationSet.add(state);
-		this.hashCode = ((PerfectRecallISKey)state.getISKeyForPlayerToMove()).getLeft();
+		this.hashCode = ((PerfectRecallISKey)state.getISKeyForPlayerToMove()).getHash();
 	}
 
 	@Override

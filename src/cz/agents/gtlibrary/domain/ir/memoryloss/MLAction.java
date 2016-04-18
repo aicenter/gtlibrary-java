@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.iinodes.ir.ImperfectRecallAction;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
+@Deprecated
 public class MLAction extends ImperfectRecallAction {
 
     public MLAction(InformationSet informationSet, String type) {

@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public abstract class ImperfectRecallGameState extends GameStateImpl {
     protected List<String> actionTypeSequence;
 

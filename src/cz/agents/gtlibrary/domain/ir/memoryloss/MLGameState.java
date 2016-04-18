@@ -11,6 +11,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
+@Deprecated
 public class MLGameState extends ImperfectRecallGameState {
 
     private int round;

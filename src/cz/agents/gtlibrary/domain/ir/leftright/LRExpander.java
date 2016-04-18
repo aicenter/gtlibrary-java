@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.interfaces.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class LRExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
     public LRExpander(AlgorithmConfig<I> algConfig) {
