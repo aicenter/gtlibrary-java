@@ -32,7 +32,7 @@ public class LPTable {
 
     public enum ConstraintType {LE, EQ, GE}
 
-    public static boolean USE_CUSTOM_NAMES = false;
+    public static boolean USE_CUSTOM_NAMES = true;
     public static int CPLEXALG = IloCplex.Algorithm.Auto;
     public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
 

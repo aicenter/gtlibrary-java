@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.iinodes.ir;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
+@Deprecated
 public abstract class ImperfectRecallAction extends ActionImpl {
     protected String type;
 

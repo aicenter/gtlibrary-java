@@ -35,6 +35,8 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
+import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.domain.ir.leftright.LRExpander;
 import cz.agents.gtlibrary.domain.ir.leftright.LRGameState;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLExpander;
@@ -50,6 +52,7 @@ import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
@@ -62,7 +65,8 @@ import java.util.*;
 public class CFRISAlgorithm implements GamePlayingAlgorithm {
 
     public static void main(String[] args) {
-         runKuhnPoker();
+//         runKuhnPoker();
+           runBRTest();
 //        runGenericPoker();
 //        runML();
     }
@@ -73,6 +77,15 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
         CFRISAlgorithm cfr = new CFRISAlgorithm(rootState.getAllPlayers()[0], rootState, cfrExpander1);
 
         cfr.runMiliseconds(10000);
+    }
+
+    private static void runBRTest() {
+        GameState rootState = new BRTestGameState();
+        Expander<MCTSInformationSet> cfrExpander1 = new BRTestExpander<>(new MCTSConfig());
+        CFRISAlgorithm cfr = new CFRISAlgorithm(rootState.getAllPlayers()[0], rootState, cfrExpander1);
+
+        cfr.runMiliseconds(10000);
+        new GambitEFG().write("BRTest.gbt", rootState, cfrExpander1);
     }
 
     private static void runKuhnPoker() {

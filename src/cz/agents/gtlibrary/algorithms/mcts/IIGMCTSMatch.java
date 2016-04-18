@@ -37,7 +37,6 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
-import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
@@ -51,12 +50,9 @@ import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
-import cz.agents.gtlibrary.utils.Pair;
 
 import java.io.PrintStream;
 import java.util.*;
-import org.apache.commons.lang3.StringUtils;
-import org.jacop.examples.scala.Steiner;
 
 /**
  *
@@ -255,7 +251,7 @@ public class IIGMCTSMatch {
                 
                 Map<Action,Double> d = new FixedSizeMap(actions.size());
                 for (Action a : actions) d.put(a, distribution.get(a));
-                stitchedStrategy.put(new PerfectRecallISKey(((PerfectRecallISKey)isKey).getLeft(),sfAlgConfig.getInformationSetFor(s).getPlayersHistory()), d);
+                stitchedStrategy.put(new PerfectRecallISKey(((PerfectRecallISKey)isKey).getHash(),sfAlgConfig.getInformationSetFor(s).getPlayersHistory()), d);
             } else {
                 for (Map.Entry<Action,Double> en : old.entrySet()){
                     en.setValue(en.getValue() + distribution.get(en.getKey()));

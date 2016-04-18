@@ -613,59 +613,8 @@ public class BilinearSequenceFormBnB {
         table.setObjective(new Pair<>("root", new ArrayListSequenceImpl(opponent)), 1);
     }
 
-    /**
-     * Chooses the action a causing the highest error * 10^(MAX_DEPTH - average depth of the IS where a is played)
-     *
-     * @param config
-     * @param data
-     * @return
-     * @throws IloException
-     */
-    private Action findMostViolatedBilinearConstraints(SequenceFormIRConfig config, LPData data) throws IloException {
-        Set<Action> actions = config.getSequencesFor(player).stream()
-                .filter(s -> !s.isEmpty())
-                .filter(s -> ((SequenceFormIRInformationSet) s.getLastInformationSet()).hasIR())
-                .map(Sequence::getLast).collect(Collectors.toSet());
-        double currentError = Double.NEGATIVE_INFINITY;
-        Action currentBest = null;
-
-        for (Action action : actions) {
-            SequenceFormIRInformationSet is = (SequenceFormIRInformationSet) action.getInformationSet();
-            ArrayList<Double> specValues = new ArrayList<>();
-
-            for (Map.Entry<Sequence, Set<Sequence>> entry : is.getOutgoingSequences().entrySet()) {
-                if (data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]) > 0) {
-                    Sequence productSequence = new ArrayListSequenceImpl(entry.getKey());
-
-                    productSequence.addLast(action);
-                    specValues.add(data.getSolver().getValue(data.getVariables()[table.getVariableIndex(productSequence)]) /
-                            data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]));
-                }
-            }
-            OptionalDouble average = specValues.stream().mapToDouble(Double::doubleValue).average();
-
-            if (!average.isPresent())
-                continue;
-            double exponent = gameInfo.getMaxDepth() + 1 - getAverageDepth(is);
-
-            if(exponent < 1)
-                System.err.println("exponent malformed");
-            double error = getError(average.getAsDouble(), specValues);
-            if(error > 1e-4) {
-                error *= Math.pow(10, 5*exponent);
-                if (error > currentError) {
-                    currentError = error;
-                    currentBest = action;
-                }
-            }
-        }
-        if (currentBest == null)
-            currentBest = addFirstAvailable(config);
-        return currentBest;
-    }
-
 //    /**
-//     * Chooses the action a causing the highest error in the shallowest information set (according to average length of sequence leading to this IS)
+//     * Chooses the action a causing the highest error * 10^(MAX_DEPTH - average depth of the IS where a is played)
 //     *
 //     * @param config
 //     * @param data
@@ -678,7 +627,6 @@ public class BilinearSequenceFormBnB {
 //                .filter(s -> ((SequenceFormIRInformationSet) s.getLastInformationSet()).hasIR())
 //                .map(Sequence::getLast).collect(Collectors.toSet());
 //        double currentError = Double.NEGATIVE_INFINITY;
-//        double currentDepth = Double.POSITIVE_INFINITY;
 //        Action currentBest = null;
 //
 //        for (Action action : actions) {
@@ -698,20 +646,16 @@ public class BilinearSequenceFormBnB {
 //
 //            if (!average.isPresent())
 //                continue;
+//            double exponent = gameInfo.getMaxDepth() + 1 - getAverageDepth(is);
+//
+//            if(exponent < 1)
+//                System.err.println("exponent malformed");
 //            double error = getError(average.getAsDouble(), specValues);
-//
-//            if (error > 1e-4) {
-//                double averageDepth = getAverageDepth(is);
-//
-//                if (averageDepth < currentDepth) {
-//                    currentDepth = averageDepth;
+//            if(error > 1e-4) {
+//                error *= Math.pow(10, 5*exponent);
+//                if (error > currentError) {
 //                    currentError = error;
 //                    currentBest = action;
-//                } else if (Math.abs(averageDepth - currentDepth) <= 0) {
-//                    if (error > currentError) {
-//                        currentError = error;
-//                        currentBest = action;
-//                    }
 //                }
 //            }
 //        }
@@ -719,6 +663,62 @@ public class BilinearSequenceFormBnB {
 //            currentBest = addFirstAvailable(config);
 //        return currentBest;
 //    }
+
+    /**
+     * Chooses the action a causing the highest error in the shallowest information set (according to average length of sequence leading to this IS)
+     *
+     * @param config
+     * @param data
+     * @return
+     * @throws IloException
+     */
+    private Action findMostViolatedBilinearConstraints(SequenceFormIRConfig config, LPData data) throws IloException {
+        Set<Action> actions = config.getSequencesFor(player).stream()
+                .filter(s -> !s.isEmpty())
+                .filter(s -> ((SequenceFormIRInformationSet) s.getLastInformationSet()).hasIR())
+                .map(Sequence::getLast).collect(Collectors.toSet());
+        double currentError = Double.NEGATIVE_INFINITY;
+        double currentDepth = Double.POSITIVE_INFINITY;
+        Action currentBest = null;
+
+        for (Action action : actions) {
+            SequenceFormIRInformationSet is = (SequenceFormIRInformationSet) action.getInformationSet();
+            ArrayList<Double> specValues = new ArrayList<>();
+
+            for (Map.Entry<Sequence, Set<Sequence>> entry : is.getOutgoingSequences().entrySet()) {
+                if (data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]) > 0) {
+                    Sequence productSequence = new ArrayListSequenceImpl(entry.getKey());
+
+                    productSequence.addLast(action);
+                    specValues.add(data.getSolver().getValue(data.getVariables()[table.getVariableIndex(productSequence)]) /
+                            data.getSolver().getValue(data.getVariables()[table.getVariableIndex(entry.getKey())]));
+                }
+            }
+            OptionalDouble average = specValues.stream().mapToDouble(Double::doubleValue).average();
+
+            if (!average.isPresent())
+                continue;
+            double error = getError(average.getAsDouble(), specValues);
+
+            if (error > 1e-4) {
+                double averageDepth = getAverageDepth(is);
+
+                if (averageDepth < currentDepth) {
+                    currentDepth = averageDepth;
+                    currentError = error;
+                    currentBest = action;
+                } else if (Math.abs(averageDepth - currentDepth) <= 0) {
+                    if (error > currentError) {
+                        currentError = error;
+                        currentBest = action;
+                    }
+                }
+            }
+        }
+        if (currentBest == null)
+            currentBest = addFirstAvailable(config);
+        return currentBest;
+    }
 
 
 //    /**
@@ -789,8 +789,8 @@ public class BilinearSequenceFormBnB {
         if (DEBUG) System.out.println("----- P1 Actions -----");
         Map<Action, Double> p1Strategy = new HashMap<>();
 
-        mostBrokenAction = null;
-        mostBrokenActionValue = Double.NEGATIVE_INFINITY;
+//        mostBrokenAction = null;
+//        mostBrokenActionValue = Double.NEGATIVE_INFINITY;
         for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
             if (!i.getPlayer().equals(player))
                 continue;
@@ -800,12 +800,12 @@ public class BilinearSequenceFormBnB {
                 strategyLP.clear();
                 for (Map.Entry<Sequence, Set<Sequence>> entry : i.getOutgoingSequences().entrySet()) {
                     for (Sequence outgoingSequence : entry.getValue()) {
-                        double outgiongSeqProb = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(outgoingSequence)]);
+                        double outgoingSeqProb = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(outgoingSequence)]);
                         double incomingSeqProb = lpData.getSolver().getValue(lpData.getVariables()[table.getVariableIndex(entry.getKey())]);
 
-                        if (incomingSeqProb > 1e-6) {
+                        if (incomingSeqProb > 1e-4) {
                             allZero = false;
-                            strategyLP.add(entry.getKey(), outgoingSequence, incomingSeqProb, outgiongSeqProb);
+                            strategyLP.add(entry.getKey(), outgoingSequence, incomingSeqProb, Math.max(outgoingSeqProb, 0));
                         }
                     }
                 }
@@ -818,10 +818,10 @@ public class BilinearSequenceFormBnB {
                     p1Strategy.putAll(strategy);
                     Pair<Action, Double> actionCostPair = strategyLP.getMostExpensiveActionCostPair();
 
-                    if (mostBrokenActionValue < actionCostPair.getRight()) {
-                        mostBrokenActionValue = actionCostPair.getRight();
-                        mostBrokenAction = actionCostPair.getLeft();
-                    }
+//                    if (mostBrokenActionValue < actionCostPair.getRight()) {
+//                        mostBrokenActionValue = actionCostPair.getRight();
+//                        mostBrokenAction = actionCostPair.getLeft();
+//                    }
                 }
             } else if (!i.getOutgoingSequences().isEmpty()) {
                 assert i.getOutgoingSequences().size() == 1;
@@ -840,8 +840,8 @@ public class BilinearSequenceFormBnB {
                 p1Strategy.put(i.getActions().iterator().next(), 1d);
             i.getActions().forEach(action -> p1Strategy.putIfAbsent(action, 0d));
         }
-        if (mostBrokenAction == null)
-            mostBrokenAction = addFirstAvailable(config);
+//        if (mostBrokenAction == null)
+//            mostBrokenAction = addFirstAvailable(config);
         return p1Strategy;
     }
 

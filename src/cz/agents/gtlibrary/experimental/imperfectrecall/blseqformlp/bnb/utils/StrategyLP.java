@@ -110,6 +110,8 @@ public class StrategyLP {
     }
 
     public Map<Action, Double> getStartegy() {
+        if (tightBounds())
+            return getStrategyFromBounds();
         addVarContinuationConstraints();
         addObjective();
         addBehavSumConstraint();
@@ -120,7 +122,7 @@ public class StrategyLP {
 
             if (BilinearSequenceFormBnB.SAVE_LPS) lpData.getSolver().exportModel("strategyLP.lp");
             lpData.getSolver().solve();
-            if(lpData.getSolver().getStatus() != IloCplex.Status.Optimal)
+            if (lpData.getSolver().getStatus() != IloCplex.Status.Optimal)
                 lpData.getSolver().exportModel("strategyLP" + RandomGameInfo.seed + ".lp");
             updateMostExpensiveActionCostPair(lpData);
             return extractStrategy(lpData);
@@ -128,6 +130,16 @@ public class StrategyLP {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private boolean tightBounds() {
+        for (Map.Entry<Action, Double> entry : ubs.entrySet()) {
+            Double lb = lbs.get(entry.getKey());
+
+            if(Math.abs(entry.getValue() - lb) > 1e-6)
+                return false;
+        }
+        return true;
     }
 
     private void addLBConstraints() {
@@ -237,5 +249,9 @@ public class StrategyLP {
 
     public Pair<Action, Double> getMostExpensiveActionCostPair() {
         return mostExpensiveActionCostPair;
+    }
+
+    public Map<Action,Double> getStrategyFromBounds() {
+        return ubs;
     }
 }

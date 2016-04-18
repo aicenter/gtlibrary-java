@@ -8,11 +8,11 @@ public class PerfectRecallISKey extends ISKey {
         super(hash, sequence);
     }
 
-    public int getLeft() {
+    public int getHash() {
         return ((Integer) objects[0]).intValue();
     }
 
-    public Sequence getRight() {
+    public Sequence getSequence() {
         return (Sequence) objects[1];
     }
 
