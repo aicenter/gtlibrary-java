@@ -6,7 +6,6 @@ import cz.agents.gtlibrary.algorithms.cfr.ir.testdomains.alossgame.ALossExpander
 import cz.agents.gtlibrary.algorithms.cfr.ir.testdomains.alossgame.ALossGameState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
@@ -14,7 +13,6 @@ import cz.agents.gtlibrary.domain.ir.memoryloss.MLExpander;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.lang.management.ManagementFactory;
@@ -25,7 +23,7 @@ public class IRCFR {
     public static void main(String[] args) {
 //        runBRTest();
         runALoss();
-//          runALossCounter();
+//        runALossCounter();
     }
 
     private static void runML() {
@@ -107,7 +105,6 @@ public class IRCFR {
     protected Expander<IRCFRInformationSet> expander;
     protected AlgorithmConfig<IRCFRInformationSet> config;
 
-    protected HashMap<ISKey, IRCFRInformationSet> informationSets = new HashMap<>();
     protected boolean firstIteration = true;
 
     public IRCFR(Player searchingPlayer, GameState rootState, Expander<IRCFRInformationSet> expander) {
@@ -123,8 +120,10 @@ public class IRCFR {
         long start = threadBean.getCurrentThreadCpuTime();
         while ((threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds) {
             System.out.println(iteration(rootState, 1, 1, rootState.getAllPlayers()[0]));
+            update();
             iters++;
             System.out.println(iteration(rootState, 1, 1, rootState.getAllPlayers()[1]));
+            update();
             iters++;
         }
         firstIteration = false;
@@ -141,6 +140,10 @@ public class IRCFR {
         firstIteration = false;
         System.out.println();
         return null;
+    }
+
+    private void update() {
+        config.getAllInformationSets().values().forEach(informationSet -> informationSet.getData().applyUpdate());
     }
 
     /**
@@ -207,8 +210,8 @@ public class IRCFR {
         return ev;
     }
 
-    protected OOSAlgorithmData createAlgData(GameState node) {
-        return new OOSAlgorithmData(expander.getActions(node));
+    protected FixedForIterationData createAlgData(GameState node) {
+        return new FixedForIterationData(expander.getActions(node));
     }
 
     protected void update(double pi1, double pi2, Player expPlayer, OOSAlgorithmData data, double[] rmProbs, double[] tmpV, double ev) {
@@ -217,8 +220,8 @@ public class IRCFR {
         for (int i = 0; i < tmpV.length; i++) {
             expPlayerVals[i] = tmpV[i];
         }
-        data.updateAllRegrets(tmpV, ev, (expPlayer.getId() == 0 ? pi2 : pi1)/*pi1*pi2*/);
-        data.updateMeanStrategy(rmProbs, (expPlayer.getId() == 0 ? pi1 : pi2)/*pi1*pi2*/);
+        data.updateAllRegrets(tmpV, ev, /*(expPlayer.getId() == 0 ? pi2 : pi1)*/pi1 * pi2);
+        data.updateMeanStrategy(rmProbs, /*(expPlayer.getId() == 0 ? pi1 : pi2)*/pi1 * pi2);
     }
 
     protected double[] getStrategy(OOSAlgorithmData data) {

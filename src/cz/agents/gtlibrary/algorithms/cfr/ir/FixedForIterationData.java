@@ -5,7 +5,6 @@ import cz.agents.gtlibrary.interfaces.Action;
 
 import java.util.List;
 
-@Deprecated
 public class FixedForIterationData extends OOSAlgorithmData {
 
     protected double[] regretUpdate;

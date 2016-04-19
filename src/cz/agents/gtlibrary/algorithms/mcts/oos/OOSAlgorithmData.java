@@ -27,22 +27,28 @@ import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
 import cz.agents.gtlibrary.interfaces.Action;
+
 import java.util.Arrays;
 import java.util.List;
 
 /**
- *
  * @author vilo
  */
 public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider {
     public static boolean useEpsilonRM = false;
     public static double epsilon = 0.001;
     List<Action> actions;
-    /** Mean strategy. */
+    /**
+     * Mean strategy.
+     */
     double[] mp;
-    /** Cumulative regret. */
+    /**
+     * Cumulative regret.
+     */
     protected double[] r;
-    /** Number of strategy update samples. */
+    /**
+     * Number of strategy update samples.
+     */
     protected int nbSamples;
 
     public OOSAlgorithmData(List<Action> actions) {
@@ -50,56 +56,59 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         mp = new double[actions.size()];
         r = new double[actions.size()];
     }
-    
+
     public void getRMStrategy(double[] output) {
         final int K = actions.size();
         double R = 0;
-        for (double ri : r) R += Math.max(0,ri);
-        
-        if (R <= 0){
-            Arrays.fill(output,0,K,1.0/K);
+        for (double ri : r) R += Math.max(0, ri);
+
+        if (R <= 0) {
+            Arrays.fill(output, 0, K, 1.0 / K);
         } else {
-            for (int i=0; i<r.length; i++) output[i] = useEpsilonRM ? 1-epsilon*Math.max(0,r[i])/R + epsilon/K : Math.max(0,r[i])/R;
-        }
-    }
-    
-    public double[] getRMStrategy(){
-        double[] out = new double[r.length];
-        getRMStrategy(out);
-        return out;
-    }
-    
-    public void updateRegret(int ai, double W, double c, double x){
-        for (int i=0; i<r.length; i++){
-            if (i==ai) r[i] += (c-x)*W;
-            else r[i] += -x*W;
-        }
-    }
-    
-    public void updateRegretSM(int ai, double W, double pa, double sa){
-        for (int i=0; i<r.length; i++){
-            if (i==ai) r[i] += W*(1-pa)/sa;
-            else r[i] += -W*pa/sa;
-        }
-    }
-    
-    public void updateAllRegrets(double[] Vs, double meanV, double w){
-        for (int i=0; i<r.length; i++){
-            r[i] += w*(Vs[i]-meanV);
+            for (int i = 0; i < r.length; i++) {
+                output[i] = useEpsilonRM ? 1 - epsilon * Math.max(0, r[i]) / R + epsilon / K : Math.max(0, r[i]) / R;
+            }
         }
     }
 
-    public void updateMeanStrategy(double[] p, double w){
-        for (int i=0; i<r.length; i++){
-            mp[i] += w*p[i];
+    public double[] getRMStrategy() {
+        double[] out = new double[r.length];
+
+        getRMStrategy(out);
+        return out;
+    }
+
+    public void updateRegret(int ai, double W, double c, double x) {
+        for (int i = 0; i < r.length; i++) {
+            if (i == ai) r[i] += (c - x) * W;
+            else r[i] += -x * W;
+        }
+    }
+
+    public void updateRegretSM(int ai, double W, double pa, double sa) {
+        for (int i = 0; i < r.length; i++) {
+            if (i == ai) r[i] += W * (1 - pa) / sa;
+            else r[i] += -W * pa / sa;
+        }
+    }
+
+    public void updateAllRegrets(double[] Vs, double meanV, double w) {
+        for (int i = 0; i < r.length; i++) {
+            r[i] += w * (Vs[i] - meanV);
+        }
+    }
+
+    public void updateMeanStrategy(double[] p, double w) {
+        for (int i = 0; i < r.length; i++) {
+            mp[i] += w * p[i];
         }
         nbSamples++;
     }
 
-   public void setRegret(double[] r) {
-       this.r = r;
-   }
-        
+    public void setRegret(double[] r) {
+        this.r = r;
+    }
+
     @Override
     public List<Action> getActions() {
         return actions;
@@ -108,17 +117,17 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     @Override
     public double[] getMp() {
         return mp;
-    }    
+    }
 
     @Override
     public int getNbSamples() {
         return nbSamples;
     }
-    
+
     public void clear() {
         Arrays.fill(r, 0);
         Arrays.fill(mp, 0);
-        nbSamples=0;
+        nbSamples = 0;
     }
 }
 
