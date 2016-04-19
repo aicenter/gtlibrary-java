@@ -31,7 +31,7 @@ public abstract class InformationSetImpl implements PerfectRecallInformationSet 
 	
 	protected Sequence playerHistory;
 	protected Player player;
-	protected LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<GameState>();
+	protected LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<>();
 	private final int hashCode;
 
 	public InformationSetImpl(GameState state) {
@@ -86,9 +86,7 @@ public abstract class InformationSetImpl implements PerfectRecallInformationSet 
 	}
 
     public void addAllStateToIS(Collection<GameState> states) {
-    	for (GameState gameState : states) {
-			assert gameState.getPlayerToMove().equals(player);
-		}
+		assert states.stream().allMatch(state -> state.getPlayerToMove().equals(player));
         statesInInformationSet.addAll(states);
     }
 

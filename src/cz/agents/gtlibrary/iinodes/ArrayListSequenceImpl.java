@@ -36,12 +36,12 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	public ArrayListSequenceImpl(Player player) {
 		this.player = player;
-		actions = new ArrayList<Action>();
+		actions = new ArrayList<>();
 	}
 
 	public ArrayListSequenceImpl(Sequence sequence) {
 		player = sequence.getPlayer();
-		actions = new ArrayList<Action>(sequence.size()+1);
+		actions = new ArrayList<>(sequence.size()+1);
 		addAllAsLast(sequence);
 	}
 
