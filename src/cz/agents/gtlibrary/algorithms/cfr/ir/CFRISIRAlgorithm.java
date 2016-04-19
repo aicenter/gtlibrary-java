@@ -16,6 +16,7 @@ import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.*;
 
+@Deprecated
 public class CFRISIRAlgorithm extends CFRISAlgorithm {
 
     public static void main(String[] args) {
