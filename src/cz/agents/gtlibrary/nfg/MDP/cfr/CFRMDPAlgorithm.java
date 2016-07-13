@@ -10,6 +10,8 @@ import cz.agents.gtlibrary.nfg.MDP.DoubleOracleCostPairedMDP;
 import cz.agents.gtlibrary.nfg.MDP.FullCostPairedMDP;
 import cz.agents.gtlibrary.nfg.MDP.core.MDPBestResponse;
 import cz.agents.gtlibrary.nfg.MDP.core.MDPCoreLP;
+import cz.agents.gtlibrary.nfg.MDP.domain.paws.PAWSConfig;
+import cz.agents.gtlibrary.nfg.MDP.domain.paws.PAWSExpander;
 import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGConfig;
 import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGExpander;
 import cz.agents.gtlibrary.nfg.MDP.domain.tig.TIGPassangerState;
@@ -303,10 +305,10 @@ public class CFRMDPAlgorithm {
                 updateStateProbsMeanStrat(player,it);
                 updateEVsRegretsStrategies(config.getOtherPlayer(player));
             } else {
-                updateStateProbsMeanStrat(config.getOtherPlayer(player),it);
-                updateEVsRegretsStrategies(player);
                 updateStateProbsMeanStrat(player,it);
                 updateEVsRegretsStrategies(config.getOtherPlayer(player));
+                updateStateProbsMeanStrat(config.getOtherPlayer(player),it);
+                updateEVsRegretsStrategies(player);
             }
             
             //if (num < 100 || it % (num/100) == 0) System.out.println("Iteration " + it + " completed");
@@ -399,9 +401,17 @@ public class CFRMDPAlgorithm {
             expander = new TIGExpander();
             config = new TIGConfig();
             CACHE_RELATED_ACTIONS = true;
-            REVERSE_UPDATE_ORDER = true;
+            REVERSE_UPDATE_ORDER = false;
             if (args[1].startsWith("LP")){
                 TIGExpander.MAINTAIN_PREDECESSORS = true;
+            }
+        } else if (args[0].startsWith("PAWS")){
+            expander = new PAWSExpander();
+            config = new PAWSConfig();
+            CACHE_RELATED_ACTIONS = true;
+            REVERSE_UPDATE_ORDER = true;
+            if (args[1].startsWith("LP")){
+                PAWSExpander.MAINTAIN_PREDECESSORS = true;
             }
         } else {
              throw new IllegalArgumentException("Wrong domain definition");
@@ -432,7 +442,7 @@ public class CFRMDPAlgorithm {
         System.out.println(config.toString());
         
         CFRMDPAlgorithm alg = new CFRMDPAlgorithm(config, config.getAllPlayers().get(0), expander);
-        alg.runIterations(2000000);
+        alg.runIterations(2000);
         
         Pair<Double,Double> res = alg.computeExploitability();
         
