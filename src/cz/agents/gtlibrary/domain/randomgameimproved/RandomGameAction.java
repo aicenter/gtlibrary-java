@@ -58,6 +58,7 @@ public class RandomGameAction extends ActionImpl {
 
     @Override
     public String toString() {
+        if (informationSet == null) return "[Pl2, " + value.substring(value.indexOf("_") + 1) + "]";
         return "[" + informationSet.getPlayer() + ", " + informationSet.hashCode() + ", " + value.substring(value.indexOf("_") + 1) + "]";
     }
 
