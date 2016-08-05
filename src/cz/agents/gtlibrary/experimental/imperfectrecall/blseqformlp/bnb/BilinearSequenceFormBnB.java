@@ -54,6 +54,7 @@ public class BilinearSequenceFormBnB {
     private long strategyLPTime = 0;
     private long CPLEXInvocationCount = 0;
     private long BRTime = 0;
+    private long lpBuildingTime = 0;
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
@@ -85,6 +86,7 @@ public class BilinearSequenceFormBnB {
         System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
         System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
 
         System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
@@ -113,7 +115,10 @@ public class BilinearSequenceFormBnB {
 
     public void solve(SequenceFormIRConfig config) {
         strategyLP = new StrategyLP(config);
+        long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
+
         buildBaseLP(table, config);
+        lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         try {
             LPData lpData = table.toCplex();
 
@@ -194,6 +199,10 @@ public class BilinearSequenceFormBnB {
         return BRTime;
     }
 
+    public long getLpBuildingTime() {
+        return lpBuildingTime;
+    }
+
     private double checkOnCleanLP(SequenceFormIRConfig config, Candidate candidate) throws IloException {
         System.out.println("Check!!!!!!!!!!!!!!");
         BilinearTable table = new BilinearTable();
@@ -223,11 +232,13 @@ public class BilinearSequenceFormBnB {
         Changes newChanges = new Changes(current.getChanges());
         int[] probability = getMiddleExactProbability(current);
         Change change = new MiddleChange(current.getAction(), probability);
+        long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
         table.clearTable();
         if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
             buildBaseLP(table, config);
         current.getChanges().updateTable(table);
+        lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         int precision = table.getPrecisionFor(current.getAction());
 
         if (precision >= maxRefinements)
@@ -258,18 +269,24 @@ public class BilinearSequenceFormBnB {
         Changes newChanges = new Changes(current.getChanges());
         int[] probability = getRightExactProbability(current);
         Change change = new RightChange(current.getAction(), probability);
+        long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
         table.clearTable();
         if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
             buildBaseLP(table, config);
         current.getChanges().updateTable(table);
+        lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         newChanges.add(change);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
 
     private void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
         try {
-            if (change.updateW(table)) {
+            long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
+            boolean updated = change.updateW(table);
+
+            lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
+            if (updated) {
                 LPData lpData = table.toCplex();
 //                System.out.println("solved");
 
@@ -323,19 +340,19 @@ public class BilinearSequenceFormBnB {
         if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && Arrays.equals(probability, change.getFixedDigitArrayValue()))))
             probability[probability.length - 1]--;
         Change change = new LeftChange(current.getAction(), probability);
+        long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
         table.clearTable();
         if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
             buildBaseLP(table, config);
         current.getChanges().updateTable(table);
+        lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         newChanges.add(change);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
 
     private boolean isZero(int[] probability) {
-        if (Arrays.stream(probability).anyMatch(prob -> prob > 0))
-            return false;
-        return true;
+        return !Arrays.stream(probability).anyMatch(prob -> prob > 0);
     }
 
     private int[] getLeftExactProbability(Candidate current) {
