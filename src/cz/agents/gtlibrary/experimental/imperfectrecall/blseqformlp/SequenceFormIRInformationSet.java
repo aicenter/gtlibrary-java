@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SequenceFormIRInformationSet extends IRInformationSetImpl {
     private Map<Sequence, Set<Sequence>> outgoingSequences;
@@ -19,7 +20,7 @@ public class SequenceFormIRInformationSet extends IRInformationSetImpl {
         Set<Sequence> currentOutgoing = this.outgoingSequences.get(sequence);
 
         if (currentOutgoing == null)
-            currentOutgoing = new HashSet<>(outgoingSequences.size());
+            currentOutgoing = new LinkedHashSet<>(outgoingSequences.size());
         currentOutgoing.add(outgoingSequence);
         this.outgoingSequences.put(sequence, currentOutgoing);
     }
@@ -28,7 +29,7 @@ public class SequenceFormIRInformationSet extends IRInformationSetImpl {
         Set<Sequence> currentOutgoing = this.outgoingSequences.get(sequence);
 
         if (currentOutgoing == null)
-            currentOutgoing = new HashSet<>(outgoingSequences.size());
+            currentOutgoing = new LinkedHashSet<>(outgoingSequences.size());
         currentOutgoing.addAll(outgoingSequences);
         this.outgoingSequences.put(sequence, currentOutgoing);
     }
@@ -45,9 +46,7 @@ public class SequenceFormIRInformationSet extends IRInformationSetImpl {
         Set<Action> actions = new HashSet<>();
 
         for (Set<Sequence> outgoing : outgoingSequences.values()) {
-            for (Sequence sequence : outgoing) {
-                actions.add(sequence.getLast());
-            }
+            actions.addAll(outgoing.stream().map(Sequence::getLast).collect(Collectors.toList()));
         }
         return actions;
     }

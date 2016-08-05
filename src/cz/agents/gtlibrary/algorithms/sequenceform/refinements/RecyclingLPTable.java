@@ -426,4 +426,13 @@ public class RecyclingLPTable extends LPTable {
         variableIndices.entrySet().forEach(entry -> keys[entry.getValue()] = entry.getKey());
         return keys;
     }
+
+    public void removeObjective() {
+        try {
+            cplex.remove(lpObj);
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+        lpObj = null;
+    }
 }

@@ -16,14 +16,14 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     protected Map<Sequence, Set<Sequence>> compatibleSequences = new HashMap<>();
     protected Map<Player, Set<Sequence>> playerSequences = new HashMap<>();
 
-    private Set<GameState> terminalStates = new HashSet<>();
-    private Map<Sequence, Double> p1HighestReachableUtility = new HashMap<>();
-    private Map<Sequence, Double> p2HighestReachableUtility = new HashMap<>();
-    private Map<Sequence, Double> p1LowestReachableUtility = new HashMap<>();
-    private Map<Sequence, Double> p2LowestReachableUtility = new HashMap<>();
+    protected Set<GameState> terminalStates = new HashSet<>();
+    protected Map<Sequence, Double> p1HighestReachableUtility = new HashMap<>();
+    protected Map<Sequence, Double> p2HighestReachableUtility = new HashMap<>();
+    protected Map<Sequence, Double> p1LowestReachableUtility = new HashMap<>();
+    protected Map<Sequence, Double> p2LowestReachableUtility = new HashMap<>();
 
-    private int[] countIS = {0, 0};
-    private boolean player2IR = false;
+    protected int[] countIS = {0, 0};
+    protected boolean player2IR = false;
 
     @Override
     public SequenceFormIRInformationSet createInformationSetFor(GameState gameState) {
@@ -48,7 +48,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         addPlayerSequences(state);
     }
 
-    private void updateHighestReachableUtilities(GameState state) {
+    protected void updateHighestReachableUtilities(GameState state) {
         for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[0]).getAllPrefixes()) {
             Double currentValue = p1HighestReachableUtility.get(prefix);
             double p1Utility = state.getUtilities()[0];
@@ -67,7 +67,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         }
     }
 
-    private void updateLowestReachableUtilities(GameState state) {
+    protected void updateLowestReachableUtilities(GameState state) {
         for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[0]).getAllPrefixes()) {
             Double currentValue = p1LowestReachableUtility.get(prefix);
             double p1Utility = state.getUtilities()[0];

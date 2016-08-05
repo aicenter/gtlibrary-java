@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.bestresponse;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.MILPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.RecyclingMILPTable;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearSequenceFormBNB;
@@ -31,7 +32,7 @@ public class ImperfectRecallBestResponse {
 //        System.out.println(br.getBestResponse(getOpponentStrategy(root, expander)));
     }
 
-    private static Map<Action, Double> getOpponentStrategy(GameState root, BRTestExpander<IRInformationSetImpl> expander) {
+    protected static Map<Action, Double> getOpponentStrategy(GameState root, BRTestExpander<IRInformationSetImpl> expander) {
         Map<Action, Double> strategy = new HashMap<>(2);
 
         GameState state = root.performAction(expander.getActions(root).get(0));
@@ -44,13 +45,13 @@ public class ImperfectRecallBestResponse {
         return strategy;
     }
 
-    private Player player;
-    private Player opponent;
-    private SequenceFormIRConfig algConfig;
-    private MILPTable milpTable;
-    private GameInfo info;
-    private Expander<SequenceFormIRInformationSet> expander;
-    private double value;
+    protected Player player;
+    protected Player opponent;
+    protected SequenceFormIRConfig algConfig;
+    protected RecyclingMILPTable milpTable;
+    protected GameInfo info;
+    protected Expander<SequenceFormIRInformationSet> expander;
+    protected double value;
 
     public ImperfectRecallBestResponse(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         this.player = player;
@@ -58,7 +59,7 @@ public class ImperfectRecallBestResponse {
         this.info = info;
         this.expander = expander;
         algConfig = (SequenceFormIRConfig)(expander.getAlgorithmConfig());
-        milpTable = new MILPTable();
+        milpTable = new RecyclingMILPTable();
     }
 
     public Map<Action, Double> getBestResponse(Map<Action, Double> opponentStrategy) {
@@ -103,7 +104,7 @@ public class ImperfectRecallBestResponse {
         return null;
     }
 
-    private Map<Action, Double> createStrategy(LPData lpData) {
+    protected Map<Action, Double> createStrategy(LPData lpData) {
         Map<Action, Double> strategy = new HashMap<>();
 
         for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
@@ -116,7 +117,7 @@ public class ImperfectRecallBestResponse {
         return strategy;
     }
 
-    private void addPEquality(Map<Action, Double> opponentStrategy) {
+    protected void addPEquality(Map<Action, Double> opponentStrategy) {
         for (GameState terminalState : algConfig.getTerminalStates()) {
             milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * getProbability(terminalState, opponentStrategy));
         }
@@ -127,9 +128,9 @@ public class ImperfectRecallBestResponse {
 
     }
 
-    private void addPEqualitySequence(Map<Sequence, Double> opponentStrategy) {
+    protected void addPEqualitySequence(Map<Sequence, Double> opponentStrategy) {
         for (GameState terminalState : algConfig.getTerminalStates()) {
-            milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * opponentStrategy.get(terminalState.getSequenceFor(opponent)));
+            milpTable.setConstraint("pSum", terminalState, terminalState.getNatureProbability() * getProbability(opponentStrategy, terminalState.getSequenceFor(opponent)));
         }
 //        milpTable.setConstant("pSum", 1 - BilinearSeqenceFormLP.BILINEAR_PRECISION);
 //        milpTable.setConstant("pSum", 1 - 0.1);
@@ -137,7 +138,7 @@ public class ImperfectRecallBestResponse {
         milpTable.setConstraintType("pSum", 2);
     }
 
-    private void addPUpperBounds() {
+    protected void addPUpperBounds() {
         for (GameState terminalState : algConfig.getTerminalStates()) {
             for (Action action : terminalState.getSequenceFor(player)) {
                 Object pVar = terminalState;
@@ -152,43 +153,45 @@ public class ImperfectRecallBestResponse {
 
     }
 
-    private void addStrategySumConstraints() {
-        for (SequenceFormIRInformationSet informationSet : algConfig.getAllInformationSets().values()) {
-            if (informationSet.getPlayer().equals(player)) {
-                for (Action action : expander.getActions(informationSet)) {
-                    Object varKey = action;
+    protected void addStrategySumConstraints() {
+        algConfig.getAllInformationSets().values().stream().filter(informationSet -> informationSet.getPlayer().equals(player)).forEach(informationSet -> {
+            for (Action action : expander.getActions(informationSet)) {
+                Object varKey = action;
 
-                    milpTable.setConstraint(informationSet, varKey, 1);
-                    milpTable.markAsBinary(varKey);
-                    milpTable.watchPrimalVariable(varKey, varKey);
-                }
-                milpTable.setConstant(informationSet, 1);
-                milpTable.setConstraintType(informationSet, 1);
+                milpTable.setConstraint(informationSet, varKey, 1);
+                milpTable.markAsBinary(varKey);
+                milpTable.watchPrimalVariable(varKey, varKey);
             }
-        }
+            milpTable.setConstant(informationSet, 1);
+            milpTable.setConstraintType(informationSet, 1);
+        });
     }
 
-    private void addObjective(Map<Action, Double> opponentStrategy) {
+    protected void addObjective(Map<Action, Double> opponentStrategy) {
         for (GameState terminalState : algConfig.getTerminalStates()) {
             milpTable.setObjective(terminalState, getExpectedUtility(opponentStrategy, terminalState));
         }
     }
 
-    private void addObjectiveSequence(Map<Sequence, Double> opponentStrategy) {
+    protected void addObjectiveSequence(Map<Sequence, Double> opponentStrategy) {
         for (GameState terminalState : algConfig.getTerminalStates()) {
             milpTable.setObjective(terminalState, getExpectedUtilitySequence(opponentStrategy, terminalState));
         }
     }
 
-    private double getExpectedUtilitySequence(Map<Sequence, Double> opponentStrategy, GameState terminalState) {
-        return terminalState.getNatureProbability() * opponentStrategy.get(terminalState.getSequenceFor(opponent)) * terminalState.getUtilities()[player.getId()];
+    protected double getExpectedUtilitySequence(Map<Sequence, Double> opponentStrategy, GameState terminalState) {
+        return terminalState.getNatureProbability() * getProbability(opponentStrategy, terminalState.getSequenceFor(opponent)) * terminalState.getUtilities()[player.getId()];
     }
 
-    private double getExpectedUtility(Map<Action, Double> opponentStrategy, GameState terminalState) {
+    protected double getExpectedUtility(Map<Action, Double> opponentStrategy, GameState terminalState) {
         return terminalState.getNatureProbability() * getProbability(terminalState, opponentStrategy) * terminalState.getUtilities()[player.getId()];
     }
 
-    private double getProbability(GameState terminalState, Map<Action, Double> opponentStrategy) {
+    protected Double getProbability(Map<Sequence, Double> opponentStrategy, Sequence sequence) {
+        return opponentStrategy.get(sequence);
+    }
+
+    protected double getProbability(GameState terminalState, Map<Action, Double> opponentStrategy) {
         double probability = 1;
 
         for (Action action : terminalState.getSequenceFor(info.getOpponent(player))) {
