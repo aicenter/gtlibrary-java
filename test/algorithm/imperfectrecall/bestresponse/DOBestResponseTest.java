@@ -173,7 +173,5 @@ public class DOBestResponseTest {
 
         br.getBestResponseSequence(strategy);
         assertEquals(10, br.getValue(), 1e-4);
-
-
     }
 }
