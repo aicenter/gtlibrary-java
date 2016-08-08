@@ -126,4 +126,54 @@ public class DOBestResponseTest {
         br.getBestResponseSequence(strategy);
         assertEquals(0, br.getValue(), 1e-4);
     }
+
+    @Test
+    public void BRTestRepeatedComputationTest() {
+        GameState rootState = new BRTestGameState();
+        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
+        BasicGameBuilder.build(rootState, config, expander);
+
+        Map<Sequence, Double> strategy = new HashMap<>(2);
+
+        GameState state = rootState.performAction(expander.getActions(rootState).get(0));
+
+        strategy.put(rootState.getSequenceFor(BRTestGameInfo.FIRST_PLAYER), 1d);
+        strategy.put(state.getSequenceFor(BRTestGameInfo.FIRST_PLAYER), 1d);
+        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.SECOND_PLAYER, expander, new BRTestGameInfo());
+
+        br.getBestResponseSequence(strategy);
+        assertEquals(10, br.getValue(), 1e-4);
+
+        strategy = new HashMap<>(2);
+
+        br.getBestResponseSequence(strategy);
+        assertEquals(0, br.getValue(), 1e-4);
+    }
+
+    @Test
+    public void BRTestRepeatedComputationTest1() {
+        GameState rootState = new BRTestGameState();
+        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
+        BasicGameBuilder.build(rootState, config, expander);
+
+        Map<Sequence, Double> strategy = new HashMap<>(2);
+        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.SECOND_PLAYER, expander, new BRTestGameInfo());
+
+        br.getBestResponseSequence(strategy);
+        assertEquals(0, br.getValue(), 1e-4);
+
+        strategy = new HashMap<>(2);
+
+        GameState state = rootState.performAction(expander.getActions(rootState).get(0));
+
+        strategy.put(rootState.getSequenceFor(BRTestGameInfo.FIRST_PLAYER), 1d);
+        strategy.put(state.getSequenceFor(BRTestGameInfo.FIRST_PLAYER), 1d);
+
+        br.getBestResponseSequence(strategy);
+        assertEquals(10, br.getValue(), 1e-4);
+
+
+    }
 }
