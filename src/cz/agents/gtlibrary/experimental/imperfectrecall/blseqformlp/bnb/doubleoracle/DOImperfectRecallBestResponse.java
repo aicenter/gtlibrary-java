@@ -2,12 +2,15 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleo
 
 import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearSequenceFormBNB;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.IloException;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,9 +18,11 @@ import java.util.stream.Collectors;
 public class DOImperfectRecallBestResponse extends ImperfectRecallBestResponse {
 
     private boolean built = false;
+    private Set<Pair<Action, String>> enforcedActionsEqKeys;
 
     public DOImperfectRecallBestResponse(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         super(player, expander, info);
+        enforcedActionsEqKeys = new HashSet<>();
     }
 
     @Override
@@ -66,9 +71,103 @@ public class DOImperfectRecallBestResponse extends ImperfectRecallBestResponse {
         return null;
     }
 
+    public Map<Action, Double> getBestResponseSequenceIn(GameState state, Map<Sequence, Double> opponentStrategy) {
+        removePreviousEnforcements();
+        if (!built) {
+            addStrategySumConstraints();
+            addPUpperBounds();
+            built = true;
+        }
+        forceStateToBeReached(state);
+        redoObjectiveSequence(state, opponentStrategy);
+        redoPEqualitySequence(opponentStrategy);
+        try {
+            LPData lpData = milpTable.toCplex();
+
+            if (BilinearSequenceFormBNB.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
+            lpData.getSolver().solve();
+            setValue(lpData.getSolver().getObjValue());
+
+            return createStrategy(lpData);
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Map<Action, Double> getBestResponseIn(GameState state, Map<Action, Double> opponentStrategy) {
+        removePreviousEnforcements();
+        if (!built) {
+            addStrategySumConstraints();
+            addPUpperBounds();
+            built = true;
+        }
+        forceStateToBeReached(state);
+        redoObjective(state, opponentStrategy);
+        redoPEquality(opponentStrategy);
+        try {
+            LPData lpData = milpTable.toCplex();
+
+            if (BilinearSequenceFormBNB.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
+            lpData.getSolver().solve();
+            setValue(lpData.getSolver().getObjValue());
+
+            return createStrategy(lpData);
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void removePreviousEnforcements() {
+        for (Pair<Action, String> enforcedActionsEqKey : enforcedActionsEqKeys) {
+            milpTable.deleteConstraint(enforcedActionsEqKey);
+        }
+    }
+
+    private void forceStateToBeReached(GameState state) {
+        enforcedActionsEqKeys.clear();
+        for (Action action : state.getSequenceFor(player)) {
+            Pair<Action, String> eqKey = new Pair<>(action, "force");
+
+            milpTable.setConstraint(eqKey, action, 1);
+            milpTable.setConstant(eqKey, 1);
+            milpTable.setConstraintType(eqKey, LPTable.ConstraintType.EQ);
+            enforcedActionsEqKeys.add(eqKey);
+        }
+    }
+
     private void redoObjectiveSequence(Map<Sequence, Double> opponentStrategy) {
         milpTable.removeObjective();
         addObjectiveSequence(opponentStrategy);
+    }
+
+    private void redoObjectiveSequence(GameState state, Map<Sequence, Double> opponentStrategy) {
+        milpTable.removeObjective();
+        addObjectiveSequence(state, opponentStrategy);
+    }
+
+    private void redoObjective(GameState state, Map<Action, Double> opponentStrategy) {
+        milpTable.removeObjective();
+        addObjective(state, opponentStrategy);
+    }
+
+    protected void addObjectiveSequence(GameState state, Map<Sequence, Double> opponentStrategy) {
+        algConfig.getTerminalStates().stream()
+                .filter(terminalState -> isReachable(terminalState, state))
+                .forEach(terminalState -> milpTable.setObjective(terminalState, getExpectedUtilitySequence(opponentStrategy, terminalState)));
+    }
+
+    protected void addObjective(GameState state, Map<Action, Double> opponentStrategy) {
+        algConfig.getTerminalStates().stream()
+                .filter(terminalState -> isReachable(terminalState, state))
+                .forEach(terminalState -> milpTable.setObjective(terminalState, getExpectedUtility(opponentStrategy, terminalState)));
+    }
+
+
+    private boolean isReachable(GameState terminalState, GameState state) {
+        return state.getSequenceFor(player).isPrefixOf(terminalState.getSequenceFor(player)) &&
+                state.getSequenceFor(opponent).isPrefixOf(terminalState.getSequenceFor(opponent));
     }
 
     private void redoPEqualitySequence(Map<Sequence, Double> opponentStrategy) {
@@ -105,7 +204,7 @@ public class DOImperfectRecallBestResponse extends ImperfectRecallBestResponse {
 
             if (probability > 0) {
                 sequenceProbability = probability;
-            } else if (!prefix.isEmpty()){
+            } else if (!prefix.isEmpty()) {
                 SequenceFormIRInformationSet informationSet = (SequenceFormIRInformationSet) prefix.getLastInformationSet();
                 Set<Sequence> sameLevelSequences = informationSet.getOutgoingSequencesFor(lastPrefix);
 
@@ -148,4 +247,5 @@ public class DOImperfectRecallBestResponse extends ImperfectRecallBestResponse {
     private boolean isFirst(Action action, SequenceFormIRInformationSet informationSet) {
         return action.equals(informationSet.getOutgoingSequences().values().iterator().next().iterator().next().getLast());
     }
+
 }

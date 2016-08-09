@@ -174,4 +174,92 @@ public class DOBestResponseTest {
         br.getBestResponseSequence(strategy);
         assertEquals(10, br.getValue(), 1e-4);
     }
+
+    @Test
+    public void BRTestInStateTest() {
+        GameState rootState = new BRTestGameState();
+        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
+        BasicGameBuilder.build(rootState, config, expander);
+
+        Map<Action, Double> strategy = new HashMap<>(2);
+
+        GameState state = rootState.performAction(expander.getActions(rootState).get(0));
+
+        GameState nextState = state.performAction(expander.getActions(state).get(0));
+        List<Action> actions = expander.getActions(nextState);
+
+        strategy.put(actions.get(1), 1d);
+
+        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+
+        br.getBestResponseIn(state, strategy);
+        assertEquals(0, br.getValue(), 1e-4);
+    }
+
+    @Test
+    public void BRTestInStateTest1() {
+        GameState rootState = new BRTestGameState();
+        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
+        BasicGameBuilder.build(rootState, config, expander);
+
+        Map<Action, Double> strategy = new HashMap<>(2);
+
+        GameState state = rootState.performAction(expander.getActions(rootState).get(1));
+
+        GameState nextState = state.performAction(expander.getActions(state).get(1));
+        List<Action> actions = expander.getActions(nextState);
+
+        strategy.put(actions.get(0), 1d);
+
+        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+
+        br.getBestResponseIn(state, strategy);
+        assertEquals(0, br.getValue(), 1e-4);
+    }
+
+    @Test
+    public void BRTestInStateTest2() {
+        GameState rootState = new BRTestGameState();
+        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
+        BasicGameBuilder.build(rootState, config, expander);
+
+        Map<Action, Double> strategy = new HashMap<>(2);
+
+        GameState state = rootState.performAction(expander.getActions(rootState).get(0));
+
+        GameState nextState = state.performAction(expander.getActions(state).get(0));
+        List<Action> actions = expander.getActions(nextState);
+
+        strategy.put(actions.get(0), 1d);
+
+        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+
+        br.getBestResponseIn(state, strategy);
+        assertEquals(5, br.getValue(), 1e-4);
+    }
+
+    @Test
+    public void BRTestInStateTest3() {
+        GameState rootState = new BRTestGameState();
+        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
+        BasicGameBuilder.build(rootState, config, expander);
+
+        Map<Action, Double> strategy = new HashMap<>(2);
+
+        GameState state = rootState.performAction(expander.getActions(rootState).get(1));
+
+        GameState nextState = state.performAction(expander.getActions(state).get(1));
+        List<Action> actions = expander.getActions(nextState);
+
+        strategy.put(actions.get(1), 1d);
+
+        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+
+        br.getBestResponseIn(state, strategy);
+        assertEquals(5, br.getValue(), 1e-4);
+    }
 }
