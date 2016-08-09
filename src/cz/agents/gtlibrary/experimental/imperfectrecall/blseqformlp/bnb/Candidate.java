@@ -11,13 +11,13 @@ import java.util.Set;
 
 public class Candidate implements Comparable<Candidate> {
 
-    private Changes changes;
-    private Action action;
-    private int[] actionProbability;
-    private int fixedDigitsForCurrentAction;
+    protected Changes changes;
+    protected Action action;
+    protected int[] actionProbability;
+    protected int fixedDigitsForCurrentAction;
 
-    private double lb = Double.NEGATIVE_INFINITY;
-    private double ub = Double.POSITIVE_INFINITY;
+    protected double lb = Double.NEGATIVE_INFINITY;
+    protected double ub = Double.POSITIVE_INFINITY;
 
     public Candidate(double lb, double ub, Changes changes,
                      Action action, int[] actionProbability) {
