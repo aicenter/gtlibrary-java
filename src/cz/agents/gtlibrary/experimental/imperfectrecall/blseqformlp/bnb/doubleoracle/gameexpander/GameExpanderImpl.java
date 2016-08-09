@@ -2,7 +2,6 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleo
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.DOCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.DOImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.*;
 
@@ -30,20 +29,23 @@ public class GameExpanderImpl implements GameExpander {
     }
 
     @Override
-    public void expand(SequenceFormIRConfig config, DOCandidate candidate) {
+    public void expand(SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         Queue<GameState> queue = new ArrayDeque<>();
         boolean added;
 
         queue.add(root);
+        System.out.println("size before expand: " + config.getTerminalStates().size());
         while (!queue.isEmpty()) {
             GameState state = queue.poll();
             added = false;
 
             config.addInformationSetFor(state);
+            if (state.isGameEnd())
+                continue;
             for (Action action : expander.getActions(state)) {
                 GameState nextState = state.performAction(action);
 
-                if (candidate.getMinPlayerBestResponse().getOrDefault(nextState.getSequenceFor(minPlayer).getLast(), 0d) > 1e-8) {
+                if (nextState.getSequenceFor(minPlayer).isEmpty() || minPlayerBestResponse.getOrDefault(nextState.getSequenceFor(minPlayer).getLast(), 0d) > 1e-8) {
                     queue.add(nextState);
                     added = true;
                 }
@@ -51,15 +53,17 @@ public class GameExpanderImpl implements GameExpander {
             if (added)
                 removeTemporaryLeaf(state, config);
             else
-                addTemporaryLeafIfNotPresent(state, config, candidate);
+                addTemporaryLeafIfNotPresent(state, config, minPlayerBestResponse);
         }
+        System.out.println("size after expand: " + config.getTerminalStates().size());
+        System.out.println(config.getTerminalStates());
     }
 
-    private void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, DOCandidate candidate) {
-        if(config.getTerminalStates().contains(state))
+    private void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+        if (config.getTerminalStates().contains(state))
             return;
         config.getTerminalStates().add(state);
-        double utility = getUtilityUB(state, candidate);
+        double utility = getUtilityUB(state, minPlayerBestResponse);
 
         config.setUtility(state, utility);
         sequenceCombinationUtilityContribution.put(state, utility);
@@ -67,16 +71,17 @@ public class GameExpanderImpl implements GameExpander {
 
     /**
      * Computes an UB on the expected utility of maxPlayer in this state, nature probability included
+     *
      * @param state
      * @return
      */
-    private double getUtilityUB(GameState state, DOCandidate candidate) {
-        br.getBestResponseIn(state, candidate.getMinPlayerBestResponse());
+    private double getUtilityUB(GameState state, Map<Action, Double> minPlayerBestResponse) {
+        br.getBestResponseIn(state, minPlayerBestResponse);
         return br.getValue();
     }
 
     private void removeTemporaryLeaf(GameState state, SequenceFormIRConfig config) {
-        if (state.isGameEnd())
+        if (state.isGameEnd() || !config.getTerminalStates().contains(state))
             return;
         config.getTerminalStates().remove(state);
         Map<Player, Sequence> seqCombination = getSequenceCombination(state);
