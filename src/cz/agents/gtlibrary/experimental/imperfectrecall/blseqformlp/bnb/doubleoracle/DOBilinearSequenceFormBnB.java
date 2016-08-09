@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle;
 
 import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
@@ -11,7 +11,12 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.expandconditions.DummyExpandCondition;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.expandconditions.ExpandCondition;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.gameexpander.GameExpander;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.gameexpander.GameExpanderImpl;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -27,7 +32,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class BilinearSequenceFormBnB {
+public class DOBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
@@ -38,12 +43,12 @@ public class BilinearSequenceFormBnB {
 
     ImperfectRecallBestResponse br;
     private BilinearTable table;
-    private Expander<SequenceFormIRInformationSet> expander;
+    private Expander<SequenceFormIRInformationSet> fullGameExpander;
     private GameInfo gameInfo;
     private Double finalValue = null;
     private int maxRefinements = 7;
 
-    private Candidate currentBest;
+    private DOCandidate currentBest;
 
     private Action mostBrokenAction;
     private double mostBrokenActionValue;
@@ -55,6 +60,8 @@ public class BilinearSequenceFormBnB {
     private long CPLEXInvocationCount = 0;
     private long BRTime = 0;
     private long lpBuildingTime = 0;
+    private ExpandCondition expandCondition = new DummyExpandCondition();
+    private GameExpander gameExpander;
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
@@ -69,12 +76,12 @@ public class BilinearSequenceFormBnB {
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
         builder.build(root, config, expander);
-        BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, expander, new RandomGameInfo());
+        DOBilinearSequenceFormBnB solver = new DOBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
 
-        solver.setExpander(expander);
+        solver.setFullGameExpander(expander);
         System.out.println("Information sets: " + config.getCountIS(0));
         System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
@@ -97,27 +104,29 @@ public class BilinearSequenceFormBnB {
         BasicGameBuilder builder = new BasicGameBuilder();
         SequenceFormIRConfig config = new SequenceFormIRConfig();
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
+        GameState root = new BRTestGameState();
 
-        builder.build(new BRTestGameState(), config, expander);
-        BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        builder.build(root, config, expander);
+        DOBilinearSequenceFormBnB solver = new DOBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, root, expander, new BRTestGameInfo());
 
         solver.solve(config);
     }
 
-    public BilinearSequenceFormBnB(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
+    public DOBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
         this.table = new BilinearTable();
         this.player = player;
         this.opponent = info.getOpponent(player);
         this.gameInfo = info;
-        this.expander = expander;
-        br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+        this.fullGameExpander = fullGameExpander;
+        br = new DOImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
+        gameExpander = new GameExpanderImpl(player, root, fullGameExpander, info);
     }
 
-    public void solve(SequenceFormIRConfig config) {
-        strategyLP = new StrategyLP(config);
+    public void solve(SequenceFormIRConfig restrictedGameConfig) {
+        strategyLP = new StrategyLP(restrictedGameConfig);
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
-        buildBaseLP(table, config);
+        buildBaseLP(table, restrictedGameConfig);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         try {
             LPData lpData = table.toCplex();
@@ -130,9 +139,9 @@ public class BilinearSequenceFormBnB {
             CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
-            Queue<Candidate> fringe = new PriorityQueue<>();
+            Queue<DOCandidate> fringe = new PriorityQueue<>();
 
-            currentBest = createCandidate(lpData, config);
+            currentBest = createCandidate(lpData, restrictedGameConfig);
             if (DEBUG) System.out.println("most violated action: " + currentBest.getAction());
             if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
 
@@ -143,7 +152,7 @@ public class BilinearSequenceFormBnB {
             fringe.add(currentBest);
 
             while (!fringe.isEmpty()) {
-                Candidate current = pollCandidateWithUBHigherThanBestLB(fringe);
+                DOCandidate current = pollCandidateWithUBHigherThanBestLB(fringe);
 
 //                System.out.println(current + " vs " + currentBest);
 //                System.out.println(current.getChanges());
@@ -152,9 +161,11 @@ public class BilinearSequenceFormBnB {
                     System.out.println(current);
                     return;
                 }
-                addMiddleChildOf(current, fringe, config);
-                addLeftChildOf(current, fringe, config);
-                addRightChildOf(current, fringe, config);
+                if(expandCondition.validForExpansion(restrictedGameConfig, current))
+                    gameExpander.expand(restrictedGameConfig, current);
+                addMiddleChildOf(current, fringe, restrictedGameConfig);
+                addLeftChildOf(current, fringe, restrictedGameConfig);
+                addRightChildOf(current, fringe, restrictedGameConfig);
             }
             finalValue = currentBest.getLb();
 //            table.clearTable();
@@ -203,7 +214,7 @@ public class BilinearSequenceFormBnB {
         return lpBuildingTime;
     }
 
-    private double checkOnCleanLP(SequenceFormIRConfig config, Candidate candidate) throws IloException {
+    private double checkOnCleanLP(SequenceFormIRConfig config, DOCandidate candidate) throws IloException {
         System.out.println("Check!!!!!!!!!!!!!!");
         BilinearTable table = new BilinearTable();
         buildBaseLP(table, config);
@@ -228,7 +239,7 @@ public class BilinearSequenceFormBnB {
         return upperBound;
     }
 
-    private void addMiddleChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
+    private void addMiddleChildOf(DOCandidate current, Queue<DOCandidate> fringe, SequenceFormIRConfig config) {
         Changes newChanges = new Changes(current.getChanges());
         int[] probability = getMiddleExactProbability(current);
         Change change = new MiddleChange(current.getAction(), probability);
@@ -247,7 +258,7 @@ public class BilinearSequenceFormBnB {
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
 
-    private int[] getMiddleExactProbability(Candidate current) {
+    private int[] getMiddleExactProbability(DOCandidate current) {
         int[] probability;
 
         if (current.getActionProbability()[0] == 1) {
@@ -263,7 +274,7 @@ public class BilinearSequenceFormBnB {
         return probability;
     }
 
-    private void addRightChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
+    private void addRightChildOf(DOCandidate current, Queue<DOCandidate> fringe, SequenceFormIRConfig config) {
         if (current.getActionProbability()[0] == 1)
             return;
         Changes newChanges = new Changes(current.getChanges());
@@ -280,7 +291,7 @@ public class BilinearSequenceFormBnB {
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
 
-    private void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
+    private void applyNewChangeAndSolve(Queue<DOCandidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
         try {
             long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
             boolean updated = change.updateW(table);
@@ -302,7 +313,7 @@ public class BilinearSequenceFormBnB {
                     System.out.println(newChanges);
                 }
                 if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
-                    Candidate candidate = createCandidate(newChanges, lpData, config);
+                    DOCandidate candidate = createCandidate(newChanges, lpData, config);
 
                     assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
                     if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
@@ -331,7 +342,7 @@ public class BilinearSequenceFormBnB {
         return probability;
     }
 
-    private void addLeftChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
+    private void addLeftChildOf(DOCandidate current, Queue<DOCandidate> fringe, SequenceFormIRConfig config) {
         Changes newChanges = new Changes(current.getChanges());
         int[] probability = getLeftExactProbability(current);
 
@@ -387,8 +398,8 @@ public class BilinearSequenceFormBnB {
         return isConverged(currentBest.getLb(), currentBest.getUb());
     }
 
-    private Candidate pollCandidateWithUBHigherThanBestLB(Queue<Candidate> fringe) {
-        Candidate current = null;
+    private DOCandidate pollCandidateWithUBHigherThanBestLB(Queue<DOCandidate> fringe) {
+        DOCandidate current = null;
 
         while (current == null || (current.getUb() < currentBest.getLb() && !fringe.isEmpty()))
             current = fringe.poll();
@@ -407,19 +418,19 @@ public class BilinearSequenceFormBnB {
         addValueConstraints(table, config);
     }
 
-    private Candidate createCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
+    private DOCandidate createCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
         Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
 
         assert definedEverywhere(p1Strategy, config);
         assert equalsInPRInformationSets(p1Strategy, config, lpData);
         assert isConvexCombination(p1Strategy, lpData, config);
-        double lowerBound = getLowerBound(p1Strategy);
+        Pair<Double, Map<Action, Double>> lowerBoundAndBR = getLowerBound(p1Strategy);
         double upperBound = getUpperBound(lpData);
         Action action = findMostViolatedBilinearConstraints(config, lpData);
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action));
 
-        assert lowerBound <= upperBound + 1e-6;
-        return new Candidate(lowerBound, upperBound, changes, action, exactProbability);
+        assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
+        return new DOCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, lowerBoundAndBR.getRight());
     }
 
     private int[] getExactProbability(Double value, int precision) {
@@ -433,7 +444,7 @@ public class BilinearSequenceFormBnB {
         return exactValue;
     }
 
-    private Candidate createCandidate(LPData lpData, SequenceFormIRConfig config) throws IloException {
+    private DOCandidate createCandidate(LPData lpData, SequenceFormIRConfig config) throws IloException {
         return createCandidate(new Changes(), lpData, config);
     }
 
@@ -441,12 +452,12 @@ public class BilinearSequenceFormBnB {
         return lpData.getSolver().getObjValue();
     }
 
-    private double getLowerBound(Map<Action, Double> p1Strategy) {
+    private Pair<Double, Map<Action, Double>> getLowerBound(Map<Action, Double> p1Strategy) {
         long start = mxBean.getCurrentThreadCpuTime();
 
-        br.getBestResponse(p1Strategy);
+        Map<Action, Double> bestResponse = br.getBestResponse(p1Strategy);
         BRTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
-        return -br.getValue();
+        return new Pair<>(-br.getValue(), bestResponse);
     }
 
     private boolean equalsInPRInformationSets(Map<Action, Double> p1Strategy, SequenceFormIRConfig config, LPData lpData) throws IloException {
@@ -759,12 +770,12 @@ public class BilinearSequenceFormBnB {
     }
 
 
-    public Expander getExpander() {
-        return expander;
+    public Expander getFullGameExpander() {
+        return fullGameExpander;
     }
 
-    public void setExpander(Expander expander) {
-        this.expander = expander;
+    public void setFullGameExpander(Expander fullGameExpander) {
+        this.fullGameExpander = fullGameExpander;
     }
 
     private Map<Action, Double> extractBehavioralStrategy(SequenceFormIRConfig config, LPData lpData) throws IloException {

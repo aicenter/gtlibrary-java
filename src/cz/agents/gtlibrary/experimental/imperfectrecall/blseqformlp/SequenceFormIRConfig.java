@@ -346,4 +346,8 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
             return p1LowestReachableUtility.get(sequence);
         return p2LowestReachableUtility.get(sequence);
     }
+
+    public Map<GameState, Double> getActualNonZeroUtilityValuesInLeafs() {
+        return actualNonZeroUtilityValuesInLeafs;
+    }
 }
