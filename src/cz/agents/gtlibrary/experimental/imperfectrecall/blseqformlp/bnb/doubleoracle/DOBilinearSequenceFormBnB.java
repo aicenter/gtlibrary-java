@@ -109,7 +109,7 @@ public class DOBilinearSequenceFormBnB {
         builder.build(root, config, expander);
         DOBilinearSequenceFormBnB solver = new DOBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, root, expander, new BRTestGameInfo());
 
-        solver.solve(config);
+        solver.solve(new SequenceFormIRConfig());
     }
 
     public DOBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
@@ -126,6 +126,8 @@ public class DOBilinearSequenceFormBnB {
         strategyLP = new StrategyLP(restrictedGameConfig);
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
+        if(restrictedGameConfig.getAllInformationSets().isEmpty())
+            initRestrictedGame(restrictedGameConfig);
         buildBaseLP(table, restrictedGameConfig);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         try {
@@ -162,7 +164,7 @@ public class DOBilinearSequenceFormBnB {
                     return;
                 }
                 if(expandCondition.validForExpansion(restrictedGameConfig, current))
-                    gameExpander.expand(restrictedGameConfig, current);
+                    gameExpander.expand(restrictedGameConfig, current.getMinPlayerBestResponse());
                 addMiddleChildOf(current, fringe, restrictedGameConfig);
                 addLeftChildOf(current, fringe, restrictedGameConfig);
                 addRightChildOf(current, fringe, restrictedGameConfig);
@@ -192,6 +194,10 @@ public class DOBilinearSequenceFormBnB {
         } catch (IloException e) {
             e.printStackTrace();
         }
+    }
+
+    private void initRestrictedGame(SequenceFormIRConfig restrictedGameConfig) {
+        gameExpander.expand(restrictedGameConfig, br.getBestResponse(new HashMap<>()));
     }
 
     public long getCPLEXTime() {
