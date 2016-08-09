@@ -30,8 +30,6 @@ import java.util.stream.Collectors;
 
 @Deprecated
 public class ReusingBilinearSequenceFormBNB {
-    public static boolean DEBUG = false;
-    public static boolean SAVE_LPS = false;
     public static double BILINEAR_PRECISION = 0.0001;
     public static double EPS = 0.000001;
 
@@ -46,6 +44,9 @@ public class ReusingBilinearSequenceFormBNB {
     private int maxRefinements = 6;
 
     private Candidate currentBest;
+
+    private boolean DEBUG = false;
+    public static boolean SAVE_LPS = false;
 
     private double globalLB;
     private Action mostBrokenAction;

@@ -37,8 +37,8 @@ public class BilinearSequenceFormBNB {
 
     private static int MAX_REFINE = 6;
 
-    private boolean DEBUG = false;
-    public static boolean SAVE_LPS = false;
+    private boolean DEBUG = true;
+    public static boolean SAVE_LPS = true;
 
 
     static public final double BILINEAR_PRECISION = 0.0001;
