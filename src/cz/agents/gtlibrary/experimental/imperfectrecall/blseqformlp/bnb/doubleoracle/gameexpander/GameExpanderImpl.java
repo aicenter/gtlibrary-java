@@ -37,8 +37,8 @@ public class GameExpanderImpl implements GameExpander {
         System.out.println("size before expand: " + config.getTerminalStates().size());
         while (!queue.isEmpty()) {
             GameState state = queue.poll();
-            added = false;
 
+            added = false;
             config.addInformationSetFor(state);
             if (state.isGameEnd())
                 continue;
