@@ -86,6 +86,34 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         }
     }
 
+    protected void updateP1LowestReachableUtilitiesFromActualUtilities(GameState state) {
+        for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[0]).getAllPrefixes()) {
+            Double p1Utility = actualNonZeroUtilityValuesInLeafs.get(state);
+
+            if (p1Utility == null)
+                continue;
+            Double currentValue = p1LowestReachableUtility.get(prefix);
+
+            if (currentValue == null || currentValue > p1Utility)
+                currentValue = p1Utility;
+            p1LowestReachableUtility.put(prefix, currentValue);
+        }
+    }
+
+    protected void updateP1HighestReachableUtilitiesFromActualUtilities(GameState state) {
+        for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[0]).getAllPrefixes()) {
+            Double p1Utility = actualNonZeroUtilityValuesInLeafs.get(state);
+
+            if (p1Utility == null)
+                continue;
+            Double currentValue = p1HighestReachableUtility.get(prefix);
+
+            if (currentValue == null || currentValue < p1Utility)
+                currentValue = p1Utility;
+            p1HighestReachableUtility.put(prefix, currentValue);
+        }
+    }
+
     public void fixTheInformationSetInSequences(GameState state) {
         for (Player player : state.getAllPlayers()) {
             if (player.getId() == 2)
@@ -349,5 +377,17 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
 
     public Map<GameState, Double> getActualNonZeroUtilityValuesInLeafs() {
         return actualNonZeroUtilityValuesInLeafs;
+    }
+
+    public void updateUtilitiesReachableBySequences() {
+        p1HighestReachableUtility.clear();
+        p1LowestReachableUtility.clear();
+        p2HighestReachableUtility.clear();
+        p2LowestReachableUtility.clear();
+
+        for (GameState terminalState : terminalStates) {
+            updateP1HighestReachableUtilitiesFromActualUtilities(terminalState);
+            updateP1LowestReachableUtilitiesFromActualUtilities(terminalState);
+        }
     }
 }
