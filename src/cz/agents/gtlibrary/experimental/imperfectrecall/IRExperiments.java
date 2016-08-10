@@ -36,8 +36,8 @@ public class IRExperiments {
 //            cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSeqenceFormBNB.main(null);
             double lpValue = BilinearSeqenceFormLP.runRandomGame();
 //            BilinearSeqenceFormSingleOracle.main(null);
-            double bnbValue = BilinearSequenceFormBnB.runRandomGame();
-            assert Math.abs(lpValue - bnbValue) < 1e-3;
+//            double bnbValue = BilinearSequenceFormBnB.runRandomGame();
+//            assert Math.abs(lpValue - bnbValue) < 1e-3;
             System.out.println("-----------------------");
         }
 

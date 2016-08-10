@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle;
 
 import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
@@ -8,32 +8,27 @@ import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.expandconditions.DummyExpandCondition;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.expandconditions.ExpandCondition;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.gameexpander.GameExpander;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.gameexpander.GameExpanderImpl;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.DummyExpandCondition;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandCondition;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.GameExpander;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.SingleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 import cz.agents.gtlibrary.utils.Pair;
-import cz.agents.gtlibrary.utils.Triplet;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
-import ilog.cplex.IloCplex;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class DOBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
+public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
     public static boolean DEBUG = false;
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
@@ -55,7 +50,7 @@ public class DOBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
         builder.build(root, config, expander);
-        DOBilinearSequenceFormBnB solver = new DOBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomGameInfo());
+        OracleBilinearSequenceFormBnB solver = new OracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -86,15 +81,15 @@ public class DOBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
         GameState root = new BRTestGameState();
 
         builder.build(root, config, expander);
-        DOBilinearSequenceFormBnB solver = new DOBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, root, expander, new BRTestGameInfo());
+        OracleBilinearSequenceFormBnB solver = new OracleBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, root, expander, new BRTestGameInfo());
 
         solver.solve(new SequenceFormIRConfig());
     }
 
-    public DOBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
+    public OracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
         super(player, fullGameExpander, info);
-        br = new DOImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
-        gameExpander = new GameExpanderImpl(player, root, fullGameExpander, info);
+        br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
+        gameExpander = new SingleOracleGameExpander(player, root, fullGameExpander, info);
     }
 
     public void solve(SequenceFormIRConfig restrictedGameConfig) {
@@ -129,7 +124,7 @@ public class DOBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
             fringe.add(currentBest);
 
             while (!fringe.isEmpty()) {
-                DOCandidate current = (DOCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
+                OracleCandidate current = (OracleCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
 
 //                System.out.println(current + " vs " + currentBest);
 //                System.out.println(current.getChanges());
@@ -213,7 +208,7 @@ public class DOBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
         return isConverged(currentBest.getLb(), currentBest.getUb());
     }
 
-    protected DOCandidate createCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
+    protected OracleCandidate createCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
         Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
 
         assert definedEverywhere(p1Strategy, config);
@@ -225,7 +220,7 @@ public class DOBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action));
 
         assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
-        return new DOCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, lowerBoundAndBR.getRight());
+        return new OracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, lowerBoundAndBR.getRight());
     }
 
 
