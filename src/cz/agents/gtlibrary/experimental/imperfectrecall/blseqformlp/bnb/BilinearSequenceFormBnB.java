@@ -35,8 +35,7 @@ public class BilinearSequenceFormBnB {
     protected final Player player;
     protected final Player opponent;
 
-
-    ImperfectRecallBestResponse br;
+    protected ImperfectRecallBestResponse br;
     protected BilinearTable table;
     protected Expander<SequenceFormIRInformationSet> expander;
     protected GameInfo gameInfo;
