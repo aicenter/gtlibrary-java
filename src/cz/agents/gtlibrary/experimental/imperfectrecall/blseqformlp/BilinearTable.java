@@ -40,7 +40,7 @@ public class BilinearTable extends RecyclingLPTable {
     final int digits = 10;
     final int maxPrecision = 7;
 
-    protected final int INITIAL_MDT_PRECISION = 2;
+    public final int INITIAL_MDT_PRECISION = 2;
 
     public BilinearTable() {
         super();
@@ -372,6 +372,14 @@ public class BilinearTable extends RecyclingLPTable {
         if (precisionValue == null)
             return INITIAL_MDT_PRECISION;
         return precisionValue;
+    }
+
+    public Map<Object, Integer> getHighestPrecision() {
+        return highestPrecision;
+    }
+
+    public Map<Object, Integer> getPrecision() {
+        return precision;
     }
 
     public void removeWUpdate(Change change) throws IloException {

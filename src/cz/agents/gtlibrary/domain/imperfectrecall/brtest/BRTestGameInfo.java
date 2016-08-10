@@ -12,7 +12,7 @@ public class BRTestGameInfo implements GameInfo {
 
     @Override
     public double getMaxUtility() {
-        return 0;
+        return 10;
     }
 
     @Override

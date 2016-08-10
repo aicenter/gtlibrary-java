@@ -2,10 +2,11 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleCandidate;
 
 public class DummyExpandCondition implements ExpandCondition {
     @Override
-    public boolean validForExpansion(SequenceFormIRConfig config, Candidate candidate) {
+    public boolean validForExpansion(SequenceFormIRConfig config, OracleCandidate candidate) {
         return false;
     }
 }

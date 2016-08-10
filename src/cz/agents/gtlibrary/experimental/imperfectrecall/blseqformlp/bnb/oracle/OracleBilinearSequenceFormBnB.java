@@ -12,9 +12,9 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.DummyExpandCondition;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Changes;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandCondition;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandConditionImpl;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.GameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.SingleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
@@ -28,13 +28,13 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
-public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
+public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
 
     protected ImperfectRecallBestResponse br;
-    protected ExpandCondition expandCondition = new DummyExpandCondition();
+    protected ExpandCondition expandCondition = new ExpandConditionImpl();
     protected GameExpander gameExpander;
 
     public static void main(String[] args) {
@@ -94,10 +94,10 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
 
     public void solve(SequenceFormIRConfig restrictedGameConfig) {
         strategyLP = new StrategyLP(restrictedGameConfig);
+        if (restrictedGameConfig.getAllInformationSets().isEmpty())
+            initRestrictedGame(restrictedGameConfig);
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
-        if(restrictedGameConfig.getAllInformationSets().isEmpty())
-            initRestrictedGame(restrictedGameConfig);
         buildBaseLP(table, restrictedGameConfig);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         try {
@@ -133,8 +133,13 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
                     System.out.println(current);
                     return;
                 }
-                if(expandCondition.validForExpansion(restrictedGameConfig, current))
+                if (expandCondition.validForExpansion(restrictedGameConfig, current)) {
                     gameExpander.expand(restrictedGameConfig, current.getMinPlayerBestResponse());
+                    table.clearTable();
+                    buildingTimeStart = mxBean.getCurrentThreadCpuTime();
+                    buildBaseLP(table, restrictedGameConfig);
+                    lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
+                }
                 addMiddleChildOf(current, fringe, restrictedGameConfig);
                 addLeftChildOf(current, fringe, restrictedGameConfig);
                 addRightChildOf(current, fringe, restrictedGameConfig);
@@ -171,43 +176,6 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
     }
 
 
-
-    protected boolean isZero(int[] probability) {
-        return !Arrays.stream(probability).anyMatch(prob -> prob > 0);
-    }
-
-    protected int[] getLeftExactProbability(Candidate current) {
-        int[] probability;
-
-        if (current.getActionProbability()[0] == 1) {
-            probability = new int[current.getActionProbability().length];
-            System.arraycopy(current.getActionProbability(), 0, probability, 0, probability.length);
-            probability[0] = 0;
-            for (int i = 1; i < probability.length; i++) {
-                probability[i] = 9;
-            }
-        } else {
-            probability = current.getActionProbability();
-        }
-        return probability;
-    }
-
-
-//    protected int getDigit(double value, int digit) {
-//        int firstDigit = (int) Math.floor(value);
-//
-//        if (digit == 0)
-//            return firstDigit;
-//        double tempValue = value - firstDigit;
-//
-//        tempValue = Math.floor(tempValue * Math.pow(10, digit));
-//        return (int) (tempValue - 10 * (long) (tempValue / 10));
-//    }
-
-    protected boolean isConverged(Candidate currentBest) {
-        return isConverged(currentBest.getLb(), currentBest.getUb());
-    }
-
     protected OracleCandidate createCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
         Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
 
@@ -220,18 +188,13 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB{
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action));
 
         assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
-        return new OracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, lowerBoundAndBR.getRight());
-    }
-
-
-    protected double getUpperBound(LPData lpData) throws IloException {
-        return lpData.getSolver().getObjValue();
+        return new OracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, extractRPStrategy(config, lpData), lowerBoundAndBR.getRight());
     }
 
     protected Pair<Double, Map<Action, Double>> getLowerBoundAndBR(Map<Action, Double> p1Strategy) {
         long start = mxBean.getCurrentThreadCpuTime();
-
         Map<Action, Double> bestResponse = br.getBestResponse(p1Strategy);
+
         BRTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
         return new Pair<>(-br.getValue(), bestResponse);
     }
