@@ -5,7 +5,7 @@ import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.DOImperfectRecallBestResponse;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -19,7 +19,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
-public class DOBestResponseTest {
+public class OracleBestResponseTest {
     @Test
     public void BRTestTest() {
         GameState rootState = new BRTestGameState();
@@ -37,7 +37,7 @@ public class DOBestResponseTest {
         strategy.put(actions.get(0), 0.5);
         strategy.put(actions.get(1), 0.5);
 
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponse(strategy);
         assertEquals(2.5, br.getValue(), 1e-4);
@@ -60,7 +60,7 @@ public class DOBestResponseTest {
         strategy.put(actions.get(0), 0.6);
         strategy.put(actions.get(1), 0.4);
 
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponse(strategy);
         assertEquals(3, br.getValue(), 1e-4);
@@ -74,7 +74,7 @@ public class DOBestResponseTest {
         BasicGameBuilder.build(rootState, config, expander);
 
         Map<Action, Double> strategy = new HashMap<>(2);
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponse(strategy);
         assertEquals(5, br.getValue(), 1e-4);
@@ -88,7 +88,7 @@ public class DOBestResponseTest {
         BasicGameBuilder.build(rootState, config, expander);
 
         Map<Sequence, Double> strategy = new HashMap<>(2);
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponseSequence(strategy);
         assertEquals(5, br.getValue(), 1e-4);
@@ -107,7 +107,7 @@ public class DOBestResponseTest {
 
         strategy.put(rootState.getSequenceFor(BRTestGameInfo.FIRST_PLAYER), 1d);
         strategy.put(state.getSequenceFor(BRTestGameInfo.FIRST_PLAYER), 1d);
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.SECOND_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.SECOND_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponseSequence(strategy);
         assertEquals(10, br.getValue(), 1e-4);
@@ -121,7 +121,7 @@ public class DOBestResponseTest {
         BasicGameBuilder.build(rootState, config, expander);
 
         Map<Sequence, Double> strategy = new HashMap<>(2);
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.SECOND_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.SECOND_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponseSequence(strategy);
         assertEquals(0, br.getValue(), 1e-4);
@@ -140,7 +140,7 @@ public class DOBestResponseTest {
 
         strategy.put(rootState.getSequenceFor(BRTestGameInfo.FIRST_PLAYER), 1d);
         strategy.put(state.getSequenceFor(BRTestGameInfo.FIRST_PLAYER), 1d);
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.SECOND_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.SECOND_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponseSequence(strategy);
         assertEquals(10, br.getValue(), 1e-4);
@@ -159,7 +159,7 @@ public class DOBestResponseTest {
         BasicGameBuilder.build(rootState, config, expander);
 
         Map<Sequence, Double> strategy = new HashMap<>(2);
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.SECOND_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.SECOND_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponseSequence(strategy);
         assertEquals(0, br.getValue(), 1e-4);
@@ -191,7 +191,7 @@ public class DOBestResponseTest {
 
         strategy.put(actions.get(1), 1d);
 
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponseIn(state, strategy);
         assertEquals(0, br.getValue(), 1e-4);
@@ -213,7 +213,7 @@ public class DOBestResponseTest {
 
         strategy.put(actions.get(0), 1d);
 
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponseIn(state, strategy);
         assertEquals(0, br.getValue(), 1e-4);
@@ -235,7 +235,7 @@ public class DOBestResponseTest {
 
         strategy.put(actions.get(0), 1d);
 
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponseIn(state, strategy);
         assertEquals(5, br.getValue(), 1e-4);
@@ -257,7 +257,7 @@ public class DOBestResponseTest {
 
         strategy.put(actions.get(1), 1d);
 
-        DOImperfectRecallBestResponse br = new DOImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
+        OracleImperfectRecallBestResponse br = new OracleImperfectRecallBestResponse(BRTestGameInfo.FIRST_PLAYER, expander, new BRTestGameInfo());
 
         br.getBestResponseIn(state, strategy);
         assertEquals(5, br.getValue(), 1e-4);

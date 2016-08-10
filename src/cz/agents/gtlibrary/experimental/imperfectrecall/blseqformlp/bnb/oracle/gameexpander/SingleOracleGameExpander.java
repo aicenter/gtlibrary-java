@@ -1,8 +1,8 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.gameexpander;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander;
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle.DOImperfectRecallBestResponse;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.ArrayDeque;
@@ -10,22 +10,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 
-public class GameExpanderImpl implements GameExpander {
+public class SingleOracleGameExpander implements GameExpander {
 
     private Expander<SequenceFormIRInformationSet> expander;
     private GameState root;
     private Player maxPlayer;
     private Player minPlayer;
     private Map<GameState, Double> sequenceCombinationUtilityContribution;
-    private DOImperfectRecallBestResponse br;
+    private OracleImperfectRecallBestResponse br;
 
-    public GameExpanderImpl(Player maxPlayer, GameState root, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
+    public SingleOracleGameExpander(Player maxPlayer, GameState root, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         this.expander = expander;
         this.root = root;
         this.maxPlayer = maxPlayer;
         this.minPlayer = info.getOpponent(maxPlayer);
         sequenceCombinationUtilityContribution = new HashMap<>();
-        br = new DOImperfectRecallBestResponse(maxPlayer, expander, info);
+        br = new OracleImperfectRecallBestResponse(maxPlayer, expander, info);
     }
 
     @Override

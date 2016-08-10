@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.doubleoracle;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle;
 
 import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
@@ -15,12 +15,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DOImperfectRecallBestResponse extends ImperfectRecallBestResponse {
+public class OracleImperfectRecallBestResponse extends ImperfectRecallBestResponse {
 
     private boolean built = false;
     private Set<Pair<Action, String>> enforcedActionsEqKeys;
 
-    public DOImperfectRecallBestResponse(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
+    public OracleImperfectRecallBestResponse(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         super(player, expander, info);
         enforcedActionsEqKeys = new HashSet<>();
     }
