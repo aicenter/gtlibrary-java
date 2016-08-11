@@ -154,7 +154,7 @@ public class ImperfectRecallBestResponse {
     }
 
     protected void addStrategySumConstraints() {
-        algConfig.getAllInformationSets().values().stream().filter(informationSet -> informationSet.getPlayer().equals(player)).forEach(informationSet -> {
+        algConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().equals(player)).filter(i -> !i.getActions().isEmpty()).forEach(informationSet -> {
             for (Action action : expander.getActions(informationSet)) {
                 Object varKey = action;
 
