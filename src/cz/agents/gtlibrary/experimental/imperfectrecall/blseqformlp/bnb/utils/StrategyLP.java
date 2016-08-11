@@ -21,6 +21,7 @@ import java.util.Set;
 
 public class StrategyLP {
 
+    private static Pair<Action, Double> dummyActionCost = new Pair<>(null, 0d);
     private LPTable table;
     private SequenceFormIRConfig config;
     private Map<Sequence, Set<Triplet<String, Sequence, Action>>> sequenceToVars;
@@ -29,6 +30,7 @@ public class StrategyLP {
     private Pair<Action, Double> mostExpensiveActionCostPair;
     private Map<Action, Double> lbs;
     private Map<Action, Double> ubs;
+    private double value;
 
     public StrategyLP(SequenceFormIRConfig config) {
         this.config = config;
@@ -110,6 +112,7 @@ public class StrategyLP {
     }
 
     public Map<Action, Double> getStartegy() {
+        mostExpensiveActionCostPair = dummyActionCost;
         if (tightBounds())
             return getStrategyFromBounds();
         addVarContinuationConstraints();
@@ -122,6 +125,7 @@ public class StrategyLP {
 
             if (BilinearSequenceFormBnB.SAVE_LPS) lpData.getSolver().exportModel("strategyLP.lp");
             lpData.getSolver().solve();
+            value = lpData.getSolver().getObjValue();
             if (lpData.getSolver().getStatus() != IloCplex.Status.Optimal)
                 lpData.getSolver().exportModel("strategyLP" + RandomGameInfo.seed + ".lp");
             updateMostExpensiveActionCostPair(lpData);
@@ -163,7 +167,6 @@ public class StrategyLP {
     }
 
     private void updateMostExpensiveActionCostPair(LPData lpData) throws IloException {
-
         Map<Action, Double> actionCosts = new HashMap<>(actions.size());
 
         for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
@@ -253,5 +256,9 @@ public class StrategyLP {
 
     public Map<Action,Double> getStrategyFromBounds() {
         return ubs;
+    }
+
+    public double getValue() {
+        return value;
     }
 }

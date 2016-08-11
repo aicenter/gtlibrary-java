@@ -57,7 +57,7 @@ public class SingleOracleGameExpander implements GameExpander {
         }
         System.out.println("size after expand: " + config.getTerminalStates().size());
         System.out.println(config.getTerminalStates());
-        config.updateUtilitiesReachableBySequences();
+        config.updateP1UtilitiesReachableBySequences();
     }
 
     private void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
