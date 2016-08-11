@@ -806,7 +806,7 @@ public class BilinearSequenceFormBnB {
         Map<Action, Double> p1Strategy = new HashMap<>();
 
 //        mostBrokenAction = null;
-//        mostBrokenActionValue = Double.NEGATIVE_INFINITY;
+        mostBrokenActionValue = Double.NEGATIVE_INFINITY;
         for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
             if (!i.getPlayer().equals(player))
                 continue;
@@ -833,11 +833,11 @@ public class BilinearSequenceFormBnB {
                     i.getActions().forEach(action -> strategy.putIfAbsent(action, 0d));
                     p1Strategy.putAll(strategy);
                     Pair<Action, Double> actionCostPair = strategyLP.getMostExpensiveActionCostPair();
-
-//                    if (mostBrokenActionValue < actionCostPair.getRight()) {
-//                        mostBrokenActionValue = actionCostPair.getRight();
+//
+                    if (mostBrokenActionValue < actionCostPair.getRight()) {
+                        mostBrokenActionValue = actionCostPair.getRight();
 //                        mostBrokenAction = actionCostPair.getLeft();
-//                    }
+                    }
                 }
             } else if (!i.getOutgoingSequences().isEmpty()) {
                 assert i.getOutgoingSequences().size() == 1;

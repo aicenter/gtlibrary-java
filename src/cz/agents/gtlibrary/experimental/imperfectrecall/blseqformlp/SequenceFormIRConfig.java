@@ -36,13 +36,14 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
             updateHighestReachableUtilities(state);
             updateLowestReachableUtilities(state);
             terminalStates.add(state);
-        } else
+        } else {
             super.addInformationSetFor(state);
+        }
         if (state.isPlayerToMoveNature())
             return;
+        getOrCreateInformationSet(state);
         fixTheInformationSetInSequences(state);
         setOutgoingSequences(state);
-        getOrCreateInformationSet(state);
         setReachableSetBySequence(state);
         addCompatibleSequence(state);
         addPlayerSequences(state);
@@ -379,11 +380,11 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         return actualNonZeroUtilityValuesInLeafs;
     }
 
-    public void updateUtilitiesReachableBySequences() {
+    public void updateP1UtilitiesReachableBySequences() {
         p1HighestReachableUtility.clear();
         p1LowestReachableUtility.clear();
-        p2HighestReachableUtility.clear();
-        p2LowestReachableUtility.clear();
+//        p2HighestReachableUtility.clear();
+//        p2LowestReachableUtility.clear();
 
         for (GameState terminalState : terminalStates) {
             updateP1HighestReachableUtilitiesFromActualUtilities(terminalState);

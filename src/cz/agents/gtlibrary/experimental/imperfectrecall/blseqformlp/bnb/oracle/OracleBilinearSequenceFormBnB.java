@@ -175,7 +175,6 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         gameExpander.expand(restrictedGameConfig, br.getBestResponse(new HashMap<>()));
     }
 
-
     protected OracleCandidate createCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
         Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
 
@@ -188,7 +187,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action));
 
         assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
-        return new OracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, extractRPStrategy(config, lpData), lowerBoundAndBR.getRight());
+        return new OracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, mostBrokenActionValue, extractRPStrategy(config, lpData), lowerBoundAndBR.getRight());
     }
 
     protected Pair<Double, Map<Action, Double>> getLowerBoundAndBR(Map<Action, Double> p1Strategy) {
