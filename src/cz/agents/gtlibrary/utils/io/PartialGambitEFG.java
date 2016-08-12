@@ -9,6 +9,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Allows export of restricted game to gambit format, the restriction is made by providing Map<GameState, double[]> leafUtilities,
@@ -25,7 +26,15 @@ public class PartialGambitEFG {
         maxIndex = 0;
     }
 
-    public void write(String filename, GameState root, Expander<SequenceInformationSet> expander, Map<GameState, double[]> leafUtilities) {
+    public void writeZeroSum(String filename, GameState root, Expander<? extends InformationSet> expander, Map<GameState, Double> leafUtilities) {
+        write(filename, root, expander, convert(leafUtilities), Integer.MAX_VALUE);
+    }
+
+    private Map<GameState, double[]> convert(Map<GameState, Double> leafUtilities) {
+        return leafUtilities.entrySet().stream().collect(Collectors.toMap(e ->  e.getKey(), e -> new double []{e.getValue(), -e.getValue()}));
+    }
+
+    public void write(String filename, GameState root, Expander<? extends InformationSet> expander, Map<GameState, double[]> leafUtilities) {
         write(filename, root, expander, leafUtilities, Integer.MAX_VALUE);
     }
 
@@ -39,7 +48,7 @@ public class PartialGambitEFG {
 
             out.print("EFG 2 R \"" + root.getClass() + expander.getClass() + "\" {");
             Player[] players = root.getAllPlayers();
-            for (int i = 0; i < 2; i++) {//assumes 2 playter games (possibly with nature) nature is the last player and always present!!!
+            for (int i = 0; i < 2; i++) {//assumes 2 player games (possibly with nature) nature is the last player and always present!!!
                 if (i != 0) out.print(" ");
                 out.print("\"" + players[i] + "\"");
             }
