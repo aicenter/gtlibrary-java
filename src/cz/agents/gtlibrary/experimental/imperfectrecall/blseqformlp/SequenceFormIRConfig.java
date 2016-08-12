@@ -9,7 +9,7 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 import java.util.*;
 
 public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSet> {
-    protected Map<GameState, Double> actualNonZeroUtilityValuesInLeafs = new HashMap<>();
+    protected Map<GameState, Double> actualUtilityValuesInLeafs = new HashMap<>();
     protected Map<Sequence, Set<SequenceFormIRInformationSet>> reachableSetsBySequence = new HashMap<>();
     protected Map<Map<Player, Sequence>, Double> utilityForSequenceCombination = new HashMap<>();
     protected Map<Map<Player, Sequence>, Double> natureProbabilityForSequenceCombination = new HashMap<>();
@@ -89,7 +89,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
 
     protected void updateP1LowestReachableUtilitiesFromActualUtilities(GameState state) {
         for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[0]).getAllPrefixes()) {
-            Double p1Utility = actualNonZeroUtilityValuesInLeafs.get(state);
+            Double p1Utility = actualUtilityValuesInLeafs.get(state);
 
             if (p1Utility == null)
                 continue;
@@ -103,7 +103,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
 
     protected void updateP1HighestReachableUtilitiesFromActualUtilities(GameState state) {
         for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[0]).getAllPrefixes()) {
-            Double p1Utility = actualNonZeroUtilityValuesInLeafs.get(state);
+            Double p1Utility = actualUtilityValuesInLeafs.get(state);
 
             if (p1Utility == null)
                 continue;
@@ -240,19 +240,19 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     }
 
     public void setUtility(GameState leaf, double utility) {
-        if (actualNonZeroUtilityValuesInLeafs.containsKey(leaf)) {
-            assert (actualNonZeroUtilityValuesInLeafs.get(leaf) == utility);
+        if (actualUtilityValuesInLeafs.containsKey(leaf)) {
+            assert (actualUtilityValuesInLeafs.get(leaf) == utility);
             return; // we have already stored this leaf
         }
-        if (utility == 0) // we do not store zero-utility
-            return;
+//        if (utility == 0) // we do not store zero-utility
+//            return;
         FixedSizeMap<Player, Sequence> activePlayerMap = createActivePlayerMap(leaf);
         double existingUtility = utility;
 
         if (utilityForSequenceCombination.containsKey(activePlayerMap))
             existingUtility += utilityForSequenceCombination.get(activePlayerMap);
 
-        actualNonZeroUtilityValuesInLeafs.put(leaf, utility);
+        actualUtilityValuesInLeafs.put(leaf, utility);
         utilityForSequenceCombination.put(activePlayerMap, existingUtility);
     }
 
@@ -284,7 +284,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         } else {
             utilityForSequenceCombination.put(activePlayerMap, existingUtility);
         }
-        actualNonZeroUtilityValuesInLeafs.remove(oldLeaf);
+        actualUtilityValuesInLeafs.remove(oldLeaf);
     }
 
     protected FixedSizeMap<Player, Sequence> createActivePlayerMap(GameState leaf) {
@@ -299,7 +299,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     }
 
     public Double getActualNonzeroUtilityValues(GameState leaf) {
-        return actualNonZeroUtilityValuesInLeafs.get(leaf);
+        return actualUtilityValuesInLeafs.get(leaf);
     }
 
     public Double getUtilityFor(Map<Player, Sequence> sequenceCombination) {
@@ -376,8 +376,8 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         return p2LowestReachableUtility.get(sequence);
     }
 
-    public Map<GameState, Double> getActualNonZeroUtilityValuesInLeafs() {
-        return actualNonZeroUtilityValuesInLeafs;
+    public Map<GameState, Double> getActualUtilityValuesInLeafs() {
+        return actualUtilityValuesInLeafs;
     }
 
     public void updateP1UtilitiesReachableBySequences() {
