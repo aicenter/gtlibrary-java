@@ -28,39 +28,71 @@ public class SingleOracleGameExpander implements GameExpander {
         br = new OracleImperfectRecallBestResponse(maxPlayer, expander, info);
     }
 
+//    @Override
+//    public void expand(SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+//        Queue<GameState> queue = new ArrayDeque<>();
+//        boolean added;
+//
+//        queue.add(root);
+//        System.out.println("size before expand: " + config.getTerminalStates().size());
+//        while (!queue.isEmpty()) {
+//            GameState state = queue.poll();
+//
+//            added = false;
+//            config.addInformationSetFor(state);
+//            if (state.isGameEnd())
+//                continue;
+//            for (Action action : expander.getActions(state)) {
+//                GameState nextState = state.performAction(action);
+//
+//                if (nextState.getSequenceFor(minPlayer).isEmpty() || minPlayerBestResponse.getOrDefault(nextState.getSequenceFor(minPlayer).getLast(), 0d) > 1e-8) {
+//                    queue.add(nextState);
+//                    added = true;
+//                }
+//            }
+//            if (added)
+//                removeTemporaryLeaf(state, config);
+//            else
+//                addTemporaryLeafIfNotPresent(state, config, minPlayerBestResponse);
+//        }
+//        System.out.println("size after expand: " + config.getTerminalStates().size());
+//        System.out.println(config.getTerminalStates());
+//        config.updateP1UtilitiesReachableBySequences();
+//    }
+
     @Override
     public void expand(SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
-        Queue<GameState> queue = new ArrayDeque<>();
-        boolean added;
-
-        queue.add(root);
         System.out.println("size before expand: " + config.getTerminalStates().size());
-        while (!queue.isEmpty()) {
-            GameState state = queue.poll();
-
-            added = false;
-            config.addInformationSetFor(state);
-            if (state.isGameEnd())
-                continue;
-            for (Action action : expander.getActions(state)) {
-                GameState nextState = state.performAction(action);
-
-                if (nextState.getSequenceFor(minPlayer).isEmpty() || minPlayerBestResponse.getOrDefault(nextState.getSequenceFor(minPlayer).getLast(), 0d) > 1e-8) {
-                    queue.add(nextState);
-                    added = true;
-                }
-            }
-            if (added)
-                removeTemporaryLeaf(state, config);
-            else
-                addTemporaryLeafIfNotPresent(state, config, minPlayerBestResponse);
-        }
+        expandRecursively(root, config, minPlayerBestResponse);
         System.out.println("size after expand: " + config.getTerminalStates().size());
-        System.out.println(config.getTerminalStates());
         config.updateP1UtilitiesReachableBySequences();
     }
 
+    private void expandRecursively(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+        config.addInformationSetFor(state);
+        if (state.isGameEnd())
+            return;
+        if (state.getPlayerToMove().equals(minPlayer)) {
+            boolean added = false;
+            for (Action action : expander.getActions(state)) {
+                if (minPlayerBestResponse.getOrDefault(action, 0d) > 1e-8) {
+                    expandRecursively(state.performAction(action), config, minPlayerBestResponse);
+                    added = true;
+                }
+                if (added)
+                    removeTemporaryLeaf(state, config);
+                else
+                    addTemporaryLeafIfNotPresent(state, config, minPlayerBestResponse);
+            }
+            return;
+        }
+        for (Action action : expander.getActions(state)) {
+            expandRecursively(state.performAction(action), config, minPlayerBestResponse);
+        }
+    }
+
     private void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+        System.err.println("adding temp leaf");
         if (config.getTerminalStates().contains(state))
             return;
         config.getTerminalStates().add(state);
@@ -87,10 +119,14 @@ public class SingleOracleGameExpander implements GameExpander {
         config.getTerminalStates().remove(state);
         Map<Player, Sequence> seqCombination = getSequenceCombination(state);
         Double utility = config.getUtilityFor(seqCombination);
+        double toSubtract = sequenceCombinationUtilityContribution.get(state);
 
-        utility -= sequenceCombinationUtilityContribution.get(state);
-        config.getUtilityForSequenceCombination().put(seqCombination, utility);
-        config.getActualNonZeroUtilityValuesInLeafs().remove(state);
+        assert utility != null || Math.abs(toSubtract) <= 1e-8;
+        if (utility != null) {
+            utility -= sequenceCombinationUtilityContribution.get(state);
+            config.getUtilityForSequenceCombination().put(seqCombination, utility);
+            config.getActualNonZeroUtilityValuesInLeafs().remove(state);
+        }
     }
 
     private Map<Player, Sequence> getSequenceCombination(GameState state) {

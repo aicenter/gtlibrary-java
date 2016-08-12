@@ -57,8 +57,8 @@ public class BilinearSequenceFormBnB {
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-//        runRandomGame();
-        runBRTest();
+        runRandomGame();
+//        runBRTest();
     }
 
     public static double runRandomGame() {
