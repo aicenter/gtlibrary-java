@@ -23,7 +23,8 @@ public class RecyclingMILPTable extends RecyclingLPTable {
     @Override
     protected IloNumVar[] updateVariables(Object[] keys, String[] variableNames, double[] lb, double[] ub) throws IloException {
         if (lpVariables == null)
-            return cplex.numVarArray(variableNames.length, lb, ub, variableNames);
+            lpVariables = new IloNumVar[0];
+//            return cplex.numVarArray(variableNames.length, lb, ub, variableNames);
 
         IloNumVar[] newVariables = new IloNumVar[variableNames.length];
 
