@@ -39,8 +39,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-//        runRandomGame();
-        runBRTest();
+        runRandomGame();
+//        runBRTest();
     }
 
     public static double runRandomGame() {
@@ -61,7 +61,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
         long start = mxBean.getCurrentThreadCpuTime();
 
-        solver.solve(config);
+        solver.solve(new SequenceFormIRConfig());
         System.out.println("CPLEX time: " + solver.getCPLEXTime());
         System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
         System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
@@ -145,6 +145,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                 addRightChildOf(current, fringe, restrictedGameConfig);
             }
             finalValue = currentBest.getLb();
+            System.out.println("final value: " + finalValue);
 //            table.clearTable();
 //            buildBaseLP(config);
 //            LPData checkData = table.toCplex();
