@@ -215,7 +215,7 @@ public class RandomGameState extends GameStateImpl{
         double rndValue;
 
         if (RandomGameInfo.UTILITY_CORRELATION) {
-            if (RandomGameInfo.BINARY_UTILITY) {
+            if (RandomGameInfo.INTEGER_UTILITY) {
                 for (int i = 0; i < centers.length; i++)
                     utilities[i] = Math.signum(centers[i]);
             } else {
@@ -223,7 +223,7 @@ public class RandomGameState extends GameStateImpl{
                     utilities[i] = centers[i];
             }
         } else {
-            if (RandomGameInfo.BINARY_UTILITY) {
+            if (RandomGameInfo.INTEGER_UTILITY) {
                 rndValue = new HighQualityRandom(ID).nextInt(2*RandomGameInfo.MAX_UTILITY + 1) - RandomGameInfo.MAX_UTILITY ; // totally random binary
             } else {
                 rndValue = new HighQualityRandom(ID).nextDouble() * 2 * RandomGameInfo.MAX_UTILITY - RandomGameInfo.MAX_UTILITY; // totally random
@@ -243,7 +243,7 @@ public class RandomGameState extends GameStateImpl{
         Rational[] utilities = new Rational[centers.length];
 
         if (RandomGameInfo.UTILITY_CORRELATION) {
-            if (RandomGameInfo.BINARY_UTILITY) {
+            if (RandomGameInfo.INTEGER_UTILITY) {
                 for (int i = 0; i < centers.length; i++)
                     utilities[i] = new Rational((int) Math.signum(centers[i]));
             } else {
@@ -251,7 +251,7 @@ public class RandomGameState extends GameStateImpl{
                     utilities[i] = new Rational(centers[i]);
             }
         } else {
-            if (RandomGameInfo.BINARY_UTILITY) {
+            if (RandomGameInfo.INTEGER_UTILITY) {
                 rndValue = new Rational(new HighQualityRandom(ID).nextInt(RandomGameInfo.MAX_UTILITY + 1)); // totally random binary
             } else {
                 double doubleValue = new HighQualityRandom(ID).nextDouble() * RandomGameInfo.MAX_UTILITY;
@@ -269,7 +269,7 @@ public class RandomGameState extends GameStateImpl{
     public double[] evaluate() {
         double normalization = 1;
 
-        if (RandomGameInfo.BINARY_UTILITY)
+        if (RandomGameInfo.INTEGER_UTILITY)
             normalization = 2 * RandomGameInfo.MAX_CENTER_MODIFICATION * RandomGameInfo.MAX_DEPTH;
 
         return new double[]{centers[0] / normalization, centers[1] / normalization};

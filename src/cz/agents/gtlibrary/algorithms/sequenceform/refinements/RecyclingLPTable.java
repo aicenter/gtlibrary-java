@@ -428,6 +428,7 @@ public class RecyclingLPTable extends LPTable {
     }
 
     public void removeObjective() {
+        objective = new LinkedHashMap<>();
         try {
             cplex.remove(lpObj);
         } catch (IloException e) {

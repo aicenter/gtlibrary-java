@@ -22,14 +22,14 @@ public class RandomGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
 
     public static double CORRELATION = 0;// -1 for zero sum, 1 for identical utilities
-    public static int MAX_DEPTH = 6;
-    public static int MAX_BF = 4;
-    public static int MIN_BF = 3;
+    public static int MAX_DEPTH = 4;
+    public static int MAX_BF = 3;
+    public static int MIN_BF = 2;
     public static int MAX_OBSERVATION = 3;
     public static int MAX_UTILITY = 100;
-    public static boolean BINARY_UTILITY = false;
+    public static boolean INTEGER_UTILITY = true;
     public static boolean UTILITY_CORRELATION = false;
-    public static boolean MULTIPLE_PLAYER_DEPTHS = true;
+    public static boolean MULTIPLE_PLAYER_DEPTHS = false;
     public static int MAX_CENTER_MODIFICATION = 10;
     public static boolean FIXED_SIZE_BF = false;
     public static double NATURE_STATE_PROBABILITY = 0;
@@ -50,10 +50,7 @@ public class RandomGameInfo implements GameInfo {
     public RandomGameInfo() {
         rnd = new HighQualityRandom(seed);
         if (UTILITY_CORRELATION) {
-            if (BINARY_UTILITY)
-                MAX_UTILITY = 1;
-            else
-                MAX_UTILITY = 2 * MAX_CENTER_MODIFICATION * MAX_DEPTH;
+            MAX_UTILITY = 2 * MAX_CENTER_MODIFICATION * MAX_DEPTH;
         }
         ACTIONS = new int[MAX_BF - 1];
         for (int i = 0; i < MAX_BF - 1; i++) {
@@ -80,7 +77,7 @@ public class RandomGameInfo implements GameInfo {
 
     @Override
     public String getInfo() {
-        return "Random game:\nMAX_UTILITY:" + MAX_UTILITY + ", MAX_BF:" + MAX_BF + ", MAX_OBSERVATIONS:" + MAX_OBSERVATION + ", MAX_DEPTH:" + MAX_DEPTH + ", BIN_UTIL:" + BINARY_UTILITY + ", UTIL_CORR:" + UTILITY_CORRELATION + ", CORR:" + CORRELATION + ", SEED:" + seed;
+        return "Random game:\nMAX_UTILITY:" + MAX_UTILITY + ", MAX_BF:" + MAX_BF + ", MAX_OBSERVATIONS:" + MAX_OBSERVATION + ", MAX_DEPTH:" + MAX_DEPTH + ", BIN_UTIL:" + INTEGER_UTILITY + ", UTIL_CORR:" + UTILITY_CORRELATION + ", CORR:" + CORRELATION + ", SEED:" + seed;
     }
 
     @Override

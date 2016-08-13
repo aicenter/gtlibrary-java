@@ -201,6 +201,7 @@ public class ImperfectRecallBestResponse {
                 return 0;
             probability *= actionProbability;
         }
+        System.out.println(probability);
         return probability;
     }
 
