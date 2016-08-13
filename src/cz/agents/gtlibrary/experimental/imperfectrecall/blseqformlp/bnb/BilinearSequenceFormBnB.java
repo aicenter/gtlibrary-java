@@ -305,6 +305,8 @@ public class BilinearSequenceFormBnB {
 
                     assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
                     if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
+                    if(candidate.getLb() > currentBest.getLb())
+                        currentBest = candidate;
                     if (isConverged(candidate)) {
                         if (candidate.getLb() > currentBest.getLb()) {
                             currentBest = candidate;
@@ -806,7 +808,7 @@ public class BilinearSequenceFormBnB {
         Map<Action, Double> p1Strategy = new HashMap<>();
 
 //        mostBrokenAction = null;
-        mostBrokenActionValue = Double.NEGATIVE_INFINITY;
+        mostBrokenActionValue = 0;
         for (SequenceFormIRInformationSet i : config.getAllInformationSets().values()) {
             if (!i.getPlayer().equals(player))
                 continue;
@@ -834,8 +836,8 @@ public class BilinearSequenceFormBnB {
                     p1Strategy.putAll(strategy);
                     Pair<Action, Double> actionCostPair = strategyLP.getMostExpensiveActionCostPair();
 //
-                    if (mostBrokenActionValue < actionCostPair.getRight()) {
-                        mostBrokenActionValue = actionCostPair.getRight();
+                    if (mostBrokenActionValue < Math.abs(actionCostPair.getRight())) {
+                        mostBrokenActionValue = Math.abs(actionCostPair.getRight());
 //                        mostBrokenAction = actionCostPair.getLeft();
                     }
                 }
