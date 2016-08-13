@@ -4,11 +4,10 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.io.PartialGambitEFG;
 
-import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
 
 public class SingleOracleGameExpander implements GameExpander {
 
@@ -62,9 +61,14 @@ public class SingleOracleGameExpander implements GameExpander {
 
     @Override
     public void expand(SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
-        System.out.println("size before expand: " + config.getTerminalStates().size());
+        System.out.println("terminal states before expand: " + config.getTerminalStates().size());
+        System.out.println("information sets before expand: " + config.getAllInformationSets().size());
+        System.out.println("sequences before expand: " + config.getAllInformationSets().size());
         expandRecursively(root, config, minPlayerBestResponse);
-        System.out.println("size after expand: " + config.getTerminalStates().size());
+        System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
+        System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
+        System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
+        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs());
         config.updateP1UtilitiesReachableBySequences();
     }
 
@@ -125,7 +129,7 @@ public class SingleOracleGameExpander implements GameExpander {
         if (utility != null) {
             utility -= sequenceCombinationUtilityContribution.get(state);
             config.getUtilityForSequenceCombination().put(seqCombination, utility);
-            config.getActualNonZeroUtilityValuesInLeafs().remove(state);
+            config.getActualUtilityValuesInLeafs().remove(state);
         }
     }
 

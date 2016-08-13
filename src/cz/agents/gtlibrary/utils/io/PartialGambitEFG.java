@@ -1,7 +1,6 @@
 package cz.agents.gtlibrary.utils.io;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 
@@ -13,8 +12,8 @@ import java.util.stream.Collectors;
 
 /**
  * Allows export of restricted game to gambit format, the restriction is made by providing Map<GameState, double[]> leafUtilities,
- * which are expected to contain all the leafs of the restricted game. Beware that it builds the config.
- */
+ * which are expected to contain all the leafs of the restricted game.
+ * */
 public class PartialGambitEFG {
     private boolean wActionLabels = false;
     private Map<ISKey, Integer> infSetIndices;
@@ -69,7 +68,7 @@ public class PartialGambitEFG {
     private void writeRec(PrintStream out, GameState node, Expander<? extends InformationSet> expander, Map<GameState, double[]> leafUtilities, int cut_off_depth) {
         if (node.isGameEnd() || cut_off_depth == 0 || leafUtilities.containsKey(node)) {
             out.print("t \"" + node.toString() + "\" " + nextOutcome++ + " \"\" { ");
-            double[] u = leafUtilities.get(node);
+            double[] u = leafUtilities.getOrDefault(node, new double[]{-1e6, -1e6});
 
             for (int i = 0; i < 2; i++) {
                 out.print((i == 0 ? "" : ", ") + u[i]);
@@ -80,7 +79,7 @@ public class PartialGambitEFG {
             if (node.isPlayerToMoveNature()) {
                 out.print("c \"" + node.toString() + "\" " + nextChance++ + " \"\" { ");
                 for (Action a : actions) {
-                    out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + node.getProbabilityOfNatureFor(a) + " ");
+                     out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + node.getProbabilityOfNatureFor(a) + " ");
                 }
             } else {
                 out.print("p \"" + node.toString() + "\" " + (node.getPlayerToMove().getId() + 1) + " " + getUniqueHash(node.getISKeyForPlayerToMove()) + " \"\" { ");
@@ -91,7 +90,7 @@ public class PartialGambitEFG {
             out.println("} 0");
             for (Action a : actions) {
                 GameState next = node.performAction(a);
-                ((SequenceFormConfig<SequenceInformationSet>) expander.getAlgorithmConfig()).addStateToSequenceForm(next);
+//                ((SequenceFormConfig<SequenceInformationSet>) expander.getAlgorithmConfig()).addStateToSequenceForm(next);
                 writeRec(out, next, expander, leafUtilities, cut_off_depth - 1);
             }
         }
