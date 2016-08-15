@@ -7,14 +7,16 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.PartialGambitEFG;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
-//    private Set<GameState> temporaryLeafBlackList;
+    private Set<GameState> temporaryLeafBlackList;
 
     public ReducedSingleOracleGameExpander(Player maxPlayer, GameState root, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         super(maxPlayer, root, expander, info);
-//        temporaryLeafBlackList = new HashSet<>();
+        temporaryLeafBlackList = new HashSet<>();
     }
 
     @Override
@@ -28,7 +30,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
         System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
         System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
         System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
-        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs());
+        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         config.updateP1UtilitiesReachableBySequences();
     }
 
@@ -43,7 +45,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
         System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
         System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
         System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
-        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs());
+        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         config.updateP1UtilitiesReachableBySequences();
     }
 
@@ -100,7 +102,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
             for (Action action : expander.getActions(state)) {
                 GameState nextState = state.performAction(action);
 
-                if ((action.equals(((SequenceFormIRInformationSet)action.getInformationSet()).getOutgoingSequences().values().iterator().next().iterator().next().getLast())))
+                if ((action.equals(((SequenceFormIRInformationSet)action.getInformationSet()).getFirst())))
                     removeUnreachableActionsRecursively(nextState, minPlayerBestResponse, filteredStrategy);
             }
         } else {
@@ -115,7 +117,20 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
         return filteredStrategy;
     }
 
-//    protected void expandRecursively(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+    @Override
+    protected void removeTemporaryLeaf(GameState state, SequenceFormIRConfig config) {
+        temporaryLeafBlackList.add(state);
+        super.removeTemporaryLeaf(state, config);
+    }
+
+    @Override
+    protected void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+        if(temporaryLeafBlackList.contains(state))
+            return;
+        super.addTemporaryLeafIfNotPresent(state, config, minPlayerBestResponse);
+    }
+
+    //    protected void expandRecursively(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
 //        config.addInformationSetFor(state);
 //        if (state.isGameEnd())
 //            return;

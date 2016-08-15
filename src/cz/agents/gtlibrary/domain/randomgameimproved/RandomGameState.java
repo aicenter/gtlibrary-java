@@ -400,7 +400,7 @@ public class RandomGameState extends GameStateImpl{
         for (Map.Entry<Player, Sequence> entry : history.entrySet()) {
             builder.append(entry.getKey()).append(": ");
             for (Action action : entry.getValue()) {
-                builder.append(((RandomGameAction)action).getOrder());
+                builder.append(/*((RandomGameAction)*/action/*).getOrder()*/);
             }
             builder.append(", ");
         }
