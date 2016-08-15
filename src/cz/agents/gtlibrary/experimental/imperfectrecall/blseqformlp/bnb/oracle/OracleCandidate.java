@@ -33,4 +33,8 @@ public class OracleCandidate extends Candidate {
     public double getPrecisionError() {
         return precisionError;
     }
+
+    public Map<Sequence, Double> getMaxPlayerRealPlan() {
+        return maxPlayerRealPlan;
+    }
 }
