@@ -3,10 +3,7 @@ package cz.agents.gtlibrary.domain.randomgameimproved;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.randomgameimproved.centers.ModificationGenerator;
 import cz.agents.gtlibrary.iinodes.*;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Observation;
-import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -394,7 +391,20 @@ public class RandomGameState extends GameStateImpl{
 
     @Override
     public String toString() {
-        return "RG-ID: " + ID + " C: " + Arrays.toString(centers);
+        return "RG-ID: " + ID + " C: " + Arrays.toString(centers) + conciseHistoryToString();
+    }
+
+    private String conciseHistoryToString() {
+        StringBuilder builder = new StringBuilder();
+
+        for (Map.Entry<Player, Sequence> entry : history.entrySet()) {
+            builder.append(entry.getKey()).append(": ");
+            for (Action action : entry.getValue()) {
+                builder.append(((RandomGameAction)action).getOrder());
+            }
+            builder.append(", ");
+        }
+        return builder.toString();
     }
 
     public int[] getCenters() {
