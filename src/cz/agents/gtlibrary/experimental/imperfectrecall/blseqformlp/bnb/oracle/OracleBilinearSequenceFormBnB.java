@@ -90,7 +90,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public OracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
         super(player, fullGameExpander, info);
         br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
-        gameExpander = new SingleOracleGameExpander(player, root, fullGameExpander, info);
+        gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
     }
 
     public void solve(SequenceFormIRConfig restrictedGameConfig) {
@@ -185,6 +185,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         assert isConvexCombination(p1Strategy, lpData, config);
         Pair<Double, Map<Action, Double>> lowerBoundAndBR = getLowerBoundAndBR(p1Strategy);
         double upperBound = getUpperBound(lpData);
+
+        assert upperBound > lowerBoundAndBR.getLeft() - 1e-3;
         Action action = findMostViolatedBilinearConstraints(config, lpData);
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action));
 

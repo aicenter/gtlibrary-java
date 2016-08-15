@@ -69,7 +69,7 @@ public class SingleOracleGameExpander implements GameExpander {
         System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
         System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
         System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
-        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs());
+        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         config.updateP1UtilitiesReachableBySequences();
     }
 
@@ -82,7 +82,7 @@ public class SingleOracleGameExpander implements GameExpander {
         System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
         System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
         System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
-        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs());
+        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         config.updateP1UtilitiesReachableBySequences();
     }
 
@@ -115,9 +115,9 @@ public class SingleOracleGameExpander implements GameExpander {
     }
 
     protected void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
-        System.err.println("adding temp leaf");
-        if (config.getTerminalStates().contains(state))
+        if (config.getTerminalStates().contains(state) || state.isGameEnd())
             return;
+        System.err.println("adding temp leaf");
         config.getTerminalStates().add(state);
         double utility = getUtilityUB(state, minPlayerBestResponse);
 
@@ -139,6 +139,7 @@ public class SingleOracleGameExpander implements GameExpander {
     protected void removeTemporaryLeaf(GameState state, SequenceFormIRConfig config) {
         if (state.isGameEnd() || !config.getTerminalStates().contains(state))
             return;
+        System.err.println("removing leaf");
         config.getTerminalStates().remove(state);
         Map<Player, Sequence> seqCombination = getSequenceCombination(state);
         Double utility = config.getUtilityFor(seqCombination);

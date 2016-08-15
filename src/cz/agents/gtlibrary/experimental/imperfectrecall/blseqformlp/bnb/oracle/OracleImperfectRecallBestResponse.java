@@ -208,7 +208,7 @@ public class OracleImperfectRecallBestResponse extends ImperfectRecallBestRespon
                 SequenceFormIRInformationSet informationSet = (SequenceFormIRInformationSet) prefix.getLastInformationSet();
                 Set<Sequence> sameLevelSequences = informationSet.getOutgoingSequencesFor(lastPrefix);
 
-                assert informationSet.getOutgoingSequences().entrySet().stream().map(entry -> entry.getValue().iterator().next().getLast()).collect(Collectors.toSet()).size() == 1;
+//                assert informationSet.getOutgoingSequences().entrySet().stream().map(entry -> entry.getValue().iterator().next().getLast()).collect(Collectors.toSet()).size() == 1;
                 if (sameLevelSequences.stream().anyMatch(s -> opponentStrategy.getOrDefault(s, 0d) > 0) || !isFirst(prefix.getLast(), informationSet))
                     return 0d;
             }
@@ -218,7 +218,7 @@ public class OracleImperfectRecallBestResponse extends ImperfectRecallBestRespon
     }
 
     /**
-     * Reimplementation allowing for partial startegy, default strategy playing first available action is assumed in the rest of the tree
+     * Reimplementation allowing for partial strategy, default strategy playing first available action is assumed in the rest of the tree
      *
      * @param opponentStrategy
      * @param terminalState
@@ -234,7 +234,7 @@ public class OracleImperfectRecallBestResponse extends ImperfectRecallBestRespon
                 SequenceFormIRInformationSet informationSet = (SequenceFormIRInformationSet) action.getInformationSet();
                 Set<Sequence> sameLevelSequences = informationSet.getOutgoingSequences().values().iterator().next();
 
-                assert informationSet.getOutgoingSequences().entrySet().stream().map(entry -> entry.getValue().iterator().next()).collect(Collectors.toSet()).size() == 1;
+//                assert informationSet.getOutgoingSequences().entrySet().stream().map(entry -> entry.getValue().iterator().next()).collect(Collectors.toSet()).size() == 1;
                 if (sameLevelSequences.stream().anyMatch(s -> opponentStrategy.getOrDefault(s.getLast(), 0d) > 0) || !isFirst(action, informationSet))
                     return 0d;
             } else {
@@ -245,7 +245,7 @@ public class OracleImperfectRecallBestResponse extends ImperfectRecallBestRespon
     }
 
     private boolean isFirst(Action action, SequenceFormIRInformationSet informationSet) {
-        return action.equals(informationSet.getOutgoingSequences().values().iterator().next().iterator().next().getLast());
+        return action.equals(informationSet.getFirst());
     }
 
 }
