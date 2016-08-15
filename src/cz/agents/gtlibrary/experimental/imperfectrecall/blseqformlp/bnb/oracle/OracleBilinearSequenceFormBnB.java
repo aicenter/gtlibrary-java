@@ -16,6 +16,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.C
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandCondition;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandConditionImpl;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.GameExpander;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.ReducedSingleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.SingleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.interfaces.*;
@@ -134,7 +135,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                     return;
                 }
                 if (expandCondition.validForExpansion(restrictedGameConfig, current)) {
-                    gameExpander.expand(restrictedGameConfig, current.getMinPlayerBestResponse());
+                    gameExpander.expand(restrictedGameConfig, current);
                     table.clearTable();
                     buildingTimeStart = mxBean.getCurrentThreadCpuTime();
                     buildBaseLP(table, restrictedGameConfig);

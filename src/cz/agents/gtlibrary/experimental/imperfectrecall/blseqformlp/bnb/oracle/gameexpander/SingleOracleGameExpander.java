@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.PartialGambitEFG;
@@ -11,12 +12,12 @@ import java.util.Map;
 
 public class SingleOracleGameExpander implements GameExpander {
 
-    private Expander<SequenceFormIRInformationSet> expander;
-    private GameState root;
-    private Player maxPlayer;
-    private Player minPlayer;
-    private Map<GameState, Double> sequenceCombinationUtilityContribution;
-    private OracleImperfectRecallBestResponse br;
+    protected Expander<SequenceFormIRInformationSet> expander;
+    protected GameState root;
+    protected Player maxPlayer;
+    protected Player minPlayer;
+    protected Map<GameState, Double> sequenceCombinationUtilityContribution;
+    protected OracleImperfectRecallBestResponse br;
 
     public SingleOracleGameExpander(Player maxPlayer, GameState root, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         this.expander = expander;
@@ -60,6 +61,19 @@ public class SingleOracleGameExpander implements GameExpander {
 //    }
 
     @Override
+    public void expand(SequenceFormIRConfig config, OracleCandidate candidate) {
+        System.out.println("terminal states before expand: " + config.getTerminalStates().size());
+        System.out.println("information sets before expand: " + config.getAllInformationSets().size());
+        System.out.println("sequences before expand: " + config.getAllInformationSets().size());
+        expandRecursively(root, config, candidate);
+        System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
+        System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
+        System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
+        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs());
+        config.updateP1UtilitiesReachableBySequences();
+    }
+
+    @Override
     public void expand(SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         System.out.println("terminal states before expand: " + config.getTerminalStates().size());
         System.out.println("information sets before expand: " + config.getAllInformationSets().size());
@@ -72,22 +86,23 @@ public class SingleOracleGameExpander implements GameExpander {
         config.updateP1UtilitiesReachableBySequences();
     }
 
-    private void expandRecursively(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+    protected void expandRecursively(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         config.addInformationSetFor(state);
         if (state.isGameEnd())
             return;
         if (state.getPlayerToMove().equals(minPlayer)) {
             boolean added = false;
+
             for (Action action : expander.getActions(state)) {
                 if (minPlayerBestResponse.getOrDefault(action, 0d) > 1e-8) {
                     expandRecursively(state.performAction(action), config, minPlayerBestResponse);
                     added = true;
                 }
-                if (added)
-                    removeTemporaryLeaf(state, config);
-                else
-                    addTemporaryLeafIfNotPresent(state, config, minPlayerBestResponse);
             }
+            if (added)
+                removeTemporaryLeaf(state, config);
+            else
+                addTemporaryLeafIfNotPresent(state, config, minPlayerBestResponse);
             return;
         }
         for (Action action : expander.getActions(state)) {
@@ -95,7 +110,11 @@ public class SingleOracleGameExpander implements GameExpander {
         }
     }
 
-    private void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+    protected void expandRecursively(GameState state, SequenceFormIRConfig config, OracleCandidate candidate) {
+        expandRecursively(state, config, candidate.getMinPlayerBestResponse());
+    }
+
+    protected void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         System.err.println("adding temp leaf");
         if (config.getTerminalStates().contains(state))
             return;
@@ -112,12 +131,12 @@ public class SingleOracleGameExpander implements GameExpander {
      * @param state
      * @return
      */
-    private double getUtilityUB(GameState state, Map<Action, Double> minPlayerBestResponse) {
+    protected double getUtilityUB(GameState state, Map<Action, Double> minPlayerBestResponse) {
         br.getBestResponseIn(state, minPlayerBestResponse);
         return br.getValue();
     }
 
-    private void removeTemporaryLeaf(GameState state, SequenceFormIRConfig config) {
+    protected void removeTemporaryLeaf(GameState state, SequenceFormIRConfig config) {
         if (state.isGameEnd() || !config.getTerminalStates().contains(state))
             return;
         config.getTerminalStates().remove(state);
@@ -133,7 +152,7 @@ public class SingleOracleGameExpander implements GameExpander {
         }
     }
 
-    private Map<Player, Sequence> getSequenceCombination(GameState state) {
+    protected Map<Player, Sequence> getSequenceCombination(GameState state) {
         Map<Player, Sequence> sequenceCombination = new HashMap<>(2);
 
         sequenceCombination.put(maxPlayer, state.getSequenceFor(maxPlayer));
