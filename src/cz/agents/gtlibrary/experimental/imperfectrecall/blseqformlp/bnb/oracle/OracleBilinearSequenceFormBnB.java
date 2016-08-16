@@ -37,6 +37,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     protected ImperfectRecallBestResponse br;
     protected ExpandCondition expandCondition = new ExpandConditionImpl();
     protected GameExpander gameExpander;
+    private long expanderTime = 0;
+    private long selfTime;
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
@@ -65,13 +67,14 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         solver.solve(new SequenceFormIRConfig());
         System.out.println("CPLEX time: " + solver.getCPLEXTime());
         System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
-        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
         System.out.println("BR time: " + solver.getBRTime());
         System.out.println("LP building time: " + solver.getLpBuildingTime());
-
+        System.out.println("Expander time: " + solver.getExpanderTime());
         System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         return solver.finalValue;
     }
 
@@ -90,10 +93,12 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public OracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
         super(player, fullGameExpander, info);
         br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
-        gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
+        gameExpander = new SingleOracleGameExpander(player, root, fullGameExpander, info);
     }
 
     public void solve(SequenceFormIRConfig restrictedGameConfig) {
+        long selfStart = mxBean.getCurrentThreadCpuTime();
+
         strategyLP = new StrategyLP(restrictedGameConfig);
         if (restrictedGameConfig.getAllInformationSets().isEmpty())
             initRestrictedGame(restrictedGameConfig);
@@ -136,6 +141,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                 }
                 if (expandCondition.validForExpansion(restrictedGameConfig, current)) {
                     gameExpander.expand(restrictedGameConfig, current);
+                    expanderTime += gameExpander.getSelfTime();
+                    BRTime += gameExpander.getBRTime();
                     table.clearTable();
                     buildingTimeStart = mxBean.getCurrentThreadCpuTime();
                     buildBaseLP(table, restrictedGameConfig);
@@ -171,6 +178,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         } catch (IloException e) {
             e.printStackTrace();
         }
+        selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - selfStart)/1e6 - getLpBuildingTime() - getBRTime() -  getExpanderTime() - getCPLEXTime() - getStrategyLPTime());
     }
 
     protected void initRestrictedGame(SequenceFormIRConfig restrictedGameConfig) {
@@ -200,5 +208,13 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
         BRTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
         return new Pair<>(-br.getValue(), bestResponse);
+    }
+
+    public long getExpanderTime() {
+        return expanderTime;
+    }
+
+    public long getSelfTime() {
+        return selfTime;
     }
 }

@@ -9,4 +9,6 @@ import java.util.Map;
 public interface GameExpander {
     public void expand(SequenceFormIRConfig config, OracleCandidate candidate);
     public void expand(SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse);
+    public long getBRTime();
+    public long getSelfTime();
 }
