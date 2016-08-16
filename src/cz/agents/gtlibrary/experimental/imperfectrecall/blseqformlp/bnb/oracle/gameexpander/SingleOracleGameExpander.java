@@ -2,11 +2,14 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.PartialGambitEFG;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +21,10 @@ public class SingleOracleGameExpander implements GameExpander {
     protected Player minPlayer;
     protected Map<GameState, Double> sequenceCombinationUtilityContribution;
     protected OracleImperfectRecallBestResponse br;
+    protected ThreadMXBean mxBean;
+
+    protected long brTime;
+    protected long selfTime;
 
     public SingleOracleGameExpander(Player maxPlayer, GameState root, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         this.expander = expander;
@@ -26,6 +33,7 @@ public class SingleOracleGameExpander implements GameExpander {
         this.minPlayer = info.getOpponent(maxPlayer);
         sequenceCombinationUtilityContribution = new HashMap<>();
         br = new OracleImperfectRecallBestResponse(maxPlayer, expander, info);
+        mxBean = ManagementFactory.getThreadMXBean();
     }
 
 //    @Override
@@ -62,28 +70,44 @@ public class SingleOracleGameExpander implements GameExpander {
 
     @Override
     public void expand(SequenceFormIRConfig config, OracleCandidate candidate) {
-        System.out.println("terminal states before expand: " + config.getTerminalStates().size());
-        System.out.println("information sets before expand: " + config.getAllInformationSets().size());
-        System.out.println("sequences before expand: " + config.getAllInformationSets().size());
+        brTime = 0;
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        if(OracleBilinearSequenceFormBnB.DEBUG) {
+            System.out.println("terminal states before expand: " + config.getTerminalStates().size());
+            System.out.println("information sets before expand: " + config.getAllInformationSets().size());
+            System.out.println("sequences before expand: " + config.getAllInformationSets().size());
+        }
         expandRecursively(root, config, candidate);
-        System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
-        System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
-        System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
-        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
+        if(OracleBilinearSequenceFormBnB.DEBUG) {
+            System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
+            System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
+            System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
+            new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
+        }
         config.updateP1UtilitiesReachableBySequences();
+        selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
     }
 
     @Override
     public void expand(SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
-        System.out.println("terminal states before expand: " + config.getTerminalStates().size());
-        System.out.println("information sets before expand: " + config.getAllInformationSets().size());
-        System.out.println("sequences before expand: " + config.getAllInformationSets().size());
+        brTime = 0;
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        if(OracleBilinearSequenceFormBnB.DEBUG) {
+            System.out.println("terminal states before expand: " + config.getTerminalStates().size());
+            System.out.println("information sets before expand: " + config.getAllInformationSets().size());
+            System.out.println("sequences before expand: " + config.getAllInformationSets().size());
+        }
         expandRecursively(root, config, minPlayerBestResponse);
-        System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
-        System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
-        System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
-        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
+        if(OracleBilinearSequenceFormBnB.DEBUG) {
+            System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
+            System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
+            System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
+            new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
+        }
         config.updateP1UtilitiesReachableBySequences();
+        selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
     }
 
     protected void expandRecursively(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
@@ -132,7 +156,10 @@ public class SingleOracleGameExpander implements GameExpander {
      * @return
      */
     protected double getUtilityUB(GameState state, Map<Action, Double> minPlayerBestResponse) {
+        long start = mxBean.getCurrentThreadCpuTime();
+
         br.getBestResponseIn(state, minPlayerBestResponse);
+        brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
         return br.getValue();
     }
 
@@ -159,5 +186,15 @@ public class SingleOracleGameExpander implements GameExpander {
         sequenceCombination.put(maxPlayer, state.getSequenceFor(maxPlayer));
         sequenceCombination.put(minPlayer, state.getSequenceFor(minPlayer));
         return sequenceCombination;
+    }
+
+    @Override
+    public long getBRTime() {
+        return brTime;
+    }
+
+    @Override
+    public long getSelfTime() {
+        return selfTime;
     }
 }

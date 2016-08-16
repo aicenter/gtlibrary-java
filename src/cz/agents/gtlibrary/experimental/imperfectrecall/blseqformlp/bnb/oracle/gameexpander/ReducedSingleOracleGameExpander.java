@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleCandidate;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.PartialGambitEFG;
@@ -21,32 +22,48 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
 
     @Override
     public void expand(SequenceFormIRConfig config, OracleCandidate candidate) {
-        System.out.println("terminal states before expand: " + config.getTerminalStates().size());
-        System.out.println("information sets before expand: " + config.getAllInformationSets().size());
-        System.out.println("sequences before expand: " + config.getAllInformationSets().size());
+        brTime = 0;
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        if (OracleBilinearSequenceFormBnB.DEBUG) {
+            System.out.println("terminal states before expand: " + config.getTerminalStates().size());
+            System.out.println("information sets before expand: " + config.getAllInformationSets().size());
+            System.out.println("sequences before expand: " + config.getAllInformationSets().size());
+        }
         Map<Action, Double> filteredMinPlayerBestResponse = removeUnreachableActions(candidate);
 
         expandRecursively(root, config, filteredMinPlayerBestResponse);
-        System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
-        System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
-        System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
-        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
+        if (OracleBilinearSequenceFormBnB.DEBUG) {
+            System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
+            System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
+            System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
+            new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
+        }
         config.updateP1UtilitiesReachableBySequences();
+        selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
     }
 
     @Override
     public void expand(SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
-        System.out.println("terminal states before expand: " + config.getTerminalStates().size());
-        System.out.println("information sets before expand: " + config.getAllInformationSets().size());
-        System.out.println("sequences before expand: " + config.getAllInformationSets().size());
+        brTime = 0;
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        if(OracleBilinearSequenceFormBnB.DEBUG) {
+            System.out.println("terminal states before expand: " + config.getTerminalStates().size());
+            System.out.println("information sets before expand: " + config.getAllInformationSets().size());
+            System.out.println("sequences before expand: " + config.getAllInformationSets().size());
+        }
         Map<Action, Double> filteredMinPlayerBestResponse = removeUnreachableActions(minPlayerBestResponse);
 
         expandRecursively(root, config, filteredMinPlayerBestResponse);
-        System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
-        System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
-        System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
-        new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
+        if(OracleBilinearSequenceFormBnB.DEBUG) {
+            System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
+            System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
+            System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
+            new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
+        }
         config.updateP1UtilitiesReachableBySequences();
+        selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
     }
 
     /**
@@ -102,7 +119,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
             for (Action action : expander.getActions(state)) {
                 GameState nextState = state.performAction(action);
 
-                if ((action.equals(((SequenceFormIRInformationSet)action.getInformationSet()).getFirst())))
+                if ((action.equals(((SequenceFormIRInformationSet) action.getInformationSet()).getFirst())))
                     removeUnreachableActionsRecursively(nextState, minPlayerBestResponse, filteredStrategy);
             }
         } else {
@@ -125,7 +142,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
 
     @Override
     protected void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
-        if(temporaryLeafBlackList.contains(state))
+        if (temporaryLeafBlackList.contains(state))
             return;
         super.addTemporaryLeafIfNotPresent(state, config, minPlayerBestResponse);
     }

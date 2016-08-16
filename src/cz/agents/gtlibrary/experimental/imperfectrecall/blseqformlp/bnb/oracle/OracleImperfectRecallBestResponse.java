@@ -37,7 +37,7 @@ public class OracleImperfectRecallBestResponse extends ImperfectRecallBestRespon
         try {
             LPData lpData = milpTable.toCplex();
 
-            /*if (BilinearSequenceFormBNB.SAVE_LPS)*/ lpData.getSolver().exportModel("BRMILP.lp");
+            if (OracleBilinearSequenceFormBnB.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
             lpData.getSolver().solve();
             setValue(lpData.getSolver().getObjValue());
 
@@ -60,7 +60,7 @@ public class OracleImperfectRecallBestResponse extends ImperfectRecallBestRespon
         try {
             LPData lpData = milpTable.toCplex();
 
-            /*if (BilinearSequenceFormBNB.SAVE_LPS)*/ lpData.getSolver().exportModel("BRMILP.lp");
+            if (OracleBilinearSequenceFormBnB.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
             lpData.getSolver().solve();
             setValue(lpData.getSolver().getObjValue());
 
@@ -84,7 +84,7 @@ public class OracleImperfectRecallBestResponse extends ImperfectRecallBestRespon
         try {
             LPData lpData = milpTable.toCplex();
 
-            if (BilinearSequenceFormBNB.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
+            if (OracleBilinearSequenceFormBnB.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
             lpData.getSolver().solve();
             setValue(lpData.getSolver().getObjValue());
 
@@ -108,7 +108,7 @@ public class OracleImperfectRecallBestResponse extends ImperfectRecallBestRespon
         try {
             LPData lpData = milpTable.toCplex();
 
-            if (BilinearSequenceFormBNB.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
+            if (OracleBilinearSequenceFormBnB.SAVE_LPS) lpData.getSolver().exportModel("BRMILP.lp");
             lpData.getSolver().solve();
             setValue(lpData.getSolver().getObjValue());
 
