@@ -31,8 +31,8 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
-    public static boolean DEBUG = true;
-    public static boolean SAVE_LPS = true;
+    public static boolean DEBUG = false;
+    public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
 
     protected ImperfectRecallBestResponse br;
@@ -141,7 +141,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                     return;
                 }
                 if (expandCondition.validForExpansion(restrictedGameConfig, current)) {
-                    gameExpander.expand(restrictedGameConfig, current);
+                    boolean expanded = gameExpander.expand(restrictedGameConfig, current);
+
                     expanderTime += gameExpander.getSelfTime();
                     BRTime += gameExpander.getBRTime();
                     table.clearTable();
@@ -151,8 +152,14 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 //                    OracleCandidate samePrecisionCandidate = createCandidate(current.getChanges(), table.toCplex(), restrictedGameConfig);
 //
 //                    fringe.add(samePrecisionCandidate);
-                    current.getChanges().updateTable(table);
-                    applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
+                    if(expanded) {
+                        current.getChanges().updateTable(table);
+                        applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
+                    } else {
+                        addMiddleChildOf(current, fringe, restrictedGameConfig);
+                        addLeftChildOf(current, fringe, restrictedGameConfig);
+                        addRightChildOf(current, fringe, restrictedGameConfig);
+                    }
                 } else {
                     addMiddleChildOf(current, fringe, restrictedGameConfig);
                     addLeftChildOf(current, fringe, restrictedGameConfig);
