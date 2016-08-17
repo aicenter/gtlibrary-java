@@ -200,7 +200,7 @@ public class ImperfectRecallBestResponseImpl implements ImperfectRecallBestRespo
                 return 0;
             probability *= actionProbability;
         }
-        System.out.println(probability);
+//        System.out.println(probability);
         return probability;
     }
 

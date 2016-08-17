@@ -11,7 +11,7 @@ import java.lang.management.ThreadMXBean;
 public class ResultComparison {
 
     public static void main(String[] args) {
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 5;
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 7;
         int endingSeed = (args.length > 1) ? new Integer(args[1]) : 100;
 
         int BF = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_BF;
@@ -29,14 +29,16 @@ public class ResultComparison {
         for (int seed = startingSeed; seed<endingSeed; seed++) {
             RandomGameInfo.seed = seed;
             System.out.println("seed: " + seed);
-//            double bnbValue = BilinearSequenceFormBnB.runRandomGame();
+            double bnbValue = BilinearSequenceFormBnB.runRandomGame();
 //            System.out.println("*********************************");
-            double milpValue = BilinearSeqenceFormLP.runRandomGame();
+//            double milpValue = BilinearSeqenceFormLP.runRandomGame();
             System.out.println("*********************************");
             double oracleBnBValue = OracleBilinearSequenceFormBnB.runRandomGame();
 
-            System.out.println("seed: " + seed + ": " + /*bnbValue + " vs " + */oracleBnBValue + " vs " + milpValue);
-            assert /*Math.abs(oracleBnBValue - bnbValue) < 1e-3 && */Math.abs(oracleBnBValue - milpValue) < 1e-2;
+            System.out.println("seed: " + seed + ": " + bnbValue + " vs " + oracleBnBValue/* + " vs " + milpValue*/);
+            if (Math.abs(oracleBnBValue - bnbValue) > 1e-3) {/* && Math.abs(oracleBnBValue - milpValue) < 1e-2*/
+                throw new IllegalStateException();
+            }
             System.out.println("-----------------------");
         }
 

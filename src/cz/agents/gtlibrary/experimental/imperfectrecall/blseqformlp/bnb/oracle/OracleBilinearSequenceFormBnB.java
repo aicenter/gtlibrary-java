@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle;
 
-import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponseImpl;
+import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
@@ -14,7 +14,8 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Bilinear
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Change;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Changes;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponseImpl;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.LinearOracleImperfectRecallBestResponse;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandCondition;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandConditionImpl;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.GameExpander;
@@ -35,7 +36,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
 
-    protected ImperfectRecallBestResponseImpl br;
+    protected ImperfectRecallBestResponse br;
     protected ExpandCondition expandCondition = new ExpandConditionImpl();
     protected GameExpander gameExpander;
     private long expanderTime = 0;
@@ -94,7 +95,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public OracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
         super(player, fullGameExpander, info);
-        br = new OracleImperfectRecallBestResponseImpl(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
+        br = new LinearOracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, root, fullGameExpander, gameInfo);
         gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
     }
 
