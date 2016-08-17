@@ -40,6 +40,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     protected GameExpander gameExpander;
     private long expanderTime = 0;
     private long selfTime;
+    private int expansionCount;
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
@@ -99,6 +100,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public void solve(SequenceFormIRConfig restrictedGameConfig) {
         long selfStart = mxBean.getCurrentThreadCpuTime();
+        expansionCount = 0;
 
         strategyLP = new StrategyLP(restrictedGameConfig);
         if (restrictedGameConfig.getAllInformationSets().isEmpty())
@@ -143,6 +145,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                 if (expandCondition.validForExpansion(restrictedGameConfig, current)) {
                     boolean expanded = gameExpander.expand(restrictedGameConfig, current);
 
+                    if(expanded)
+                        expansionCount++;
                     expanderTime += gameExpander.getSelfTime();
                     BRTime += gameExpander.getBRTime();
                     table.clearTable();
@@ -152,7 +156,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 //                    OracleCandidate samePrecisionCandidate = createCandidate(current.getChanges(), table.toCplex(), restrictedGameConfig);
 //
 //                    fringe.add(samePrecisionCandidate);
-                    if(expanded) {
+                    if(expansionCount > current.getExpansionCount()) {
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
                     } else {
@@ -213,7 +217,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action));
 
         assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
-        return new OracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, mostBrokenActionValue, extractRPStrategy(config, lpData), lowerBoundAndBR.getRight());
+        return new OracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, mostBrokenActionValue, extractRPStrategy(config, lpData), lowerBoundAndBR.getRight(), expansionCount);
     }
 
     protected Pair<Double, Map<Action, Double>> getLowerBoundAndBR(Map<Action, Double> p1Strategy) {

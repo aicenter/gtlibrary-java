@@ -305,8 +305,10 @@ public class BilinearSequenceFormBnB {
 
                     assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
                     if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
-                    if(candidate.getLb() > currentBest.getLb())
+                    if(candidate.getLb() > currentBest.getLb()) {
                         currentBest = candidate;
+                        System.out.println("current best: " + currentBest);
+                    }
                     if (isConverged(candidate)) {
                         if (candidate.getLb() > currentBest.getLb()) {
                             currentBest = candidate;

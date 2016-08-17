@@ -11,19 +11,22 @@ public class OracleCandidate extends Candidate {
     private Map<Action, Double> minPlayerBestResponse;
     private Map<Sequence, Double> maxPlayerRealPlan;
     private double precisionError;
+    private int expansionCount;
 
-    public OracleCandidate(double lb, double ub, Changes changes, Action action, int[] actionProbability, double precisionError, Map<Sequence, Double> maxPlayerRealPlan, Map<Action, Double> minPlayerBestResponse) {
+    public OracleCandidate(double lb, double ub, Changes changes, Action action, int[] actionProbability, double precisionError, Map<Sequence, Double> maxPlayerRealPlan, Map<Action, Double> minPlayerBestResponse, int expansionCount) {
         super(lb, ub, changes, action, actionProbability);
         this.minPlayerBestResponse = minPlayerBestResponse;
         this.maxPlayerRealPlan = maxPlayerRealPlan;
         this.precisionError = precisionError;
+        this.expansionCount = expansionCount;
     }
 
-    public OracleCandidate(double lb, double ub, Action action, int[] actionProbability, double precisionError, Map<Sequence, Double> maxPlayerRealPlan, Map<Action, Double> minPlayerBestResponse) {
+    public OracleCandidate(double lb, double ub, Action action, int[] actionProbability, double precisionError, Map<Sequence, Double> maxPlayerRealPlan, Map<Action, Double> minPlayerBestResponse, int expansionCount) {
         super(lb, ub, action, actionProbability);
         this.minPlayerBestResponse = minPlayerBestResponse;
         this.maxPlayerRealPlan = maxPlayerRealPlan;
         this.precisionError = precisionError;
+        this.expansionCount = expansionCount;
     }
 
     public Map<Action, Double> getMinPlayerBestResponse() {
@@ -36,5 +39,9 @@ public class OracleCandidate extends Candidate {
 
     public Map<Sequence, Double> getMaxPlayerRealPlan() {
         return maxPlayerRealPlan;
+    }
+
+    public int getExpansionCount() {
+        return expansionCount;
     }
 }
