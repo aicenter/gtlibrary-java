@@ -14,12 +14,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class OracleImperfectRecallBestResponse extends ImperfectRecallBestResponseImpl {
+public class OracleImperfectRecallBestResponseImpl extends ImperfectRecallBestResponseImpl {
 
     private boolean built = false;
     private Set<Pair<Action, String>> enforcedActionsEqKeys;
 
-    public OracleImperfectRecallBestResponse(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
+    public OracleImperfectRecallBestResponseImpl(Player player, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         super(player, expander, info);
         enforcedActionsEqKeys = new HashSet<>();
     }
