@@ -21,9 +21,10 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
     }
 
     @Override
-    public void expand(SequenceFormIRConfig config, OracleCandidate candidate) {
+    public boolean expand(SequenceFormIRConfig config, OracleCandidate candidate) {
         brTime = 0;
         long start = mxBean.getCurrentThreadCpuTime();
+        int terminalLeafCount = config.getTerminalStates().size();
 
         if (OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states before expand: " + config.getTerminalStates().size());
@@ -41,12 +42,14 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
         }
         config.updateP1UtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
+        return config.getTerminalStates().size() > terminalLeafCount;
     }
 
     @Override
-    public void expand(SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+    public boolean expand(SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         brTime = 0;
         long start = mxBean.getCurrentThreadCpuTime();
+        int terminalLeafCount = config.getTerminalStates().size();
 
         if(OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states before expand: " + config.getTerminalStates().size());
@@ -64,6 +67,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
         }
         config.updateP1UtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
+        return config.getTerminalStates().size() > terminalLeafCount;
     }
 
     /**

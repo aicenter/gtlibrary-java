@@ -24,7 +24,7 @@ public class RandomGameInfo implements GameInfo {
     public static double CORRELATION = 0;// -1 for zero sum, 1 for identical utilities
     public static int MAX_DEPTH = 4;
     public static int MAX_BF = 4;
-    public static int MIN_BF = 3;
+    public static int MIN_BF = 4;
     public static int MAX_OBSERVATION = 3;
     public static int MAX_UTILITY = 100;
     public static boolean INTEGER_UTILITY = true;
