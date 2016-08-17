@@ -7,6 +7,7 @@ import ilog.concert.IloException;
 import java.util.Arrays;
 
 public abstract class Change {
+    public static Change EMPTY = new EmptyChange();
     protected Action action;
     protected int[] fixedDigitArrayValue;
     protected double fixedDigitNumericValue;

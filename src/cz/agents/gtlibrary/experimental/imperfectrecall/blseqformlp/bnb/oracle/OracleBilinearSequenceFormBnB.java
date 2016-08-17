@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Change;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Changes;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandCondition;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandConditionImpl;
@@ -30,8 +31,8 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
-    public static boolean DEBUG = false;
-    public static boolean SAVE_LPS = false;
+    public static boolean DEBUG = true;
+    public static boolean SAVE_LPS = true;
     public static double EPS = 1e-3;
 
     protected ImperfectRecallBestResponse br;
@@ -93,7 +94,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public OracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
         super(player, fullGameExpander, info);
         br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
-        gameExpander = new SingleOracleGameExpander(player, root, fullGameExpander, info);
+        gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
     }
 
     public void solve(SequenceFormIRConfig restrictedGameConfig) {
@@ -147,10 +148,16 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                     buildingTimeStart = mxBean.getCurrentThreadCpuTime();
                     buildBaseLP(table, restrictedGameConfig);
                     lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
+//                    OracleCandidate samePrecisionCandidate = createCandidate(current.getChanges(), table.toCplex(), restrictedGameConfig);
+//
+//                    fringe.add(samePrecisionCandidate);
+                    current.getChanges().updateTable(table);
+                    applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
+                } else {
+                    addMiddleChildOf(current, fringe, restrictedGameConfig);
+                    addLeftChildOf(current, fringe, restrictedGameConfig);
+                    addRightChildOf(current, fringe, restrictedGameConfig);
                 }
-                addMiddleChildOf(current, fringe, restrictedGameConfig);
-                addLeftChildOf(current, fringe, restrictedGameConfig);
-                addRightChildOf(current, fringe, restrictedGameConfig);
             }
             finalValue = currentBest.getLb();
             System.out.println("final value: " + finalValue);
