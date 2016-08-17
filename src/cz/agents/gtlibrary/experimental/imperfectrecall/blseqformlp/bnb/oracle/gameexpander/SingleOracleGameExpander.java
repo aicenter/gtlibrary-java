@@ -4,7 +4,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleCandidate;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleImperfectRecallBestResponse;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.PartialGambitEFG;
 
@@ -145,7 +145,6 @@ public class SingleOracleGameExpander implements GameExpander {
     protected void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         if (config.getTerminalStates().contains(state) || state.isGameEnd())
             return;
-        System.err.println("adding temp leaf");
         config.getTerminalStates().add(state);
         double utility = getUtilityUB(state, minPlayerBestResponse);
 
@@ -170,7 +169,6 @@ public class SingleOracleGameExpander implements GameExpander {
     protected void removeTemporaryLeaf(GameState state, SequenceFormIRConfig config) {
         if (state.isGameEnd() || !config.getTerminalStates().contains(state))
             return;
-        System.err.println("removing leaf");
         config.getTerminalStates().remove(state);
         Map<Player, Sequence> seqCombination = getSequenceCombination(state);
         Double utility = config.getUtilityFor(seqCombination);

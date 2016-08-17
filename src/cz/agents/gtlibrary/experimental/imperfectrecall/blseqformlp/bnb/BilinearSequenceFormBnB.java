@@ -203,7 +203,7 @@ public class BilinearSequenceFormBnB {
     }
 
     protected double checkOnCleanLP(SequenceFormIRConfig config, Candidate candidate) throws IloException {
-        System.out.println("Check!!!!!!!!!!!!!!");
+//        System.out.println("Check!!!!!!!!!!!!!!");
         BilinearTable table = new BilinearTable();
         buildBaseLP(table, config);
         LPData checkData = table.toCplex();
@@ -293,7 +293,7 @@ public class BilinearSequenceFormBnB {
                 long start = mxBean.getCurrentThreadCpuTime();
 
                 lpData.getSolver().solve();
-                System.out.println(CPLEXInvocationCount++);
+//                System.out.println(CPLEXInvocationCount++);
                 CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
                 if (DEBUG) {
                     System.out.println(lpData.getSolver().getStatus());
