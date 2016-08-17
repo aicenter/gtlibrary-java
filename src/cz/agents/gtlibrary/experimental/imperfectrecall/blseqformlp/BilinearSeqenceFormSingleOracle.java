@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 
-import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
+import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponseImpl;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
@@ -113,7 +113,7 @@ public class BilinearSeqenceFormSingleOracle {
 
             Map<Action, Double> P1Strategy = extractBehavioralStrategy(config, lpData);
 
-            ImperfectRecallBestResponse br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+            ImperfectRecallBestResponseImpl br = new ImperfectRecallBestResponseImpl(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
             Map<Action, Double> brActions = br.getBestResponse(P1Strategy);
 
             int iteration = 0;

@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle;
 
-import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
+import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponseImpl;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
@@ -18,7 +18,6 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.e
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandConditionImpl;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.GameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.ReducedSingleOracleGameExpander;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.SingleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -35,7 +34,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
 
-    protected ImperfectRecallBestResponse br;
+    protected ImperfectRecallBestResponseImpl br;
     protected ExpandCondition expandCondition = new ExpandConditionImpl();
     protected GameExpander gameExpander;
     private long expanderTime = 0;

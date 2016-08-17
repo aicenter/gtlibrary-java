@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb;
 
-import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
+import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponseImpl;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
@@ -35,7 +35,7 @@ public class BilinearSequenceFormBnB {
     protected final Player player;
     protected final Player opponent;
 
-    protected ImperfectRecallBestResponse br;
+    protected ImperfectRecallBestResponseImpl br;
     protected BilinearTable table;
     protected Expander<SequenceFormIRInformationSet> expander;
     protected GameInfo gameInfo;
@@ -109,7 +109,7 @@ public class BilinearSequenceFormBnB {
         this.opponent = info.getOpponent(player);
         this.gameInfo = info;
         this.expander = expander;
-        br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+        br = new ImperfectRecallBestResponseImpl(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
     }
 
     public void solve(SequenceFormIRConfig config) {
