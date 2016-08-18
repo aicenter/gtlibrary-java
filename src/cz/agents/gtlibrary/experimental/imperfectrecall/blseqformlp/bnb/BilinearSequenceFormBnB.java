@@ -151,6 +151,11 @@ public class BilinearSequenceFormBnB {
                     System.out.println(current);
                     return;
                 }
+                if (Math.abs(currentBest.getLb() - current.getUb()) < 1e-4 * gameInfo.getMaxUtility()) {
+                    System.out.println(current);
+                    return;
+                }
+
                 addMiddleChildOf(current, fringe, config);
                 addLeftChildOf(current, fringe, config);
                 addRightChildOf(current, fringe, config);
@@ -305,7 +310,7 @@ public class BilinearSequenceFormBnB {
 
                     assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
                     if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
-                    if(candidate.getLb() > currentBest.getLb()) {
+                    if (candidate.getLb() > currentBest.getLb()) {
                         currentBest = candidate;
                         System.out.println("current best: " + currentBest);
                     }
@@ -399,7 +404,7 @@ public class BilinearSequenceFormBnB {
     }
 
     protected boolean isConverged(double globalLB, double globalUB) {
-        return Math.abs(globalUB - globalLB) < 1e-4;
+        return Math.abs(globalUB - globalLB) < 1e-4 * gameInfo.getMaxUtility();
     }
 
     protected void buildBaseLP(BilinearTable table, SequenceFormIRConfig config) {
