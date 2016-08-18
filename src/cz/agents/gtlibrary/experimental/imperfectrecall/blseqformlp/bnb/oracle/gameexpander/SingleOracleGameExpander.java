@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleCandidate;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.LinearOracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.PartialGambitEFG;
@@ -32,7 +33,8 @@ public class SingleOracleGameExpander implements GameExpander {
         this.maxPlayer = maxPlayer;
         this.minPlayer = info.getOpponent(maxPlayer);
         sequenceCombinationUtilityContribution = new HashMap<>();
-        br = new OracleImperfectRecallBestResponse(maxPlayer, expander, info);
+//        br = new OracleImperfectRecallBestResponse(maxPlayer, expander, info);
+        br = new LinearOracleImperfectRecallBestResponse(maxPlayer, root, expander, info);
         mxBean = ManagementFactory.getThreadMXBean();
     }
 

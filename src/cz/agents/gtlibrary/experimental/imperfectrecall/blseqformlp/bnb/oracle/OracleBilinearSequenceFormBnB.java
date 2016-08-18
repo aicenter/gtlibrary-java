@@ -26,10 +26,14 @@ import cz.agents.gtlibrary.utils.BasicGameBuilder;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
+import ilog.cplex.IloCplex;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
@@ -96,6 +100,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public OracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
         super(player, fullGameExpander, info);
         br = new LinearOracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, root, fullGameExpander, gameInfo);
+//        br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
         gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
     }
 
@@ -117,7 +122,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
             long start = mxBean.getCurrentThreadCpuTime();
 
             lpData.getSolver().solve();
-            CPLEXInvocationCount++;
+            System.out.println(CPLEXInvocationCount++);
             CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
@@ -132,21 +137,27 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                 return;
             }
             fringe.add(currentBest);
+            int it = 1;
 
             while (!fringe.isEmpty()) {
                 OracleCandidate current = (OracleCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
 
 //                System.out.println(current + " vs " + currentBest);
 //                System.out.println(current.getChanges());
+                System.out.println(current + " vs " + currentBest);
                 if (isConverged(current)) {
                     currentBest = current;
                     System.out.println(current);
-                    return;
+                    break;
+                }
+                if (Math.abs(currentBest.getLb() - current.getUb()) < 1e-4 * gameInfo.getMaxUtility()) {
+                    System.out.println(current);
+                    break;
                 }
                 if (expandCondition.validForExpansion(restrictedGameConfig, current)) {
                     boolean expanded = gameExpander.expand(restrictedGameConfig, current);
 
-                    if(expanded)
+                    if (expanded)
                         expansionCount++;
                     expanderTime += gameExpander.getSelfTime();
                     BRTime += gameExpander.getBRTime();
@@ -157,9 +168,10 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 //                    OracleCandidate samePrecisionCandidate = createCandidate(current.getChanges(), table.toCplex(), restrictedGameConfig);
 //
 //                    fringe.add(samePrecisionCandidate);
-                    if(expansionCount > current.getExpansionCount()) {
+                    if (expansionCount > current.getExpansionCount()) {
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
+                        updateCurrentBest(restrictedGameConfig);
                     } else {
                         addMiddleChildOf(current, fringe, restrictedGameConfig);
                         addLeftChildOf(current, fringe, restrictedGameConfig);
@@ -197,7 +209,42 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         } catch (IloException e) {
             e.printStackTrace();
         }
-        selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - selfStart)/1e6 - getLpBuildingTime() - getBRTime() -  getExpanderTime() - getCPLEXTime() - getStrategyLPTime());
+        selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6 - getLpBuildingTime() - getBRTime() - getExpanderTime() - getCPLEXTime() - getStrategyLPTime());
+    }
+
+    private void updateCurrentBest(SequenceFormIRConfig restrictedGameConfig) {
+        table.clearTable();
+        long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
+
+        buildBaseLP(table, restrictedGameConfig);
+        lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
+        currentBest.getChanges().updateTable(table);
+        try {
+            buildingTimeStart = mxBean.getCurrentThreadCpuTime();
+
+            lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
+            LPData lpData = table.toCplex();
+//                System.out.println("solved");
+
+            if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
+            long start = mxBean.getCurrentThreadCpuTime();
+
+            lpData.getSolver().solve();
+//                System.out.println(CPLEXInvocationCount++);
+            CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
+            if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
+                Candidate candidate = createCandidate(currentBest.getChanges(), lpData, restrictedGameConfig);
+
+                assert Math.abs(candidate.getUb() - checkOnCleanLP(restrictedGameConfig, candidate)) < 1e-4;
+                if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
+                if (candidate.getLb() > currentBest.getLb()) {
+                    currentBest = candidate;
+                    System.out.println("current best: " + currentBest);
+                }
+            }
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
     }
 
     protected void initRestrictedGame(SequenceFormIRConfig restrictedGameConfig) {
