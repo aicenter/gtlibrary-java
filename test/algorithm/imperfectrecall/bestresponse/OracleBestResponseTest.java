@@ -5,7 +5,7 @@ import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleImperfectRecallBestResponse;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
