@@ -31,9 +31,9 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
             System.out.println("information sets before expand: " + config.getAllInformationSets().size());
             System.out.println("sequences before expand: " + config.getAllInformationSets().size());
         }
-        Map<Action, Double> filteredMinPlayerBestResponse = removeUnreachableActions(candidate);
+//        Map<Action, Double> filteredMinPlayerBestResponse = removeUnreachableActions(candidate);
 
-        expandRecursively(root, config, filteredMinPlayerBestResponse);
+        expandRecursively(root, config, candidate.getMinPlayerBestResponse());
         if (OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
             System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
@@ -56,9 +56,9 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
             System.out.println("information sets before expand: " + config.getAllInformationSets().size());
             System.out.println("sequences before expand: " + config.getAllInformationSets().size());
         }
-        Map<Action, Double> filteredMinPlayerBestResponse = removeUnreachableActions(minPlayerBestResponse);
+//        Map<Action, Double> filteredMinPlayerBestResponse = removeUnreachableActions(minPlayerBestResponse);
 
-        expandRecursively(root, config, filteredMinPlayerBestResponse);
+        expandRecursively(root, config, minPlayerBestResponse);
         if(OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
             System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
