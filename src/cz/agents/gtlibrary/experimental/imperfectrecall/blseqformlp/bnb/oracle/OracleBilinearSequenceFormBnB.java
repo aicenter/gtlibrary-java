@@ -20,6 +20,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.e
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandConditionImpl;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.GameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.ReducedSingleOracleGameExpander;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.SingleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -82,6 +83,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
         System.out.println("Oracle self time: " + solver.getSelfTime());
         System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
         return solver.finalValue;
     }
 
@@ -144,7 +146,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
 //                System.out.println(current + " vs " + currentBest);
 //                System.out.println(current.getChanges());
-                System.out.println(current + " vs " + currentBest);
+//                System.out.println(current + " vs " + currentBest);
                 if (isConverged(current)) {
                     currentBest = current;
                     System.out.println(current);

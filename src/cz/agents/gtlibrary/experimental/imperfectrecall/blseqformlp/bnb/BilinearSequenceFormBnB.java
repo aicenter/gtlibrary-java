@@ -48,12 +48,15 @@ public class BilinearSequenceFormBnB {
     protected double mostBrokenActionValue;
     protected StrategyLP strategyLP;
 
+    protected Map<Changes, Double> ubs;
+
     protected ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
     protected long CPLEXTime = 0;
     protected long strategyLPTime = 0;
     protected long CPLEXInvocationCount = 0;
     protected long BRTime = 0;
     protected long lpBuildingTime = 0;
+    protected int cuts;
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
@@ -89,6 +92,7 @@ public class BilinearSequenceFormBnB {
 
         System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("cuts: " + solver.cuts);
         return solver.finalValue;
     }
 
@@ -110,6 +114,7 @@ public class BilinearSequenceFormBnB {
         this.gameInfo = info;
         this.expander = expander;
         br = new ImperfectRecallBestResponseImpl(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+        ubs = new HashMap<>();
     }
 
     public void solve(SequenceFormIRConfig config) {
@@ -149,11 +154,11 @@ public class BilinearSequenceFormBnB {
                 if (isConverged(current)) {
                     currentBest = current;
                     System.out.println(current);
-                    return;
+                    break;
                 }
                 if (Math.abs(currentBest.getLb() - current.getUb()) < 1e-4 * gameInfo.getMaxUtility()) {
                     System.out.println(current);
-                    return;
+                    break;
                 }
 
                 addMiddleChildOf(current, fringe, config);
@@ -248,6 +253,11 @@ public class BilinearSequenceFormBnB {
         if (precision >= maxRefinements)
             return;
         newChanges.add(change);
+        if(ubs.containsKey(newChanges)) {
+            cuts++;
+            return;
+        }
+        ubs.put(newChanges, 0d);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
 
@@ -281,6 +291,11 @@ public class BilinearSequenceFormBnB {
         current.getChanges().updateTable(table);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         newChanges.add(change);
+        if(ubs.containsKey(newChanges)) {
+            cuts++;
+            return;
+        }
+        ubs.put(newChanges, 0d);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
 
@@ -356,6 +371,11 @@ public class BilinearSequenceFormBnB {
         current.getChanges().updateTable(table);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         newChanges.add(change);
+        if(ubs.containsKey(newChanges)) {
+            cuts++;
+            return;
+        }
+        ubs.put(newChanges, 0d);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
 
