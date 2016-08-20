@@ -22,8 +22,8 @@ public class RandomGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
 
     public static double CORRELATION = 0;// -1 for zero sum, 1 for identical utilities
-    public static int MAX_DEPTH = 4;
-    public static int MAX_BF = 3;
+    public static int MAX_DEPTH = 5;
+    public static int MAX_BF = 2;
     public static int MIN_BF = 2;
     public static int MAX_OBSERVATION = 3;
     public static int MAX_UTILITY = 100;
@@ -42,7 +42,7 @@ public class RandomGameInfo implements GameInfo {
     public static ObservationsType OBSERVATIONS_TYPE = ObservationsType.FORGETFUL;
     public static double FORGET_OBSERVATION_PROBABILITY = 0;
 
-    public static long seed = 26;
+    public static long seed = 68;
 
     public static Random rnd = new HighQualityRandom(seed);
     public static ModificationGenerator modificationGenerator = new UniformModificationGenerator(MAX_CENTER_MODIFICATION);
