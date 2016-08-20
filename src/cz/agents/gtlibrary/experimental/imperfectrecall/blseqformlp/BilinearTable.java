@@ -249,7 +249,7 @@ public class BilinearTable extends RecyclingLPTable {
 
         ubs[1][0] = 0;
         lbs[0][0] = 1;
-        if (change.getFixedDigitArrayValue()[0] == 1) {
+        if (change.getFixedDigitArrayValue().get(0) == 1) {
             assert false;
             return true;
         }
@@ -259,7 +259,7 @@ public class BilinearTable extends RecyclingLPTable {
         if (digitToFix == 0)
             return false;
         for (int k = digitToFix; k < digits; k++) {
-            if ((change.getFixedDigitArrayValue().length == 0) && (k > 1))
+            if ((change.getFixedDigitArrayValue().size() == 0) && (k > 1))
                 continue;
             if (lbs[k][change.getFixedDigitCount()] < 1) {
                 if (ubs[k][change.getFixedDigitCount()] == 1)
@@ -276,7 +276,7 @@ public class BilinearTable extends RecyclingLPTable {
 
         boolean changed = false;
 
-        if (change.getFixedDigitArrayValue()[0] == 1) {
+        if (change.getFixedDigitArrayValue().get(0) == 1) {
             lbs[1][0] = 1;
             ubs[0][0] = 0;
         } else {
@@ -324,7 +324,7 @@ public class BilinearTable extends RecyclingLPTable {
         double[][] ubs = getUBs(change.getAction());
         boolean changed = false;
 
-        if (change.getFixedDigitArrayValue()[0] == 1) {
+        if (change.getFixedDigitArrayValue().get(0) == 1) {
             lbs[1][0] = 1;
             ubs[0][0] = 0;
             assert false;
@@ -333,9 +333,9 @@ public class BilinearTable extends RecyclingLPTable {
             ubs[1][0] = 0;
         }
         for (int k = 0; k < digits; k++) {
-            for (int l = 1; l < change.getFixedDigitArrayValue().length; l++) {
+            for (int l = 1; l < change.getFixedDigitArrayValue().size(); l++) {
                 if ((l == 0) && (k > 1)) continue;
-                if (k != change.getFixedDigitArrayValue()[l]) {
+                if (k != change.getFixedDigitArrayValue().get(l)) {
                     if (ubs[k][l] > 0) {
                         changed = true;
                         ubs[k][l] = 0;
@@ -355,7 +355,7 @@ public class BilinearTable extends RecyclingLPTable {
     }
 
     protected int getLastFixedDigit(Change change) {
-        return change.getFixedDigitArrayValue()[change.getFixedDigitArrayValue().length - 1];
+        return change.getFixedDigitArrayValue().get(change.getFixedDigitArrayValue().size() - 1);
     }
 
     public int getPrecisionFor(Object factor2) {

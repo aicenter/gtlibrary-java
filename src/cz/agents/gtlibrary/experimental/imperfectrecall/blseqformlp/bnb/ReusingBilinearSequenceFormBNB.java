@@ -333,7 +333,7 @@ public class ReusingBilinearSequenceFormBNB {
 
         if (isZero(probability))
             return;
-        if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && Arrays.equals(probability, change.getFixedDigitArrayValue()))))
+        if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && probability.equals(change.getFixedDigitArrayValue()))))
             probability[probability.length - 1]--;
         Change change = new LeftChange(current.getAction(), probability);
 
