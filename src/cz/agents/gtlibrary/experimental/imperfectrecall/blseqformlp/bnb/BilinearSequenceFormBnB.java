@@ -252,8 +252,8 @@ public class BilinearSequenceFormBnB {
 
         if (precision >= maxRefinements)
             return;
-        newChanges.add(change);
-        if(ubs.containsKey(newChanges)) {
+        updateChangesForMiddle(newChanges, change);
+        if (ubs.containsKey(newChanges)) {
             cuts++;
             return;
         }
@@ -290,13 +290,184 @@ public class BilinearSequenceFormBnB {
             buildBaseLP(table, config);
         current.getChanges().updateTable(table);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
-        newChanges.add(change);
-        if(ubs.containsKey(newChanges)) {
+        updateChangesForRight(newChanges, change);
+        if (ubs.containsKey(newChanges)) {
             cuts++;
             return;
         }
         ubs.put(newChanges, 0d);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
+    }
+
+    private void updateChangesForLeft(Changes newChanges, Change change) {
+        newChanges.add(change);
+        Map<Action, int[]> lbs = new HashMap<>();
+        Map<Action, int[]> ubs = new HashMap<>();
+
+        for (Change oldChange : newChanges) {
+            updateBounds(lbs, ubs, oldChange);
+        }
+        Set<Action> actions = ((SequenceFormIRInformationSet) change.getAction().getInformationSet()).getActions();
+        int[] ubSum = getUBSum(actions, ubs);
+        int[] needed = subtract(new int[]{1}, change.getFixedDigitArrayValue());
+
+        for (Action action : actions) {
+//            if(action.equals(change.getAction()))
+//                continue;
+            int[] currentUBSum = subtract(ubSum, ubs.getOrDefault(action, new int[]{1}));
+            int[] currentLB = subtract(needed, currentUBSum);
+
+            if (greater(currentLB, lbs.getOrDefault(action, new int[]{0})))
+                for (int i = 2; i <= currentLB.length; i++) {
+                    newChanges.add(new RightChange(action, getSubArray(currentLB, i)));
+                }
+        }
+    }
+
+    private void updateBounds(Map<Action, int[]> lbs, Map<Action, int[]> ubs, Change oldChange) {
+        if (oldChange instanceof LeftChange) {
+            int[] oldUB = ubs.get(oldChange.getAction());
+
+            if (oldUB == null || greater(oldUB, oldChange.getFixedDigitArrayValue()))
+                ubs.put(oldChange.getAction(), oldChange.getFixedDigitArrayValue());
+        } else if (oldChange instanceof RightChange) {
+            int[] oldLB = lbs.get(oldChange.getAction());
+
+            if (oldLB == null || greater(oldChange.getFixedDigitArrayValue(), oldLB))
+                lbs.put(oldChange.getAction(), oldChange.getFixedDigitArrayValue());
+        } else {
+            int[] oldUB = ubs.get(oldChange.getAction());
+            int[] oldLB = lbs.get(oldChange.getAction());
+            int[] newUB = new int[oldChange.getFixedDigitArrayValue().length];
+
+            System.arraycopy(oldChange.getFixedDigitArrayValue(), 0, newUB, 0, newUB.length);
+            newUB[newUB.length - 1]++;
+            if (oldUB == null || greater(oldUB, newUB))
+                ubs.put(oldChange.getAction(), newUB);
+            if (oldLB == null || greater(oldChange.getFixedDigitArrayValue(), oldLB))
+                lbs.put(oldChange.getAction(), oldChange.getFixedDigitArrayValue());
+        }
+    }
+
+    private int[] getSubArray(int[] currentLB, int i) {
+        return Arrays.copyOf(currentLB, i);
+    }
+
+    private int[] getUBSum(Set<Action> actions, Map<Action, int[]> ubs) {
+        int[] sum = new int[]{0};
+
+        for (Action action : actions) {
+            sum = add(sum, ubs.getOrDefault(action, new int[]{1}));
+        }
+        return sum;
+    }
+
+    private int[] subtract(int[] arr1, int[] arr2) {
+        int[] result = new int[Math.max(arr1.length, arr2.length)];
+        int temp;
+        boolean carry = false;
+
+        for (int i = result.length - 1; i >= 0; i--) {
+            if (i >= arr1.length) {
+                result[i] = (10 - arr2[i]) % 10 - (carry ? 1 : 0);
+                carry = true;
+            } else if (i >= arr2.length) {
+                result[i] = arr1[i];
+                carry = false;
+            } else {
+                temp = arr1[i] - arr2[i] - (carry ? 1 : 0);
+                carry = temp < 0;
+                result[i] = temp % 10;
+            }
+        }
+        return result;
+    }
+
+    private int[] add(int[] arr1, int[] arr2) {
+        int[] result = new int[Math.max(arr1.length, arr2.length)];
+        int temp;
+        boolean carry = false;
+
+        for (int i = result.length - 1; i >= 0; i--) {
+            if (i >= arr1.length) {
+                result[i] = arr2[i];
+                carry = false;
+            } else if (i >= arr2.length) {
+                result[i] = arr1[i];
+                carry = false;
+            } else {
+                temp = arr1[i] + arr2[i] + (carry ? 1 : 0);
+                carry = temp > 9;
+                result[i] = temp % 10;
+            }
+        }
+        return result;
+    }
+
+    private double toDouble(int[] array) {
+        double value = 0;
+
+        for (int i = 0; i < array.length; i++) {
+            value += array[i] * Math.pow(10, -i);
+        }
+        return value;
+    }
+
+    private boolean greater(int[] arr1, int[] arr2) {
+        for (int i = 0; i < Math.min(arr1.length, arr2.length); i++) {
+            if (arr1[i] > arr2[i])
+                return true;
+            else if (arr1[i] < arr2[i])
+                return false;
+        }
+        return arr1.length > arr2.length;
+    }
+
+    private void updateChangesForRight(Changes newChanges, Change change) {
+        newChanges.add(change);
+        Map<Action, int[]> lbs = new HashMap<>();
+        Map<Action, int[]> ubs = new HashMap<>();
+
+        for (Change oldChange : newChanges) {
+            updateBounds(lbs, ubs, oldChange);
+        }
+        Set<Action> actions = ((SequenceFormIRInformationSet) change.getAction().getInformationSet()).getActions();
+        int[] lbSum = getLBSum(actions, change.getAction(), lbs);
+        int[] limit = subtract(new int[]{1}, change.getFixedDigitArrayValue());
+
+        for (Action action : actions) {
+            if(action.equals(change.getAction()))
+                continue;
+            int[] currentLBSum = subtract(lbSum, lbs.getOrDefault(action, new int[]{0}));
+            int[] currentUB = subtract(limit, currentLBSum);
+
+            if (greater(ubs.getOrDefault(action, new int[]{1}), currentUB))
+                for (int i = 2; i <= currentUB.length; i++) {
+                    newChanges.add(new LeftChange(action, getSubArray(currentUB, i)));
+                }
+        }
+    }
+
+    private int[] getLBSum(Set<Action> actions, Action toIgnore, Map<Action, int[]> lbs) {
+        int[] sum = new int[]{0};
+
+        for (Action action : actions) {
+            if(action.equals(toIgnore))
+                continue;
+            sum = add(sum, lbs.getOrDefault(action, new int[]{0}));
+        }
+        return sum;
+    }
+
+    private void updateChangesForMiddle(Changes newChanges, Change change) {
+        newChanges.add(change);
+//        int[] rightChangeArray = new int[change.getFixedDigitArrayValue().length];
+//
+//        for (int i = 0; i < rightChangeArray.length; i++) {
+//            rightChangeArray[i] = change.getFixedDigitArrayValue()[i] + 1;
+//        }
+//        newChanges.add(new RightChange(change.getAction(), change.getFixedDigitArrayValue()));
+//        newChanges.add(new LeftChange(change.getAction(), change.getFixedDigitArrayValue()));
     }
 
     protected void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
@@ -370,8 +541,8 @@ public class BilinearSequenceFormBnB {
             buildBaseLP(table, config);
         current.getChanges().updateTable(table);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
-        newChanges.add(change);
-        if(ubs.containsKey(newChanges)) {
+        updateChangesForLeft(newChanges, change);
+        if (ubs.containsKey(newChanges)) {
             cuts++;
             return;
         }
