@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTabl
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.number.DigitArray;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -301,160 +302,117 @@ public class BilinearSequenceFormBnB {
 
     private void updateChangesForLeft(Changes newChanges, Change change) {
         newChanges.add(change);
-        Map<Action, int[]> lbs = new HashMap<>();
-        Map<Action, int[]> ubs = new HashMap<>();
+        Map<Action, DigitArray> lbs = new HashMap<>();
+        Map<Action, DigitArray> ubs = new HashMap<>();
 
         for (Change oldChange : newChanges) {
             updateBounds(lbs, ubs, oldChange);
         }
         Set<Action> actions = ((SequenceFormIRInformationSet) change.getAction().getInformationSet()).getActions();
-        int[] ubSum = getUBSum(actions, ubs);
-        int[] needed = subtract(new int[]{1}, change.getFixedDigitArrayValue());
+        DigitArray ubSum = getUBSum(actions, ubs);
+        DigitArray needed = DigitArray.ONE.subtract(change.getFixedDigitArrayValue());
 
         for (Action action : actions) {
 //            if(action.equals(change.getAction()))
 //                continue;
-            int[] currentUBSum = subtract(ubSum, ubs.getOrDefault(action, new int[]{1}));
-            int[] currentLB = subtract(needed, currentUBSum);
+            DigitArray currentUBSum = ubSum.subtract(ubs.getOrDefault(action, DigitArray.ONE));
+            DigitArray currentLB = needed.subtract(currentUBSum);
 
-            if (greater(currentLB, lbs.getOrDefault(action, new int[]{0})))
-                for (int i = 2; i <= currentLB.length; i++) {
-                    newChanges.add(new RightChange(action, getSubArray(currentLB, i)));
+            moveToProbabilityInterval(currentLB);
+            if (currentLB.isGreaterThan(lbs.getOrDefault(action, DigitArray.ZERO)))
+                for (int i = 1; i <= currentLB.size(); i++) {
+                    newChanges.add(new RightChange(action, currentLB.getReducedPrecisionDigitArray(i)));
                 }
         }
     }
 
-    private void updateBounds(Map<Action, int[]> lbs, Map<Action, int[]> ubs, Change oldChange) {
+    private void updateBounds(Map<Action, DigitArray> lbs, Map<Action, DigitArray> ubs, Change oldChange) {
         if (oldChange instanceof LeftChange) {
-            int[] oldUB = ubs.get(oldChange.getAction());
+            DigitArray oldUB = ubs.get(oldChange.getAction());
 
-            if (oldUB == null || greater(oldUB, oldChange.getFixedDigitArrayValue()))
+            if (oldUB == null || oldUB.isGreaterThan(oldChange.getFixedDigitArrayValue()))
                 ubs.put(oldChange.getAction(), oldChange.getFixedDigitArrayValue());
         } else if (oldChange instanceof RightChange) {
-            int[] oldLB = lbs.get(oldChange.getAction());
+            DigitArray oldLB = lbs.get(oldChange.getAction());
 
-            if (oldLB == null || greater(oldChange.getFixedDigitArrayValue(), oldLB))
+            if (oldLB == null || oldChange.getFixedDigitArrayValue().isGreaterThan(oldLB))
                 lbs.put(oldChange.getAction(), oldChange.getFixedDigitArrayValue());
         } else {
-            int[] oldUB = ubs.get(oldChange.getAction());
-            int[] oldLB = lbs.get(oldChange.getAction());
-            int[] newUB = new int[oldChange.getFixedDigitArrayValue().length];
+            DigitArray newUB = new DigitArray(oldChange.getFixedDigitArrayValue());
+            DigitArray oldUB = ubs.get(oldChange.getAction());
+            DigitArray oldLB = lbs.get(oldChange.getAction());
 
-            System.arraycopy(oldChange.getFixedDigitArrayValue(), 0, newUB, 0, newUB.length);
-            newUB[newUB.length - 1]++;
-            if (oldUB == null || greater(oldUB, newUB))
-                ubs.put(oldChange.getAction(), newUB);
-            if (oldLB == null || greater(oldChange.getFixedDigitArrayValue(), oldLB))
+            for (int i = newUB.size() - 1; i >= 0; i--) {
+                if (newUB.get(i) == 9) {
+                    newUB.set(i, 0);
+                } else {
+                    newUB.set(i, newUB.get(i) + 1);
+                    break;
+                }
+            }
+            if (oldUB == null || oldUB.isGreaterThan(newUB))
+                ubs.put(oldChange.getAction(), new DigitArray(newUB));
+            if (oldLB == null || oldChange.getFixedDigitArrayValue().isGreaterThan(oldLB))
                 lbs.put(oldChange.getAction(), oldChange.getFixedDigitArrayValue());
         }
     }
 
-    private int[] getSubArray(int[] currentLB, int i) {
-        return Arrays.copyOf(currentLB, i);
-    }
-
-    private int[] getUBSum(Set<Action> actions, Map<Action, int[]> ubs) {
-        int[] sum = new int[]{0};
+    private DigitArray getUBSum(Set<Action> actions, Map<Action, DigitArray> ubs) {
+        DigitArray sum = DigitArray.ZERO;
 
         for (Action action : actions) {
-            sum = add(sum, ubs.getOrDefault(action, new int[]{1}));
+            sum = sum.add(ubs.getOrDefault(action, DigitArray.ONE));
         }
         return sum;
     }
 
-    private int[] subtract(int[] arr1, int[] arr2) {
-        int[] result = new int[Math.max(arr1.length, arr2.length)];
-        int temp;
-        boolean carry = false;
-
-        for (int i = result.length - 1; i >= 0; i--) {
-            if (i >= arr1.length) {
-                result[i] = (10 - arr2[i]) % 10 - (carry ? 1 : 0);
-                carry = true;
-            } else if (i >= arr2.length) {
-                result[i] = arr1[i];
-                carry = false;
-            } else {
-                temp = arr1[i] - arr2[i] - (carry ? 1 : 0);
-                carry = temp < 0;
-                result[i] = temp % 10;
-            }
-        }
-        return result;
-    }
-
-    private int[] add(int[] arr1, int[] arr2) {
-        int[] result = new int[Math.max(arr1.length, arr2.length)];
-        int temp;
-        boolean carry = false;
-
-        for (int i = result.length - 1; i >= 0; i--) {
-            if (i >= arr1.length) {
-                result[i] = arr2[i];
-                carry = false;
-            } else if (i >= arr2.length) {
-                result[i] = arr1[i];
-                carry = false;
-            } else {
-                temp = arr1[i] + arr2[i] + (carry ? 1 : 0);
-                carry = temp > 9;
-                result[i] = temp % 10;
-            }
-        }
-        return result;
-    }
-
-    private double toDouble(int[] array) {
-        double value = 0;
-
-        for (int i = 0; i < array.length; i++) {
-            value += array[i] * Math.pow(10, -i);
-        }
-        return value;
-    }
-
-    private boolean greater(int[] arr1, int[] arr2) {
-        for (int i = 0; i < Math.min(arr1.length, arr2.length); i++) {
-            if (arr1[i] > arr2[i])
-                return true;
-            else if (arr1[i] < arr2[i])
-                return false;
-        }
-        return arr1.length > arr2.length;
-    }
 
     private void updateChangesForRight(Changes newChanges, Change change) {
         newChanges.add(change);
-        Map<Action, int[]> lbs = new HashMap<>();
-        Map<Action, int[]> ubs = new HashMap<>();
+        Map<Action, DigitArray> lbs = new HashMap<>();
+        Map<Action, DigitArray> ubs = new HashMap<>();
 
         for (Change oldChange : newChanges) {
             updateBounds(lbs, ubs, oldChange);
         }
         Set<Action> actions = ((SequenceFormIRInformationSet) change.getAction().getInformationSet()).getActions();
-        int[] lbSum = getLBSum(actions, change.getAction(), lbs);
-        int[] limit = subtract(new int[]{1}, change.getFixedDigitArrayValue());
+        DigitArray lbSum = getLBSum(actions, change.getAction(), lbs);
+        DigitArray limit = DigitArray.ONE.subtract(change.getFixedDigitArrayValue());
 
         for (Action action : actions) {
-            if(action.equals(change.getAction()))
+            if (action.equals(change.getAction()))
                 continue;
-            int[] currentLBSum = subtract(lbSum, lbs.getOrDefault(action, new int[]{0}));
-            int[] currentUB = subtract(limit, currentLBSum);
+            DigitArray currentLBSum = lbSum.subtract(lbs.getOrDefault(action, DigitArray.ZERO));
+            DigitArray currentUB = limit.subtract(currentLBSum);
 
-            if (greater(ubs.getOrDefault(action, new int[]{1}), currentUB))
-                for (int i = 2; i <= currentUB.length; i++) {
-                    newChanges.add(new LeftChange(action, getSubArray(currentUB, i)));
+            moveToProbabilityInterval(currentUB);
+            if (ubs.getOrDefault(action, DigitArray.ONE).isGreaterThan(currentUB))
+                for (int i = 1; i <= currentUB.size(); i++) {
+                    newChanges.add(new LeftChange(action, currentUB.getReducedPrecisionDigitArray(i)));
                 }
         }
     }
 
-    private int[] getLBSum(Set<Action> actions, Action toIgnore, Map<Action, int[]> lbs) {
-        int[] sum = new int[]{0};
+    private void moveToProbabilityInterval(DigitArray digitArray) {
+        if (!digitArray.isGreaterThan(DigitArray.ZERO)) {
+            for (int i = 0; i < digitArray.size(); i++) {
+                digitArray.set(i, 0);
+            }
+        } else if (digitArray.isGreaterThan(DigitArray.ONE)) {
+            digitArray.set(0, 1);
+            for (int i = 1; i < digitArray.size(); i++) {
+                digitArray.set(i, 0);
+            }
+        }
+    }
+
+    private DigitArray getLBSum(Set<Action> actions, Action toIgnore, Map<Action, DigitArray> lbs) {
+        DigitArray sum = DigitArray.ZERO;
 
         for (Action action : actions) {
-            if(action.equals(toIgnore))
+            if (action.equals(toIgnore))
                 continue;
-            sum = add(sum, lbs.getOrDefault(action, new int[]{0}));
+            sum = sum.add(lbs.getOrDefault(action, DigitArray.ZERO));
         }
         return sum;
     }
@@ -521,7 +479,14 @@ public class BilinearSequenceFormBnB {
         int[] probability = new int[current.getActionProbability().length];
 
         System.arraycopy(current.getActionProbability(), 0, probability, 0, probability.length);
-        probability[probability.length - 1]++;
+        for (int i = probability.length - 1; i >= 0; i--) {
+            if (probability[i] == 9) {
+                probability[i] = 0;
+            } else {
+                probability[i]++;
+                break;
+            }
+        }
         return probability;
     }
 
@@ -531,7 +496,7 @@ public class BilinearSequenceFormBnB {
 
         if (isZero(probability))
             return;
-        if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && Arrays.equals(probability, change.getFixedDigitArrayValue()))))
+        if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && probability.equals(change.getFixedDigitArrayValue()))))
             probability[probability.length - 1]--;
         Change change = new LeftChange(current.getAction(), probability);
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();

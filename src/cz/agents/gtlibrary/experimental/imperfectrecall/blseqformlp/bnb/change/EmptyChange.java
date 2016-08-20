@@ -5,7 +5,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTabl
 public class EmptyChange extends Change {
 
     public EmptyChange() {
-        super(null, null);
+        super(null, new int[0]);
     }
 
     @Override
