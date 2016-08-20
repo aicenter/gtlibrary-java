@@ -23,13 +23,24 @@ public class DigitArray {
     }
 
     public boolean isGreaterThan(int[] other) {
-        for (int i = 0; i < Math.min(digitArray.length, other.length); i++) {
-            if (digitArray[i] > other[i])
+        for (int i = 0; i < Math.max(digitArray.length, other.length); i++) {
+            if (i >= digitArray.length) {
+                if (other[i] > 0)
+                    return false;
+                else if (other[i] < 0)
+                    return true;
+            } else if (i >= other.length) {
+                if (digitArray[i] > 0)
+                    return true;
+                else if (digitArray[i] < 0)
+                    return false;
+            } else if (digitArray[i] > other[i]) {
                 return true;
-            else if (digitArray[i] < other[i])
+            } else if (digitArray[i] < other[i]) {
                 return false;
+            }
         }
-        return digitArray.length > other.length;
+        return false;
     }
 
     public DigitArray add(DigitArray other) {
