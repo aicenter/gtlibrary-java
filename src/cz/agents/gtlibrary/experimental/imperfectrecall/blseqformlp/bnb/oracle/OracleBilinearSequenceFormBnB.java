@@ -37,8 +37,8 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
-    public static boolean DEBUG = false;
-    public static boolean SAVE_LPS = false;
+    public static boolean DEBUG = true;
+    public static boolean SAVE_LPS = true;
     public static double EPS = 1e-3;
 
     protected ImperfectRecallBestResponse br;
