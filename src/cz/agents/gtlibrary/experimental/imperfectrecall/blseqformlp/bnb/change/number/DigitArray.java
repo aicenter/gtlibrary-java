@@ -44,7 +44,7 @@ public class DigitArray {
     }
 
     public DigitArray add(DigitArray other) {
-        return new DigitArray(other.digitArray);
+        return add(other.digitArray);
     }
 
     public DigitArray add(int[] other) {

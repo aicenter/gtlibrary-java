@@ -309,7 +309,7 @@ public class BilinearSequenceFormBnB {
             updateBounds(lbs, ubs, oldChange);
         }
         Set<Action> actions = ((SequenceFormIRInformationSet) change.getAction().getInformationSet()).getActions();
-        DigitArray ubSum = getUBSum(actions, ubs);
+        DigitArray ubSum = getUBSum(actions, change.getAction(), ubs);
         DigitArray needed = DigitArray.ONE.subtract(change.getFixedDigitArrayValue());
 
         for (Action action : actions) {
@@ -320,7 +320,7 @@ public class BilinearSequenceFormBnB {
 
             moveToProbabilityInterval(currentLB);
             if (currentLB.isGreaterThan(lbs.getOrDefault(action, DigitArray.ZERO)))
-                for (int i = 1; i <= currentLB.size(); i++) {
+                for (int i = 2; i <= currentLB.size(); i++) {
                     newChanges.add(new RightChange(action, currentLB.getReducedPrecisionDigitArray(i)));
                 }
         }
@@ -357,10 +357,12 @@ public class BilinearSequenceFormBnB {
         }
     }
 
-    private DigitArray getUBSum(Set<Action> actions, Map<Action, DigitArray> ubs) {
+    private DigitArray getUBSum(Set<Action> actions, Action toIgnore, Map<Action, DigitArray> ubs) {
         DigitArray sum = DigitArray.ZERO;
 
         for (Action action : actions) {
+            if (action.equals(toIgnore))
+                continue;
             sum = sum.add(ubs.getOrDefault(action, DigitArray.ONE));
         }
         return sum;
@@ -387,7 +389,7 @@ public class BilinearSequenceFormBnB {
 
             moveToProbabilityInterval(currentUB);
             if (ubs.getOrDefault(action, DigitArray.ONE).isGreaterThan(currentUB))
-                for (int i = 1; i <= currentUB.size(); i++) {
+                for (int i = 2; i <= currentUB.size(); i++) {
                     newChanges.add(new LeftChange(action, currentUB.getReducedPrecisionDigitArray(i)));
                 }
         }
