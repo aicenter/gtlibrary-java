@@ -177,16 +177,16 @@ public class SQFBestResponseAlgorithm {
                 alternativeNodesProbs.put(currentNode, currentNodeProb);
             }
 
-//            if (!nonZeroOppRP && !nonZeroOppRPAlt && ISProbability > gameState.getNatureProbability()) {
-//                // if there is zero OppRP prob we keep only those nodes in IS that are caused by the moves of nature
-//                // i.e., -> we keep all the nodes that share the same history of the opponent
-//                for (GameState state : new ArrayList<GameState>(alternativeNodes)) {
-//                    if (!state.getHistory().getSequenceOf(players[opponentPlayerIndex]).equals(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex]))) {
-//                        alternativeNodes.remove(state);
-//                        alternativeNodesProbs.remove(state);
-//                    }
-//                }
-//            }
+            if (!nonZeroOppRP && !nonZeroOppRPAlt && ISProbability > gameState.getNatureProbability()) {
+                // if there is zero OppRP prob we keep only those nodes in IS that are caused by the moves of nature
+                // i.e., -> we keep all the nodes that share the same history of the opponent
+                for (GameState state : new ArrayList<GameState>(alternativeNodes)) {
+                    if (!state.getHistory().getSequenceOf(players[opponentPlayerIndex]).equals(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex]))) {
+                        alternativeNodes.remove(state);
+                        alternativeNodesProbs.remove(state);
+                    }
+                }
+            }
 
             BRSrchSelection sel = new BRSrchSelection(lowerBound, ISProbability, alternativeNodesProbs, nonZeroOppRP);
             Collections.sort(alternativeNodes, comparator);
