@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.number;
 
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class DigitArray {
 
@@ -87,7 +88,7 @@ public class DigitArray {
             } else {
                 temp = digitArray[i] - other[i] - (carry ? 1 : 0);
                 carry = temp < 0;
-                result[i] = temp % 10;
+                result[i] = i == 0 ? temp % 10 : Math.floorMod(temp, 10);
             }
         }
         return new DigitArray(result);
@@ -109,20 +110,32 @@ public class DigitArray {
         return digitArray.length;
     }
 
+    public IntStream stream() {
+        return Arrays.stream(digitArray);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof DigitArray)) return false;
-
         DigitArray that = (DigitArray) o;
 
-        return Arrays.equals(digitArray, that.digitArray);
-
+        for (int i = 0; i < Math.max(digitArray.length, that.digitArray.length); i++) {
+            if (digitArray.length <= i) {
+                if (that.digitArray[i] != 0)
+                    return false;
+            } else if (that.digitArray.length <= i) {
+                if (digitArray[i] != 0)
+                    return false;
+            } else if (digitArray[i] != that.digitArray[i])
+                return false;
+        }
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(digitArray);
+        return 0;
     }
 
     @Override
@@ -130,4 +143,7 @@ public class DigitArray {
         return Arrays.toString(digitArray);
     }
 
+    public int[] getArray() {
+        return digitArray;
+    }
 }
