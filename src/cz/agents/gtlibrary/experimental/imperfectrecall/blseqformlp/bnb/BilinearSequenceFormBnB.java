@@ -301,29 +301,35 @@ public class BilinearSequenceFormBnB {
     }
 
     private void updateChangesForLeft(Changes newChanges, Change change) {
-        newChanges.add(change);
-        Map<Action, DigitArray> lbs = new HashMap<>();
-        Map<Action, DigitArray> ubs = new HashMap<>();
-
-        for (Change oldChange : newChanges) {
-            updateBounds(lbs, ubs, oldChange);
-        }
-        Set<Action> actions = ((SequenceFormIRInformationSet) change.getAction().getInformationSet()).getActions();
-        DigitArray ubSum = getUBSum(actions, change.getAction(), ubs);
-        DigitArray needed = DigitArray.ONE.subtract(change.getFixedDigitArrayValue());
-
-        for (Action action : actions) {
-//            if(action.equals(change.getAction()))
+        newChanges.add(change);  //problém je asi v tom že tam vznikají omezení akcí v přesnosti kterou ta akce ještě nemá
+                //vykašlat se na celý tohle a tyhle ztpřesňující věci dělat až v výpočtu ub a lb v changes tim nebudou vznikat tyhle problěmy
+//        Map<Action, DigitArray> lbs = new HashMap<>();
+//        Map<Action, DigitArray> ubs = new HashMap<>();
+//
+//        for (Change oldChange : newChanges) {
+//            updateBounds(lbs, ubs, oldChange);
+//        }
+//        Set<Action> actions = ((SequenceFormIRInformationSet) change.getAction().getInformationSet()).getActions();
+//        DigitArray ubSum = getUBSum(actions, change.getAction(), ubs);
+//        DigitArray needed = DigitArray.ONE.subtract(change.getFixedDigitArrayValue());
+//
+//        for (Action action : actions) {
+//            if (action.equals(change.getAction()))
 //                continue;
-            DigitArray currentUBSum = ubSum.subtract(ubs.getOrDefault(action, DigitArray.ONE));
-            DigitArray currentLB = needed.subtract(currentUBSum);
+//            DigitArray currentUBSum = ubSum.subtract(ubs.getOrDefault(action, DigitArray.ONE));
+//            DigitArray currentLB = needed.subtract(currentUBSum);
+//
+//            moveToProbabilityInterval(currentLB);
+//            assert positive(currentLB);
+//            if (currentLB.isGreaterThan(lbs.getOrDefault(action, DigitArray.ZERO)))
+//                for (int i = 2; i <= currentLB.size(); i++) {
+//                    newChanges.add(new RightChange(action, currentLB.getReducedPrecisionDigitArray(i)));
+//                }
+//        }
+    }
 
-            moveToProbabilityInterval(currentLB);
-            if (currentLB.isGreaterThan(lbs.getOrDefault(action, DigitArray.ZERO)))
-                for (int i = 2; i <= currentLB.size(); i++) {
-                    newChanges.add(new RightChange(action, currentLB.getReducedPrecisionDigitArray(i)));
-                }
-        }
+    private boolean positive(DigitArray currentLB) {
+        return currentLB.stream().allMatch(i -> i >= 0);
     }
 
     private void updateBounds(Map<Action, DigitArray> lbs, Map<Action, DigitArray> ubs, Change oldChange) {
@@ -371,28 +377,29 @@ public class BilinearSequenceFormBnB {
 
     private void updateChangesForRight(Changes newChanges, Change change) {
         newChanges.add(change);
-        Map<Action, DigitArray> lbs = new HashMap<>();
-        Map<Action, DigitArray> ubs = new HashMap<>();
-
-        for (Change oldChange : newChanges) {
-            updateBounds(lbs, ubs, oldChange);
-        }
-        Set<Action> actions = ((SequenceFormIRInformationSet) change.getAction().getInformationSet()).getActions();
-        DigitArray lbSum = getLBSum(actions, change.getAction(), lbs);
-        DigitArray limit = DigitArray.ONE.subtract(change.getFixedDigitArrayValue());
-
-        for (Action action : actions) {
-            if (action.equals(change.getAction()))
-                continue;
-            DigitArray currentLBSum = lbSum.subtract(lbs.getOrDefault(action, DigitArray.ZERO));
-            DigitArray currentUB = limit.subtract(currentLBSum);
-
-            moveToProbabilityInterval(currentUB);
-            if (ubs.getOrDefault(action, DigitArray.ONE).isGreaterThan(currentUB))
-                for (int i = 2; i <= currentUB.size(); i++) {
-                    newChanges.add(new LeftChange(action, currentUB.getReducedPrecisionDigitArray(i)));
-                }
-        }
+//        Map<Action, DigitArray> lbs = new HashMap<>();
+//        Map<Action, DigitArray> ubs = new HashMap<>();
+//
+//        for (Change oldChange : newChanges) {
+//            updateBounds(lbs, ubs, oldChange);
+//        }
+//        Set<Action> actions = ((SequenceFormIRInformationSet) change.getAction().getInformationSet()).getActions();
+//        DigitArray lbSum = getLBSum(actions, change.getAction(), lbs);
+//        DigitArray limit = DigitArray.ONE.subtract(change.getFixedDigitArrayValue());
+//
+//        for (Action action : actions) {
+//            if (action.equals(change.getAction()))
+//                continue;
+//            DigitArray currentLBSum = lbSum.subtract(lbs.getOrDefault(action, DigitArray.ZERO));
+//            DigitArray currentUB = limit.subtract(currentLBSum);
+//
+//            moveToProbabilityInterval(currentUB);
+//            assert positive(currentUB);
+//            if (ubs.getOrDefault(action, DigitArray.ONE).isGreaterThan(currentUB))
+//                for (int i = 2; i <= currentUB.size(); i++) {
+//                    newChanges.add(new LeftChange(action, currentUB.getReducedPrecisionDigitArray(i)));
+//                }
+//        }
     }
 
     private void moveToProbabilityInterval(DigitArray digitArray) {
@@ -406,6 +413,7 @@ public class BilinearSequenceFormBnB {
                 digitArray.set(i, 0);
             }
         }
+        assert positive(digitArray);
     }
 
     private DigitArray getLBSum(Set<Action> actions, Action toIgnore, Map<Action, DigitArray> lbs) {
@@ -421,13 +429,59 @@ public class BilinearSequenceFormBnB {
 
     private void updateChangesForMiddle(Changes newChanges, Change change) {
         newChanges.add(change);
-//        int[] rightChangeArray = new int[change.getFixedDigitArrayValue().length];
+//        Map<Action, DigitArray> lbs = new HashMap<>();
+//        Map<Action, DigitArray> ubs = new HashMap<>();
 //
-//        for (int i = 0; i < rightChangeArray.length; i++) {
-//            rightChangeArray[i] = change.getFixedDigitArrayValue()[i] + 1;
+//        for (Change oldChange : newChanges) {
+//            updateBounds(lbs, ubs, oldChange);
 //        }
-//        newChanges.add(new RightChange(change.getAction(), change.getFixedDigitArrayValue()));
-//        newChanges.add(new LeftChange(change.getAction(), change.getFixedDigitArrayValue()));
+//        Set<Action> actions = ((SequenceFormIRInformationSet) change.getAction().getInformationSet()).getActions();
+//        DigitArray lbSum = getLBSum(actions, change.getAction(), lbs);
+//        DigitArray limit = DigitArray.ONE.subtract(change.getFixedDigitArrayValue());
+//
+//        for (Action action : actions) {
+//            if (action.equals(change.getAction()))
+//                continue;
+//            DigitArray currentLBSum = lbSum.subtract(lbs.getOrDefault(action, DigitArray.ZERO));
+//            DigitArray currentUB = limit.subtract(currentLBSum);
+//
+//            moveToProbabilityInterval(currentUB);
+//            assert positive(currentUB);
+//            if (ubs.getOrDefault(action, DigitArray.ONE).isGreaterThan(currentUB))
+//                for (int i = 2; i <= currentUB.size(); i++) {
+//                    newChanges.add(new LeftChange(action, currentUB.getReducedPrecisionDigitArray(i)));
+//                }
+//        }
+//        DigitArray ubSum = getUBSum(actions, change.getAction(), ubs);
+//        DigitArray needed = decrementLSD(DigitArray.ONE.subtract(change.getFixedDigitArrayValue()));
+//
+//        for (Action action : actions) {
+//            if (action.equals(change.getAction()))
+//                continue;
+//            DigitArray currentUBSum = ubSum.subtract(ubs.getOrDefault(action, DigitArray.ONE));
+//            DigitArray currentLB = needed.subtract(currentUBSum);
+//
+//            moveToProbabilityInterval(currentLB);
+//            assert positive(currentLB);
+//            if (currentLB.isGreaterThan(lbs.getOrDefault(action, DigitArray.ZERO)))
+//                for (int i = 2; i <= currentLB.size(); i++) {
+//                    newChanges.add(new RightChange(action, currentLB.getReducedPrecisionDigitArray(i)));
+//                }
+//        }
+    }
+
+    private DigitArray decrementLSD(DigitArray needed) {
+        int[] decrement = new int[needed.size()];
+
+        decrement[decrement.length - 1] = 1;
+        return needed.subtract(decrement);
+    }
+
+    private DigitArray incrementLSD(DigitArray array) {
+        int[] decrement = new int[array.size()];
+
+        decrement[decrement.length - 1] = 1;
+        return array.add(decrement);
     }
 
     protected void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
@@ -582,13 +636,13 @@ public class BilinearSequenceFormBnB {
         double lowerBound = getLowerBound(p1Strategy);
         double upperBound = getUpperBound(lpData);
         Action action = findMostViolatedBilinearConstraints(config, lpData);
-        int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action));
+        int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action), action, changes);
 
         assert lowerBound <= upperBound + 1e-6;
         return new Candidate(lowerBound, upperBound, changes, action, exactProbability);
     }
 
-    protected int[] getExactProbability(Double value, int precision) {
+    protected int[] getExactProbability(Double value, int precision, Action action, Changes changes) {
         int[] exactValue = new int[precision];
         int intValue = (int) Math.floor(value * Math.pow(10, precision));
 
@@ -596,8 +650,19 @@ public class BilinearSequenceFormBnB {
             exactValue[i] = (int) (intValue / Math.pow(10, exactValue.length - i));
             intValue -= exactValue[i] * Math.pow(10, exactValue.length - i);
         }
-        return exactValue;
+
+        DigitArray currentProbability = new DigitArray(exactValue);
+        DigitArray ub = changes.getUbFor(action);
+        DigitArray lb = changes.getLbFor(action);
+
+        if(currentProbability.equals(ub))
+            currentProbability = decrementLSD(currentProbability);
+        if(currentProbability.equals(lb))
+            currentProbability = incrementLSD(currentProbability);
+        return currentProbability.getArray();
     }
+
+
 
     protected Candidate createCandidate(LPData lpData, SequenceFormIRConfig config) throws IloException {
         return createCandidate(new Changes(), lpData, config);
