@@ -8,25 +8,28 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.b
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.number.DigitArray;
 import cz.agents.gtlibrary.interfaces.Action;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class Changes extends LinkedHashSet<Change> {
+public class Changes extends ArrayList<Change> {
 
     private Bound lbs;
     private Bound ubs;
+    Boolean valid;
 
     public Changes() {
         super();
         lbs = new LowerBound();
         ubs = new UpperBound();
+        valid = null;
     }
 
     public Changes(Changes changes) {
         super(changes);
         lbs = deepCopy(changes.lbs, new LowerBound());
         ubs = deepCopy(changes.ubs, new UpperBound());
+        valid = changes.valid;
     }
 
     private Bound deepCopy(Bound source, Bound destination) {
@@ -49,6 +52,7 @@ public class Changes extends LinkedHashSet<Change> {
     }
 
     private void updateBounds(Change change) {
+        valid = null;
         if (change instanceof LeftChange)
             updateBoundsForLeft(change);
         else if (change instanceof RightChange)
@@ -195,5 +199,26 @@ public class Changes extends LinkedHashSet<Change> {
 
     public DigitArray getLbFor(Action action) {
         return lbs.getOrDefault(action, DigitArray.ZERO);
+    }
+
+    public boolean isValid() {
+        if(valid == null)
+            valid = checkValidity();
+        return valid;
+    }
+
+    private boolean checkValidity() {
+        Set<Action> relevantActions = Stream.concat(ubs.entrySet().stream().flatMap(e -> e.getValue().keySet().stream()),
+                ubs.entrySet().stream().flatMap(e -> e.getValue().keySet().stream())).collect(Collectors.toSet());
+        for (Action relevantAction : relevantActions) {
+            DigitArray ub = ubs.getOrDefault(relevantAction, DigitArray.ONE);
+            DigitArray lb = lbs.getOrDefault(relevantAction, DigitArray.ZERO);
+
+            if(DigitArray.ZERO.isGreaterThan(ub) || lb.isGreaterThan(DigitArray.ONE))
+                return false;
+            if(lb.isGreaterThan(ub))
+                return false;
+        }
+        return true;
     }
 }
