@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 public class BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean SAVE_LPS = false;
+    public static boolean USE_INVALID_CUTS = true;
+    public static boolean USE_DUPLICITY_CUTS = false;
     public static double EPS = 1e-3;
 
     protected final Player player;
@@ -58,6 +60,7 @@ public class BilinearSequenceFormBnB {
     protected long BRTime = 0;
     protected long lpBuildingTime = 0;
     protected int cuts;
+    protected int invalidCuts = 0;
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
@@ -94,6 +97,7 @@ public class BilinearSequenceFormBnB {
         System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
         System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
         return solver.finalValue;
     }
 
@@ -150,7 +154,7 @@ public class BilinearSequenceFormBnB {
             while (!fringe.isEmpty()) {
                 Candidate current = pollCandidateWithUBHigherThanBestLB(fringe);
 
-//                System.out.println(current + " vs " + currentBest);
+                System.out.println(current + " vs " + currentBest);
 //                System.out.println(current.getChanges());
                 if (isConverged(current)) {
                     currentBest = current;
@@ -254,7 +258,11 @@ public class BilinearSequenceFormBnB {
         if (precision >= maxRefinements)
             return;
         updateChangesForMiddle(newChanges, change);
-        if (ubs.containsKey(newChanges)) {
+        if(USE_INVALID_CUTS && !newChanges.isValid()) {
+            invalidCuts++;
+            return;
+        }
+        if (USE_DUPLICITY_CUTS && ubs.containsKey(newChanges)) {
             cuts++;
             return;
         }
@@ -292,7 +300,11 @@ public class BilinearSequenceFormBnB {
         current.getChanges().updateTable(table);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         updateChangesForRight(newChanges, change);
-        if (ubs.containsKey(newChanges)) {
+        if(USE_INVALID_CUTS && !newChanges.isValid()) {
+            invalidCuts++;
+            return;
+        }
+        if (USE_DUPLICITY_CUTS && ubs.containsKey(newChanges)) {
             cuts++;
             return;
         }
@@ -563,7 +575,11 @@ public class BilinearSequenceFormBnB {
         current.getChanges().updateTable(table);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         updateChangesForLeft(newChanges, change);
-        if (ubs.containsKey(newChanges)) {
+        if(USE_INVALID_CUTS && !newChanges.isValid()) {
+            invalidCuts++;
+            return;
+        }
+        if (USE_DUPLICITY_CUTS && ubs.containsKey(newChanges)) {
             cuts++;
             return;
         }
@@ -655,10 +671,10 @@ public class BilinearSequenceFormBnB {
         DigitArray ub = changes.getUbFor(action);
         DigitArray lb = changes.getLbFor(action);
 
-        if(currentProbability.equals(ub))
+        if(!ub.equals(DigitArray.ONE) && currentProbability.equals(ub))
             currentProbability = decrementLSD(currentProbability);
-        if(currentProbability.equals(lb))
-            currentProbability = incrementLSD(currentProbability);
+//        if(!lb.equals(DigitArray.ZERO) && currentProbability.equals(lb))
+//            currentProbability = incrementLSD(currentProbability);
         return currentProbability.getArray();
     }
 
