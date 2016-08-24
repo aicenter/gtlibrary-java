@@ -15,7 +15,7 @@ public abstract class Change {
 
     public Change(Action action, int[] fixedDigitArrayValue) {
         this.action = action;
-        this.fixedDigitArrayValue = new DigitArray(fixedDigitArrayValue);
+        this.fixedDigitArrayValue = new DigitArray(fixedDigitArrayValue, true);
     }
 
     public Change(Action action, DigitArray fixedDigitArrayValue) {

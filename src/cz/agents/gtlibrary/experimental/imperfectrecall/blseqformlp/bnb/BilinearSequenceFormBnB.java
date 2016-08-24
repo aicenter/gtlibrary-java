@@ -486,14 +486,14 @@ public class BilinearSequenceFormBnB {
         int[] decrement = new int[needed.size()];
 
         decrement[decrement.length - 1] = 1;
-        return needed.subtract(decrement);
+        return needed.subtract(new DigitArray(decrement, true));
     }
 
     private DigitArray incrementLSD(DigitArray array) {
-        int[] decrement = new int[array.size()];
+        int[] increment = new int[array.size()];
 
-        decrement[decrement.length - 1] = 1;
-        return array.add(decrement);
+        increment[increment.length - 1] = 1;
+        return array.add(new DigitArray(increment, true));
     }
 
     protected void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
@@ -666,7 +666,7 @@ public class BilinearSequenceFormBnB {
             intValue -= exactValue[i] * Math.pow(10, exactValue.length - i);
         }
 
-        DigitArray currentProbability = new DigitArray(exactValue);
+        DigitArray currentProbability = new DigitArray(exactValue, true);
         DigitArray ub = changes.getUbFor(action);
         DigitArray lb = changes.getLbFor(action);
 
