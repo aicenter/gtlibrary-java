@@ -16,12 +16,14 @@ public class Changes extends ArrayList<Change> {
 
     private Bound lbs;
     private Bound ubs;
-    Boolean valid;
+    private Map<Action, Integer> precision;
+    private Boolean valid;
 
     public Changes() {
         super();
         lbs = new LowerBound();
         ubs = new UpperBound();
+        precision = new HashMap<>();
         valid = null;
     }
 
@@ -29,6 +31,7 @@ public class Changes extends ArrayList<Change> {
         super(changes);
         lbs = deepCopy(changes.lbs, new LowerBound());
         ubs = deepCopy(changes.ubs, new UpperBound());
+        precision = new HashMap<>(changes.precision);
         valid = changes.valid;
     }
 
@@ -53,13 +56,22 @@ public class Changes extends ArrayList<Change> {
 
     private void updateBounds(Change change) {
         valid = null;
-        if (change instanceof LeftChange)
+        if (change instanceof LeftChange) {
             updateBoundsForLeft(change);
-        else if (change instanceof RightChange)
+        } else if (change instanceof RightChange) {
             updateBoundsForRight(change);
-        else
+        } else {
             updateBoundsForMiddle(change);
+            updatePrecision(change);
+        }
         while (inferBounds()) ;
+    }
+
+    private void updatePrecision(Change change) {
+        int oldPrecision = precision.getOrDefault(change.getAction(), 2);
+
+        if (change.getFixedDigitArrayValue().size() > oldPrecision)
+            precision.put(change.getAction(), change.getFixedDigitArrayValue().size());
     }
 
     private void updateBoundsForMiddle(Change change) {
@@ -180,14 +192,16 @@ public class Changes extends ArrayList<Change> {
         if (!(o instanceof Changes)) return false;
         Changes changes = (Changes) o;
 
-        if (lbs != null ? !lbs.equals(changes.lbs) : changes.lbs != null) return false;
-        return ubs != null ? ubs.equals(changes.ubs) : changes.ubs == null;
+        if (!precision.equals(changes.precision)) return false;
+        if (!lbs.equals(changes.lbs)) return false;
+        return ubs.equals(changes.ubs);
     }
 
     @Override
     public int hashCode() {
         int result = 1;
 
+        result = 31 * result + (precision != null ? precision.hashCode() : 0);
         result = 31 * result + (lbs != null ? lbs.hashCode() : 0);
         result = 31 * result + (ubs != null ? ubs.hashCode() : 0);
         return result;
@@ -202,7 +216,7 @@ public class Changes extends ArrayList<Change> {
     }
 
     public boolean isValid() {
-        if(valid == null)
+        if (valid == null)
             valid = checkValidity();
         return valid;
     }
@@ -214,9 +228,9 @@ public class Changes extends ArrayList<Change> {
             DigitArray ub = ubs.getOrDefault(relevantAction, DigitArray.ONE);
             DigitArray lb = lbs.getOrDefault(relevantAction, DigitArray.ZERO);
 
-            if(DigitArray.ZERO.isGreaterThan(ub) || lb.isGreaterThan(DigitArray.ONE))
+            if (DigitArray.ZERO.isGreaterThan(ub) || lb.isGreaterThan(DigitArray.ONE))
                 return false;
-            if(lb.isGreaterThan(ub))
+            if (lb.isGreaterThan(ub))
                 return false;
         }
         return true;

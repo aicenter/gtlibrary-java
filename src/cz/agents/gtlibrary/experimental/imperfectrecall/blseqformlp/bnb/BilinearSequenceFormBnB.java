@@ -580,7 +580,6 @@ public class BilinearSequenceFormBnB {
             return;
         }
         if (USE_DUPLICITY_CUTS && ubs.containsKey(newChanges)) {
-            cuts++;
             return;
         }
         ubs.put(newChanges, 0d);

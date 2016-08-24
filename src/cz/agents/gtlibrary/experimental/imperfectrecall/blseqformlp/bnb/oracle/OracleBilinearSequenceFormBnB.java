@@ -37,8 +37,8 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
-    public static boolean DEBUG = true;
-    public static boolean SAVE_LPS = true;
+    public static boolean DEBUG = false;
+    public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
 
     protected ImperfectRecallBestResponse br;
@@ -84,6 +84,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         System.out.println("Oracle self time: " + solver.getSelfTime());
         System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
         return solver.finalValue;
     }
 
@@ -159,8 +160,9 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                 if (expandCondition.validForExpansion(restrictedGameConfig, current)) {
                     boolean expanded = gameExpander.expand(restrictedGameConfig, current);
 
-                    if (expanded)
+                    if (expanded) {
                         expansionCount++;
+                    }
                     expanderTime += gameExpander.getSelfTime();
                     BRTime += gameExpander.getBRTime();
                     table.clearTable();
