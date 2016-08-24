@@ -125,8 +125,9 @@ public class DigitArray {
 
         for (int i = result.length - 1; i >= 0; i--) {
             if (i >= digitArray.length) {
-                result[i] = Math.floorMod(10 - other.digitArray[i] - (carry ? 1 : 0), 10);
-                carry = (other.digitArray[i] != 0);
+                temp = -other.digitArray[i] - (carry ? 1 : 0);
+                carry = temp < 0;
+                result[i] = Math.floorMod(temp, 10);
             } else if (i >= other.digitArray.length) {
                 result[i] = digitArray[i];
                 carry = false;
