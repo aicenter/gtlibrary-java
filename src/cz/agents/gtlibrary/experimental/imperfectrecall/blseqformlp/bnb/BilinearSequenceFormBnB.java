@@ -32,7 +32,7 @@ public class BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean SAVE_LPS = false;
     public static boolean USE_INVALID_CUTS = true;
-    public static boolean USE_DUPLICITY_CUTS = false;
+    public static boolean USE_DUPLICITY_CUTS = true;
     public static double EPS = 1e-3;
 
     protected final Player player;
