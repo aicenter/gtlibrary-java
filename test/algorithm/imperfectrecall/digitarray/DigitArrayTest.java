@@ -95,6 +95,13 @@ public class DigitArrayTest {
     }
 
     @Test
+    public void DigitArraySubtractTest5() {
+        DigitArray minuend = DigitArray.ONE;
+        DigitArray subtrahend = new DigitArray(new int[]{0, 0, 2}, true);
+
+        assertEquals(new DigitArray(new int[]{0, 9, 8}, true), minuend.subtract(subtrahend));
+    }
+    @Test
     public void DigitArrayIsGreaterThanTest() {
         DigitArray digit = new DigitArray(new int[]{0, 2, 2}, true);
         DigitArray digit1 = new DigitArray(new int[]{0, 2, 2, 0}, true);
