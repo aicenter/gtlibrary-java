@@ -25,11 +25,13 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
         brTime = 0;
         long start = mxBean.getCurrentThreadCpuTime();
         int terminalLeafCount = config.getTerminalStates().size();
+        int sequenceCount = config.getAllSequences().size();
+        int informationSetCount = config.getAllInformationSets().size();
 
         if (OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states before expand: " + config.getTerminalStates().size());
             System.out.println("information sets before expand: " + config.getAllInformationSets().size());
-            System.out.println("sequences before expand: " + config.getAllInformationSets().size());
+            System.out.println("sequences before expand: " + config.getAllSequences().size());
         }
 //        Map<Action, Double> filteredMinPlayerBestResponse = removeUnreachableActions(candidate);
 
@@ -42,7 +44,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
         }
         config.updateP1UtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
-        return config.getTerminalStates().size() > terminalLeafCount;
+        return config.getTerminalStates().size() > terminalLeafCount || config.getAllSequences().size() > sequenceCount || config.getAllInformationSets().size() > informationSetCount;
     }
 
     @Override
@@ -51,7 +53,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
         long start = mxBean.getCurrentThreadCpuTime();
         int terminalLeafCount = config.getTerminalStates().size();
 
-        if(OracleBilinearSequenceFormBnB.DEBUG) {
+        if (OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states before expand: " + config.getTerminalStates().size());
             System.out.println("information sets before expand: " + config.getAllInformationSets().size());
             System.out.println("sequences before expand: " + config.getAllInformationSets().size());
@@ -59,7 +61,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
 //        Map<Action, Double> filteredMinPlayerBestResponse = removeUnreachableActions(minPlayerBestResponse);
 
         expandRecursively(root, config, minPlayerBestResponse);
-        if(OracleBilinearSequenceFormBnB.DEBUG) {
+        if (OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
             System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
             System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
