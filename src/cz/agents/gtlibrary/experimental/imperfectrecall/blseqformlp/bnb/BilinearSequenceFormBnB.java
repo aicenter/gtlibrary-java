@@ -242,6 +242,22 @@ public class BilinearSequenceFormBnB {
         return upperBound;
     }
 
+    protected int[] getMiddleExactProbability(Candidate current) {
+        int[] probability;
+
+        if (current.getActionProbability()[0] == 1) {
+            probability = new int[current.getActionProbability().length];
+            System.arraycopy(current.getActionProbability(), 0, probability, 0, probability.length);
+            probability[0] = 0;
+            for (int i = 1; i < probability.length; i++) {
+                probability[i] = 9;
+            }
+        } else {
+            probability = current.getActionProbability();
+        }
+        return probability;
+    }
+
     protected void addMiddleChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
         Changes newChanges = new Changes(current.getChanges());
         int[] probability = getMiddleExactProbability(current);
@@ -268,22 +284,6 @@ public class BilinearSequenceFormBnB {
         }
         ubs.put(newChanges, 0d);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
-    }
-
-    protected int[] getMiddleExactProbability(Candidate current) {
-        int[] probability;
-
-        if (current.getActionProbability()[0] == 1) {
-            probability = new int[current.getActionProbability().length];
-            System.arraycopy(current.getActionProbability(), 0, probability, 0, probability.length);
-            probability[0] = 0;
-            for (int i = 1; i < probability.length; i++) {
-                probability[i] = 9;
-            }
-        } else {
-            probability = current.getActionProbability();
-        }
-        return probability;
     }
 
     protected void addRightChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
@@ -580,6 +580,7 @@ public class BilinearSequenceFormBnB {
             return;
         }
         if (USE_DUPLICITY_CUTS && ubs.containsKey(newChanges)) {
+            cuts++;
             return;
         }
         ubs.put(newChanges, 0d);
