@@ -5,6 +5,8 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
+import cz.agents.gtlibrary.domain.phantomTTT.imperfectrecall.IRTTTState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -37,7 +39,8 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
-    public static boolean DEBUG = false;
+    public static boolean DEBUG = true;
+    public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
 
@@ -50,8 +53,44 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-        runRandomGame();
+//        runRandomGame();
+        runTTT();
 //        runBRTest();
+    }
+
+    public static double runTTT() {
+//        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SelfBuildingSequenceFormIRConfig();
+        GameState root = new IRTTTState();
+        Expander<SequenceFormIRInformationSet> expander = new TTTExpander<>(config);
+
+//        builder.build(root, config, expander);
+//        System.out.println("game build");
+        OracleBilinearSequenceFormBnB solver = new OracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomGameInfo());
+
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+//        System.out.println("Information sets: " + config.getCountIS(0));
+//        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(new SequenceFormIRConfig());
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Expander time: " + solver.getExpanderTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        return solver.finalValue;
     }
 
     public static double runRandomGame() {
