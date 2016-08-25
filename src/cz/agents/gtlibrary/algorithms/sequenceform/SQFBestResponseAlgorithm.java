@@ -180,12 +180,12 @@ public class SQFBestResponseAlgorithm {
                         alternativeNodes.remove(state);
                         alternativeNodesProbs.remove(state);
                     }
-                    if (!state.getSequenceForPlayerToMove().equals(gameState.getSequenceForPlayerToMove())) {
-                        alternativeNodes.remove(state);
-                        alternativeNodesProbs.remove(state);
-                    }
                 }
             }
+            new ArrayList<GameState>(alternativeNodes).stream().filter(state -> !state.getSequenceForPlayerToMove().equals(gameState.getSequenceForPlayerToMove())).forEach(state -> {
+                alternativeNodes.remove(state);
+                alternativeNodesProbs.remove(state);
+            });
 
             BRSrchSelection sel = new BRSrchSelection(lowerBound, ISProbability, alternativeNodesProbs, nonZeroOppRP);
             Collections.sort(alternativeNodes, comparator);
