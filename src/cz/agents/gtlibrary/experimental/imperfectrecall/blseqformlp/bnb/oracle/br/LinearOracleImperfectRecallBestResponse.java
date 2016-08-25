@@ -29,7 +29,7 @@ public class LinearOracleImperfectRecallBestResponse extends OracleImperfectReca
     }
 
     private Map<Action, Double> toBehavioralStrategy(HashSet<Sequence> sequences) {
-        return sequences.stream().filter(s -> !s.isEmpty()).collect(Collectors.toMap(s -> s.getLast(), s -> 1d));
+        return sequences.stream().filter(s -> !s.isEmpty()).collect(Collectors.toMap(s -> s.getLast(), s -> 1d, (oldKey, newKey) -> newKey));
     }
 
     @Override
