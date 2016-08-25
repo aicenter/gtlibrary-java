@@ -7,6 +7,8 @@ import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSet> {
     protected Map<GameState, Double> actualUtilityValuesInLeafs = new HashMap<>();
@@ -319,7 +321,8 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     }
 
     public Collection<Sequence> getAllSequences() {
-        return compatibleSequences.keySet();
+        return playerSequences.values().stream().flatMap(v -> v.stream()).collect(Collectors.toSet());
+//        return compatibleSequences.keySet();
     }
 
     public Set<SequenceFormIRInformationSet> getReachableSets(Sequence sequence) {

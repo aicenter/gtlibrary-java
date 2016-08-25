@@ -68,7 +68,7 @@ public class Changes extends ArrayList<Change> {
     }
 
     private void updatePrecision(Change change) {
-        int oldPrecision = precision.getOrDefault(change.getAction(), 2);
+        int oldPrecision = precision.getOrDefault(change.getAction(), 1);
 
         if (change.getFixedDigitArrayValue().size() > oldPrecision)
             precision.put(change.getAction(), change.getFixedDigitArrayValue().size());
@@ -230,7 +230,7 @@ public class Changes extends ArrayList<Change> {
 
             if (DigitArray.ZERO.isGreaterThan(ub) || lb.isGreaterThan(DigitArray.ONE))
                 return false;
-            if (lb.isGreaterThan(ub))
+            if (lb.isGreaterThan(ub) || lb.equals(ub))
                 return false;
         }
         return true;
