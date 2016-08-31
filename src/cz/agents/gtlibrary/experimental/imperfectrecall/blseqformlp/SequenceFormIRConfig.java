@@ -236,7 +236,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     public void setUtility(GameState leaf) {
         final double[] utilities = leaf.getUtilities();
 
-        assert utilities[0] == -utilities[1] : "not a zero-sum game";
+//        assert utilities[0] == -utilities[1] : "not a zero-sum game";
         double utility = utilities[0] * leaf.getNatureProbability();
         setUtility(leaf, utility);
     }
