@@ -154,7 +154,7 @@ public class BilinearSequenceFormBnB {
             while (!fringe.isEmpty()) {
                 Candidate current = pollCandidateWithUBHigherThanBestLB(fringe);
 
-                System.out.println(current + " vs " + currentBest);
+//                System.out.println(current + " vs " + currentBest);
 //                System.out.println(current.getChanges());
                 if (isConverged(current)) {
                     currentBest = current;
