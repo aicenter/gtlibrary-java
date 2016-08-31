@@ -24,7 +24,7 @@ public class CrswfInformationSet extends IRInformationSetImpl {
 
     @Override
     public String toString() {
-        return "[IS:" + player + ":" + statesInInformationSet + "]";
+        return "[IS:" + player + ":" + statesInformationSet + "]";
     }
 
     public double getNatureProbability() {
@@ -57,8 +57,8 @@ public class CrswfInformationSet extends IRInformationSetImpl {
 
     public void mergeWith(CrswfInformationSet informationSet) {
         this.ID = informationSet.ID;
-        statesInInformationSet.addAll(informationSet.getAllStates());
-        informationSet.addAllStatesToIS(statesInInformationSet);
+        statesInformationSet.addAll(informationSet.getAllStates());
+        informationSet.addAllStatesToIS(statesInformationSet);
     }
 
     public long getID() {

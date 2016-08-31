@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.dag;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.InformationSet;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +11,6 @@ import java.util.Map;
 public class DAGConfig extends ConfigImpl<DAGInformationSet> {
     protected Map<DAGGameState, Double> actualUtilityValuesInLeafs = new HashMap<>();
     protected Map<GameState, Map<Action, GameState>> successors = new HashMap<>();
-
 
     @Override
     public DAGInformationSet createInformationSetFor(GameState gameState) {
@@ -46,6 +46,18 @@ public class DAGConfig extends ConfigImpl<DAGInformationSet> {
             stateSuccessors = new HashMap<>();
         stateSuccessors.put(action, successor);
         successors.put(state, stateSuccessors);
+        DAGInformationSet informationSet = getInformationSetFor(state);
+
+        if(informationSet != null)
+            informationSet.addAction(action);
     }
 
+    public Map<GameState, Map<Action, GameState>> getSuccessors() {
+        return successors;
+    }
+
+    @Override
+    public Double getActualNonzeroUtilityValues(GameState leaf) {
+        return actualUtilityValuesInLeafs.get(leaf);
+    }
 }
