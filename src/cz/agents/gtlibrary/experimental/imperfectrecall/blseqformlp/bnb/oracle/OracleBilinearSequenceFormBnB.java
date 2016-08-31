@@ -16,7 +16,9 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Bilinear
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Change;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Changes;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.LinearOracleImperfectRecallBestResponse;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleALossRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandCondition;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandConditionImpl;
@@ -39,8 +41,8 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
-    public static boolean DEBUG = true;
-    public static boolean EXPORT_GBT = false;
+    public static boolean DEBUG = false;
+    public static boolean EXPORT_GBT = true;
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
 
@@ -53,8 +55,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-//        runRandomGame();
-        runTTT();
+        runRandomGame();
+//        runTTT();
 //        runBRTest();
     }
 
@@ -141,7 +143,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public OracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
         super(player, fullGameExpander, info);
-        br = new LinearOracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, root, fullGameExpander, gameInfo);
+        br = new OracleALossRecallBestResponse(RandomGameInfo.SECOND_PLAYER, root, fullGameExpander, gameInfo);
+//        br = new LinearOracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, root, fullGameExpander, gameInfo);
 //        br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
         gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
     }
@@ -301,6 +304,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         assert equalsInPRInformationSets(p1Strategy, config, lpData);
         assert isConvexCombination(p1Strategy, lpData, config);
         Pair<Double, Map<Action, Double>> lowerBoundAndBR = getLowerBoundAndBR(p1Strategy);
+
+        assert correctSums(lowerBoundAndBR.getRight());
         double upperBound = getUpperBound(lpData);
 
         assert upperBound > lowerBoundAndBR.getLeft() - 1e-3;
@@ -311,9 +316,22 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         return new OracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, mostBrokenActionValue, extractRPStrategy(config, lpData), lowerBoundAndBR.getRight(), expansionCount);
     }
 
+    private boolean correctSums(Map<Action, Double> strategy) {
+        for (Map.Entry<Action, Double> entry : strategy.entrySet()) {
+            double sum = 0;
+
+            for (Action action : ((SequenceFormIRInformationSet)entry.getKey().getInformationSet()).getActions()) {
+               sum += strategy.getOrDefault(action, 0d);
+            }
+            if(Math.abs(sum - 1) > 1e-8)
+                return false;
+        }
+        return true;
+    }
+
     protected Pair<Double, Map<Action, Double>> getLowerBoundAndBR(Map<Action, Double> p1Strategy) {
         long start = mxBean.getCurrentThreadCpuTime();
-        Map<Action, Double> bestResponse = br.getBestResponse(p1Strategy);
+        Map<Action, Double> bestResponse = new HashMap<>(br.getBestResponse(p1Strategy));
 
         BRTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
         return new Pair<>(-br.getValue(), bestResponse);
