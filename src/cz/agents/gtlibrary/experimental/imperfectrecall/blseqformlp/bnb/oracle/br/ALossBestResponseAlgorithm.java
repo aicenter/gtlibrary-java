@@ -76,6 +76,7 @@ public class ALossBestResponseAlgorithm {
         this.BRresult.clear();
         this.bestResponse.clear();
         this.cachedValuesForNodes.clear();
+        this.firstLevelActions.clear();
         this.gameTreeRoot = root;
 
         comparator = new ORComparator();
