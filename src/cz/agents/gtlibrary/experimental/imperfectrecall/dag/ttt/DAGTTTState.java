@@ -22,6 +22,7 @@ public class DAGTTTState extends IRTTTState implements DAGGameState {
         Expander<DAGInformationSet> expander = new TTTExpander<>(config);
 
         BasicGameBuilder.build(root, config, expander);
+        System.out.println(config.getAllInformationSets().size());
     }
 
     public DAGTTTState(DAGConfig config) {

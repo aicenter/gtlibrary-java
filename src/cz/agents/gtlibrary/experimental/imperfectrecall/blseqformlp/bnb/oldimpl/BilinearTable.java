@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.MILPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
@@ -14,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Deprecated
-public class BilinearTable extends LPTable {
+public class BilinearTable extends MILPTable {
     private Map<Object, Pair<Object, Object>> bilinearVars;
     private Map<Object, Integer> bilinearPrecision; // infromation set -> precision
     private Map<Object, IloNumVar[][]> wVariables; // information set -> binary variables for the bilinear terms for that IS
