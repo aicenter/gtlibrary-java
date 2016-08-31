@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.LinearOracleImperfectRecallBestResponse;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleALossRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.PartialGambitEFG;
@@ -34,7 +35,8 @@ public class SingleOracleGameExpander implements GameExpander {
         this.minPlayer = info.getOpponent(maxPlayer);
         sequenceCombinationUtilityContribution = new HashMap<>();
 //        br = new OracleImperfectRecallBestResponse(maxPlayer, expander, info);
-        br = new LinearOracleImperfectRecallBestResponse(maxPlayer, root, expander, info);
+        br = new OracleALossRecallBestResponse(maxPlayer, root, expander, info);
+//        br = new LinearOracleImperfectRecallBestResponse(maxPlayer, root, expander, info);
         mxBean = ManagementFactory.getThreadMXBean();
     }
 
@@ -76,18 +78,18 @@ public class SingleOracleGameExpander implements GameExpander {
         long start = mxBean.getCurrentThreadCpuTime();
         int terminalLeafCount = config.getTerminalStates().size();
 
-        if(OracleBilinearSequenceFormBnB.DEBUG) {
+        if (OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states before expand: " + config.getTerminalStates().size());
             System.out.println("information sets before expand: " + config.getAllInformationSets().size());
             System.out.println("sequences before expand: " + config.getAllInformationSets().size());
         }
         expandRecursively(root, config, candidate);
-        if(OracleBilinearSequenceFormBnB.DEBUG) {
+        if (OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
             System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
             System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
         }
-        if(OracleBilinearSequenceFormBnB.EXPORT_GBT)
+        if (OracleBilinearSequenceFormBnB.EXPORT_GBT)
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         config.updateP1UtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
@@ -100,18 +102,18 @@ public class SingleOracleGameExpander implements GameExpander {
         long start = mxBean.getCurrentThreadCpuTime();
         int terminalLeafCount = config.getTerminalStates().size();
 
-        if(OracleBilinearSequenceFormBnB.DEBUG) {
+        if (OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states before expand: " + config.getTerminalStates().size());
             System.out.println("information sets before expand: " + config.getAllInformationSets().size());
             System.out.println("sequences before expand: " + config.getAllInformationSets().size());
         }
         expandRecursively(root, config, minPlayerBestResponse);
-        if(OracleBilinearSequenceFormBnB.DEBUG) {
+        if (OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
             System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
             System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
         }
-        if(OracleBilinearSequenceFormBnB.EXPORT_GBT)
+        if (OracleBilinearSequenceFormBnB.EXPORT_GBT)
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         config.updateP1UtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
