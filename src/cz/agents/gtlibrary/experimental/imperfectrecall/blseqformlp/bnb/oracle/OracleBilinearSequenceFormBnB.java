@@ -41,7 +41,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
-    public static boolean DEBUG = true;
+    public static boolean DEBUG = false;
     public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
@@ -187,8 +187,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
             while (!fringe.isEmpty()) {
                 OracleCandidate current = (OracleCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
 
-                System.out.println(current + " vs " + currentBest);
-                System.out.println(current.getChanges());
+//                System.out.println(current + " vs " + currentBest);
+//                System.out.println(current.getChanges());
 //                System.out.println(current + " vs " + currentBest);
                 if (isConverged(current)) {
                     currentBest = current;
