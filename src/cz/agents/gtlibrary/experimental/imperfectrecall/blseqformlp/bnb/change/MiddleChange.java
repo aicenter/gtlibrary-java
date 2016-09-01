@@ -28,6 +28,10 @@ public class MiddleChange extends Change {
     public boolean equals(Object o) {
         if (!(o instanceof MiddleChange))
             return false;
+        MiddleChange other = (MiddleChange) o;
+
+        if(fixedDigitArrayValue.size() != other.fixedDigitArrayValue.size())
+            return false;
         return super.equals(o);
     }
 

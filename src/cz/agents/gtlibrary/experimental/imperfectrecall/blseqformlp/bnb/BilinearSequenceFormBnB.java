@@ -282,6 +282,7 @@ public class BilinearSequenceFormBnB {
             cuts++;
             return;
         }
+        assert !current.getChanges().contains(change);
         ubs.put(newChanges, 0d);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
@@ -308,6 +309,7 @@ public class BilinearSequenceFormBnB {
             cuts++;
             return;
         }
+        assert !current.getChanges().contains(change);
         ubs.put(newChanges, 0d);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
@@ -520,7 +522,7 @@ public class BilinearSequenceFormBnB {
                 if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
                     Candidate candidate = createCandidate(newChanges, lpData, config);
 
-                    assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
+//                    assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
                     if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
                     if (candidate.getLb() > currentBest.getLb()) {
                         currentBest = candidate;
@@ -562,11 +564,13 @@ public class BilinearSequenceFormBnB {
         Changes newChanges = new Changes(current.getChanges());
         int[] probability = getLeftExactProbability(current);
 
-        if (isZero(probability))
-            return;
+        DigitArray probDigit = new DigitArray(probability, true);
+
         if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && probability.equals(change.getFixedDigitArrayValue()))))
-            probability[probability.length - 1]--;
-        Change change = new LeftChange(current.getAction(), probability);
+            probDigit = decrementLSD(probDigit);
+        if (DigitArray.ZERO.isGreaterThan(probDigit) || probDigit.equals(DigitArray.ZERO))
+            return;
+        Change change = new LeftChange(current.getAction(), probDigit);
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
         table.clearTable();
@@ -583,6 +587,7 @@ public class BilinearSequenceFormBnB {
             cuts++;
             return;
         }
+        assert !current.getChanges().contains(change);
         ubs.put(newChanges, 0d);
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
@@ -666,13 +671,18 @@ public class BilinearSequenceFormBnB {
             exactValue[i] = (int) (intValue / Math.pow(10, exactValue.length - i));
             intValue -= exactValue[i] * Math.pow(10, exactValue.length - i);
         }
-
         DigitArray currentProbability = new DigitArray(exactValue, true);
+
+        if(intValue > 4)
+            currentProbability = incrementLSD(currentProbability);
         DigitArray ub = changes.getUbFor(action);
         DigitArray lb = changes.getLbFor(action);
 
         if(!ub.equals(DigitArray.ONE) && currentProbability.equals(ub))
             currentProbability = decrementLSD(currentProbability);
+        if(lb.isGreaterThan(currentProbability))
+            currentProbability = incrementLSD(currentProbability);
+//        assert (currentProbability.isGreaterThan(lb) || currentProbability.size() > lb.size()) && (ub.isGreaterThan(currentProbability) || ub.equals(DigitArray.ONE));
 //        if(!lb.equals(DigitArray.ZERO) && currentProbability.equals(lb))
 //            currentProbability = incrementLSD(currentProbability);
         return currentProbability.getArray();

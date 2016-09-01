@@ -41,7 +41,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
-    public static boolean DEBUG = false;
+    public static boolean DEBUG = true;
     public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
@@ -187,8 +187,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
             while (!fringe.isEmpty()) {
                 OracleCandidate current = (OracleCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
 
-//                System.out.println(current + " vs " + currentBest);
-//                System.out.println(current.getChanges());
+                System.out.println(current + " vs " + currentBest);
+                System.out.println(current.getChanges());
 //                System.out.println(current + " vs " + currentBest);
                 if (isConverged(current)) {
                     currentBest = current;
@@ -281,7 +281,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
             if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
                 Candidate candidate = createCandidate(currentBest.getChanges(), lpData, restrictedGameConfig);
 
-                assert Math.abs(candidate.getUb() - checkOnCleanLP(restrictedGameConfig, candidate)) < 1e-4;
+//                assert Math.abs(candidate.getUb() - checkOnCleanLP(restrictedGameConfig, candidate)) < 1e-4;
                 if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
                 if (candidate.getLb() > currentBest.getLb()) {
                     currentBest = candidate;
@@ -300,7 +300,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     protected OracleCandidate createCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
         Map<Action, Double> p1Strategy = extractBehavioralStrategyLP(config, lpData);
 
-        assert definedEverywhere(p1Strategy, config);
+//        assert definedEverywhere(p1Strategy, config);
         assert equalsInPRInformationSets(p1Strategy, config, lpData);
         assert isConvexCombination(p1Strategy, lpData, config);
         Pair<Double, Map<Action, Double>> lowerBoundAndBR = getLowerBoundAndBR(p1Strategy);
