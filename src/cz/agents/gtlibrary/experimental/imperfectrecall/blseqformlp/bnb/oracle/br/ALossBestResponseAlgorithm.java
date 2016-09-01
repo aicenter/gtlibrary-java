@@ -203,7 +203,7 @@ public class ALossBestResponseAlgorithm {
             Action resultAction = sel.getResult().getLeft(); //selected action for the searching player
 
             for (GameState currentNode : alternativeNodes) { // storing the results based on the action
-                if (sel.actionRealValues.get(currentNode) == null) {
+                if (sel.actionRealValues.get(currentNode) == null || sel.actionRealValues.get(currentNode).isEmpty()) {
                     if (currentNode.equals(gameState)) {
 //                        returnValue = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
                         returnValue = Double.NEGATIVE_INFINITY;
