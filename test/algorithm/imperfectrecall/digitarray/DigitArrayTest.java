@@ -212,4 +212,20 @@ public class DigitArrayTest {
 
         assertEquals(true, digit1.equals(digit));
     }
+
+    @Test
+    public void DigitArrayAverageTest() {
+        DigitArray digit = new DigitArray(new int[]{0, 4, 2}, true);
+        DigitArray digit1 = new DigitArray(new int[]{1, 7, 7, 0}, true);
+
+        assertArrayEquals(new int[]{1, 0, 9, 5}, DigitArray.getAverage(digit, digit1, 4).getArray());
+    }
+
+    @Test
+    public void DigitArrayAverageTest1() {
+        DigitArray digit = new DigitArray(new int[]{0, 4, 2}, true);
+        DigitArray digit1 = new DigitArray(new int[]{1, 2, 7, 0}, true);
+
+        assertArrayEquals(new int[]{0, 8, 5}, DigitArray.getAverage(digit, digit1, 3).getArray());
+    }
 }
