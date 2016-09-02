@@ -33,6 +33,7 @@ public class BilinearSequenceFormBnB {
     public static boolean SAVE_LPS = false;
     public static boolean USE_INVALID_CUTS = true;
     public static boolean USE_DUPLICITY_CUTS = true;
+    public static boolean USE_BINARY_HALVING = true;
     public static double EPS = 1e-3;
 
     protected final Player player;
@@ -123,7 +124,7 @@ public class BilinearSequenceFormBnB {
     }
 
     public void solve(SequenceFormIRConfig config) {
-        strategyLP = new StrategyLP(config);
+         strategyLP = new StrategyLP(config);
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
         buildBaseLP(table, config);
@@ -288,14 +289,14 @@ public class BilinearSequenceFormBnB {
     }
 
     protected void addRightChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
+        table.clearTable();
         if (current.getActionProbability()[0] == 1)
             return;
         Changes newChanges = new Changes(current.getChanges());
-        int[] probability = getRightExactProbability(current);
+        DigitArray probability = getRightExactProbability(current);
         Change change = new RightChange(current.getAction(), probability);
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
-        table.clearTable();
         if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
             buildBaseLP(table, config);
         current.getChanges().updateTable(table);
@@ -484,20 +485,6 @@ public class BilinearSequenceFormBnB {
 //        }
     }
 
-    private DigitArray decrementLSD(DigitArray needed) {
-        int[] decrement = new int[needed.size()];
-
-        decrement[decrement.length - 1] = 1;
-        return needed.subtract(new DigitArray(decrement, true));
-    }
-
-    private DigitArray incrementLSD(DigitArray array) {
-        int[] increment = new int[array.size()];
-
-        increment[increment.length - 1] = 1;
-        return array.add(new DigitArray(increment, true));
-    }
-
     protected void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
         try {
             long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
@@ -545,7 +532,11 @@ public class BilinearSequenceFormBnB {
         }
     }
 
-    protected int[] getRightExactProbability(Candidate current) {
+    protected DigitArray getRightExactProbability(Candidate current) {
+        if(USE_BINARY_HALVING) {
+            return DigitArray.getAverage(current.getChanges().getLbFor(current.getAction()),
+                    current.getChanges().getUbFor(current.getAction()), table.getPrecisionFor(current.getAction()));
+        }
         int[] probability = new int[current.getActionProbability().length];
 
         System.arraycopy(current.getActionProbability(), 0, probability, 0, probability.length);
@@ -557,23 +548,21 @@ public class BilinearSequenceFormBnB {
                 break;
             }
         }
-        return probability;
+        return new DigitArray(probability, true);
     }
 
     protected void addLeftChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
+        table.clearTable();
         Changes newChanges = new Changes(current.getChanges());
-        int[] probability = getLeftExactProbability(current);
+        DigitArray probDigit =  getLeftExactProbability(current);
 
-        DigitArray probDigit = new DigitArray(probability, true);
-
-        if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && probability.equals(change.getFixedDigitArrayValue()))))
-            probDigit = decrementLSD(probDigit);
+        if (alreadyPresentLeft(newChanges, probDigit))
+            probDigit = probDigit.decrementLSD();
         if (DigitArray.ZERO.isGreaterThan(probDigit) || probDigit.equals(DigitArray.ZERO))
             return;
         Change change = new LeftChange(current.getAction(), probDigit);
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
-        table.clearTable();
         if (!BilinearTable.DELETE_PRECISION_CONSTRAINTS_ONLY)
             buildBaseLP(table, config);
         current.getChanges().updateTable(table);
@@ -592,11 +581,19 @@ public class BilinearSequenceFormBnB {
         applyNewChangeAndSolve(fringe, config, newChanges, change);
     }
 
+    private boolean alreadyPresentLeft(Changes newChanges, DigitArray probDigit) {
+        return newChanges.stream().anyMatch(change -> (change instanceof LeftChange && probDigit.equals(change.getFixedDigitArrayValue())));
+    }
+
     protected boolean isZero(int[] probability) {
         return !Arrays.stream(probability).anyMatch(prob -> prob > 0);
     }
 
-    protected int[] getLeftExactProbability(Candidate current) {
+    protected DigitArray getLeftExactProbability(Candidate current) {
+        if(USE_BINARY_HALVING) {
+           return DigitArray.getAverage(current.getChanges().getLbFor(current.getAction()),
+                   current.getChanges().getUbFor(current.getAction()), table.getPrecisionFor(current.getAction()));
+        }
         int[] probability;
 
         if (current.getActionProbability()[0] == 1) {
@@ -609,7 +606,7 @@ public class BilinearSequenceFormBnB {
         } else {
             probability = current.getActionProbability();
         }
-        return probability;
+        return new DigitArray(probability, true);
     }
 
 
@@ -674,14 +671,14 @@ public class BilinearSequenceFormBnB {
         DigitArray currentProbability = new DigitArray(exactValue, true);
 
         if(intValue > 4)
-            currentProbability = incrementLSD(currentProbability);
+            currentProbability = currentProbability.incrementLSD();
         DigitArray ub = changes.getUbFor(action);
         DigitArray lb = changes.getLbFor(action);
 
         if(!ub.equals(DigitArray.ONE) && currentProbability.equals(ub))
-            currentProbability = decrementLSD(currentProbability);
+            currentProbability = currentProbability.decrementLSD();
         if(lb.isGreaterThan(currentProbability))
-            currentProbability = incrementLSD(currentProbability);
+            currentProbability = currentProbability.incrementLSD();
 //        assert (currentProbability.isGreaterThan(lb) || currentProbability.size() > lb.size()) && (ub.isGreaterThan(currentProbability) || ub.equals(DigitArray.ONE));
 //        if(!lb.equals(DigitArray.ZERO) && currentProbability.equals(lb))
 //            currentProbability = incrementLSD(currentProbability);
