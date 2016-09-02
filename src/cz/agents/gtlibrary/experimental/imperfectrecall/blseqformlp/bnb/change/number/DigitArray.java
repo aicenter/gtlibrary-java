@@ -11,6 +11,10 @@ public class DigitArray {
     private int[] digitArray;
     private boolean positive;
 
+    public static DigitArray getAverage(DigitArray digit1, DigitArray digit2, int precision) {
+        return digit1.add(digit2).divideByTwo().roundTo(precision);
+    }
+
     public DigitArray(int[] digitArray, boolean positive) {
         this.digitArray = digitArray;
         this.positive = positive;
@@ -34,6 +38,51 @@ public class DigitArray {
                 return false;
         }
         return true;
+    }
+
+    private DigitArray roundTo(int precision) {
+        int[] arrayCopy = new int[precision];
+
+        if (precision >= size()) {
+            System.arraycopy(digitArray, 0, arrayCopy, 0, size());
+            return new DigitArray(arrayCopy, positive);
+        }
+        System.arraycopy(digitArray, 0, arrayCopy, 0, arrayCopy.length);
+        DigitArray result = new DigitArray(arrayCopy, positive);
+
+        if (digitArray[arrayCopy.length] > 4)
+            result = result.incrementLSD();
+        return result;
+    }
+
+    public DigitArray decrementLSD() {
+        int[] decrement = new int[size()];
+
+        decrement[decrement.length - 1] = 1;
+        return subtract(new DigitArray(decrement, true));
+    }
+
+    public DigitArray incrementLSD() {
+        int[] increment = new int[size()];
+
+        increment[increment.length - 1] = 1;
+        return add(new DigitArray(increment, true));
+    }
+
+    private DigitArray divideByTwo() {
+        int[] copyArray = new int[digitArray.length + 1];
+
+        System.arraycopy(digitArray, 0, copyArray, 0, digitArray.length);
+//        DigitArray result = new DigitArray(copyArray, positive);
+        int carry = 0;
+
+        for (int i = 0; i < copyArray.length; i++) {
+            int positionResult = (int) Math.floor(copyArray[i] / 2. + carry);
+
+            carry = (int) ((copyArray[i] / 2. + carry - positionResult) * 10);
+            copyArray[i] = positionResult;
+        }
+        return new DigitArray(copyArray, positive);
     }
 
     public boolean isGreaterThan(DigitArray other) {
