@@ -3,7 +3,10 @@ package cz.agents.gtlibrary.domain.bpg.imperfectrecall;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.bpg.data.BorderPatrollingGraph;
-import cz.agents.gtlibrary.iinodes.*;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
+import cz.agents.gtlibrary.iinodes.Observations;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Observation;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -48,7 +51,7 @@ public class IRBPGGameState extends BPGGameState {
             attackerObservations.add(new BPGDefenderAttackerObservation(flaggedNodesObservedByPatroller));
             Observations defenderObservations = new Observations(BPGGameInfo.DEFENDER, BPGGameInfo.DEFENDER);
 
-            defenderObservations.add(new BPGDefenderDefenderObservation(p1Position, p2Position));
+            defenderObservations.add(new BPGDefenderDefenderObservation(p1Position, p2Position, getSequenceFor(BPGGameInfo.DEFENDER).size()));
             key = new ImperfectRecallISKey(defenderObservations, attackerObservations, null);
         }
         return key;
@@ -87,10 +90,12 @@ public class IRBPGGameState extends BPGGameState {
 
         protected Node p1Position;
         protected Node p2Position;
+        protected int round;
 
-        public BPGDefenderDefenderObservation(Node p1Position, Node p2Position) {
+        public BPGDefenderDefenderObservation(Node p1Position, Node p2Position, int round) {
             this.p1Position = p1Position;
             this.p2Position = p2Position;
+            this.round = round;
         }
 
         @Override
@@ -100,9 +105,9 @@ public class IRBPGGameState extends BPGGameState {
 
             BPGDefenderDefenderObservation that = (BPGDefenderDefenderObservation) o;
 
+            if (round != that.round) return false;
             if (p1Position != null ? !p1Position.equals(that.p1Position) : that.p1Position != null) return false;
-            if (p2Position != null ? !p2Position.equals(that.p2Position) : that.p2Position != null) return false;
-            return true;
+            return p2Position != null ? p2Position.equals(that.p2Position) : that.p2Position == null;
 
         }
 
@@ -110,6 +115,7 @@ public class IRBPGGameState extends BPGGameState {
         public int hashCode() {
             int result = p1Position != null ? p1Position.hashCode() : 0;
             result = 31 * result + (p2Position != null ? p2Position.hashCode() : 0);
+            result = 31 * result + round;
             return result;
         }
 
