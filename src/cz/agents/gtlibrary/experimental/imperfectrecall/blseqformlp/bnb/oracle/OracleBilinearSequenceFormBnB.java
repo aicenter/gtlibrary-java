@@ -2,10 +2,14 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle;
 
 import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.domain.bpg.BPGExpander;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.imperfectrecall.IRTTTState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
@@ -35,14 +39,11 @@ import ilog.cplex.IloCplex;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
-    public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = false;
+    public static boolean DEBUG = true;
+    public static boolean EXPORT_GBT = true;
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
 
@@ -55,8 +56,9 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-        runRandomGame();
+//        runRandomGame();
 //        runTTT();
+        runBPG();
 //        runBRTest();
     }
 
@@ -68,7 +70,41 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
 //        builder.build(root, config, expander);
 //        System.out.println("game build");
-        OracleBilinearSequenceFormBnB solver = new OracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomGameInfo());
+        OracleBilinearSequenceFormBnB solver = new OracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new TTTInfo());
+
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+//        System.out.println("Information sets: " + config.getCountIS(0));
+//        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(new SequenceFormIRConfig());
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Expander time: " + solver.getExpanderTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        return solver.finalValue;
+    }
+
+    public static double runBPG() {
+        SequenceFormIRConfig config = new SelfBuildingSequenceFormIRConfig();
+        GameState root = new IRBPGGameState();
+        Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
+
+//        builder.build(root, config, expander);
+//        System.out.println("game build");
+        OracleBilinearSequenceFormBnB solver = new OracleBilinearSequenceFormBnB(BPGGameInfo.DEFENDER, root, expander, new BPGGameInfo());
 
 //        GambitEFG exporter = new GambitEFG();
 //        exporter.write("RG.gbt", root, expander);
@@ -143,7 +179,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public OracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
         super(player, fullGameExpander, info);
-        br = new OracleALossRecallBestResponse(RandomGameInfo.SECOND_PLAYER, root, fullGameExpander, gameInfo);
+        br = new OracleALossRecallBestResponse(info.getOpponent(player), root, fullGameExpander, gameInfo);
 //        br = new LinearOracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, root, fullGameExpander, gameInfo);
 //        br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
         gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);

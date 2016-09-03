@@ -4,7 +4,6 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleCandidate;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.LinearOracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleALossRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.interfaces.*;
@@ -91,7 +90,7 @@ public class SingleOracleGameExpander implements GameExpander {
         }
         if (OracleBilinearSequenceFormBnB.EXPORT_GBT)
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
-        config.updateP1UtilitiesReachableBySequences();
+        config.updateUtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
         return config.getTerminalStates().size() > terminalLeafCount;
     }
@@ -115,7 +114,7 @@ public class SingleOracleGameExpander implements GameExpander {
         }
         if (OracleBilinearSequenceFormBnB.EXPORT_GBT)
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
-        config.updateP1UtilitiesReachableBySequences();
+        config.updateUtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
         return config.getTerminalStates().size() > terminalLeafCount;
     }

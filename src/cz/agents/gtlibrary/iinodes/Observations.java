@@ -11,12 +11,13 @@ public class Observations implements List<Observation> {
     private List<Observation> observationList;
     private Player observingPlayer;
     private Player observedPlayer;
-
     public Observations(Player observingPlayer, Player observedPlayer) {
         this.observingPlayer = observingPlayer;
         this.observedPlayer = observedPlayer;
         observationList = new LinkedList<>();
     }
+
+    private int hashCode = -1;
 
     public Observations(List<Observation> observationList, Player observingPlayer, Player observedPlayer) {
         this.observingPlayer = observingPlayer;
@@ -42,6 +43,7 @@ public class Observations implements List<Observation> {
 
     @Override
     public Iterator<Observation> iterator() {
+        hashCode = -1;
         return observationList.iterator();
     }
 
@@ -57,11 +59,13 @@ public class Observations implements List<Observation> {
 
     @Override
     public boolean add(Observation observation) {
+        hashCode = -1;
         return observation.isEmpty() || observationList.add(observation);
     }
 
     @Override
     public boolean remove(Object o) {
+        hashCode = -1;
         return observationList.remove(o);
     }
 
@@ -85,16 +89,19 @@ public class Observations implements List<Observation> {
 
     @Override
     public boolean removeAll(Collection<?> c) {
+        hashCode = -1;
         return observationList.removeAll(c);
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
+        hashCode = -1;
         return observationList.retainAll(c);
     }
 
     @Override
     public void clear() {
+        hashCode = -1;
         observationList.clear();
     }
 
@@ -111,7 +118,9 @@ public class Observations implements List<Observation> {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 31).append(observedPlayer).append(observingPlayer).append(observationList).toHashCode();
+        if (hashCode == -1)
+            hashCode = new HashCodeBuilder(17, 31).append(observedPlayer).append(observingPlayer).append(observationList).toHashCode();
+        return hashCode;
     }
 
     @Override
@@ -121,17 +130,20 @@ public class Observations implements List<Observation> {
 
     @Override
     public Observation set(int index, Observation element) {
+        hashCode = -1;
         return element.isEmpty() ? remove(index) : observationList.set(index, element);
     }
 
     @Override
     public void add(int index, Observation element) {
+        hashCode = -1;
         if (!element.isEmpty())
             observationList.add(index, element);
     }
 
     @Override
     public Observation remove(int index) {
+        hashCode = -1;
         return observationList.remove(index);
     }
 
@@ -147,11 +159,13 @@ public class Observations implements List<Observation> {
 
     @Override
     public ListIterator<Observation> listIterator() {
+        hashCode = -1;
         return observationList.listIterator();
     }
 
     @Override
     public ListIterator<Observation> listIterator(int index) {
+        hashCode = -1;
         return observationList.listIterator(index);
     }
 

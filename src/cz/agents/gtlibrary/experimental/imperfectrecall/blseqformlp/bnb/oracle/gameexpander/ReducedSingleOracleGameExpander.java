@@ -43,7 +43,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
         }
         if(OracleBilinearSequenceFormBnB.EXPORT_GBT)
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
-        config.updateP1UtilitiesReachableBySequences();
+        config.updateUtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
         return config.getTerminalStates().size() > terminalLeafCount || config.getAllSequences().size() > sequenceCount || config.getAllInformationSets().size() > informationSetCount;
     }
@@ -69,7 +69,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
         }
         if(OracleBilinearSequenceFormBnB.EXPORT_GBT)
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
-        config.updateP1UtilitiesReachableBySequences();
+        config.updateUtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
         return config.getTerminalStates().size() > terminalLeafCount;
     }
