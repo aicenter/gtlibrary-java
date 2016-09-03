@@ -2,6 +2,9 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 
 import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponseImpl;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.domain.bpg.BPGExpander;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
@@ -35,7 +38,8 @@ public class BilinearSeqenceFormLP {
     private final double EPS = 0.000001;
 
     public static void main(String[] args) {
-        runRandomGame();
+//        runRandomGame();
+        runBPG();
 //        runBRTest();
     }
 
@@ -53,6 +57,40 @@ public class BilinearSeqenceFormLP {
 //        }
 
         BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
+
+        GambitEFG exporter = new GambitEFG();
+        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+        System.out.println("Information sets: " + config.getCountIS(0));
+        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        solver.solve(config);
+
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        return solver.finalValue;
+
+//        System.out.println("IR SETS");
+//        for (SequenceFormIRInformationSet is : config.getAllInformationSets().values()) {
+//            if (is.isHasIR()) {
+//                System.out.println(is.getISKey());
+//            }
+//        }
+    }
+
+    public static double runBPG() {
+        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        GameState root = new IRBPGGameState();
+        Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
+
+        builder.build(root, config, expander);
+
+//        if (config.isPlayer2IR()) {
+//            System.out.println(" Player 2 has IR ... skipping ...");
+//            return;
+//        }
+
+        BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BPGGameInfo.DEFENDER, new BPGGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -132,7 +170,7 @@ public class BilinearSeqenceFormLP {
 //                }
                 sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
             }
-            ImperfectRecallBestResponseImpl br = new ImperfectRecallBestResponseImpl(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+            ImperfectRecallBestResponseImpl br = new ImperfectRecallBestResponseImpl(opponent, expander, gameInfo);
 
             if (DEBUG) System.out.println("-------------------");
             if (DEBUG) {

@@ -2,6 +2,9 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb;
 
 import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponseImpl;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.domain.bpg.BPGExpander;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
@@ -65,7 +68,8 @@ public class BilinearSequenceFormBnB {
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-        runRandomGame();
+//        runRandomGame();
+        runBPG();
 //        runBRTest();
     }
 
@@ -102,6 +106,37 @@ public class BilinearSequenceFormBnB {
         return solver.finalValue;
     }
 
+    public static double runBPG() {
+        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        GameState root = new IRBPGGameState();
+        Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
+
+        builder.build(root, config, expander);
+        BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(BPGGameInfo.DEFENDER, expander, new BPGGameInfo());
+
+        solver.setExpander(expander);
+        System.out.println("Information sets: " + config.getCountIS(0));
+        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        return solver.finalValue;
+    }
+
+
     protected static void runBRTest() {
         BasicGameBuilder builder = new BasicGameBuilder();
         SequenceFormIRConfig config = new SequenceFormIRConfig();
@@ -119,12 +154,12 @@ public class BilinearSequenceFormBnB {
         this.opponent = info.getOpponent(player);
         this.gameInfo = info;
         this.expander = expander;
-        br = new ImperfectRecallBestResponseImpl(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+        br = new ImperfectRecallBestResponseImpl(opponent, expander, gameInfo);
         ubs = new HashMap<>();
     }
 
     public void solve(SequenceFormIRConfig config) {
-         strategyLP = new StrategyLP(config);
+        strategyLP = new StrategyLP(config);
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
         buildBaseLP(table, config);
@@ -275,7 +310,7 @@ public class BilinearSequenceFormBnB {
         if (precision >= maxRefinements)
             return;
         updateChangesForMiddle(newChanges, change);
-        if(USE_INVALID_CUTS && !newChanges.isValid()) {
+        if (USE_INVALID_CUTS && !newChanges.isValid()) {
             invalidCuts++;
             return;
         }
@@ -302,7 +337,7 @@ public class BilinearSequenceFormBnB {
         current.getChanges().updateTable(table);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         updateChangesForRight(newChanges, change);
-        if(USE_INVALID_CUTS && !newChanges.isValid()) {
+        if (USE_INVALID_CUTS && !newChanges.isValid()) {
             invalidCuts++;
             return;
         }
@@ -317,7 +352,7 @@ public class BilinearSequenceFormBnB {
 
     private void updateChangesForLeft(Changes newChanges, Change change) {
         newChanges.add(change);  //problém je asi v tom že tam vznikají omezení akcí v přesnosti kterou ta akce ještě nemá
-                //vykašlat se na celý tohle a tyhle ztpřesňující věci dělat až v výpočtu ub a lb v changes tim nebudou vznikat tyhle problěmy
+        //vykašlat se na celý tohle a tyhle ztpřesňující věci dělat až v výpočtu ub a lb v changes tim nebudou vznikat tyhle problěmy
 //        Map<Action, DigitArray> lbs = new HashMap<>();
 //        Map<Action, DigitArray> ubs = new HashMap<>();
 //
@@ -533,7 +568,7 @@ public class BilinearSequenceFormBnB {
     }
 
     protected DigitArray getRightExactProbability(Candidate current) {
-        if(USE_BINARY_HALVING) {
+        if (USE_BINARY_HALVING) {
             return DigitArray.getAverage(current.getChanges().getLbFor(current.getAction()),
                     current.getChanges().getUbFor(current.getAction()), table.getPrecisionFor(current.getAction()));
         }
@@ -554,7 +589,7 @@ public class BilinearSequenceFormBnB {
     protected void addLeftChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
         table.clearTable();
         Changes newChanges = new Changes(current.getChanges());
-        DigitArray probDigit =  getLeftExactProbability(current);
+        DigitArray probDigit = getLeftExactProbability(current);
 
         if (alreadyPresentLeft(newChanges, probDigit))
             probDigit = probDigit.decrementLSD();
@@ -568,7 +603,7 @@ public class BilinearSequenceFormBnB {
         current.getChanges().updateTable(table);
         lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
         updateChangesForLeft(newChanges, change);
-        if(USE_INVALID_CUTS && !newChanges.isValid()) {
+        if (USE_INVALID_CUTS && !newChanges.isValid()) {
             invalidCuts++;
             return;
         }
@@ -590,9 +625,9 @@ public class BilinearSequenceFormBnB {
     }
 
     protected DigitArray getLeftExactProbability(Candidate current) {
-        if(USE_BINARY_HALVING) {
-           return DigitArray.getAverage(current.getChanges().getLbFor(current.getAction()),
-                   current.getChanges().getUbFor(current.getAction()), table.getPrecisionFor(current.getAction()));
+        if (USE_BINARY_HALVING) {
+            return DigitArray.getAverage(current.getChanges().getLbFor(current.getAction()),
+                    current.getChanges().getUbFor(current.getAction()), table.getPrecisionFor(current.getAction()));
         }
         int[] probability;
 
@@ -670,21 +705,20 @@ public class BilinearSequenceFormBnB {
         }
         DigitArray currentProbability = new DigitArray(exactValue, true);
 
-        if(intValue > 4)
+        if (intValue > 4)
             currentProbability = currentProbability.incrementLSD();
         DigitArray ub = changes.getUbFor(action);
         DigitArray lb = changes.getLbFor(action);
 
-        if(!ub.equals(DigitArray.ONE) && currentProbability.equals(ub))
+        if (!ub.equals(DigitArray.ONE) && currentProbability.equals(ub))
             currentProbability = currentProbability.decrementLSD();
-        if(lb.isGreaterThan(currentProbability))
+        if (lb.isGreaterThan(currentProbability))
             currentProbability = currentProbability.incrementLSD();
 //        assert (currentProbability.isGreaterThan(lb) || currentProbability.size() > lb.size()) && (ub.isGreaterThan(currentProbability) || ub.equals(DigitArray.ONE));
 //        if(!lb.equals(DigitArray.ZERO) && currentProbability.equals(lb))
 //            currentProbability = incrementLSD(currentProbability);
         return currentProbability.getArray();
     }
-
 
 
     protected Candidate createCandidate(LPData lpData, SequenceFormIRConfig config) throws IloException {
@@ -830,7 +864,7 @@ public class BilinearSequenceFormBnB {
                 Double utility = config.getUtilityFor(sequence, compatibleSequence);
 
                 if (utility != null)
-                    table.setConstraint(eqKey, compatibleSequence, -utility);
+                    table.setConstraint(eqKey, compatibleSequence, (player.getId() == 0 ? -1 : 1) * utility);
             }
         }
     }

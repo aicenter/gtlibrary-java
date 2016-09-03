@@ -117,6 +117,35 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         }
     }
 
+    protected void updateP2LowestReachableUtilitiesFromActualUtilities(GameState state) {
+        for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[1]).getAllPrefixes()) {
+            Double p2Utility = -actualUtilityValuesInLeafs.get(state);
+
+            if (p2Utility == null)
+                continue;
+            Double currentValue = p2LowestReachableUtility.get(prefix);
+
+            if (currentValue == null || currentValue > p2Utility)
+                currentValue = p2Utility;
+            p2LowestReachableUtility.put(prefix, currentValue);
+        }
+    }
+
+    protected void updateP2HighestReachableUtilitiesFromActualUtilities(GameState state) {
+        for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[1]).getAllPrefixes()) {
+            Double p2Utility = actualUtilityValuesInLeafs.get(state);
+
+            if (p2Utility == null)
+                continue;
+            Double currentValue = p2HighestReachableUtility.get(prefix);
+
+            if (currentValue == null || currentValue < p2Utility)
+                currentValue = p2Utility;
+            p2HighestReachableUtility.put(prefix, currentValue);
+        }
+    }
+
+
     public void fixTheInformationSetInSequences(GameState state) {
         for (Player player : state.getAllPlayers()) {
             if (player.getId() == 2)
@@ -383,15 +412,17 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         return actualUtilityValuesInLeafs;
     }
 
-    public void updateP1UtilitiesReachableBySequences() {
+    public void updateUtilitiesReachableBySequences() {
         p1HighestReachableUtility.clear();
         p1LowestReachableUtility.clear();
-//        p2HighestReachableUtility.clear();
-//        p2LowestReachableUtility.clear();
+        p2HighestReachableUtility.clear();
+        p2LowestReachableUtility.clear();
 
         for (GameState terminalState : terminalStates) {
             updateP1HighestReachableUtilitiesFromActualUtilities(terminalState);
             updateP1LowestReachableUtilitiesFromActualUtilities(terminalState);
+            updateP2HighestReachableUtilitiesFromActualUtilities(terminalState);
+            updateP2LowestReachableUtilitiesFromActualUtilities(terminalState);
         }
     }
 }
