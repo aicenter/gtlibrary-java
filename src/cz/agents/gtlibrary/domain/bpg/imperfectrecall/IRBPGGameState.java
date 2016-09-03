@@ -1,23 +1,46 @@
 package cz.agents.gtlibrary.domain.bpg.imperfectrecall;
 
+import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.bpg.data.BorderPatrollingGraph;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
+import cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.Observations;
+import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Observation;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.graph.Node;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class IRBPGGameState extends BPGGameState {
+
+    public static void main(String[] args) {
+        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        GameState root = new IRBPGGameState();
+        Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
+
+        BasicGameBuilder.build(root, config, expander);
+
+        GambitEFG exporter = new GambitEFG();
+        exporter.write("IRBPG.gbt", root, expander);
+    }
+
     public IRBPGGameState() {
+        super();
     }
 
     public IRBPGGameState(BorderPatrollingGraph graph) {
@@ -30,7 +53,7 @@ public class IRBPGGameState extends BPGGameState {
 
     @Override
     public GameState copy() {
-        return new IRBPGGameState();
+        return new IRBPGGameState(this);
     }
 
     @Override
@@ -165,12 +188,12 @@ public class IRBPGGameState extends BPGGameState {
             if (this == o) return true;
             BPGAttackerDefenderObservation that = (BPGAttackerDefenderObservation) o;
 
-            return hashcode == that.hashcode;
+            return this.hashcode == that.hashcode;
         }
 
         @Override
         public int hashCode() {
-            return hashCode;
+            return this.hashcode;
         }
 
         @Override
