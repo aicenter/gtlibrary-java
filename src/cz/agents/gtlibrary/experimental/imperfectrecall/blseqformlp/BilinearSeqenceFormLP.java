@@ -240,7 +240,7 @@ public class BilinearSeqenceFormLP {
                 Double utility = config.getUtilityFor(sequence, compatibleSequence);
 
                 if (utility != null)
-                    table.setConstraint(eqKey, compatibleSequence, -utility);
+                    table.setConstraint(eqKey, compatibleSequence, (player.getId() == 0 ? -1 : 1) * utility);
             }
         }
     }
