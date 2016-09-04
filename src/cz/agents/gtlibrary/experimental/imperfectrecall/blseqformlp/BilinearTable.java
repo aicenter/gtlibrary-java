@@ -11,7 +11,6 @@ import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
 import java.util.*;
-import java.util.stream.IntStream;
 
 public class BilinearTable extends RecyclingLPTable {
 
@@ -74,6 +73,7 @@ public class BilinearTable extends RecyclingLPTable {
     public LPData toCplex() throws IloException {
         LPData data = super.toCplex();
 
+        deleteBilinearConstraints(data);
         for (Map.Entry<Object, Pair<Object, Object>> bilinKey : bilinearVars.entrySet()) {
             addBilinearConstraint(data, bilinKey.getKey(), bilinKey.getValue().getLeft(), bilinKey.getValue().getRight(),
                     getPrecisionFor(bilinKey.getValue().getRight()), getHighestPrecisionFor(bilinKey.getValue().getRight()));
@@ -81,6 +81,18 @@ public class BilinearTable extends RecyclingLPTable {
         bilinearVarsToUpdate.clear();
         updateWBounds();
         return data;
+    }
+
+    private void deleteBilinearConstraints(LPData data) throws IloException {
+        Set<IloCopyable> toDelete = new HashSet<>();
+
+        for (Map.Entry<Object, Pair<Object, Object>> bilinKey : bilinearVars.entrySet()) {
+            if (outgoingBilinearConstraints.containsKey(bilinKey.getKey()))
+                toDelete.add(outgoingBilinearConstraints.get(bilinKey.getKey()));
+            if (behavioralBilinearConstraints.containsKey(bilinKey.getValue().getRight()))
+                toDelete.add(behavioralBilinearConstraints.get(bilinKey.getValue().getRight()));
+        }
+        data.getSolver().delete(toDelete.toArray(new IloCopyable[toDelete.size()]));
     }
 
     protected void updateWBounds() throws IloException {
@@ -101,10 +113,11 @@ public class BilinearTable extends RecyclingLPTable {
     }
 
     protected void addBilinearConstraint(LPData data, Object bilinVarKey, Object factor1, Object factor2, int precision, int highestPrecision) throws IloException {
-        if (outgoingBilinearConstraints.containsKey(bilinVarKey))
-            data.getSolver().delete(outgoingBilinearConstraints.get(bilinVarKey));
-        if (behavioralBilinearConstraints.containsKey(factor2))
-            data.getSolver().delete(behavioralBilinearConstraints.get(factor2));
+//        if (outgoingBilinearConstraints.containsKey(bilinVarKey))
+//            data.getSolver().delete(outgoingBilinearConstraints.get(bilinVarKey));
+//        if (behavioralBilinearConstraints.containsKey(factor2))
+//            data.getSolver().delete(behavioralBilinearConstraints.get(factor2));
+
         IloRange[] newConstraints = addMDTConstraints(data, bilinVarKey, factor1, factor2, precision);
 
         behavioralBilinearConstraints.put(factor2, newConstraints[0]);
