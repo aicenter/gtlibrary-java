@@ -42,8 +42,8 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
-    public static boolean DEBUG = true;
-    public static boolean EXPORT_GBT = true;
+    public static boolean DEBUG = false;
+    public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
 
@@ -81,7 +81,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
         long start = mxBean.getCurrentThreadCpuTime();
 
-        solver.solve(new SequenceFormIRConfig());
+        solver.solve(config);
         System.out.println("CPLEX time: " + solver.getCPLEXTime());
         System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
         System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
@@ -94,6 +94,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("cuts: " + solver.cuts);
         System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(TTTInfo.XPlayer) + ", " + config.getSequencesFor(TTTInfo.OPlayer));
         return solver.finalValue;
     }
 
@@ -115,7 +117,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
         long start = mxBean.getCurrentThreadCpuTime();
 
-        solver.solve(new SequenceFormIRConfig());
+        solver.solve(config);
         System.out.println("CPLEX time: " + solver.getCPLEXTime());
         System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
         System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
@@ -128,6 +130,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("cuts: " + solver.cuts);
         System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
         return solver.finalValue;
     }
 
@@ -255,6 +259,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
                         updateCurrentBest(restrictedGameConfig);
                     } else {
+                        assert current.getPrecisionError() > 1e-8;
                         addMiddleChildOf(current, fringe, restrictedGameConfig);
                         addLeftChildOf(current, fringe, restrictedGameConfig);
                         addRightChildOf(current, fringe, restrictedGameConfig);
@@ -341,7 +346,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         assert isConvexCombination(p1Strategy, lpData, config);
         Pair<Double, Map<Action, Double>> lowerBoundAndBR = getLowerBoundAndBR(p1Strategy);
 
-        assert correctSums(lowerBoundAndBR.getRight());
+//        assert correctSums(lowerBoundAndBR.getRight());
         double upperBound = getUpperBound(lpData);
 
         assert upperBound > lowerBoundAndBR.getLeft() - 1e-3;

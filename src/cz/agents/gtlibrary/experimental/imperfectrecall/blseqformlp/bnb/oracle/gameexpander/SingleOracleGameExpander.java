@@ -151,7 +151,7 @@ public class SingleOracleGameExpander implements GameExpander {
         if (config.getTerminalStates().contains(state) || state.isGameEnd())
             return;
         config.getTerminalStates().add(state);
-        double utility = getUtilityUB(state, minPlayerBestResponse);
+        double utility = (maxPlayer.getId() == 0 ? 1 : -1) * getUtilityUB(state, minPlayerBestResponse);
 
         config.setUtility(state, utility);
         sequenceCombinationUtilityContribution.put(state, utility);
