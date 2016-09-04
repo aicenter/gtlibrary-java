@@ -1,5 +1,8 @@
 package cz.agents.gtlibrary.domain.bpg.imperfectrecall;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -7,7 +10,6 @@ import cz.agents.gtlibrary.domain.bpg.data.BorderPatrollingGraph;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
-import cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
@@ -19,6 +21,7 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Observation;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.BasicGameBuilder;
 import cz.agents.gtlibrary.utils.graph.Node;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -35,8 +38,18 @@ public class IRBPGGameState extends BPGGameState {
 
         BasicGameBuilder.build(root, config, expander);
 
-        GambitEFG exporter = new GambitEFG();
-        exporter.write("IRBPG.gbt", root, expander);
+        System.out.println(config.getAllInformationSets().size());
+        System.out.println(config.getSequencesFor(BPGGameInfo.DEFENDER).size());
+
+        root = new BPGGameState();
+        SequenceFormConfig<SequenceInformationSet> config1 = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> expander1 = new BPGExpander<>(config1);
+        FullSequenceEFG efg = new FullSequenceEFG(root, expander1, new BPGGameInfo(), config1);
+        efg.generateCompleteGame();
+        System.out.println(config1.getAllInformationSets().size());
+        System.out.println(config1.getSequencesFor(BPGGameInfo.DEFENDER).size());
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("IRBPG.gbt", root, expander);
     }
 
     public IRBPGGameState() {
@@ -71,7 +84,7 @@ public class IRBPGGameState extends BPGGameState {
         } else {
             Observations attackerObservations = new Observations(BPGGameInfo.DEFENDER, BPGGameInfo.ATTACKER);
 
-            attackerObservations.add(new BPGDefenderAttackerObservation(flaggedNodesObservedByPatroller));
+//            attackerObservations.add(new BPGDefenderAttackerObservation(flaggedNodesObservedByPatroller));
             Observations defenderObservations = new Observations(BPGGameInfo.DEFENDER, BPGGameInfo.DEFENDER);
 
             defenderObservations.add(new BPGDefenderDefenderObservation(p1Position, p2Position, getSequenceFor(BPGGameInfo.DEFENDER).size()));
