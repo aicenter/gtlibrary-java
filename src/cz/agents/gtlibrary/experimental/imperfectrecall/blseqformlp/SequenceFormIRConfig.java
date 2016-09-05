@@ -355,7 +355,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     }
 
     public Set<SequenceFormIRInformationSet> getReachableSets(Sequence sequence) {
-        return reachableSetsBySequence.get(sequence);
+        return reachableSetsBySequence.getOrDefault(sequence, Collections.emptySet());
     }
 
     public Collection<Sequence> getSequencesFor(Player player) {

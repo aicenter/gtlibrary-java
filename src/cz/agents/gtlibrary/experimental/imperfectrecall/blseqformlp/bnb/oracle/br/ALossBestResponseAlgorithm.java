@@ -81,7 +81,7 @@ public class ALossBestResponseAlgorithm {
 
         comparator = new ORComparator();
 
-        return bestResponse(root, -MAX_UTILITY_VALUE, 1);
+        return bestResponse(root, -MAX_UTILITY_VALUE, getOpponentProbability(root.getSequenceFor(players[opponentPlayerIndex])));
     }
 
     protected Double calculateEvaluation(GameState gameState, double currentStateProbability) {
@@ -231,7 +231,7 @@ public class ALossBestResponseAlgorithm {
 
             resultActions.add(resultAction);
             Sequence sequence = gameState.getSequenceFor(players[searchingPlayerIndex]);
-            if(sequence.isEmpty()) {
+            if(sequence.isEmpty() || gameState.equals(gameTreeRoot)) {
                  firstLevelActions.add(resultAction);
             } else {
                 Action previousAction = sequence.getLast();
@@ -255,15 +255,15 @@ public class ALossBestResponseAlgorithm {
                 nodeProbability *= currentStateProb;
                 nonZeroORP = true;
             }
-            if (algConfig.getActualNonzeroUtilityValues(gameState) != null) {
-                returnValue = algConfig.getActualNonzeroUtilityValues(gameState);
-                if (nonZeroORP) {
-                    returnValue *= currentStateProb;
-                }
-                if (searchingPlayerIndex != 0) {
-                    returnValue *= -1;
-                }
-            } else {
+//            if (algConfig.getActualNonzeroUtilityValues(gameState) != null) {
+//                returnValue = algConfig.getActualNonzeroUtilityValues(gameState);
+//                if (nonZeroORP) {
+//                    returnValue *= currentStateProb;
+//                }
+//                if (searchingPlayerIndex != 0) {
+//                    returnValue *= -1;
+//                }
+//            } else {
                 BROppSelection sel = new BROppSelection(lowerBound, nodeProbability, nonZeroORP);
                 List<Action> actionsToExplore = expander.getActions(gameState);
                 actionsToExplore = sel.sortActions(gameState, actionsToExplore);
@@ -272,7 +272,7 @@ public class ALossBestResponseAlgorithm {
                 if (nonZeroORP && !sel.nonZeroContinuation) {
                     returnValue *= currentStateProb;
                 }
-            }
+//            }
         }
 
         assert (returnValue != null);

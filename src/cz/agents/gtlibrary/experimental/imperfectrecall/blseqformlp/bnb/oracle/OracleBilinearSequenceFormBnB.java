@@ -26,6 +26,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.b
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandCondition;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandConditionImpl;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.DoubleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.GameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.ReducedSingleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.SingleOracleGameExpander;
@@ -43,7 +44,7 @@ import java.util.*;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = false;
+    public static boolean EXPORT_GBT = true;
     public static boolean SAVE_LPS = false;
     public static double EPS = 1e-3;
 
@@ -186,7 +187,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         br = new OracleALossRecallBestResponse(info.getOpponent(player), root, fullGameExpander, gameInfo);
 //        br = new LinearOracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, root, fullGameExpander, gameInfo);
 //        br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
-        gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
+//        gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
+        gameExpander = new DoubleOracleGameExpander(player, root, fullGameExpander, info);
     }
 
     public void solve(SequenceFormIRConfig restrictedGameConfig) {
@@ -354,7 +356,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action), action, changes);
 
         assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
-        return new OracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability, mostBrokenActionValue, extractRPStrategy(config, lpData), lowerBoundAndBR.getRight(), expansionCount);
+        return new OracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability,
+                mostBrokenActionValue, extractRPStrategy(config, lpData), p1Strategy, lowerBoundAndBR.getRight(), expansionCount);
     }
 
     private boolean correctSums(Map<Action, Double> strategy) {

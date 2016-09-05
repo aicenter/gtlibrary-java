@@ -84,7 +84,7 @@ public class IRBPGGameState extends BPGGameState {
         } else {
             Observations attackerObservations = new Observations(BPGGameInfo.DEFENDER, BPGGameInfo.ATTACKER);
 
-//            attackerObservations.add(new BPGDefenderAttackerObservation(flaggedNodesObservedByPatroller));
+            attackerObservations.add(new BPGDefenderAttackerObservation(flaggedNodesObservedByPatroller));
             Observations defenderObservations = new Observations(BPGGameInfo.DEFENDER, BPGGameInfo.DEFENDER);
 
             defenderObservations.add(new BPGDefenderDefenderObservation(p1Position, p2Position, getSequenceFor(BPGGameInfo.DEFENDER).size()));
