@@ -113,11 +113,6 @@ public class BilinearTable extends RecyclingLPTable {
     }
 
     protected void addBilinearConstraint(LPData data, Object bilinVarKey, Object factor1, Object factor2, int precision, int highestPrecision) throws IloException {
-//        if (outgoingBilinearConstraints.containsKey(bilinVarKey))
-//            data.getSolver().delete(outgoingBilinearConstraints.get(bilinVarKey));
-//        if (behavioralBilinearConstraints.containsKey(factor2))
-//            data.getSolver().delete(behavioralBilinearConstraints.get(factor2));
-
         IloRange[] newConstraints = addMDTConstraints(data, bilinVarKey, factor1, factor2, precision);
 
         behavioralBilinearConstraints.put(factor2, newConstraints[0]);
