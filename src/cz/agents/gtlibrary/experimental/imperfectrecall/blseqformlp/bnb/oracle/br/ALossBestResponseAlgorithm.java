@@ -534,27 +534,27 @@ public class ALossBestResponseAlgorithm {
 
         @Override
         public List<Action> sortActions(GameState state, List<Action> actions) {
-            Collections.sort(actions, (o1, o2) -> {
-                int o1OutsideCount = 0;
-
-                for (Sequence sequence : ((SequenceFormIRInformationSet) o1.getInformationSet()).getOutgoingSequences().keySet()) {
-                    Sequence copy = new ArrayListSequenceImpl(sequence);
-
-                    copy.addLast(o1);
-                    if(!((SequenceFormIRConfig)algConfig).getSequencesFor(copy.getPlayer()).contains(copy))
-                        o1OutsideCount++;
-                }
-                int o2OutsideCount = 0;
-
-                for (Sequence sequence : ((SequenceFormIRInformationSet) o2.getInformationSet()).getOutgoingSequences().keySet()) {
-                    Sequence copy = new ArrayListSequenceImpl(sequence);
-
-                    copy.addLast(o2);
-                    if(!((SequenceFormIRConfig)algConfig).getSequencesFor(copy.getPlayer()).contains(copy))
-                        o2OutsideCount++;
-                }
-                return Integer.compare(o1OutsideCount, o2OutsideCount);
-            });
+//            Collections.sort(actions, (o1, o2) -> {
+//                int o1OutsideCount = 0;
+//
+//                for (Sequence sequence : ((SequenceFormIRInformationSet) o1.getInformationSet()).getOutgoingSequences().keySet()) {
+//                    Sequence copy = new ArrayListSequenceImpl(sequence);
+//
+//                    copy.addLast(o1);
+//                    if(!((SequenceFormIRConfig)algConfig).getSequencesFor(copy.getPlayer()).contains(copy))
+//                        o1OutsideCount++;
+//                }
+//                int o2OutsideCount = 0;
+//
+//                for (Sequence sequence : ((SequenceFormIRInformationSet) o2.getInformationSet()).getOutgoingSequences().keySet()) {
+//                    Sequence copy = new ArrayListSequenceImpl(sequence);
+//
+//                    copy.addLast(o2);
+//                    if(!((SequenceFormIRConfig)algConfig).getSequencesFor(copy.getPlayer()).contains(copy))
+//                        o2OutsideCount++;
+//                }
+//                return Integer.compare(o1OutsideCount, o2OutsideCount);
+//            });
             return actions;
 
 //            if (myBehavioralStrategy.size() == 0) {
