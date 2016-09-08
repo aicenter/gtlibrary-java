@@ -44,7 +44,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
-    public static boolean RESOLVE_CURRENT_BEST = false;
+    public static boolean RESOLVE_CURRENT_BEST = true;
     public static double EPS = 1e-3;
 
     protected ImperfectRecallBestResponse br;
@@ -64,7 +64,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public static double runTTT() {
 //        BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SelfBuildingSequenceFormIRConfig();
+        SequenceFormIRConfig config = new SelfBuildingSequenceFormIRConfig(new TTTInfo());
         GameState root = new IRTTTState();
         Expander<SequenceFormIRInformationSet> expander = new TTTExpander<>(config);
 
@@ -100,7 +100,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     }
 
     public static double runBPG() {
-        SequenceFormIRConfig config = new SelfBuildingSequenceFormIRConfig();
+        SequenceFormIRConfig config = new SelfBuildingSequenceFormIRConfig(new BPGGameInfo());
         GameState root = new IRBPGGameState();
         Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
 
@@ -137,7 +137,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public static double runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new RandomGameInfo());
         GameState root = new RandomGameState();
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
@@ -153,7 +153,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
         long start = mxBean.getCurrentThreadCpuTime();
 
-        solver.solve(new SequenceFormIRConfig());
+        solver.solve(new SequenceFormIRConfig(new RandomGameInfo()));
         System.out.println("CPLEX time: " + solver.getCPLEXTime());
         System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
         System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
@@ -166,19 +166,20 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("cuts: " + solver.cuts);
         System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("Sequence count: " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size() + ", " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size());
         return solver.finalValue;
     }
 
     protected static void runBRTest() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         GameState root = new BRTestGameState();
 
         builder.build(root, config, expander);
         OracleBilinearSequenceFormBnB solver = new OracleBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, root, expander, new BRTestGameInfo());
 
-        solver.solve(new SequenceFormIRConfig());
+        solver.solve(new SequenceFormIRConfig(new BRTestGameInfo()));
     }
 
     public OracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {

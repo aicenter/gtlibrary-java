@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -8,7 +9,6 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSet> {
     protected Map<GameState, Double> actualUtilityValuesInLeafs = new HashMap<>();
@@ -26,6 +26,12 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
 
     protected int[] countIS = {0, 0};
     protected boolean player2IR = false;
+
+    protected GameInfo gameInfo;
+
+    public SequenceFormIRConfig(GameInfo gameInfo) {
+        this.gameInfo = gameInfo;
+    }
 
     @Override
     public SequenceFormIRInformationSet createInformationSetFor(GameState gameState) {
@@ -397,15 +403,15 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     public double getHighestReachableUtilityFor(Sequence sequence) {
         assert sequence.getPlayer().getId() != 2;
         if (sequence.getPlayer().getId() == 0)
-            return p1HighestReachableUtility.get(sequence);
-        return p2HighestReachableUtility.get(sequence);
+            return p1HighestReachableUtility.getOrDefault(sequence, gameInfo.getMaxUtility());
+        return p2HighestReachableUtility.getOrDefault(sequence, gameInfo.getMaxUtility());
     }
 
     public double getLowestReachableUtilityFor(Sequence sequence) {
         assert sequence.getPlayer().getId() != 2;
         if (sequence.getPlayer().getId() == 0)
-            return p1LowestReachableUtility.get(sequence);
-        return p2LowestReachableUtility.get(sequence);
+            return p1LowestReachableUtility.getOrDefault(sequence, -gameInfo.getMaxUtility());
+        return p2LowestReachableUtility.getOrDefault(sequence, -gameInfo.getMaxUtility());
     }
 
     public Map<GameState, Double> getActualUtilityValuesInLeafs() {

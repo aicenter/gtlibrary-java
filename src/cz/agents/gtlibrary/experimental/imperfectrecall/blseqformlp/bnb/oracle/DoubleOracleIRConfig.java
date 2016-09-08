@@ -10,8 +10,8 @@ import java.util.Set;
 public class DoubleOracleIRConfig extends SelfBuildingSequenceFormIRConfig {
     private Map<GameState, Double> pending;
 
-    public DoubleOracleIRConfig() {
-        super();
+    public DoubleOracleIRConfig(GameInfo gameInfo) {
+        super(gameInfo);
         pending = new HashMap<>();
     }
 

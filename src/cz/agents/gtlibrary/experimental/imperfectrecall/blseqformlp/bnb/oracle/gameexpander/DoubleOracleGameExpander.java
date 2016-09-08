@@ -157,27 +157,10 @@ public class DoubleOracleGameExpander implements GameExpander {
             return;
         if (state.getPlayerToMove().equals(minPlayer)) {
 //            for (GameState alternativeState : config.getInformationSetFor(state).getAllStates()) {
-                boolean added = false;
-
-                for (Action action : expander.getActions(state)) {
-                    if (minPlayerBestResponse.getOrDefault(action, 0d) > 1e-8 || addedActions.contains(action)) {
-                        tempAddedActions.add(action);
-                        expandRecursivelyForced(state.performAction(action), config, maxPlayerBestResponse, minPlayerBestResponse);
-                        added = true;
-                    }
-                }
-                if (added)
-                    removeTemporaryLeaf(state, config);
-                else if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
-                    expand(state, config, minPlayerBestResponse);
-//            }
-            return;
-        }
-//        for (GameState alternativeState : config.getInformationSetFor(state).getAllStates()) {
             boolean added = false;
 
             for (Action action : expander.getActions(state)) {
-                if (maxPlayerBestResponse.getOrDefault(action, 0d) > 1e-8 || addedActions.contains(action)) {
+                if (minPlayerBestResponse.getOrDefault(action, 0d) > 1e-8 || addedActions.contains(action)) {
                     tempAddedActions.add(action);
                     expandRecursivelyForced(state.performAction(action), config, maxPlayerBestResponse, minPlayerBestResponse);
                     added = true;
@@ -187,6 +170,23 @@ public class DoubleOracleGameExpander implements GameExpander {
                 removeTemporaryLeaf(state, config);
             else if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
                 expand(state, config, minPlayerBestResponse);
+//            }
+            return;
+        }
+//        for (GameState alternativeState : config.getInformationSetFor(state).getAllStates()) {
+        boolean added = false;
+
+        for (Action action : expander.getActions(state)) {
+            if (maxPlayerBestResponse.getOrDefault(action, 0d) > 1e-8 || addedActions.contains(action)) {
+                tempAddedActions.add(action);
+                expandRecursivelyForced(state.performAction(action), config, maxPlayerBestResponse, minPlayerBestResponse);
+                added = true;
+            }
+        }
+        if (added)
+            removeTemporaryLeaf(state, config);
+        else if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
+            expand(state, config, minPlayerBestResponse);
 //        }
     }
 
@@ -220,7 +220,7 @@ public class DoubleOracleGameExpander implements GameExpander {
             GameState state = tempLeaf.performAction(previousAction);
             long start = mxBean.getCurrentThreadCpuTime();
 
-            ((OracleALossRecallBestResponse) br).getBestResponseInNoClear(state, minPlayerBestResponse);
+            ((OracleALossRecallBestResponse) br).getBestResponseIn(state, minPlayerBestResponse);
             brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
             add(config, state, br.getValue());
             return previousAction;
