@@ -20,22 +20,20 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Bilinear
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Change;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Changes;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.LinearOracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleALossRecallBestResponse;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandCondition;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandConditionImpl;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.DoubleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.GameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.ReducedSingleOracleGameExpander;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.SingleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.Triplet;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
+import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
 import java.lang.management.ManagementFactory;
@@ -44,16 +42,17 @@ import java.util.*;
 
 public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = true;
+    public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
+    public static boolean RESOLVE_CURRENT_BEST = false;
     public static double EPS = 1e-3;
 
     protected ImperfectRecallBestResponse br;
     protected ExpandCondition expandCondition = new ExpandConditionImpl();
     protected GameExpander gameExpander;
-    private long expanderTime = 0;
-    private long selfTime;
-    private int expansionCount;
+    protected long expanderTime = 0;
+    protected long selfTime;
+    protected int expansionCount;
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
@@ -187,8 +186,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         br = new OracleALossRecallBestResponse(info.getOpponent(player), root, fullGameExpander, gameInfo);
 //        br = new LinearOracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, root, fullGameExpander, gameInfo);
 //        br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
-//        gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
-        gameExpander = new DoubleOracleGameExpander(player, root, fullGameExpander, info);
+        gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
+//        gameExpander = new DoubleOracleGameExpander(player, root, fullGameExpander, info);
     }
 
     public void solve(SequenceFormIRConfig restrictedGameConfig) {
@@ -210,6 +209,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
             lpData.getSolver().solve();
             System.out.println(CPLEXInvocationCount++);
+            System.out.println(getPossibleBestResponseActions(lpData));
             CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
@@ -259,7 +259,8 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                     if (expansionCount > current.getExpansionCount()) {
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
-                        updateCurrentBest(restrictedGameConfig);
+                        if (RESOLVE_CURRENT_BEST)
+                            updateCurrentBest(restrictedGameConfig);
                     } else {
                         assert current.getPrecisionError() > 1e-8;
                         addMiddleChildOf(current, fringe, restrictedGameConfig);
@@ -301,7 +302,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6 - getLpBuildingTime() - getBRTime() - getExpanderTime() - getCPLEXTime() - getStrategyLPTime());
     }
 
-    private void updateCurrentBest(SequenceFormIRConfig restrictedGameConfig) {
+    protected void updateCurrentBest(SequenceFormIRConfig restrictedGameConfig) {
         table.clearTable();
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
@@ -364,10 +365,10 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
         for (Map.Entry<Action, Double> entry : strategy.entrySet()) {
             double sum = 0;
 
-            for (Action action : ((SequenceFormIRInformationSet)entry.getKey().getInformationSet()).getActions()) {
-               sum += strategy.getOrDefault(action, 0d);
+            for (Action action : ((SequenceFormIRInformationSet) entry.getKey().getInformationSet()).getActions()) {
+                sum += strategy.getOrDefault(action, 0d);
             }
-            if(Math.abs(sum - 1) > 1e-8)
+            if (Math.abs(sum - 1) > 1e-8)
                 return false;
         }
         return true;

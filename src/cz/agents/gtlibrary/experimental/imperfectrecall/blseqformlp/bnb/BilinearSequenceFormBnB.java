@@ -24,6 +24,7 @@ import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
+import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
 import java.lang.management.ManagementFactory;
@@ -534,6 +535,7 @@ public class BilinearSequenceFormBnB {
                 long start = mxBean.getCurrentThreadCpuTime();
 
                 lpData.getSolver().solve();
+                System.out.println(getPossibleBestResponseActions(lpData));
 //                System.out.println(CPLEXInvocationCount++);
                 CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
                 if (DEBUG) {
@@ -566,6 +568,26 @@ public class BilinearSequenceFormBnB {
             e.printStackTrace();
         }
     }
+
+    protected Map<Object, Double> getSlackValues(LPData lpData) throws IloException {
+        Map<Object, Double> slackVariables = new HashMap<>();
+
+        for (Map.Entry<Object, IloRange> entry : lpData.getWatchedDualVariables().entrySet()) {
+            slackVariables.put(entry.getKey(), lpData.getSolver().getDual(entry.getValue()));
+        }
+        return slackVariables;
+    }
+
+    protected Set<Action> getPossibleBestResponseActions(LPData lpData) throws IloException {
+        Set<Action> possibleBestResponseActions = new HashSet<>();
+
+        for (Map.Entry<Object, IloRange> entry : lpData.getWatchedDualVariables().entrySet()) {
+            if (entry.getKey() instanceof Triplet && lpData.getSolver().getSlack(entry.getValue()) < 1e-8)
+                possibleBestResponseActions.add(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getThird());
+        }
+        return possibleBestResponseActions;
+    }
+
 
     protected DigitArray getRightExactProbability(Candidate current) {
         if (USE_BINARY_HALVING) {
@@ -849,6 +871,7 @@ public class BilinearSequenceFormBnB {
                 informationSet = sequence.getLastInformationSet();
                 eqKey = new Triplet<>(informationSet, subsequence, sequence.getLast());
             }
+            table.watchDualVariable(eqKey, eqKey);
             Object varKey = new Pair<>(informationSet, subsequence);
 
             table.setConstraint(eqKey, varKey, 1);

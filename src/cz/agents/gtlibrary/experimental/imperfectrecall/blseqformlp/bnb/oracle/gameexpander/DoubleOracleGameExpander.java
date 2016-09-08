@@ -3,9 +3,9 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleALossRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.PartialGambitEFG;
 
@@ -29,9 +29,9 @@ public class DoubleOracleGameExpander implements GameExpander {
     protected long brTime;
     protected long selfTime;
 
-    private Set<GameState> temporaryLeafBlackList;
-    private Set<Action> addedActions;
-    private Set<Action> tempAddedActions;
+    protected Set<GameState> temporaryLeafBlackList;
+    protected Set<Action> addedActions;
+    protected Set<Action> tempAddedActions;
 
     public DoubleOracleGameExpander(Player maxPlayer, GameState root, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         this.expander = expander;
@@ -68,9 +68,9 @@ public class DoubleOracleGameExpander implements GameExpander {
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         addedActions.addAll(tempAddedActions);
 //        if(!(config.getTerminalStates().size() > terminalLeafCount || config.getAllSequences().size() > sequenceCount || config.getAllInformationSets().size() > informationSetCount)) {
-            tempAddedActions = new HashSet<>();
-            expandRecursivelyForced(root, config, candidate.getMaxPlayerStrategy(), candidate.getMinPlayerBestResponse());
-            addedActions.addAll(tempAddedActions);
+        tempAddedActions = new HashSet<>();
+        expandRecursivelyForced(root, config, candidate.getMaxPlayerStrategy(), candidate.getMinPlayerBestResponse());
+        addedActions.addAll(tempAddedActions);
 //        }
         if (OracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
@@ -190,7 +190,7 @@ public class DoubleOracleGameExpander implements GameExpander {
         }
     }
 
-    private boolean isVisited(GameState state, Map<Action, Double> maxPlayerStrategy, Map<Action, Double> minPlayerStrategy) {
+    protected boolean isVisited(GameState state, Map<Action, Double> maxPlayerStrategy, Map<Action, Double> minPlayerStrategy) {
         for (Action action : state.getSequenceFor(minPlayer)) {
             if (minPlayerStrategy.getOrDefault(action, 0d) < 1e-8)
                 return false;
@@ -202,48 +202,68 @@ public class DoubleOracleGameExpander implements GameExpander {
         return true;
     }
 
-    private void expand(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+    protected void expand(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+        Action action = null;
         for (GameState gameState : config.getInformationSetFor(tempLeaf).getAllStates()) {
             removeTemporaryLeaf(gameState, config);
             if (gameState.getPlayerToMove().equals(minPlayer))
                 addTempLeafAfterActionFrom(gameState, config, minPlayerBestResponse);
             else
-                addTempLeafAfterBestResponseAction(gameState, config, minPlayerBestResponse);
+                action = addTempLeafAfterBestResponseAction(gameState, config, minPlayerBestResponse, action);
         }
     }
 
-    private void addTempLeafAfterBestResponseAction(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+    protected Action addTempLeafAfterBestResponseAction(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse, Action previousAction) {
+        if (tempLeaf.isGameEnd())
+            return previousAction;
+        if (previousAction != null) {
+            GameState state = tempLeaf.performAction(previousAction);
+            long start = mxBean.getCurrentThreadCpuTime();
+
+            ((OracleALossRecallBestResponse) br).getBestResponseInNoClear(state, minPlayerBestResponse);
+            brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
+            add(config, state, br.getValue());
+            return previousAction;
+        }
         long start = mxBean.getCurrentThreadCpuTime();
 
-        Map<Action, Double> maxPlayerBestResponse = br.getBestResponseIn(tempLeaf, minPlayerBestResponse);
+        Map<Action, Double> maxPlayerBestResponse = ((OracleALossRecallBestResponse) br).getBestResponseInNoClear(tempLeaf, minPlayerBestResponse);
         brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
 
         for (Action action : expander.getActions(tempLeaf)) {
             if (maxPlayerBestResponse.getOrDefault(action, 0d) > 1e-8) {
                 GameState state = tempLeaf.performAction(action);
 
-                config.addInformationSetFor(state);
-                if (temporaryLeafBlackList.contains(state))
-                    return;
-                if (config.getTerminalStates().contains(state) || state.isGameEnd())
-                    return;
-                config.getTerminalStates().add(state);
-                double utility = (maxPlayer.getId() == 0 ? 1 : -1) * br.getValue();
-
-                config.setUtility(state, utility);
-                sequenceCombinationUtilityContribution.put(state, utility);
-                return;
+                add(config, state, br.getValue());
+                tempAddedActions.add(action);
+                return action;
             }
         }
         assert false;
+        return null;
     }
 
-    private void addTempLeafAfterActionFrom(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+    protected void add(SequenceFormIRConfig config, GameState state, double value) {
+        config.addInformationSetFor(state);
+        if (temporaryLeafBlackList.contains(state))
+            return;
+        if (config.getTerminalStates().contains(state) || state.isGameEnd())
+            return;
+        config.getTerminalStates().add(state);
+        double utility = (maxPlayer.getId() == 0 ? 1 : -1) * value;
+
+        config.setUtility(state, utility);
+        sequenceCombinationUtilityContribution.put(state, utility);
+    }
+
+    protected void addTempLeafAfterActionFrom(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         for (Action action : expander.getActions(tempLeaf)) {
             if (minPlayerBestResponse.getOrDefault(action, 0d) > 1e-8) {
                 GameState state = tempLeaf.performAction(action);
+
                 config.addInformationSetFor(state);
                 addTemporaryLeafIfNotPresent(state, config, minPlayerBestResponse);
+                tempAddedActions.add(action);
                 return;
             }
         }
@@ -313,5 +333,10 @@ public class DoubleOracleGameExpander implements GameExpander {
     @Override
     public long getSelfTime() {
         return selfTime;
+    }
+
+    @Override
+    public long getBRExpandedNodes() {
+        return br.getExpandedNodes();
     }
 }

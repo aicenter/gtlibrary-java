@@ -19,6 +19,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br;
 
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
@@ -69,7 +71,7 @@ public class ALossBestResponseAlgorithm {
 
     public Double calculateBR(GameState root, Map<Action, Double> opponentBehavioralStrategy, Map<Action, Double> myBehavioralStrategy) {
 
-        nodes = 0;
+//        nodes = 0;
 
         this.opponentBehavioralStartegy = opponentBehavioralStrategy;
         this.myBehavioralStrategy = myBehavioralStrategy;
@@ -103,7 +105,7 @@ public class ALossBestResponseAlgorithm {
     }
 
     public Double calculateBRNoClear(GameState root) {
-        return bestResponse(root, -MAX_UTILITY_VALUE, 1);
+        return bestResponse(root, -MAX_UTILITY_VALUE, getOpponentProbability(root.getSequenceFor(players[opponentPlayerIndex])));
     }
 
     protected Double bestResponse(GameState gameState, double lowerBound, double currentStateProb) {
@@ -532,35 +534,58 @@ public class ALossBestResponseAlgorithm {
 
         @Override
         public List<Action> sortActions(GameState state, List<Action> actions) {
-            if (myBehavioralStrategy.size() == 0) {
-                return actions;
-            }
+            Collections.sort(actions, (o1, o2) -> {
+                int o1OutsideCount = 0;
 
-            List<Action> result = new ArrayList<Action>();
-            // sort according to my old realizaiton plan
-            Sequence currentSequence = state.getSequenceFor(players[searchingPlayerIndex]);
-            Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
-            boolean hasPositiveProb = false;
-            for (Action a : actions) {
-                Sequence newSeq = new ArrayListSequenceImpl(currentSequence);
-                newSeq.addLast(a);
-                Double prob = getMyProbability(newSeq);
-                if (prob == null) {
-                    prob = 0d;
+                for (Sequence sequence : ((SequenceFormIRInformationSet) o1.getInformationSet()).getOutgoingSequences().keySet()) {
+                    Sequence copy = new ArrayListSequenceImpl(sequence);
+
+                    copy.addLast(o1);
+                    if(!((SequenceFormIRConfig)algConfig).getSequencesFor(copy.getPlayer()).contains(copy))
+                        o1OutsideCount++;
                 }
-                if (prob > 0) {
-                    hasPositiveProb = true;
+                int o2OutsideCount = 0;
+
+                for (Sequence sequence : ((SequenceFormIRInformationSet) o2.getInformationSet()).getOutgoingSequences().keySet()) {
+                    Sequence copy = new ArrayListSequenceImpl(sequence);
+
+                    copy.addLast(o2);
+                    if(!((SequenceFormIRConfig)algConfig).getSequencesFor(copy.getPlayer()).contains(copy))
+                        o2OutsideCount++;
                 }
-                sequenceMap.put(a, prob); // the standard way is to sort ascending; hence, we store negative probability
-            }
-            if (!hasPositiveProb) {
-                return actions; // if
-            }
-            ValueComparator<Action> comp = new ValueComparator<Action>(sequenceMap);
-            TreeMap<Action, Double> sortedMap = new TreeMap<Action, Double>(comp);
-            sortedMap.putAll(sequenceMap);
-            result.addAll(sortedMap.keySet());
-            return result;
+                return Integer.compare(o1OutsideCount, o2OutsideCount);
+            });
+            return actions;
+
+//            if (myBehavioralStrategy.size() == 0) {
+//                return actions;
+//            }
+//
+//            List<Action> result = new ArrayList<Action>();
+//            // sort according to my old realizaiton plan
+//            Sequence currentSequence = state.getSequenceFor(players[searchingPlayerIndex]);
+//            Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
+//            boolean hasPositiveProb = false;
+//            for (Action a : actions) {
+//                Sequence newSeq = new ArrayListSequenceImpl(currentSequence);
+//                newSeq.addLast(a);
+//                Double prob = getMyProbability(newSeq);
+//                if (prob == null) {
+//                    prob = 0d;
+//                }
+//                if (prob > 0) {
+//                    hasPositiveProb = true;
+//                }
+//                sequenceMap.put(a, prob); // the standard way is to sort ascending; hence, we store negative probability
+//            }
+//            if (!hasPositiveProb) {
+//                return actions; // if
+//            }
+//            ValueComparator<Action> comp = new ValueComparator<Action>(sequenceMap);
+//            TreeMap<Action, Double> sortedMap = new TreeMap<Action, Double>(comp);
+//            sortedMap.putAll(sequenceMap);
+//            result.addAll(sortedMap.keySet());
+//            return result;
         }
     }
 
