@@ -24,4 +24,5 @@ public class DoubleOracleCandidate extends OracleCandidate {
     public Set<Action> getPossibleBestResponses() {
         return possibleBestResponses;
     }
+
 }

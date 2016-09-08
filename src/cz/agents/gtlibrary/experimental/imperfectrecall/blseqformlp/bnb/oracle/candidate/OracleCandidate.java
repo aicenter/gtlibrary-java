@@ -51,4 +51,5 @@ public class OracleCandidate extends Candidate {
     public int getExpansionCount() {
         return expansionCount;
     }
+
 }

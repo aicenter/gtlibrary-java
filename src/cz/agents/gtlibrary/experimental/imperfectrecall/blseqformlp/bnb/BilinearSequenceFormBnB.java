@@ -535,7 +535,6 @@ public class BilinearSequenceFormBnB {
                 long start = mxBean.getCurrentThreadCpuTime();
 
                 lpData.getSolver().solve();
-                System.out.println(getPossibleBestResponseActions(lpData));
 //                System.out.println(CPLEXInvocationCount++);
                 CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
                 if (DEBUG) {

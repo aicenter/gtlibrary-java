@@ -33,7 +33,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
-    public static boolean DEBUG = true;
+    public static boolean DEBUG = false;
     public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
     public static boolean RESOLVE_CURRENT_BEST = false;
@@ -215,7 +215,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
             while (!fringe.isEmpty()) {
                 OracleCandidate current = (OracleCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
 
-                System.out.println(current + " vs " + currentBest);
+//                System.out.println(current + " vs " + currentBest);
                 if (isConverged(current)) {
                     currentBest = current;
                     System.out.println(current);
@@ -228,7 +228,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                 if (expansionCount > current.getExpansionCount()) {
                     current.getChanges().updateTable(table);
                     applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
-                    if (RESOLVE_CURRENT_BEST)
+                    if (RESOLVE_CURRENT_BEST && !current.equals(currentBest))
                         updateCurrentBest(restrictedGameConfig);
                 } else {
 //                if (expandCondition.validForExpansion(restrictedGameConfig, current)) {
@@ -237,7 +237,6 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     if (expanded) {
                         expansionCount++;
                     }
-                    System.out.println(expanded);
                     expanderTime += gameExpander.getSelfTime();
                     BRTime += gameExpander.getBRTime();
                     table.clearTable();
@@ -250,7 +249,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     if (expansionCount > current.getExpansionCount()) {
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
-                        if (RESOLVE_CURRENT_BEST)
+                        if (RESOLVE_CURRENT_BEST && !current.equals(currentBest))
                             updateCurrentBest(restrictedGameConfig);
                     } else {
                         assert current.getPrecisionError() > 1e-8;
@@ -307,7 +306,6 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         Map.Entry<GameState, Double> bestPending = ((DoubleOracleIRConfig) config).getBestPending(possibleBestResponses, opponent);
         double upperBound = bestPending == null ? lpUB : Math.max(lpUB, bestPending.getValue());
 
-        System.out.println("LB: " + lowerBoundAndBR.getLeft() + "lpUB: " + lpUB + " vs abs. UB: " + upperBound);
         assert upperBound > lowerBoundAndBR.getLeft() - 1e-3;
         Action action = findMostViolatedBilinearConstraints(config, lpData);
         int[] exactProbability = getExactProbability(maxPlayerStrategy.get(action), table.getPrecisionFor(action), action, changes);
