@@ -30,7 +30,7 @@ public class BPGGameInfo implements GameInfo {
 
 	public static Player[] ALL_PLAYERS = { ATTACKER, DEFENDER };
 
-	public static int DEPTH = 3;
+	public static int DEPTH = 5;
 	public static boolean SLOW_MOVES = true;
 	public static String graphFile = "GridW3-almost-connected.txt";//"GridW3-connected.txt";//"GridW3-small.txt"
     public static double EVADER_MOVE_COST = 0.5/(2*DEPTH);
@@ -38,7 +38,7 @@ public class BPGGameInfo implements GameInfo {
 
 	@Override
 	public double getMaxUtility() {
-		return 2;
+		return 1;
 	}
 
 	@Override

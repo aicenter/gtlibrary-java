@@ -44,7 +44,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
-    public static boolean RESOLVE_CURRENT_BEST = false;
+    public static boolean RESOLVE_CURRENT_BEST = true;
     public static double EPS = 1e-3;
 
     protected ImperfectRecallBestResponse br;
@@ -259,7 +259,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                     if (expansionCount > current.getExpansionCount()) {
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
-                        if (RESOLVE_CURRENT_BEST)
+                        if (RESOLVE_CURRENT_BEST && !currentBest.equals(current))
                             updateCurrentBest(restrictedGameConfig);
                     } else {
                         assert current.getPrecisionError() > 1e-8;

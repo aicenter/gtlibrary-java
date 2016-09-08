@@ -156,38 +156,38 @@ public class DoubleOracleGameExpander implements GameExpander {
         if (state.isGameEnd())
             return;
         if (state.getPlayerToMove().equals(minPlayer)) {
-            for (GameState alternativeState : config.getInformationSetFor(state).getAllStates()) {
+//            for (GameState alternativeState : config.getInformationSetFor(state).getAllStates()) {
                 boolean added = false;
 
-                for (Action action : expander.getActions(alternativeState)) {
+                for (Action action : expander.getActions(state)) {
                     if (minPlayerBestResponse.getOrDefault(action, 0d) > 1e-8 || addedActions.contains(action)) {
                         tempAddedActions.add(action);
-                        expandRecursivelyForced(alternativeState.performAction(action), config, maxPlayerBestResponse, minPlayerBestResponse);
+                        expandRecursivelyForced(state.performAction(action), config, maxPlayerBestResponse, minPlayerBestResponse);
                         added = true;
                     }
                 }
                 if (added)
-                    removeTemporaryLeaf(alternativeState, config);
-                else if (isVisited(alternativeState, maxPlayerBestResponse, minPlayerBestResponse))
-                    expand(alternativeState, config, minPlayerBestResponse);
-            }
+                    removeTemporaryLeaf(state, config);
+                else if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
+                    expand(state, config, minPlayerBestResponse);
+//            }
             return;
         }
-        for (GameState alternativeState : config.getInformationSetFor(state).getAllStates()) {
+//        for (GameState alternativeState : config.getInformationSetFor(state).getAllStates()) {
             boolean added = false;
 
-            for (Action action : expander.getActions(alternativeState)) {
+            for (Action action : expander.getActions(state)) {
                 if (maxPlayerBestResponse.getOrDefault(action, 0d) > 1e-8 || addedActions.contains(action)) {
                     tempAddedActions.add(action);
-                    expandRecursivelyForced(alternativeState.performAction(action), config, maxPlayerBestResponse, minPlayerBestResponse);
+                    expandRecursivelyForced(state.performAction(action), config, maxPlayerBestResponse, minPlayerBestResponse);
                     added = true;
                 }
             }
             if (added)
-                removeTemporaryLeaf(alternativeState, config);
-            else if (isVisited(alternativeState, maxPlayerBestResponse, minPlayerBestResponse))
-                expand(alternativeState, config, minPlayerBestResponse);
-        }
+                removeTemporaryLeaf(state, config);
+            else if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
+                expand(state, config, minPlayerBestResponse);
+//        }
     }
 
     protected boolean isVisited(GameState state, Map<Action, Double> maxPlayerStrategy, Map<Action, Double> minPlayerStrategy) {

@@ -24,7 +24,6 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
 
     @Override
     public boolean expand(SequenceFormIRConfig config, OracleCandidate candidate) {
-        System.err.println(((DoubleOracleIRConfig) config).getPending().size());
         brTime = 0;
         long start = mxBean.getCurrentThreadCpuTime();
         int terminalLeafCount = config.getTerminalStates().size();
@@ -36,22 +35,15 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
             System.out.println("information sets before expand: " + config.getAllInformationSets().size());
             System.out.println("sequences before expand: " + config.getAllSequences().size());
         }
-//        Map<Action, Double> maxPlayerBestResponse = new HashMap<>(br.getBestResponse(candidate.getMinPlayerBestResponse()));
-//
-//        tempAddedActions = new HashSet<>();
-//        expandRecursively(root, config, maxPlayerBestResponse, candidate.getMinPlayerBestResponse());
-//        if (OracleBilinearSequenceFormBnB.EXPORT_GBT)
-//            new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
-//        addedActions.addAll(tempAddedActions);
-
-//        if(!(config.getTerminalStates().size() > terminalLeafCount || config.getAllSequences().size() > sequenceCount || config.getAllInformationSets().size() > informationSetCount)) {
         tempAddedActions = new HashSet<>();
         expandRecursivelyForced(root, config, candidate.getMaxPlayerStrategy(), candidate.getMinPlayerBestResponse());
         addedActions.addAll(tempAddedActions);
+        validateRestrictedGame(root, config);
         if (DoubleOracleBilinearSequenceFormBnB.EXPORT_GBT)
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         updatePending(root, (DoubleOracleIRConfig) config);
         addPending((DoubleOracleIRConfig) config, (DoubleOracleCandidate) candidate);
+        validateRestrictedGame(root, config);
 //        }
         if (DoubleOracleBilinearSequenceFormBnB.DEBUG) {
             System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
@@ -63,6 +55,39 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
         config.updateUtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
         return config.getTerminalStates().size() > terminalLeafCount || config.getAllSequences().size() > sequenceCount || config.getAllInformationSets().size() > informationSetCount;
+    }
+
+    private void validateRestrictedGame(GameState state, SequenceFormIRConfig config) {
+        config.addInformationSetFor(state);
+        if (state.isGameEnd())
+            return;
+        if (state.getPlayerToMove().equals(minPlayer)) {
+            boolean added = false;
+
+            for (Action action : expander.getActions(state)) {
+                if (addedActions.contains(action)) {
+                    validateRestrictedGame(state.performAction(action), config);
+                    added = true;
+                }
+            }
+            if (added)
+                removeTemporaryLeaf(state, config);
+            else
+                addTemporaryLeafIfNotPresent(state, config, Collections.EMPTY_MAP);
+            return;
+        }
+        boolean added = false;
+
+        for (Action action : expander.getActions(state)) {
+            if (addedActions.contains(action)) {
+                validateRestrictedGame(state.performAction(action), config);
+                added = true;
+            }
+        }
+        if (added)
+            removeTemporaryLeaf(state, config);
+        else
+            addTemporaryLeafIfNotPresent(state, config, Collections.EMPTY_MAP);
     }
 
     private void addPending(DoubleOracleIRConfig config, DoubleOracleCandidate candidate) {

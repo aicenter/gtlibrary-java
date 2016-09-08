@@ -96,8 +96,6 @@ public class Candidate implements Comparable<Candidate> {
         Candidate candidate = (Candidate) o;
 
         if (!Arrays.equals(candidate.actionProbability, actionProbability)) return false;
-        if (Double.compare(candidate.lb, lb) != 0) return false;
-        if (Double.compare(candidate.ub, ub) != 0) return false;
         if (!changes.equals(candidate.changes)) return false;
         return !(action != null ? !action.equals(candidate.action) : candidate.action != null);
 
@@ -110,10 +108,6 @@ public class Candidate implements Comparable<Candidate> {
         result = changes.hashCode();
         result = 31 * result + (action != null ? action.hashCode() : 0);
         temp = Arrays.hashCode(actionProbability);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(lb);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(ub);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
