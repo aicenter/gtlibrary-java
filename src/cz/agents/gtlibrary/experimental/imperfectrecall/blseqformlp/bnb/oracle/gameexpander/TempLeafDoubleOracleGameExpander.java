@@ -59,7 +59,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
 
     private void validateRestrictedGame(GameState state, SequenceFormIRConfig config) {
         config.addInformationSetFor(state);
-        if (state.isGameEnd())
+        if (state.isGameEnd() || config.getTerminalStates().contains(state))
             return;
         if (state.getPlayerToMove().equals(minPlayer)) {
             boolean added = false;

@@ -34,18 +34,18 @@ import java.util.*;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = false;
+    public static boolean EXPORT_GBT = true;
     public static boolean SAVE_LPS = false;
-    public static boolean RESOLVE_CURRENT_BEST = false;
+    public static boolean RESOLVE_CURRENT_BEST = true;
     public static double EPS = 1e-3;
 
     protected GameState root;
 
     public static void main(String[] args) {
-        new Scanner(System.in).next();
-//        runRandomGame();
+//        new Scanner(System.in).next();
+        runRandomGame();
 //        runTTT();
-        runBPG();
+//        runBPG();
 //        runBRTest();
     }
 
@@ -140,7 +140,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
         long start = mxBean.getCurrentThreadCpuTime();
 
-        solver.solve(new DoubleOracleIRConfig());
+        solver.solve(config);
         System.out.println("CPLEX time: " + solver.getCPLEXTime());
         System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
         System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
