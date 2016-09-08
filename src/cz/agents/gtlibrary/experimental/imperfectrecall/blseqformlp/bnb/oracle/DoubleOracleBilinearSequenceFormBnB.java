@@ -34,18 +34,18 @@ import java.util.*;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = true;
+    public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
-    public static boolean RESOLVE_CURRENT_BEST = true;
+    public static boolean RESOLVE_CURRENT_BEST = false;
     public static double EPS = 1e-3;
 
     protected GameState root;
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-        runRandomGame();
+//        runRandomGame();
 //        runTTT();
-//        runBPG();
+        runBPG();
 //        runBRTest();
     }
 
