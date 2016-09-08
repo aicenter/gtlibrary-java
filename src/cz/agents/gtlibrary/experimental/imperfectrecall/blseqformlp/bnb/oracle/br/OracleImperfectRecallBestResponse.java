@@ -246,5 +246,4 @@ public class OracleImperfectRecallBestResponse extends ImperfectRecallBestRespon
     private boolean isFirst(Action action, SequenceFormIRInformationSet informationSet) {
         return action.equals(informationSet.getFirst());
     }
-
 }

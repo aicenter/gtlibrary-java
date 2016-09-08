@@ -211,4 +211,9 @@ public class ImperfectRecallBestResponseImpl implements ImperfectRecallBestRespo
     public void setValue(double value) {
         this.value = value;
     }
+
+    @Override
+    public long getExpandedNodes() {
+        return 0;
+    }
 }

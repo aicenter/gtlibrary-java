@@ -103,9 +103,10 @@ public class PatrollerAction extends ActionImpl {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!super.equals(obj))
-			return false;
-		PatrollerAction other = (PatrollerAction) obj;
+		if(obj == null || !(obj instanceof PatrollerAction))
+		    return false;
+	    PatrollerAction other = (PatrollerAction) obj;
+
 		if (!fromNodeP1.equals(other.fromNodeP1))
 			return false;
 		if (!fromNodeP2.equals(other.fromNodeP2))
@@ -113,6 +114,8 @@ public class PatrollerAction extends ActionImpl {
 		if (!toNodeP1.equals(other.toNodeP1))
 			return false;
 		if (!toNodeP2.equals(other.toNodeP2))
+			return false;
+		if (!super.equals(obj))
 			return false;
 		return true;
 	}

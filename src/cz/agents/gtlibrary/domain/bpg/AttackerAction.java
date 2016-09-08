@@ -82,9 +82,10 @@ public class AttackerAction extends ActionImpl {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!super.equals(obj))
+		if(obj == null || !(obj instanceof AttackerAction))
 			return false;
 		AttackerAction other = (AttackerAction) obj;
+
 		if (fromNode == null) {
 			if (other.fromNode != null)
 				return false;
@@ -96,6 +97,8 @@ public class AttackerAction extends ActionImpl {
 		} else if (!toNode.equals(other.toNode))
 			return false;
 		if (type != other.type)
+			return false;
+		if (!super.equals(obj))
 			return false;
 		return true;
 	}

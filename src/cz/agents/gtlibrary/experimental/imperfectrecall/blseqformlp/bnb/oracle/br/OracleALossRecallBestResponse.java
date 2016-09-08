@@ -63,8 +63,17 @@ public class OracleALossRecallBestResponse extends OracleImperfectRecallBestResp
         return sqfBR.getBestResponse();
     }
 
+    public Map<Action, Double> getBestResponseInNoClear(GameState state, Map<Action, Double> opponentStrategy) {
+        value = sqfBR.calculateBRNoClear(state);
+        return sqfBR.getBestResponse();
+    }
+
     @Override
     public Map<Action, Double> getBestResponseSequenceIn(GameState state, Map<Sequence, Double> opponentStrategy) {
         throw new UnsupportedOperationException();
+    }
+
+    public long getExpandedNodes() {
+        return sqfBR.nodes;
     }
 }
