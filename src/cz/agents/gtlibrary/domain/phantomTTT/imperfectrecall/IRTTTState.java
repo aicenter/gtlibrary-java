@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.domain.phantomTTT.imperfectrecall;
 
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
@@ -20,7 +21,7 @@ public class IRTTTState extends TTTState {
 
     public static void main(String[] args) {
         GameState root = new IRTTTState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new TTTInfo());
         Expander<SequenceFormIRInformationSet> expander = new TTTExpander<>(config);
 
         BasicGameBuilder.build(root, config, expander);

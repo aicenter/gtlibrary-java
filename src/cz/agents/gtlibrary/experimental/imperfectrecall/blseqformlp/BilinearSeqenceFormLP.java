@@ -45,7 +45,7 @@ public class BilinearSeqenceFormLP {
 
     public static double runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new RandomGameInfo());
         GameState root = new RandomGameState();
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
@@ -79,7 +79,7 @@ public class BilinearSeqenceFormLP {
 
     public static double runBPG() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BPGGameInfo());
         GameState root = new IRBPGGameState();
         Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
 
@@ -113,7 +113,7 @@ public class BilinearSeqenceFormLP {
 
     private static void runBRTest() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
 
         builder.build(new BRTestGameState(), config, new BRTestExpander<>(config));
         BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());

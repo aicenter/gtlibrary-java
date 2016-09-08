@@ -203,7 +203,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
     protected double getUtilityUB(GameState state, Map<Action, Double> minPlayerBestResponse) {
         long start = mxBean.getCurrentThreadCpuTime();
 
-        ((OracleALossRecallBestResponse) br).getBestResponseInNoClear(state, minPlayerBestResponse);
+        ((OracleALossRecallBestResponse) br).getBestResponseIn(state, minPlayerBestResponse);
         brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
         return br.getValue();
     }

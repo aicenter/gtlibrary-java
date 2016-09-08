@@ -34,7 +34,7 @@ import java.util.*;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = true;
+    public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
     public static boolean RESOLVE_CURRENT_BEST = true;
     public static double EPS = 1e-3;
@@ -43,15 +43,15 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-        runRandomGame();
+//        runRandomGame();
 //        runTTT();
-//        runBPG();
+        runBPG();
 //        runBRTest();
     }
 
     public static double runTTT() {
 //        BasicGameBuilder builder = new BasicGameBuilder();
-        DoubleOracleIRConfig config = new DoubleOracleIRConfig();
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new TTTInfo());
         GameState root = new IRTTTState();
         Expander<SequenceFormIRInformationSet> expander = new TTTExpander<>(config);
 
@@ -87,7 +87,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     }
 
     public static double runBPG() {
-        DoubleOracleIRConfig config = new DoubleOracleIRConfig();
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new BPGGameInfo());
         GameState root = new IRBPGGameState();
         Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
 
@@ -124,7 +124,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static double runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        DoubleOracleIRConfig config = new DoubleOracleIRConfig();
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomGameInfo());
         GameState root = new RandomGameState();
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
@@ -153,19 +153,20 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("cuts: " + solver.cuts);
         System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("Sequence count: " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size() + ", " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size());
         return solver.finalValue;
     }
 
     protected static void runBRTest() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         GameState root = new BRTestGameState();
 
         builder.build(root, config, expander);
         OracleBilinearSequenceFormBnB solver = new OracleBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, root, expander, new BRTestGameInfo());
 
-        solver.solve(new SequenceFormIRConfig());
+        solver.solve(new SequenceFormIRConfig(new BRTestGameInfo()));
     }
 
     public DoubleOracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
@@ -249,7 +250,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     if (expansionCount > current.getExpansionCount()) {
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
-                        if (RESOLVE_CURRENT_BEST && !current.equals(currentBest))
+                        if (RESOLVE_CURRENT_BEST)
                             updateCurrentBest(restrictedGameConfig);
                     } else {
                         assert current.getPrecisionError() > 1e-8;

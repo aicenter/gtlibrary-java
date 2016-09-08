@@ -51,7 +51,7 @@ public class BilinearSequenceFormBNB {
 
     private static void runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new RandomGameInfo());
         GameState root = new RandomGameState();
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
@@ -85,7 +85,7 @@ public class BilinearSequenceFormBNB {
 
     private static void runBRTest() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
 
         Expander expander = new BRTestExpander<>(config);
 

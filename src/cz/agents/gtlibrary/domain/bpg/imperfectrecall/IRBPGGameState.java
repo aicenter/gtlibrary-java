@@ -30,7 +30,7 @@ import java.util.Set;
 public class IRBPGGameState extends BPGGameState {
 
     public static void main(String[] args) {
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BPGGameInfo());
         GameState root = new IRBPGGameState();
         Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
 

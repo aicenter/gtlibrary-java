@@ -76,7 +76,7 @@ public class BilinearSequenceFormBnB {
 
     public static double runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new RandomGameInfo());
         GameState root = new RandomGameState();
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
@@ -109,7 +109,7 @@ public class BilinearSequenceFormBnB {
 
     public static double runBPG() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BPGGameInfo());
         GameState root = new IRBPGGameState();
         Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
 
@@ -140,7 +140,7 @@ public class BilinearSequenceFormBnB {
 
     protected static void runBRTest() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
 
         builder.build(new BRTestGameState(), config, expander);
