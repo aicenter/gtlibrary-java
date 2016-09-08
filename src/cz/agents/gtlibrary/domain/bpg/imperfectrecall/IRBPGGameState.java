@@ -74,7 +74,8 @@ public class IRBPGGameState extends BPGGameState {
         if (playerToMove.equals(BPGGameInfo.ATTACKER)) {
             Observations attackerObservations = new Observations(BPGGameInfo.ATTACKER, BPGGameInfo.ATTACKER);
 
-            attackerObservations.add(new BPGAttackerAttackerObservation(getHash1(getSequenceForPlayerToMove()), getHash2(getSequenceForPlayerToMove())));
+//            attackerObservations.add(new BPGAttackerAttackerObservation(getHash1(getSequenceForPlayerToMove()), getHash2(getSequenceForPlayerToMove())));
+            attackerObservations.add(new BPGAttackerAttackerObservation(getSequenceForPlayerToMove()));
             Observations defenderObservations = new Observations(BPGGameInfo.ATTACKER, BPGGameInfo.DEFENDER);
 
             defenderObservations.add(new BPGAttackerDefenderObservation(new HashCodeBuilder().append(isGameEnd()).toHashCode()));
@@ -82,7 +83,7 @@ public class IRBPGGameState extends BPGGameState {
         } else {
             Observations attackerObservations = new Observations(BPGGameInfo.DEFENDER, BPGGameInfo.ATTACKER);
 
-            attackerObservations.add(new BPGDefenderAttackerObservation(flaggedNodesObservedByPatroller));
+//            attackerObservations.add(new BPGDefenderAttackerObservation(flaggedNodesObservedByPatroller));
             Observations defenderObservations = new Observations(BPGGameInfo.DEFENDER, BPGGameInfo.DEFENDER);
 
             defenderObservations.add(new BPGDefenderDefenderObservation(p1Position, p2Position, getSequenceFor(BPGGameInfo.DEFENDER).size()));
@@ -177,60 +178,33 @@ public class IRBPGGameState extends BPGGameState {
         }
     }
 
-    class BPGAttackerAttackerObservation implements Observation {
-
-        protected int hashcode1;
-        protected int hashcode2;
-
-        public BPGAttackerAttackerObservation(int hashcode1, int hashcode2) {
-            this.hashcode1 = hashcode1;
-            this.hashcode2 = hashcode2;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof BPGAttackerAttackerObservation)) return false;
-
-            BPGAttackerAttackerObservation that = (BPGAttackerAttackerObservation) o;
-
-            if (hashcode1 != that.hashcode1) return false;
-            return hashcode2 == that.hashcode2;
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result = hashcode1;
-            result = 31 * result + hashcode2;
-            return result;
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return false;
-        }
-    }
-
 //    class BPGAttackerAttackerObservation implements Observation {
 //
-//        protected Sequence attackerSequence;
+//        protected int hashcode1;
+//        protected int hashcode2;
 //
-//        public BPGAttackerAttackerObservation(Sequence attackerSequence) {
-//            this.attackerSequence = new ArrayListSequenceImpl(attackerSequence);
+//        public BPGAttackerAttackerObservation(int hashcode1, int hashcode2) {
+//            this.hashcode1 = hashcode1;
+//            this.hashcode2 = hashcode2;
 //        }
 //
 //        @Override
 //        public boolean equals(Object o) {
 //            if (this == o) return true;
+//            if (!(o instanceof BPGAttackerAttackerObservation)) return false;
+//
 //            BPGAttackerAttackerObservation that = (BPGAttackerAttackerObservation) o;
 //
-//            return attackerSequence.equals(that.attackerSequence);
+//            if (hashcode1 != that.hashcode1) return false;
+//            return hashcode2 == that.hashcode2;
+//
 //        }
 //
 //        @Override
 //        public int hashCode() {
-//            return attackerSequence.hashCode();
+//            int result = hashcode1;
+//            result = 31 * result + hashcode2;
+//            return result;
 //        }
 //
 //        @Override
@@ -238,6 +212,33 @@ public class IRBPGGameState extends BPGGameState {
 //            return false;
 //        }
 //    }
+
+    class BPGAttackerAttackerObservation implements Observation {
+
+        protected Sequence attackerSequence;
+
+        public BPGAttackerAttackerObservation(Sequence attackerSequence) {
+            this.attackerSequence = new ArrayListSequenceImpl(attackerSequence);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            BPGAttackerAttackerObservation that = (BPGAttackerAttackerObservation) o;
+
+            return attackerSequence.equals(that.attackerSequence);
+        }
+
+        @Override
+        public int hashCode() {
+            return attackerSequence.hashCode();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+    }
 
     class BPGAttackerDefenderObservation implements Observation {
 
