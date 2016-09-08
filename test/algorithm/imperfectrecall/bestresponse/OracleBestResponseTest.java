@@ -23,7 +23,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestTest() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -46,7 +46,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestTest1() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -69,7 +69,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestDefaultStrategyTest() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -83,7 +83,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestDefaultRPTest() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -97,7 +97,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestDefaultRPTest1() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -116,7 +116,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestDefaultRPTest2() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -130,7 +130,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestRepeatedComputationTest() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -154,7 +154,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestRepeatedComputationTest1() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -178,7 +178,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestInStateTest() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -200,7 +200,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestInStateTest1() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -222,7 +222,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestInStateTest2() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
@@ -244,7 +244,7 @@ public class OracleBestResponseTest {
     @Test
     public void BRTestInStateTest3() {
         GameState rootState = new BRTestGameState();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
         BasicGameBuilder.build(rootState, config, expander);
 
