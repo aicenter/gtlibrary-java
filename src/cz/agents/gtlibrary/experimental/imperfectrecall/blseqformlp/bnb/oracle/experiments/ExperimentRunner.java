@@ -1,8 +1,10 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.experiments;
 
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSeqenceFormLP;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
 
 import java.lang.management.ManagementFactory;
@@ -10,8 +12,12 @@ import java.lang.management.ThreadMXBean;
 
 public class ExperimentRunner {
     public static void main(String[] args) {
-        if(args[0].equals("TTT")) {
-              OracleBilinearSequenceFormBnB.runTTT();
+        if (args[0].equals("TTT")) {
+            DoubleOracleBilinearSequenceFormBnB.runTTT();
+        } else if (args[0].equals("BPG")) {
+            BPGGameInfo.DEPTH = Integer.parseInt(args[1]);
+            BPGGameInfo.SLOW_MOVES = Boolean.parseBoolean(args[2]);
+            DoubleOracleBilinearSequenceFormBnB.runBPG();
         } else {
             int BF = (args.length > 2) ? new Integer(args[2]) : RandomGameInfo.MAX_BF;
             int DEPTH = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_DEPTH;
@@ -33,6 +39,8 @@ public class ExperimentRunner {
                 OracleBilinearSequenceFormBnB.runRandomGame();
             } else if (args[4].equals("base")) {
                 BilinearSeqenceFormLP.runRandomGame();
+            } else if (args[4].equals("dobnb")) {
+                DoubleOracleBilinearSequenceFormBnB.runRandomGame();
             }
             System.out.println("-----------------------");
             System.out.println("OVERALL TIME = " + ((threadBean.getCurrentThreadCpuTime() - start) / 1000000));
