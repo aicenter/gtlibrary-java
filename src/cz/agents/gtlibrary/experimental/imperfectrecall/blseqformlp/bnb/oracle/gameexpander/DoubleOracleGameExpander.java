@@ -168,7 +168,7 @@ public class DoubleOracleGameExpander implements GameExpander {
             }
             if (added)
                 removeTemporaryLeaf(state, config);
-            else if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
+            else //if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
                 expand(state, config, minPlayerBestResponse);
 //            }
             return;
@@ -185,7 +185,7 @@ public class DoubleOracleGameExpander implements GameExpander {
         }
         if (added)
             removeTemporaryLeaf(state, config);
-        else if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
+        else //if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
             expand(state, config, minPlayerBestResponse);
 //        }
     }
@@ -203,6 +203,10 @@ public class DoubleOracleGameExpander implements GameExpander {
     }
 
     protected void expand(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+        if(!config.getTerminalStates().contains(tempLeaf)) {
+           addTemporaryLeafIfNotPresent(tempLeaf, config, minPlayerBestResponse);
+            return;
+        }
         Action action = null;
         for (GameState gameState : config.getInformationSetFor(tempLeaf).getAllStates()) {
             removeTemporaryLeaf(gameState, config);

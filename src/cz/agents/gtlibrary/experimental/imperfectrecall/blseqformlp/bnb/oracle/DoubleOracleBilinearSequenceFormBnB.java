@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = false;
+    public static boolean EXPORT_GBT = true;
     public static boolean SAVE_LPS = false;
     public static boolean RESOLVE_CURRENT_BEST = true;
     public static double EPS = 1e-3;
@@ -50,42 +50,40 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        runBRTest();
     }
 
-//    public static double runAbstractedRandomGame() {
-//        BasicGameBuilder builder = new BasicGameBuilder();
-//        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomGameInfo());
-//        GameState root = new RandomGameState();
-//        Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
-//
-//        builder.build(root, config, expander);
-//        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomGameInfo());
-//
-//        GambitEFG exporter = new GambitEFG();
-//        exporter.write("RG.gbt", root, expander);
-//
-//        solver.setExpander(expander);
-//        System.out.println("Information sets: " + config.getCountIS(0));
-//        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
-//        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
-//        long start = mxBean.getCurrentThreadCpuTime();
-//
-//        solver.solve(config);
-//        System.out.println("CPLEX time: " + solver.getCPLEXTime());
-//        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
-//        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
-//        System.out.println("BR time: " + solver.getBRTime());
-//        System.out.println("LP building time: " + solver.getLpBuildingTime());
-//        System.out.println("Expander time: " + solver.getExpanderTime());     config
-//        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
-//        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
-//        System.out.println("Oracle self time: " + solver.getSelfTime());
-//        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
-//        System.out.println("cuts: " + solver.cuts);
-//        System.out.println("invalid cuts: " + solver.invalidCuts);
-//        System.out.println("P1 sequence count: " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size());
-//        System.out.println("P2 sequence count: " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size());
-//        System.out.println("Information set count: " + config.getAllInformationSets().size());
-//        return solver.finalValue;
-//    }
+    public static double runAbstractedRandomGame() {
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomGameInfo());
+        GameState root = new RandomGameState();
+        Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
+
+        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomGameInfo());
+
+        GambitEFG exporter = new GambitEFG();
+        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+        System.out.println("Information sets: " + config.getCountIS(0));
+        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Expander time: " + solver.getExpanderTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("P1 sequence count: " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size());
+        System.out.println("P2 sequence count: " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size());
+        System.out.println("Information set count: " + config.getAllInformationSets().size());
+        return solver.finalValue;
+    }
 
     public static double runTTT() {
 //        BasicGameBuilder builder = new BasicGameBuilder();
@@ -181,12 +179,12 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        builder.build(root, config, expander);
         DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomGameInfo());
 
-        GambitEFG exporter = new GambitEFG();
-        exporter.write("RG.gbt", root, expander);
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
 
         solver.setExpander(expander);
-        System.out.println("Information sets: " + config.getCountIS(0));
-        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+//        System.out.println("Information sets: " + config.getCountIS(0));
+//        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
         long start = mxBean.getCurrentThreadCpuTime();
 
