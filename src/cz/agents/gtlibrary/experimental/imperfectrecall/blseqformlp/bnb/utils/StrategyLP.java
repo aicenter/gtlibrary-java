@@ -133,7 +133,7 @@ public class StrategyLP {
         } catch (IloException e) {
             e.printStackTrace();
         }
-        return null;
+        return getStrategyFromBounds();
     }
 
     private boolean tightBounds() {
