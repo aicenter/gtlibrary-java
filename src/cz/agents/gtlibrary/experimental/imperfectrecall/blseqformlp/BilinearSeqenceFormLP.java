@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -38,8 +39,8 @@ public class BilinearSeqenceFormLP {
     private final double EPS = 0.000001;
 
     public static void main(String[] args) {
-//        runRandomGame();
-        runBPG();
+        runRandomGame();
+//        runBPG();
 //        runBRTest();
     }
 
@@ -62,8 +63,8 @@ public class BilinearSeqenceFormLP {
         exporter.write("RG.gbt", root, expander);
 
         solver.setExpander(expander);
-        System.out.println("Information sets: " + config.getCountIS(0));
-        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
         solver.solve(config);
 
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
@@ -184,6 +185,9 @@ public class BilinearSeqenceFormLP {
                     }
                 }
             }
+            Map<Sequence, Double> rp = extractRPStrategy(config, lpData);
+
+            System.out.println("Support: " + rp.values().stream().filter(v -> v > 1e-8).count());
 //            IRSequenceBestResponse br2 = new IRSequenceBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
 //            br2.getBestResponseSequence(extractRPStrategy(config, lpData));
             br.getBestResponse(P1Strategy);

@@ -16,6 +16,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.number.DigitArray;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -69,8 +70,8 @@ public class BilinearSequenceFormBnB {
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-//        runRandomGame();
-        runBPG();
+        runRandomGame();
+//        runBPG();
 //        runBRTest();
     }
 
@@ -104,6 +105,8 @@ public class BilinearSequenceFormBnB {
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
         System.out.println("cuts: " + solver.cuts);
         System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
         return solver.finalValue;
     }
 
@@ -134,6 +137,8 @@ public class BilinearSequenceFormBnB {
         System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
         System.out.println("cuts: " + solver.cuts);
         System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
         return solver.finalValue;
     }
 
@@ -208,6 +213,9 @@ public class BilinearSequenceFormBnB {
                 addRightChildOf(current, fringe, config);
             }
             finalValue = currentBest.getLb();
+            Map<Sequence, Double> rp = ((OracleCandidate)currentBest).getMaxPlayerRealPlan();
+
+            System.out.println("Support: " + rp.values().stream().filter(v -> v > 1e-8).count());
 //            table.clearTable();
 //            buildBaseLP(config);
 //            LPData checkData = table.toCplex();
@@ -352,8 +360,7 @@ public class BilinearSequenceFormBnB {
     }
 
     private void updateChangesForLeft(Changes newChanges, Change change) {
-        newChanges.add(change);  //problém je asi v tom že tam vznikají omezení akcí v přesnosti kterou ta akce ještě nemá
-        //vykašlat se na celý tohle a tyhle ztpřesňující věci dělat až v výpočtu ub a lb v changes tim nebudou vznikat tyhle problěmy
+        newChanges.add(change);
 //        Map<Action, DigitArray> lbs = new HashMap<>();
 //        Map<Action, DigitArray> ubs = new HashMap<>();
 //
@@ -713,7 +720,7 @@ public class BilinearSequenceFormBnB {
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action), action, changes);
 
         assert lowerBound <= upperBound + 1e-6;
-        return new Candidate(lowerBound, upperBound, changes, action, exactProbability);
+        return new OracleCandidate(lowerBound, upperBound, changes, action, exactProbability, 0, extractRPStrategy(config, lpData), null, null, 0);
     }
 
     protected int[] getExactProbability(Double value, int precision, Action action, Changes changes) {

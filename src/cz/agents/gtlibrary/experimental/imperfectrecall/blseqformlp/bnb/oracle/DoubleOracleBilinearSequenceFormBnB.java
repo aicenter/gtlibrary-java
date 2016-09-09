@@ -31,6 +31,7 @@ import ilog.concert.IloException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
@@ -43,9 +44,9 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-//        runRandomGame();
+        runRandomGame();
 //        runTTT();
-        runBPG();
+//        runBPG();
 //        runBRTest();
     }
 
@@ -122,6 +123,18 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         return solver.finalValue;
     }
 
+    protected static void runBRTest() {
+        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
+        Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
+        GameState root = new BRTestGameState();
+
+        builder.build(root, config, expander);
+        OracleBilinearSequenceFormBnB solver = new OracleBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, root, expander, new BRTestGameInfo());
+
+        solver.solve(new SequenceFormIRConfig(new BRTestGameInfo()));
+    }
+
     public static double runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
         DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomGameInfo());
@@ -153,20 +166,10 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
         System.out.println("cuts: " + solver.cuts);
         System.out.println("invalid cuts: " + solver.invalidCuts);
-        System.out.println("Sequence count: " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size() + ", " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size());
+        System.out.println("P1 sequence count: " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size());
+        System.out.println("P2 sequence count: " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size());
+        System.out.println("Information set count: " + config.getAllInformationSets().size());
         return solver.finalValue;
-    }
-
-    protected static void runBRTest() {
-        BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
-        Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
-        GameState root = new BRTestGameState();
-
-        builder.build(root, config, expander);
-        OracleBilinearSequenceFormBnB solver = new OracleBilinearSequenceFormBnB(BRTestGameInfo.FIRST_PLAYER, root, expander, new BRTestGameInfo());
-
-        solver.solve(new SequenceFormIRConfig(new BRTestGameInfo()));
     }
 
     public DoubleOracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
@@ -223,13 +226,13 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     break;
                 }
                 if (Math.abs(currentBest.getLb() - current.getUb()) < 1e-4 * gameInfo.getMaxUtility()) {
-                    System.out.println(current);
+                    System.out.println(currentBest);
                     break;
                 }
                 if (expansionCount > current.getExpansionCount()) {
                     current.getChanges().updateTable(table);
                     applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
-                    if (RESOLVE_CURRENT_BEST && !current.equals(currentBest))
+                    if (RESOLVE_CURRENT_BEST)
                         updateCurrentBest(restrictedGameConfig);
                 } else {
 //                if (expandCondition.validForExpansion(restrictedGameConfig, current)) {
@@ -268,6 +271,9 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
             System.out.println("Nodes expanded by BR: " + gameExpander.getBRExpandedNodes());
             finalValue = currentBest.getLb();
             System.out.println("final value: " + finalValue);
+            Map<Sequence, Double> rp = ((OracleCandidate)currentBest).getMaxPlayerRealPlan();
+
+            System.out.println("Support: " + rp.values().stream().filter(v -> v > 1e-8).count());
 //            table.clearTable();
 //            buildBaseLP(config);
 //            LPData checkData = table.toCplex();
