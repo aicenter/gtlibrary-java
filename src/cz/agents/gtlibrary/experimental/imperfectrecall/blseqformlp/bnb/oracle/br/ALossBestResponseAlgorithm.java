@@ -54,7 +54,7 @@ public class ALossBestResponseAlgorithm {
     private Set<Action> resultActions = new HashSet<>();
     private Set<Action> firstLevelActions = new HashSet<>();
 
-    public ALossBestResponseAlgorithm(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo) {
+    public ALossBestResponseAlgorithm(GameState root, Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo) {
         this.searchingPlayerIndex = searchingPlayerIndex;
         this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
         this.players = actingPlayers;
@@ -63,6 +63,7 @@ public class ALossBestResponseAlgorithm {
         this.algConfig = algConfig;
         this.gameInfo = gameInfo;
         this.MAX_UTILITY_VALUE = gameInfo.getMaxUtility();
+        this.gameTreeRoot = root;
     }
 
     public Double calculateBR(GameState root, Map<Action, Double> opponentBehavioralStrategy) {

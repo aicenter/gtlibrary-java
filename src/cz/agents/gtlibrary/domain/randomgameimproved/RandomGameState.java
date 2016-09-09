@@ -85,6 +85,7 @@ public class RandomGameState extends GameStateImpl {
         modificationGenerator = gameState.modificationGenerator.copy();
         centers = Arrays.copyOf(gameState.centers, gameState.centers.length);
         depth = gameState.depth;
+        actionsCount = gameState.getActionsCount();
         if (gameState.isPlayerToMoveNature()) {
             actionProbabilities = new ArrayList<>(gameState.actionProbabilities);
             probabilitySum = gameState.probabilitySum;
@@ -102,7 +103,7 @@ public class RandomGameState extends GameStateImpl {
     private void initializeObservationsMaps() {
         observations = new HashMap<>();
         for (Player player : players) {
-            observations.put(player, new HashMap<Player, Observations>(3));
+            observations.put(player, new HashMap<>(3));
         }
     }
 
