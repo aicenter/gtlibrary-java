@@ -230,6 +230,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     break;
                 }
                 if (expansionCount > current.getExpansionCount()) {
+                    table.clearTable();
                     current.getChanges().updateTable(table);
                     applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
                     if (RESOLVE_CURRENT_BEST)
