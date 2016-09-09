@@ -15,7 +15,7 @@ public class OracleALossRecallBestResponse extends OracleImperfectRecallBestResp
     public OracleALossRecallBestResponse(Player player, GameState root, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         super(player, expander, info);
         this.root = root;
-        sqfBR = new ALossBestResponseAlgorithm(expander, player.getId(), new Player[]{new PlayerImpl(0), new PlayerImpl(1)}, expander.getAlgorithmConfig(), info);
+        sqfBR = new ALossBestResponseAlgorithm(root, expander, player.getId(), new Player[]{new PlayerImpl(0), new PlayerImpl(1)}, expander.getAlgorithmConfig(), info);
     }
 
     @Override
