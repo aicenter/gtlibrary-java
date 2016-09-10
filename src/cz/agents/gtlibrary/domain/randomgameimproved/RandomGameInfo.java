@@ -25,7 +25,7 @@ public class RandomGameInfo implements GameInfo {
     public static int MAX_DEPTH = 5;
     public static int MAX_BF = 3;
     public static int MIN_BF = 3;
-    public static int MAX_OBSERVATION = 50;
+    public static int MAX_OBSERVATION = 5;
     public static int MAX_UTILITY = 1;
     public static boolean INTEGER_UTILITY = false;
     public static boolean UTILITY_CORRELATION = true;
@@ -35,8 +35,8 @@ public class RandomGameInfo implements GameInfo {
     public static double NATURE_STATE_PROBABILITY = 0;
     public static int[] ACTIONS;
 
-    public static boolean IMPERFECT_RECALL = true;
-    public static boolean IMPERFECT_RECALL_ONLYFORP1 = true;
+    public static boolean IMPERFECT_RECALL = false;
+    public static boolean IMPERFECT_RECALL_ONLYFORP1 = false;
     public static boolean ABSENT_MINDEDNESS = false;
     public static double EMPTY_OBSERVATION_PROBABILITY = 0.5;
     public static ObservationsType OBSERVATIONS_TYPE = ObservationsType.FORGETFUL;

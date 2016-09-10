@@ -29,7 +29,7 @@ public class RandomAbstractionGameState extends GameStateImpl {
     @Override
     public void performActionModifyingThisState(Action action) {
         super.performActionModifyingThisState(action);
-        wrappedGameState.performActionModifyingThisState(((RandomAbstractionAction)action).wrappedAction);
+        wrappedGameState.performActionModifyingThisState(((RandomAbstractionAction)action).wrappedActions.get(wrappedGameState));
 //        if (wrappedGameState.isPlayerToMoveNature() || checkConsistency(action)) {
 //            try {
 //                Method m = GameStateImpl.class.getDeclaredMethod("updateNatureProbabilityFor", Action.class);

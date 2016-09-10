@@ -1,17 +1,23 @@
 package cz.agents.gtlibrary.domain.randomabstraction;
 
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameAction;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RandomAbstractionAction extends ActionImpl {
 
-    public Action wrappedAction;
+    public Map<GameState, Action> wrappedActions;
 
-    public RandomAbstractionAction(Action wrappedAction, InformationSet informationSet) {
+    public RandomAbstractionAction(GameState state, Action wrappedAction, InformationSet informationSet) {
         super(informationSet);
-        this.wrappedAction = wrappedAction;
+        wrappedActions = new HashMap<>();
+        wrappedActions.put(state, wrappedAction);
     }
     @Override
     public void perform(GameState gameState) {
@@ -25,17 +31,21 @@ public class RandomAbstractionAction extends ActionImpl {
 
         RandomAbstractionAction that = (RandomAbstractionAction) o;
 
-        return wrappedAction != null ? wrappedAction.equals(that.wrappedAction) : that.wrappedAction == null;
-
+        return ((RandomGameAction)wrappedActions.values().stream().findAny().get()).getOrder() ==
+                ((RandomGameAction)that.wrappedActions.values().stream().findAny().get()).getOrder();
     }
 
     @Override
     public int hashCode() {
-        return wrappedAction != null ? wrappedAction.hashCode() : 0;
+        return new HashCodeBuilder(17,31).append(informationSet).append(((RandomGameAction)wrappedActions.values().stream().findAny().get()).getOrder()).toHashCode();
     }
 
     @Override
     public String toString() {
-        return wrappedAction.toString();
+        return wrappedActions.toString();
+    }
+
+    public void add(GameState gameState, Action action) {
+        wrappedActions.put(gameState, action);
     }
 }
