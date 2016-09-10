@@ -1,5 +1,8 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
@@ -48,8 +51,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-        runRandomGame();
-//        runAbstractedRandomGame();
+//        runRandomGame();
+        runAbstractedRandomGame();
 //        runTTT();
 //        runBPG();
 //        runBRTest();
@@ -57,8 +60,10 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static double runAbstractedRandomGame() {
         GameState wrappedRoot = new RandomGameState();
-        Expander<SequenceFormIRInformationSet> wrappedExpander = new RandomGameExpander<>(new SequenceFormIRConfig(new RandomGameInfo()));
-        cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder.build(wrappedRoot, wrappedExpander.getAlgorithmConfig(), wrappedExpander);
+        SequenceFormConfig<SequenceInformationSet> wrappedConfig = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> wrappedExpander = new RandomGameExpander<>(wrappedConfig);
+        FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), wrappedConfig);
+        efg.generateCompleteGame();
 
         DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo()));
         GameState root = RandomAbstractionGameStateFactory.createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());

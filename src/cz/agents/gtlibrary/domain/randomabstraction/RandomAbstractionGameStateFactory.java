@@ -1,5 +1,10 @@
 package cz.agents.gtlibrary.domain.randomabstraction;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.bpg.BPGExpander;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -21,8 +26,11 @@ public class RandomAbstractionGameStateFactory {
 
     public static void main(String[] args) {
         GameState wrappedRoot = new RandomGameState();
-        Expander<SequenceFormIRInformationSet> wrappedExpander = new RandomGameExpander<>(new SequenceFormIRConfig(new RandomGameInfo()));
-        BasicGameBuilder.build(wrappedRoot, wrappedExpander.getAlgorithmConfig(), wrappedExpander);
+        SequenceFormConfig<SequenceInformationSet> config = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> wrappedExpander = new RandomGameExpander<>(config);
+
+        FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
+        efg.generateCompleteGame();
 
         GameState root = RandomAbstractionGameStateFactory.createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new SequenceFormIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo())));
@@ -34,7 +42,7 @@ public class RandomAbstractionGameStateFactory {
         gambit.buildAndWrite("test.gbt", root, expander);
     }
 
-    public static RandomAbstractionGameState createRoot(GameState wrappedRoot, AlgorithmConfig<? extends SequenceFormIRInformationSet> config) {
+    public static RandomAbstractionGameState createRoot(GameState wrappedRoot, AlgorithmConfig<? extends SequenceInformationSet> config) {
 //        Map<ISKey, ISKey> keyMap = config.getAllInformationSets().keySet().stream().collect(Collectors.toMap(key -> key, key -> key));
         Map<ISKey, ISKey> keyMap = new HashMap<>();
         Collection<LinkedList<ISKey>> mergeCandidates = getMergeCandidates(config);
@@ -69,11 +77,11 @@ public class RandomAbstractionGameStateFactory {
      * @param config
      * @return
      */
-    private static Collection<LinkedList<ISKey>> getMergeCandidates(AlgorithmConfig<? extends SequenceFormIRInformationSet> config) {
+    private static Collection<LinkedList<ISKey>> getMergeCandidates(AlgorithmConfig<? extends SequenceInformationSet> config) {
         Map<Object, LinkedList<ISKey>> mergeCandidates = new HashMap<>();
         int counter = 0;
 
-        for (Map.Entry<ISKey, ? extends SequenceFormIRInformationSet> entry : config.getAllInformationSets().entrySet()) {
+        for (Map.Entry<ISKey, ? extends SequenceInformationSet> entry : config.getAllInformationSets().entrySet()) {
             if (entry.getValue().getPlayer().getId() == 1 || entry.getValue().getOutgoingSequences().isEmpty()) {
                 LinkedList<ISKey> list = new LinkedList<>();
 
@@ -90,15 +98,14 @@ public class RandomAbstractionGameStateFactory {
         return mergeCandidates.values();
     }
 
-    private static int getIncomingSequenceLength(SequenceFormIRInformationSet informationSet) {
-        Optional<Sequence> incomingSequence = informationSet.getOutgoingSequences().keySet().stream().findAny();
+    private static int getIncomingSequenceLength(SequenceInformationSet informationSet) {
+        Sequence incomingSequence = informationSet.getPlayersHistory();
 
-        assert incomingSequence.isPresent();
-        return incomingSequence.get().size();
+        return incomingSequence.size();
     }
 
-    private static int getActionCount(SequenceFormIRInformationSet informationSet) {
-        return informationSet.getActions().size();
+    private static int getActionCount(SequenceInformationSet informationSet) {
+        return informationSet.getOutgoingSequences().size();
     }
 
     private static ISKey getKey(int id) {
