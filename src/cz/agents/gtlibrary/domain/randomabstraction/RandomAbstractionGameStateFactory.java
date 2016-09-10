@@ -50,7 +50,7 @@ public class RandomAbstractionGameStateFactory {
         int counter = 0;
 
         for (LinkedList<ISKey> mergeCandidate : mergeCandidates) {
-            Collections.shuffle(mergeCandidate);
+            Collections.shuffle(mergeCandidate, random);
 
             while (!mergeCandidate.isEmpty()) {
                 ISKey newKey = getKey(counter++);
