@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.utils.io;
+package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.io;
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.iinodes.ISKey;
@@ -66,7 +66,15 @@ public class PartialGambitEFG {
     int nextChance = 1;
 
     private void writeRec(PrintStream out, GameState node, Expander<? extends InformationSet> expander, Map<GameState, double[]> leafUtilities, SequenceFormIRConfig config, int cut_off_depth) {
-        if (node.isGameEnd() || cut_off_depth == 0 || leafUtilities.containsKey(node) || notInConfig(config, node)) {
+        if (node.isGameEnd() && !leafUtilities.containsKey(node)) {
+            out.print("t \"" + node.toString() + "\" " + nextOutcome++ + " \"\" { ");
+            double[] u = new double[]{-1e6, -1e6};
+
+            for (int i = 0; i < 2; i++) {
+                out.print((i == 0 ? "" : ", ") + u[i]);
+            }
+            out.println("}");
+        } else if (cut_off_depth == 0 || leafUtilities.containsKey(node) || notInConfig(config, node)) {
             out.print("t \"" + node.toString() + "\" " + nextOutcome++ + " \"\" { ");
             double[] u = leafUtilities.getOrDefault(node, new double[]{-1e6, -1e6});
 
