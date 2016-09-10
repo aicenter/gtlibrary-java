@@ -19,6 +19,7 @@ public class RandomAbstractionAction extends ActionImpl {
         wrappedActions = new HashMap<>();
         wrappedActions.put(state, wrappedAction);
     }
+
     @Override
     public void perform(GameState gameState) {
     }
@@ -31,13 +32,13 @@ public class RandomAbstractionAction extends ActionImpl {
 
         RandomAbstractionAction that = (RandomAbstractionAction) o;
 
-        return ((RandomGameAction)wrappedActions.values().stream().findAny().get()).getOrder() ==
-                ((RandomGameAction)that.wrappedActions.values().stream().findAny().get()).getOrder();
+        return ((RandomGameAction) wrappedActions.values().stream().findAny().get()).getOrder() ==
+                ((RandomGameAction) that.wrappedActions.values().stream().findAny().get()).getOrder();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17,31).append(informationSet).append(((RandomGameAction)wrappedActions.values().stream().findAny().get()).getOrder()).toHashCode();
+        return new HashCodeBuilder(17, 31).append(informationSet).append(((RandomGameAction) wrappedActions.values().stream().findAny().get()).getOrder()).toHashCode();
     }
 
     @Override
@@ -47,5 +48,6 @@ public class RandomAbstractionAction extends ActionImpl {
 
     public void add(GameState gameState, Action action) {
         wrappedActions.put(gameState, action);
+        assert wrappedActions.values().stream().map(a -> ((RandomGameAction) a).getOrder()).distinct().count() == 1;
     }
 }
