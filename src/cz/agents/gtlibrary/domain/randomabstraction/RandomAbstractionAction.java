@@ -15,7 +15,6 @@ public class RandomAbstractionAction extends ActionImpl {
     }
     @Override
     public void perform(GameState gameState) {
-        wrappedAction.perform(((RandomAbstractionGameState)gameState).getWrappedGameState());
     }
 
     @Override
