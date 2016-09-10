@@ -28,13 +28,14 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.St
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 import cz.agents.gtlibrary.utils.Pair;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Set;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
@@ -47,8 +48,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-//        runRandomGame();
-        runAbstractedRandomGame();
+        runRandomGame();
+//        runAbstractedRandomGame();
 //        runTTT();
 //        runBPG();
 //        runBRTest();
@@ -295,7 +296,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
                         if (RESOLVE_CURRENT_BEST)
-                                updateCurrentBest(restrictedGameConfig);
+                            updateCurrentBest(restrictedGameConfig);
                     } else {
                         assert current.getPrecisionError() > 1e-8;
                         addMiddleChildOf(current, fringe, restrictedGameConfig);
@@ -312,7 +313,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
             System.out.println("Nodes expanded by BR: " + gameExpander.getBRExpandedNodes());
             finalValue = currentBest.getLb();
             System.out.println("final value: " + finalValue);
-            Map<Sequence, Double> rp = ((OracleCandidate)currentBest).getMaxPlayerRealPlan();
+            Map<Sequence, Double> rp = ((OracleCandidate) currentBest).getMaxPlayerRealPlan();
 
             System.out.println("Support: " + rp.values().stream().filter(v -> v > 1e-8).count());
 //            table.clearTable();
@@ -360,7 +361,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
         assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
         return new DoubleOracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability,
-                mostBrokenActionValue, extractRPStrategy(config, lpData), maxPlayerStrategy, lowerBoundAndBR.getRight(), expansionCount, possibleBestResponses);
+                mostBrokenActionValue, extractRPStrategy(config, lpData), maxPlayerStrategy, lowerBoundAndBR.getRight(), expansionCount, possibleBestResponses, lpUB);
     }
 
 }

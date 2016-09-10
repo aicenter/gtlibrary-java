@@ -28,25 +28,27 @@ public class RandomAbstractionGameState extends GameStateImpl {
 
     @Override
     public void performActionModifyingThisState(Action action) {
-        if (wrappedGameState.isPlayerToMoveNature() || checkConsistency(action)) {
-            try {
-                Method m = GameStateImpl.class.getDeclaredMethod("updateNatureProbabilityFor", Action.class);
-                m.setAccessible(true);
-                m.invoke(wrappedGameState, action);
-                m = GameStateImpl.class.getDeclaredMethod("addActionToHistory", Action.class, Player.class);
-                m.setAccessible(true);
-                m.invoke(wrappedGameState, action, getPlayerToMove());
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-            action.perform(this);
-        } else {
-            throw new IllegalStateException("Inconsistent move.");
-        }
+        super.performActionModifyingThisState(action);
+        wrappedGameState.performActionModifyingThisState(((RandomAbstractionAction)action).wrappedAction);
+//        if (wrappedGameState.isPlayerToMoveNature() || checkConsistency(action)) {
+//            try {
+//                Method m = GameStateImpl.class.getDeclaredMethod("updateNatureProbabilityFor", Action.class);
+//                m.setAccessible(true);
+//                m.invoke(wrappedGameState, action);
+//                m = GameStateImpl.class.getDeclaredMethod("addActionToHistory", Action.class, Player.class);
+//                m.setAccessible(true);
+//                m.invoke(wrappedGameState, action, getPlayerToMove());
+//            } catch (NoSuchMethodException e) {
+//                e.printStackTrace();
+//            } catch (InvocationTargetException e) {
+//                e.printStackTrace();
+//            } catch (IllegalAccessException e) {
+//                e.printStackTrace();
+//            }
+//            action.perform(this);
+//        } else {
+//            throw new IllegalStateException("Inconsistent move.");
+//        }
     }
 
     @Override
@@ -95,16 +97,12 @@ public class RandomAbstractionGameState extends GameStateImpl {
 
         RandomAbstractionGameState that = (RandomAbstractionGameState) o;
 
-        if (abstraction != null ? !abstraction.equals(that.abstraction) : that.abstraction != null) return false;
-        return wrappedGameState != null ? wrappedGameState.equals(that.wrappedGameState) : that.wrappedGameState == null;
-
+        return wrappedGameState.equals(that.wrappedGameState);
     }
 
     @Override
     public int hashCode() {
-        int result = abstraction != null ? abstraction.hashCode() : 0;
-        result = 31 * result + (wrappedGameState != null ? wrappedGameState.hashCode() : 0);
-        return result;
+        return wrappedGameState.hashCode();
     }
 
     @Override
