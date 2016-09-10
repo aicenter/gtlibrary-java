@@ -6,8 +6,8 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.O
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleALossRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleImperfectRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.io.PartialGambitEFG;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.io.PartialGambitEFG;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -168,7 +168,7 @@ public class DoubleOracleGameExpander implements GameExpander {
             }
             if (added)
                 removeTemporaryLeaf(state, config);
-            else //if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
+            else if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
                 expand(state, config, minPlayerBestResponse);
 //            }
             return;
@@ -185,7 +185,7 @@ public class DoubleOracleGameExpander implements GameExpander {
         }
         if (added)
             removeTemporaryLeaf(state, config);
-        else //if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
+        else if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
             expand(state, config, minPlayerBestResponse);
 //        }
     }
@@ -224,14 +224,14 @@ public class DoubleOracleGameExpander implements GameExpander {
             GameState state = tempLeaf.performAction(previousAction);
             long start = mxBean.getCurrentThreadCpuTime();
 
-            ((OracleALossRecallBestResponse) br).getBestResponseIn(state, minPlayerBestResponse);
+            br.getBestResponseIn(state, minPlayerBestResponse);
             brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
             add(config, state, br.getValue());
             return previousAction;
         }
         long start = mxBean.getCurrentThreadCpuTime();
 
-        Map<Action, Double> maxPlayerBestResponse = ((OracleALossRecallBestResponse) br).getBestResponseInNoClear(tempLeaf, minPlayerBestResponse);
+        Map<Action, Double> maxPlayerBestResponse = br.getBestResponseIn(tempLeaf, minPlayerBestResponse);
         brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
 
         for (Action action : expander.getActions(tempLeaf)) {

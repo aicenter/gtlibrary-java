@@ -10,6 +10,9 @@ import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.imperfectrecall.IRTTTState;
+import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
+import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
+import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -44,25 +47,27 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-        runRandomGame();
+//        runRandomGame();
+        runAbstractedRandomGame();
 //        runTTT();
 //        runBPG();
 //        runBRTest();
     }
 
     public static double runAbstractedRandomGame() {
-        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomGameInfo());
-        GameState root = new RandomGameState();
-        Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
+        GameState wrappedRoot = new RandomGameState();
+        Expander<SequenceFormIRInformationSet> wrappedExpander = new RandomGameExpander<>(new SequenceFormIRConfig(new RandomGameInfo()));
+        cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder.build(wrappedRoot, wrappedExpander.getAlgorithmConfig(), wrappedExpander);
 
-        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomGameInfo());
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo()));
+        GameState root = RandomAbstractionGameStateFactory.createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, config);
+        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomAbstractionGameInfo(new RandomGameInfo()));
 
-        GambitEFG exporter = new GambitEFG();
-        exporter.write("RG.gbt", root, expander);
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
 
         solver.setExpander(expander);
-        System.out.println("Information sets: " + config.getCountIS(0));
-        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
         long start = mxBean.getCurrentThreadCpuTime();
 
@@ -290,7 +295,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
                         if (RESOLVE_CURRENT_BEST)
-                            updateCurrentBest(restrictedGameConfig);
+                                updateCurrentBest(restrictedGameConfig);
                     } else {
                         assert current.getPrecisionError() > 1e-8;
                         addMiddleChildOf(current, fringe, restrictedGameConfig);

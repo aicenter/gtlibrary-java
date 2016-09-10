@@ -8,6 +8,9 @@ import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
+import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
+import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -16,6 +19,8 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.number.DigitArray;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleBilinearSequenceFormBnB;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
@@ -70,9 +75,45 @@ public class BilinearSequenceFormBnB {
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-        runRandomGame();
+//        runRandomGame();
+        runAbstractedRandomGame();
 //        runBPG();
 //        runBRTest();
+    }
+
+    public static double runAbstractedRandomGame() {
+        GameState wrappedRoot = new RandomGameState();
+        Expander<SequenceFormIRInformationSet> wrappedExpander = new RandomGameExpander<>(new SequenceFormIRConfig(new RandomGameInfo()));
+        cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder.build(wrappedRoot, wrappedExpander.getAlgorithmConfig(), wrappedExpander);
+
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo()));
+        GameState root = RandomAbstractionGameStateFactory.createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, config);
+        BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, expander, new RandomAbstractionGameInfo(new RandomGameInfo()));
+
+        cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("P1 sequence count: " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size());
+        System.out.println("P2 sequence count: " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size());
+        System.out.println("Information set count: " + config.getAllInformationSets().size());
+        return solver.finalValue;
     }
 
     public static double runRandomGame() {
