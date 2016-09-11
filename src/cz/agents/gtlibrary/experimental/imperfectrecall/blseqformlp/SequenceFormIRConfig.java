@@ -163,9 +163,9 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
             SequenceFormIRInformationSet informationSet = getAllInformationSets().get(sequence.getLastInformationSet().getISKey());
 
             if (informationSet != null) { // if there is a particular IS in the algConfig for the previous state, we set it to be the IS in the stored sequences
-                Set<GameState> oldStates = sequence.getLast().getInformationSet().getAllStates();
-
-                informationSet.addAllStatesToIS(oldStates);
+//                Set<GameState> oldStates = sequence.getLast().getInformationSet().getAllStates();
+//
+//                informationSet.addAllStatesToIS(oldStates);
                 sequence.getLast().setInformationSet(informationSet);
             } else {
                 System.out.print("");
@@ -207,7 +207,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         Sequence sequence = state.getSequenceFor(player);
 
         if (sequence != null && sequence.size() > 0) {
-            SequenceFormIRInformationSet prevIS = (SequenceFormIRInformationSet) sequence.getLastInformationSet();
+            SequenceFormIRInformationSet prevIS = allInformationSets.get(sequence.getLastInformationSet().getISKey());
 
             prevIS.addOutgoingSequenceFor(sequence.getSubSequence(sequence.size() - 1), sequence);
         }

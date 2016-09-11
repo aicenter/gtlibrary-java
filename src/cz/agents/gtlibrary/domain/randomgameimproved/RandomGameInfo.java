@@ -42,7 +42,7 @@ public class RandomGameInfo implements GameInfo {
     public static ObservationsType OBSERVATIONS_TYPE = ObservationsType.FORGETFUL;
     public static double FORGET_OBSERVATION_PROBABILITY = 0.5;
 
-    public static long seed = 1;
+    public static long seed = 9;
 
     public static Random rnd = new HighQualityRandom(seed);
     public static ModificationGenerator modificationGenerator = new UniformModificationGenerator(MAX_CENTER_MODIFICATION);

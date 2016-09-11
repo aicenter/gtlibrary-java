@@ -14,7 +14,7 @@ public class RandomAbstractionGameInfo implements GameInfo {
      * Nature should always be last
      **/
     public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
-    public static double JOIN_PROB = 0.5;
+    public static double JOIN_PROB = 0.3;
 
     private GameInfo wrappedGameInfo;
 
