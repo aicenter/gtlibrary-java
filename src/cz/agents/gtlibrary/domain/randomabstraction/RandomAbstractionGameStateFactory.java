@@ -143,5 +143,10 @@ public class RandomAbstractionGameStateFactory {
         public int hashCode() {
             return id;
         }
+
+        @Override
+        public String toString() {
+            return id + "";
+        }
     }
 }

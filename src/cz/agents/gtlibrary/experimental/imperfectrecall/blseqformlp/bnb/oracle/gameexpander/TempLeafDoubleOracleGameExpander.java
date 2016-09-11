@@ -258,7 +258,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
         for (Pair<GameState, Double> pair : viablePending.values()) {
             Action lastAction = pair.getLeft().getSequenceFor(maxPlayer).getLast();
 
-            for (GameState alternativeState : lastAction.getInformationSet().getAllStates()) {
+            for (GameState alternativeState : config.getAllInformationSets().get(lastAction.getInformationSet().getISKey()).getAllStates()) {
                 if (config.getTerminalStates().contains(alternativeState))
                     continue;
                 removeTemporaryLeaf(alternativeState, config);
@@ -317,22 +317,22 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
     }
 
 
-    private void addMaxPending(DoubleOracleIRConfig config, OracleCandidate candidate) {
-        Map.Entry<GameState, Double> bestPending = config.getAndRemoveBestPending();
-
-        if (bestPending != null && bestPending.getValue() >= candidate.getUb()) {
-            Action lastAction = bestPending.getKey().getSequenceFor(maxPlayer).getLast();
-
-            for (GameState alternativeState : lastAction.getInformationSet().getAllStates()) {
-                removeTemporaryLeaf(alternativeState, config);
-                GameState nextState = alternativeState.performAction(lastAction);
-
-                config.addInformationSetFor(nextState);
-                addTemporaryLeafIfNotPresent(nextState, config, Collections.EMPTY_MAP);
-            }
-            tempAddedActions.add(lastAction);
-        }
-    }
+//    private void addMaxPending(DoubleOracleIRConfig config, OracleCandidate candidate) {
+//        Map.Entry<GameState, Double> bestPending = config.getAndRemoveBestPending();
+//
+//        if (bestPending != null && bestPending.getValue() >= candidate.getUb()) {
+//            Action lastAction = bestPending.getKey().getSequenceFor(maxPlayer).getLast();
+//
+//            for (GameState alternativeState : lastAction.getInformationSet().getAllStates()) {
+//                removeTemporaryLeaf(alternativeState, config);
+//                GameState nextState = alternativeState.performAction(lastAction);
+//
+//                config.addInformationSetFor(nextState);
+//                addTemporaryLeafIfNotPresent(nextState, config, Collections.EMPTY_MAP);
+//            }
+//            tempAddedActions.add(lastAction);
+//        }
+//    }
 
     protected void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         if (temporaryLeafBlackList.contains(state))

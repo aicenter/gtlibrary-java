@@ -1,7 +1,9 @@
 package cz.agents.gtlibrary.domain.randomabstraction;
 
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameAction;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -12,12 +14,12 @@ import java.util.Map;
 
 public class RandomAbstractionAction extends ActionImpl {
 
-    public Map<GameState, Action> wrappedActions;
+    public Map<ISKey, Action> wrappedActions;
 
     public RandomAbstractionAction(GameState state, Action wrappedAction, InformationSet informationSet) {
         super(informationSet);
         wrappedActions = new HashMap<>();
-        wrappedActions.put(state, wrappedAction);
+        wrappedActions.put(state.getISKeyForPlayerToMove(), wrappedAction);
     }
 
     @Override
@@ -43,11 +45,12 @@ public class RandomAbstractionAction extends ActionImpl {
 
     @Override
     public String toString() {
-        return wrappedActions.toString();
+        return ((SequenceFormIRInformationSet)informationSet).getOutgoingSequences().keySet().stream().findAny() +
+                "OA:" + ((RandomGameAction) wrappedActions.values().stream().findAny().get()).getOrder();
     }
 
     public void add(GameState gameState, Action action) {
-        wrappedActions.put(gameState, action);
+        wrappedActions.put(gameState.getISKeyForPlayerToMove(), action);
         assert wrappedActions.values().stream().map(a -> ((RandomGameAction) a).getOrder()).distinct().count() == 1;
     }
 }

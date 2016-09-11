@@ -12,8 +12,8 @@ import java.lang.management.ThreadMXBean;
 public class ResultComparison {
 
     public static void main(String[] args) {
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 100;
-        int endingSeed = (args.length > 1) ? new Integer(args[1]) : 200;
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 0;
+        int endingSeed = (args.length > 1) ? new Integer(args[1]) : 100;
 
         int BF = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_BF;
         int DEPTH = (args.length > 4) ? new Integer(args[4]) : RandomGameInfo.MAX_DEPTH;
@@ -32,9 +32,9 @@ public class ResultComparison {
             System.out.println("seed: " + seed);
 //            double bnbValue = BilinearSequenceFormBnB.runRandomGame();
 //            System.out.println("*********************************");
-            double milpValue = DoubleOracleBilinearSequenceFormBnB.runRandomGame();
+            double milpValue = DoubleOracleBilinearSequenceFormBnB.runAbstractedRandomGame();
             System.out.println("*********************************");
-            double oracleBnBValue = OracleBilinearSequenceFormBnB.runRandomGame();
+            double oracleBnBValue = BilinearSequenceFormBnB.runAbstractedRandomGame();
 
             System.out.println("seed: " + seed + ": " + milpValue + " vs " + oracleBnBValue/* + " vs " + milpValue*/);
             if (Math.abs(oracleBnBValue - milpValue) > 0.1) {/* &&  < 1e-2*/

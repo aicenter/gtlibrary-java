@@ -97,8 +97,8 @@ public class BilinearSequenceFormBnB {
         BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, expander, new RandomAbstractionGameInfo(new RandomGameInfo()));
 
         cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
-//        GambitEFG exporter = new GambitEFG();
-//        exporter.write("RG.gbt", root, expander);
+        GambitEFG exporter = new GambitEFG();
+        exporter.write("RG.gbt", root, expander);
 
         solver.setExpander(expander);
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
