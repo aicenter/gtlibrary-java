@@ -40,7 +40,7 @@ public class GenericPokerExpander<I extends InformationSet> extends ExpanderImpl
 	@Override
 	public List<Action> getActions(GameState gameState) {
 		GenericPokerGameState gpState = (GenericPokerGameState) gameState;
-		List<Action> actions = new LinkedList<Action>();
+		List<Action> actions = new LinkedList<>();
 
 		if (gpState.isPlayerToMoveNature()) {
 			addActionsOfNature(gpState, actions, getAlgorithmConfig().getInformationSetFor(gameState));
