@@ -134,6 +134,12 @@ public class DoubleOracleGameExpander implements GameExpander {
             }
             return;
         }
+        if(state.isPlayerToMoveNature()) {
+            for (Action action : expander.getActions(state)) {
+                expandRecursively(state.performAction(action), config, maxPlayerBestResponse, minPlayerBestResponse);
+            }
+            return;
+        }
         for (GameState alternativeState : config.getInformationSetFor(state).getAllStates()) {
             boolean added = false;
 
@@ -171,6 +177,12 @@ public class DoubleOracleGameExpander implements GameExpander {
             else if (isVisited(state, maxPlayerBestResponse, minPlayerBestResponse))
                 expand(state, config, minPlayerBestResponse);
 //            }
+            return;
+        }
+        if(state.isPlayerToMoveNature()) {
+            for (Action action : expander.getActions(state)) {
+                expandRecursivelyForced(state.performAction(action), config, maxPlayerBestResponse, minPlayerBestResponse);
+            }
             return;
         }
 //        for (GameState alternativeState : config.getInformationSetFor(state).getAllStates()) {

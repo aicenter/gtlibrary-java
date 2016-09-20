@@ -13,6 +13,9 @@ import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.imperfectrecall.IRTTTState;
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
+import cz.agents.gtlibrary.domain.poker.kuhn.ir.IRKuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameStateFactory;
@@ -42,7 +45,7 @@ import java.util.Set;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = false;
+    public static boolean EXPORT_GBT = true;
     public static boolean SAVE_LPS = false;
     public static boolean RESOLVE_CURRENT_BEST = true;
     public static double EPS = 1e-3;
@@ -52,10 +55,11 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
 //        runRandomGame();
-        runAbstractedRandomGame();
+//        runAbstractedRandomGame();
 //        runTTT();
 //        runBPG();
 //        runBRTest();
+        runKuhnPoker();
     }
 
     public static double runAbstractedRandomGame() {
@@ -93,6 +97,42 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         System.out.println("P1 sequence count: " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size());
         System.out.println("P2 sequence count: " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size());
         System.out.println("Information set count: " + config.getAllInformationSets().size());
+        return solver.finalValue;
+    }
+
+    public static double runKuhnPoker() {
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new BPGGameInfo());
+        GameState root = new IRKuhnPokerGameState();
+        Expander<SequenceFormIRInformationSet> expander = new KuhnPokerExpander<>(config);
+
+//        builder.build(root, config, expander);
+//        System.out.println("game build");
+        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(KPGameInfo.FIRST_PLAYER, root, expander, new KPGameInfo());
+
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+//        System.out.println("Information sets: " + config.getCountIS(0));
+//        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Expander time: " + solver.getExpanderTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
         return solver.finalValue;
     }
 

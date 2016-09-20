@@ -11,6 +11,9 @@ import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
+import cz.agents.gtlibrary.domain.poker.kuhn.ir.IRKuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameStateFactory;
@@ -79,7 +82,8 @@ public class BilinearSequenceFormBnB {
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
 //        runRandomGame();
-        runAbstractedRandomGame();
+//        runAbstractedRandomGame();
+        runKuhnPoker();
 //        runBPG();
 //        runBRTest();
     }
@@ -164,6 +168,38 @@ public class BilinearSequenceFormBnB {
 
         builder.build(root, config, expander);
         BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(BPGGameInfo.DEFENDER, expander, new BPGGameInfo());
+
+        solver.setExpander(expander);
+        System.out.println("Information sets: " + config.getCountIS(0));
+        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
+        return solver.finalValue;
+    }
+
+    public static double runKuhnPoker() {
+        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BPGGameInfo());
+        GameState root = new IRKuhnPokerGameState();
+        Expander<SequenceFormIRInformationSet> expander = new KuhnPokerExpander<>(config);
+
+        builder.build(root, config, expander);
+        BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(KPGameInfo.FIRST_PLAYER, expander, new KPGameInfo());
 
         solver.setExpander(expander);
         System.out.println("Information sets: " + config.getCountIS(0));
