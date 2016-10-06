@@ -13,6 +13,9 @@ import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.imperfectrecall.IRTTTState;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.ir.IRGenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.ir.IRKuhnPokerGameState;
@@ -31,22 +34,22 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.c
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.TempLeafDoubleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
+import ilog.concert.IloRange;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean EXPORT_GBT = true;
-    public static boolean SAVE_LPS = false;
+    public static boolean SAVE_LPS = true;
     public static boolean RESOLVE_CURRENT_BEST = true;
     public static double EPS = 1e-3;
 
@@ -54,12 +57,13 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-//        runRandomGame();
+        runRandomGame();
 //        runAbstractedRandomGame();
 //        runTTT();
 //        runBPG();
 //        runBRTest();
-        runKuhnPoker();
+//        runKuhnPoker();
+//        runGenericPoker();
     }
 
     public static double runAbstractedRandomGame() {
@@ -108,6 +112,42 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        builder.build(root, config, expander);
 //        System.out.println("game build");
         DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(KPGameInfo.FIRST_PLAYER, root, expander, new KPGameInfo());
+
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+//        System.out.println("Information sets: " + config.getCountIS(0));
+//        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Expander time: " + solver.getExpanderTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
+        return solver.finalValue;
+    }
+
+    public static double runGenericPoker() {
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new BPGGameInfo());
+        GameState root = new IRGenericPokerGameState();
+        Expander<SequenceFormIRInformationSet> expander = new GenericPokerExpander<>(config);
+
+//        builder.build(root, config, expander);
+//        System.out.println("game build");
+        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(GPGameInfo.FIRST_PLAYER, root, expander, new GPGameInfo());
 
 //        GambitEFG exporter = new GambitEFG();
 //        exporter.write("RG.gbt", root, expander);
@@ -305,7 +345,9 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
             while (!fringe.isEmpty()) {
                 OracleCandidate current = (OracleCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
 
-//                System.out.println(current + " vs " + currentBest);
+                it++;
+                System.out.println(current.getPrecisionError());
+                System.out.println(current + " vs " + currentBest);
                 if (isConverged(current)) {
                     currentBest = current;
                     System.out.println(current);
@@ -338,11 +380,13 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //
 //                    fringe.add(samePrecisionCandidate);
                     if (expansionCount > current.getExpansionCount()) {
+                        System.out.println("expand");
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
                         if (RESOLVE_CURRENT_BEST)
                             updateCurrentBest(restrictedGameConfig);
                     } else {
+                        System.out.println("prec");
                         assert current.getPrecisionError() > 1e-8;
                         addMiddleChildOf(current, fringe, restrictedGameConfig);
                         addLeftChildOf(current, fringe, restrictedGameConfig);
@@ -393,12 +437,14 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
 //        assert definedEverywhere(maxPlayerStrategy, config);
         assert equalsInPRInformationSets(maxPlayerStrategy, config, lpData);
-        assert isConvexCombination(maxPlayerStrategy, lpData, config);
+//        assert isConvexCombination(maxPlayerStrategy, lpData, config);
         Pair<Double, Map<Action, Double>> lowerBoundAndBR = getLowerBoundAndBR(maxPlayerStrategy);
         double lpUB = getUpperBound(lpData);
-        Set<Action> possibleBestResponses = getPossibleBestResponseActions(lpData);
-        Map.Entry<GameState, Double> bestPending = ((DoubleOracleIRConfig) config).getBestPending(possibleBestResponses, opponent);
-        double upperBound = bestPending == null ? lpUB : Math.max(lpUB, bestPending.getValue());
+        List<Map<Action, Double>> possibleBestResponses = getPossibleBestResponseActions(lpData, config);
+
+        ((TempLeafDoubleOracleGameExpander) gameExpander).updatePendingAndTempLeafsForced(root, (DoubleOracleIRConfig) config, possibleBestResponses);
+        Pair<GameState, Double> bestPending = ((DoubleOracleIRConfig) config).getBestPending(possibleBestResponses, opponent);
+        double upperBound = bestPending == null ? lpUB : Math.max(lpUB, bestPending.getRight());
 
         assert upperBound > lowerBoundAndBR.getLeft() - 1e-3;
         Action action = findMostViolatedBilinearConstraints(config, lpData);
@@ -409,4 +455,118 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                 mostBrokenActionValue, extractRPStrategy(config, lpData), maxPlayerStrategy, lowerBoundAndBR.getRight(), expansionCount, possibleBestResponses, lpUB);
     }
 
+    protected List<Map<Action, Double>> getPossibleBestResponseActions(LPData lpData, SequenceFormIRConfig config) throws IloException {
+        Map<Sequence, Set<Action>> possibleBestResponseActions = new HashMap<>();
+
+        for (Map.Entry<Object, IloRange> entry : lpData.getWatchedDualVariables().entrySet()) {
+            if (entry.getKey() instanceof Triplet && lpData.getSolver().getSlack(entry.getValue()) < 1e-8) {
+                Set<Action> currentActions = possibleBestResponseActions.getOrDefault(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getSecond(), new HashSet<>());
+
+                currentActions.add(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getThird());
+                possibleBestResponseActions.put(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getSecond(), currentActions);
+            }
+        }
+        return splitToSeparateBRs(possibleBestResponseActions, config);
+    }
+
+//    private List<Map<Action, Double>> splitToSeparateBRs(Map<Sequence, Set<Action>> possibleBestResponseActions, SequenceFormIRConfig config) {
+//        return splitToSeparateBRs(root, possibleBestResponseActions, new ArrayList<>(), new HashMap<>(), true, config);
+//    }
+//
+//    private List<Map<Action, Double>> splitToSeparateBRs(GameState state, Map<Sequence, Set<Action>> possibleBestResponseActions, List<Map<Action, Double>> brSplit, Map<Action, Double> currentBR, boolean last, SequenceFormIRConfig config) {
+//        if (state.isGameEnd() || config.getTerminalStates().contains(state)) {
+//            if (last)
+//                brSplit.add(currentBR);
+//            return brSplit;
+//        }
+//        if (state.isPlayerToMoveNature() || state.getPlayerToMove().equals(player)) {
+//            List<Action> actions = expander.getActions(state);
+//            int counter = 0;
+//            List<GameState> possibleSuccessors = new ArrayList<>();
+//
+//            for (Action action : actions) {
+//                GameState nextState = state.performAction(action);
+//
+//                if (config.getSequencesFor(player).contains(nextState.getSequenceFor(player)))
+//                    possibleSuccessors.add(state.performAction(action)) ;
+//            }
+//            for (GameState successor : possibleSuccessors) {
+//                splitToSeparateBRs(successor, possibleBestResponseActions, brSplit, currentBR, last && (++counter) == possibleSuccessors.size(), config);
+//            }
+//            return brSplit;
+//        }
+//        boolean first = true;
+//        Map<Action, Double> currentBRCopy = new HashMap<>(currentBR);
+//
+//        for (Action action : expander.getActions(state)) {
+//            if (!possibleBestResponseActions.get(state.getSequenceForPlayerToMove()).contains(action))
+//                continue;
+//            Map<Action, Double> currentBRActionCopy;
+//
+//            if (first)
+//                currentBRActionCopy = currentBR;
+//            else
+//                currentBRActionCopy = new HashMap<>(currentBRCopy);
+//            currentBRActionCopy.put(action, 1d);
+//            splitToSeparateBRs(state.performAction(action), possibleBestResponseActions, brSplit, currentBRActionCopy, last, config);
+//            first = false;
+//        }
+//        return brSplit;
+//    }
+
+    private List<Map<Action, Double>> splitToSeparateBRs(Map<Sequence, Set<Action>> possibleBestResponseActions, SequenceFormIRConfig config) {
+        Deque<GameState> queue = new ArrayDeque<>();
+
+        queue.add(root);
+        return splitToSeparateBRs(queue, possibleBestResponseActions, new ArrayList<>(), new HashMap<>(), new HashMap<>(), config);
+    }
+
+    private List<Map<Action, Double>> splitToSeparateBRs(Deque<GameState> queue, Map<Sequence, Set<Action>> possibleBestResponseActions, List<Map<Action, Double>> brSplit, Map<Action, Double> currentBR, Map<ISKey, Action> fixedInIS, SequenceFormIRConfig config) {
+        while (!queue.isEmpty()) {
+            GameState state = queue.removeFirst();
+
+            if (state.isGameEnd() || config.getTerminalStates().contains(state))
+                continue;
+            if (state.isPlayerToMoveNature() || state.getPlayerToMove().equals(player)) {
+                expander.getActions(state).stream()
+                        .map(a -> state.performAction(a))
+                        .filter(s -> config.getSequencesFor(player).contains(s.getSequenceFor(player)))
+                        .forEach(s -> queue.addLast(s));
+                continue;
+            }
+            Action fixedActionInIS = fixedInIS.get(state.getISKeyForPlayerToMove());
+            if(fixedActionInIS != null) {
+                queue.addLast(state.performAction(fixedActionInIS));
+                continue;
+            }
+            Action firstAction = null;
+
+            for (Action action : expander.getActions(state)) {
+                if (!possibleBestResponseActions.get(state.getSequenceForPlayerToMove()).contains(action))
+                    continue;
+
+                if (firstAction == null) {
+                    queue.addLast(state.performAction(action));
+                    currentBR.put(action, 1d);
+                    firstAction = action;
+                    fixedInIS.put(state.getISKeyForPlayerToMove(), action);
+                } else {
+                    Deque<GameState> queueCopy = new ArrayDeque<>(queue);
+
+                    queueCopy.removeLast();
+                    Map<Action, Double> currentBRCopy = new HashMap<>(currentBR);
+
+                    currentBRCopy.remove(firstAction);
+                    queueCopy.addLast(state.performAction(action));
+                    currentBRCopy.put(action, 1d);
+                    Map<ISKey, Action> fixedInISCopy = new HashMap<>(fixedInIS);
+
+                    fixedInISCopy.put(state.getISKeyForPlayerToMove(), action);
+                    splitToSeparateBRs(queueCopy, possibleBestResponseActions, brSplit, currentBRCopy, fixedInISCopy, config);
+                }
+            }
+        }
+        brSplit.add(currentBR);
+        return brSplit;
+    }
 }

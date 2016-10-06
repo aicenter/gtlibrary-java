@@ -81,7 +81,7 @@ public class GenericPokerExpander<I extends InformationSet> extends ExpanderImpl
 	}
 
 	protected void addCall(List<Action> actions, GenericPokerGameState gpState, LinkedList<PokerAction> history, I informationSet) {
-		actions.add(createAction(gpState, getValueOfCall(gpState), "c", informationSet));
+		actions.add(createAction(gpState, 0, "c", informationSet));
 	}
 
 	protected int getValueOfCall(GenericPokerGameState state) {

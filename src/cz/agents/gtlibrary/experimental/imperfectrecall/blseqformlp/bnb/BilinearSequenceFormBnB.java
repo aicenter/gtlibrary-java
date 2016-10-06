@@ -11,6 +11,9 @@ import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.ir.IRGenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.ir.IRKuhnPokerGameState;
@@ -46,7 +49,7 @@ import java.util.stream.Collectors;
 
 public class BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean SAVE_LPS = false;
+    public static boolean SAVE_LPS = true;
     public static boolean USE_INVALID_CUTS = true;
     public static boolean USE_DUPLICITY_CUTS = true;
     public static boolean USE_BINARY_HALVING = true;
@@ -81,9 +84,10 @@ public class BilinearSequenceFormBnB {
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-//        runRandomGame();
+        runRandomGame();
 //        runAbstractedRandomGame();
-        runKuhnPoker();
+//        runKuhnPoker();
+//        runGenericPoker();
 //        runBPG();
 //        runBRTest();
     }
@@ -200,6 +204,38 @@ public class BilinearSequenceFormBnB {
 
         builder.build(root, config, expander);
         BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(KPGameInfo.FIRST_PLAYER, expander, new KPGameInfo());
+
+        solver.setExpander(expander);
+        System.out.println("Information sets: " + config.getCountIS(0));
+        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
+        return solver.finalValue;
+    }
+
+    public static double runGenericPoker() {
+        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new GPGameInfo());
+        GameState root = new IRGenericPokerGameState();
+        Expander<SequenceFormIRInformationSet> expander = new GenericPokerExpander<>(config);
+
+        builder.build(root, config, expander);
+        BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(GPGameInfo.FIRST_PLAYER, expander, new GPGameInfo());
 
         solver.setExpander(expander);
         System.out.println("Information sets: " + config.getCountIS(0));
@@ -664,16 +700,6 @@ public class BilinearSequenceFormBnB {
             slackVariables.put(entry.getKey(), lpData.getSolver().getDual(entry.getValue()));
         }
         return slackVariables;
-    }
-
-    protected Set<Action> getPossibleBestResponseActions(LPData lpData) throws IloException {
-        Set<Action> possibleBestResponseActions = new HashSet<>();
-
-        for (Map.Entry<Object, IloRange> entry : lpData.getWatchedDualVariables().entrySet()) {
-            if (entry.getKey() instanceof Triplet && lpData.getSolver().getSlack(entry.getValue()) < 1e-8)
-                possibleBestResponseActions.add(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getThird());
-        }
-        return possibleBestResponseActions;
     }
 
 

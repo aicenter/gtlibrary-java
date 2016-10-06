@@ -128,7 +128,7 @@ public class ALossBestResponseAlgorithm {
         Player currentPlayer = gameState.getPlayerToMove();
 
         if (currentPlayer.equals(players[searchingPlayerIndex])) { // searching player to move
-            List<GameState> alternativeNodes = new ArrayList<GameState>();
+            List<GameState> alternativeNodes = new ArrayList<>();
 
             boolean nonZeroOppRP = currentStateProb > 0;
             boolean nonZeroOppRPAlt = false;

@@ -41,7 +41,7 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
             System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
             System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
         }
-        if(OracleBilinearSequenceFormBnB.EXPORT_GBT)
+        if (OracleBilinearSequenceFormBnB.EXPORT_GBT)
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         config.updateUtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
@@ -63,11 +63,11 @@ public class ReducedSingleOracleGameExpander extends SingleOracleGameExpander {
 
         expandRecursively(root, config, filteredMinPlayerBestResponse);
         if (OracleBilinearSequenceFormBnB.DEBUG) {
-            System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
-            System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
+            System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
             System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
+            System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
         }
-        if(OracleBilinearSequenceFormBnB.EXPORT_GBT)
+        if (OracleBilinearSequenceFormBnB.EXPORT_GBT)
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         config.updateUtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);

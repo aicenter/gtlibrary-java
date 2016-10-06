@@ -1,18 +1,22 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle;
 
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class DoubleOracleIRConfig extends SelfBuildingSequenceFormIRConfig {
     private Map<GameState, Double> pending;
+    private Map<GameState, GameState> parents;
 
     public DoubleOracleIRConfig(GameInfo gameInfo) {
         super(gameInfo);
         pending = new HashMap<>();
+        parents = new HashMap<>();
     }
 
     @Override
@@ -25,57 +29,117 @@ public class DoubleOracleIRConfig extends SelfBuildingSequenceFormIRConfig {
         return pending.containsKey(state);
     }
 
-    public void addPending(GameState state, double value) {
+    public void addPending(GameState state, GameState parent, double value) {
         pending.put(state, value);
+        parents.put(state, parent);
     }
 
-    public Map.Entry<GameState, Double> getBestPending() {
-        Map.Entry<GameState, Double> currentBest = null;
+    public Pair<GameState, Double> getBestPending() {
+        Pair<GameState, Double> currentBest = null;
 
         for (Map.Entry<GameState, Double> entry : pending.entrySet()) {
-            if (currentBest == null || entry.getValue() > currentBest.getValue())
-                currentBest = entry;
+            if (currentBest == null || entry.getValue() / entry.getKey().getNatureProbability() > currentBest.getRight())
+                currentBest = new Pair<>(entry.getKey(), entry.getValue() / entry.getKey().getNatureProbability());
         }
         return currentBest;
     }
 
-    public Map.Entry<GameState, Double> getBestPending(Set<Action> possibleBestResponses, Player minPlayer) {
-        Map.Entry<GameState, Double> currentBest = null;
+//    public Pair<GameState, Double> getBestPending(Set<Action> possibleBestResponses, Player minPlayer) {
+//        Pair<GameState, Double> currentBest = null;
+//
+//        for (Map.Entry<GameState, Double> entry : pending.entrySet()) {
+//            if (isPlayed(entry.getKey().getSequenceFor(minPlayer), possibleBestResponses) && (currentBest == null || entry.getValue() / entry.getKey().getNatureProbability() > currentBest.getRight()))
+//                currentBest = new Pair<>(entry.getKey(), entry.getValue() / entry.getKey().getNatureProbability());
+//        }
+//        return currentBest;
+//    }
+
+    public Pair<GameState, Double> getBestPending(List<Map<Action, Double>> possibleBestResponses, Player minPlayer) {
+        Pair<GameState, Double> currentBest = null;
 
         for (Map.Entry<GameState, Double> entry : pending.entrySet()) {
-            if (isPlayed(entry.getKey().getSequenceFor(minPlayer), possibleBestResponses) && (currentBest == null || entry.getValue() > currentBest.getValue()))
-                currentBest = entry;
+            if (isPlayed(entry.getKey().getSequenceFor(minPlayer), possibleBestResponses) && (currentBest == null || entry.getValue() / entry.getKey().getNatureProbability() > currentBest.getRight()))
+                currentBest = new Pair<>(entry.getKey(), entry.getValue() / entry.getKey().getNatureProbability());
         }
         return currentBest;
     }
 
-    private boolean isPlayed(Sequence sequence, Set<Action> possibleBestResponses) {
-        return sequence.getAsList().stream().allMatch(a -> possibleBestResponses.contains(a));
+    private boolean isPlayed(Sequence sequence, List<Map<Action, Double>> possibleBestResponses) {
+        return possibleBestResponses.stream().anyMatch(br -> sequence.getAsList().stream().allMatch(a -> br.containsKey(a)));
     }
 
-    public Map<InformationSet, Pair<GameState, Double>> getAndRemoveAllViablePending(Set<Action> possibleBestResponses, Player minPlayer, double ub) {
+    public Map<InformationSet, Pair<GameState, Double>> getAndRemoveAllViablePending(Expander<? extends InformationSet> expander, Map<Action, Double> maxPlayerStrategy, List<Map<Action, Double>> possibleBestResponses, Player minPlayer) {
+        Map<InformationSet, Pair<GameState, Double>> viablePending = getViablePending(expander, maxPlayerStrategy, possibleBestResponses, minPlayer);
+
+        removeFromPending(viablePending);
+        return viablePending;
+    }
+
+//    public Map<InformationSet, Pair<GameState, Double>> getViablePending(Set<Action> possibleBestResponses, Player minPlayer, double ub) {
+//        Map<InformationSet, Pair<GameState, Double>> viablePending = new HashMap<>();
+//
+//        pending.entrySet().stream().filter(e -> isPlayed(e.getKey().getSequenceFor(minPlayer), possibleBestResponses)).filter(e -> e.getValue() / e.getKey().getNatureProbability() >= ub).forEach(entry -> {
+//            InformationSet currentIS = getParentIS(entry.getKey(), gameInfo.getOpponent(minPlayer));
+//            Pair<GameState, Double> currentPair = viablePending.get(currentIS);
+//
+//            if (currentPair == null || entry.getValue() > currentPair.getRight())
+//                viablePending.put(currentIS, new Pair<>(entry.getKey(), entry.getValue() / entry.getKey().getNatureProbability()));
+//        });
+//        return viablePending;
+//    }
+
+    public Map<InformationSet, Pair<GameState, Double>> getViablePending(Expander<? extends InformationSet> expander, Map<Action, Double> maxPlayerStrategy, List<Map<Action, Double>> possibleBestResponses, Player minPlayer) {
         Map<InformationSet, Pair<GameState, Double>> viablePending = new HashMap<>();
 
-        pending.entrySet().stream().filter(e -> isPlayed(e.getKey().getSequenceFor(minPlayer), possibleBestResponses)).filter(e -> e.getValue() >= ub).forEach(entry -> {
-            InformationSet currentIS = getInformationSetFor(entry.getKey());
+        pending.entrySet().stream().filter(e -> isPlayed(e.getKey().getSequenceFor(minPlayer), possibleBestResponses))
+                .filter(e -> e.getValue() / e.getKey().getNatureProbability() >= getParentValue(e.getKey(), expander, maxPlayerStrategy, possibleBestResponses, gameInfo.getOpponent(minPlayer))).forEach(entry -> {
+            InformationSet currentIS = getParentIS(entry.getKey(), gameInfo.getOpponent(minPlayer));
             Pair<GameState, Double> currentPair = viablePending.get(currentIS);
 
             if (currentPair == null || entry.getValue() > currentPair.getRight())
-                viablePending.put(currentIS, new Pair<>(entry.getKey(), entry.getValue()));
+                viablePending.put(currentIS, new Pair<>(entry.getKey(), entry.getValue() / entry.getKey().getNatureProbability()));
         });
-        removeFromPending(viablePending);
         return viablePending;
+    }
+
+    private SequenceFormIRInformationSet getParentIS(GameState pending, Player maxPlayer) {
+       return (SequenceFormIRInformationSet) pending.getSequenceFor(maxPlayer).getLastInformationSet();
+    }
+
+    private double getParentValue(GameState state, Expander<? extends InformationSet> expander, Map<Action, Double> maxPlayerStrategy, List<Map<Action, Double>> minPlayerStrategies, Player maxPlayer) {
+        return minPlayerStrategies.stream().mapToDouble(strategy -> getExpectedValue(state, expander, maxPlayerStrategy, strategy, maxPlayer)).min().getAsDouble();
+    }
+
+    private double getExpectedValue(GameState state, Expander<? extends InformationSet> expander, Map<Action, Double> maxPlayerStrategy, Map<Action, Double> minPlayerStrategy, Player maxPlayer) {
+        if(state.isGameEnd())
+            return state.getUtilities()[maxPlayer.getId()];
+        if (state.isPlayerToMoveNature())
+            return expander.getActions(state).stream().mapToDouble(a -> state.getProbabilityOfNatureFor(a)*getExpectedValue(state.performAction(a), expander, maxPlayerStrategy, minPlayerStrategy, maxPlayer)).sum();
+        if(state.getPlayerToMove().equals(maxPlayer))
+            return expander.getActions(state).stream().filter(a -> maxPlayerStrategy.getOrDefault(a, 0d) > 1e-8)
+                    .mapToDouble(a -> maxPlayerStrategy.getOrDefault(a, 0d)*getExpectedValue(state.performAction(a), expander, maxPlayerStrategy, minPlayerStrategy, maxPlayer)).sum();
+        assert expander.getActions(state).stream().filter(a -> minPlayerStrategy.getOrDefault(a, 0d) > 1e-8).count() == 1;
+        return expander.getActions(state).stream().filter(a -> minPlayerStrategy.getOrDefault(a, 0d) > 1e-8)
+                .mapToDouble(a -> getExpectedValue(state.performAction(a), expander, maxPlayerStrategy, minPlayerStrategy, maxPlayer)).sum();
     }
 
     private void removeFromPending(Map<InformationSet, Pair<GameState, Double>> viablePending) {
         viablePending.values().stream().map(p -> p.getRight()).forEach(state -> pending.remove(state));
     }
 
-    public Map.Entry<GameState, Double> getAndRemoveBestPending() {
-        Map.Entry<GameState, Double> bestPending = getBestPending();
+    public Pair<GameState, Double> getAndRemoveBestPending() {
+        Pair<GameState, Double> bestPending = getBestPending();
 
         if (bestPending != null)
-            pending.remove(bestPending.getKey());
+            pending.remove(bestPending.getLeft());
+        return bestPending;
+    }
+
+    public Pair<GameState, Double> getAndRemoveBestPending(List<Map<Action, Double>> possibleBestResponses, Player minPlayer) {
+        Pair<GameState, Double> bestPending = getBestPending(possibleBestResponses, minPlayer);
+
+        if (bestPending != null)
+            pending.remove(bestPending.getLeft());
         return bestPending;
     }
 

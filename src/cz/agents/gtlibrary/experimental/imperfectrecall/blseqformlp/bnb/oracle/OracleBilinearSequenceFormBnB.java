@@ -250,7 +250,6 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
             lpData.getSolver().solve();
             System.out.println(CPLEXInvocationCount++);
-            System.out.println(getPossibleBestResponseActions(lpData));
             CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
             System.out.println(lpData.getSolver().getStatus());
             System.out.println(lpData.getSolver().getObjValue());
