@@ -106,7 +106,9 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
             Observations natureObservations = new Observations(GPGameInfo.FIRST_PLAYER, GPGameInfo.NATURE);
             String cardComparison = getCardComparison(((GenericPokerAction) getTable()), ((GenericPokerAction) getCardFor(GPGameInfo.FIRST_PLAYER)));
 
-            natureObservations.add(new ImperfectPokerObservation(cardComparison));
+//            natureObservations.add(new ImperfectPokerObservation(cardComparison));
+            natureObservations.add(new ImperfectPokerObservation(getCardFor(GPGameInfo.FIRST_PLAYER).getActionType()));
+            natureObservations.add(new ImperfectPokerObservation(getTable().getActionType()));
             return new ImperfectRecallISKey(ownObservations, opponentObservations, natureObservations);
         }
         if (getPlayerToMove().equals(GPGameInfo.SECOND_PLAYER))

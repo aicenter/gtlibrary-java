@@ -47,11 +47,11 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         } else {
             super.addInformationSetFor(state);
         }
-        if (state.isPlayerToMoveNature())
-            return;
         getOrCreateInformationSet(state);
         fixTheInformationSetInSequences(state);
         setOutgoingSequences(state);
+        if (state.isPlayerToMoveNature())
+            return;
         setReachableSetBySequence(state);
         addCompatibleSequence(state);
         addPlayerSequences(state);
@@ -252,7 +252,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
 
         if (infoSet == null) {
             infoSet = createInformationSetFor(state);
-            countIS[state.getPlayerToMove().getId()]++;
+//            countIS[state.getPlayerToMove().getId()]++;
         } else if (!state.isGameEnd() && !infoSet.hasIR()) {
             Player plToMove = infoSet.getPlayer();
             Sequence currentHistory = state.getHistory().getSequenceOf(plToMove);
