@@ -40,6 +40,10 @@ public class Candidate implements Comparable<Candidate> {
         return ub;
     }
 
+    public void setUb(double ub) {
+        this.ub = ub;
+    }
+
     public double getLb() {
         return lb;
     }

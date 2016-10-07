@@ -41,6 +41,7 @@ import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
 import ilog.concert.IloRange;
+import ilog.cplex.IloCplex;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -48,8 +49,8 @@ import java.util.*;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = true;
-    public static boolean SAVE_LPS = true;
+    public static boolean EXPORT_GBT = false;
+    public static boolean SAVE_LPS = false;
     public static boolean RESOLVE_CURRENT_BEST = true;
     public static double EPS = 1e-3;
 
@@ -57,13 +58,13 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-        runRandomGame();
+//        runRandomGame();
 //        runAbstractedRandomGame();
 //        runTTT();
 //        runBPG();
 //        runBRTest();
 //        runKuhnPoker();
-//        runGenericPoker();
+        runGenericPoker();
     }
 
     public static double runAbstractedRandomGame() {
@@ -442,9 +443,10 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         double lpUB = getUpperBound(lpData);
         List<Map<Action, Double>> possibleBestResponses = getPossibleBestResponseActions(lpData, config);
 
+        possibleBestResponses.add(lowerBoundAndBR.getRight());
         ((TempLeafDoubleOracleGameExpander) gameExpander).updatePendingAndTempLeafsForced(root, (DoubleOracleIRConfig) config, possibleBestResponses);
-        Pair<GameState, Double> bestPending = ((DoubleOracleIRConfig) config).getBestPending(possibleBestResponses, opponent);
-        double upperBound = bestPending == null ? lpUB : Math.max(lpUB, bestPending.getRight());
+//        Pair<GameState, Double> bestPending = ((DoubleOracleIRConfig) config).getBestPending(possibleBestResponses, opponent);
+        double upperBound = /*bestPending == null ? */lpUB /*: Math.max(lpUB, bestPending.getRight())*/;
 
         assert upperBound > lowerBoundAndBR.getLeft() - 1e-3;
         Action action = findMostViolatedBilinearConstraints(config, lpData);
@@ -459,14 +461,66 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         Map<Sequence, Set<Action>> possibleBestResponseActions = new HashMap<>();
 
         for (Map.Entry<Object, IloRange> entry : lpData.getWatchedDualVariables().entrySet()) {
-            if (entry.getKey() instanceof Triplet && lpData.getSolver().getSlack(entry.getValue()) < 1e-8) {
-                Set<Action> currentActions = possibleBestResponseActions.getOrDefault(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getSecond(), new HashSet<>());
+            if (entry.getKey() instanceof Triplet)
+                if (lpData.getSolver().getSlack(entry.getValue()) < 1e-8) {
+                    Set<Action> currentActions = possibleBestResponseActions.getOrDefault(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getSecond(), new HashSet<>());
 
-                currentActions.add(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getThird());
-                possibleBestResponseActions.put(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getSecond(), currentActions);
-            }
+                    currentActions.add(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getThird());
+                    possibleBestResponseActions.put(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getSecond(), currentActions);
+                }
         }
         return splitToSeparateBRs(possibleBestResponseActions, config);
+    }
+
+    protected void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
+        try {
+            long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
+            boolean updated = change.updateW(table);
+
+            lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
+            if (updated) {
+                LPData lpData = table.toCplex();
+//                System.out.println("solved");
+
+                if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
+                long start = mxBean.getCurrentThreadCpuTime();
+
+                lpData.getSolver().solve();
+//                System.out.println(CPLEXInvocationCount++);
+                CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
+                if (DEBUG) {
+                    System.out.println(lpData.getSolver().getStatus());
+                    System.out.println(lpData.getSolver().getObjValue());
+                    System.out.println(newChanges);
+                }
+                if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
+                    Candidate candidate = createCandidate(newChanges, lpData, config);
+
+//                    assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
+                    if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
+
+                    if (candidate.getLb() > currentBest.getLb()) {
+                        currentBest = candidate;
+                        System.out.println("current best: " + currentBest);
+                    }
+                    if (((DoubleOracleIRConfig) config).pendingAvailable(expander, ((DoubleOracleCandidate) candidate).getMaxPlayerStrategy(), ((DoubleOracleCandidate) candidate).getPossibleBestResponses(), gameInfo.getOpponent(player))) {
+                        candidate.setUb(Double.POSITIVE_INFINITY);
+                    }
+                    if (isConverged(candidate)) {
+                        if (candidate.getLb() > currentBest.getLb()) {
+                            currentBest = candidate;
+                            System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
+                        }
+                    } else if (candidate.getUb() > currentBest.getLb() + EPS) {
+                        if (DEBUG) System.out.println("most violated action: " + candidate.getAction());
+
+                        fringe.add(candidate);
+                    }
+                }
+            }
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
     }
 
 //    private List<Map<Action, Double>> splitToSeparateBRs(Map<Sequence, Set<Action>> possibleBestResponseActions, SequenceFormIRConfig config) {
@@ -535,16 +589,17 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                 continue;
             }
             Action fixedActionInIS = fixedInIS.get(state.getISKeyForPlayerToMove());
-            if(fixedActionInIS != null) {
+            if (fixedActionInIS != null) {
                 queue.addLast(state.performAction(fixedActionInIS));
                 continue;
             }
             Action firstAction = null;
 
+            if (!possibleBestResponseActions.containsKey(state.getSequenceForPlayerToMove()))
+                return brSplit;
             for (Action action : expander.getActions(state)) {
                 if (!possibleBestResponseActions.get(state.getSequenceForPlayerToMove()).contains(action))
                     continue;
-
                 if (firstAction == null) {
                     queue.addLast(state.performAction(action));
                     currentBR.put(action, 1d);

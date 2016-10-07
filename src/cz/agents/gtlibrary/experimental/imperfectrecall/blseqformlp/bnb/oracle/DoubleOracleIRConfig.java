@@ -30,6 +30,8 @@ public class DoubleOracleIRConfig extends SelfBuildingSequenceFormIRConfig {
     }
 
     public void addPending(GameState state, GameState parent, double value) {
+//        if(state.isGameEnd() || terminalStates.contains(state))
+//            return;
         pending.put(state, value);
         parents.put(state, parent);
     }
@@ -92,7 +94,7 @@ public class DoubleOracleIRConfig extends SelfBuildingSequenceFormIRConfig {
         Map<InformationSet, Pair<GameState, Double>> viablePending = new HashMap<>();
 
         pending.entrySet().stream().filter(e -> isPlayed(e.getKey().getSequenceFor(minPlayer), possibleBestResponses))
-                .filter(e -> e.getValue() / e.getKey().getNatureProbability() >= getParentValue(e.getKey(), expander, maxPlayerStrategy, possibleBestResponses, gameInfo.getOpponent(minPlayer))).forEach(entry -> {
+                .filter(e -> e.getValue() / e.getKey().getNatureProbability() > getParentValue(e.getKey(), expander, maxPlayerStrategy, possibleBestResponses, gameInfo.getOpponent(minPlayer))).forEach(entry -> {
             InformationSet currentIS = getParentIS(entry.getKey(), gameInfo.getOpponent(minPlayer));
             Pair<GameState, Double> currentPair = viablePending.get(currentIS);
 
@@ -107,18 +109,25 @@ public class DoubleOracleIRConfig extends SelfBuildingSequenceFormIRConfig {
     }
 
     private double getParentValue(GameState state, Expander<? extends InformationSet> expander, Map<Action, Double> maxPlayerStrategy, List<Map<Action, Double>> minPlayerStrategies, Player maxPlayer) {
-        return minPlayerStrategies.stream().mapToDouble(strategy -> getExpectedValue(state, expander, maxPlayerStrategy, strategy, maxPlayer)).min().getAsDouble();
+        return minPlayerStrategies.stream().mapToDouble(strategy -> getExpectedValue(parents.get(state), expander, maxPlayerStrategy, strategy, maxPlayer)).min().getAsDouble();
     }
 
     private double getExpectedValue(GameState state, Expander<? extends InformationSet> expander, Map<Action, Double> maxPlayerStrategy, Map<Action, Double> minPlayerStrategy, Player maxPlayer) {
         if(state.isGameEnd())
             return state.getUtilities()[maxPlayer.getId()];
+        if(terminalStates.contains(state))
+            return (maxPlayer.getId() == 0 ? 1 : -1) * getActualNonzeroUtilityValues(state);
         if (state.isPlayerToMoveNature())
             return expander.getActions(state).stream().mapToDouble(a -> state.getProbabilityOfNatureFor(a)*getExpectedValue(state.performAction(a), expander, maxPlayerStrategy, minPlayerStrategy, maxPlayer)).sum();
         if(state.getPlayerToMove().equals(maxPlayer))
-            return expander.getActions(state).stream().filter(a -> maxPlayerStrategy.getOrDefault(a, 0d) > 1e-8)
-                    .mapToDouble(a -> maxPlayerStrategy.getOrDefault(a, 0d)*getExpectedValue(state.performAction(a), expander, maxPlayerStrategy, minPlayerStrategy, maxPlayer)).sum();
-        assert expander.getActions(state).stream().filter(a -> minPlayerStrategy.getOrDefault(a, 0d) > 1e-8).count() == 1;
+            return expander.getActions(state).stream()
+                    .filter(a -> maxPlayerStrategy.getOrDefault(a, 0d) > 1e-8)
+                    .map(a -> new Pair<>(a, state.performAction(a)))
+                    .filter(p -> getSequencesFor(maxPlayer).contains(p.getRight().getSequenceFor(maxPlayer)))
+                    .mapToDouble(p -> maxPlayerStrategy.getOrDefault(p.getLeft(), 0d)*getExpectedValue(p.getRight(), expander, maxPlayerStrategy, minPlayerStrategy, maxPlayer)).sum();
+        assert expander.getActions(state).stream().filter(a -> minPlayerStrategy.getOrDefault(a, 0d) > 1e-8).count() <= 1;
+        if (expander.getActions(state).stream().filter(a -> minPlayerStrategy.getOrDefault(a, 0d) > 1e-8).count() == 0)
+            return getExpectedValue(state.performAction(expander.getActions(state).get(0)), expander, maxPlayerStrategy, minPlayerStrategy, maxPlayer);
         return expander.getActions(state).stream().filter(a -> minPlayerStrategy.getOrDefault(a, 0d) > 1e-8)
                 .mapToDouble(a -> getExpectedValue(state.performAction(a), expander, maxPlayerStrategy, minPlayerStrategy, maxPlayer)).sum();
     }
@@ -146,4 +155,10 @@ public class DoubleOracleIRConfig extends SelfBuildingSequenceFormIRConfig {
     public Map<GameState, Double> getPending() {
         return pending;
     }
+
+    public boolean pendingAvailable(Expander<SequenceFormIRInformationSet> expander, Map<Action, Double> maxPlayerStrategy, List<Map<Action, Double>> possibleBestResponses, Player minPlayer) {
+        return pending.entrySet().stream().anyMatch(e -> isPlayed(e.getKey().getSequenceFor(minPlayer), possibleBestResponses) &&
+                (e.getValue() / e.getKey().getNatureProbability() > getParentValue(e.getKey(), expander, maxPlayerStrategy, possibleBestResponses, gameInfo.getOpponent(minPlayer))));
+    }
+
 }

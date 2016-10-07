@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 
 public class BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean SAVE_LPS = true;
+    public static boolean SAVE_LPS = false;
     public static boolean USE_INVALID_CUTS = true;
     public static boolean USE_DUPLICITY_CUTS = true;
     public static boolean USE_BINARY_HALVING = true;
