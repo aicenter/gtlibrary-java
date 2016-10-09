@@ -22,6 +22,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
@@ -40,7 +41,7 @@ public class ALossBestResponseAlgorithm {
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<>();
     protected Map<Action, Double> opponentBehavioralStartegy = new HashMap<>();
     protected Map<Action, Double> myBehavioralStrategy = new HashMap<>();
-    protected HashMap<Action, HashSet<Action>> BRresult = new HashMap<>();
+    protected HashMap<Action, Map<ISKey, Action>> BRresult = new HashMap<>();
     protected Map<Action, Double> bestResponse = new HashMap<>();
     final protected int searchingPlayerIndex;
     final protected int opponentPlayerIndex;
@@ -52,7 +53,7 @@ public class ALossBestResponseAlgorithm {
     protected ORComparator comparator;
     protected GameState gameTreeRoot = null;
     private Set<Action> resultActions = new HashSet<>();
-    private Set<Action> firstLevelActions = new HashSet<>();
+    private Map<ISKey, Action> firstLevelActions = new HashMap<>();
 
     public ALossBestResponseAlgorithm(GameState root, Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo) {
         this.searchingPlayerIndex = searchingPlayerIndex;
@@ -235,20 +236,18 @@ public class ALossBestResponseAlgorithm {
             resultActions.add(resultAction);
             Sequence sequence = gameState.getSequenceFor(players[searchingPlayerIndex]);
             if(sequence.isEmpty() || gameState.equals(gameTreeRoot)) {
-                 firstLevelActions.add(resultAction);
+                if(!firstLevelActions.containsKey(gameState.getISKeyForPlayerToMove()))
+                    firstLevelActions.put(gameState.getISKeyForPlayerToMove(), resultAction);
             } else {
                 Action previousAction = sequence.getLast();
 
 //            Sequence resultSequence = new ArrayListSequenceImpl(currentHistory.get(players[searchingPlayerIndex]));
 //            resultSequence.addLast(resultAction);
 
-                HashSet<Action> tmpActionSet = BRresult.get(previousAction);
-                if (tmpActionSet == null) {
-                    tmpActionSet = new HashSet<>();
-                }
+                Map<ISKey, Action> tmpActionMap = BRresult.getOrDefault(previousAction, new HashMap<>());
 
-                tmpActionSet.add(resultAction);
-                BRresult.put(previousAction, tmpActionSet);
+                tmpActionMap.putIfAbsent(gameState.getISKeyForPlayerToMove(), resultAction);
+                BRresult.put(previousAction, tmpActionMap);
             }
         } else { // nature player or the opponent is to move
             double nodeProbability = gameState.getNatureProbability();
@@ -600,14 +599,14 @@ public class ALossBestResponseAlgorithm {
         Map<Action, Double> result = new HashMap<>();
         Queue<Action> queue = new ArrayDeque<>();
 
-        queue.addAll(firstLevelActions);
-        firstLevelActions.forEach(a -> result.put(a, 1d));
+        queue.addAll(firstLevelActions.values());
+        firstLevelActions.values().forEach(a -> result.put(a, 1d));
         while (queue.size() > 0) {
             Action action = queue.poll();
-            Set<Action> res = BRresult.get(action);
+            Map<ISKey, Action> res = BRresult.get(action);
             if (res != null) {
-                res.stream().forEach(a -> result.put(a, 1d));
-                queue.addAll(res);
+                res.values().stream().forEach(a -> result.put(a, 1d));
+                queue.addAll(res.values());
             }
         }
 
