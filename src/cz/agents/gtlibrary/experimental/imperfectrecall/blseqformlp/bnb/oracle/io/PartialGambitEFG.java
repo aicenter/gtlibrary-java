@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * which are expected to contain all the leafs of the restricted game.
  * */
 public class PartialGambitEFG {
-    private boolean wActionLabels = false;
+    private boolean wActionLabels = true;
     private Map<ISKey, Integer> infSetIndices;
     private int maxIndex;
 

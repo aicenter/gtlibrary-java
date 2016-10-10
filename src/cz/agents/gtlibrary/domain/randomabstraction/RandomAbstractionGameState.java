@@ -107,6 +107,6 @@ public class RandomAbstractionGameState extends GameStateImpl {
 
     @Override
     public String toString() {
-        return wrappedGameState.toString();
+        return history.toString();
     }
 }
