@@ -58,13 +58,13 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-//        runRandomGame();
+        runRandomGame();
 //        runAbstractedRandomGame();
 //        runTTT();
 //        runBPG();
 //        runBRTest();
 //        runKuhnPoker();
-        runGenericPoker();
+//        runGenericPoker();
     }
 
     public static double runAbstractedRandomGame() {

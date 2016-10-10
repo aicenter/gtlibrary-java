@@ -12,7 +12,7 @@ import java.lang.management.ThreadMXBean;
 public class ResultComparison {
 
     public static void main(String[] args) {
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 0;
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 64;
         int endingSeed = (args.length > 1) ? new Integer(args[1]) : 200;
 
         int BF = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_BF;
@@ -35,7 +35,7 @@ public class ResultComparison {
             System.err.println("*******DO*******");
             double milpValue = DoubleOracleBilinearSequenceFormBnB.runRandomGame();
             System.err.println("**************BnB*******************");
-            double oracleBnBValue = BilinearSequenceFormBnB.runRandomGame();
+            double oracleBnBValue = BilinearSeqenceFormLP.runRandomGame();
 
             System.out.println("seed: " + seed + ": " + milpValue + " vs " + oracleBnBValue/* + " vs " + milpValue*/);
             if (Math.abs(oracleBnBValue - milpValue) > 0.1) {/* &&  < 1e-2*/
