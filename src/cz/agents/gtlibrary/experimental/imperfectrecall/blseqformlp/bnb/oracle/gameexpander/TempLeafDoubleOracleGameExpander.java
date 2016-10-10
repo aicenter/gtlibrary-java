@@ -34,6 +34,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
             System.out.println("sequences before expand: " + config.getAllSequences().size());
         }
         List<Map<Action, Double>> bestResponseCombo = ((DoubleOracleCandidate) candidate).getPossibleBestResponses();
+        Set<GameState> terminalStatesCopy  = new HashSet<>(config.getTerminalStates());
 
         updatePendingAndTempLeafsForced(root, (DoubleOracleIRConfig) config, bestResponseCombo);
 //        Map<Action, Double> maxPlayerBestResponse = new HashMap<>(br.getBestResponse(candidate.getMinPlayerBestResponse()));
@@ -65,7 +66,11 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
             new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
         config.updateUtilitiesReachableBySequences();
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
-        return config.getTerminalStates().size() > terminalLeafCount || config.getAllSequences().size() > sequenceCount || config.getAllInformationSets().size() > informationSetCount;
+        return isExpanded(config, terminalLeafCount, sequenceCount, informationSetCount, terminalStatesCopy);
+    }
+
+    private boolean isExpanded(SequenceFormIRConfig config, int terminalLeafCount, int sequenceCount, int informationSetCount, Set<GameState> terminalStatesCopy) {
+        return config.getTerminalStates().size() > terminalLeafCount || config.getAllSequences().size() > sequenceCount || config.getAllInformationSets().size() > informationSetCount || !terminalStatesCopy.equals(config.getTerminalStates());
     }
 
     public Map<Action, Double> createBestResponseCombo(Map<Action, Double> currentBR, Set<Action> possibleBRs) {

@@ -3,8 +3,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
-import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSeqenceFormLP;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSequenceFormLP;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
@@ -51,7 +50,7 @@ public class ExperimentRunner {
             } else if (args[4].equals("oraclebnb")) {
                 OracleBilinearSequenceFormBnB.runAbstractedRandomGame();
             } else if (args[4].equals("base")) {
-                BilinearSeqenceFormLP.runAbstractedRandomGame();
+                BilinearSequenceFormLP.runAbstractedRandomGame();
             } else if (args[4].equals("dobnb")) {
                 DoubleOracleBilinearSequenceFormBnB.runAbstractedRandomGame();
             }

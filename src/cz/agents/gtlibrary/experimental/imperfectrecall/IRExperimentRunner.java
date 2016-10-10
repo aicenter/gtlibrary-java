@@ -3,8 +3,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearSequenceFormBNB;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSeqenceFormLP;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSequenceFormLP;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -24,7 +23,7 @@ public class IRExperimentRunner {
 
         RandomGameInfo.seed = new Integer(args[0]);
         if (args[4].equals("base"))
-            BilinearSeqenceFormLP.main(null);
+            BilinearSequenceFormLP.main(null);
         else if (args[4].equals("bnb"))
             BilinearSequenceFormBnB.main(null);
         else
