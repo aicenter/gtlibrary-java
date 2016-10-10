@@ -452,10 +452,11 @@ public class BilinearSequenceFormBnB {
 
     protected void addRightChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
         table.clearTable();
-        if (current.getActionProbability()[0] == 1)
-            return;
+
         Changes newChanges = new Changes(current.getChanges());
         DigitArray probability = getRightExactProbability(current);
+        if (probability.getArray()[0] == 1)
+            return;
         Change change = new RightChange(current.getAction(), probability);
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
@@ -1292,7 +1293,7 @@ public class BilinearSequenceFormBnB {
             if (informationSet.getPlayer().equals(player) && informationSet.hasIR() && !informationSet.getActions().isEmpty())
                 return informationSet.getActions().iterator().next();
         }
-        assert !config.getAllInformationSets().values().stream().anyMatch(SequenceFormIRInformationSet::hasIR);
+//        assert !config.getAllInformationSets().values().stream().anyMatch(SequenceFormIRInformationSet::hasIR);
         for (SequenceFormIRInformationSet informationSet : config.getAllInformationSets().values()) {
             if (informationSet.getPlayer().equals(player) && !informationSet.getActions().isEmpty())
                 return informationSet.getActions().iterator().next();
