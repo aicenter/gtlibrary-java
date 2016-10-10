@@ -49,7 +49,7 @@ import java.util.*;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = true;
+    public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
     public static boolean RESOLVE_CURRENT_BEST = true;
     public static double EPS = 1e-3;
@@ -57,11 +57,10 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     protected GameState root;
 
     public static void main(String[] args) {
-//        new Scanner(System.in).next();
-        runRandomGame();
+//        runRandomGame();
 //        runAbstractedRandomGame();
 //        runTTT();
-//        runBPG();
+        runBPG();
 //        runBRTest();
 //        runKuhnPoker();
 //        runGenericPoker();
@@ -336,10 +335,6 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
             if (DEBUG) System.out.println("most violated action: " + currentBest.getAction());
             if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
 
-            if (isConverged(currentBest)) {
-                finalValue = currentBest.getLb();
-                return;
-            }
             fringe.add(currentBest);
             int it = 1;
 
@@ -349,12 +344,12 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                 it++;
                 System.out.println(current.getPrecisionError());
                 System.out.println(current + " vs " + currentBest);
-                if (isConverged(current)) {
+                if (isConverged(current) && it > 2) {
                     currentBest = current;
                     System.out.println(current);
                     break;
                 }
-                if (Math.abs(currentBest.getLb() - current.getUb()) < 1e-4 * gameInfo.getMaxUtility()) {
+                if (Math.abs(currentBest.getLb() - current.getUb()) < 1e-4 * gameInfo.getMaxUtility() && it > 2) {
                     System.out.println(currentBest);
                     break;
                 }

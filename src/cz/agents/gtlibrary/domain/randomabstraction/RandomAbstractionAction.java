@@ -45,7 +45,7 @@ public class RandomAbstractionAction extends ActionImpl {
 
     @Override
     public String toString() {
-        return ((SequenceFormIRInformationSet)informationSet).getOutgoingSequences().keySet().stream().findAny() +
+        return informationSet.hashCode() +
                 "OA:" + ((RandomGameAction) wrappedActions.values().stream().findAny().get()).getOrder();
     }
 

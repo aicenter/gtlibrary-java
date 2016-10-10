@@ -380,7 +380,7 @@ public class ALossBestResponseAlgorithm {
 
         @Override
         public Pair<Action, Double> getResult() {
-            if (nonZeroORP && !nonZeroContinuation) {
+            if ((nonZeroORP && !nonZeroContinuation) || (!nonZeroORP && nonZeroContinuation)) {
                 return new Pair<Action, Double>(null, tempValue);
             } else {
                 return new Pair<Action, Double>(null, value);
@@ -416,37 +416,55 @@ public class ALossBestResponseAlgorithm {
             if (state.isPlayerToMoveNature()) {
                 nonZeroContinuation = nonZeroORP;
                 // sort according to the nature probability
-                Map<Action, Double> actionMap = new FixedSizeMap<Action, Double>(actions.size());
+                Map<Action, Double> actionMap = new FixedSizeMap<>(actions.size());
                 for (Action a : actions) {
-                    actionMap.put(a, state.getProbabilityOfNatureFor(a)); // the standard way is to sort ascending; hence, we store negative probability
+                    actionMap.put(a, state.getProbabilityOfNatureFor(a));
                 }
-                ValueComparator<Action> comp = new ValueComparator<Action>(actionMap);
-                TreeMap<Action, Double> sortedMap = new TreeMap<Action, Double>(comp);
+                ValueComparator<Action> comp = new ValueComparator<>(actionMap);
+                TreeMap<Action, Double> sortedMap = new TreeMap<>(comp);
                 sortedMap.putAll(actionMap);
                 result.addAll(sortedMap.keySet());
             } else {
-                // sort according to the opponent realizaiton plan
-                Sequence currentSequence = state.getSequenceFor(players[opponentPlayerIndex]);
-                Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
+                Map<Action, Double> actionMap = new FixedSizeMap<>(actions.size());
+
                 for (Action a : actions) {
-                    Sequence newSeq = new ArrayListSequenceImpl(currentSequence);
-                    newSeq.addLast(a);
-                    Double prob = getOpponentProbability(newSeq);
-                    if (prob == null) {
-                        prob = 0d;
-                    }
-                    if (prob > 0) {
+                    Double prob = opponentBehavioralStartegy.getOrDefault(a, 0d);
+
+                    actionMap.put(a, prob);
+                    if (prob > 0)
                         nonZeroContinuation = true;
-                    }
-                    sequenceMap.put(a, prob); // the standard way is to sort ascending; hence, we store negative probability
                 }
+                ValueComparator<Action> comp = new ValueComparator<>(actionMap);
+                TreeMap<Action, Double> sortedMap = new TreeMap<>(comp);
+
+                sortedMap.putAll(actionMap);
+                result.addAll(sortedMap.keySet());
                 if (!nonZeroContinuation) {
                     return actions;
                 }
-                ValueComparator<Action> comp = new ValueComparator<Action>(sequenceMap);
-                TreeMap<Action, Double> sortedMap = new TreeMap<Action, Double>(comp);
-                sortedMap.putAll(sequenceMap);
-                result.addAll(sortedMap.keySet());
+//                // sort according to the opponent realizaiton plan
+//                Sequence currentSequence = state.getSequenceFor(players[opponentPlayerIndex]);
+//                Map<Action, Double> sequenceMap = new FixedSizeMap<>(actions.size());
+//                for (Action a : actions) {
+//                    Sequence newSeq = new ArrayListSequenceImpl(currentSequence);
+//                    newSeq.addLast(a);
+//                    Double prob = getOpponentProbability(newSeq);
+//                    if (prob == null) {
+//                        prob = 0d;
+//                    }
+//                    if (prob > 0) {
+//                        nonZeroContinuation = true;
+//                    }
+//                    sequenceMap.put(a, prob); // the standard way is to sort ascending; hence, we store negative probability
+//                }
+//                if (!nonZeroContinuation) {
+//
+//                    return actions;
+//                }
+//                ValueComparator<Action> comp = new ValueComparator<Action>(sequenceMap);
+//                TreeMap<Action, Double> sortedMap = new TreeMap<Action, Double>(comp);
+//                sortedMap.putAll(sequenceMap);
+//                result.addAll(sortedMap.keySet());
             }
             return result;
         }
