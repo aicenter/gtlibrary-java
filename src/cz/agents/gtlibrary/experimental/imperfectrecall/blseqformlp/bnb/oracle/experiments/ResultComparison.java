@@ -1,10 +1,9 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.experiments;
 
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSeqenceFormLP;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSequenceFormLP;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleBilinearSequenceFormBnB;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -12,7 +11,7 @@ import java.lang.management.ThreadMXBean;
 public class ResultComparison {
 
     public static void main(String[] args) {
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 64;
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 33;
         int endingSeed = (args.length > 1) ? new Integer(args[1]) : 200;
 
         int BF = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_BF;
@@ -35,7 +34,7 @@ public class ResultComparison {
             System.err.println("*******DO*******");
             double milpValue = DoubleOracleBilinearSequenceFormBnB.runRandomGame();
             System.err.println("**************BnB*******************");
-            double oracleBnBValue = BilinearSeqenceFormLP.runRandomGame();
+            double oracleBnBValue = BilinearSequenceFormBnB.runRandomGame();
 
             System.out.println("seed: " + seed + ": " + milpValue + " vs " + oracleBnBValue/* + " vs " + milpValue*/);
             if (Math.abs(oracleBnBValue - milpValue) > 0.1) {/* &&  < 1e-2*/

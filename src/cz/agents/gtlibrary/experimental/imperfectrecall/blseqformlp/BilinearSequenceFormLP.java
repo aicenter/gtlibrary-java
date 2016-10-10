@@ -17,10 +17,8 @@ import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameStateFa
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearTable;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleIRConfig;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -29,11 +27,9 @@ import cz.agents.gtlibrary.utils.Triplet;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.concert.IloException;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.*;
 
-public class BilinearSeqenceFormLP {
+public class BilinearSequenceFormLP {
     private final Player player;
     private final Player opponent;
     private cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearTable table;
@@ -64,7 +60,7 @@ public class BilinearSeqenceFormLP {
         DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo()));
         GameState root = RandomAbstractionGameStateFactory.createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, config);
-        BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(RandomGameInfo.FIRST_PLAYER, new RandomAbstractionGameInfo(new RandomGameInfo()));
+        BilinearSequenceFormLP solver = new BilinearSequenceFormLP(RandomGameInfo.FIRST_PLAYER, new RandomAbstractionGameInfo(new RandomGameInfo()));
 
         cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
         GambitEFG exporter = new GambitEFG();
@@ -93,7 +89,7 @@ public class BilinearSeqenceFormLP {
 //            return;
 //        }
 
-        BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
+        BilinearSequenceFormLP solver = new BilinearSequenceFormLP(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -127,7 +123,7 @@ public class BilinearSeqenceFormLP {
 //            return;
 //        }
 
-        BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BPGGameInfo.DEFENDER, new BPGGameInfo());
+        BilinearSequenceFormLP solver = new BilinearSequenceFormLP(BPGGameInfo.DEFENDER, new BPGGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -153,12 +149,12 @@ public class BilinearSeqenceFormLP {
         SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
 
         builder.build(new BRTestGameState(), config, new BRTestExpander<>(config));
-        BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());
+        BilinearSequenceFormLP solver = new BilinearSequenceFormLP(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());
 
         solver.solve(config);
     }
 
-    public BilinearSeqenceFormLP(Player player, GameInfo info) {
+    public BilinearSequenceFormLP(Player player, GameInfo info) {
         this.table = new BilinearTable();
         this.player = player;
         this.opponent = info.getOpponent(player);
