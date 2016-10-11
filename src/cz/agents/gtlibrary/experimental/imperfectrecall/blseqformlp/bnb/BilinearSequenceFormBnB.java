@@ -85,10 +85,10 @@ public class BilinearSequenceFormBnB {
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
 //        runRandomGame();
-//        runAbstractedRandomGame();
+        runAbstractedRandomGame();
 //        runKuhnPoker();
 //        runGenericPoker();
-        runBPG();
+//        runBPG();
 //        runBRTest();
     }
 

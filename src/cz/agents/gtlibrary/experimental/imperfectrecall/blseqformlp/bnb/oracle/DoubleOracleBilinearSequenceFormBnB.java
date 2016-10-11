@@ -55,12 +55,14 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     public static double EPS = 1e-3;
 
     protected GameState root;
+    private long testTime = 0;
 
     public static void main(String[] args) {
+//        new Scanner(System.in).next();
 //        runRandomGame();
-//        runAbstractedRandomGame();
+        runAbstractedRandomGame();
 //        runTTT();
-        runBPG();
+//        runBPG();
 //        runBRTest();
 //        runKuhnPoker();
 //        runGenericPoker();
@@ -342,8 +344,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                 OracleCandidate current = (OracleCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
 
                 it++;
-                System.out.println(current.getPrecisionError());
-                System.out.println(current + " vs " + currentBest);
+//                System.out.println(current.getPrecisionError());
+//                System.out.println(current + " vs " + currentBest);
                 if (isConverged(current) && it > 2) {
                     currentBest = current;
                     System.out.println(current);
@@ -376,13 +378,13 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //
 //                    fringe.add(samePrecisionCandidate);
                     if (expansionCount > current.getExpansionCount()) {
-                        System.out.println("expand");
+//                        System.out.println("expand");
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
                         if (RESOLVE_CURRENT_BEST)
                             updateCurrentBest(restrictedGameConfig);
                     } else {
-                        System.out.println("prec");
+//                        System.out.println("prec");
                         assert current.getPrecisionError() > 1e-8;
                         addMiddleChildOf(current, fringe, restrictedGameConfig);
                         addLeftChildOf(current, fringe, restrictedGameConfig);
@@ -425,6 +427,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         } catch (IloException e) {
             e.printStackTrace();
         }
+        System.out.println("TEST TIME: " + ((TempLeafDoubleOracleGameExpander) gameExpander).getTestTime());
+        System.out.println("TEST TIME1: " + testTime);
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6 - getLpBuildingTime() - getBRTime() - getExpanderTime() - getCPLEXTime() - getStrategyLPTime());
     }
 
@@ -439,7 +443,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         List<Map<Action, Double>> possibleBestResponses = getPossibleBestResponseActions(lpData, config);
 
         possibleBestResponses.add(lowerBoundAndBR.getRight());
-        ((TempLeafDoubleOracleGameExpander) gameExpander).updatePendingAndTempLeafsForced(root, (DoubleOracleIRConfig) config, possibleBestResponses);
+
 //        Pair<GameState, Double> bestPending = ((DoubleOracleIRConfig) config).getBestPending(possibleBestResponses, opponent);
         double upperBound = /*bestPending == null ? */lpUB /*: Math.max(lpUB, bestPending.getRight())*/;
 
@@ -489,7 +493,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     System.out.println(newChanges);
                 }
                 if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
-                    Candidate candidate = createCandidate(newChanges, lpData, config);
+                    DoubleOracleCandidate candidate = (DoubleOracleCandidate) createCandidate(newChanges, lpData, config);
 
 //                    assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
                     if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
@@ -498,7 +502,11 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                         currentBest = candidate;
                         System.out.println("current best: " + currentBest);
                     }
-                    if (((DoubleOracleIRConfig) config).pendingAvailable(expander, ((DoubleOracleCandidate) candidate).getMaxPlayerStrategy(), ((DoubleOracleCandidate) candidate).getPossibleBestResponses(), gameInfo.getOpponent(player))) {
+//                    long testStart = mxBean.getCurrentThreadCpuTime();
+//                    ((TempLeafDoubleOracleGameExpander) gameExpander).updatePendingAndTempLeafsForced(root, (DoubleOracleIRConfig) config, ((DoubleOracleCandidate)candidate).getPossibleBestResponses());
+//                   assert ((DoubleOracleIRConfig) config).pendingAvailable(expander, candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses(), gameInfo.getOpponent(player)) == ((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses());
+//                    testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
+                    if (((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses())) {
                         candidate.setUb(Double.POSITIVE_INFINITY);
                     }
                     if (isConverged(candidate)) {

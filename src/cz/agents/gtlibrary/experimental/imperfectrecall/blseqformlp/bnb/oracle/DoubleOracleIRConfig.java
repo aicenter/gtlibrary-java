@@ -108,8 +108,12 @@ public class DoubleOracleIRConfig extends SelfBuildingSequenceFormIRConfig {
        return (SequenceFormIRInformationSet) pending.getSequenceFor(maxPlayer).getLastInformationSet();
     }
 
-    private double getParentValue(GameState state, Expander<? extends InformationSet> expander, Map<Action, Double> maxPlayerStrategy, List<Map<Action, Double>> minPlayerStrategies, Player maxPlayer) {
-        return minPlayerStrategies.stream().mapToDouble(strategy -> getExpectedValue(parents.get(state), expander, maxPlayerStrategy, strategy, maxPlayer)).min().getAsDouble();
+    public double getParentValue(GameState state, Expander<? extends InformationSet> expander, Map<Action, Double> maxPlayerStrategy, List<Map<Action, Double>> minPlayerStrategies, Player maxPlayer) {
+        return getValue(parents.get(state), expander, maxPlayerStrategy, minPlayerStrategies, maxPlayer);
+    }
+
+    public double getValue(GameState state, Expander<? extends InformationSet> expander, Map<Action, Double> maxPlayerStrategy, List<Map<Action, Double>> minPlayerStrategies, Player maxPlayer) {
+        return minPlayerStrategies.stream().mapToDouble(strategy -> getExpectedValue(state, expander, maxPlayerStrategy, strategy, maxPlayer)).min().getAsDouble();
     }
 
     private double getExpectedValue(GameState state, Expander<? extends InformationSet> expander, Map<Action, Double> maxPlayerStrategy, Map<Action, Double> minPlayerStrategy, Player maxPlayer) {

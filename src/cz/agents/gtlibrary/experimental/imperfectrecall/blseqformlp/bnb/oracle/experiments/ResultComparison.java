@@ -7,12 +7,15 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.D
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.Scanner;
 
 public class ResultComparison {
 
     public static void main(String[] args) {
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 33;
-        int endingSeed = (args.length > 1) ? new Integer(args[1]) : 200;
+//        new Scanner(System.in).next();
+
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 224;
+        int endingSeed = (args.length > 1) ? new Integer(args[1]) : 400;
 
         int BF = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_BF;
         int DEPTH = (args.length > 4) ? new Integer(args[4]) : RandomGameInfo.MAX_DEPTH;
@@ -32,9 +35,9 @@ public class ResultComparison {
 //            double bnbValue = BilinearSequenceFormBnB.runRandomGame();
 //            System.out.println("*********************************");
             System.err.println("*******DO*******");
-            double milpValue = DoubleOracleBilinearSequenceFormBnB.runRandomGame();
+            double milpValue = DoubleOracleBilinearSequenceFormBnB.runAbstractedRandomGame();
             System.err.println("**************BnB*******************");
-            double oracleBnBValue = BilinearSequenceFormBnB.runRandomGame();
+            double oracleBnBValue = BilinearSequenceFormBnB.runAbstractedRandomGame();
 
             System.out.println("seed: " + seed + ": " + milpValue + " vs " + oracleBnBValue/* + " vs " + milpValue*/);
             if (Math.abs(oracleBnBValue - milpValue) > 0.1) {/* &&  < 1e-2*/

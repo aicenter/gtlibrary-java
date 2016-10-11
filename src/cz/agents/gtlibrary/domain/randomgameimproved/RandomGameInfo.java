@@ -35,14 +35,14 @@ public class RandomGameInfo implements GameInfo {
     public static double NATURE_STATE_PROBABILITY = 0;
     public static int[] ACTIONS;
 
-    public static boolean IMPERFECT_RECALL = true;
-    public static boolean IMPERFECT_RECALL_ONLYFORP1 = true;
+    public static boolean IMPERFECT_RECALL = false;
+    public static boolean IMPERFECT_RECALL_ONLYFORP1 = false;
     public static boolean ABSENT_MINDEDNESS = false;
     public static double EMPTY_OBSERVATION_PROBABILITY = 0.5;
     public static ObservationsType OBSERVATIONS_TYPE = ObservationsType.FORGETFUL;
     public static double FORGET_OBSERVATION_PROBABILITY = 0.5;
 
-    public static long seed = 202;
+    public static long seed = 223;
 
     public static Random rnd = new HighQualityRandom(seed);
     public static ModificationGenerator modificationGenerator = new UniformModificationGenerator(MAX_CENTER_MODIFICATION);
