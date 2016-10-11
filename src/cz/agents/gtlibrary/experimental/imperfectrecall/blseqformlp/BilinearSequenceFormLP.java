@@ -45,7 +45,8 @@ public class BilinearSequenceFormLP {
     private final double EPS = 0.000001;
 
     public static void main(String[] args) {
-        runRandomGame();
+        runAbstractedRandomGame();
+//        runRandomGame();
 //        runBPG();
 //        runBRTest();
     }

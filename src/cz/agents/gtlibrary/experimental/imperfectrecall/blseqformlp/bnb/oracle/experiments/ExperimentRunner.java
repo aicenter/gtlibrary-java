@@ -35,8 +35,8 @@ public class ExperimentRunner {
             RandomGameInfo.MIN_BF = BF;
             RandomGameInfo.MAX_DEPTH = DEPTH;
             RandomGameInfo.ABSENT_MINDEDNESS = false;
-            RandomGameInfo.IMPERFECT_RECALL = true;
-            RandomGameInfo.IMPERFECT_RECALL_ONLYFORP1 = true;
+            RandomGameInfo.IMPERFECT_RECALL = false;
+            RandomGameInfo.IMPERFECT_RECALL_ONLYFORP1 = false;
             RandomGameInfo.MAX_OBSERVATION = obs;
             RandomAbstractionGameInfo.JOIN_PROB = joinProbability;
             ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
