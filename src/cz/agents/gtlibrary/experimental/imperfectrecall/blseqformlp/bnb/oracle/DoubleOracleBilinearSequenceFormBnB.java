@@ -60,8 +60,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     public static void main(String[] args) {
         new Scanner(System.in).next();
 //        runRandomGame();
-//        runAbstractedRandomGame();
-        runTTT();
+        runAbstractedRandomGame();
+//        runTTT();
 //        runBPG();
 //        runBRTest();
 //        runKuhnPoker();
@@ -432,6 +432,41 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6 - getLpBuildingTime() - getBRTime() - getExpanderTime() - getCPLEXTime() - getStrategyLPTime());
     }
 
+    protected void updateCurrentBest(SequenceFormIRConfig restrictedGameConfig) {
+        table.clearTable();
+        long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
+
+        buildBaseLP(table, restrictedGameConfig);
+        lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
+        currentBest.getChanges().updateTable(table);
+        try {
+            buildingTimeStart = mxBean.getCurrentThreadCpuTime();
+
+            lpBuildingTime += (mxBean.getCurrentThreadCpuTime() - buildingTimeStart) / 1e6;
+            LPData lpData = table.toCplex();
+//                System.out.println("solved");
+
+            if (SAVE_LPS) lpData.getSolver().exportModel("bilinSQFnew.lp");
+            long start = mxBean.getCurrentThreadCpuTime();
+
+            lpData.getSolver().solve();
+//                System.out.println(CPLEXInvocationCount++);
+            CPLEXTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
+            if (lpData.getSolver().getStatus().equals(IloCplex.Status.Optimal)) {
+                Candidate candidate = createLightWeightCandidate(currentBest.getChanges(), lpData, restrictedGameConfig);
+
+//                assert Math.abs(candidate.getUb() - checkOnCleanLP(restrictedGameConfig, candidate)) < 1e-4;
+                if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
+                if (candidate.getLb() > currentBest.getLb()) {
+                    currentBest = candidate;
+                    System.out.println("current best: " + currentBest);
+                }
+            }
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+    }
+
     protected OracleCandidate createCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
         Map<Action, Double> maxPlayerStrategy = extractBehavioralStrategyLP(config, lpData);
 
@@ -454,6 +489,30 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
         return new DoubleOracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability,
                 mostBrokenActionValue, extractRPStrategy(config, lpData), maxPlayerStrategy, lowerBoundAndBR.getRight(), expansionCount, possibleBestResponses, lpUB);
+    }
+
+    protected OracleCandidate createLightWeightCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
+        Map<Action, Double> maxPlayerStrategy = extractBehavioralStrategyLP(config, lpData);
+
+//        assert definedEverywhere(maxPlayerStrategy, config);
+        assert equalsInPRInformationSets(maxPlayerStrategy, config, lpData);
+//        assert isConvexCombination(maxPlayerStrategy, lpData, config);
+        Pair<Double, Map<Action, Double>> lowerBoundAndBR = getLowerBoundAndBR(maxPlayerStrategy);
+        double lpUB = getUpperBound(lpData);
+//        List<Map<Action, Double>> possibleBestResponses = getPossibleBestResponseActions(lpData, config);
+
+//        possibleBestResponses.add(lowerBoundAndBR.getRight());
+
+//        Pair<GameState, Double> bestPending = ((DoubleOracleIRConfig) config).getBestPending(possibleBestResponses, opponent);
+        double upperBound = /*bestPending == null ? */lpUB /*: Math.max(lpUB, bestPending.getRight())*/;
+
+        assert upperBound > lowerBoundAndBR.getLeft() - 1e-3;
+//        Action action = findMostViolatedBilinearConstraints(config, lpData);
+//        int[] exactProbability = getExactProbability(maxPlayerStrategy.get(action), table.getPrecisionFor(action), action, changes);
+
+        assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
+        return new DoubleOracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, null, null,
+                mostBrokenActionValue, extractRPStrategy(config, lpData), maxPlayerStrategy, lowerBoundAndBR.getRight(), expansionCount, null, lpUB);
     }
 
     protected List<Map<Action, Double>> getPossibleBestResponseActions(LPData lpData, SequenceFormIRConfig config) throws IloException {
@@ -570,6 +629,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        }
 //        return brSplit;
 //    }
+
 
     private List<Map<Action, Double>> splitToSeparateBRs(Map<Sequence, Set<Action>> possibleBestResponseActions, SequenceFormIRConfig config) {
         Deque<GameState> queue = new ArrayDeque<>();
