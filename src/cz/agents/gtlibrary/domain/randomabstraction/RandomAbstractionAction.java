@@ -1,7 +1,6 @@
 package cz.agents.gtlibrary.domain.randomabstraction;
 
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameAction;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -15,6 +14,7 @@ import java.util.Map;
 public class RandomAbstractionAction extends ActionImpl {
 
     public Map<ISKey, Action> wrappedActions;
+    int hashCode = -1;
 
     public RandomAbstractionAction(GameState state, Action wrappedAction, InformationSet informationSet) {
         super(informationSet);
@@ -40,7 +40,9 @@ public class RandomAbstractionAction extends ActionImpl {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 31).append(informationSet).append(((RandomGameAction) wrappedActions.values().stream().findAny().get()).getOrder()).toHashCode();
+        if (hashCode == -1)
+            hashCode = new HashCodeBuilder(17, 31).append(informationSet).append(((RandomGameAction) wrappedActions.values().stream().findAny().get()).getOrder()).toHashCode();
+        return hashCode;
     }
 
     @Override

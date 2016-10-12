@@ -7,15 +7,14 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.D
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.Scanner;
 
 public class ResultComparison {
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
 
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 224;
-        int endingSeed = (args.length > 1) ? new Integer(args[1]) : 400;
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 0;
+        int endingSeed = (args.length > 1) ? new Integer(args[1]) : 1000;
 
         int BF = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_BF;
         int DEPTH = (args.length > 4) ? new Integer(args[4]) : RandomGameInfo.MAX_DEPTH;
@@ -29,7 +28,7 @@ public class ResultComparison {
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         long start = threadBean.getCurrentThreadCpuTime();
 
-        for (int seed = startingSeed; seed<endingSeed; seed++) {
+        for (int seed = startingSeed; seed < endingSeed; seed++) {
             RandomGameInfo.seed = seed;
             System.err.println("seed: " + seed);
 //            double bnbValue = BilinearSequenceFormBnB.runRandomGame();
@@ -37,15 +36,15 @@ public class ResultComparison {
             System.err.println("*******DO*******");
             double milpValue = DoubleOracleBilinearSequenceFormBnB.runAbstractedRandomGame();
             System.err.println("**************BnB*******************");
-            double oracleBnBValue = BilinearSequenceFormBnB.runAbstractedRandomGame();
+            double oracleBnBValue = BilinearSequenceFormLP.runAbstractedRandomGame();
 
             System.out.println("seed: " + seed + ": " + milpValue + " vs " + oracleBnBValue/* + " vs " + milpValue*/);
-            if (Math.abs(oracleBnBValue - milpValue) > 0.1) {/* &&  < 1e-2*/
+            if (Math.abs(oracleBnBValue - milpValue) > 0.05) {/* &&  < 1e-2*/
                 throw new IllegalStateException();
             }
             System.out.println("-----------------------");
         }
 
-        System.out.println("OVERALL TIME = " + ((threadBean.getCurrentThreadCpuTime() - start)/1000000));
+        System.out.println("OVERALL TIME = " + ((threadBean.getCurrentThreadCpuTime() - start) / 1000000));
     }
 }
