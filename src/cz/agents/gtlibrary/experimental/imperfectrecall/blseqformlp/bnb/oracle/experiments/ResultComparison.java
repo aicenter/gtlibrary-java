@@ -36,7 +36,7 @@ public class ResultComparison {
             System.err.println("*******DO*******");
             double milpValue = DoubleOracleBilinearSequenceFormBnB.runAbstractedRandomGame();
             System.err.println("**************BnB*******************");
-            double oracleBnBValue = BilinearSequenceFormLP.runAbstractedRandomGame();
+            double oracleBnBValue = BilinearSequenceFormBnB.runAbstractedRandomGame();
 
             System.out.println("seed: " + seed + ": " + milpValue + " vs " + oracleBnBValue/* + " vs " + milpValue*/);
             if (Math.abs(oracleBnBValue - milpValue) > 0.05) {/* &&  < 1e-2*/

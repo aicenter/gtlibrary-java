@@ -512,14 +512,16 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
         while (!queue.isEmpty()) {
             GameState state = queue.removeFirst();
 
-            if (state.isGameEnd())
+            if (state.isGameEnd() || config.getTerminalStates().contains(state))
                 continue;
             if (state.getPlayerToMove().equals(maxPlayer)) {
                 for (Action action : expander.getActions(state)) {
                     GameState nextState = state.performAction(action);
 
                     if (!config.getSequencesFor(state.getPlayerToMove()).contains(nextState.getSequenceFor(state.getPlayerToMove()))) {
-                        if (getUtilityUBForCombo(nextState, possibleBestResponses) / nextState.getNatureProbability() > config.getValue(state, expander, maxPlayerStrategy, possibleBestResponses, maxPlayer))
+                        double toBeat = config.getValue(state, expander, maxPlayerStrategy, possibleBestResponses, maxPlayer);
+
+                        if (ubHigherThan(nextState, possibleBestResponses, toBeat))
                             return true;
                     } else {
                         queue.addLast(nextState);
@@ -553,7 +555,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
         List<Integer> updatedIndices = new ArrayList<>(stratUse.length);
 
         for (int i = 0; i < stratUse.length; i++) {
-            if(stratUse[i]) {
+            if (stratUse[i]) {
                 if (!(stratUse[i] &= possibleBestResponses.get(i).containsKey(action)))
                     updatedIndices.add(i);
             }
@@ -571,7 +573,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
 
     private double getUtilityUBForCombo(GameState state, List<Map<Action, Double>> minPlayerBestResponses) {
         long testStart = mxBean.getCurrentThreadCpuTime();
-        double value =  minPlayerBestResponses.stream().mapToDouble(bestResponse -> {
+        double value = minPlayerBestResponses.stream().mapToDouble(bestResponse -> {
             long start = mxBean.getCurrentThreadCpuTime();
 
             br.getBestResponseIn(state, bestResponse);
@@ -587,6 +589,19 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
 //            if (br.getValue() > value)
 //                value = br.getValue();
 //        }
+        testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
+        return value;
+    }
+
+    private boolean ubHigherThan(GameState state, List<Map<Action, Double>> minPlayerBestResponses, double toBeat) {
+        long testStart = mxBean.getCurrentThreadCpuTime();
+        boolean value = minPlayerBestResponses.stream().mapToDouble(bestResponse -> {
+            long start = mxBean.getCurrentThreadCpuTime();
+
+            br.getBestResponseIn(state, bestResponse);
+            brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
+            return br.getValue() / state.getNatureProbability();
+        }).anyMatch(v -> v > toBeat);
         testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
         return value;
     }
