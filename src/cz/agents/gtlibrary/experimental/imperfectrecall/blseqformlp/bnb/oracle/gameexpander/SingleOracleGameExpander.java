@@ -34,7 +34,7 @@ public class SingleOracleGameExpander implements GameExpander {
         this.minPlayer = info.getOpponent(maxPlayer);
         sequenceCombinationUtilityContribution = new HashMap<>();
 //        br = new OracleImperfectRecallBestResponse(maxPlayer, expander, info);
-        br = new OracleALossRecallBestResponse(maxPlayer, root, expander, info);
+        br = new OracleALossRecallBestResponse(maxPlayer, root, expander, info, false);
 //        br = new LinearOracleImperfectRecallBestResponse(maxPlayer, root, expander, info);
         mxBean = ManagementFactory.getThreadMXBean();
     }
