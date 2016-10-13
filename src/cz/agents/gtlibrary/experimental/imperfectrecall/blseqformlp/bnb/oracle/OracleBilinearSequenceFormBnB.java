@@ -224,7 +224,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 
     public OracleBilinearSequenceFormBnB(Player player, GameState root, Expander<SequenceFormIRInformationSet> fullGameExpander, GameInfo info) {
         super(player, fullGameExpander, info);
-        br = new OracleALossRecallBestResponse(info.getOpponent(player), root, fullGameExpander, gameInfo);
+        br = new OracleALossRecallBestResponse(info.getOpponent(player), root, fullGameExpander, gameInfo, false);
 //        br = new LinearOracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, root, fullGameExpander, gameInfo);
 //        br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
         gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);

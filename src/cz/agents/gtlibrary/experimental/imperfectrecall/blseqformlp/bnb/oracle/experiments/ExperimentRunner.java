@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSequ
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.BilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -14,8 +15,10 @@ import java.lang.management.ThreadMXBean;
 public class ExperimentRunner {
     public static void main(String[] args) {
         if (args[0].equals("TTT")) {
+            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = false;
             DoubleOracleBilinearSequenceFormBnB.runTTT();
         } else if (args[0].equals("BPG")) {
+            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = true;
             BPGGameInfo.DEPTH = Integer.parseInt(args[1]);
             BPGGameInfo.SLOW_MOVES = Boolean.parseBoolean(args[2]);
             if (args[3].equals("bnb"))
@@ -24,6 +27,7 @@ public class ExperimentRunner {
                 DoubleOracleBilinearSequenceFormBnB.runBPG();
 
         } else {
+            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = true;
             int BF = (args.length > 2) ? new Integer(args[2]) : RandomGameInfo.MAX_BF;
             int DEPTH = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_DEPTH;
             int seed = Integer.parseInt(args[5]);

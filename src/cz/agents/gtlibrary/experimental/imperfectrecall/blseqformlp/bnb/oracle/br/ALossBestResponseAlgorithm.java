@@ -19,11 +19,10 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br;
 
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.DummyMap;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.ValueComparator;
@@ -36,10 +35,14 @@ import java.util.*;
  */
 public class ALossBestResponseAlgorithm {
 
+    private boolean USE_STATE_CACHE = false;
+    private DummyMap<Action, GameState> dummyInstance = new DummyMap<>();
+    private Map<GameState, Map<Action, GameState>> stateCache;
+
     public long nodes = 0;
     protected Expander expander;
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<>();
-    protected Map<Action, Double> opponentBehavioralStartegy = new HashMap<>();
+    protected Map<Action, Double> opponentBehavioralStrategy = new HashMap<>();
     protected Map<Action, Double> myBehavioralStrategy = new HashMap<>();
     protected HashMap<Action, Map<ISKey, Action>> BRresult = new HashMap<>();
     protected Map<Action, Double> bestResponse = new HashMap<>();
@@ -55,7 +58,7 @@ public class ALossBestResponseAlgorithm {
     private Set<Action> resultActions = new HashSet<>();
     private Map<ISKey, Action> firstLevelActions = new HashMap<>();
 
-    public ALossBestResponseAlgorithm(GameState root, Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo) {
+    public ALossBestResponseAlgorithm(GameState root, Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse) {
         this.searchingPlayerIndex = searchingPlayerIndex;
         this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
         this.players = actingPlayers;
@@ -65,6 +68,8 @@ public class ALossBestResponseAlgorithm {
         this.gameInfo = gameInfo;
         this.MAX_UTILITY_VALUE = gameInfo.getMaxUtility();
         this.gameTreeRoot = root;
+        USE_STATE_CACHE = stateCacheUse;
+        stateCache = USE_STATE_CACHE ? new HashMap<>(10000) : new DummyMap<>();
     }
 
     public Double calculateBR(GameState root, Map<Action, Double> opponentBehavioralStrategy) {
@@ -75,7 +80,7 @@ public class ALossBestResponseAlgorithm {
 
 //        nodes = 0;
 
-        this.opponentBehavioralStartegy = opponentBehavioralStrategy;
+        this.opponentBehavioralStrategy = opponentBehavioralStrategy;
         this.myBehavioralStrategy = myBehavioralStrategy;
         this.BRresult.clear();
         this.bestResponse.clear();
@@ -235,8 +240,8 @@ public class ALossBestResponseAlgorithm {
 
             resultActions.add(resultAction);
             Sequence sequence = gameState.getSequenceFor(players[searchingPlayerIndex]);
-            if(sequence.isEmpty() || gameState.equals(gameTreeRoot)) {
-                if(!firstLevelActions.containsKey(gameState.getISKeyForPlayerToMove()))
+            if (sequence.isEmpty() || gameState.equals(gameTreeRoot)) {
+                if (!firstLevelActions.containsKey(gameState.getISKeyForPlayerToMove()))
                     firstLevelActions.put(gameState.getISKeyForPlayerToMove(), resultAction);
             } else {
                 Action previousAction = sequence.getLast();
@@ -266,14 +271,14 @@ public class ALossBestResponseAlgorithm {
 //                    returnValue *= -1;
 //                }
 //            } else {
-                BROppSelection sel = new BROppSelection(lowerBound, nodeProbability, nonZeroORP);
-                List<Action> actionsToExplore = expander.getActions(gameState);
-                actionsToExplore = sel.sortActions(gameState, actionsToExplore);
-                selectAction(gameState, sel, actionsToExplore, currentStateProb);
-                returnValue = sel.getResult().getRight();
-                if (nonZeroORP && !sel.nonZeroContinuation) {
-                    returnValue *= currentStateProb;
-                }
+            BROppSelection sel = new BROppSelection(lowerBound, nodeProbability, nonZeroORP);
+            List<Action> actionsToExplore = expander.getActions(gameState);
+            actionsToExplore = sel.sortActions(gameState, actionsToExplore);
+            selectAction(gameState, sel, actionsToExplore, currentStateProb);
+            returnValue = sel.getResult().getRight();
+            if (nonZeroORP && !sel.nonZeroContinuation) {
+                returnValue *= currentStateProb;
+            }
 //            }
         }
 
@@ -286,7 +291,7 @@ public class ALossBestResponseAlgorithm {
         double probability = 1;
 
         for (Action action : sequence) {
-            double currentProbability = opponentBehavioralStartegy.getOrDefault(action, 0d);
+            double currentProbability = opponentBehavioralStrategy.getOrDefault(action, 0d);
 
             if (currentProbability == 0)
                 return 0;
@@ -309,23 +314,28 @@ public class ALossBestResponseAlgorithm {
     }
 
     public void selectAction(GameState state, BRActionSelection selection, List<Action> actionsToExplore, double currentStateProb) {
-//        List<Action> actionsToExplore = expander.getActions(state);
-//        actionsToExplore = selection.sortActions(state, actionsToExplore);
-        for (Action action : actionsToExplore) {
-            GameState newState = state.performAction(action);
-            double natureProb = newState.getNatureProbability(); // TODO extract these probabilities from selection Map
-            double oppRP = getOpponentProbability(newState.getSequenceFor(players[opponentPlayerIndex]));
-            double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
+        Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
 
-            if (newLowerBound <= MAX_UTILITY_VALUE) {
-                double value = bestResponse(newState, newLowerBound, oppRP);
-                selection.addValue(action, value, natureProb, oppRP);
-            }
+        for (Action action : actionsToExplore) {
+            GameState newState = successors.computeIfAbsent(action, a -> state.performAction(a));
+
+            handleState(selection, action, newState);
         }
     }
 
-    public Map<Action, Double> getOpponentBehavioralStartegy() {
-        return opponentBehavioralStartegy;
+    private void handleState(BRActionSelection selection, Action action, GameState newState) {
+        double natureProb = newState.getNatureProbability(); // TODO extract these probabilities from selection Map
+        double oppRP = getOpponentProbability(newState.getSequenceFor(players[opponentPlayerIndex]));
+        double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
+
+        if (newLowerBound <= MAX_UTILITY_VALUE) {
+            double value = bestResponse(newState, newLowerBound, oppRP);
+            selection.addValue(action, value, natureProb, oppRP);
+        }
+    }
+
+    public Map<Action, Double> getOpponentBehavioralStrategy() {
+        return opponentBehavioralStrategy;
     }
 
     public abstract class BRActionSelection {
@@ -428,7 +438,7 @@ public class ALossBestResponseAlgorithm {
                 Map<Action, Double> actionMap = new FixedSizeMap<>(actions.size());
 
                 for (Action a : actions) {
-                    Double prob = opponentBehavioralStartegy.getOrDefault(a, 0d);
+                    Double prob = opponentBehavioralStrategy.getOrDefault(a, 0d);
 
                     actionMap.put(a, prob);
                     if (prob > 0)
@@ -696,55 +706,63 @@ public class ALossBestResponseAlgorithm {
                 continue;
 
             if (currentState.isPlayerToMoveNature()) {
-                List<Action> tmp = expander.getActions(currentState);
-                for (Action a : tmp) {
-                    GameState newState = currentState.performAction(a);
-                    if (newState != null) {
-                        queue.push(newState);
-                    }
+                List<Action> actions = expander.getActions(currentState);
+                Map<Action, GameState> successors = stateCache.computeIfAbsent(currentState, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance)
+                ;
+
+                for (Action action : actions) {
+                    GameState newState = successors.computeIfAbsent(action, a -> currentState.performAction(a));
+
+                    queue.push(newState);
                 }
             } else if (!currentState.getPlayerToMove().equals(mainPlayer)) {
-                List<Action> tmp = expander.getActions(currentState);
+                List<Action> actions = expander.getActions(currentState);
+                Map<Action, GameState> successors = stateCache.computeIfAbsent(currentState, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance)
+                ;
                 boolean noUpdate = true;
+
                 if (!neverCheckOppAgain && !notVisitedDueToOpponent(currentState)) {
-                    Sequence s = new ArrayListSequenceImpl(currentState.getSequenceForPlayerToMove());
-                    for (Action a : tmp) {
-                        s.addLast(a);
-                        double d = getOpponentProbability(s);
+                    Sequence sequence = new ArrayListSequenceImpl(currentState.getSequenceForPlayerToMove());
+
+                    for (Action action : actions) {
+                        sequence.addLast(action);
+                        double d = getOpponentProbability(sequence);
+
                         if (d > 0) {
-                            GameState newState = currentState.performAction(a);
-                            if (newState != null) {
-                                queue.push(newState);
-                                noUpdate = false;
-                            }
-                        }
-                        s.removeLast();
-                    }
-                    if (noUpdate && !tmp.isEmpty()) {
-                        GameState newState = currentState.performAction(tmp.get(0));
-                        if (newState != null) {
+                            GameState newState = successors.computeIfAbsent(action, a -> currentState.performAction(a));
+
                             queue.push(newState);
+                            noUpdate = false;
                         }
+                        sequence.removeLast();
+                    }
+
+                    if (noUpdate && !actions.isEmpty()) {
+                        GameState newState = successors.computeIfAbsent(actions.get(0), a -> currentState.performAction(a));
+
+                        queue.push(newState);
                     }
                 } else {
 //                    neverCheckOppAgain = true;
-                    GameState newState = currentState.performAction(tmp.get(0));
-                    if (newState != null) {
-                        queue.push(newState);
-                    }
+                    GameState newState = successors.computeIfAbsent(actions.get(0), a -> currentState.performAction(a));
+
+                    queue.push(newState);
                 }
             } else {
                 Player toMove = currentState.getPlayerToMove();
                 int whichAction = currentState.getSequenceFor(toMove).size();
                 if (whichAction < state.getSequenceFor(toMove).size()) {
                     Action actionToExecute = state.getSequenceFor(toMove).get(whichAction);
+
                     if (currentState.checkConsistency(actionToExecute)) {
-                        GameState newState = currentState.performAction(actionToExecute);
+                        Map<Action, GameState> successors = stateCache.computeIfAbsent(currentState, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance)
+                        ;
+                        GameState newState = successors.computeIfAbsent(actionToExecute, a -> currentState.performAction(a));
+
                         queue.push(newState);
                     }
                 }
             }
-
         }
         return alternativeNodes;
     }

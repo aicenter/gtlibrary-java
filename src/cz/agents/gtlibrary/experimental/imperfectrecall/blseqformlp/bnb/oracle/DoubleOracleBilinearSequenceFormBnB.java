@@ -52,6 +52,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
     public static boolean RESOLVE_CURRENT_BEST = false;
+    public static boolean STATE_CACHE_USE = true;
     public static double EPS = 1e-3;
 
     protected GameState root;
@@ -60,8 +61,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     public static void main(String[] args) {
         new Scanner(System.in).next();
 //        runRandomGame();
-        runAbstractedRandomGame();
-//        runTTT();
+//        runAbstractedRandomGame();
+        runTTT();
 //        runBPG();
 //        runBRTest();
 //        runKuhnPoker();

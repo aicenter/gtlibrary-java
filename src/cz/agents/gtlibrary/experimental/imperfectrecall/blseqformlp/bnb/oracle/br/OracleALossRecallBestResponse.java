@@ -12,10 +12,10 @@ public class OracleALossRecallBestResponse extends OracleImperfectRecallBestResp
     private ALossBestResponseAlgorithm sqfBR;
     private GameState root;
 
-    public OracleALossRecallBestResponse(Player player, GameState root, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
+    public OracleALossRecallBestResponse(Player player, GameState root, Expander<SequenceFormIRInformationSet> expander, GameInfo info, boolean stateCacheUse) {
         super(player, expander, info);
         this.root = root;
-        sqfBR = new ALossBestResponseAlgorithm(root, expander, player.getId(), new Player[]{new PlayerImpl(0), new PlayerImpl(1)}, expander.getAlgorithmConfig(), info);
+        sqfBR = new ALossBestResponseAlgorithm(root, expander, player.getId(), new Player[]{new PlayerImpl(0), new PlayerImpl(1)}, expander.getAlgorithmConfig(), info, stateCacheUse);
     }
 
     @Override
