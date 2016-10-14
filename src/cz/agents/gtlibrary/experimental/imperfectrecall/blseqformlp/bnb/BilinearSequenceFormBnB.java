@@ -83,12 +83,12 @@ public class BilinearSequenceFormBnB {
     protected int invalidCuts = 0;
 
     public static void main(String[] args) {
-        new Scanner(System.in).next();
+//        new Scanner(System.in).next();
 //        runRandomGame();
-        runAbstractedRandomGame();
+//        runAbstractedRandomGame();
 //        runKuhnPoker();
 //        runGenericPoker();
-//        runBPG();
+        runBPG();
 //        runBRTest();
     }
 

@@ -15,7 +15,7 @@ import java.lang.management.ThreadMXBean;
 public class ExperimentRunner {
     public static void main(String[] args) {
         if (args[0].equals("TTT")) {
-            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = false;
+            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = true;
             DoubleOracleBilinearSequenceFormBnB.runTTT();
         } else if (args[0].equals("BPG")) {
             DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = true;

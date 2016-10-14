@@ -19,6 +19,8 @@ import java.util.Set;
 
 public class IRTTTState extends TTTState {
 
+    public ISKey key;
+
     public static void main(String[] args) {
         GameState root = new IRTTTState();
         SequenceFormIRConfig config = new SequenceFormIRConfig(new TTTInfo());
@@ -42,26 +44,29 @@ public class IRTTTState extends TTTState {
 
     @Override
     public ISKey getISKeyForPlayerToMove() {
-        Set<Integer> myPositions = new HashSet<>();
-        Set<Integer> observed = new HashSet<>();
-        char currentPlayerSymbol = toMove;
-        char opponentPlayerSymbol = getOpponent();
+        if(key == null) {
+            Set<Integer> myPositions = new HashSet<>();
+            Set<Integer> observed = new HashSet<>();
+            char currentPlayerSymbol = toMove;
+            char opponentPlayerSymbol = getOpponent();
 
-        for (int i = 0; i < s.size() / 4; i++) {
-            char currentPositionSymbol = getSymbol(i);
+            for (int i = 0; i < s.size() / 4; i++) {
+                char currentPositionSymbol = getSymbol(i);
 
-            if (currentPositionSymbol == currentPlayerSymbol)
-                myPositions.add(i);
-            else if (currentPositionSymbol == opponentPlayerSymbol && getTried(currentPlayerSymbol, i))
-                observed.add(i);
+                if (currentPositionSymbol == currentPlayerSymbol)
+                    myPositions.add(i);
+                else if (currentPositionSymbol == opponentPlayerSymbol && getTried(currentPlayerSymbol, i))
+                    observed.add(i);
+            }
+            Observations myObservations = new Observations(getPlayerToMove(), getPlayerToMove());
+
+            myObservations.add(new TTTObservation(myPositions));
+            Observations oppObservations = new Observations(getPlayerToMove(), getAllPlayers()[1 - getPlayerToMove().getId()]);
+
+            oppObservations.add(new TTTObservation(observed));
+            key = new ImperfectRecallISKey(myObservations, oppObservations, null);
         }
-        Observations myObservations = new Observations(getPlayerToMove(), getPlayerToMove());
-
-        myObservations.add(new TTTObservation(myPositions));
-        Observations oppObservations = new Observations(getPlayerToMove(), getAllPlayers()[1 - getPlayerToMove().getId()]);
-
-        oppObservations.add(new TTTObservation(observed));
-        return new ImperfectRecallISKey(myObservations, oppObservations, null);
+        return key;
     }
 
     @Override
@@ -71,6 +76,7 @@ public class IRTTTState extends TTTState {
 
     class TTTObservation implements Observation {
         private Set<Integer> positions;
+        private int hashCode = -1;
 
         public TTTObservation(Set<Integer> positions) {
             this.positions = positions;
@@ -81,6 +87,8 @@ public class IRTTTState extends TTTState {
             if (this == o) return true;
             if (!(o instanceof TTTObservation)) return false;
 
+            if(o.hashCode() != hashCode())
+                return false;
             TTTObservation that = (TTTObservation) o;
 
             return positions != null ? positions.equals(that.positions) : that.positions == null;
@@ -89,7 +97,9 @@ public class IRTTTState extends TTTState {
 
         @Override
         public int hashCode() {
-            return positions != null ? positions.hashCode() : 0;
+            if(hashCode == -1)
+                hashCode = positions != null ? positions.hashCode() : 0;
+            return hashCode;
         }
 
         @Override

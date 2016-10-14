@@ -338,6 +338,10 @@ public class ALossBestResponseAlgorithm {
         return opponentBehavioralStrategy;
     }
 
+    public Map<GameState, Map<Action, GameState>> getStateCache() {
+        return stateCache;
+    }
+
     public abstract class BRActionSelection {
 
         protected double lowerBound;

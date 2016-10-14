@@ -76,4 +76,8 @@ public class OracleALossRecallBestResponse extends OracleImperfectRecallBestResp
     public long getExpandedNodes() {
         return sqfBR.nodes;
     }
+
+    public Map<GameState, Map<Action, GameState>> getStateCache() {
+        return sqfBR.getStateCache();
+    }
 }
