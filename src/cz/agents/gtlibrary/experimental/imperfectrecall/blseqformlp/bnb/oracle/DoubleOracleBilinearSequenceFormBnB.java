@@ -30,6 +30,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Change;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Changes;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleALossRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.DoubleOracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.TempLeafDoubleOracleGameExpander;
@@ -64,8 +65,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     public static void main(String[] args) {
         new Scanner(System.in).next();
 //        runRandomGame();
-//        runAbstractedRandomGame();
-        runTTT();
+        runAbstractedRandomGame();
+//        runTTT();
 //        runBPG();
 //        runBRTest();
 //        runKuhnPoker();
@@ -310,6 +311,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        br = new OracleImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, fullGameExpander, gameInfo);
 //        gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
         this.root = root;
+        br = new OracleALossRecallBestResponse(info.getOpponent(player), root, fullGameExpander, gameInfo, false);
         gameExpander = new TempLeafDoubleOracleGameExpander(player, root, fullGameExpander, info);
         stateCache = ((TempLeafDoubleOracleGameExpander) gameExpander).getStateCache();
     }
