@@ -23,6 +23,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.domain.phantomTTT;
 
+import cz.agents.gtlibrary.domain.phantomTTT.imperfectrecall.IRTTTState;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -43,6 +44,9 @@ public class TTTAction extends ActionImpl  {
         final TTTState s = (TTTState) gameState;
         assert !s.getTried(s.toMove, fieldID);
         s.setTried(s.toMove, fieldID);
+
+        if(s instanceof IRTTTState)
+            ((IRTTTState)s).key = null;
         
         if (' ' == s.getSymbol(fieldID)){
             s.setSymbol(fieldID, s.toMove);

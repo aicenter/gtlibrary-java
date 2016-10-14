@@ -37,6 +37,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.St
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
+import cz.agents.gtlibrary.utils.DummyMap;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
@@ -54,6 +55,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     public static boolean RESOLVE_CURRENT_BEST = false;
     public static boolean STATE_CACHE_USE = true;
     public static double EPS = 1e-3;
+    public Map<GameState, Map<Action, GameState>> stateCache;
+    public Map<Action, GameState> dummyInstance = new DummyMap<>();
 
     protected GameState root;
     private long testTime = 0;
@@ -308,6 +311,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        gameExpander = new ReducedSingleOracleGameExpander(player, root, fullGameExpander, info);
         this.root = root;
         gameExpander = new TempLeafDoubleOracleGameExpander(player, root, fullGameExpander, info);
+        stateCache = ((TempLeafDoubleOracleGameExpander) gameExpander).getStateCache();
     }
 
     public void solve(DoubleOracleIRConfig restrictedGameConfig) {
@@ -382,7 +386,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //                        System.out.println("expand");
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
-                        if (RESOLVE_CURRENT_BEST)
+                        if (RESOLVE_CURRENT_BEST && !current.getChanges().equals(currentBest.getChanges()))
                             updateCurrentBest(restrictedGameConfig);
                     } else {
 //                        System.out.println("prec");
@@ -645,27 +649,30 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
             if (state.isGameEnd() || config.getTerminalStates().contains(state))
                 continue;
+            List<Action> actions = expander.getActions(state);
+            Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> STATE_CACHE_USE ? new HashMap<>(actions.size()) : dummyInstance);
+
             if (state.isPlayerToMoveNature() || state.getPlayerToMove().equals(player)) {
-                expander.getActions(state).stream()
-                        .map(a -> state.performAction(a))
+                actions.stream()
+                        .map(action -> successors.computeIfAbsent(action, a -> state.performAction(a)))
                         .filter(s -> config.getSequencesFor(player).contains(s.getSequenceFor(player)))
                         .forEach(s -> queue.addLast(s));
                 continue;
             }
             Action fixedActionInIS = fixedInIS.get(state.getISKeyForPlayerToMove());
             if (fixedActionInIS != null) {
-                queue.addLast(state.performAction(fixedActionInIS));
+                queue.addLast(successors.computeIfAbsent(fixedActionInIS, a -> state.performAction(a)));
                 continue;
             }
             Action firstAction = null;
 
             if (!possibleBestResponseActions.containsKey(state.getSequenceForPlayerToMove()))
                 return brSplit;
-            for (Action action : expander.getActions(state)) {
+            for (Action action : actions) {
                 if (!possibleBestResponseActions.get(state.getSequenceForPlayerToMove()).contains(action))
                     continue;
                 if (firstAction == null) {
-                    queue.addLast(state.performAction(action));
+                    queue.addLast(successors.computeIfAbsent(action, a -> state.performAction(a)));
                     currentBR.put(action, 1d);
                     firstAction = action;
                     fixedInIS.put(state.getISKeyForPlayerToMove(), action);
@@ -676,7 +683,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     Map<Action, Double> currentBRCopy = new HashMap<>(currentBR);
 
                     currentBRCopy.remove(firstAction);
-                    queueCopy.addLast(state.performAction(action));
+                    queueCopy.addLast(successors.computeIfAbsent(action, a -> state.performAction(a)));
                     currentBRCopy.put(action, 1d);
                     Map<ISKey, Action> fixedInISCopy = new HashMap<>(fixedInIS);
 
