@@ -53,6 +53,7 @@ public class TTTAction extends ActionImpl  {
             s.toMove = (s.toMove == 'x' ? 'o' : 'x' );
         }
         s.moveNum++;
+        s.hashCode = -1;
     }
 
     @Override

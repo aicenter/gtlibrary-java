@@ -29,12 +29,10 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.PrintStream;
@@ -54,6 +52,7 @@ public class TTTState extends GameStateImpl {
     public BitSet s = new BitSet(36);
     public char toMove = 'x';
     public byte moveNum = 0;
+    int hashCode;
 
     public char getOpponent() {
         return (toMove == 'x' ? 'o' : 'x');
@@ -88,7 +87,7 @@ public class TTTState extends GameStateImpl {
     public void setTried(char p, int field) {
         s.set(4 * field + (p == 'x' ? 2 : 3), true);
     }
-    
+
     private void deleteTried(char p, int field) {
         s.set(4 * field + (p == 'x' ? 2 : 3), false);
     }
@@ -204,7 +203,9 @@ public class TTTState extends GameStateImpl {
 
     @Override
     public int hashCode() {
-        return s.hashCode();
+        if (hashCode == -1)
+            hashCode = s.hashCode();
+        return hashCode;
     }
 
     @Override
@@ -318,30 +319,30 @@ public class TTTState extends GameStateImpl {
             ex.printStackTrace();
         }
     }
-    
+
     @Override
     public void reverseAction() {
-    	TTTAction lastAction = (TTTAction)history.getLastAction();
-    	toMove = history.getLastPlayer().equals(TTTInfo.XPlayer) ? 'x' : 'o';
-    	if(toMove == 'x')
-    		reverseXAction(lastAction);
-    	else
-    		reverseOAction(lastAction);
-    	moveNum--;	
-    	super.reverseAction();
+        TTTAction lastAction = (TTTAction) history.getLastAction();
+        toMove = history.getLastPlayer().equals(TTTInfo.XPlayer) ? 'x' : 'o';
+        if (toMove == 'x')
+            reverseXAction(lastAction);
+        else
+            reverseOAction(lastAction);
+        moveNum--;
+        super.reverseAction();
     }
 
-	private void reverseOAction(TTTAction lastAction) {
-		deleteTried('o', lastAction.fieldID);
-		if ('o' == getSymbol(lastAction.fieldID)){
-			setSymbol(lastAction.fieldID, ' ');
-		}
-	}
+    private void reverseOAction(TTTAction lastAction) {
+        deleteTried('o', lastAction.fieldID);
+        if ('o' == getSymbol(lastAction.fieldID)) {
+            setSymbol(lastAction.fieldID, ' ');
+        }
+    }
 
-	private void reverseXAction(TTTAction lastAction) {
-		deleteTried('x', lastAction.fieldID);
-		if ('x' == getSymbol(lastAction.fieldID)){
-			setSymbol(lastAction.fieldID, ' ');
-		}	
-	}
+    private void reverseXAction(TTTAction lastAction) {
+        deleteTried('x', lastAction.fieldID);
+        if ('x' == getSymbol(lastAction.fieldID)) {
+            setSymbol(lastAction.fieldID, ' ');
+        }
+    }
 }
