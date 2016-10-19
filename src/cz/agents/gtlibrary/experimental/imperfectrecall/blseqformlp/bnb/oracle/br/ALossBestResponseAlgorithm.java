@@ -35,12 +35,12 @@ import java.util.*;
  */
 public class ALossBestResponseAlgorithm {
 
-    private boolean USE_STATE_CACHE = false;
-    private DummyMap<Action, GameState> dummyInstance = new DummyMap<>();
-    private Map<GameState, Map<Action, GameState>> stateCache;
+    protected boolean USE_STATE_CACHE = false;
+    protected DummyMap<Action, GameState> dummyInstance = new DummyMap<>();
+    protected Map<GameState, Map<Action, GameState>> stateCache;
 
     public long nodes = 0;
-    protected Expander expander;
+    protected Expander<? extends InformationSet> expander;
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<>();
     protected Map<Action, Double> opponentBehavioralStrategy = new HashMap<>();
     protected Map<Action, Double> myBehavioralStrategy = new HashMap<>();
@@ -55,10 +55,10 @@ public class ALossBestResponseAlgorithm {
     final protected double EPS_CONSTANT = 0.000000001; // zero for numerical-stability reasons
     protected ORComparator comparator;
     protected GameState gameTreeRoot = null;
-    private Set<Action> resultActions = new HashSet<>();
-    private Map<ISKey, Action> firstLevelActions = new HashMap<>();
+    protected Set<Action> resultActions = new HashSet<>();
+    protected Map<ISKey, Action> firstLevelActions = new HashMap<>();
 
-    public ALossBestResponseAlgorithm(GameState root, Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse) {
+    public ALossBestResponseAlgorithm(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse) {
         this.searchingPlayerIndex = searchingPlayerIndex;
         this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
         this.players = actingPlayers;
@@ -287,7 +287,7 @@ public class ALossBestResponseAlgorithm {
         return returnValue;
     }
 
-    private double getOpponentProbability(Sequence sequence) {
+    protected double getOpponentProbability(Sequence sequence) {
         double probability = 1;
 
         for (Action action : sequence) {
@@ -711,8 +711,7 @@ public class ALossBestResponseAlgorithm {
 
             if (currentState.isPlayerToMoveNature()) {
                 List<Action> actions = expander.getActions(currentState);
-                Map<Action, GameState> successors = stateCache.computeIfAbsent(currentState, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance)
-                ;
+                Map<Action, GameState> successors = stateCache.computeIfAbsent(currentState, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
 
                 for (Action action : actions) {
                     GameState newState = successors.computeIfAbsent(action, a -> currentState.performAction(a));
@@ -721,8 +720,7 @@ public class ALossBestResponseAlgorithm {
                 }
             } else if (!currentState.getPlayerToMove().equals(mainPlayer)) {
                 List<Action> actions = expander.getActions(currentState);
-                Map<Action, GameState> successors = stateCache.computeIfAbsent(currentState, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance)
-                ;
+                Map<Action, GameState> successors = stateCache.computeIfAbsent(currentState, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
                 boolean noUpdate = true;
 
                 if (!neverCheckOppAgain && !notVisitedDueToOpponent(currentState)) {
@@ -771,7 +769,7 @@ public class ALossBestResponseAlgorithm {
         return alternativeNodes;
     }
 
-    private boolean notVisitedDueToOpponent(GameState currentState) {
+    protected boolean notVisitedDueToOpponent(GameState currentState) {
         return Math.abs(getOpponentProbability(currentState.getSequenceFor(players[opponentPlayerIndex]))) < 1e-8;
     }
 

@@ -30,6 +30,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Change;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Changes;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.LimitedActionsALossBRAlgorithm;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleALossRecallBestResponse;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.DoubleOracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
@@ -48,12 +49,13 @@ import ilog.cplex.IloCplex;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = false;
+    public static boolean EXPORT_GBT = true;
     public static boolean SAVE_LPS = false;
-    public static boolean RESOLVE_CURRENT_BEST = false;
+    public static boolean RESOLVE_CURRENT_BEST = true;
     public static boolean STATE_CACHE_USE = true;
     public static double EPS = 1e-3;
     public Map<GameState, Map<Action, GameState>> stateCache;
@@ -63,7 +65,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     private long testTime = 0;
 
     public static void main(String[] args) {
-        new Scanner(System.in).next();
+//        new Scanner(System.in).next();
 //        runRandomGame();
         runAbstractedRandomGame();
 //        runTTT();
@@ -318,6 +320,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public void solve(DoubleOracleIRConfig restrictedGameConfig) {
         long selfStart = mxBean.getCurrentThreadCpuTime();
+        restrictedGameConfig.setBr(new LimitedActionsALossBRAlgorithm(root, expander, 1 - player.getId(),
+                new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]}, restrictedGameConfig, gameInfo, stateCache));
         expansionCount = 0;
 
         strategyLP = new StrategyLP(restrictedGameConfig);
@@ -439,6 +443,14 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6 - getLpBuildingTime() - getBRTime() - getExpanderTime() - getCPLEXTime() - getStrategyLPTime());
     }
 
+    protected void initRestrictedGame(SequenceFormIRConfig restrictedGameConfig) {
+        Map<Action, Double> bestResponse = br.getBestResponse(new HashMap<>());
+        Map<Sequence, Set<Action>> bestResponseCombo = new HashMap<>();
+
+        addTo(root, bestResponseCombo, bestResponse, (DoubleOracleIRConfig) restrictedGameConfig);
+        ((TempLeafDoubleOracleGameExpander)gameExpander).expand(restrictedGameConfig, bestResponse, bestResponseCombo);
+    }
+
     protected void updateCurrentBest(SequenceFormIRConfig restrictedGameConfig) {
         table.clearTable();
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
@@ -482,9 +494,9 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        assert isConvexCombination(maxPlayerStrategy, lpData, config);
         Pair<Double, Map<Action, Double>> lowerBoundAndBR = getLowerBoundAndBR(maxPlayerStrategy);
         double lpUB = getUpperBound(lpData);
-        List<Map<Action, Double>> possibleBestResponses = getPossibleBestResponseActions(lpData, config);
+//        List<Map<Action, Double>> possibleBestResponses = getPossibleBestResponseActions(lpData, config);
 
-        possibleBestResponses.add(lowerBoundAndBR.getRight());
+//        possibleBestResponses.add(lowerBoundAndBR.getRight());
 
 //        Pair<GameState, Double> bestPending = ((DoubleOracleIRConfig) config).getBestPending(possibleBestResponses, opponent);
         double upperBound = /*bestPending == null ? */lpUB /*: Math.max(lpUB, bestPending.getRight())*/;
@@ -495,7 +507,42 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
         assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
         return new DoubleOracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, action, exactProbability,
-                mostBrokenActionValue, extractRPStrategy(config, lpData), maxPlayerStrategy, lowerBoundAndBR.getRight(), expansionCount, possibleBestResponses, lpUB);
+                mostBrokenActionValue, extractRPStrategy(config, lpData), maxPlayerStrategy, lowerBoundAndBR.getRight(),
+                expansionCount, null, lpUB, clear(getContinuationMap(lpData, lowerBoundAndBR.getRight(), (DoubleOracleIRConfig) config), (DoubleOracleIRConfig) config));
+    }
+
+    private Map<Sequence, Set<Action>> clear(Map<Sequence, Set<Action>> continuationMap, DoubleOracleIRConfig config) {
+        clear(root, continuationMap, config);
+        return continuationMap;
+    }
+
+    private boolean clear(GameState state, Map<Sequence, Set<Action>> continuationMap, DoubleOracleIRConfig config) {
+        if (state.isGameEnd() || config.getTerminalStates().contains(state))
+            return false;
+        List<Action> actions = expander.getActions(state);
+        Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> STATE_CACHE_USE ? new HashMap<>(actions.size()) : dummyInstance);
+
+        if (state.isPlayerToMoveNature() || state.getPlayerToMove().equals(player)) {
+            Set<Boolean> collect = actions.stream()
+                    .map(action -> successors.computeIfAbsent(action, a -> state.performAction(a)))
+                    .filter(s -> state.isPlayerToMoveNature() || config.getSequencesFor(player).contains(s.getSequenceFor(player)))
+                    .map(s -> clear(s, continuationMap, config)).collect(Collectors.toSet());
+
+            return collect.contains(true);
+        }
+        Set<Action> availableActions = continuationMap.get(state.getSequenceForPlayerToMove());
+
+        if (availableActions == null)
+            return true;
+        for (Action action : actions) {
+            if (!availableActions.contains(action))
+                continue;
+            boolean cleared = clear(successors.computeIfAbsent(action, a -> state.performAction(a)), continuationMap, config);
+
+            if (cleared)
+                availableActions.remove(action);
+        }
+        return availableActions.isEmpty();
     }
 
     protected OracleCandidate createLightWeightCandidate(Changes changes, LPData lpData, SequenceFormIRConfig config) throws IloException {
@@ -519,10 +566,14 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
         assert lowerBoundAndBR.getLeft() <= upperBound + 1e-6;
         return new DoubleOracleCandidate(lowerBoundAndBR.getLeft(), upperBound, changes, null, null,
-                mostBrokenActionValue, extractRPStrategy(config, lpData), maxPlayerStrategy, lowerBoundAndBR.getRight(), expansionCount, null, lpUB);
+                mostBrokenActionValue, extractRPStrategy(config, lpData), maxPlayerStrategy, lowerBoundAndBR.getRight(), expansionCount, null, lpUB, null);
     }
 
     protected List<Map<Action, Double>> getPossibleBestResponseActions(LPData lpData, SequenceFormIRConfig config) throws IloException {
+        return splitToSeparateBRs(getContinuationMap(lpData), config);
+    }
+
+    private Map<Sequence, Set<Action>> getContinuationMap(LPData lpData) throws IloException {
         Map<Sequence, Set<Action>> possibleBestResponseActions = new HashMap<>();
 
         for (Map.Entry<Object, IloRange> entry : lpData.getWatchedDualVariables().entrySet()) {
@@ -534,7 +585,38 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     possibleBestResponseActions.put(((Triplet<InformationSet, Sequence, Action>) entry.getKey()).getSecond(), currentActions);
                 }
         }
-        return splitToSeparateBRs(possibleBestResponseActions, config);
+        return possibleBestResponseActions;
+    }
+
+    private Map<Sequence, Set<Action>> getContinuationMap(LPData lpData, Map<Action, Double> br, DoubleOracleIRConfig config) throws IloException {
+        Map<Sequence, Set<Action>> possibleBestResponseActions = getContinuationMap(lpData);
+
+        addTo(possibleBestResponseActions, br, config);
+        return possibleBestResponseActions;
+    }
+
+    private void addTo(Map<Sequence, Set<Action>> possibleBestResponseActions, Map<Action, Double> br, DoubleOracleIRConfig config) {
+        addTo(root, possibleBestResponseActions, br, config);
+    }
+
+    private void addTo(GameState state, Map<Sequence, Set<Action>> possibleBestResponseActions, Map<Action, Double> br, DoubleOracleIRConfig config) {
+        if (state.isGameEnd())
+            return;
+        List<Action> actions = expander.getActions(state);
+        Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> STATE_CACHE_USE ? new HashMap<>(actions.size()) : dummyInstance);
+
+        if (state.isPlayerToMoveNature() || state.getPlayerToMove().equals(player)) {
+            actions.stream()
+                    .map(action -> successors.computeIfAbsent(action, a -> state.performAction(a)))
+                    .forEach(s -> addTo(s, possibleBestResponseActions, br, config));
+            return;
+        }
+        actions.stream().filter(a -> br.getOrDefault(a, 0d) > 1-1e-8).forEach(action -> {
+            Set<Action> possibleActions = possibleBestResponseActions.computeIfAbsent(state.getSequenceForPlayerToMove(), s -> new HashSet<>());
+
+            possibleActions.add(action);
+            addTo(successors.computeIfAbsent(action, a -> state.performAction(a)), possibleBestResponseActions, br, config);
+        });
     }
 
     protected void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
@@ -572,7 +654,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //                    ((TempLeafDoubleOracleGameExpander) gameExpander).updatePendingAndTempLeafsForced(root, (DoubleOracleIRConfig) config, ((DoubleOracleCandidate)candidate).getPossibleBestResponses());
 //                   assert ((DoubleOracleIRConfig) config).pendingAvailable(expander, candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses(), gameInfo.getOpponent(player)) == ((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses());
 //                    testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
-                    if (((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses())) {
+                    ((TempLeafDoubleOracleGameExpander) gameExpander).tempHack = candidate.getContinuationMap();
+                    if (((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getContinuationMap())) {
                         candidate.setUb(Double.POSITIVE_INFINITY);
                     }
                     if (isConverged(candidate)) {

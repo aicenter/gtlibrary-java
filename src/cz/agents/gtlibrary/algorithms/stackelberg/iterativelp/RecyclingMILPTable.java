@@ -59,4 +59,9 @@ public class RecyclingMILPTable extends RecyclingLPTable {
     private IloNumVar createBinaryVar(String varName) throws IloException {
         return cplex.boolVar(varName);
     }
+
+    public void clearTable() {
+        super.clearTable();
+        binaryVariables.clear();
+    }
 }
