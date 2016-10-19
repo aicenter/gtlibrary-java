@@ -85,10 +85,10 @@ public class BilinearSequenceFormBnB {
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
 //        runRandomGame();
-//        runAbstractedRandomGame();
+        runAbstractedRandomGame();
 //        runKuhnPoker();
 //        runGenericPoker();
-        runBPG();
+//        runBPG();
 //        runBRTest();
     }
 
@@ -806,7 +806,7 @@ public class BilinearSequenceFormBnB {
     }
 
     protected boolean isConverged(double globalLB, double globalUB) {
-        return Math.abs(globalUB - globalLB) < 1e-4 * gameInfo.getMaxUtility();
+        return Math.abs(globalUB - globalLB) < 1e-4 * gameInfo.getMaxUtility() || globalLB > globalLB;
     }
 
     protected void buildBaseLP(BilinearTable table, SequenceFormIRConfig config) {

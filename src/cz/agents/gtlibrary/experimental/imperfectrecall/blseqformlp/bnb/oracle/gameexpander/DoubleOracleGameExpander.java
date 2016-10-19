@@ -131,7 +131,7 @@ public class DoubleOracleGameExpander implements GameExpander {
                 if (added)
                     removeTemporaryLeaf(alternativeState, config);
                 else
-                    addTemporaryLeafIfNotPresent(alternativeState, config, minPlayerBestResponse);
+                    addTemporaryLeafIfNotPresentForStrategy(alternativeState, config, minPlayerBestResponse);
             }
             return;
         }
@@ -154,7 +154,7 @@ public class DoubleOracleGameExpander implements GameExpander {
             if (added)
                 removeTemporaryLeaf(alternativeState, config);
             else
-                addTemporaryLeafIfNotPresent(alternativeState, config, minPlayerBestResponse);
+                addTemporaryLeafIfNotPresentForStrategy(alternativeState, config, minPlayerBestResponse);
         }
     }
 
@@ -217,20 +217,20 @@ public class DoubleOracleGameExpander implements GameExpander {
 
     protected void expand(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         if(!config.getTerminalStates().contains(tempLeaf)) {
-           addTemporaryLeafIfNotPresent(tempLeaf, config, minPlayerBestResponse);
+           addTemporaryLeafIfNotPresentForStrategy(tempLeaf, config, minPlayerBestResponse);
             return;
         }
         Action action = null;
         for (GameState gameState : config.getInformationSetFor(tempLeaf).getAllStates()) {
             removeTemporaryLeaf(gameState, config);
             if (gameState.getPlayerToMove().equals(minPlayer))
-                addTempLeafAfterActionFrom(gameState, config, minPlayerBestResponse);
+                addTempLeafAfterActionFromForStrategy(gameState, config, minPlayerBestResponse);
             else
-                action = addTempLeafAfterBestResponseAction(gameState, config, minPlayerBestResponse, action);
+                action = addTempLeafAfterBestResponseActionForStrategy(gameState, config, minPlayerBestResponse, action);
         }
     }
 
-    protected Action addTempLeafAfterBestResponseAction(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse, Action previousAction) {
+    protected Action addTempLeafAfterBestResponseActionForStrategy(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse, Action previousAction) {
         if (tempLeaf.isGameEnd())
             return previousAction;
         if (previousAction != null) {
@@ -273,13 +273,13 @@ public class DoubleOracleGameExpander implements GameExpander {
         sequenceCombinationUtilityContribution.put(state, utility);
     }
 
-    protected void addTempLeafAfterActionFrom(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+    protected void addTempLeafAfterActionFromForStrategy(GameState tempLeaf, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         for (Action action : expander.getActions(tempLeaf)) {
             if (minPlayerBestResponse.getOrDefault(action, 0d) > 1e-8) {
                 GameState state = tempLeaf.performAction(action);
 
                 config.addInformationSetFor(state);
-                addTemporaryLeafIfNotPresent(state, config, minPlayerBestResponse);
+                addTemporaryLeafIfNotPresentForStrategy(state, config, minPlayerBestResponse);
                 tempAddedActions.add(action);
                 return;
             }
@@ -291,7 +291,7 @@ public class DoubleOracleGameExpander implements GameExpander {
         expandRecursively(state, config, maxPlayerBestResponse, candidate.getMinPlayerBestResponse());
     }
 
-    protected void addTemporaryLeafIfNotPresent(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
+    protected void addTemporaryLeafIfNotPresentForStrategy(GameState state, SequenceFormIRConfig config, Map<Action, Double> minPlayerBestResponse) {
         if (temporaryLeafBlackList.contains(state))
             return;
         if (config.getTerminalStates().contains(state) || state.isGameEnd())
