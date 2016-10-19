@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 
 public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceFormBnB {
     public static boolean DEBUG = false;
-    public static boolean EXPORT_GBT = true;
+    public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
     public static boolean RESOLVE_CURRENT_BEST = true;
     public static boolean STATE_CACHE_USE = true;
@@ -65,10 +65,10 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     private long testTime = 0;
 
     public static void main(String[] args) {
-//        new Scanner(System.in).next();
+        new Scanner(System.in).next();
 //        runRandomGame();
-        runAbstractedRandomGame();
-//        runTTT();
+//        runAbstractedRandomGame();
+        runTTT();
 //        runBPG();
 //        runBRTest();
 //        runKuhnPoker();
@@ -345,6 +345,9 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
             Queue<Candidate> fringe = new PriorityQueue<>();
 
             currentBest = createCandidate(lpData, restrictedGameConfig);
+            if (((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, restrictedGameConfig, ((DoubleOracleCandidate)currentBest).getMaxPlayerStrategy(), ((DoubleOracleCandidate)currentBest).getContinuationMap())) {
+                currentBest.setUb(Double.POSITIVE_INFINITY);
+            }
             if (DEBUG) System.out.println("most violated action: " + currentBest.getAction());
             if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
 
@@ -357,12 +360,12 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                 it++;
 //                System.out.println(current.getPrecisionError());
 //                System.out.println(current + " vs " + currentBest);
-                if (isConverged(current) && it > 2) {
+                if (isConverged(current)) {
                     currentBest = current;
                     System.out.println(current);
                     break;
                 }
-                if (Math.abs(currentBest.getLb() - current.getUb()) < 1e-4 * gameInfo.getMaxUtility() && it > 2) {
+                if (Math.abs(currentBest.getLb() - current.getUb()) < 1e-4 * gameInfo.getMaxUtility()) {
                     System.out.println(currentBest);
                     break;
                 }
