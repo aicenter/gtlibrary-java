@@ -55,7 +55,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     public static boolean DEBUG = false;
     public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
-    public static boolean RESOLVE_CURRENT_BEST = true;
+    public static boolean RESOLVE_CURRENT_BEST = false;
     public static boolean STATE_CACHE_USE = true;
     public static double EPS = 1e-3;
     public Map<GameState, Map<Action, GameState>> stateCache;
@@ -65,11 +65,11 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     private long testTime = 0;
 
     public static void main(String[] args) {
-        new Scanner(System.in).next();
+//        new Scanner(System.in).next();
 //        runRandomGame();
 //        runAbstractedRandomGame();
-        runTTT();
-//        runBPG();
+//        runTTT();
+        runBPG();
 //        runBRTest();
 //        runKuhnPoker();
 //        runGenericPoker();
@@ -218,7 +218,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         System.out.println("cuts: " + solver.cuts);
         System.out.println("invalid cuts: " + solver.invalidCuts);
         System.out.println("IS count: " + config.getAllInformationSets().size());
-        System.out.println("Sequence count: " + config.getSequencesFor(TTTInfo.XPlayer) + ", " + config.getSequencesFor(TTTInfo.OPlayer));
+        System.out.println("Sequence count: " + config.getSequencesFor(TTTInfo.XPlayer).size() + ", " + config.getSequencesFor(TTTInfo.OPlayer).size());
         return solver.finalValue;
     }
 
@@ -392,13 +392,13 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //
 //                    fringe.add(samePrecisionCandidate);
                     if (expansionCount > current.getExpansionCount()) {
-//                        System.out.println("expand");
+                        System.out.println("expand " + current.getPrecisionError());
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
                         if (RESOLVE_CURRENT_BEST && !current.getChanges().equals(currentBest.getChanges()))
                             updateCurrentBest(restrictedGameConfig);
                     } else {
-//                        System.out.println("prec");
+                        System.out.println("prec " + current.getPrecisionError());
                         assert current.getPrecisionError() > 1e-8;
                         addMiddleChildOf(current, fringe, restrictedGameConfig);
                         addLeftChildOf(current, fringe, restrictedGameConfig);

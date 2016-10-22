@@ -31,6 +31,7 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 public class TTTAction extends ActionImpl  {
 	
 	private static final long serialVersionUID = -542752552988722459L;
+    private int hashCode = -1;
 	
 	public byte fieldID;
 
@@ -70,20 +71,23 @@ public class TTTAction extends ActionImpl  {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        if (!super.equals(obj))	return false;
         final TTTAction other = (TTTAction) obj;
+
         if (this.fieldID != other.fieldID) {
             return false;
         }
+        if (!super.equals(obj))	return false;
         return true;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 37 * hash + this.fieldID;
-        if (getInformationSet() != null) hash = 37 * hash + (int) getInformationSet().hashCode();
-        return hash;
+        if(hashCode == -1) {
+            hashCode = 7;
+            hashCode = 37 * hashCode + this.fieldID;
+            if (getInformationSet() != null) hashCode = 37 * hashCode + getInformationSet().hashCode();
+        }
+        return hashCode;
     }
     
     

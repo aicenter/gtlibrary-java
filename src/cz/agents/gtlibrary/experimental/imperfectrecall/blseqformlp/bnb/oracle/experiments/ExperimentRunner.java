@@ -15,17 +15,19 @@ import java.lang.management.ThreadMXBean;
 public class ExperimentRunner {
     public static void main(String[] args) {
         if (args[0].equals("TTT")) {
-            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = true;
+            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = false;
+            DoubleOracleBilinearSequenceFormBnB.RESOLVE_CURRENT_BEST = Boolean.parseBoolean(args[1]);
             DoubleOracleBilinearSequenceFormBnB.runTTT();
         } else if (args[0].equals("BPG")) {
-            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = true;
+            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = false;
             BPGGameInfo.DEPTH = Integer.parseInt(args[1]);
             BPGGameInfo.SLOW_MOVES = Boolean.parseBoolean(args[2]);
-            if (args[3].equals("bnb"))
+            if (args[3].equals("bnb")) {
                 BilinearSequenceFormBnB.runBPG();
-            else
+            } else {
+                DoubleOracleBilinearSequenceFormBnB.RESOLVE_CURRENT_BEST = Boolean.parseBoolean(args[4]);
                 DoubleOracleBilinearSequenceFormBnB.runBPG();
-
+            }
         } else {
             DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = true;
             int BF = (args.length > 2) ? new Integer(args[2]) : RandomGameInfo.MAX_BF;
@@ -56,6 +58,7 @@ public class ExperimentRunner {
             } else if (args[4].equals("base")) {
                 BilinearSequenceFormLP.runAbstractedRandomGame();
             } else if (args[4].equals("dobnb")) {
+                DoubleOracleBilinearSequenceFormBnB.RESOLVE_CURRENT_BEST = Boolean.parseBoolean(args[5]);
                 DoubleOracleBilinearSequenceFormBnB.runAbstractedRandomGame();
             }
             System.out.println("-----------------------");

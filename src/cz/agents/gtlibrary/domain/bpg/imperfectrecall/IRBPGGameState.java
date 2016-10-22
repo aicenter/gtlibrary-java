@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.bpg.PatrollerAction;
 import cz.agents.gtlibrary.domain.bpg.data.BorderPatrollingGraph;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
@@ -82,11 +83,16 @@ public class IRBPGGameState extends BPGGameState {
             key = new ImperfectRecallISKey(attackerObservations, defenderObservations, null);
         } else {
             Observations attackerObservations = new Observations(BPGGameInfo.DEFENDER, BPGGameInfo.ATTACKER);
-
+//
 //            attackerObservations.add(new BPGDefenderAttackerObservation(flaggedNodesObservedByPatroller));
             Observations defenderObservations = new Observations(BPGGameInfo.DEFENDER, BPGGameInfo.DEFENDER);
-
+//
             defenderObservations.add(new BPGDefenderDefenderObservation(p1Position, p2Position, getSequenceFor(BPGGameInfo.DEFENDER).size()));
+            Sequence sequence = getSequenceForPlayerToMove();
+
+            if(!sequence.isEmpty())
+                defenderObservations.add(new BPGDefenderDefenderObservation(((PatrollerAction)sequence.getLast()).getFromNodeForP1(), ((PatrollerAction)sequence.getLast()).getFromNodeForP2(), getSequenceFor(BPGGameInfo.DEFENDER).size()));
+//            defenderObservations.add(new PerfectRecallObservation(super.getISKeyForPlayerToMove()));
             key = new ImperfectRecallISKey(defenderObservations, attackerObservations, null);
         }
         return key;
