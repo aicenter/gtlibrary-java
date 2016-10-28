@@ -7,6 +7,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.ir.IRGoofSpielGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
@@ -65,17 +68,18 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     private long testTime = 0;
 
     public static void main(String[] args) {
-//        new Scanner(System.in).next();
+        new Scanner(System.in).next();
 //        runRandomGame();
 //        runAbstractedRandomGame();
 //        runTTT();
-        runBPG();
+//        runBPG();
+        runGoofSpiel();
 //        runBRTest();
 //        runKuhnPoker();
 //        runGenericPoker();
     }
 
-    public static double runAbstractedRandomGame() {
+    public static double runAbstractedRandomGame() {    //dává smysl dávat tam middle podlě hodnoty té akce, nemělo by to třeba být něco jako furt bin půení a ve chvíli kdy mi vyjde pravděpodobnost na hraně tak dát middle?
         GameState wrappedRoot = new RandomGameState();
         SequenceFormConfig<SequenceInformationSet> wrappedConfig = new SequenceFormConfig<>();
         Expander<SequenceInformationSet> wrappedExpander = new RandomGameExpander<>(wrappedConfig);
@@ -121,6 +125,42 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        builder.build(root, config, expander);
 //        System.out.println("game build");
         DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(KPGameInfo.FIRST_PLAYER, root, expander, new KPGameInfo());
+
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+//        System.out.println("Information sets: " + config.getCountIS(0));
+//        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Expander time: " + solver.getExpanderTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
+        return solver.finalValue;
+    }
+
+    public static double runGoofSpiel() {
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new GSGameInfo());
+        GameState root = new IRGoofSpielGameState();
+        Expander<SequenceFormIRInformationSet> expander = new GoofSpielExpander<>(config);
+
+//        builder.build(root, config, expander);
+//        System.out.println("game build");
+        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(GSGameInfo.FIRST_PLAYER, root, expander, new GSGameInfo());
 
 //        GambitEFG exporter = new GambitEFG();
 //        exporter.write("RG.gbt", root, expander);

@@ -39,7 +39,7 @@ import java.util.Map;
  * Assumes that nodes with the same hashCode() of information set key pair belong to the same information set (without check on equals())
  */
 public class GambitEFG {
-    private boolean wActionLabels = false;
+    private boolean wActionLabels = true;
     private Map<ISKey, Integer> infSetIndices;
     private int maxIndex;
 

@@ -66,7 +66,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
             Arrays.fill(output, 0, K, 1.0 / K);
         } else {
             for (int i = 0; i < r.length; i++) {
-                output[i] = useEpsilonRM ? 1 - epsilon * Math.max(0, r[i]) / R + epsilon / K : Math.max(0, r[i]) / R;
+                output[i] = useEpsilonRM ? (1 - epsilon) * Math.max(0, r[i]) / R + epsilon / K : Math.max(0, r[i]) / R;
             }
         }
     }
