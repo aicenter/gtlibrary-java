@@ -31,6 +31,7 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
@@ -82,10 +83,10 @@ public class GeneralDoubleOracle {
 
     public static void main(String[] args) {
 //		runAC();
-        runBP();
+//        runBP();
 //        runGenericPoker();
 //        runKuhnPoker();
-//        runGoofSpiel();
+        runGoofSpiel();
 //        runRandomGame();
 //		runSimRandomGame();
 //                runLiarsDice();
@@ -184,7 +185,7 @@ public class GeneralDoubleOracle {
 
     public static void runGoofSpiel() {
         GSGameInfo.useFixedNatureSequence = true;
-        GameState rootState = new GoofSpielGameState();
+        GameState rootState = new IIGoofSpielGameState();
         GSGameInfo gameInfo = new GSGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new GoofSpielExpander<DoubleOracleInformationSet>(algConfig);

@@ -672,12 +672,12 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
     private double getUtilityUBForCombo(GameState state, Map<Sequence, Set<Action>> minPlayerBestResponses) {
         if (state.isGameEnd())
             return state.getUtilities()[maxPlayer.getId()];
-        assert !state.isPlayerToMoveNature();
         List<Action> actions = expander.getActions(state);
+        assert !state.isPlayerToMoveNature() || actions.size() == 1;
         Map<Action, GameState> successors = stateCache.computeIfAbsent(state,
                 s -> DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE ? new HashMap<>(actions.size()) : dummyInstance);
 
-        if (state.getPlayerToMove().equals(maxPlayer))
+        if (state.getPlayerToMove().equals(maxPlayer) || state.isPlayerToMoveNature())
             return expander.getActions(state).stream()
                     .mapToDouble(action -> getUtilityUBForCombo(successors.computeIfAbsent(action, a -> state.performAction(a)), minPlayerBestResponses)).max().getAsDouble();
         Set<Action> possibleContinuations = minPlayerBestResponses.getOrDefault(state.getSequenceFor(minPlayer), Collections.emptySet());
