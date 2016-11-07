@@ -88,8 +88,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 //        runIR();
 //        runML();
 //        runLR();
-        runAAAI();
-//        runAoS();
+//        runAAAI();
+        runAoS();
 //        runBPG();
     }
 
