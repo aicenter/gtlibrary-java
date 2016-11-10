@@ -310,8 +310,10 @@ public class BilinearSequenceFormBnB {
                 return;
             }
             fringe.add(currentBest);
+            int it = 0;
 
             while (!fringe.isEmpty()) {
+                it++;
                 Candidate current = pollCandidateWithUBHigherThanBestLB(fringe);
 
                 System.out.println(current + " vs " + currentBest);
@@ -899,7 +901,7 @@ public class BilinearSequenceFormBnB {
                     if (value != null)
                         sum += value;
                 }
-                if (Math.abs(1 - sum) > 1e-7)
+                if (Math.abs(1 - sum) > 1e-4)
                     return false;
             }
         }
@@ -916,7 +918,7 @@ public class BilinearSequenceFormBnB {
             for (Map.Entry<Sequence, Set<Sequence>> entry : informationSet.getOutgoingSequences().entrySet()) {
                 double incomingSeqProb = lpdata.getSolver().getValue(lpdata.getVariables()[table.getVariableIndex(entry.getKey())]);
 
-                if (incomingSeqProb > 1e-8)
+                if (incomingSeqProb > 1e-4)
                     for (Sequence outgoingSequence : entry.getValue()) {
                         double outgoingSeqProb = lpdata.getSolver().getValue(lpdata.getVariables()[table.getVariableIndex(outgoingSequence)]);
                         double behavStrat = outgoingSeqProb / incomingSeqProb;

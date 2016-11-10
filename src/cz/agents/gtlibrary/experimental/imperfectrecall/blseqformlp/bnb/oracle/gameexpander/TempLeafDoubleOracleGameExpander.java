@@ -20,7 +20,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
     long testTime = 0;
     private Map<GameState, Map<Action, GameState>> stateCache;
     private Map<Action, GameState> dummyInstance = new DummyMap<>();
-    public Map<Sequence, Set<Action>> tempHack = new HashMap<>();
+//    public Map<Sequence, Set<Action>> tempHack = new HashMap<>();
 
     public TempLeafDoubleOracleGameExpander(Player maxPlayer, GameState root, Expander<SequenceFormIRInformationSet> expander, GameInfo info) {
         super(maxPlayer, root, expander, info);
@@ -30,7 +30,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
     @Override
     public boolean expand(SequenceFormIRConfig config, OracleCandidate candidate) {
         brTime = 0;
-        tempHack = ((DoubleOracleCandidate) candidate).getContinuationMap();
+//        tempHack = ((DoubleOracleCandidate) candidate).getContinuationMap();
         long start = mxBean.getCurrentThreadCpuTime();
         int terminalLeafCount = config.getTerminalStates().size();
         int sequenceCount = config.getAllSequences().size();
@@ -636,38 +636,38 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
         return false;
     }
 
-    private double getUtilityUBForCombo(GameState state, List<Map<Action, Double>> minPlayerBestResponses) {
-        long testStart = mxBean.getCurrentThreadCpuTime();
-        double value = minPlayerBestResponses.stream().mapToDouble(bestResponse -> {
-            if (bestResponse.isEmpty())
-                return Double.NEGATIVE_INFINITY;
-            long start = mxBean.getCurrentThreadCpuTime();
-
-            br.getBestResponseIn(state, bestResponse);
-            brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
-            return br.getValue();
-        }).max().getAsDouble();
-
-//        if(tempHack != null) {
-        double value1 = getUtilityUBForCombo(state, tempHack);
-
-//            if(Math.abs(value - value1) > 1e-8) {
-//                getUtilityUBForCombo(state, tempHack);
-//                assert false;
-//            }
-//        }
-//        double value = Double.NEGATIVE_INFINITY;
-//        for (Map<Action, Double> bestResponse : minPlayerBestResponses) {
+//    private double getUtilityUBForCombo(GameState state, List<Map<Action, Double>> minPlayerBestResponses) {
+//        long testStart = mxBean.getCurrentThreadCpuTime();
+//        double value = minPlayerBestResponses.stream().mapToDouble(bestResponse -> {
+//            if (bestResponse.isEmpty())
+//                return Double.NEGATIVE_INFINITY;
 //            long start = mxBean.getCurrentThreadCpuTime();
 //
 //            br.getBestResponseIn(state, bestResponse);
 //            brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
-//            if (br.getValue() > value)
-//                value = br.getValue();
-//        }
-        testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
-        return value1;
-    }
+//            return br.getValue();
+//        }).max().getAsDouble();
+//
+////        if(tempHack != null) {
+//        double value1 = getUtilityUBForCombo(state, tempHack);
+//
+////            if(Math.abs(value - value1) > 1e-8) {
+////                getUtilityUBForCombo(state, tempHack);
+////                assert false;
+////            }
+////        }
+////        double value = Double.NEGATIVE_INFINITY;
+////        for (Map<Action, Double> bestResponse : minPlayerBestResponses) {
+////            long start = mxBean.getCurrentThreadCpuTime();
+////
+////            br.getBestResponseIn(state, bestResponse);
+////            brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
+////            if (br.getValue() > value)
+////                value = br.getValue();
+////        }
+//        testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
+//        return value1;
+//    }
 
     private double getUtilityUBForCombo(GameState state, Map<Sequence, Set<Action>> minPlayerBestResponses) {
         if (state.isGameEnd())
@@ -710,7 +710,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
     protected double getUtilityUB(GameState state, Map<Action, Double> minPlayerBestResponse) {
         long start = mxBean.getCurrentThreadCpuTime();
 
-        ((OracleALossRecallBestResponse) br).getBestResponseIn(state, minPlayerBestResponse);
+        br.getBestResponseIn(state, minPlayerBestResponse);
         brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
         return br.getValue();
     }

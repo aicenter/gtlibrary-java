@@ -3,8 +3,6 @@ package cz.agents.gtlibrary.domain.randomabstraction;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.domain.bpg.BPGExpander;
-import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -18,28 +16,31 @@ import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.util.*;
 
 public class RandomAbstractionGameStateFactory {
 
     public static void main(String[] args) {
-        GameState wrappedRoot = new RandomGameState();
-        SequenceFormConfig<SequenceInformationSet> config = new SequenceFormConfig<>();
-        Expander<SequenceInformationSet> wrappedExpander = new RandomGameExpander<>(config);
+        for (int i = 0; i <= 100; i++) {
+            RandomGameInfo.seed = i;
+            GameState wrappedRoot = new RandomGameState();
+            SequenceFormConfig<SequenceInformationSet> config = new SequenceFormConfig<>();
+            Expander<SequenceInformationSet> wrappedExpander = new RandomGameExpander<>(config);
 
-        FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
-        efg.generateCompleteGame();
+            FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
+            efg.generateCompleteGame();
 
-        GameState root = RandomAbstractionGameStateFactory.createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
-        Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new SequenceFormIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo())));
+            GameState root = RandomAbstractionGameStateFactory.createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+            Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new SequenceFormIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo())));
 
-        BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+            BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+            System.out.println(i + " " + ((SequenceFormIRConfig)expander.getAlgorithmConfig()).getSequencesFor(RandomGameInfo.FIRST_PLAYER).size() + " " + ((SequenceFormIRConfig)expander.getAlgorithmConfig()).getSequencesFor(RandomGameInfo.SECOND_PLAYER).size());
 
-        GambitEFG gambit = new GambitEFG();
-
-        gambit.buildAndWrite("test.gbt", root, expander);
+        }
+//        GambitEFG gambit = new GambitEFG();
+//
+//        gambit.buildAndWrite("test.gbt", root, expander);
     }
 
     public static RandomAbstractionGameState createRoot(GameState wrappedRoot, AlgorithmConfig<? extends SequenceInformationSet> config) {
