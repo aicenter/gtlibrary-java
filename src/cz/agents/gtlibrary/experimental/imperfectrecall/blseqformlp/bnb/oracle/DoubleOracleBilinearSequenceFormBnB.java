@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.imperfectrecall.AttackerIRBPGGameState;
 import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
@@ -13,6 +14,10 @@ import cz.agents.gtlibrary.domain.goofspiel.ir.IRGoofSpielGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
+import cz.agents.gtlibrary.domain.oshizumo.ir.IROshiZumoGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.imperfectrecall.IRTTTState;
@@ -68,12 +73,14 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     private long testTime = 0;
 
     public static void main(String[] args) {
-        new Scanner(System.in).next();
+//        new Scanner(System.in).next();
 //        runRandomGame();
 //        runAbstractedRandomGame();
 //        runTTT();
 //        runBPG();
-        runGoofSpiel();
+//        runAttackerBPG();
+//        runGoofSpiel();
+        runOshiZumo();
 //        runBRTest();
 //        runKuhnPoker();
 //        runGenericPoker();
@@ -161,6 +168,42 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        builder.build(root, config, expander);
 //        System.out.println("game build");
         DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(GSGameInfo.FIRST_PLAYER, root, expander, new GSGameInfo());
+
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+//        System.out.println("Information sets: " + config.getCountIS(0));
+//        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Expander time: " + solver.getExpanderTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
+        return solver.finalValue;
+    }
+
+    public static double runOshiZumo() {
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new OZGameInfo());
+        GameState root = new IROshiZumoGameState();
+        Expander<SequenceFormIRInformationSet> expander = new OshiZumoExpander<>(config);
+
+//        builder.build(root, config, expander);
+//        System.out.println("game build");
+        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(GSGameInfo.FIRST_PLAYER, root, expander, new OZGameInfo());
 
 //        GambitEFG exporter = new GambitEFG();
 //        exporter.write("RG.gbt", root, expander);
@@ -298,6 +341,42 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         return solver.finalValue;
     }
 
+    public static double runAttackerBPG() {
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new BPGGameInfo());
+        GameState root = new AttackerIRBPGGameState();
+        Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
+
+//        builder.build(root, config, expander);
+//        System.out.println("game build");
+        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(BPGGameInfo.ATTACKER, root, expander, new BPGGameInfo());
+
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+//        System.out.println("Information sets: " + config.getCountIS(0));
+//        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Expander time: " + solver.getExpanderTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
+        return solver.finalValue;
+    }
+
     protected static void runBRTest() {
         BasicGameBuilder builder = new BasicGameBuilder();
         SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
@@ -365,8 +444,10 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         expansionCount = 0;
 
         strategyLP = new StrategyLP(restrictedGameConfig);
+        System.out.println("before init");
         if (restrictedGameConfig.getAllInformationSets().isEmpty())
             initRestrictedGame(restrictedGameConfig);
+        System.out.println("RG initialized");
         long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
 
         buildBaseLP(table, restrictedGameConfig);
@@ -697,7 +778,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //                    ((TempLeafDoubleOracleGameExpander) gameExpander).updatePendingAndTempLeafsForced(root, (DoubleOracleIRConfig) config, ((DoubleOracleCandidate)candidate).getPossibleBestResponses());
 //                   assert ((DoubleOracleIRConfig) config).pendingAvailable(expander, candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses(), gameInfo.getOpponent(player)) == ((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses());
 //                    testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
-                    ((TempLeafDoubleOracleGameExpander) gameExpander).tempHack = candidate.getContinuationMap();
+//                    ((TempLeafDoubleOracleGameExpander) gameExpander).tempHack = candidate.getContinuationMap();
                     if (((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getContinuationMap())) {
                         candidate.setUb(Double.POSITIVE_INFINITY);
                     }

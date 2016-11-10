@@ -26,7 +26,6 @@ public class IRGoofSpielGameState extends IIGoofSpielGameState {
         super();
     }
 
-
     @Override
     public ISKey getISKeyForPlayerToMove() {
         if (key == null) {
@@ -35,8 +34,8 @@ public class IRGoofSpielGameState extends IIGoofSpielGameState {
             if (player.equals(GSGameInfo.FIRST_PLAYER)) {
                 Observations observations = new Observations(player, player);
 
-//                observations.add(new GSObservation(playerScore[player.getId()], new HashSet<>(getCardsFor(player))));
-                observations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
+                observations.add(new GSObservation(playerScore[player.getId()], new HashSet<>(getCardsFor(player))));
+//                observations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
                 key = new ImperfectRecallISKey(observations, null, null);
             } else {
                 Observations observations = new Observations(player, player);
