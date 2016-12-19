@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.iinodes.Observations;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class IROshiZumoGameState extends OshiZumoGameState {
@@ -44,22 +45,39 @@ public class IROshiZumoGameState extends OshiZumoGameState {
     @Override
     public ISKey getISKeyForPlayerToMove() {
         if (key == null) {
-//            if(getPlayerToMove().equals(OZGameInfo.FIRST_PLAYER)) {
-            Observations observations = new Observations(getPlayerToMove(), getPlayerToMove());
+            if (getPlayerToMove().equals(OZGameInfo.FIRST_PLAYER)) {
+                Observations observations = new Observations(getPlayerToMove(), getPlayerToMove());
 
-            observations.add(new OshiZumoBoardObservation(wrestlerLoc, currentPlayerIndex == 0 ? p1Coins : p2Coins));
-            Sequence sequence = getSequenceForPlayerToMove();
-            Sequence opponentSequence = getSequenceFor(players[1 - getPlayerToMove().getId()]);
-            List<Integer> wins = new ArrayList(sequence.size());
+                observations.add(new OshiZumoBoardObservation(wrestlerLoc, currentPlayerIndex == 0 ? p1Coins : p2Coins));
+                Sequence sequence = getSequenceForPlayerToMove();
+                Sequence opponentSequence = getSequenceFor(players[1 - getPlayerToMove().getId()]);
+                List<Integer> wins = new ArrayList(sequence.size());
 
-            for (int i = 0; i < sequence.size(); i++) {
-                wins.add((int) Math.signum(((OshiZumoAction) sequence.get(i)).compareTo((OshiZumoAction) opponentSequence.get(i))));
+                for (int i = 0; i < sequence.size(); i++) {
+                    wins.add((int) Math.signum(((OshiZumoAction) sequence.get(i)).compareTo((OshiZumoAction) opponentSequence.get(i))));
+                }
+                Observations opponentObservations = new Observations(getPlayerToMove(), players[1 - currentPlayerIndex]);
+
+                opponentObservations.add(new OpponentObservation(wins, isGameEnd()));
+                key = new ImperfectRecallISKey(observations, opponentObservations, null);
+            } else {
+
+                Observations observations = new Observations(getPlayerToMove(), getPlayerToMove());
+
+                observations.add(new OshiZumoBoardObservation(wrestlerLoc, currentPlayerIndex == 0 ? p1Coins : p2Coins));
+                Sequence sequence = getSequenceForPlayerToMove();
+                Sequence opponentSequence = getSequenceFor(players[1 - getPlayerToMove().getId()]);
+                List<Integer> wins = new ArrayList(sequence.size());
+
+                for (int i = 0; i < sequence.size(); i++) {
+                    wins.add((int) Math.signum(((OshiZumoAction) sequence.get(i)).compareTo((OshiZumoAction) opponentSequence.get(i))));
+                }
+                Observations opponentObservations = new Observations(getPlayerToMove(), players[1 - currentPlayerIndex]);
+
+                opponentObservations.add(new OpponentObservation(wins, isGameEnd()));
+                key = new ImperfectRecallISKey(observations, opponentObservations, null);
             }
-            Observations opponentObservations = new Observations(getPlayerToMove(), players[1 - currentPlayerIndex]);
-
-            opponentObservations.add(new OpponentObservation(wins));
-            key = new ImperfectRecallISKey(observations, opponentObservations, null);
-//            } else {
+//
 //                Observations observations = new Observations(players[currentPlayerIndex], players[1 - currentPlayerIndex]);
 //
 //                observations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
@@ -114,9 +132,11 @@ public class IROshiZumoGameState extends OshiZumoGameState {
 
     private class OpponentObservation implements Observation {
         protected List<Integer> wins;
+        protected boolean isGameEnd;
 
-        public OpponentObservation(List<Integer> wins) {
+        public OpponentObservation(List<Integer> wins, boolean isGameEnd) {
             this.wins = wins;
+            this.isGameEnd = isGameEnd;
         }
 
         @Override
@@ -126,13 +146,16 @@ public class IROshiZumoGameState extends OshiZumoGameState {
 
             OpponentObservation that = (OpponentObservation) o;
 
+            if (isGameEnd != that.isGameEnd) return false;
             return wins.equals(that.wins);
 
         }
 
         @Override
         public int hashCode() {
-            return wins.hashCode();
+            int result = wins.hashCode();
+            result = 31 * result + (isGameEnd ? 1 : 0);
+            return result;
         }
 
         @Override

@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.imperfectrecall.AttackerIRBPGGameState;
+import cz.agents.gtlibrary.domain.bpg.imperfectrecall.BothIRBPGGameState;
 import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
@@ -79,8 +80,9 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        runTTT();
 //        runBPG();
 //        runAttackerBPG();
+        runBothIRBPG();
 //        runGoofSpiel();
-        runOshiZumo();
+//        runOshiZumo();
 //        runBRTest();
 //        runKuhnPoker();
 //        runGenericPoker();
@@ -94,7 +96,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         efg.generateCompleteGame();
 
         DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo()));
-        GameState root = RandomAbstractionGameStateFactory.createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, config);
         DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, root, expander, new RandomAbstractionGameInfo(new RandomGameInfo()));
 
@@ -344,6 +346,42 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     public static double runAttackerBPG() {
         DoubleOracleIRConfig config = new DoubleOracleIRConfig(new BPGGameInfo());
         GameState root = new AttackerIRBPGGameState();
+        Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
+
+//        builder.build(root, config, expander);
+//        System.out.println("game build");
+        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(BPGGameInfo.ATTACKER, root, expander, new BPGGameInfo());
+
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+//        System.out.println("Information sets: " + config.getCountIS(0));
+//        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Expander time: " + solver.getExpanderTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
+        return solver.finalValue;
+    }
+
+    public static double runBothIRBPG() {
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new BPGGameInfo());
+        GameState root = new BothIRBPGGameState();
         Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
 
 //        builder.build(root, config, expander);

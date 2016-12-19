@@ -480,8 +480,8 @@ public class GeneralDoubleOracle {
                 if (realizationPlans.get(player).get(sequence) > 0) {
                     support_size[player.getId()]++;
 //                    maxIt[player.getId()] = Math.max(maxIt[player.getId()], algConfig.getIterationForSequence(sequence));
-                    if (DEBUG)
-                        debugOutput.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+//                    if (DEBUG)
+                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
                 }
             }
         }

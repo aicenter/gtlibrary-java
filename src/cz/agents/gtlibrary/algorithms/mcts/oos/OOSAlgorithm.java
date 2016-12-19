@@ -52,6 +52,9 @@ import cz.agents.gtlibrary.domain.ir.leftright.LRGameState;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLExpander;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLGameInfo;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
+import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -59,9 +62,7 @@ import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.ArrayDeque;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 
 /**
@@ -85,11 +86,12 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
 
     public static void main(String[] args) {
+        seed = Integer.parseInt(args[0]);
 //        runIR();
 //        runML();
 //        runLR();
-//        runAAAI();
-        runAoS();
+        runAAAI(Double.parseDouble(args[1]));
+//        runAoS();
 //        runBPG();
     }
 
@@ -157,25 +159,99 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         gambit.write("IROOSDomain.gbt", root, expander);
     }
 
-    private static void runAAAI() {
+    private static void runAAAI(double epsilon) {
         GameState root = new AAAIGameState();
         MCTSConfig config = new MCTSConfig();
         Expander<MCTSInformationSet> expander = new AAAIExpander<>(config);
         expander.getAlgorithmConfig().createInformationSetFor(root);
+//        Expander<SequenceFormIRInformationSet> sequenceExpander = new AAAIExpander<>(new SequenceFormIRConfig(new AAAIGameInfo()));
+//        BasicGameBuilder.build(root, sequenceExpander.getAlgorithmConfig(), sequenceExpander);
+        ALossBestResponseAlgorithm br0 = new ALossBestResponseAlgorithm(root, expander, 0, root.getAllPlayers(), expander.getAlgorithmConfig(), new AAAIGameInfo(), false);
+        ALossBestResponseAlgorithm br1 = new ALossBestResponseAlgorithm(root, expander, 1, root.getAllPlayers(), expander.getAlgorithmConfig(), new AAAIGameInfo(), false);
 
-
-        OOSAlgorithm oos = new OOSAlgorithm(AAAIGameInfo.FIRST_PLAYER, new OOSSimulator(expander, seed), root, expander);
+        OOSAlgorithm oos = new OOSAlgorithm(AAAIGameInfo.FIRST_PLAYER, new OOSSimulator(expander, seed), root, expander, 0.9, epsilon);
         SMJournalExperiments.buildCompleteTree(oos.getRootNode());
-        for (int i = 0; i < 1000000; i++) {
-            oos.runIterations(200000);
+        for (int i = 0; i < 2000000; i++) {
+            oos.runIterations(100000);
             Strategy strategy0 = StrategyCollector.getStrategyFor(oos.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
             Strategy strategy1 = StrategyCollector.getStrategyFor(oos.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
             System.out.println(strategy0);
             System.out.println(strategy1);
+            UtilityCalculator calculator = new UtilityCalculator(root, expander);
+
+            System.out.println("Avg. exp.: " + calculator.computeUtility(strategy0, strategy1));
+            System.out.println("P1 exploitability: " + -br1.calculateBR(root, tobehav(root, expander, strategy0, AAAIGameInfo.FIRST_PLAYER, new HashMap<>())));
+            System.out.println("P2 exploitability: " + -br0.calculateBR(root, tobehav(root, expander, strategy1, AAAIGameInfo.SECOND_PLAYER, new HashMap<>())));
+            System.out.println(br0.getBestResponse());
+            System.out.println(br1.getBestResponse());
         }
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("AAAIOOSDomain.gbt", root, expander);
+    }
+
+    private static Map<Sequence, Double> toRP(GameState root, Expander<? extends InformationSet> expander, Strategy strategy, Player player, Map<Sequence, Double> rp) {
+        rp.putIfAbsent(new ArrayListSequenceImpl(player), 1d);
+        if (root.isGameEnd())
+            return rp;
+        List<Action> actions = expander.getActions(root);
+
+        if (root.getPlayerToMove().equals(player)) {
+            double incomingProbability = rp.getOrDefault(root.getSequenceForPlayerToMove(), 0d);
+
+            if (incomingProbability > 1e-8) {
+                double sum = 0;
+                for (Action action : actions) {
+                    GameState nextState = root.performAction(action);
+                    Sequence continuation = nextState.getSequenceFor(player);
+                    double contProb = strategy.getOrDefault(continuation, 0d);
+
+                    sum += contProb;
+                    rp.put(continuation, incomingProbability * contProb);
+                    toRP(nextState, expander, strategy, player, rp);
+                }
+                assert Math.abs(sum - 1) < 1e-4;
+            }
+        } else {
+            for (Action action : actions) {
+                toRP(root.performAction(action), expander, strategy, player, rp);
+            }
+        }
+        return rp;
+    }
+
+    private static Map<Action, Double> tobehav(GameState root, Expander<? extends InformationSet> expander, Strategy strategy, Player player, Map<Action, Double> behav) {
+        if (root.isGameEnd())
+            return behav;
+        List<Action> actions = expander.getActions(root);
+
+        if (root.getPlayerToMove().equals(player)) {
+            double incomingProbability = strategy.getOrDefault(root.getSequenceForPlayerToMove(), 0d);
+
+            if (incomingProbability > 1e-8) {
+                double sum = 0;
+                double behavSum = 0;
+                for (Action action : actions) {
+                    GameState nextState = root.performAction(action);
+                    Sequence continuation = nextState.getSequenceFor(player);
+                    double contProb = strategy.getOrDefault(continuation, 0d);
+
+                    if(contProb > 0) {
+                        sum += contProb;
+                        behavSum += contProb / incomingProbability;
+                        behav.put(action, contProb / incomingProbability);
+                        tobehav(nextState, expander, strategy, player, behav);
+                    }
+                }
+                assert Math.abs(sum - incomingProbability) < 1e-4 || sum == 0;
+                assert Math.abs(behavSum - 1) < 1e-4|| sum == 0;
+            }
+        } else {
+            for (Action action : actions) {
+                tobehav(root.performAction(action), expander, strategy, player, behav);
+            }
+        }
+        return behav;
     }
 
     private static void runML() {
@@ -287,16 +363,19 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     }
 
     public Action runIterations(int iterations) {
+        double p0Value = 0;
+
         for (int i = 0; i < iterations / 2; i++) {
             if (curIS != rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble() <= delta);
             underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
-            iteration(rootNode, 1, 1, 1, 1, rootNode.getGameState().getAllPlayers()[0]);
+            p0Value = iteration(rootNode, 1, 1, 1, 1, rootNode.getGameState().getAllPlayers()[0]);
             underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
 //            if (rootNode.getGameState().getAllPlayers()[1].getId() == 1)
-                iteration(rootNode, 1, 1, 1, 1, rootNode.getGameState().getAllPlayers()[1]);
+            iteration(rootNode, 1, 1, 1, 1, rootNode.getGameState().getAllPlayers()[1]);
         }
         if (curIS == null || !curIS.getPlayer().equals(searchingPlayer)) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
+
         return Strategy.selectAction(distribution, rnd);
     }
 

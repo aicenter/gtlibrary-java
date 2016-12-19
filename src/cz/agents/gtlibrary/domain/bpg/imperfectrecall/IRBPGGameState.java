@@ -116,7 +116,7 @@ public class IRBPGGameState extends BPGGameState {
         return hcb.toHashCode();
     }
 
-    class BPGDefenderAttackerObservation implements Observation {
+    static class BPGDefenderAttackerObservation implements Observation {
 
         protected Set<Node> flaggedNodesObservedByPatroller;
 
@@ -145,7 +145,7 @@ public class IRBPGGameState extends BPGGameState {
         }
     }
 
-    class BPGDefenderDefenderObservation implements Observation {
+    static class BPGDefenderDefenderObservation implements Observation {
 
         protected Node p1Position;
         protected Node p2Position;
