@@ -22,7 +22,6 @@ public class IDObservation implements Observation {
         IDObservation that = (IDObservation) o;
 
         return id == that.id;
-
     }
 
     @Override
