@@ -41,7 +41,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     /**
      * Mean strategy.
      */
-    double[] mp;
+    protected double[] mp;
     /**
      * Cumulative regret.
      */

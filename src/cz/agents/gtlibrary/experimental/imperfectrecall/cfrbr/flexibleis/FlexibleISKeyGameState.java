@@ -1,23 +1,21 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.flexibleis;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.*;
 
 public class FlexibleISKeyGameState extends GameStateImpl {
     private GameState wrappedState;
     private ISKey isKey;
 
-    public FlexibleISKeyGameState(GameStateImpl gameState) {
-        super(gameState);
+    public FlexibleISKeyGameState(GameState gameState) {
+        super(gameState.getAllPlayers());
         wrappedState = gameState;
     }
 
     @Override
     public void performActionModifyingThisState(Action action) {
-        super.performActionModifyingThisState(action);
         wrappedState.performActionModifyingThisState(action);
     }
 
@@ -27,8 +25,28 @@ public class FlexibleISKeyGameState extends GameStateImpl {
     }
 
     @Override
+    public Rational getExactProbabilityOfNatureFor(Action action) {
+        return wrappedState.getExactProbabilityOfNatureFor(action);
+    }
+
+    @Override
+    public History getHistory() {
+        return wrappedState.getHistory();
+    }
+
+    @Override
+    public Sequence getSequenceFor(Player player) {
+        return wrappedState.getSequenceFor(player);
+    }
+
+    @Override
+    public Sequence getSequenceForPlayerToMove() {
+        return wrappedState.getSequenceForPlayerToMove();
+    }
+
+    @Override
     public ISKey getISKeyForPlayerToMove() {
-        if(isKey == null)
+        if (isKey == null)
             return wrappedState.getISKeyForPlayerToMove();
         return isKey;
     }
@@ -44,7 +62,7 @@ public class FlexibleISKeyGameState extends GameStateImpl {
 
     @Override
     public GameState copy() {
-        return new FlexibleISKeyGameState(this);
+        return new FlexibleISKeyGameState(wrappedState.copy());
     }
 
     @Override
@@ -69,8 +87,17 @@ public class FlexibleISKeyGameState extends GameStateImpl {
 
     @Override
     public boolean equals(Object object) {
-        if(!(object instanceof FlexibleISKeyGameState))
+        if (!(object instanceof FlexibleISKeyGameState))
             return false;
-        return wrappedState.equals(object);
+        return wrappedState.equals(((FlexibleISKeyGameState)object).getWrappedState());
+    }
+
+    public GameState getWrappedState() {
+        return wrappedState;
+    }
+
+    @Override
+    public String toString() {
+        return wrappedState.toString();
     }
 }

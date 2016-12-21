@@ -27,7 +27,8 @@ import cz.agents.gtlibrary.interfaces.Player;
 public abstract class PokerAction extends ActionImpl {
 
 	private static final long serialVersionUID = 6347157865176927070L;
-	
+
+	protected String card;
 	protected final String action;
 	protected final Player player;
 
@@ -38,6 +39,15 @@ public abstract class PokerAction extends ActionImpl {
 		super(i);
 		this.action = action;
 		this.player = player;
+		cachedHash = computeHashCode();
+		cachedHashWithoutIS = computeHashCodeWithoutIS();
+	}
+
+	public PokerAction(String action, InformationSet i, Player player, String card) {
+		super(i);
+		this.action = action;
+		this.player = player;
+		this.card = card;
 		cachedHash = computeHashCode();
 		cachedHashWithoutIS = computeHashCodeWithoutIS();
 	}
@@ -79,7 +89,7 @@ public abstract class PokerAction extends ActionImpl {
 
 	@Override
 	public String toString() {
-		return "[" + action + ", " + player + ", " + getPlayersCard() + "]";
+		return "[" + action + ", " + player + ", " + card + "]";
 	}
 
 	@Override
@@ -130,7 +140,7 @@ public abstract class PokerAction extends ActionImpl {
 	}
 
     public String getPlayersCard() {
-        if (informationSet != null && player.getId() != 2 && !informationSet.getAllStates().isEmpty()) {
+        if (card != null) {
             return ((PokerGameState)informationSet.getAllStates().iterator().next()).getCardFor(player).getActionType();
         } else
             return "none";
