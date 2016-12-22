@@ -61,6 +61,11 @@ public class FlexibleISKeyGameState extends GameStateImpl {
     }
 
     @Override
+    public double getNatureProbability() {
+        return wrappedState.getNatureProbability();
+    }
+
+    @Override
     public GameState copy() {
         return new FlexibleISKeyGameState(wrappedState.copy());
     }

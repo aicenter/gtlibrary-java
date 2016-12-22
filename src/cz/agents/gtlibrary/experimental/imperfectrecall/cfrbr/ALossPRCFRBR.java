@@ -27,8 +27,6 @@ import cz.agents.gtlibrary.algorithms.cfr.ir.FixedForIterationData;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFR;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRConfig;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
@@ -39,6 +37,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.ir.IRGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.ir.IRKuhnPokerGameState;
@@ -57,6 +58,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,9 +69,10 @@ import java.util.Map;
 public class ALossPRCFRBR implements GamePlayingAlgorithm {
 
     public static void main(String[] args) {
-//        runIRKuhnPoker();
+        runIRKuhnPoker();
 //        runRandomAbstractionGame();
-        runIRBPG();
+//        runIRBPG();
+//        runIRGoofspiel();
     }
 
     private static void runIRBPG() {
@@ -80,6 +83,13 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         cfr.runIterations(10000);
     }
 
+    private static void runIRGoofspiel() {
+        GameState root = new IRGoofSpielGameState();
+        Expander<IRCFRInformationSet> expander = new GoofSpielExpander<>(new IRCFRConfig());
+        ALossPRCFRBR cfr = new ALossPRCFRBR(root.getAllPlayers()[0], root, expander, new GSGameInfo());
+
+        cfr.runIterations(10000);
+    }
 
     private static void runIRKuhnPoker() {
         GameState root = new IRKuhnPokerGameState();
@@ -87,7 +97,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
         ALossPRCFRBR cfr = new ALossPRCFRBR(root.getAllPlayers()[0], root, expander, new KPGameInfo());
 
-        cfr.runIterations(10000);
+        cfr.runIterations(100000);
     }
 
     private static void runRandomAbstractionGame() {
@@ -146,21 +156,19 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     public Action runIterations(int iterations) {
         for (int i = 0; i < iterations; i++) {
             if (regretMatchingPlayer.equals(rootState.getAllPlayers()[0])) {
-                regretMatchingIteration(rootState, 1, 1, rootState.getAllPlayers()[0]);
+                System.out.println("rm: " + regretMatchingIteration(rootState, 1, 1, rootState.getAllPlayers()[0]));
                 update();
-                bestResponseIteration();
-                update();
+                System.out.println("br: " + bestResponseIteration());
             } else {
                 regretMatchingIteration(rootState, 1, 1, rootState.getAllPlayers()[1]);
                 update();
                 bestResponseIteration();
-                update();
             }
             if (i % 100 == 0) {
                 Map<Action, Double> strategy = IRCFR.getStrategyFor(rootState, regretMatchingPlayer, new MeanStratDist(), config.getAllInformationSets(), expander);
 
-//                System.out.println(strategy);
-//                System.out.println(IRCFR.getStrategyFor(rootState, rootState.getAllPlayers()[1 - regretMatchingPlayer.getId()], new MeanStratDist(), config.getAllInformationSets(), expander));
+                System.out.println(strategy);
+                System.out.println(IRCFR.getStrategyFor(rootState, rootState.getAllPlayers()[1 - regretMatchingPlayer.getId()], new MeanStratDist(), config.getAllInformationSets(), expander));
                 System.out.println(br.calculateBR(rootState, strategy));
             }
         }
@@ -169,7 +177,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     }
 
     private void update() {
-        informationSets.values().forEach(informationSet -> informationSet.getData().applyUpdate());
+        informationSets.values().stream().filter(is -> is.getPlayer().equals(regretMatchingPlayer)).forEach(informationSet -> informationSet.getData().applyUpdate());
     }
 
     private double bestResponseIteration() {
@@ -241,7 +249,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
             is.setData(createAlgData(node));
             informationSets.put(node.getISKeyForPlayerToMove(), is);
         }
-        if (firstIteration && !is.getAllStates().contains(node)) {
+        if (!is.getAllStates().contains(node)) {
             config.addInformationSetFor(node, is);
         }
 
@@ -277,11 +285,21 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
             }
             ev += rmProbs[i] * tmpV[i];
         }
+        assert !is.getPlayer().equals(expPlayer) || isPureStrat(rmProbs) || isUniform(rmProbs);
         if (is.getPlayer().equals(expPlayer)) {
             update(node, pi1, pi2, expPlayer, data, rmProbs, tmpV, ev);
         }
 
         return ev;
+    }
+
+    private boolean isUniform(double[] rmProbs) {
+        return Arrays.stream(rmProbs).allMatch(v -> Math.abs(v - rmProbs[0]) < 1e-3) || Math.abs(Arrays.stream(rmProbs).sum() - 1) < 1e-3;
+    }
+
+    private boolean isPureStrat(double[] rmProbs) {
+        return Arrays.stream(rmProbs).filter(v -> v > 1e-3).allMatch(v -> Math.abs(v - 1) < 1e-3) &&
+                Arrays.stream(rmProbs).filter(v -> v > 1e-3).count() == 1;
     }
 
     protected FixedForIterationData createAlgData(GameState node) {
