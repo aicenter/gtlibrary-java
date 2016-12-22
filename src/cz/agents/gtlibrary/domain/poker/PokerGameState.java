@@ -338,7 +338,7 @@ public abstract class PokerGameState extends GameStateImpl {
         Iterator<PokerAction> iterator = sequenceForAllPlayers.iterator();
         int moveNum = 0;
 
-        hcb.append(playerCards[getPlayerToMove().getId()]);
+        hcb.append(playerCards[getPlayerToMove().getId()].getActionType());
         while (iterator.hasNext()) {
             hcb.append(iterator.next().observableISHash());
             hcb.append(moveNum++);

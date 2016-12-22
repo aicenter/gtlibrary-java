@@ -20,31 +20,39 @@ public class IRKuhnPokerGameState extends KuhnPokerGameState {
         super(gameState);
     }
 
+//    @Override
+//    public ISKey getISKeyForPlayerToMove() {
+//        if (isPlayerToMoveNature()) {
+//            Observations natureObs = new Observations(KPGameInfo.NATURE, KPGameInfo.NATURE);
+//
+//            natureObs.add(new PerfectPokerObservation(new ArrayListSequenceImpl(getSequenceForPlayerToMove())));
+//            return new ImperfectRecallISKey(null, null, natureObs);
+//        }
+//
+//        HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
+//        Iterator<PokerAction> iterator = sequenceForAllPlayers.iterator();
+//        int moveNum = 0;
+//
+//        hcb.append(playerCards[getPlayerToMove().getId()].getActionType());
+//        while (iterator.hasNext()) {
+//            hcb.append(iterator.next().observableISHash());
+//            hcb.append(moveNum++);
+//        }
+//        Observations ownObservation = new Observations(getPlayerToMove(), getPlayerToMove());
+//
+//        ownObservation.add(new PerfectPokerObservation(new ArrayListSequenceImpl(getSequenceForPlayerToMove())));
+//        Observations rest = new Observations(getPlayerToMove(), players[1 - getPlayerToMove().getId()]);
+//
+//        rest.add(new IntPokerObservation(hcb.toHashCode()));
+//        return new ImperfectRecallISKey(ownObservation, rest, null);
+//    }
+
     @Override
     public ISKey getISKeyForPlayerToMove() {
-        if (isPlayerToMoveNature()) {
-            Observations natureObs = new Observations(KPGameInfo.NATURE, KPGameInfo.NATURE);
+        Observations observations = new Observations(getPlayerToMove(), getPlayerToMove());
 
-            natureObs.add(new PerfectPokerObservation(new ArrayListSequenceImpl(getSequenceForPlayerToMove())));
-            return new ImperfectRecallISKey(null, null, natureObs);
-        }
-
-        HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
-        Iterator<PokerAction> iterator = sequenceForAllPlayers.iterator();
-        int moveNum = 0;
-
-        hcb.append(playerCards[getPlayerToMove().getId()].getActionType());
-        while (iterator.hasNext()) {
-            hcb.append(iterator.next().observableISHash());
-            hcb.append(moveNum++);
-        }
-        Observations ownObservation = new Observations(getPlayerToMove(), getPlayerToMove());
-
-        ownObservation.add(new PerfectPokerObservation(new ArrayListSequenceImpl(getSequenceForPlayerToMove())));
-        Observations rest = new Observations(getPlayerToMove(), players[1 - getPlayerToMove().getId()]);
-
-        rest.add(new IntPokerObservation(hcb.toHashCode()));
-        return new ImperfectRecallISKey(ownObservation, rest, null);
+        observations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
+        return new ImperfectRecallISKey(observations, null, null);
     }
 
     @Override
