@@ -36,8 +36,8 @@ import java.util.List;
  */
 public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider {
     public static boolean useEpsilonRM = false;
+    protected List<Action> actions;
     public static double epsilon = 0.001;
-    List<Action> actions;
     /**
      * Mean strategy.
      */
@@ -112,6 +112,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     @Override
     public List<Action> getActions() {
         return actions;
+    }
+
+    public void setActions(List<Action> actions) {
+        this.actions = actions;
     }
 
     @Override

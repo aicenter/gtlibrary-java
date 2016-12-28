@@ -14,10 +14,7 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
-import cz.agents.gtlibrary.iinodes.Observations;
+import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 import cz.agents.gtlibrary.utils.Pair;
@@ -43,6 +40,7 @@ public class IRBPGGameState extends BPGGameState {
         root = new BPGGameState();
         SequenceFormConfig<SequenceInformationSet> config1 = new SequenceFormConfig<>();
         Expander<SequenceInformationSet> expander1 = new BPGExpander<>(config1);
+
         FullSequenceEFG efg = new FullSequenceEFG(root, expander1, new BPGGameInfo(), config1);
         efg.generateCompleteGame();
         System.out.println(config1.getAllInformationSets().size());
@@ -92,7 +90,7 @@ public class IRBPGGameState extends BPGGameState {
 
             if(!sequence.isEmpty())
                 defenderObservations.add(new BPGDefenderDefenderObservation(((PatrollerAction)sequence.getLast()).getFromNodeForP1(), ((PatrollerAction)sequence.getLast()).getFromNodeForP2(), getSequenceFor(BPGGameInfo.DEFENDER).size()));
-//            defenderObservations.add(new PerfectRecallObservation(super.getISKeyForPlayerToMove()));
+            defenderObservations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
             key = new ImperfectRecallISKey(defenderObservations, attackerObservations, null);
         }
         return key;
