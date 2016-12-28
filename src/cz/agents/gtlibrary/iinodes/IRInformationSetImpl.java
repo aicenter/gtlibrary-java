@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class IRInformationSetImpl implements InformationSet {
     protected Player player;
-    protected LinkedHashSet<GameState> statesInformationSet = new LinkedHashSet<GameState>();
+    protected LinkedHashSet<GameState> statesInformationSet = new LinkedHashSet<>();
     private final int hashCode;
     private final ImperfectRecallISKey key;
 

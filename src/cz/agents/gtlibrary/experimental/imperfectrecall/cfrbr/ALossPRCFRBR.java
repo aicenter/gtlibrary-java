@@ -43,6 +43,7 @@ import cz.agents.gtlibrary.domain.goofspiel.ir.IRGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.ir.IRKuhnPokerGameState;
+import cz.agents.gtlibrary.domain.randomabstraction.IDObservation;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAlossAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
@@ -50,18 +51,19 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
-import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.flexibleis.FlexibleISKeyExpander;
-import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.flexibleis.FlexibleISKeyGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.flexibleisdomain.FlexibleISKeyExpander;
+import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.flexibleisdomain.FlexibleISKeyGameState;
+import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
+import cz.agents.gtlibrary.iinodes.Observations;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author vilo
@@ -69,8 +71,8 @@ import java.util.Map;
 public class ALossPRCFRBR implements GamePlayingAlgorithm {
 
     public static void main(String[] args) {
-        runIRKuhnPoker();
-//        runRandomAbstractionGame();
+//        runIRKuhnPoker();
+        runRandomAbstractionGame();
 //        runIRBPG();
 //        runIRGoofspiel();
     }
@@ -112,29 +114,40 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
 
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
-        ALossPRCFRBR cfr = new ALossPRCFRBR(root.getAllPlayers()[0], root, expander, new KPGameInfo());
+        ALossPRCFRBR cfr = new ALossPRCFRBR(root.getAllPlayers()[1], root, expander, new KPGameInfo());
 
-        cfr.runIterations(100);
+        cfr.runIterations(10000);
+        GambitEFG gambit = new GambitEFG();
+
+        gambit.write("cfrbrtest.gbt", root, expander);
     }
 
     protected Player regretMatchingPlayer;
+    protected Player brPlayer;
     protected BackPropFactory fact;
     protected FlexibleISKeyGameState rootState;
     protected ThreadMXBean threadBean;
     protected Expander<IRCFRInformationSet> expander;
     protected AlgorithmConfig<IRCFRInformationSet> config;
     protected ALossBestResponseAlgorithm br;
+    protected Map<GameState, ISKey> isKeys;
+    protected int isKeyCounter;
 
     protected HashMap<ISKey, IRCFRInformationSet> informationSets = new HashMap<>();
     protected boolean firstIteration = true;
 
     public ALossPRCFRBR(Player regretMatchingPlayer, GameState rootState, Expander<IRCFRInformationSet> expander, GameInfo info) {
+        isKeys = new HashMap<>();
         this.regretMatchingPlayer = regretMatchingPlayer;
-        this.rootState = new FlexibleISKeyGameState(rootState);
-        this.expander = new FlexibleISKeyExpander<>(expander);
+        this.brPlayer = info.getOpponent(regretMatchingPlayer);
+        this.rootState = new FlexibleISKeyGameState((GameStateImpl) rootState, isKeys);
+        this.expander = new FlexibleISKeyExpander<>(expander, new IRCFRConfig());
         this.config = expander.getAlgorithmConfig();
+        BasicGameBuilder.build(rootState, expander.getAlgorithmConfig(), expander);
+        BasicGameBuilder.build(this.rootState, this.expander.getAlgorithmConfig(), this.expander);
         br = new ALossBestResponseAlgorithm(this.rootState, this.expander, 1 - regretMatchingPlayer.getId(), new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, config, info, false);
         threadBean = ManagementFactory.getThreadMXBean();
+        isKeyCounter = Integer.MIN_VALUE;
     }
 
     @Override
@@ -191,9 +204,148 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
             return distribution;
         }, config.getAllInformationSets(), expander);
         double value = br.calculateBR(rootState, strategy);
-        updateData(rootState, br.getBestResponse(), strategy);
+        Map<Action, Double> bestResponse = br.getBestResponse();
 
+        updateISs(rootState, bestResponse, strategy);
+        updateData(rootState, bestResponse, strategy);
         return value;
+    }
+
+    private void updateISs(FlexibleISKeyGameState state, Map<Action, Double> bestResponse, Map<Action, Double> opponentStrategy) {
+        Map<Action, Double> avgStrategy = IRCFR.getStrategyFor(rootState, rootState.getAllPlayers()[1 - regretMatchingPlayer.getId()],
+                new MeanStratDist(), config.getAllInformationSets(), expander);
+        HashMap<ISKey, ExpectedValues> valueMap = new HashMap<>();
+        ExpectedValues expectedValues = getExpectedValues(state, bestResponse, avgStrategy, opponentStrategy, 1, 1, 1, valueMap);
+
+        valueMap.forEach((k, v) -> {
+            FixedForIterationData data = informationSets.get(k).getData();
+
+            v.updateExpectedExpectedValue(1. / (data.getNbSamples() + 1));
+        });
+        updateISStructure(state, bestResponse, opponentStrategy, valueMap);
+        informationSets.forEach((key, is) -> is.getData().setActions(expander.getActions(is)));
+    }
+
+    private void updateISStructure(GameState state, Map<Action, Double> bestResponse, Map<Action, Double> opponentStrategy, HashMap<ISKey, ExpectedValues> valueMap) {
+        if (state.isGameEnd())
+            return;
+        if (state.isPlayerToMoveNature()) {
+            expander.getActions(state).stream().map(a -> state.performAction(a)).forEach(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap));
+            return;
+        }
+        if (state.getPlayerToMove().equals(regretMatchingPlayer)) {
+            expander.getActions(state).stream().filter(a -> opponentStrategy.getOrDefault(a, 0d) > 1e-8).map(a -> state.performAction(a)).forEach(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap));
+            return;
+        }
+        IRCFRInformationSet is = informationSets.get(state.getISKeyForPlayerToMove());
+        ExpectedValues expectedValues = valueMap.get(state.getISKeyForPlayerToMove());
+        List<Action> actions = is.getData().getActions();
+        assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() == 1;
+
+        actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).map(a -> state.performAction(a)).forEach(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap));
+        if (expectedValues != null && expectedValues.getRealvsExpectedDistance() < -1e-3) {
+            Set<GameState> isStates = is.getAllStates();
+            Set<GameState> toRemove = new HashSet<>();
+
+            isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(state.getSequenceForPlayerToMove())).forEach(isState -> toRemove.add(isState));
+
+            if(toRemove.size() != isStates.size()) {
+                isStates.removeAll(toRemove);
+                createNewIS(toRemove);
+                System.err.println("creating IS");
+            }
+        }
+    }
+
+    private void createNewIS(Set<GameState> states) {
+        ImperfectRecallISKey newISKey = createNewISKey();
+        GameState state = states.stream().findAny().get();
+
+        states.forEach(s -> isKeys.put(s, newISKey));
+        IRCFRInformationSet is = config.createInformationSetFor(state);
+
+        config.addInformationSetFor(state, is);
+        is.addAllStatesToIS(states);
+        informationSets.put(newISKey, is);
+        is.setData(createAlgData(state));
+    }
+
+    private ImperfectRecallISKey createNewISKey() {
+        Observations observations = new Observations(brPlayer, brPlayer);
+
+        observations.add(new IDObservation(isKeyCounter++));
+        return new ImperfectRecallISKey(observations, null, null);
+    }
+
+
+    private ExpectedValues getExpectedValues(GameState state, Map<Action, Double> bestResponse,
+                                             Map<Action, Double> avgStrategy, Map<Action, Double> opponentStrategy,
+                                             double brProb, double currentProb, double newProb, Map<ISKey, ExpectedValues> valueMap) {
+        if (state.isGameEnd())
+            return new ExpectedValues(state.getUtilities()[1 - regretMatchingPlayer.getId()] * brProb,
+                    state.getUtilities()[1 - regretMatchingPlayer.getId()] * currentProb,
+                    state.getUtilities()[1 - regretMatchingPlayer.getId()] * newProb);
+        if (state.isPlayerToMoveNature()) {
+            ExpectedValues expectedValues = new ExpectedValues();
+
+            for (Action action : expander.getActions(state)) {
+                double actionNatureProb = state.getProbabilityOfNatureFor(action);
+                ExpectedValues expectedValuesForAction = getExpectedValues(state.performAction(action), bestResponse, avgStrategy, opponentStrategy,
+                        brProb * actionNatureProb, currentProb * actionNatureProb, newProb * actionNatureProb, valueMap);
+
+                expectedValues.add(expectedValuesForAction);
+            }
+            return expectedValues;
+        }
+        if (state.getPlayerToMove().equals(regretMatchingPlayer)) {
+            ExpectedValues expectedValues = new ExpectedValues();
+
+            for (Action action : expander.getActions(state)) {
+                double actionProb = opponentStrategy.getOrDefault(action, 0d);
+                ExpectedValues expectedValuesForAction = getExpectedValues(state.performAction(action),
+                        bestResponse, avgStrategy, opponentStrategy, brProb * actionProb, currentProb * actionProb, newProb * actionProb, valueMap);
+
+                expectedValues.add(expectedValuesForAction);
+            }
+            return expectedValues;
+        }
+        List<Action> actions = expander.getActions(state);
+        ExpectedValues expectedValues = valueMap.computeIfAbsent(state.getISKeyForPlayerToMove(), isKey -> new ExpectedValues());
+        double[] meanStrat = new double[actions.size()];
+        int actionIndex = 0;
+        FixedForIterationData data = informationSets.get(state.getISKeyForPlayerToMove()).getData();
+
+        System.arraycopy(data.getMp(), 0, meanStrat, 0, meanStrat.length);
+        meanStrat = updateAndNormalizeMeanStrat(meanStrat, bestResponse, actions);
+        for (Action action : actions) {
+            double actionProb = avgStrategy.getOrDefault(action, 0d);
+            double actionBRProb = bestResponse.getOrDefault(action, 0d);
+            ExpectedValues expectedValuesForAction = getExpectedValues(state.performAction(action),
+                    bestResponse, avgStrategy, opponentStrategy, brProb * actionBRProb, currentProb * actionProb, newProb * meanStrat[actionIndex++], valueMap);
+
+            expectedValues.add(expectedValuesForAction);
+        }
+        return expectedValues;
+    }
+
+    private double[] updateAndNormalizeMeanStrat(double[] meanStrat, Map<Action, Double> bestResponse, List<Action> actions) {
+        double sum = 0;
+        int index = 0;
+
+        for (int i = 0; i < meanStrat.length; i++) {
+            if (bestResponse.getOrDefault(actions.get(i), 0d) > 1 - 1e-3)
+                meanStrat[index]++;
+            sum += meanStrat[index++];
+        }
+        if (sum < 1 - 1e-3)
+            for (int i = 0; i < meanStrat.length; i++) {
+                meanStrat[i] = 1. / meanStrat.length;
+            }
+        else
+            for (int i = 0; i < meanStrat.length; i++) {
+                meanStrat[i] /= sum;
+            }
+        return meanStrat;
     }
 
     private void updateData(GameState state, Map<Action, Double> bestResponse, Map<Action, Double> strategy) {
@@ -243,6 +395,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         }
 
         IRCFRInformationSet is = informationSets.get(node.getISKeyForPlayerToMove());
+
         if (is == null) {
             is = config.createInformationSetFor(node);
             config.addInformationSetFor(node, is);

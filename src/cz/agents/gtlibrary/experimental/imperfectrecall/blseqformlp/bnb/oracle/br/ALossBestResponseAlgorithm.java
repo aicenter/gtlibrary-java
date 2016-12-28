@@ -757,8 +757,7 @@ public class ALossBestResponseAlgorithm {
                     Action actionToExecute = state.getSequenceFor(toMove).get(whichAction);
 
                     if (currentState.checkConsistency(actionToExecute)) {
-                        Map<Action, GameState> successors = stateCache.computeIfAbsent(currentState, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance)
-                        ;
+                        Map<Action, GameState> successors = stateCache.computeIfAbsent(currentState, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
                         GameState newState = successors.computeIfAbsent(actionToExecute, a -> currentState.performAction(a));
 
                         queue.push(newState);
