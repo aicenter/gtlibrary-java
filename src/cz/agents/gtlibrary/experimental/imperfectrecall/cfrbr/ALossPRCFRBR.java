@@ -65,9 +65,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
-/**
- * @author vilo
- */
 public class ALossPRCFRBR implements GamePlayingAlgorithm {
 
     public static void main(String[] args) {
@@ -116,10 +113,11 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
         ALossPRCFRBR cfr = new ALossPRCFRBR(root.getAllPlayers()[1], root, expander, new KPGameInfo());
 
-        cfr.runIterations(10000);
+        cfr.runIterations(1000);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("cfrbrtest.gbt", root, expander);
+        System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
     }
 
     protected Player regretMatchingPlayer;
@@ -145,7 +143,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         this.expander = new FlexibleISKeyExpander<>(expander, new IRCFRConfig(), informationSets);
         this.config = this.expander.getAlgorithmConfig();
         BasicGameBuilder.build(rootState, expander.getAlgorithmConfig(), expander);
-        BasicGameBuilder.build(this.rootState, this.expander.getAlgorithmConfig(), this.expander);
+//        BasicGameBuilder.build(this.rootState, this.expander.getAlgorithmConfig(), this.expander);
         br = new ALossBestResponseAlgorithm(this.rootState, this.expander, 1 - regretMatchingPlayer.getId(), new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, config, info, false);
         threadBean = ManagementFactory.getThreadMXBean();
         isKeyCounter = Integer.MIN_VALUE;
@@ -188,6 +186,8 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
             }
         }
         firstIteration = false;
+        System.out.println("Orig IS count: " + ((FlexibleISKeyExpander)expander).getWrappedExpander().getAlgorithmConfig().getAllInformationSets().size());
+        System.out.println("New IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         return null;
     }
 

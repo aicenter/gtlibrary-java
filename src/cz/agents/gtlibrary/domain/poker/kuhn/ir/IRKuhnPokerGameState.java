@@ -3,7 +3,10 @@ package cz.agents.gtlibrary.domain.poker.kuhn.ir;
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
-import cz.agents.gtlibrary.iinodes.*;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
+import cz.agents.gtlibrary.iinodes.Observations;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Observation;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -35,9 +38,10 @@ public class IRKuhnPokerGameState extends KuhnPokerGameState {
 
         hcb.append(playerCards[getPlayerToMove().getId()].getActionType());
         while (iterator.hasNext()) {
-            hcb.append(iterator.next().getActionType());
+//            hcb.append(iterator.next().getActionType());
             hcb.append(moveNum++);
         }
+        hcb.append(isGameEnd());
         Observations ownObservation = new Observations(getPlayerToMove(), getPlayerToMove());
 
 //        ownObservation.add(new PerfectPokerObservation(new ArrayListSequenceImpl(getSequenceForPlayerToMove())));
