@@ -45,6 +45,8 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.c
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.TempLeafDoubleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
+import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.cprr.CPRRExpander;
+import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.cprr.CPRRGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -75,12 +77,13 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
+        runCPRRAbstractedRandomGame();
 //        runRandomGame();
 //        runAbstractedRandomGame();
 //        runTTT();
 //        runBPG();
 //        runAttackerBPG();
-        runBothIRBPG();
+//        runBothIRBPG();
 //        runGoofSpiel();
 //        runOshiZumo();
 //        runBRTest();
@@ -88,7 +91,46 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        runGenericPoker();
     }
 
-    public static double runAbstractedRandomGame() {    //dává smysl dávat tam middle podlě hodnoty té akce, nemělo by to třeba být něco jako furt bin půení a ve chvíli kdy mi vyjde pravděpodobnost na hraně tak dát middle?
+    public static double runCPRRAbstractedRandomGame() {
+        GameState wrappedRoot = new RandomGameState();
+        SequenceFormConfig<SequenceInformationSet> wrappedConfig = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> wrappedExpander = new RandomGameExpander<>(wrappedConfig);
+        FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), wrappedConfig);
+        efg.generateCompleteGame();
+
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo()));
+        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, config);
+        CPRRExpander<SequenceFormIRInformationSet> cprrExpander = new CPRRExpander<>(expander);
+        DoubleOracleBilinearSequenceFormBnB solver = new DoubleOracleBilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, new CPRRGameState(root), cprrExpander, new RandomAbstractionGameInfo(new RandomGameInfo()));
+
+//        GambitEFG exporter = new GambitEFG();
+//        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(cprrExpander);
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+        System.out.println("Expander time: " + solver.getExpanderTime());
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("Oracle self time: " + solver.getSelfTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("P1 sequence count: " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size());
+        System.out.println("P2 sequence count: " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size());
+        System.out.println("Information set count: " + config.getAllInformationSets().size());
+        return solver.finalValue;
+    }
+
+    public static double runAbstractedRandomGame() {
         GameState wrappedRoot = new RandomGameState();
         SequenceFormConfig<SequenceInformationSet> wrappedConfig = new SequenceFormConfig<>();
         Expander<SequenceInformationSet> wrappedExpander = new RandomGameExpander<>(wrappedConfig);

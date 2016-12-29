@@ -22,12 +22,16 @@ public class FlexibleISKeyExpander<I extends InformationSet> extends ExpanderImp
 
     @Override
     public List<Action> getActions(GameState gameState) {
-        return wrappedExpander.getActions(((FlexibleISKeyGameState)gameState).getWrappedState()).stream().map(a ->
+        return wrappedExpander.getActions(((FlexibleISKeyGameState) gameState).getWrappedState()).stream().map(a ->
                 new FlexibleISAction(getAlgorithmConfig().getInformationSetFor(gameState), a, gameState, informationSets)).collect(Collectors.toList());
     }
 
     @Override
     public List<Action> getActions(I informationSet) {
         throw new UnsupportedOperationException("Actions need to be associated with states");
+    }
+
+    public Expander<I> getWrappedExpander() {
+        return wrappedExpander;
     }
 }
