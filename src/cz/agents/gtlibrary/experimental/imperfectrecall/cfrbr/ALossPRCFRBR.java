@@ -72,9 +72,9 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
 
     public static void main(String[] args) {
 //        runIRKuhnPoker();
-        runRandomAbstractionGame();
+//        runRandomAbstractionGame();
 //        runIRBPG();
-//        runIRGoofspiel();
+        runIRGoofspiel();
     }
 
     private static void runIRBPG() {
@@ -88,7 +88,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     private static void runIRGoofspiel() {
         GameState root = new IRGoofSpielGameState();
         Expander<IRCFRInformationSet> expander = new GoofSpielExpander<>(new IRCFRConfig());
-        ALossPRCFRBR cfr = new ALossPRCFRBR(root.getAllPlayers()[0], root, expander, new GSGameInfo());
+        ALossPRCFRBR cfr = new ALossPRCFRBR(root.getAllPlayers()[1], root, expander, new GSGameInfo());
 
         cfr.runIterations(10000);
     }
@@ -132,6 +132,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     protected ALossBestResponseAlgorithm br;
     protected Map<GameState, ISKey> isKeys;
     protected int isKeyCounter;
+    private int iteration = 0;
 
     protected HashMap<ISKey, IRCFRInformationSet> informationSets = new HashMap<>();
     protected boolean firstIteration = true;
@@ -141,8 +142,8 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         this.regretMatchingPlayer = regretMatchingPlayer;
         this.brPlayer = info.getOpponent(regretMatchingPlayer);
         this.rootState = new FlexibleISKeyGameState((GameStateImpl) rootState, isKeys);
-        this.expander = new FlexibleISKeyExpander<>(expander, new IRCFRConfig());
-        this.config = expander.getAlgorithmConfig();
+        this.expander = new FlexibleISKeyExpander<>(expander, new IRCFRConfig(), informationSets);
+        this.config = this.expander.getAlgorithmConfig();
         BasicGameBuilder.build(rootState, expander.getAlgorithmConfig(), expander);
         BasicGameBuilder.build(this.rootState, this.expander.getAlgorithmConfig(), this.expander);
         br = new ALossBestResponseAlgorithm(this.rootState, this.expander, 1 - regretMatchingPlayer.getId(), new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, config, info, false);
@@ -168,6 +169,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
 
     public Action runIterations(int iterations) {
         for (int i = 0; i < iterations; i++) {
+            this.iteration++;
             if (regretMatchingPlayer.equals(rootState.getAllPlayers()[0])) {
                 System.out.println("rm: " + regretMatchingIteration(rootState, 1, 1, rootState.getAllPlayers()[0]));
                 update();
@@ -207,7 +209,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         Map<Action, Double> bestResponse = br.getBestResponse();
 
         updateISs(rootState, bestResponse, strategy);
-        updateData(rootState, bestResponse, strategy);
+//        updateData(rootState, bestResponse, strategy);
         return value;
     }
 
@@ -223,7 +225,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
             v.updateExpectedExpectedValue(1. / (data.getNbSamples() + 1));
         });
         updateISStructure(state, bestResponse, opponentStrategy, valueMap);
-        informationSets.forEach((key, is) -> is.getData().setActions(expander.getActions(is)));
+        informationSets.forEach((key, is) -> is.getData().setActions(expander.getActions(is.getAllStates().stream().findAny().get())));
     }
 
     private void updateISStructure(GameState state, Map<Action, Double> bestResponse, Map<Action, Double> opponentStrategy, HashMap<ISKey, ExpectedValues> valueMap) {
@@ -239,8 +241,9 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         }
         IRCFRInformationSet is = informationSets.get(state.getISKeyForPlayerToMove());
         ExpectedValues expectedValues = valueMap.get(state.getISKeyForPlayerToMove());
-        List<Action> actions = is.getData().getActions();
+        List<Action> actions = expander.getActions(state);
         assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() == 1;
+        int actionIndex = getIndex(actions, bestResponse);
 
         actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).map(a -> state.performAction(a)).forEach(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap));
         if (expectedValues != null && expectedValues.getRealvsExpectedDistance() < -1e-3) {
@@ -249,15 +252,31 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
 
             isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(state.getSequenceForPlayerToMove())).forEach(isState -> toRemove.add(isState));
 
-            if(toRemove.size() != isStates.size()) {
+            if (toRemove.size() != isStates.size()) {
                 isStates.removeAll(toRemove);
-                createNewIS(toRemove);
-                System.err.println("creating IS");
+                IRCFRInformationSet newIS = createNewIS(toRemove);
+
+                ((CFRBRData) newIS.getData()).setRegretAtIndex(actionIndex, 1);
+                ((CFRBRData) newIS.getData()).updateMeanStrategy(actionIndex, 1);
+                updateBR(bestResponse, actions, actionIndex, state);
+                System.err.println("creating IS in it " + iteration + "\n old IS: " + is.getISKey() + "\n new IS " + newIS.getISKey());
+                return;
             }
         }
+        ((CFRBRData) is.getData()).setRegretAtIndex(actionIndex, 1);
+        ((CFRBRData) is.getData()).updateMeanStrategy(actionIndex, 1);
     }
 
-    private void createNewIS(Set<GameState> states) {
+    private void updateBR(Map<Action, Double> bestResponse, List<Action> actions, int actionIndex, GameState state) {
+        Action toAdd = expander.getActions(state).get(actionIndex);
+        Action toRemove = actions.get(actionIndex);
+
+        System.out.println("removing " + toRemove + " adding " + toAdd);
+        bestResponse.remove(toRemove);
+        bestResponse.put(toAdd, 1d);
+    }
+
+    private IRCFRInformationSet createNewIS(Set<GameState> states) {
         ImperfectRecallISKey newISKey = createNewISKey();
         GameState state = states.stream().findAny().get();
 
@@ -268,6 +287,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         is.addAllStatesToIS(states);
         informationSets.put(newISKey, is);
         is.setData(createAlgData(state));
+        return is;
     }
 
     private ImperfectRecallISKey createNewISKey() {
@@ -348,26 +368,28 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         return meanStrat;
     }
 
-    private void updateData(GameState state, Map<Action, Double> bestResponse, Map<Action, Double> strategy) {
-        if (state.isGameEnd())
-            return;
-        if (state.isPlayerToMoveNature()) {
-            expander.getActions(state).stream().map(a -> state.performAction(a)).forEach(s -> updateData(s, bestResponse, strategy));
-            return;
-        }
-        if (state.getPlayerToMove().equals(regretMatchingPlayer)) {
-            expander.getActions(state).stream().filter(a -> strategy.getOrDefault(a, 0d) > 1e-8).map(a -> state.performAction(a)).forEach(s -> updateData(s, bestResponse, strategy));
-            return;
-        }
-        IRCFRInformationSet is = informationSets.get(state.getISKeyForPlayerToMove());
-        List<Action> actions = expander.getActions(state);
-        assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() == 1;
-        int actionIndex = getIndex(actions, bestResponse);
-
-        ((CFRBRData) is.getData()).setRegretAtIndex(actionIndex, 1);
-        ((CFRBRData) is.getData()).updateMeanStrategy(actionIndex, 1);
-        actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).map(a -> state.performAction(a)).forEach(s -> updateData(s, bestResponse, strategy));
-    }
+//    private void updateData(GameState state, Map<Action, Double> bestResponse, Map<Action, Double> strategy) {
+//        if (state.isGameEnd()) update data už probíhají na nové struktuře is ale to v tě BR není, nešlo by buď
+//        udělat update data udělat na těch nových IS jenom(protože to jsou ty co odpojuju díky té best response) nebo si
+//        nějak pamatovat co se změnilo ?
+//        return;
+//        if (state.isPlayerToMoveNature()) {
+//            expander.getActions(state).stream().map(a -> state.performAction(a)).forEach(s -> updateData(s, bestResponse, strategy));
+//            return;
+//        }
+//        if (state.getPlayerToMove().equals(regretMatchingPlayer)) {
+//            expander.getActions(state).stream().filter(a -> strategy.getOrDefault(a, 0d) > 1e-8).map(a -> state.performAction(a)).forEach(s -> updateData(s, bestResponse, strategy));
+//            return;
+//        }
+//        IRCFRInformationSet is = informationSets.get(state.getISKeyForPlayerToMove());
+//        List<Action> actions = expander.getActions(state);
+//        assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() == 1;
+//        int actionIndex = getIndex(actions, bestResponse);
+//
+//        ((CFRBRData) is.getData()).setRegretAtIndex(actionIndex, 1);
+//        ((CFRBRData) is.getData()).updateMeanStrategy(actionIndex, 1);
+//        actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).map(a -> state.performAction(a)).forEach(s -> updateData(s, bestResponse, strategy));
+//    }
 
     private int getIndex(List<Action> actions, Map<Action, Double> bestResponse) {
         int index = -1;
@@ -407,7 +429,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         }
 
         OOSAlgorithmData data = is.getData();
-        List<Action> actions = data.getActions();
+        List<Action> actions = expander.getActions(node);
 
         if (node.isPlayerToMoveNature()) {
             double ev = 0;
