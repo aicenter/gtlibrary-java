@@ -65,8 +65,8 @@ import java.util.*;
 public class CFRISAlgorithm implements GamePlayingAlgorithm {
 
     public static void main(String[] args) {
-//         runKuhnPoker();
-           runBRTest();
+         runKuhnPoker();
+//           runBRTest();
 //        runGenericPoker();
 //        runML();
     }

@@ -84,6 +84,11 @@ public class IRGoofSpielGameState extends IIGoofSpielGameState {
             result = 31 * result + cards.hashCode();
             return result;
         }
+
+        @Override
+        public String toString() {
+            return score + " " + cards;
+        }
     }
 
 }
