@@ -44,7 +44,7 @@ public class ALossBestResponseAlgorithm {
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<>();
     protected Map<Action, Double> opponentBehavioralStrategy = new HashMap<>();
     protected Map<Action, Double> myBehavioralStrategy = new HashMap<>();
-    protected HashMap<Action, Map<ISKey, Action>> BRresult = new HashMap<>();
+    protected HashMap<Sequence, Map<ISKey, Sequence>> BRresult = new HashMap<>();
     protected Map<Action, Double> bestResponse = new HashMap<>();
     final protected int searchingPlayerIndex;
     final protected int opponentPlayerIndex;
@@ -56,7 +56,7 @@ public class ALossBestResponseAlgorithm {
     protected ORComparator comparator;
     protected GameState gameTreeRoot = null;
     protected Set<Action> resultActions = new HashSet<>();
-    protected Map<ISKey, Action> firstLevelActions = new HashMap<>();
+    protected Map<ISKey, Sequence> firstLevelActions = new HashMap<>();
 
     public ALossBestResponseAlgorithm(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse) {
         this.searchingPlayerIndex = searchingPlayerIndex;
@@ -240,19 +240,21 @@ public class ALossBestResponseAlgorithm {
 
             resultActions.add(resultAction);
             Sequence sequence = gameState.getSequenceFor(players[searchingPlayerIndex]);
+            Sequence sequenceCopy = new ArrayListSequenceImpl(sequence);
+
+            sequenceCopy.addLast(resultAction);
             if (sequence.isEmpty() || gameState.equals(gameTreeRoot)) {
                 if (!firstLevelActions.containsKey(gameState.getISKeyForPlayerToMove()))
-                    firstLevelActions.put(gameState.getISKeyForPlayerToMove(), resultAction);
+                    firstLevelActions.put(gameState.getISKeyForPlayerToMove(), sequenceCopy);
             } else {
-                Action previousAction = sequence.getLast();
 
 //            Sequence resultSequence = new ArrayListSequenceImpl(currentHistory.get(players[searchingPlayerIndex]));
 //            resultSequence.addLast(resultAction);
 
-                Map<ISKey, Action> tmpActionMap = BRresult.getOrDefault(previousAction, new HashMap<>());
+                Map<ISKey, Sequence> tmpActionMap = BRresult.getOrDefault(sequence, new HashMap<>());
 
-                tmpActionMap.putIfAbsent(gameState.getISKeyForPlayerToMove(), resultAction);
-                BRresult.put(previousAction, tmpActionMap);
+                tmpActionMap.putIfAbsent(gameState.getISKeyForPlayerToMove(), sequenceCopy);
+                BRresult.put(sequence, tmpActionMap);
             }
         } else { // nature player or the opponent is to move
             double nodeProbability = gameState.getNatureProbability();
@@ -629,19 +631,19 @@ public class ALossBestResponseAlgorithm {
             return bestResponse;
         }
         Map<Action, Double> result = new HashMap<>();
-        Queue<Action> queue = new ArrayDeque<>();
+        Queue<Sequence> queue = new ArrayDeque<>();
 
         queue.addAll(firstLevelActions.values());
-        firstLevelActions.values().forEach(a -> result.put(a, 1d));
+        firstLevelActions.values().forEach(s -> result.put(s.getLast(), 1d));
         while (queue.size() > 0) {
-            Action action = queue.poll();
-            Map<ISKey, Action> res = BRresult.get(action);
+            Sequence sequence = queue.poll();
+            Map<ISKey, Sequence> res = BRresult.get(sequence);
+
             if (res != null) {
-                res.values().stream().forEach(a -> result.put(a, 1d));
+                res.values().stream().forEach(s -> result.put(s.getLast(), 1d));
                 queue.addAll(res.values());
             }
         }
-
         bestResponse = result;
         return result;
     }

@@ -172,19 +172,21 @@ public class LimitedActionsALossBRAlgorithm extends ALossBestResponseAlgorithm {
 
             resultActions.add(resultAction);
             Sequence sequence = gameState.getSequenceFor(players[searchingPlayerIndex]);
+            Sequence sequenceCopy = new ArrayListSequenceImpl(sequence);
+
+            sequenceCopy.addLast(resultAction);
             if (sequence.isEmpty() || gameState.equals(gameTreeRoot)) {
                 if (!firstLevelActions.containsKey(gameState.getISKeyForPlayerToMove()))
-                    firstLevelActions.put(gameState.getISKeyForPlayerToMove(), resultAction);
+                    firstLevelActions.put(gameState.getISKeyForPlayerToMove(), sequenceCopy);
             } else {
-                Action previousAction = sequence.getLast();
 
 //            Sequence resultSequence = new ArrayListSequenceImpl(currentHistory.get(players[searchingPlayerIndex]));
 //            resultSequence.addLast(resultAction);
 
-                Map<ISKey, Action> tmpActionMap = BRresult.getOrDefault(previousAction, new HashMap<>());
+                Map<ISKey, Sequence> tmpActionMap = BRresult.getOrDefault(sequence, new HashMap<>());
 
-                tmpActionMap.putIfAbsent(gameState.getISKeyForPlayerToMove(), resultAction);
-                BRresult.put(previousAction, tmpActionMap);
+                tmpActionMap.putIfAbsent(gameState.getISKeyForPlayerToMove(), sequenceCopy);
+                BRresult.put(sequence, tmpActionMap);
             }
         } else { // nature player or the opponent is to move
             double nodeProbability = gameState.getNatureProbability();
