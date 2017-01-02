@@ -23,7 +23,7 @@ public class RandomGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
 
     public static double CORRELATION = -1;// -1 for zero sum, 1 for identical utilities
-    public static int MAX_DEPTH = 5;
+    public static int MAX_DEPTH = 6;
     public static int MAX_BF = 3;
     public static int MIN_BF = 3;
     public static int MAX_OBSERVATION = 5;

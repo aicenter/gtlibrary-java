@@ -40,7 +40,7 @@ public class ExpectedValues {
 
     @Override
     public String toString() {
-        return Arrays.toString(expectedValues);
+        return "BRVal: " + getBRExpectedValue() + ", CurrVal: " + getCurrentExpectedValue() + ", RealNewVal: " + getRealNewExpectedValue() + ", ExpNewVal: " + getExpectedNewExpectedValue();
     }
 
     public void add(ExpectedValues expectedValuesForAction) {
