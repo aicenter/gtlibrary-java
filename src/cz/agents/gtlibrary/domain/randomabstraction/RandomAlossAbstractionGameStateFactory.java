@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,9 +28,9 @@ public class RandomAlossAbstractionGameStateFactory extends RandomAbstractionGam
 
             FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
             efg.generateCompleteGame();
-//            GambitEFG gambit = new GambitEFG();
+            GambitEFG gambit = new GambitEFG();
 
-//            gambit.buildAndWrite("test_orig.gbt", wrappedRoot, wrappedExpander);
+            gambit.buildAndWrite("test_orig.gbt", wrappedRoot, wrappedExpander);
             System.out.println("***************");
             System.out.println(i + " " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size() + " " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size() + " " + config.getAllInformationSets().size());
 //            config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).forEach(System.out::println);
@@ -37,9 +38,9 @@ public class RandomAlossAbstractionGameStateFactory extends RandomAbstractionGam
             Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new SequenceFormIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo())));
 
             BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
-//            GambitEFG gambit1 = new GambitEFG();
+            GambitEFG gambit1 = new GambitEFG();
 
-//            gambit1.buildAndWrite("test.gbt", root, expander);
+            gambit1.buildAndWrite("test.gbt", root, expander);
             System.out.println(i + " " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getSequencesFor(RandomGameInfo.FIRST_PLAYER).size() + " " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getSequencesFor(RandomGameInfo.SECOND_PLAYER).size()  + " " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllInformationSets().size());
 //            ((SequenceFormIRConfig)expander.getAlgorithmConfig()).getSequencesFor(RandomGameInfo.FIRST_PLAYER).forEach(System.out::println);
         }
@@ -93,7 +94,7 @@ public class RandomAlossAbstractionGameStateFactory extends RandomAbstractionGam
         for (Sequence sequence : left) {
             Map<InformationSet, Action> sequenceISs = sequence.getAsList().stream().collect(Collectors.toMap(a -> a.getInformationSet(), a -> a));
 
-            if (!playersHistory.getAsList().stream().anyMatch(a -> sequenceISs.containsKey(a.getInformationSet()) && !a.equals(sequenceISs.get(a.getInformationSet()))))
+            if (!playersHistory.equals(sequence) && !playersHistory.getAsList().stream().anyMatch(a -> sequenceISs.containsKey(a.getInformationSet()) && !a.equals(sequenceISs.get(a.getInformationSet()))))
                 return false;
         }
         return true;
