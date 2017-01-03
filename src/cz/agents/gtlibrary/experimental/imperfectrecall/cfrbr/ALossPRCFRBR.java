@@ -73,11 +73,11 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     public static void main(String[] args) {
 //        runIRKuhnPoker();
 //        runAlossRandomAbstractionGame();
-//        runRandomAbstractionGame();
+        runRandomAbstractionGame();
 //        runIRBPG();
 //        runIRGoofspiel();
 //        runAlossCPRRRandomAbstractionGame();
-        runCPRRRandomAbstractionGame();
+//        runCPRRRandomAbstractionGame();
     }
 
     private static void runIRBPG() {
@@ -113,17 +113,20 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
         efg.generateCompleteGame();
 
+        System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
         GameState root = new RandomAlossAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
 
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         ALossPRCFRBR cfr = new ALossPRCFRBR(root.getAllPlayers()[1], root, expander, new KPGameInfo());
 
-        cfr.runIterations(10000);
+        cfr.runIterations(1000);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("cfrbrtest.gbt", root, expander);
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
     }
 
     private static void runRandomAbstractionGame() {
@@ -134,17 +137,20 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
         efg.generateCompleteGame();
 
+        System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
         GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
 
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         ALossPRCFRBR cfr = new ALossPRCFRBR(root.getAllPlayers()[1], root, expander, new KPGameInfo());
 
-        cfr.runIterations(10000);
+        cfr.runIterations(300);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("cfrbrtest.gbt", root, expander);
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
     }
 
     private static void runAlossCPRRRandomAbstractionGame() {
@@ -155,11 +161,13 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
         efg.generateCompleteGame();
 
+        System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
         GameState root = new RandomAlossAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
 
 
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         GameState cprrRoot = new CPRRGameState(root);
         Expander<IRCFRInformationSet> cprrExpander = new CPRRExpander<>(expander);
         ALossPRCFRBR cfr = new ALossPRCFRBR(cprrRoot.getAllPlayers()[1], cprrRoot, cprrExpander, new KPGameInfo());
@@ -179,11 +187,13 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
         efg.generateCompleteGame();
 
+        System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
         GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
 
 
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         GameState cprrRoot = new CPRRGameState(root);
         Expander<IRCFRInformationSet> cprrExpander = new CPRRExpander<>(expander);
         ALossPRCFRBR cfr = new ALossPRCFRBR(cprrRoot.getAllPlayers()[1], cprrRoot, cprrExpander, new KPGameInfo());
@@ -253,16 +263,17 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
                 update();
                 bestResponseIteration();
             }
-            if (i % 100 == 0) {
+            if (i % 50 == 0) {
                 Map<Action, Double> strategy = IRCFR.getStrategyFor(rootState, regretMatchingPlayer, new MeanStratDist(), config.getAllInformationSets(), expander);
 
-                System.out.println(strategy);
-                System.out.println(IRCFR.getStrategyFor(rootState, rootState.getAllPlayers()[1 - regretMatchingPlayer.getId()], new MeanStratDist(), config.getAllInformationSets(), expander));
+//                System.out.println(strategy);
+//                System.out.println(IRCFR.getStrategyFor(rootState, rootState.getAllPlayers()[1 - regretMatchingPlayer.getId()], new MeanStratDist(), config.getAllInformationSets(), expander));
                 System.out.println("exp val against br: " + -br.calculateBR(rootState, strategy));
 
                 Map<Action, Double> bestResponse = br.getBestResponse();
                 Map<Action, Double> averageBestResponse = IRCFR.getStrategyFor(rootState, brPlayer, new MeanStratDist(), config.getAllInformationSets(), expander);
                 System.out.println("exp val avg vs avg: " + computeExpectedValue(rootState, strategy, averageBestResponse));
+                System.out.println("Current IS count: " + config.getAllInformationSets().size());
             }
         }
         firstIteration = false;
@@ -321,16 +332,15 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         informationSets.forEach((key, is) -> is.getData().setActions(expander.getActions(is.getAllStates().stream().findAny().get())));
     }
 
-    private void updateISStructure(GameState state, Map<Action, Double> bestResponse, Map<Action, Double> opponentStrategy, HashMap<ISKey, ExpectedValues> valueMap) {
+    private int updateISStructure(GameState state, Map<Action, Double> bestResponse, Map<Action, Double> opponentStrategy, HashMap<ISKey, ExpectedValues> valueMap) {
         if (state.isGameEnd())
-            return;
+            return 0;
         if (state.isPlayerToMoveNature()) {
-            expander.getActions(state).stream().map(state::performAction).forEach(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap));
-            return;
+            return expander.getActions(state).stream().map(state::performAction).mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap)).sum();
         }
         if (state.getPlayerToMove().equals(regretMatchingPlayer)) {
-            expander.getActions(state).stream().filter(a -> opponentStrategy.getOrDefault(a, 0d) > 1e-8).map(state::performAction).forEach(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap));
-            return;
+            return expander.getActions(state).stream().filter(a -> opponentStrategy.getOrDefault(a, 0d) > 1e-8)
+                    .map(state::performAction).mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap)).sum();
         }
         IRCFRInformationSet is = informationSets.get(state.getISKeyForPlayerToMove());
         ExpectedValues expectedValues = valueMap.get(state.getISKeyForPlayerToMove());
@@ -338,29 +348,37 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() == 1;
         int actionIndex = getIndex(actions, bestResponse);
 
-        actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).map(state::performAction).forEach(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap));
-        if (expectedValues != null && expectedValues.getRealvsExpectedDistance() < -EPS) {
-            Set<GameState> isStates = is.getAllStates();
-            Set<GameState> toRemove = new HashSet<>();
+        int splitCount = actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).map(state::performAction)
+                .mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap)).sum();
 
-            isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(state.getSequenceForPlayerToMove())).forEach(toRemove::add);
+        if (splitCount == 0) {
+            if (expectedValues != null && expectedValues.getRealvsExpectedDistance() < -EPS) {
+                Set<GameState> isStates = is.getAllStates();
+                Set<GameState> toRemove = new HashSet<>();
 
-            if (toRemove.size() != isStates.size()) {
-                isStates.removeAll(toRemove);
-                IRCFRInformationSet newIS = createNewIS(toRemove);
+                isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(state.getSequenceForPlayerToMove())).forEach(toRemove::add);
 
-                ((CFRBRData) newIS.getData()).setRegretAtIndex(actionIndex, 1);
-                ((CFRBRData) newIS.getData()).updateMeanStrategy(actionIndex, 1);
-                updateBR(bestResponse, actions, actionIndex, state);
-                GambitEFG gambit = new GambitEFG();
+                if (toRemove.size() != isStates.size()) {
 
-                gambit.write("cfrbr" + iteration + ".gbt", rootState, expander);
-                System.err.println("creating IS in it " + iteration + "\n old IS: " + is.getISKey() + "\n new IS " + newIS.getISKey());
-                return;
+                    isStates.removeAll(toRemove);
+                    IRCFRInformationSet newIS = createNewIS(toRemove);
+
+                    ((CFRBRData) newIS.getData()).setRegretAtIndex(actionIndex, 1);
+                    ((CFRBRData) newIS.getData()).updateMeanStrategy(actionIndex, 1);
+                    updateBR(bestResponse, actions, actionIndex, state);
+                    GambitEFG gambit = new GambitEFG();
+
+                    gambit.write("cfrbr" + iteration + ".gbt", rootState, expander);
+                    System.err.println("creating IS in it " + iteration + "\n old IS: " + is.getISKey() + "\n new IS " + newIS.getISKey());
+                    return 1;
+
+                }
             }
         }
+
         ((CFRBRData) is.getData()).setRegretAtIndex(actionIndex, 1);
         ((CFRBRData) is.getData()).updateMeanStrategy(actionIndex, 1);
+        return splitCount;
     }
 
     private void updateBR(Map<Action, Double> bestResponse, List<Action> actions, int actionIndex, GameState state) {
