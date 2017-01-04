@@ -1,9 +1,9 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr;
 
-import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class ExpectedValues {
+    public static ExpectedValues ZEROS = new ExpectedValues(0, 0, 0);
     double[] expectedValues;
 
     public ExpectedValues() {
@@ -48,7 +48,7 @@ public class ExpectedValues {
     }
 
     public void updateExpectedExpectedValue(double brWeight) {
-        expectedValues[3] = getBRExpectedValue()*brWeight + getCurrentExpectedValue()*(1 - brWeight);
+        expectedValues[3] = getBRExpectedValue() * brWeight + getCurrentExpectedValue() * (1 - brWeight);
     }
 
 }
