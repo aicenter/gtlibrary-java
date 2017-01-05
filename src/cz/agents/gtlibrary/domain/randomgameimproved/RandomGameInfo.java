@@ -3,7 +3,6 @@ package cz.agents.gtlibrary.domain.randomgameimproved;
 import cz.agents.gtlibrary.domain.randomgameimproved.centers.ModificationGenerator;
 import cz.agents.gtlibrary.domain.randomgameimproved.centers.UniformModificationGenerator;
 import cz.agents.gtlibrary.domain.randomgameimproved.observationvariants.ObservationsType;
-import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.cprr.CPRRGameState;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -23,9 +22,9 @@ public class RandomGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
 
     public static double CORRELATION = -1;// -1 for zero sum, 1 for identical utilities
-    public static int MAX_DEPTH = 7;
-    public static int MAX_BF = 4;
-    public static int MIN_BF = 4;
+    public static int MAX_DEPTH = 4;
+    public static int MAX_BF = 3;
+    public static int MIN_BF = 3;
     public static int MAX_OBSERVATION = 5;
     public static int MAX_UTILITY = 1;
     public static boolean INTEGER_UTILITY = false;
@@ -43,7 +42,7 @@ public class RandomGameInfo implements GameInfo {
     public static ObservationsType OBSERVATIONS_TYPE = ObservationsType.FORGETFUL;
     public static double FORGET_OBSERVATION_PROBABILITY = 0.5;
 
-    public static long seed = 82;
+    public static long seed = 1;
 
     public static Random rnd = new HighQualityRandom(seed);
     public static ModificationGenerator modificationGenerator = new UniformModificationGenerator(MAX_CENTER_MODIFICATION);

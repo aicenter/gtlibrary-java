@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.flexibleisdomain;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.flexibleisdomain;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;

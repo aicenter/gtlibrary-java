@@ -70,10 +70,10 @@ public class P1RandomAlossAbstractionGameStateFactory extends P1RandomAbstractio
                 mergeCandidates.put(key, list);
             }
         }
-        return mergeCandidates.values().stream().flatMap(list -> list.stream()).map(pair -> pair.getRight()).collect(Collectors.toList());
+        return mergeCandidates.values().stream().flatMap(Collection::stream).map(Pair::getRight).collect(Collectors.toList());
     }
 
-    private void update(List<Pair<Set<Sequence>, LinkedList<ISKey>>> list, Map.Entry<ISKey, ? extends SequenceInformationSet> entry) {
+    protected void update(List<Pair<Set<Sequence>, LinkedList<ISKey>>> list, Map.Entry<ISKey, ? extends SequenceInformationSet> entry) {
         for (Pair<Set<Sequence>, LinkedList<ISKey>> pair : list) {
             if (compatible(pair.getLeft(), entry.getValue().getPlayersHistory())) {
                 pair.getLeft().add(entry.getValue().getPlayersHistory());
@@ -92,7 +92,7 @@ public class P1RandomAlossAbstractionGameStateFactory extends P1RandomAbstractio
 
     private boolean compatible(Set<Sequence> left, Sequence playersHistory) {
         for (Sequence sequence : left) {
-            Map<InformationSet, Action> sequenceISs = sequence.getAsList().stream().collect(Collectors.toMap(a -> a.getInformationSet(), a -> a));
+            Map<InformationSet, Action> sequenceISs = sequence.getAsList().stream().collect(Collectors.toMap(Action::getInformationSet, a -> a));
 
             if (!playersHistory.equals(sequence) && !playersHistory.getAsList().stream().anyMatch(a -> sequenceISs.containsKey(a.getInformationSet()) && !a.equals(sequenceISs.get(a.getInformationSet()))))
                 return false;
