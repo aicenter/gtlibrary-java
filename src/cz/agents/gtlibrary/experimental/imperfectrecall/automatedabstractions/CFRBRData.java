@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions;
 
 import cz.agents.gtlibrary.algorithms.cfr.ir.FixedForIterationData;
 import cz.agents.gtlibrary.interfaces.Action;

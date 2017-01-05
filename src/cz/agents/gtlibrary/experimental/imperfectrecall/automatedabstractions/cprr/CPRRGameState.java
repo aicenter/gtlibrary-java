@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.cprr;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr;
 
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRConfig;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;

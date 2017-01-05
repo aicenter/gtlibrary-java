@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions;
 
 import java.util.stream.IntStream;
 

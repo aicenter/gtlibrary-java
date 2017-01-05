@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.flexibleisdomain;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.flexibleisdomain;
 
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
@@ -24,11 +24,6 @@ public class FlexibleISKeyExpander<I extends InformationSet> extends ExpanderImp
     public List<Action> getActions(GameState gameState) {
         return wrappedExpander.getActions(((FlexibleISKeyGameState) gameState).getWrappedState()).stream().map(a ->
                 new FlexibleISAction(getAlgorithmConfig().getInformationSetFor(gameState), a, gameState, informationSets)).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<Action> getActions(I informationSet) {
-        throw new UnsupportedOperationException("Actions need to be associated with states");
     }
 
     public Expander<I> getWrappedExpander() {
