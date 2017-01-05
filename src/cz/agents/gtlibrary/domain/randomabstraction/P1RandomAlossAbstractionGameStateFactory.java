@@ -17,7 +17,7 @@ import cz.agents.gtlibrary.utils.io.GambitEFG;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class RandomAlossAbstractionGameStateFactory extends RandomAbstractionGameStateFactory {
+public class P1RandomAlossAbstractionGameStateFactory extends P1RandomAbstractionGameStateFactory {
 
     public static void main(String[] args) {
         for (int i = 0; i <= 100; i++) {
@@ -34,7 +34,7 @@ public class RandomAlossAbstractionGameStateFactory extends RandomAbstractionGam
             System.out.println("***************");
             System.out.println(i + " " + config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).size() + " " + config.getSequencesFor(RandomGameInfo.SECOND_PLAYER).size() + " " + config.getAllInformationSets().size());
 //            config.getSequencesFor(RandomGameInfo.FIRST_PLAYER).forEach(System.out::println);
-            GameState root = new RandomAlossAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+            GameState root = new P1RandomAlossAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
             Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new SequenceFormIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo())));
 
             BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
