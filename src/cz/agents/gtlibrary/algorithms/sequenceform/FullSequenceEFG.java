@@ -19,8 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
-import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRConfig;
-import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -54,19 +52,13 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
-import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
-import cz.agents.gtlibrary.domain.randomabstraction.RandomAlossAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
-import cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder;
 import cz.agents.gtlibrary.domain.upordown.UDExpander;
 import cz.agents.gtlibrary.domain.upordown.UDGameInfo;
 import cz.agents.gtlibrary.domain.upordown.UDGameState;
-import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.ALossPRCFRBR;
-import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.cprr.CPRRExpander;
-import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.cprr.CPRRGameState;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;

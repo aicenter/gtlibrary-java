@@ -20,7 +20,7 @@ import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.util.*;
 
-public class RandomAbstractionGameStateFactory {
+public class P1RandomAbstractionGameStateFactory {
 
     public static void main(String[] args) {
         for (int i = 0; i <= 100; i++) {
@@ -35,7 +35,7 @@ public class RandomAbstractionGameStateFactory {
             FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
             efg.generateCompleteGame();
 
-            GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+            GameState root = new P1RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
             Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new SequenceFormIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo())));
 
             BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);

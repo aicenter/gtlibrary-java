@@ -45,8 +45,8 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.ir.IRKuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomabstraction.IDObservation;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
-import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameStateFactory;
-import cz.agents.gtlibrary.domain.randomabstraction.RandomAlossAbstractionGameStateFactory;
+import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
+import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAlossAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -74,11 +74,11 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     public static void main(String[] args) {
 //        runIRKuhnPoker();
 //        runAlossRandomAbstractionGame();
-        runRandomAbstractionGame();
+//        runRandomAbstractionGame();
 //        runIRBPG();
 //        runIRGoofspiel();
 //        runAlossCPRRRandomAbstractionGame();
-//        runCPRRRandomAbstractionGame();
+        runCPRRRandomAbstractionGame();
     }
 
     private static void runIRBPG() {
@@ -115,7 +115,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         efg.generateCompleteGame();
 
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
-        GameState root = new RandomAlossAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        GameState root = new P1RandomAlossAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
 
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
@@ -139,7 +139,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         efg.generateCompleteGame();
 
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
-        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        GameState root = new P1RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
 
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
@@ -163,7 +163,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         efg.generateCompleteGame();
 
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
-        GameState root = new RandomAlossAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        GameState root = new P1RandomAlossAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
 
 
@@ -189,7 +189,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         efg.generateCompleteGame();
 
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
-        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        GameState root = new P1RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
 
 
@@ -206,6 +206,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
     }
 
+    protected final boolean SPLIT_ONLY_DEEPEST = false;
     protected final double EPS = 0;
     protected Player regretMatchingPlayer;
     protected Player brPlayer;
@@ -217,7 +218,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     protected ALossBestResponseAlgorithm br;
     protected Map<GameState, ISKey> isKeys;
     protected int isKeyCounter;
-    private int iteration = 0;
+    protected int iteration = 0;
 
     protected HashMap<ISKey, IRCFRInformationSet> informationSets = new HashMap<>();
     protected boolean firstIteration = true;
@@ -230,7 +231,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         this.expander = new FlexibleISKeyExpander<>(expander, new IRCFRConfig(), informationSets);
         this.config = this.expander.getAlgorithmConfig();
         BasicGameBuilder.build(rootState, expander.getAlgorithmConfig(), expander);
-        BasicGameBuilder.build(this.rootState, this.expander.getAlgorithmConfig(), this.expander);
+//        BasicGameBuilder.build(this.rootState, this.expander.getAlgorithmConfig(), this.expander);
         br = new ALossBestResponseAlgorithm(this.rootState, this.expander, 1 - regretMatchingPlayer.getId(), new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, config, info, false);
         threadBean = ManagementFactory.getThreadMXBean();
         isKeyCounter = Integer.MIN_VALUE;
@@ -258,11 +259,11 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
             if (regretMatchingPlayer.equals(rootState.getAllPlayers()[0])) {
                 System.out.println("rm: " + regretMatchingIteration(rootState, 1, 1, rootState.getAllPlayers()[0]));
                 update();
-                System.out.println("br: " + bestResponseIteration());
+                System.out.println("br: " + bestResponseIteration(regretMatchingPlayer, br));
             } else {
                 regretMatchingIteration(rootState, 1, 1, rootState.getAllPlayers()[1]);
                 update();
-                bestResponseIteration();
+                bestResponseIteration(regretMatchingPlayer, br);
             }
             if (i % 50 == 0) {
                 Map<Action, Double> strategy = IRCFR.getStrategyFor(rootState, regretMatchingPlayer, new MeanStratDist(), config.getAllInformationSets(), expander);
@@ -283,7 +284,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         return null;
     }
 
-    private double computeExpectedValue(GameState state, Map<Action, Double> regretMatchingStrategy, Map<Action, Double> brStrategy) {
+    protected double computeExpectedValue(GameState state, Map<Action, Double> regretMatchingStrategy, Map<Action, Double> brStrategy) {
         if (state.isGameEnd())
             return state.getUtilities()[regretMatchingPlayer.getId()];
         if (state.isPlayerToMoveNature())
@@ -300,8 +301,8 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         informationSets.values().stream().filter(is -> is.getPlayer().equals(regretMatchingPlayer)).forEach(informationSet -> informationSet.getData().applyUpdate());
     }
 
-    private double bestResponseIteration() {
-        Map<Action, Double> strategy = IRCFR.getStrategyFor(rootState, regretMatchingPlayer, data -> {
+    protected double bestResponseIteration(Player opponent, ALossBestResponseAlgorithm br) {
+        Map<Action, Double> strategy = IRCFR.getStrategyFor(rootState, opponent, data -> {
             CFRBRData cfrbrData = (CFRBRData) data;
             Map<Action, Double> distribution = new HashMap<>(cfrbrData.getActions().size());
 
@@ -373,7 +374,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         int splitCount = actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).map(state::performAction)
                 .mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, valueMap, toSplit)).sum();
 
-        if (splitCount == 0) {
+        if (!SPLIT_ONLY_DEEPEST || splitCount == 0) {
             if (expectedValues != null && expectedValues.getRealvsExpectedDistance() < -EPS) {
                 Set<GameState> isStates = is.getAllStates();
                 long toRemove = isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(state.getSequenceForPlayerToMove())).count();
@@ -386,7 +387,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
                     return 1;
                 }
             }
-        } else {
+        } else if(SPLIT_ONLY_DEEPEST) {
             if (toSplit.remove(is) != null)
                 System.err.println("removing " + is.getISKey());
         }

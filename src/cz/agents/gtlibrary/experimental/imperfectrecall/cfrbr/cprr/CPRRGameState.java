@@ -7,13 +7,10 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
-import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
-import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameStateFactory;
+import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleIRConfig;
 import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -31,7 +28,7 @@ public class CPRRGameState extends GameStateImpl {
         efg.generateCompleteGame();
 
         IRCFRConfig config = new IRCFRConfig();
-        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        GameState root = new P1RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, config);
         CPRRExpander<IRCFRInformationSet> cprrExpander = new CPRRExpander<>(new RandomAbstractionExpander<>(wrappedExpander, config));
 
