@@ -63,12 +63,12 @@ public class FlexibleISKeyGameState extends GameStateImpl {
 
     @Override
     public double getProbabilityOfNatureFor(Action action) {
-        return wrappedState.getProbabilityOfNatureFor(action);
+        return wrappedState.getProbabilityOfNatureFor(((FlexibleISAction)action).getWrappedAction());
     }
 
     @Override
     public Rational getExactProbabilityOfNatureFor(Action action) {
-        return wrappedState.getExactProbabilityOfNatureFor(action);
+        return wrappedState.getExactProbabilityOfNatureFor(((FlexibleISAction)action).getWrappedAction());
     }
 
     @Override
