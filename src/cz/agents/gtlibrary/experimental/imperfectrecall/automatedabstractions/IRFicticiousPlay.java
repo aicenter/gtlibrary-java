@@ -11,6 +11,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAlossAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
+import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -28,7 +29,10 @@ import java.util.*;
 public class IRFicticiousPlay extends ALossPRCFRBR {
 
     public static void main(String[] args) {
-        runRandomAbstractionGame();
+        runBothIRRandomAbstractionGame();
+//        runCPRRBothIRRandomAbstractionGame();
+//        runRandomAbstractionGame();
+//        runCPRRRandomAbstractionGame();
     }
 
     protected static void runAlossRandomAbstractionGame() {
@@ -65,6 +69,30 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
 
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
         GameState root = new P1RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
+
+        BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
+        ALossPRCFRBR cfr = new IRFicticiousPlay(root, expander, new KPGameInfo());
+
+        cfr.runIterations(300);
+        GambitEFG gambit = new GambitEFG();
+
+        gambit.write("cfrbrtest.gbt", root, expander);
+        System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
+    }
+
+    protected static void runBothIRRandomAbstractionGame() {
+        GameState wrappedRoot = new RandomGameState();
+        SequenceFormConfig<SequenceInformationSet> config = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> wrappedExpander = new RandomGameExpander<>(config);
+
+        FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
+        efg.generateCompleteGame();
+
+        System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
+        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
 
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
@@ -131,6 +159,32 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
     }
 
+    protected static void runCPRRBothIRRandomAbstractionGame() {
+        GameState wrappedRoot = new RandomGameState();
+        SequenceFormConfig<SequenceInformationSet> config = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> wrappedExpander = new RandomGameExpander<>(config);
+
+        FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), config);
+        efg.generateCompleteGame();
+
+        System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
+        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
+
+
+        BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
+        GameState cprrRoot = new CPRRGameState(root);
+        Expander<IRCFRInformationSet> cprrExpander = new CPRRExpander<>(expander);
+        ALossPRCFRBR cfr = new IRFicticiousPlay(cprrRoot, cprrExpander, new KPGameInfo());
+
+        cfr.runIterations(1000);
+        GambitEFG gambit = new GambitEFG();
+
+        gambit.write("cfrbrtest.gbt", cprrRoot, cprrExpander);
+        System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
+    }
+
     protected final ALossBestResponseAlgorithm p0BR;
     protected final ALossBestResponseAlgorithm p1BR;
 
@@ -151,7 +205,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         Set<GameState> set = new HashSet<>(1);
 
         set.add(state);
-        createNewIS(set);
+        createNewIS(set, state.getPlayerToMove());
     }
 
 
@@ -160,7 +214,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
             this.iteration++;
             bestResponseIteration(rootState.getAllPlayers()[1], p0BR);
             bestResponseIteration(rootState.getAllPlayers()[0], p1BR);
-            if (i % 50 == 0) {
+            if (i % 10 == 0) {
                 Map<Action, Double> strategy = IRCFR.getStrategyFor(rootState, regretMatchingPlayer, new MeanStratDist(), config.getAllInformationSets(), expander);
 
 //                System.out.println(strategy);
@@ -176,6 +230,9 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         firstIteration = false;
         System.out.println("Orig IS count: " + ((FlexibleISKeyExpander) expander).getWrappedExpander().getAlgorithmConfig().getAllInformationSets().size());
         System.out.println("New IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
+        GambitEFG gambit = new GambitEFG();
+
+        gambit.write("cfrbrresult.gbt", rootState, expander);
         return null;
     }
 
