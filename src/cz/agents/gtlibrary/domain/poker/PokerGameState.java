@@ -176,7 +176,7 @@ public abstract class PokerGameState extends GameStateImpl {
     }
 
     protected boolean lastMovePlayedByNature() {
-        return sequenceForAllPlayers.getLast().getPlayer().equals(players[2]);
+        return !sequenceForAllPlayers.isEmpty() && sequenceForAllPlayers.getLast().getPlayer().equals(players[2]);
     }
 
     protected boolean isLastMoveAggressive() {

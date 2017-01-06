@@ -51,7 +51,7 @@ public class FlexibleISAction extends ActionImpl {
 
     private void updateIS() {
         informationSet = informationSets.get(associatedState.getISKeyForPlayerToMove());
-        assert informationSet != null;
+        assert associatedState.isPlayerToMoveNature() ||  informationSet != null;
     }
 
     @Override

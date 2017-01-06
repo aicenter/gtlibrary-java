@@ -87,7 +87,7 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
         return new ImperfectRecallISKey(ownObservations, opponentObservations, natureObservations);
     }
 
-    private void populateObservations(Observations observations) {
+    protected void populateObservations(Observations observations) {
         for (Action action : getSequenceFor(observations.getObservedPlayer())) {
             GenericPokerAction pokerAction = (GenericPokerAction) action;
 
