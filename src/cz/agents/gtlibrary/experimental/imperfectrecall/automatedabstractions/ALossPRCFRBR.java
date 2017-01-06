@@ -206,7 +206,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
     }
 
-    protected final boolean SPLIT_ONLY_DEEPEST = false;
+    protected final boolean SPLIT_ONLY_DEEPEST = true;
     protected final double EPS = 0;
     protected Player regretMatchingPlayer;
     protected Player brPlayer;
@@ -265,7 +265,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
                 update();
                 bestResponseIteration(regretMatchingPlayer, br);
             }
-            if (i % 50 == 0) {
+            if (i % 20 == 0) {
                 Map<Action, Double> strategy = IRCFR.getStrategyFor(rootState, regretMatchingPlayer, new MeanStratDist(), config.getAllInformationSets(), expander);
 
 //                System.out.println(strategy);
@@ -336,11 +336,11 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         });
         Map<InformationSet, List<Pair<Sequence, Integer>>> toSplit = new HashMap<>();
         updateISStructure(state, bestResponse, opponentStrategy, opponent, valueMap, toSplit);
-        splitISs(toSplit);
+        splitISs(toSplit, state.getAllPlayers()[1 - opponent.getId()]);
         informationSets.forEach((key, is) -> is.getData().setActions(expander.getActions(is.getAllStates().stream().findAny().get())));
     }
 
-    protected void splitISs(Map<InformationSet, List<Pair<Sequence, Integer>>> toSplit) {
+    protected void splitISs(Map<InformationSet, List<Pair<Sequence, Integer>>> toSplit, Player player) {
         for (Map.Entry<InformationSet, List<Pair<Sequence, Integer>>> entry : toSplit.entrySet()) {
             for (Pair<Sequence, Integer> entryPair : entry.getValue()) {
                 Set<GameState> isStates = entry.getKey().getAllStates();
@@ -350,12 +350,15 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
                 if (toRemove.isEmpty())
                     continue;
                 isStates.removeAll(toRemove);
-                IRCFRInformationSet newIS = createNewIS(toRemove);
+                IRCFRInformationSet newIS = createNewIS(toRemove, player);
 
                 ((CFRBRData) newIS.getData()).setRegretAtIndex(entryPair.getRight(), 1);
                 ((CFRBRData) newIS.getData()).updateMeanStrategy(entryPair.getRight(), 1);
                 System.err.println("creating IS in it " + iteration + "\n old IS: " + entry.getKey().getISKey() + "\n " + entryPair.getLeft() + "\n new IS: " + newIS.getISKey());
             }
+            GambitEFG gambit = new GambitEFG();
+
+            gambit.write("cfrbriteration" + iteration + ".gbt", rootState, expander);
         }
     }
 
@@ -410,8 +413,8 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         bestResponse.put(toAdd, 1d);
     }
 
-    protected IRCFRInformationSet createNewIS(Set<GameState> states) {
-        ImperfectRecallISKey newISKey = createNewISKey();
+    protected IRCFRInformationSet createNewIS(Set<GameState> states, Player player) {
+        ImperfectRecallISKey newISKey = createNewISKey(player);
         GameState state = states.stream().findAny().get();
 
         states.forEach(s -> isKeys.put(s, newISKey));
@@ -424,8 +427,8 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         return is;
     }
 
-    protected ImperfectRecallISKey createNewISKey() {
-        Observations observations = new Observations(brPlayer, brPlayer);
+    protected ImperfectRecallISKey createNewISKey(Player player) {
+        Observations observations = new Observations(player, player);
 
         observations.add(new IDObservation(isKeyCounter++));
         return new ImperfectRecallISKey(observations, null, null);
