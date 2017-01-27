@@ -71,7 +71,9 @@ public class WichardtGameState extends GameStateImpl {
                 if (((WichardtAction) p2Sequence.get(0)).getType().equals("R"))
                     return new double[]{0, 0};
             }
-            return new double[]{-5, 5};
+            if (((WichardtAction) p2Sequence.get(0)).getType().equals("L"))
+                return new double[]{-5, 5};
+            return new double[]{-20, 20};
         } else {
             if (((WichardtAction) p1Sequence.get(1)).getType().equals("r2")) {
                 if (((WichardtAction) p2Sequence.get(0)).getType().equals("L"))
@@ -79,7 +81,9 @@ public class WichardtGameState extends GameStateImpl {
                 if (((WichardtAction) p2Sequence.get(0)).getType().equals("R"))
                     return new double[]{1, -1};
             }
-            return new double[]{-5, 5};
+            if (((WichardtAction) p2Sequence.get(0)).getType().equals("L"))
+                return new double[]{-5, 5};
+            return new double[]{-20, 20};
         }
     }
 
@@ -111,5 +115,10 @@ public class WichardtGameState extends GameStateImpl {
 
     public int getRound() {
         return round;
+    }
+
+    @Override
+    public String toString() {
+        return history.toString();
     }
 }

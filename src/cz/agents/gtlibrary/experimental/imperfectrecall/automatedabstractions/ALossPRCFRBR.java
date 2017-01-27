@@ -68,8 +68,11 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ALossPRCFRBR implements GamePlayingAlgorithm {
+
+    public static final boolean UPDATE_IS_STRUCTURE = false;
 
     public static void main(String[] args) {
 //        runIRKuhnPoker();
@@ -284,17 +287,17 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         return null;
     }
 
-    protected double computeExpectedValue(GameState state, Map<Action, Double> regretMatchingStrategy, Map<Action, Double> brStrategy) {
+    protected double computeExpectedValue(GameState state, Map<Action, Double> p0Strategy, Map<Action, Double> p1Strategy) {
         if (state.isGameEnd())
             return state.getUtilities()[regretMatchingPlayer.getId()];
         if (state.isPlayerToMoveNature())
             return expander.getActions(state).stream()
-                    .mapToDouble(a -> state.getProbabilityOfNatureFor(a) * computeExpectedValue(state.performAction(a), regretMatchingStrategy, brStrategy)).sum();
-        if (state.getPlayerToMove().equals(regretMatchingPlayer))
-            return expander.getActions(state).stream().filter(a -> regretMatchingStrategy.getOrDefault(a, 0d) > 1e-8)
-                    .mapToDouble(a -> regretMatchingStrategy.get(a) * computeExpectedValue(state.performAction(a), regretMatchingStrategy, brStrategy)).sum();
-        return expander.getActions(state).stream().filter(a -> brStrategy.getOrDefault(a, 0d) > 1e-8)
-                .mapToDouble(a -> brStrategy.get(a) * computeExpectedValue(state.performAction(a), regretMatchingStrategy, brStrategy)).sum();
+                    .mapToDouble(a -> state.getProbabilityOfNatureFor(a) * computeExpectedValue(state.performAction(a), p0Strategy, p1Strategy)).sum();
+        if (state.getPlayerToMove().equals(state.getAllPlayers()[0]))
+            return expander.getActions(state).stream().filter(a -> p0Strategy.getOrDefault(a, 0d) > 1e-8)
+                    .mapToDouble(a -> p0Strategy.get(a) * computeExpectedValue(state.performAction(a), p0Strategy, p1Strategy)).sum();
+        return expander.getActions(state).stream().filter(a -> p1Strategy.getOrDefault(a, 0d) > 1e-8)
+                .mapToDouble(a -> p1Strategy.get(a) * computeExpectedValue(state.performAction(a), p0Strategy, p1Strategy)).sum();
     }
 
     protected void update() {
@@ -304,9 +307,10 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     protected double bestResponseIteration(Player opponent, ALossBestResponseAlgorithm br) {
         Map<Action, Double> strategy = getOpponentStrategyForBR(opponent, rootState, expander);
         double value = br.calculateBR(rootState, strategy);
-        Map<Action, Double> bestResponse = br.getBestResponse();
+        Map<Sequence, Action> fullBestResponseResult = br.getFullBestResponseResult();
 
-        updateISs(rootState, bestResponse, strategy, opponent);
+
+        updateISs(rootState, fullBestResponseResult, strategy, opponent);
 //        updateData(rootState, bestResponse, strategy);
         return value;
     }
@@ -323,7 +327,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         }, config.getAllInformationSets(), expander);
     }
 
-    protected void updateISs(FlexibleISKeyGameState state, Map<Action, Double> bestResponse, Map<Action, Double> opponentStrategy, Player opponent) {
+    protected void updateISs(FlexibleISKeyGameState state, Map<Sequence, Action> bestResponse, Map<Action, Double> opponentStrategy, Player opponent) {
         Map<Action, Double> avgStrategy = IRCFR.getStrategyFor(rootState, rootState.getAllPlayers()[1 - opponent.getId()],
                 new MeanStratDist(), config.getAllInformationSets(), expander);
         HashMap<ISKey, ExpectedValues> valueMap = new HashMap<>();
@@ -336,7 +340,8 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         });
         Map<InformationSet, List<Pair<Sequence, Integer>>> toSplit = new HashMap<>();
         updateISStructure(state, bestResponse, opponentStrategy, opponent, valueMap, toSplit);
-        splitISs(toSplit, state.getAllPlayers()[1 - opponent.getId()]);
+        if (UPDATE_IS_STRUCTURE)
+            splitISs(toSplit, state.getAllPlayers()[1 - opponent.getId()]);
         informationSets.forEach((key, is) -> is.getData().setActions(expander.getActions(is.getAllStates().stream().findAny().get())));
     }
 
@@ -362,7 +367,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         }
     }
 
-    protected int updateISStructure(GameState state, Map<Action, Double> bestResponse, Map<Action, Double> opponentStrategy, Player opponent, HashMap<ISKey, ExpectedValues> valueMap, Map<InformationSet, List<Pair<Sequence, Integer>>> toSplit) {
+    protected int updateISStructure(GameState state, Map<Sequence, Action> bestResponse, Map<Action, Double> opponentStrategy, Player opponent, HashMap<ISKey, ExpectedValues> valueMap, Map<InformationSet, List<Pair<Sequence, Integer>>> toSplit) {
         if (state.isGameEnd())
             return 0;
         if (state.isPlayerToMoveNature()) {
@@ -375,33 +380,40 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         IRCFRInformationSet is = informationSets.get(state.getISKeyForPlayerToMove());
         ExpectedValues expectedValues = valueMap.get(state.getISKeyForPlayerToMove());
         List<Action> actions = expander.getActions(state);
-        assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() == 1;
-        int actionIndex = getIndex(actions, bestResponse);
+        Set<Action> bestResponseActionsForIS = getBestResponseActionsForIS(is, bestResponse);
+        Action currentStateBestResponseAction = bestResponse.get(state.getSequenceForPlayerToMove());
+//        assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() == 1;
+        int actionIndex = getIndex(actions, currentStateBestResponseAction);
+        int splitCount = updateISStructure(state.performAction(currentStateBestResponseAction), bestResponse, opponentStrategy, opponent, valueMap, toSplit) ;
+//        int splitCount = actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).map(state::performAction)
+//                .mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, opponent, valueMap, toSplit)).sum();
 
-        int splitCount = actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).map(state::performAction)
-                .mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, opponent, valueMap, toSplit)).sum();
+        if (UPDATE_IS_STRUCTURE)
+            if (!SPLIT_ONLY_DEEPEST || splitCount == 0) {
+                if (expectedValues != null && expectedValues.getRealvsExpectedDistance() < -EPS || bestResponseActionsForIS.size() > 1) {
+                    Set<GameState> isStates = is.getAllStates();
+                    long toRemove = isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(state.getSequenceForPlayerToMove())).count();
 
-        if (!SPLIT_ONLY_DEEPEST || splitCount == 0) {
-            if (expectedValues != null && expectedValues.getRealvsExpectedDistance() < -EPS) {
-                Set<GameState> isStates = is.getAllStates();
-                long toRemove = isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(state.getSequenceForPlayerToMove())).count();
+                    if (toRemove != isStates.size()) {
+                        List<Pair<Sequence, Integer>> currentSplitList = toSplit.compute(is, (k, v) -> v == null ? new ArrayList<>() : v);
 
-                if (toRemove != isStates.size()) {
-                    List<Pair<Sequence, Integer>> currentSplitList = toSplit.compute(is, (k, v) -> v == null ? new ArrayList<>() : v);
-
-                    currentSplitList.add(new Pair<>(state.getSequenceForPlayerToMove(), actionIndex));
-                    System.err.println(iteration + " adding IS: " + is.getISKey() + " " + state.getSequenceForPlayerToMove() + " " + actionIndex);
-                    return 1;
+                        currentSplitList.add(new Pair<>(state.getSequenceForPlayerToMove(), actionIndex));
+                        System.err.println(iteration + " adding IS: " + is.getISKey() + " " + state.getSequenceForPlayerToMove() + " " + actionIndex);
+                        return 1;
+                    }
                 }
+            } else if (SPLIT_ONLY_DEEPEST) {
+                if (toSplit.remove(is) != null)
+                    System.err.println("removing " + is.getISKey());
             }
-        } else if (SPLIT_ONLY_DEEPEST) {
-            if (toSplit.remove(is) != null)
-                System.err.println("removing " + is.getISKey());
-        }
-
         ((CFRBRData) is.getData()).setRegretAtIndex(actionIndex, 1);
         ((CFRBRData) is.getData()).updateMeanStrategy(actionIndex, 1);
         return splitCount;
+    }
+
+    private Set<Action> getBestResponseActionsForIS(IRCFRInformationSet is, Map<Sequence, Action> bestResponse) {
+        return is.getAllStates().stream().map(s -> s.getSequenceForPlayerToMove()).filter(s -> bestResponse.containsKey(s))
+                .map(s -> bestResponse.get(s)).collect(Collectors.toSet());
     }
 
     protected void updateBR(Map<Action, Double> bestResponse, List<Action> actions, int actionIndex, GameState state) {
@@ -435,7 +447,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     }
 
 
-    protected ExpectedValues getExpectedValues(GameState state, Map<Action, Double> bestResponse,
+    protected ExpectedValues getExpectedValues(GameState state, Map<Sequence, Action> bestResponse,
                                                Map<Action, Double> avgStrategy, Map<Action, Double> opponentStrategy,
                                                double brProb, double currentProb, double newProb, Map<ISKey, ExpectedValues> valueMap, Player opponent) {
         if (brProb < 1e-8 && currentProb < 1e-8 && newProb < 1e-8)
@@ -474,13 +486,14 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         double[] meanStrat = new double[actions.size()];
         int actionIndex = 0;
         FixedForIterationData data = informationSets.get(state.getISKeyForPlayerToMove()).getData();
+        Action bestResponseAction = bestResponse.get(state.getSequenceForPlayerToMove());
 
         System.arraycopy(data.getMp(), 0, meanStrat, 0, meanStrat.length);
-        meanStrat = updateAndNormalizeMeanStrat(meanStrat, bestResponse, actions);
+        meanStrat = updateAndNormalizeMeanStrat(meanStrat, bestResponseAction, actions);
         assert Math.abs(Arrays.stream(meanStrat).sum() - 1) < 1e-8;
         for (Action action : actions) {
             double actionProb = avgStrategy.getOrDefault(action, 0d);
-            double actionBRProb = bestResponse.getOrDefault(action, 0d);
+            double actionBRProb = bestResponseAction.equals(action) ? 1 : 0;
             ExpectedValues expectedValuesForAction = getExpectedValues(state.performAction(action),
                     bestResponse, avgStrategy, opponentStrategy, brProb * actionBRProb, currentProb * actionProb, newProb * meanStrat[actionIndex++], valueMap, opponent);
 
@@ -491,12 +504,12 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     }
 
 
-    protected double[] updateAndNormalizeMeanStrat(double[] meanStrat, Map<Action, Double> bestResponse, List<Action> actions) {
+    protected double[] updateAndNormalizeMeanStrat(double[] meanStrat, Action bestResponseAction, List<Action> actions) {
         double sum = 0;
         int index = 0;
 
         for (int i = 0; i < meanStrat.length; i++) {
-            if (bestResponse.getOrDefault(actions.get(i), 0d) > 1 - 1e-3)
+            if (bestResponseAction.equals(actions.get(i)))
                 meanStrat[index]++;
             sum += meanStrat[index++];
         }
@@ -511,12 +524,12 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         return meanStrat;
     }
 
-    protected int getIndex(List<Action> actions, Map<Action, Double> bestResponse) {
+    protected int getIndex(List<Action> actions, Action bestResponseAction) {
         int index = -1;
 
         for (Action action : actions) {
             index++;
-            if (bestResponse.getOrDefault(action, 0d) > 1 - 1e-8)
+            if (bestResponseAction.equals(action))
                 return index;
         }
         return -1;

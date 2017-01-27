@@ -11,7 +11,7 @@ public class WichardtGameInfo implements GameInfo {
 
     @Override
     public double getMaxUtility() {
-        return 5;
+        return 20;
     }
 
     @Override
