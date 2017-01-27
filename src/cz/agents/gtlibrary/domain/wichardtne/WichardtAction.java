@@ -36,6 +36,10 @@ public class WichardtAction extends ActionImpl {
         WichardtAction that = (WichardtAction) o;
 
         return type != null ? type.equals(that.type) : that.type == null;
+    }
 
+    @Override
+    public String toString() {
+        return type;
     }
 }

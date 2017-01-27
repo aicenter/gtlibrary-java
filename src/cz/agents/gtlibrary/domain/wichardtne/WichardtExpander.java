@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class WichardtExpander<I extends InformationSet> extends ExpanderImpl<I> {
@@ -25,7 +26,7 @@ public class WichardtExpander<I extends InformationSet> extends ExpanderImpl<I> 
             return getSecondRoundActions(getAlgorithmConfig().getInformationSetFor(gameState));
         if (round == 2)
             return getThirdRoundActions(getAlgorithmConfig().getInformationSetFor(gameState));
-        return null;
+        return Collections.emptyList();
     }
 
     private List<Action> getFirstRoundActions(InformationSet informationSet) {

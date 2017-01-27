@@ -128,6 +128,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return nbSamples;
     }
 
+    public double[] getRegrets() {
+        return r;
+    }
+
     public void clear() {
         Arrays.fill(r, 0);
         Arrays.fill(mp, 0);
