@@ -316,16 +316,14 @@ public class ALossBestResponseAlgorithm {
     }
 
     public void selectAction(GameState state, BRActionSelection selection, List<Action> actionsToExplore, double currentStateProb) {
-        Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
-
         for (Action action : actionsToExplore) {
-            GameState newState = successors.computeIfAbsent(action, a -> state.performAction(a));
-
-            handleState(selection, action, newState);
+            handleState(selection, action, state);
         }
     }
 
-    private void handleState(BRActionSelection selection, Action action, GameState newState) {
+    protected void handleState(BRActionSelection selection, Action action, GameState state) {
+        Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
+        GameState newState = successors.computeIfAbsent(action, a -> state.performAction(a));
         double natureProb = newState.getNatureProbability(); // TODO extract these probabilities from selection Map
         double oppRP = getOpponentProbability(newState.getSequenceFor(players[opponentPlayerIndex]));
         double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
@@ -645,6 +643,28 @@ public class ALossBestResponseAlgorithm {
             }
         }
         bestResponse = result;
+        return result;
+    }
+
+    public Map<Sequence, Action> getFullBestResponseResult() {
+        if (BRresult == null) {
+            return null;
+        }
+        Map<Sequence, Action> result = new HashMap<>();
+        Queue<Sequence> queue = new ArrayDeque<>();
+        Sequence emptySequence = new ArrayListSequenceImpl(gameTreeRoot.getAllPlayers()[searchingPlayerIndex]);
+
+        queue.addAll(firstLevelActions.values());
+        firstLevelActions.values().forEach(s -> result.put(emptySequence, s.getLast()));
+        while (queue.size() > 0) {
+            Sequence sequence = queue.poll();
+            Map<ISKey, Sequence> res = BRresult.get(sequence);
+
+            if (res != null) {
+                res.values().stream().forEach(s -> result.put(sequence, s.getLast()));
+                queue.addAll(res.values());
+            }
+        }
         return result;
     }
 
