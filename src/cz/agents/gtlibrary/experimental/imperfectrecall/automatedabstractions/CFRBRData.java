@@ -15,7 +15,8 @@ public class CFRBRData extends FixedForIterationData {
         super(actions);
         meanStrategyUpdateNumerator = new double[actions.size()];
 //        Arrays.fill(mp, 1./mp.length);
-        mp[0] = 1;
+        if (mp.length > 0)
+            mp[0] = 1;
     }
 
     public CFRBRData(CFRBRData data) {
