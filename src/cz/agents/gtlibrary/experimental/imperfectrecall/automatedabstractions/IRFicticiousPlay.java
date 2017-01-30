@@ -33,8 +33,8 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
 
     public static void main(String[] args) {
 //        runGenericPoker();
-        runWichardtCounterExample();
-//        runBothIRRandomAbstractionGame();
+//        runWichardtCounterExample();
+        runBothIRRandomAbstractionGame();
 //        runCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
 //        runCPRRRandomAbstractionGame();
@@ -401,9 +401,9 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                 }
             }
         }
-        GambitEFG gambit = new GambitEFG();
-
-        gambit.write("cfrbriteration" + iteration + ".gbt", rootState, expander);
+//        GambitEFG gambit = new GambitEFG();
+//
+//        gambit.write("cfrbriteration" + iteration + ".gbt", rootState, expander);
 
     }
 
@@ -431,9 +431,9 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                 }
             }
         }
-        GambitEFG gambit = new GambitEFG();
-
-        gambit.write("cfrbriteration" + iteration + ".gbt", rootState, expander);
+//        GambitEFG gambit = new GambitEFG();
+//
+//        gambit.write("cfrbriteration" + iteration + ".gbt", rootState, expander);
     }
 
     protected IRCFRInformationSet createNewIS(Set<GameState> states, Player player, CFRBRData data) {
