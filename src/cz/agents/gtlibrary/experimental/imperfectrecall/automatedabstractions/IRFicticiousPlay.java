@@ -32,8 +32,8 @@ import java.util.*;
 public class IRFicticiousPlay extends ALossPRCFRBR {
 
     public static void main(String[] args) {
-        runGenericPoker();
-//        runWichardtCounterExample();
+//        runGenericPoker();
+        runWichardtCounterExample();
 //        runBothIRRandomAbstractionGame();
 //        runCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
@@ -60,7 +60,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         ALossPRCFRBR cfr = new IRFicticiousPlay(root, expander, new WichardtGameInfo());
 
-        cfr.runIterations(30000);
+        cfr.runIterations(300);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("cfrbrtest.gbt", root, expander);
@@ -288,7 +288,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         double delta;
 
         if (player.getId() == 0)
-            delta = p1Delta.calculateDelta(strategy, strategyDiffs);
+            delta = -p1Delta.calculateDelta(strategy, strategyDiffs);
         else
             delta = p0Delta.calculateDelta(strategy, strategyDiffs);
         return delta > 1. / (iteration * iteration) * EPS + 1e-4;
@@ -476,9 +476,9 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                 for (int i = 0; i < meanStratDiffForAction.length; i++) {
                     meanStratDiffForAction[i] /= meanStratDiffForActionNormalizer;
                 }
-                for (Sequence sequence : entry.getValue().keySet()) {
+                entry.getKey().getInformationSet().getAllStates().stream().map(s -> s.getSequenceForPlayerToMove()).forEach(sequence -> {
                     strategyDiffs.irStrategyDiff.put(sequence, toMapNoNorm(actions, meanStratDiffForAction));
-                }
+                });
             }
         }
         return strategyDiffs;
