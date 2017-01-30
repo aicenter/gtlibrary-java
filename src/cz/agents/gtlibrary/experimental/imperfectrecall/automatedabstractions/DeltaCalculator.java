@@ -28,7 +28,7 @@ public class DeltaCalculator extends ALossBestResponseAlgorithm {
     protected Double calculateEvaluation(GameState gameState, double currentStateProbability) {
         double utRes = gameState.getUtilities()[searchingPlayerIndex] * gameState.getNatureProbability();
 
-        return utRes * prProbability - utRes * irProbability;
+        return utRes * irProbability - utRes * prProbability;
     }
 
     protected void handleState(BRActionSelection selection, Action action, GameState state) {

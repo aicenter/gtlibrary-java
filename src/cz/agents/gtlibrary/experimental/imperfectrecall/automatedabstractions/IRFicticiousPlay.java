@@ -60,7 +60,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         ALossPRCFRBR cfr = new IRFicticiousPlay(root, expander, new WichardtGameInfo());
 
-        cfr.runIterations(300);
+        cfr.runIterations(1000);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("cfrbrtest.gbt", root, expander);
@@ -130,7 +130,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         ALossPRCFRBR cfr = new IRFicticiousPlay(root, expander, new RandomAbstractionGameInfo(new RandomGameInfo()));
 
-        cfr.runIterations(1500);
+        cfr.runIterations(15000);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("cfrbrtest.gbt", root, expander);
@@ -288,9 +288,11 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         double delta;
 
         if (player.getId() == 0)
-            delta = -p1Delta.calculateDelta(strategy, strategyDiffs);
+            delta = p1Delta.calculateDelta(strategy, strategyDiffs);
         else
             delta = p0Delta.calculateDelta(strategy, strategyDiffs);
+        if (Math.abs(delta) > 1e-8)
+            System.err.println(delta);
         return delta > 1. / (iteration * iteration) * EPS + 1e-4;
     }
 
