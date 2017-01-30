@@ -35,7 +35,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
 //        runGenericPoker();
 //        runWichardtCounterExample();
         runBothIRRandomAbstractionGame();
-//        runCPRRBothIRRandomAbstractionGame();
+        runCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
 //        runCPRRRandomAbstractionGame();
     }
@@ -130,7 +130,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         ALossPRCFRBR cfr = new IRFicticiousPlay(root, expander, new RandomAbstractionGameInfo(new RandomGameInfo()));
 
-        cfr.runIterations(15000);
+        cfr.runIterations(100000);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("cfrbrtest.gbt", root, expander);
@@ -209,7 +209,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         Expander<IRCFRInformationSet> cprrExpander = new CPRRExpander<>(expander);
         ALossPRCFRBR cfr = new IRFicticiousPlay(cprrRoot, cprrExpander, new RandomAbstractionGameInfo(new RandomGameInfo()));
 
-        cfr.runIterations(1000);
+        cfr.runIterations(100000);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("cfrbrtest.gbt", cprrRoot, cprrExpander);
@@ -241,15 +241,15 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
             this.iteration++;
             bestResponseIteration(rootState.getAllPlayers()[1], p0BR);
             bestResponseIteration(rootState.getAllPlayers()[0], p1BR);
-            if (i % 10 == 0) {
+            if (i % 20 == 0) {
                 Map<Action, Double> p1Strategy = getStrategyFor(rootState.getAllPlayers()[1]);
 
-                System.out.println(p1Strategy);
+//                System.out.println(p1Strategy);
 
 //                System.out.println("br: " + p0BR.getBestResponse());
 
                 Map<Action, Double> p0Strategy = getStrategyFor(rootState.getAllPlayers()[0]);
-                System.out.println(p0Strategy);
+//                System.out.println(p0Strategy);
                 System.out.println("p0BR: " + p0BR.calculateBR(rootState, p1Strategy));
                 System.out.println("p1BR: " + -p1BR.calculateBR(rootState, p0Strategy));
 //                System.out.println("br: " + p1BR.getBestResponse());
