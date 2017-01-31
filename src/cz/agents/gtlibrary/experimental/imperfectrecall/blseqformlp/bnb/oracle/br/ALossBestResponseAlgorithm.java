@@ -646,22 +646,22 @@ public class ALossBestResponseAlgorithm {
         return result;
     }
 
-    public Map<Sequence, Action> getFullBestResponseResult() {
+    public Map<Sequence, Map<ISKey, Action>> getFullBestResponseResult() {
         if (BRresult == null) {
             return null;
         }
-        Map<Sequence, Action> result = new HashMap<>();
+        Map<Sequence, Map<ISKey, Action>> result = new HashMap<>();
         Queue<Sequence> queue = new ArrayDeque<>();
         Sequence emptySequence = new ArrayListSequenceImpl(gameTreeRoot.getAllPlayers()[searchingPlayerIndex]);
 
         queue.addAll(firstLevelActions.values());
-        firstLevelActions.values().forEach(s -> result.put(emptySequence, s.getLast()));
+        firstLevelActions.values().forEach(s -> result.computeIfAbsent(emptySequence, k -> new HashMap<>()).put(s.getLast().getInformationSet().getISKey(), s.getLast()));
         while (queue.size() > 0) {
             Sequence sequence = queue.poll();
             Map<ISKey, Sequence> res = BRresult.get(sequence);
 
             if (res != null) {
-                res.values().stream().forEach(s -> result.put(sequence, s.getLast()));
+                res.values().stream().forEach(s -> result.computeIfAbsent(sequence, k -> new HashMap<>()).put(s.getLast().getInformationSet().getISKey(), s.getLast()));
                 queue.addAll(res.values());
             }
         }

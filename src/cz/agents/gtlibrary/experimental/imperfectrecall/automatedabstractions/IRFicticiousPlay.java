@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.generic.ir.CPRRConstIRGenericPokerGameState;
 import cz.agents.gtlibrary.domain.randomabstraction.*;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
@@ -23,6 +24,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cp
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.flexibleisdomain.FlexibleISKeyExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.flexibleisdomain.FlexibleISKeyGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -32,15 +34,28 @@ import java.util.*;
 public class IRFicticiousPlay extends ALossPRCFRBR {
 
     public static void main(String[] args) {
-//        runGenericPoker();
+        runGenericPoker();
 //        runWichardtCounterExample();
 //        runBothIRRandomAbstractionGame();
-        runCPRRBothIRRandomAbstractionGame();
+//        runCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
 //        runCPRRRandomAbstractionGame();
     }
 
     protected static void runGenericPoker() {
+        GameState root = new GenericPokerGameState();
+        Expander<IRCFRInformationSet> expander = new GenericPokerExpander<>(new IRCFRConfig());
+
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
+        ALossPRCFRBR cfr = new IRFicticiousPlay(root, expander, new GPGameInfo());
+
+        cfr.runIterations(300);
+        GambitEFG gambit = new GambitEFG();
+
+        gambit.write("cfrbrtest.gbt", root, expander);
+    }
+
+    protected static void runIRGenericPoker() {
         GameState root = new CPRRConstIRGenericPokerGameState();
         Expander<IRCFRInformationSet> expander = new GenericPokerExpander<>(new IRCFRConfig());
 
@@ -266,7 +281,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         return null;
     }
 
-    protected void updateISs(FlexibleISKeyGameState state, Map<Sequence, Action> bestResponse, Map<Action, Double> opponentStrategy, Player opponent) {
+    protected void updateISs(FlexibleISKeyGameState state, Map<Sequence, Map<ISKey, Action>> bestResponse, Map<Action, Double> opponentStrategy, Player opponent) {
         Map<InformationSet, Map<Action, Map<Sequence, double[]>>> toSplit = new HashMap<>();
         Player currentPlayer = state.getAllPlayers()[1 - opponent.getId()];
 
@@ -296,7 +311,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         return delta > 1. / (iteration * iteration) * EPS + 1e-4;
     }
 
-    protected int updateISStructure(GameState state, Map<Sequence, Action> bestResponse, Map<Action, Double> opponentStrategy, Player opponent, Map<InformationSet, Map<Action, Map<Sequence, double[]>>> toSplit, double pBR, double pAvg) {
+    protected int updateISStructure(GameState state, Map<Sequence, Map<ISKey, Action>> bestResponse, Map<Action, Double> opponentStrategy, Player opponent, Map<InformationSet, Map<Action, Map<Sequence, double[]>>> toSplit, double pBR, double pAvg) {
         if (state.isGameEnd())
             return 0;
         if (state.isPlayerToMoveNature())
@@ -306,7 +321,8 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                     .map(state::performAction).mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, opponent, toSplit, pBR, pAvg)).sum();
         IRCFRInformationSet is = informationSets.get(state.getISKeyForPlayerToMove());
         List<Action> actions = expander.getActions(state);
-        Action currentStateBestResponseAction = bestResponse.get(state.getSequenceForPlayerToMove());
+        Map<ISKey, Action> isKeyActionMap = bestResponse.get(state.getSequenceForPlayerToMove());
+        Action currentStateBestResponseAction = isKeyActionMap == null ? null : isKeyActionMap.get(state.getISKeyForPlayerToMove());
 
         double[] meanStrategy = is.getData().getMp();
 

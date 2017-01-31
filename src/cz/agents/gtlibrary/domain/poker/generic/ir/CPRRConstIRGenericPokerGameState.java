@@ -58,7 +58,7 @@ public class CPRRConstIRGenericPokerGameState extends IRGenericPokerGameState {
         Observations opponentObservations = new Observations(getPlayerToMove(), players[1 - currentPlayerIndex]);
 
         populateObservations(opponentObservations);
-        Observations natureObservations = new Observations(GPGameInfo.FIRST_PLAYER, GPGameInfo.SECOND_PLAYER);
+        Observations natureObservations = new Observations(GPGameInfo.FIRST_PLAYER, GPGameInfo.NATURE);
 
         if (firstMoveAfterTable())
             natureObservations.add(new IRGenericPokerGameState.ImperfectPokerObservation(getTable().getActionType()));

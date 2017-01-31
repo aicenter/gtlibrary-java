@@ -307,7 +307,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     protected double bestResponseIteration(Player opponent, ALossBestResponseAlgorithm br) {
         Map<Action, Double> strategy = getOpponentStrategyForBR(opponent, rootState, expander);
         double value = br.calculateBR(rootState, strategy);
-        Map<Sequence, Action> fullBestResponseResult = br.getFullBestResponseResult();
+        Map<Sequence, Map<ISKey, Action>> fullBestResponseResult = br.getFullBestResponseResult();
 
 
         updateISs(rootState, fullBestResponseResult, strategy, opponent);
@@ -327,7 +327,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         }, config.getAllInformationSets(), expander);
     }
 
-    protected void updateISs(FlexibleISKeyGameState state, Map<Sequence, Action> bestResponse, Map<Action, Double> opponentStrategy, Player opponent) {
+    protected void updateISs(FlexibleISKeyGameState state, Map<Sequence, Map<ISKey, Action>> bestResponse, Map<Action, Double> opponentStrategy, Player opponent) {
         Map<Action, Double> avgStrategy = IRCFR.getStrategyFor(rootState, rootState.getAllPlayers()[1 - opponent.getId()],
                 new MeanStratDist(), config.getAllInformationSets(), expander);
         HashMap<ISKey, ExpectedValues> valueMap = new HashMap<>();
@@ -367,7 +367,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         }
     }
 
-    protected int updateISStructure(GameState state, Map<Sequence, Action> bestResponse, Map<Action, Double> opponentStrategy, Player opponent, HashMap<ISKey, ExpectedValues> valueMap, Map<InformationSet, List<Pair<Sequence, Integer>>> toSplit) {
+    protected int updateISStructure(GameState state, Map<Sequence, Map<ISKey, Action>> bestResponse, Map<Action, Double> opponentStrategy, Player opponent, HashMap<ISKey, ExpectedValues> valueMap, Map<InformationSet, List<Pair<Sequence, Integer>>> toSplit) {
         if (state.isGameEnd())
             return 0;
         if (state.isPlayerToMoveNature()) {
@@ -381,7 +381,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         ExpectedValues expectedValues = valueMap.get(state.getISKeyForPlayerToMove());
         List<Action> actions = expander.getActions(state);
         Set<Action> bestResponseActionsForIS = getBestResponseActionsForIS(is, bestResponse);
-        Action currentStateBestResponseAction = bestResponse.get(state.getSequenceForPlayerToMove());
+        Action currentStateBestResponseAction = bestResponse.get(state.getSequenceForPlayerToMove()).get(state.getISKeyForPlayerToMove());
 //        assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() == 1;
         int actionIndex = getIndex(actions, currentStateBestResponseAction);
         int splitCount = updateISStructure(state.performAction(currentStateBestResponseAction), bestResponse, opponentStrategy, opponent, valueMap, toSplit) ;
@@ -411,9 +411,9 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         return splitCount;
     }
 
-    private Set<Action> getBestResponseActionsForIS(IRCFRInformationSet is, Map<Sequence, Action> bestResponse) {
-        return is.getAllStates().stream().map(s -> s.getSequenceForPlayerToMove()).filter(s -> bestResponse.containsKey(s))
-                .map(s -> bestResponse.get(s)).collect(Collectors.toSet());
+    private Set<Action> getBestResponseActionsForIS(IRCFRInformationSet is, Map<Sequence, Map<ISKey, Action>> bestResponse) {
+        return is.getAllStates().stream().filter(s -> bestResponse.containsKey(s.getSequenceForPlayerToMove()))
+                .map(s -> bestResponse.get(s.getSequenceForPlayerToMove()).get(s.getISKeyForPlayerToMove())).collect(Collectors.toSet());
     }
 
     protected void updateBR(Map<Action, Double> bestResponse, List<Action> actions, int actionIndex, GameState state) {
@@ -447,7 +447,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     }
 
 
-    protected ExpectedValues getExpectedValues(GameState state, Map<Sequence, Action> bestResponse,
+    protected ExpectedValues getExpectedValues(GameState state, Map<Sequence, Map<ISKey, Action>> bestResponse,
                                                Map<Action, Double> avgStrategy, Map<Action, Double> opponentStrategy,
                                                double brProb, double currentProb, double newProb, Map<ISKey, ExpectedValues> valueMap, Player opponent) {
         if (brProb < 1e-8 && currentProb < 1e-8 && newProb < 1e-8)
@@ -486,7 +486,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         double[] meanStrat = new double[actions.size()];
         int actionIndex = 0;
         FixedForIterationData data = informationSets.get(state.getISKeyForPlayerToMove()).getData();
-        Action bestResponseAction = bestResponse.get(state.getSequenceForPlayerToMove());
+        Action bestResponseAction = bestResponse.get(state.getSequenceForPlayerToMove()).get(state.getISKeyForPlayerToMove());
 
         System.arraycopy(data.getMp(), 0, meanStrat, 0, meanStrat.length);
         meanStrat = updateAndNormalizeMeanStrat(meanStrat, bestResponseAction, actions);
@@ -532,6 +532,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
             if (bestResponseAction.equals(action))
                 return index;
         }
+        assert false;
         return -1;
     }
 

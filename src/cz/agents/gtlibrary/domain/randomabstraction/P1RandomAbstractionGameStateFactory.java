@@ -44,7 +44,6 @@ public class P1RandomAbstractionGameStateFactory {
 
             gambit1.buildAndWrite("test.gbt", root, expander);
         }
-
     }
 
     public RandomAbstractionGameState createRoot(GameState wrappedRoot, AlgorithmConfig<? extends SequenceInformationSet> config) {
