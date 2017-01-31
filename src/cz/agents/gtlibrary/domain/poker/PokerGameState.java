@@ -172,11 +172,11 @@ public abstract class PokerGameState extends GameStateImpl {
     }
 
     protected boolean isFirstMoveInRound() {
-        return sequenceForAllPlayers.isEmpty() || lastMovePlayedByNature();
+        return sequenceForAllPlayers.isEmpty() || isFirstPlayerAfterNature();
     }
 
-    protected boolean lastMovePlayedByNature() {
-        return !sequenceForAllPlayers.isEmpty() && sequenceForAllPlayers.getLast().getPlayer().equals(players[2]);
+    protected boolean firstMoveOfPlayerToMove() {
+        return sequenceForAllPlayers.size() <= 1 && !isPlayerToMoveNature();
     }
 
     protected boolean isLastMoveAggressive() {
