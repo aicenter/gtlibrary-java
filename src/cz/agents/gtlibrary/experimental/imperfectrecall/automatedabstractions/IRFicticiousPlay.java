@@ -34,10 +34,10 @@ import java.util.*;
 public class IRFicticiousPlay extends ALossPRCFRBR {
 
     public static void main(String[] args) {
-        runGenericPoker();
+//        runGenericPoker();
 //        runWichardtCounterExample();
 //        runBothIRRandomAbstractionGame();
-//        runCPRRBothIRRandomAbstractionGame();
+        runCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
 //        runCPRRRandomAbstractionGame();
     }
@@ -431,10 +431,13 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                 for (Map.Entry<Sequence, double[]> sequenceEntry : entry.getValue().entrySet()) {
                     Set<GameState> isStates = entry.getKey().getInformationSet().getAllStates();
                     Set<GameState> toRemove = new HashSet<>();
-                    int actionIndex = getIndex(((IRCFRInformationSet) entry.getKey().getInformationSet()).getData().getActions(), entry.getKey());
 
                     isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(sequenceEntry.getKey())).forEach(toRemove::add);
                     if (toRemove.isEmpty())
+                        continue;
+                    int actionIndex = getIndex(((IRCFRInformationSet) entry.getKey().getInformationSet()).getData().getActions(), entry.getKey());
+
+                    if(actionIndex == -1)
                         continue;
                     isStates.removeAll(toRemove);
                     IRCFRInformationSet newIS = createNewIS(toRemove, player, (CFRBRData) ((IRCFRInformationSet) entry.getKey().getInformationSet()).getData());

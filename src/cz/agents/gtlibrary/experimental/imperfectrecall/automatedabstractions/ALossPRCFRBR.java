@@ -532,7 +532,6 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
             if (bestResponseAction.equals(action))
                 return index;
         }
-        assert false;
         return -1;
     }
 
