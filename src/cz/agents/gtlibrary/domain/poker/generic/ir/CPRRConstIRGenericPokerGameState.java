@@ -60,16 +60,29 @@ public class CPRRConstIRGenericPokerGameState extends IRGenericPokerGameState {
         populateObservations(opponentObservations);
         Observations natureObservations = new Observations(GPGameInfo.FIRST_PLAYER, GPGameInfo.NATURE);
 
-        if (firstMoveAfterTable())
+        if (firstMoveOfPlayerToMoveAfterTable())
             natureObservations.add(new IRGenericPokerGameState.ImperfectPokerObservation(getTable().getActionType()));
-        else if(lastMovePlayedByNature())
+        else if(firstMoveOfPlayerToMove())
             natureObservations.add(new IRGenericPokerGameState.ImperfectPokerObservation(getCardForActingPlayer().getActionType()));
         cachedISKey = new ImperfectRecallISKey(ownObservations, opponentObservations, natureObservations);
         return cachedISKey;
     }
 
-    private boolean firstMoveAfterTable() {
-        return lastMovePlayedByNature() && getTable() != null;
+//    @Override
+//    public ISKey getISKeyForPlayerToMove() {
+//        Observations observations = new Observations(getPlayerToMove(), getPlayerToMove());
+//
+//        observations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
+//        return new ImperfectRecallISKey(observations, null, null);
+//    }
+
+    private boolean firstMoveOfPlayerToMoveAfterTable() {
+        return getTable() != null && natureMoveInLastTwo();
+    }
+
+    private boolean natureMoveInLastTwo() {
+        return sequenceForAllPlayers.getLast().getPlayer().equals(GPGameInfo.NATURE) ||
+                sequenceForAllPlayers.get(sequenceForAllPlayers.size() - 2).getPlayer().equals(GPGameInfo.NATURE);
     }
 
     private ISKey getPRKey(ISKey isKeyForPlayerToMove) {

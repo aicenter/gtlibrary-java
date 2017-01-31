@@ -9,10 +9,7 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
-import cz.agents.gtlibrary.iinodes.Observations;
+import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 
@@ -47,11 +44,19 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
         super(gameState);
     }
 
+//    @Override
+//    public ISKey getISKeyForPlayerToMove() {
+//        if (getTable() == null)
+//            return getKeyBeforeTable();
+//        return getKeyAfterTable();
+//    }
+
     @Override
     public ISKey getISKeyForPlayerToMove() {
-        if (getTable() == null)
-            return getKeyBeforeTable();
-        return getKeyAfterTable();
+        Observations observations = new Observations(getPlayerToMove(), getPlayerToMove());
+
+        observations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
+        return new ImperfectRecallISKey(observations, null, null);
     }
 
     public ISKey getKeyBeforeTable() {
