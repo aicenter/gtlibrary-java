@@ -42,7 +42,7 @@ public class DeltaCalculator extends ALossBestResponseAlgorithm {
 //        if (newLowerBound <= MAX_UTILITY_VALUE) {
         double value = (Math.abs(prProbability) < 1e-8 && Math.abs(irProbability) < 1e-8) ? 0 : bestResponse(newState, Double.NEGATIVE_INFINITY, 1);
 
-        selection.addValue(action, value, natureProb, 1);
+        selection.addValue(action, value, natureProb, 1e-3*state.getNatureProbability());
 //        }
     }
 

@@ -34,7 +34,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
     public static void main(String[] args) {
 //        runGenericPoker();
 //        runWichardtCounterExample();
-        runBothIRRandomAbstractionGame();
+//        runBothIRRandomAbstractionGame();
         runCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
 //        runCPRRRandomAbstractionGame();
