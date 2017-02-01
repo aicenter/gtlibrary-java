@@ -17,7 +17,7 @@ public class IJCAI2017Experiments {
                 IRFicticiousPlay.runCPRRBothIRRandomAbstractionGame();
         } else if (args[0].equals("GP")) {
             GPGameInfo.MAX_RAISES_IN_ROW = Integer.parseInt(args[1]);
-            if (args[1].equals("IR"))
+            if (args[2].equals("IR"))
                 IRFicticiousPlay.runIRGenericPoker();
             else
                 IRFicticiousPlay.runGenericPoker();
