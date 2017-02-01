@@ -284,7 +284,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
     }
 
     protected void updateISs(FlexibleISKeyGameState state, Map<Sequence, Map<ISKey, Action>> bestResponse, Map<Action, Double> opponentStrategy, Player opponent) {
-        Map<InformationSet, Map<Action, Map<Sequence, double[]>>> toSplit = new HashMap<>();
+        Map<InformationSet, Map<Integer, Map<Sequence, double[]>>> toSplit = new HashMap<>();
         Player currentPlayer = state.getAllPlayers()[1 - opponent.getId()];
 
         updateISStructure(state, bestResponse, opponentStrategy, opponent, toSplit, 1, 1);
@@ -320,7 +320,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         return delta > 1. / (iteration * iteration) * EPS + 1e-3;
     }
 
-    protected int updateISStructure(GameState state, Map<Sequence, Map<ISKey, Action>> bestResponse, Map<Action, Double> opponentStrategy, Player opponent, Map<InformationSet, Map<Action, Map<Sequence, double[]>>> toSplit, double pBR, double pAvg) {
+    protected int updateISStructure(GameState state, Map<Sequence, Map<ISKey, Action>> bestResponse, Map<Action, Double> opponentStrategy, Player opponent, Map<InformationSet, Map<Integer, Map<Sequence, double[]>>> toSplit, double pBR, double pAvg) {
         if (state.isGameEnd())
             return 0;
         if (state.isPlayerToMoveNature())
@@ -341,8 +341,9 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         Set<GameState> isStates = is.getAllStates();
 
         if (pBR > 1 - 1e-8 && isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(state.getSequenceForPlayerToMove())).count() != isStates.size()) {
-            Map<Action, Map<Sequence, double[]>> actionMap = toSplit.compute(is, (k, v) -> v == null ? new HashMap<>() : v);
-            Map<Sequence, double[]> currentSplitSequences = actionMap.compute(currentStateBestResponseAction, (k, v) -> v == null ? new HashMap<>() : v);
+            int actionIndex = getIndex(actions, currentStateBestResponseAction);
+            Map<Integer, Map<Sequence, double[]>> actionMap = toSplit.compute(is, (k, v) -> v == null ? new HashMap<>() : v);
+            Map<Sequence, double[]> currentSplitSequences = actionMap.compute(actionIndex, (k, v) -> v == null ? new HashMap<>() : v);
             double[] currentValuePair = currentSplitSequences.compute(state.getSequenceForPlayerToMove(), (k, v) -> v == null ? new double[2] : v);
 
             currentValuePair[0] += 1. / (iteration + 1) * pBR;
@@ -386,25 +387,30 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
 //        }
 //    }
 
-    protected void splitISsAccordingToBR(Map<InformationSet, Map<Action, Map<Sequence, double[]>>> toSplit, Player player) {
-        for (Map.Entry<InformationSet, Map<Action, Map<Sequence, double[]>>> informationSetMapEntry : toSplit.entrySet()) {
+    protected void splitISsAccordingToBR(Map<InformationSet, Map<Integer, Map<Sequence, double[]>>> toSplit, Player player) {
+        for (Map.Entry<InformationSet, Map<Integer, Map<Sequence, double[]>>> informationSetMapEntry : toSplit.entrySet()) {
             if (informationSetMapEntry.getValue().size() > 1) {
-                for (Map.Entry<Action, Map<Sequence, double[]>> entry : informationSetMapEntry.getValue().entrySet()) {
-                    Set<GameState> isStates = entry.getKey().getInformationSet().getAllStates();
+                for (Map.Entry<Integer, Map<Sequence, double[]>> entry : informationSetMapEntry.getValue().entrySet()) {
+                    Set<GameState> isStates = informationSetMapEntry.getKey().getAllStates();
                     Set<GameState> toRemove = new HashSet<>();
-                    int actionIndex = getIndex(((IRCFRInformationSet) entry.getKey().getInformationSet()).getData().getActions(), entry.getKey());
+                    int actionIndex = entry.getKey();
 
                     for (Sequence sequence : entry.getValue().keySet()) {
                         isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(sequence)).forEach(toRemove::add);
                     }
                     if (toRemove.isEmpty())
                         continue;
-                    isStates.removeAll(toRemove);
-                    IRCFRInformationSet newIS = createNewIS(toRemove, player, (CFRBRData) ((IRCFRInformationSet) entry.getKey().getInformationSet()).getData());
+                    IRCFRInformationSet newIS;
+                    if (toRemove.size() == isStates.size())
+                        newIS = (IRCFRInformationSet) informationSetMapEntry.getKey();
+                    else {
+                        isStates.removeAll(toRemove);
+                        newIS = createNewIS(toRemove, player, (CFRBRData) ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData());
+                    }
                     double[] meanStrategy = newIS.getData().getMp();
 
                     for (Map.Entry<Sequence, double[]> sequenceEntry : entry.getValue().entrySet()) {
-                        for (int i = 0; i < ((IRCFRInformationSet) entry.getKey().getInformationSet()).getData().getActions().size(); i++) {
+                        for (int i = 0; i < ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData().getActions().size(); i++) {
                             ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateNumerator(i, sequenceEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]));
                         }
                         ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateDenominator(sequenceEntry.getValue()[0] + sequenceEntry.getValue()[1]);
@@ -413,13 +419,13 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                     System.err.println("!!!BR creating IS in it " + iteration);
                 }
             } else {
-                for (Map.Entry<Action, Map<Sequence, double[]>> entry : informationSetMapEntry.getValue().entrySet()) {
+                for (Map.Entry<Integer, Map<Sequence, double[]>> entry : informationSetMapEntry.getValue().entrySet()) {
                     CFRBRData data = (CFRBRData) ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData();
                     double[] meanStrategy = data.getMp();
-                    int actionIndex = getIndex(data.getActions(), entry.getKey());
+                    int actionIndex = entry.getKey();
 
                     for (Map.Entry<Sequence, double[]> sequenceEntry : entry.getValue().entrySet()) {
-                        for (int i = 0; i < ((IRCFRInformationSet) entry.getKey().getInformationSet()).getData().getActions().size(); i++) {
+                        for (int i = 0; i < ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData().getActions().size(); i++) {
                             data.addToMeanStrategyUpdateNumerator(i, sequenceEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]));
                         }
                         data.addToMeanStrategyUpdateDenominator(sequenceEntry.getValue()[0] + sequenceEntry.getValue()[1]);
@@ -434,26 +440,25 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
 
     }
 
-    protected void splitISsToPR(Map<InformationSet, Map<Action, Map<Sequence, double[]>>> toSplit, Player player) {
-        for (Map<Action, Map<Sequence, double[]>> actionMap : toSplit.values()) {
-            for (Map.Entry<Action, Map<Sequence, double[]>> entry : actionMap.entrySet()) {
+    protected void splitISsToPR(Map<InformationSet, Map<Integer, Map<Sequence, double[]>>> toSplit, Player player) {
+        for (Map.Entry<InformationSet, Map<Integer, Map<Sequence, double[]>>> actionMapEntry : toSplit.entrySet()) {
+            for (Map.Entry<Integer, Map<Sequence, double[]>> entry : actionMapEntry.getValue().entrySet()) {
                 for (Map.Entry<Sequence, double[]> sequenceEntry : entry.getValue().entrySet()) {
-                    Set<GameState> isStates = entry.getKey().getInformationSet().getAllStates();
+                    Set<GameState> isStates = actionMapEntry.getKey().getAllStates();
                     Set<GameState> toRemove = new HashSet<>();
 
                     isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(sequenceEntry.getKey())).forEach(toRemove::add);
                     if (toRemove.isEmpty())
                         continue;
-                    int actionIndex = getIndex(((IRCFRInformationSet) entry.getKey().getInformationSet()).getData().getActions(), entry.getKey());
+                    int actionIndex = entry.getKey();
 
-                    if (actionIndex == -1)
-                        continue;
+                    assert actionIndex > -1;
                     IRCFRInformationSet newIS;
                     if (toRemove.size() == isStates.size())
-                        newIS = (IRCFRInformationSet) entry.getKey().getInformationSet();
+                        newIS = (IRCFRInformationSet) actionMapEntry.getKey();
                     else {
                         isStates.removeAll(toRemove);
-                        newIS = createNewIS(toRemove, player, (CFRBRData) ((IRCFRInformationSet) entry.getKey().getInformationSet()).getData());
+                        newIS = createNewIS(toRemove, player, (CFRBRData) ((IRCFRInformationSet) actionMapEntry.getKey()).getData());
                     }
                     double[] meanStrategy = newIS.getData().getMp();
 
@@ -486,16 +491,16 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
     }
 
 
-    protected StrategyDiffs getStrategyDiffs(Map<InformationSet, Map<Action, Map<Sequence, double[]>>> toSplit) {
+    protected StrategyDiffs getStrategyDiffs(Map<InformationSet, Map<Integer, Map<Sequence, double[]>>> toSplit) {
         StrategyDiffs strategyDiffs = new StrategyDiffs();
 
-        for (Map<Action, Map<Sequence, double[]>> actionMap : toSplit.values()) {
-            for (Map.Entry<Action, Map<Sequence, double[]>> entry : actionMap.entrySet()) {
-                List<Action> actions = ((IRCFRInformationSet) entry.getKey().getInformationSet()).getData().getActions();
+        for (Map.Entry<InformationSet, Map<Integer, Map<Sequence, double[]>>> actionMapEntry : toSplit.entrySet()) {
+            for (Map.Entry<Integer, Map<Sequence, double[]>> entry : actionMapEntry.getValue().entrySet()) {
+                List<Action> actions = ((IRCFRInformationSet) actionMapEntry.getKey()).getData().getActions();
                 double[] meanStratDiffForAction = new double[actions.size()];
-                double[] meanStrategy = ((IRCFRInformationSet) entry.getKey().getInformationSet()).getData().getMp();
+                double[] meanStrategy = ((IRCFRInformationSet) actionMapEntry.getKey()).getData().getMp();
                 double meanStratDiffForActionNormalizer = 0;
-                int actionIndex = getIndex(actions, entry.getKey());
+                int actionIndex = entry.getKey();
 
                 for (Map.Entry<Sequence, double[]> sequenceValuesEntry : entry.getValue().entrySet()) {
                     double[] meanStratDiffForSequence = new double[actions.size()];
@@ -511,7 +516,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                 for (int i = 0; i < meanStratDiffForAction.length; i++) {
                     meanStratDiffForAction[i] /= meanStratDiffForActionNormalizer;
                 }
-                entry.getKey().getInformationSet().getAllStates().stream().map(s -> s.getSequenceForPlayerToMove()).forEach(sequence -> {
+                actionMapEntry.getKey().getAllStates().stream().map(s -> s.getSequenceForPlayerToMove()).forEach(sequence -> {
                     strategyDiffs.irStrategyDiff.put(sequence, toMapNoNorm(actions, meanStratDiffForAction));
                 });
             }
