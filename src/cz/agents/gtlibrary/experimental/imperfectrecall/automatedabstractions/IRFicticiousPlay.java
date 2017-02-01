@@ -36,10 +36,10 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
 
     public static void main(String[] args) {
 //        runGenericPoker();
-        runIRGenericPoker();
+//        runIRGenericPoker();
 //        runWichardtCounterExample();
 //        runBothIRRandomAbstractionGame();
-//        runCPRRBothIRRandomAbstractionGame();
+        runCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
 //        runCPRRRandomAbstractionGame();
     }
@@ -51,7 +51,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         ALossPRCFRBR cfr = new IRFicticiousPlay(root, expander, new GPGameInfo());
 
-        cfr.runIterations(300);
+        cfr.runIterations(1000000);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("cfrbrtest.gbt", root, expander);
@@ -64,7 +64,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
         ALossPRCFRBR cfr = new IRFicticiousPlay(root, expander, new GPGameInfo());
 
-        cfr.runIterations(10000);
+        cfr.runIterations(1000000);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("cfrbrtest.gbt", root, expander);
@@ -321,7 +321,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
             delta = p0Delta.calculateDelta(strategy, strategyDiffs);
         if (Math.abs(delta) > 1e-8)
             System.err.println(delta);
-        return delta > 1. / (iteration * iteration) * EPS + 1e-2;
+        return delta > 1. / (iteration * iteration) * EPS + 1e-3;
     }
 
     protected int updateISStructure(GameState state, Map<Sequence, Map<ISKey, Action>> bestResponse, Map<Action, Double> opponentStrategy, Player opponent, Map<InformationSet, Map<Action, Map<Sequence, double[]>>> toSplit, double pBR, double pAvg) {
@@ -453,7 +453,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                     if (actionIndex == -1)
                         continue;
                     IRCFRInformationSet newIS;
-                    if(toRemove.size() == isStates.size())
+                    if (toRemove.size() == isStates.size())
                         newIS = (IRCFRInformationSet) entry.getKey().getInformationSet();
                     else {
                         isStates.removeAll(toRemove);
@@ -547,5 +547,15 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
     @Override
     protected Map<Action, Double> getOpponentStrategyForBR(Player opponent, FlexibleISKeyGameState rootState, Expander<IRCFRInformationSet> expander) {
         return IRCFR.getStrategyFor(rootState, opponent, new MeanStratDist(), config.getAllInformationSets(), expander);
+//        Map<Action, Double> strategy = new HashMap<>(informationSets.size() / 2);
+//
+//        informationSets.values().stream().filter(is -> is.getPlayer().equals(opponent)).forEach(is -> {
+//            double[] meanStrategy = is.getData().getMp();
+//            int index = 0;
+//            for (Action action : is.getData().getActions()) {
+//                  strategy.put(action, meanStrategy[index++]);
+//            }
+//        });
+//        return strategy;
     }
 }
