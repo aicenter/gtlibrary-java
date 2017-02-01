@@ -35,11 +35,11 @@ import java.util.stream.Collectors;
 public class IRFicticiousPlay extends ALossPRCFRBR {
 
     public static void main(String[] args) {
-//        runGenericPoker();
+        runGenericPoker();
 //        runIRGenericPoker();
 //        runWichardtCounterExample();
 //        runBothIRRandomAbstractionGame();
-        runCPRRBothIRRandomAbstractionGame();
+//        runCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
 //        runCPRRRandomAbstractionGame();
     }
@@ -307,10 +307,6 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         informationSets.forEach((key, is) -> is.getData().setActions(expander.getActions(is.getAllStates().stream().findAny().get())));
     }
 
-    private Map<Action, Double> getStrategyFor(Player player) {
-        return IRCFR.getStrategyFor(rootState, player, new MeanStratDist(), config.getAllInformationSets(), expander);
-    }
-
     private boolean aboveDelta(StrategyDiffs strategyDiffs, Map<Action, Double> strategy, Player player) {
 //        return false;
         double delta;
@@ -414,7 +410,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                         ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateDenominator(sequenceEntry.getValue()[0] + sequenceEntry.getValue()[1]);
                     }
                     ((CFRBRData) newIS.getData()).updateMeanStrategy();
-                    System.err.println("!!!BR creating IS in it " + iteration + "\n old IS: " + entry.getKey().getInformationSet() + "\n new IS: " + newIS.getISKey());
+                    System.err.println("!!!BR creating IS in it " + iteration);
                 }
             } else {
                 for (Map.Entry<Action, Map<Sequence, double[]>> entry : informationSetMapEntry.getValue().entrySet()) {
@@ -466,7 +462,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                     }
                     ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateDenominator(sequenceEntry.getValue()[0] + sequenceEntry.getValue()[1]);
                     ((CFRBRData) newIS.getData()).updateMeanStrategy();
-                    System.err.println("PR " + newIS.getPlayer() + " creating IS in it " + iteration + "\n old IS: " + entry.getKey().getInformationSet() + "\n new IS: " + newIS.getISKey());
+                    System.err.println("PR " + newIS.getPlayer() + " creating IS in it " + iteration);
                 }
             }
         }
@@ -542,20 +538,5 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
             actionMap.put(action, meanStrat[index++]);
         }
         return actionMap;
-    }
-
-    @Override
-    protected Map<Action, Double> getOpponentStrategyForBR(Player opponent, FlexibleISKeyGameState rootState, Expander<IRCFRInformationSet> expander) {
-        return IRCFR.getStrategyFor(rootState, opponent, new MeanStratDist(), config.getAllInformationSets(), expander);
-//        Map<Action, Double> strategy = new HashMap<>(informationSets.size() / 2);
-//
-//        informationSets.values().stream().filter(is -> is.getPlayer().equals(opponent)).forEach(is -> {
-//            double[] meanStrategy = is.getData().getMp();
-//            int index = 0;
-//            for (Action action : is.getData().getActions()) {
-//                  strategy.put(action, meanStrategy[index++]);
-//            }
-//        });
-//        return strategy;
     }
 }
