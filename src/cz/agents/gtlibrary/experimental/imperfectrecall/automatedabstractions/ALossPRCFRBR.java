@@ -269,14 +269,14 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
                 bestResponseIteration(regretMatchingPlayer, br);
             }
             if (i % 20 == 0) {
-                Map<Action, Double> strategy = IRCFR.getStrategyFor(rootState, regretMatchingPlayer, new MeanStratDist(), config.getAllInformationSets(), expander);
+                Map<Action, Double> strategy = getStrategyFor(regretMatchingPlayer);
 
 //                System.out.println(strategy);
 //                System.out.println(IRCFR.getStrategyFor(rootState, rootState.getAllPlayers()[1 - regretMatchingPlayer.getId()], new MeanStratDist(), config.getAllInformationSets(), expander));
                 System.out.println("exp val against br: " + -br.calculateBR(rootState, strategy));
 
-                Map<Action, Double> bestResponse = br.getBestResponse();
-                Map<Action, Double> averageBestResponse = IRCFR.getStrategyFor(rootState, brPlayer, new MeanStratDist(), config.getAllInformationSets(), expander);
+//                Map<Action, Double> bestResponse = br.getBestResponse();
+                Map<Action, Double> averageBestResponse = getStrategyFor(brPlayer);
                 System.out.println("exp val avg vs avg: " + computeExpectedValue(rootState, strategy, averageBestResponse));
                 System.out.println("Current IS count: " + config.getAllInformationSets().size());
             }
