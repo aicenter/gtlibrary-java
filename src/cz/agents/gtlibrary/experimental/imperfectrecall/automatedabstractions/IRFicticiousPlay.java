@@ -35,8 +35,8 @@ import java.util.stream.Collectors;
 public class IRFicticiousPlay extends ALossPRCFRBR {
 
     public static void main(String[] args) {
-        runGenericPoker();
-//        runIRGenericPoker();
+//        runGenericPoker();
+        runIRGenericPoker();
 //        runWichardtCounterExample();
 //        runBothIRRandomAbstractionGame();
 //        runCPRRBothIRRandomAbstractionGame();
