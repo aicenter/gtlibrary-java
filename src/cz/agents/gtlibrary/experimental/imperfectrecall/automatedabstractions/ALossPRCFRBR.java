@@ -305,7 +305,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     }
 
     protected double bestResponseIteration(Player opponent, ALossBestResponseAlgorithm br) {
-        Map<Action, Double> strategy = getOpponentStrategyForBR(opponent, rootState, expander);
+        Map<Action, Double> strategy = getStrategyFor(opponent);
         double value = br.calculateBR(rootState, strategy);
         Map<Sequence, Map<ISKey, Action>> fullBestResponseResult = br.getFullBestResponseResult();
 
@@ -328,8 +328,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     }
 
     protected void updateISs(FlexibleISKeyGameState state, Map<Sequence, Map<ISKey, Action>> bestResponse, Map<Action, Double> opponentStrategy, Player opponent) {
-        Map<Action, Double> avgStrategy = IRCFR.getStrategyFor(rootState, rootState.getAllPlayers()[1 - opponent.getId()],
-                new MeanStratDist(), config.getAllInformationSets(), expander);
+        Map<Action, Double> avgStrategy = getStrategyFor(rootState.getAllPlayers()[1 - opponent.getId()]);
         HashMap<ISKey, ExpectedValues> valueMap = new HashMap<>();
         ExpectedValues expectedValues = getExpectedValues(state, bestResponse, avgStrategy, opponentStrategy, 1, 1, 1, valueMap, opponent);
 
@@ -622,6 +621,20 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         }
         data.updateAllRegrets(tmpV, ev, (expPlayer.getId() == 0 ? pi2 : pi1)/*pi1*pi2*/);
         data.updateMeanStrategy(rmProbs, (expPlayer.getId() == 0 ? pi1 : pi2)/*pi1*pi2*/);
+    }
+
+    protected Map<Action, Double> getStrategyFor(Player player) {
+        Map<Action, Double> strategy = new HashMap<>(informationSets.size() / 2);
+
+        informationSets.values().stream().filter(is -> is.getPlayer().equals(player)).forEach(is -> {
+            double[] meanStrategy = is.getData().getMp();
+            int index = 0;
+
+            for (Action action : is.getData().getActions()) {
+                strategy.put(action, meanStrategy[index++]);
+            }
+        });
+        return strategy;
     }
 
     protected double[] getStrategy(OOSAlgorithmData data, GameState state) {
