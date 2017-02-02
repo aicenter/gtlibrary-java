@@ -1,9 +1,7 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions;
 
-import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFR;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRConfig;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
@@ -267,6 +265,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
 
                 Map<Action, Double> p0Strategy = getStrategyFor(rootState.getAllPlayers()[0]);
 //                System.out.println(p0Strategy);
+                System.out.println("Iteration: " + iteration);
                 System.out.println("p0BR: " + p0BR.calculateBR(rootState, p1Strategy));
                 System.out.println("p1BR: " + -p1BR.calculateBR(rootState, p0Strategy));
 //                System.out.println("br: " + p1BR.getBestResponse());
@@ -311,6 +310,8 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
 //        return false;
         double delta;
 
+        assert valid(strategyDiffs, strategy);
+//        Map<Sequence, Double> irDiffProbs = getIRDiffProbs(strategyDiffs.irStrategyDiff, strategy);
         if (player.getId() == 0)
             delta = p1Delta.calculateDelta(strategy, strategyDiffs);
         else
@@ -318,6 +319,38 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         if (Math.abs(delta) > 1e-8)
             System.err.println(delta);
         return delta > 1. / (iteration * iteration) * EPS + 1e-3;
+    }
+
+    private Map<Sequence, Double> getIRDiffProbs(Map<Sequence, Map<Action, Double>> irStrategyDiff, Map<Action, Double> strategy) {
+        Map<Sequence, Double> diffProbs = new HashMap<>();
+        for (Sequence sequence : irStrategyDiff.keySet()) {
+            diffProbs.put(sequence, getProbability(sequence, strategy));
+        }
+        return diffProbs;
+    }
+
+    private Double getProbability(Sequence sequence, Map<Action, Double> strategy) {
+        double prob = 1;
+        for (Action action : sequence) {
+            prob *= strategy.getOrDefault(action, 0d);
+        }
+        return prob;
+    }
+
+    private boolean valid(StrategyDiffs strategyDiffs, Map<Action, Double> strategy) {
+        for (Map<Action, Double> actionDoubleMap : strategyDiffs.prStrategyDiff.values()) {
+            for (Map.Entry<Action, Double> actionDoubleEntry : actionDoubleMap.entrySet()) {
+                if (strategy.getOrDefault(actionDoubleEntry.getKey(), 0d) + actionDoubleEntry.getValue() < 0)
+                    return false;
+            }
+        }
+        for (Map<Action, Double> actionDoubleMap : strategyDiffs.irStrategyDiff.values()) {
+            for (Map.Entry<Action, Double> actionDoubleEntry : actionDoubleMap.entrySet()) {
+                if (strategy.getOrDefault(actionDoubleEntry.getKey(), 0d) + actionDoubleEntry.getValue() < 0)
+                    return false;
+            }
+        }
+        return true;
     }
 
     protected int updateISStructure(GameState state, Map<Sequence, Map<ISKey, Action>> bestResponse, Map<Action, Double> opponentStrategy, Player opponent, Map<InformationSet, Map<Integer, Map<Sequence, double[]>>> toSplit, double pBR, double pAvg) {
@@ -505,14 +538,18 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
                 for (Map.Entry<Sequence, double[]> sequenceValuesEntry : entry.getValue().entrySet()) {
                     double[] meanStratDiffForSequence = new double[actions.size()];
 
+//                    if(sequenceValuesEntry.getValue()[0] + sequenceValuesEntry.getValue()[1] < 1e-3)
+//                        continue;
                     for (int i = 0; i < actions.size(); i++) {
                         meanStratDiffForSequence[i] = sequenceValuesEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]);
-                        meanStratDiffForAction[i] = meanStratDiffForSequence[i];
+                        meanStratDiffForAction[i] += meanStratDiffForSequence[i];
                         meanStratDiffForSequence[i] /= sequenceValuesEntry.getValue()[0] + sequenceValuesEntry.getValue()[1];
-                        meanStratDiffForActionNormalizer += sequenceValuesEntry.getValue()[0] + sequenceValuesEntry.getValue()[1];
                     }
+                    meanStratDiffForActionNormalizer += sequenceValuesEntry.getValue()[0] + sequenceValuesEntry.getValue()[1];
                     strategyDiffs.prStrategyDiff.put(sequenceValuesEntry.getKey(), toMapNoNorm(actions, meanStratDiffForSequence));
                 }
+//                if(meanStratDiffForActionNormalizer < 1e-3)
+//                    continue;
                 for (int i = 0; i < meanStratDiffForAction.length; i++) {
                     meanStratDiffForAction[i] /= meanStratDiffForActionNormalizer;
                 }

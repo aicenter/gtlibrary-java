@@ -46,7 +46,7 @@ public class CFRBRData extends FixedForIterationData {
         if (meanStrategyUpdateDenominator < 1e-8)
             return;
         IntStream.range(0, mp.length).forEach(i -> mp[i] += meanStrategyUpdateNumerator[i] / meanStrategyUpdateDenominator);
-        assert Math.abs(Arrays.stream(mp).sum() - 1) < 1e-8;
+        assert Math.abs(Arrays.stream(mp).sum() - 1) < 1e-8 && Arrays.stream(mp).allMatch(v -> v >= 0);
         meanStrategyUpdateDenominator = 0;
         Arrays.fill(meanStrategyUpdateNumerator, 0);
     }
