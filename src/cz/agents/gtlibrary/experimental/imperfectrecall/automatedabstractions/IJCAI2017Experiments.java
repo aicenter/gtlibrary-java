@@ -11,7 +11,7 @@ public class IJCAI2017Experiments {
             RandomGameInfo.MIN_BF = Integer.parseInt(args[2]);
             RandomGameInfo.MAX_BF = Integer.parseInt(args[2]);
             RandomGameInfo.seed = Long.parseLong(args[3]);
-            RandomAbstractionGameInfo.JOIN_PROB = Double.parseDouble(args[5]);
+            RandomAbstractionGameInfo.JOIN_PROB = 1;
             IRFicticiousPlay.EPS = Double.parseDouble(args[6]);
             if (args[4].equals("IR"))
                 IRFicticiousPlay.runCPRRConstantBothIRRandomAbstractionGame();
