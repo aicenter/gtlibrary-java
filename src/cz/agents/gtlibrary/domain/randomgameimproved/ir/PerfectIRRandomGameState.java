@@ -13,13 +13,6 @@ public class PerfectIRRandomGameState extends RandomGameState{
         super(gameState);
     }
 
-//    @Override
-//    public ISKey getISKeyForPlayerToMove() {
-//        if (getTable() == null)
-//            return getKeyBeforeTable();
-//        return getKeyAfterTable();
-//    }
-
     @Override
     public ISKey getISKeyForPlayerToMove() {
         Observations observations = new Observations(getPlayerToMove(), getPlayerToMove());
