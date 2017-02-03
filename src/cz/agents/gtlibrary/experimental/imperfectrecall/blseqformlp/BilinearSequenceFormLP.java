@@ -13,7 +13,7 @@ import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
-import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameStateFactory;
+import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -59,7 +59,7 @@ public class BilinearSequenceFormLP {
         efg.generateCompleteGame();
 
         DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo()));
-        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        GameState root = new P1RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, config);
         BilinearSequenceFormLP solver = new BilinearSequenceFormLP(RandomGameInfo.FIRST_PLAYER, new RandomAbstractionGameInfo(new RandomGameInfo()));
 

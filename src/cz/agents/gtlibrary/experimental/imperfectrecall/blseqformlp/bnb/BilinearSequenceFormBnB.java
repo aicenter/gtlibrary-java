@@ -19,7 +19,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.ir.IRKuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
-import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameStateFactory;
+import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -28,12 +28,11 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceForm
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.number.DigitArray;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleBilinearSequenceFormBnB;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
-import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.cprr.CPRRExpander;
-import cz.agents.gtlibrary.experimental.imperfectrecall.cfrbr.cprr.CPRRGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr.CPRRExpander;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr.CPRRGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -103,7 +102,7 @@ public class BilinearSequenceFormBnB {
         efg.generateCompleteGame();
 
         DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo()));
-        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        GameState root = new P1RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, config);
         CPRRExpander<SequenceFormIRInformationSet> cprrExpander = new CPRRExpander<>(expander);
         BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, cprrExpander, new RandomAbstractionGameInfo(new RandomGameInfo()));
@@ -141,7 +140,7 @@ public class BilinearSequenceFormBnB {
         efg.generateCompleteGame();
 
         DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo()));
-        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        GameState root = new P1RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
         Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, config);
         BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(RandomGameInfo.FIRST_PLAYER, expander, new RandomAbstractionGameInfo(new RandomGameInfo()));
 
