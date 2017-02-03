@@ -14,9 +14,9 @@ public class IJCAI2017Experiments {
             RandomAbstractionGameInfo.JOIN_PROB = Double.parseDouble(args[5]);
             IRFicticiousPlay.EPS = Double.parseDouble(args[6]);
             if (args[4].equals("IR"))
-                IRFicticiousPlay.runBothIRRandomAbstractionGame();
+                IRFicticiousPlay.runCPRRConstantBothIRRandomAbstractionGame();
             else
-                IRFicticiousPlay.runCPRRBothIRRandomAbstractionGame();
+                IRFicticiousPlay.runSimpleCPRRBothIRRandomAbstractionGame();
         } else if (args[0].equals("GP")) {
             GPGameInfo.MAX_RAISES_IN_ROW = Integer.parseInt(args[1]);
             GPGameInfo.MAX_DIFFERENT_BETS = Integer.parseInt(args[2]);

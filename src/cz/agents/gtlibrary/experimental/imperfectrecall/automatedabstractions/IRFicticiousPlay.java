@@ -39,8 +39,8 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
 //        runWichardtCounterExample();
 //        runBothIRRandomAbstractionGame();
 //        runCPRRBothIRRandomAbstractionGame();
-//        runCPRRConstantBothIRRandomAbstractionGame();
-        runSimpleCPRRBothIRRandomAbstractionGame();
+        runCPRRConstantBothIRRandomAbstractionGame();
+//        runSimpleCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
 //        runCPRRRandomAbstractionGame();
     }
