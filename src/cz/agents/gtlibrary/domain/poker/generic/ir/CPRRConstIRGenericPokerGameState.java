@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerAction;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
@@ -61,9 +62,9 @@ public class CPRRConstIRGenericPokerGameState extends IRGenericPokerGameState {
         Observations natureObservations = new Observations(GPGameInfo.FIRST_PLAYER, GPGameInfo.NATURE);
 
         if (firstMoveOfPlayerToMoveAfterTable())
-            natureObservations.add(new IRGenericPokerGameState.ImperfectPokerObservation(getTable().getActionType()));
+            natureObservations.add(new IRGenericPokerGameState.ImperfectPokerObservation((GenericPokerAction) getTable()));
         else if(firstMoveOfPlayerToMove())
-            natureObservations.add(new IRGenericPokerGameState.ImperfectPokerObservation(getCardForActingPlayer().getActionType()));
+            natureObservations.add(new IRGenericPokerGameState.ImperfectPokerObservation((GenericPokerAction) getCardForActingPlayer()));
         cachedISKey = new ImperfectRecallISKey(ownObservations, opponentObservations, natureObservations);
         return cachedISKey;
     }

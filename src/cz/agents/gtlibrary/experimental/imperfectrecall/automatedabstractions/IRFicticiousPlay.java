@@ -34,9 +34,9 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
 
     public static void main(String[] args) {
 //        runGenericPoker();
-        runIRGenericPoker();
+//        runIRGenericPoker();
 //        runWichardtCounterExample();
-//        runBothIRRandomAbstractionGame();
+        runBothIRRandomAbstractionGame();
 //        runCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
 //        runCPRRRandomAbstractionGame();
@@ -231,6 +231,8 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
     }
 
+    public static double EPS = 0;
+
     protected final ALossBestResponseAlgorithm p0BR;
     protected final ALossBestResponseAlgorithm p1BR;
     protected final DeltaCalculator p0Delta;
@@ -318,7 +320,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
             delta = p0Delta.calculateDelta(strategy, strategyDiffs);
         if (Math.abs(delta) > 1e-8)
             System.err.println(delta);
-        return delta > 1. / (iteration * iteration) * EPS + 1e-3;
+        return delta > EPS + 1e-3;
     }
 
     private Map<Sequence, Double> getIRDiffProbs(Map<Sequence, Map<Action, Double>> irStrategyDiff, Map<Action, Double> strategy) {

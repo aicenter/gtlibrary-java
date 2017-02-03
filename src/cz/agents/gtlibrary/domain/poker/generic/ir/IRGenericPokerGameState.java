@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.domain.poker.generic.ir;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerAction;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
@@ -69,7 +70,7 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
             populateObservations(opponentObservations);
             Observations natureObservations = new Observations(GPGameInfo.FIRST_PLAYER, GPGameInfo.NATURE);
 
-            natureObservations.add(new ImperfectPokerObservation(getCardFor(GPGameInfo.FIRST_PLAYER).getActionType()));
+            natureObservations.add(new ImperfectPokerObservation((GenericPokerAction) getCardFor(GPGameInfo.FIRST_PLAYER)));
             return new ImperfectRecallISKey(ownObservations, opponentObservations, natureObservations);
         }
         if (getPlayerToMove().equals(GPGameInfo.SECOND_PLAYER))
@@ -86,9 +87,9 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
         opponentObservations.add(new PerfectObservablePokerObservation(new ArrayListSequenceImpl(getSequenceFor(GPGameInfo.FIRST_PLAYER))));
         Observations natureObservations = new Observations(GPGameInfo.SECOND_PLAYER, GPGameInfo.NATURE);
 
-        natureObservations.add(new ImperfectPokerObservation(getCardFor(GPGameInfo.SECOND_PLAYER).getActionType()));
+        natureObservations.add(new ImperfectPokerObservation((GenericPokerAction) getCardFor(GPGameInfo.SECOND_PLAYER)));
         if (getTable() != null)
-            natureObservations.add(new ImperfectPokerObservation(getTable().getActionType()));
+            natureObservations.add(new ImperfectPokerObservation((GenericPokerAction) getTable()));
         return new ImperfectRecallISKey(ownObservations, opponentObservations, natureObservations);
     }
 
@@ -96,7 +97,7 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
         for (Action action : getSequenceFor(observations.getObservedPlayer())) {
             GenericPokerAction pokerAction = (GenericPokerAction) action;
 
-            observations.add(new ImperfectPokerObservation(pokerAction.getActionType()));
+            observations.add(new ImperfectPokerObservation(pokerAction));
         }
     }
 
@@ -112,8 +113,8 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
             String cardComparison = getCardComparison(((GenericPokerAction) getTable()), ((GenericPokerAction) getCardFor(GPGameInfo.FIRST_PLAYER)));
 
 //            natureObservations.add(new ImperfectPokerObservation(cardComparison));
-            natureObservations.add(new ImperfectPokerObservation(getCardFor(GPGameInfo.FIRST_PLAYER).getActionType()));
-            natureObservations.add(new ImperfectPokerObservation(getTable().getActionType()));
+            natureObservations.add(new ImperfectPokerObservation((GenericPokerAction) getCardFor(GPGameInfo.FIRST_PLAYER)));
+            natureObservations.add(new ImperfectPokerObservation((GenericPokerAction) getTable()));
             return new ImperfectRecallISKey(ownObservations, opponentObservations, natureObservations);
         }
         if (getPlayerToMove().equals(GPGameInfo.SECOND_PLAYER))
@@ -147,9 +148,13 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
     public class ImperfectPokerObservation implements Observation {
 
         String type;
+        int value;
 
-        public ImperfectPokerObservation(String type) {
-            this.type = type;
+        public ImperfectPokerObservation(GenericPokerAction action) {
+            type = action.getActionType();
+            if(type.equals("b") || type.equals("r")) {
+                value = action.getValue();
+            }
         }
 
         @Override
@@ -164,13 +169,16 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
 
             ImperfectPokerObservation that = (ImperfectPokerObservation) o;
 
+            if (value != that.value) return false;
             return type.equals(that.type);
 
         }
 
         @Override
         public int hashCode() {
-            return type.hashCode();
+            int result = type.hashCode();
+            result = 31 * result + value;
+            return result;
         }
 
         @Override
