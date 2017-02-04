@@ -13,6 +13,8 @@ public class IJCAI2017Experiments {
             RandomGameInfo.seed = Long.parseLong(args[3]);
             RandomAbstractionGameInfo.JOIN_PROB = 1;
             IRFicticiousPlay.EPS = Double.parseDouble(args[6]);
+            if(args.length > 7)
+                IRFicticiousPlay.CONVERGENCE_POWER = Double.parseDouble(args[7]);
             if (args[4].equals("IR"))
                 IRFicticiousPlay.runCPRRConstantBothIRRandomAbstractionGame();
             else
@@ -21,6 +23,8 @@ public class IJCAI2017Experiments {
             GPGameInfo.MAX_RAISES_IN_ROW = Integer.parseInt(args[1]);
             GPGameInfo.MAX_DIFFERENT_BETS = Integer.parseInt(args[2]);
             IRFicticiousPlay.EPS = Double.parseDouble(args[4]);
+            if(args.length > 5)
+                IRFicticiousPlay.CONVERGENCE_POWER = Double.parseDouble(args[5]);
             if (args[3].equals("IR"))
                 IRFicticiousPlay.runIRGenericPoker();
             else

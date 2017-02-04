@@ -270,6 +270,7 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         System.out.println("Unabstracted IS count: " + config.getAllInformationSets().size());
     }
 
+    public static double CONVERGENCE_POWER = 1;
     public static double EPS = 0;
 
     protected final ALossBestResponseAlgorithm p0BR;
@@ -358,8 +359,8 @@ public class IRFicticiousPlay extends ALossPRCFRBR {
         else
             delta = p0Delta.calculateDelta(strategy, strategyDiffs);
         if (Math.abs(delta) > 1e-8)
-            System.err.println(delta);
-        return delta > EPS + 1e-3;
+            System.err.println(delta + " vs " + (1./Math.pow(iteration, CONVERGENCE_POWER)*EPS + 1e-3));
+        return delta > 1./Math.pow(iteration, CONVERGENCE_POWER)*EPS + 1e-3;
     }
 
     private Map<Sequence, Double> getIRDiffProbs(Map<Sequence, Map<Action, Double>> irStrategyDiff, Map<Action, Double> strategy) {

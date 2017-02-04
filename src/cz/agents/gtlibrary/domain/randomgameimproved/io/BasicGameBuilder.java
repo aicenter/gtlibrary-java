@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.domain.randomgameimproved.io;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.ArrayDeque;
+import java.util.stream.Collectors;
 
 public class BasicGameBuilder {
     public static void build(GameState rootState, AlgorithmConfig<? extends InformationSet> algConfig, Expander<? extends InformationSet> expander) {
@@ -14,12 +15,9 @@ public class BasicGameBuilder {
             GameState currentState = queue.removeLast();
 
             algConfig.addInformationSetFor(currentState);
-            if (currentState.isGameEnd()) {
+            if (currentState.isGameEnd())
                 continue;
-            }
-            for (Action action : expander.getActions(currentState)) {
-                queue.add(currentState.performAction(action));
-            }
+            queue.addAll(expander.getActions(currentState).stream().map(currentState::performAction).collect(Collectors.toList()));
         }
     }
 }
