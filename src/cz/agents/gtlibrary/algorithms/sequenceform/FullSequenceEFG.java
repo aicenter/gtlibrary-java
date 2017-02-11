@@ -93,8 +93,8 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-		runKuhnPoker();
-//		runGenericPoker();
+//		runKuhnPoker();
+		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
@@ -337,6 +337,7 @@ public class FullSequenceEFG {
 		generateCompleteGame();
         debugOutput.println("Game tree built...");
         debugOutput.println("Information set count: " + algConfig.getAllInformationSets().size());
+		debugOutput.println("Sequences: " + algConfig.getSequencesFor(gameConfig.getAllPlayers()[0]).size() + ", " + algConfig.getSequencesFor(gameConfig.getAllPlayers()[1]).size());
 		overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
 
 		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };

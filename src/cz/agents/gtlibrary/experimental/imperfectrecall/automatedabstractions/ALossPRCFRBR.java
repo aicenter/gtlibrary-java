@@ -27,7 +27,6 @@ import cz.agents.gtlibrary.algorithms.cfr.ir.FixedForIterationData;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFR;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRConfig;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
@@ -383,7 +382,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         Action currentStateBestResponseAction = bestResponse.get(state.getSequenceForPlayerToMove()).get(state.getISKeyForPlayerToMove());
 //        assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() == 1;
         int actionIndex = getIndex(actions, currentStateBestResponseAction);
-        int splitCount = updateISStructure(state.performAction(currentStateBestResponseAction), bestResponse, opponentStrategy, opponent, valueMap, toSplit) ;
+        int splitCount = updateISStructure(state.performAction(currentStateBestResponseAction), bestResponse, opponentStrategy, opponent, valueMap, toSplit);
 //        int splitCount = actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).map(state::performAction)
 //                .mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, opponent, valueMap, toSplit)).sum();
 
@@ -485,7 +484,8 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         double[] meanStrat = new double[actions.size()];
         int actionIndex = 0;
         FixedForIterationData data = informationSets.get(state.getISKeyForPlayerToMove()).getData();
-        Action bestResponseAction = bestResponse.get(state.getSequenceForPlayerToMove()).get(state.getISKeyForPlayerToMove());
+        Map<ISKey, Action> isKeyActionMap = bestResponse.get(state.getSequenceForPlayerToMove());
+        Action bestResponseAction = isKeyActionMap == null ? null : isKeyActionMap.get(state.getISKeyForPlayerToMove());
 
         System.arraycopy(data.getMp(), 0, meanStrat, 0, meanStrat.length);
         meanStrat = updateAndNormalizeMeanStrat(meanStrat, bestResponseAction, actions);

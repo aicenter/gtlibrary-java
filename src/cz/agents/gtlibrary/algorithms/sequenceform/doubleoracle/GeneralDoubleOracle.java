@@ -87,10 +87,10 @@ public class GeneralDoubleOracle {
     public static void main(String[] args) {
 //		runAC();
 //        runBP();
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-        runIIOshiZumo();
+//        runIIOshiZumo();
 //        runRandomGame();
 //		runSimRandomGame();
 //                runLiarsDice();
@@ -176,6 +176,7 @@ public class GeneralDoubleOracle {
 //        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpanderDomain<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
+        System.out.println(algConfig.getAllInformationSets().size());
     }
 
     public static void runBP() {

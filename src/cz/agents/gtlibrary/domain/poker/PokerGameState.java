@@ -350,7 +350,7 @@ public abstract class PokerGameState extends GameStateImpl {
 
     @Override
     public int hashCode() {
-        if (hash == -1)
+//        if (hash == -1)
             hash = new HashCodeBuilder(17, 31).append(history).toHashCode();
         return hash;
     }

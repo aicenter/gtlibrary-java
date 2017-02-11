@@ -12,23 +12,26 @@ public class IJCAI2017Experiments {
             RandomGameInfo.MAX_BF = Integer.parseInt(args[2]);
             RandomGameInfo.seed = Long.parseLong(args[3]);
             RandomAbstractionGameInfo.JOIN_PROB = 1;
-            IRFicticiousPlay.EPS = Double.parseDouble(args[6]);
+            IRFictitiousPlay.EPS = Double.parseDouble(args[6]);
             if(args.length > 7)
-                IRFicticiousPlay.CONVERGENCE_POWER = Double.parseDouble(args[7]);
+                IRFictitiousPlay.CONVERGENCE_POWER = Double.parseDouble(args[7]);
             if (args[4].equals("IR"))
-                IRFicticiousPlay.runCPRRConstantBothIRRandomAbstractionGame();
+                IRFictitiousPlay.runCPRRConstantBothIRRandomAbstractionGame();
             else
-                IRFicticiousPlay.runSimpleCPRRBothIRRandomAbstractionGame();
+                IRFictitiousPlay.runSimpleCPRRBothIRRandomAbstractionGame();
         } else if (args[0].equals("GP")) {
             GPGameInfo.MAX_RAISES_IN_ROW = Integer.parseInt(args[1]);
             GPGameInfo.MAX_DIFFERENT_BETS = Integer.parseInt(args[2]);
-            IRFicticiousPlay.EPS = Double.parseDouble(args[4]);
-            if(args.length > 5)
-                IRFicticiousPlay.CONVERGENCE_POWER = Double.parseDouble(args[5]);
-            if (args[3].equals("IR"))
-                IRFicticiousPlay.runIRGenericPoker();
+            GPGameInfo.MAX_DIFFERENT_RAISES = Integer.parseInt(args[3]);
+            GPGameInfo.MAX_CARD_TYPES = Integer.parseInt(args[4]);
+            GPGameInfo.MAX_CARD_OF_EACH_TYPE = Integer.parseInt(args[5]);
+            IRFictitiousPlay.EPS = Double.parseDouble(args[7]);
+            if(args.length > 8)
+                IRFictitiousPlay.CONVERGENCE_POWER = Double.parseDouble(args[8]);
+            if (args[6].equals("IR"))
+                IRFictitiousPlay.runIRGenericPoker();
             else
-                IRFicticiousPlay.runGenericPoker();
+                IRFictitiousPlay.runGenericPoker();
         }
     }
 }
