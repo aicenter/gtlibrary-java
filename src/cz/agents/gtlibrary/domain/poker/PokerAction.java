@@ -94,7 +94,7 @@ public abstract class PokerAction extends ActionImpl {
 
 	@Override
 	public int hashCode() {
-		return cachedHash;
+		return computeHashCode();
 	}
 
 	@Override

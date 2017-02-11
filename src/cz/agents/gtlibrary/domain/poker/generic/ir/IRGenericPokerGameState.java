@@ -3,7 +3,6 @@ package cz.agents.gtlibrary.domain.poker.generic.ir;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerAction;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
@@ -94,10 +93,15 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
     }
 
     protected void populateObservations(Observations observations) {
-        for (Action action : getSequenceFor(observations.getObservedPlayer())) {
+        int index = 0;
+        Sequence sequence = getSequenceFor(observations.getObservedPlayer());
+        for (Action action : sequence) {
             GenericPokerAction pokerAction = (GenericPokerAction) action;
 
-            observations.add(new ImperfectPokerObservation(pokerAction));
+            if (++index == sequence.size())
+                observations.add(new ImperfectPokerObservationWithValue(pokerAction));
+            else
+                observations.add(new ImperfectPokerObservation(pokerAction));
         }
     }
 
@@ -152,9 +156,9 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
 
         public ImperfectPokerObservation(GenericPokerAction action) {
             type = action.getActionType();
-            if(type.equals("b") || type.equals("r")) {
-                value = action.getValue();
-            }
+//            if(type.equals("b") || type.equals("r")) {
+//                value = action.getValue();
+//            }
         }
 
         @Override
@@ -168,6 +172,48 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
             if (!(o instanceof ImperfectPokerObservation)) return false;
 
             ImperfectPokerObservation that = (ImperfectPokerObservation) o;
+
+            if (value != that.value) return false;
+            return type.equals(that.type);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = type.hashCode();
+            result = 31 * result + value;
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return type;
+        }
+    }
+
+    public class ImperfectPokerObservationWithValue implements Observation {
+
+        String type;
+        int value;
+
+        public ImperfectPokerObservationWithValue(GenericPokerAction action) {
+            type = action.getActionType();
+            if (type.equals("b") || type.equals("r")) {
+                value = action.getValue();
+            }
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ImperfectPokerObservationWithValue)) return false;
+
+            ImperfectPokerObservationWithValue that = (ImperfectPokerObservationWithValue) o;
 
             if (value != that.value) return false;
             return type.equals(that.type);

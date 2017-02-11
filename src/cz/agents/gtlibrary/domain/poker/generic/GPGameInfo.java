@@ -45,7 +45,7 @@ public class GPGameInfo implements GameInfo {
     public static int MAX_RAISES_IN_ROW = 2;
 
     public static int MAX_DIFFERENT_BETS = 2;
-    public static int MAX_DIFFERENT_RAISES = MAX_DIFFERENT_BETS;
+    public static int MAX_DIFFERENT_RAISES = 2;//MAX_DIFFERENT_BETS;
     public static int[] BETS_FIRST_ROUND;
 
     {
