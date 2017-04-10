@@ -28,7 +28,8 @@ public class DeltaCalculator extends ALossBestResponseAlgorithm {
     protected Double calculateEvaluation(GameState gameState, double currentStateProbability) {
         double utRes = gameState.getUtilities()[searchingPlayerIndex] * gameState.getNatureProbability();
 
-        return utRes * irProbability - utRes * prProbability;
+        return Math.abs(utRes * irProbability - utRes * prProbability);
+//        return utRes * irProbability - utRes * prProbability;
     }
 
     protected Double bestResponse(GameState gameState, double lowerBound, double currentStateProb) {
@@ -175,7 +176,7 @@ public class DeltaCalculator extends ALossBestResponseAlgorithm {
         prProbability = getPRProbability(state, action);
         irProbability = getIRProbability(state, action);
 //        if (newLowerBound <= MAX_UTILITY_VALUE) {
-        double value = (Math.abs(prProbability) < 1e-8 && Math.abs(irProbability) < 1e-8) ? 0 : bestResponse(newState, Double.NEGATIVE_INFINITY, 1);
+        double value = Math.abs(irProbability) < 1e-8 && Math.abs(prProbability) < 1e-8 ? 0 : bestResponse(newState, Double.NEGATIVE_INFINITY, 1);
 
         selection.addValue(action, value, natureProb, 1e-3 * state.getNatureProbability());
 //        }
