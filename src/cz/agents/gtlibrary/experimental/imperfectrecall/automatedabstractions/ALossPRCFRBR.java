@@ -72,6 +72,7 @@ import java.util.stream.Collectors;
 public class ALossPRCFRBR implements GamePlayingAlgorithm {
 
     public static final boolean UPDATE_IS_STRUCTURE = false;
+    protected int maxBRInformationSets = -1;
 
     public static void main(String[] args) {
 //        runIRKuhnPoker();
@@ -308,10 +309,27 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         double value = br.calculateBR(rootState, strategy);
         Map<Sequence, Map<ISKey, Action>> fullBestResponseResult = br.getFullBestResponseResult();
 
-
+        Set<ISKey> visitedISs = new HashSet<>();
+        countISsVisited(fullBestResponseResult, rootState, rootState.getAllPlayers()[1 - opponent.getId()], visitedISs);
+        maxBRInformationSets =  Math.max(maxBRInformationSets, visitedISs.size());
         updateISs(rootState, fullBestResponseResult, strategy, opponent);
 //        updateData(rootState, bestResponse, strategy);
         return value;
+    }
+
+    private void countISsVisited(Map<Sequence, Map<ISKey, Action>> fullBestResponseResult, GameState state, Player player, Set<ISKey> visitesISs) {
+        if(state.isGameEnd())
+            return;
+        visitesISs.add(state.getISKeyForPlayerToMove());
+        if(state.getPlayerToMove().equals(player)) {
+            visitesISs.add(state.getISKeyForPlayerToMove());
+            expander.getActions(state).stream().filter(a -> a.equals(fullBestResponseResult.getOrDefault(state.getSequenceForPlayerToMove(), new HashMap<>()).get(state.getISKeyForPlayerToMove())))
+                    .forEach(a -> countISsVisited(fullBestResponseResult, state.performAction(a), player, visitesISs));
+            return;
+        }
+        expander.getActions(state).stream()
+                .forEach(a -> countISsVisited(fullBestResponseResult, state.performAction(a), player, visitesISs));
+
     }
 
     protected Map<Action, Double> getOpponentStrategyForBR(Player opponent, FlexibleISKeyGameState rootState, Expander<IRCFRInformationSet> expander) {
