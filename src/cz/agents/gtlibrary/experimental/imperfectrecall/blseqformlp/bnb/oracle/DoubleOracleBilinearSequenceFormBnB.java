@@ -27,12 +27,14 @@ import cz.agents.gtlibrary.domain.poker.generic.ir.IRGenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.ir.IRKuhnPokerGameState;
+import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
-import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr.CPRRExpander;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr.CPRRGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidate;
@@ -44,8 +46,6 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.c
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.gameexpander.TempLeafDoubleOracleGameExpander;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
-import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr.CPRRExpander;
-import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr.CPRRGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -67,6 +67,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     public static boolean SAVE_LPS = false;
     public static boolean RESOLVE_CURRENT_BEST = false;
     public static boolean STATE_CACHE_USE = true;
+    public static boolean USE_CORRECT_ALGORITHM = true;
     public static double EPS = 1e-3;
     public Map<GameState, Map<Action, GameState>> stateCache;
     public Map<Action, GameState> dummyInstance = new DummyMap<>();
@@ -76,9 +77,9 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
-        runCPRRAbstractedRandomGame();
+//        runCPRRAbstractedRandomGame();
 //        runRandomGame();
-//        runAbstractedRandomGame();
+        runAbstractedRandomGame();
 //        runTTT();
 //        runBPG();
 //        runAttackerBPG();
@@ -545,7 +546,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
             Queue<Candidate> fringe = new PriorityQueue<>();
 
             currentBest = createCandidate(lpData, restrictedGameConfig);
-            if (((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, restrictedGameConfig, ((DoubleOracleCandidate)currentBest).getMaxPlayerStrategy(), ((DoubleOracleCandidate)currentBest).getContinuationMap())) {
+            if (((TempLeafDoubleOracleGameExpander) gameExpander).isResolveNeeded(root, restrictedGameConfig, ((DoubleOracleCandidate) currentBest).getMaxPlayerStrategy(), ((DoubleOracleCandidate) currentBest).getContinuationMap())) {
                 currentBest.setUb(Double.POSITIVE_INFINITY);
             }
             if (DEBUG) System.out.println("most violated action: " + currentBest.getAction());
@@ -555,7 +556,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
             int it = 1;
 
             while (!fringe.isEmpty()) {
-                OracleCandidate current = (OracleCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
+                DoubleOracleCandidate current = (DoubleOracleCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
 
                 it++;
 //                System.out.println(current.getPrecisionError());
@@ -572,7 +573,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                 if (expansionCount > current.getExpansionCount()) {
                     table.clearTable();
                     current.getChanges().updateTable(table);
-                    applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
+                    applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY, current);
                     if (RESOLVE_CURRENT_BEST)
                         updateCurrentBest(restrictedGameConfig);
                 } else {
@@ -594,7 +595,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     if (expansionCount > current.getExpansionCount()) {
                         System.out.println("expand " + current.getPrecisionError());
                         current.getChanges().updateTable(table);
-                        applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
+                        applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY, current);
                         if (RESOLVE_CURRENT_BEST && !current.getChanges().equals(currentBest.getChanges()))
                             updateCurrentBest(restrictedGameConfig);
                     } else {
@@ -651,7 +652,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         Map<Sequence, Set<Action>> bestResponseCombo = new HashMap<>();
 
         addTo(root, bestResponseCombo, bestResponse, (DoubleOracleIRConfig) restrictedGameConfig);
-        ((TempLeafDoubleOracleGameExpander)gameExpander).expand(restrictedGameConfig, bestResponse, bestResponseCombo);
+        ((TempLeafDoubleOracleGameExpander) gameExpander).expand(restrictedGameConfig, bestResponse, bestResponseCombo);
     }
 
     protected void updateCurrentBest(SequenceFormIRConfig restrictedGameConfig) {
@@ -814,7 +815,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     .forEach(s -> addTo(s, possibleBestResponseActions, br, config));
             return;
         }
-        actions.stream().filter(a -> br.getOrDefault(a, 0d) > 1-1e-8).forEach(action -> {
+        actions.stream().filter(a -> br.getOrDefault(a, 0d) > 1 - 1e-8).forEach(action -> {
             Set<Action> possibleActions = possibleBestResponseActions.computeIfAbsent(state.getSequenceForPlayerToMove(), s -> new HashSet<>());
 
             possibleActions.add(action);
@@ -822,7 +823,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         });
     }
 
-    protected void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
+    protected void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change, DoubleOracleCandidate oldCandidate) {
         try {
             long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
             boolean updated = change.updateW(table);
@@ -858,8 +859,10 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //                   assert ((DoubleOracleIRConfig) config).pendingAvailable(expander, candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses(), gameInfo.getOpponent(player)) == ((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses());
 //                    testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
 //                    ((TempLeafDoubleOracleGameExpander) gameExpander).tempHack = candidate.getContinuationMap();
-                    if (((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getContinuationMap())) {
+                    if (((TempLeafDoubleOracleGameExpander) gameExpander).isResolveNeeded(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getContinuationMap())) {
                         candidate.setUb(Double.POSITIVE_INFINITY);
+                        if (USE_CORRECT_ALGORITHM)
+                            candidate.mergeContinuationMap(oldCandidate.getContinuationMap());
                     }
                     if (isConverged(candidate)) {
                         if (candidate.getLb() > currentBest.getLb()) {

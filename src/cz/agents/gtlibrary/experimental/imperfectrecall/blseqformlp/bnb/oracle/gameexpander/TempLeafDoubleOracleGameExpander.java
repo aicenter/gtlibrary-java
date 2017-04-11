@@ -520,7 +520,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
         }
     }
 
-    public boolean pendingAvailable(GameState root, DoubleOracleIRConfig config, Map<Action, Double> maxPlayerStrategy, Map<Sequence, Set<Action>> possibleBestResponses) {
+    public boolean isResolveNeeded(GameState root, DoubleOracleIRConfig config, Map<Action, Double> maxPlayerStrategy, Map<Sequence, Set<Action>> possibleBestResponses) {
         Deque<GameState> queue = new ArrayDeque<>();
 
         queue.add(root);
@@ -529,7 +529,15 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
             List<Action> actions = expander.getActions(state);
             Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE ? new HashMap<>(actions.size()) : dummyInstance);
 
-            if (state.isGameEnd() || config.getTerminalStates().contains(state))
+            if (config.getTerminalStates().contains(state) && !state.isGameEnd()) {
+                double utilityUB = getUtilityUBForCombo(state, possibleBestResponses);
+                double storedUtility = config.getActualNonzeroUtilityValues(state);
+
+                assert utilityUB >= storedUtility;
+                if (utilityUB > storedUtility + 1e-4)
+                    return true;
+                continue;
+            }  else if (state.isGameEnd() || config.getTerminalStates().contains(state))
                 continue;
             if (state.getPlayerToMove().equals(maxPlayer)) {
                 for (Action action : actions) {
@@ -554,10 +562,10 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
             }
             Set<Action> possibleActions = possibleBestResponses.get(state.getSequenceForPlayerToMove());
 
-            if(possibleActions == null)
+            if (possibleActions == null)
                 continue;
             for (Action action : actions) {
-                if(!possibleActions.contains(action))
+                if (!possibleActions.contains(action))
                     continue;
                 GameState nextState = successors.computeIfAbsent(action, a -> state.performAction(a));
 

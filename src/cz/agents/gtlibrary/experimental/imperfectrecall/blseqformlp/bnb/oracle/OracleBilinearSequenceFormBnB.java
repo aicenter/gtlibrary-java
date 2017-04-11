@@ -27,6 +27,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.Candidat
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Change;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.Changes;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.OracleALossRecallBestResponse;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.DoubleOracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandCondition;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.expandconditions.ExpandConditionImpl;
@@ -296,7 +297,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
 //                    fringe.add(samePrecisionCandidate);
                     if (expansionCount > current.getExpansionCount()) {
                         current.getChanges().updateTable(table);
-                        applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY);
+                        applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY, current instanceof DoubleOracleCandidate ? (DoubleOracleCandidate) current : null);
                         if (RESOLVE_CURRENT_BEST)
                             updateCurrentBest(restrictedGameConfig);
                     } else {

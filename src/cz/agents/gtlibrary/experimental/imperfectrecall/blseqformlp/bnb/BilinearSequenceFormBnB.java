@@ -17,22 +17,23 @@ import cz.agents.gtlibrary.domain.poker.generic.ir.IRGenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.ir.IRKuhnPokerGameState;
+import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
-import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr.CPRRExpander;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr.CPRRGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.*;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.number.DigitArray;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleIRConfig;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.DoubleOracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.candidate.OracleCandidate;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.utils.StrategyLP;
-import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr.CPRRExpander;
-import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.cprr.CPRRGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -373,7 +374,7 @@ public class BilinearSequenceFormBnB {
                 addRightChildOf(current, fringe, config);
             }
             finalValue = currentBest.getLb();
-            Map<Sequence, Double> rp = ((OracleCandidate)currentBest).getMaxPlayerRealPlan();
+            Map<Sequence, Double> rp = ((OracleCandidate) currentBest).getMaxPlayerRealPlan();
 
             System.out.println("Support: " + rp.values().stream().filter(v -> v > 1e-8).count());
 //            table.clearTable();
@@ -489,7 +490,7 @@ public class BilinearSequenceFormBnB {
         }
         assert !current.getChanges().contains(change);
         ubs.put(newChanges, 0d);
-        applyNewChangeAndSolve(fringe, config, newChanges, change);
+        applyNewChangeAndSolve(fringe, config, newChanges, change, current instanceof DoubleOracleCandidate ? (DoubleOracleCandidate) current : null);
     }
 
     protected void addRightChildOf(Candidate current, Queue<Candidate> fringe, SequenceFormIRConfig config) {
@@ -517,7 +518,7 @@ public class BilinearSequenceFormBnB {
         }
         assert !current.getChanges().contains(change);
         ubs.put(newChanges, 0d);
-        applyNewChangeAndSolve(fringe, config, newChanges, change);
+        applyNewChangeAndSolve(fringe, config, newChanges, change, current instanceof DoubleOracleCandidate ? (DoubleOracleCandidate) current : null);
     }
 
     private void updateChangesForLeft(Changes newChanges, Change change) {
@@ -689,7 +690,7 @@ public class BilinearSequenceFormBnB {
 //        }
     }
 
-    protected void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change) {
+    protected void applyNewChangeAndSolve(Queue<Candidate> fringe, SequenceFormIRConfig config, Changes newChanges, Change change, DoubleOracleCandidate oldCandidate) {
         try {
             long buildingTimeStart = mxBean.getCurrentThreadCpuTime();
             boolean updated = change.updateW(table);
@@ -792,7 +793,7 @@ public class BilinearSequenceFormBnB {
         }
         assert !current.getChanges().contains(change);
         ubs.put(newChanges, 0d);
-        applyNewChangeAndSolve(fringe, config, newChanges, change);
+        applyNewChangeAndSolve(fringe, config, newChanges, change, current instanceof DoubleOracleCandidate ? (DoubleOracleCandidate) current : null);
     }
 
     private boolean alreadyPresentLeft(Changes newChanges, DigitArray probDigit) {
