@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.LimitedActionsALossBRAlgorithm;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.*;
@@ -218,5 +219,22 @@ public class DoubleOracleIRConfig extends SelfBuildingSequenceFormIRConfig {
 
     public void setBr(LimitedActionsALossBRAlgorithm br) {
         this.br = br;
+    }
+
+    public void setUtility(GameState leaf, double utility) {
+        Double storedUtility = actualUtilityValuesInLeafs.get(leaf);
+        if (storedUtility != null) {
+            if (Math.abs(storedUtility - utility) < 1e-8)
+                return;
+            utilityForSequenceCombination.compute(createActivePlayerMap(leaf), (k, v) -> v - storedUtility);
+        }
+        FixedSizeMap<Player, Sequence> activePlayerMap = createActivePlayerMap(leaf);
+        double existingUtility = utility;
+
+        if (utilityForSequenceCombination.containsKey(activePlayerMap))
+            existingUtility += utilityForSequenceCombination.get(activePlayerMap);
+
+        actualUtilityValuesInLeafs.put(leaf, utility);
+        utilityForSequenceCombination.put(activePlayerMap, existingUtility);
     }
 }

@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.C
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,5 +44,9 @@ public class DoubleOracleCandidate extends OracleCandidate {
 
     public double getLpUB() {
         return lpUB;
+    }
+
+    public void mergeContinuationMap(Map<Sequence, Set<Action>> continuationMap) {
+        continuationMap.forEach((k, v) -> this.continuationMap.computeIfAbsent(k, key -> new HashSet<>()).addAll(v));
     }
 }
