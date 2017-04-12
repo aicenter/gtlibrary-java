@@ -76,7 +76,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     private long testTime = 0;
 
     public static void main(String[] args) {
-//        new Scanner(System.in).next();
+        new Scanner(System.in).next();
 //        runCPRRAbstractedRandomGame();
 //        runRandomGame();
         runAbstractedRandomGame();
@@ -646,16 +646,12 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     }
 
     private boolean expandGame(DoubleOracleIRConfig restrictedGameConfig, DoubleOracleCandidate current) {
-        boolean expanded;
-
         if (USE_CORRECT_ALGORITHM && Double.isInfinite(current.getUb())) {
             System.out.println("Max player oracle");
-            expanded = ((TempLeafDoubleOracleGameExpander) gameExpander).expandByMaxPlayerOracle(restrictedGameConfig, current);
-        } else {
-            System.out.println("Both oracles");
-            expanded = gameExpander.expand(restrictedGameConfig, current);
+            return ((TempLeafDoubleOracleGameExpander) gameExpander).expandByMaxPlayerOracle(restrictedGameConfig, current);
         }
-        return expanded;
+        System.out.println("Both oracles");
+        return gameExpander.expand(restrictedGameConfig, current);
     }
 
     protected void initRestrictedGame(SequenceFormIRConfig restrictedGameConfig) {
@@ -869,7 +865,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //                   assert ((DoubleOracleIRConfig) config).pendingAvailable(expander, candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses(), gameInfo.getOpponent(player)) == ((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses());
 //                    testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
 //                    ((TempLeafDoubleOracleGameExpander) gameExpander).tempHack = candidate.getContinuationMap();
-                    Map<Sequence, Set<Action>> contMap = mergeContinuationMaps(oldCandidate.getContinuationMap(), candidate.getContinuationMap());
+                    Map<Sequence, Set<Action>> contMap = getContinuationMap(oldCandidate, candidate);
 
                     if (((TempLeafDoubleOracleGameExpander) gameExpander).isResolveNeeded(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), contMap)) {
                         candidate.setUb(Double.POSITIVE_INFINITY);
@@ -892,6 +888,12 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         } catch (IloException e) {
             e.printStackTrace();
         }
+    }
+
+    private Map<Sequence, Set<Action>> getContinuationMap(DoubleOracleCandidate oldCandidate, DoubleOracleCandidate candidate) {
+        if (USE_CORRECT_ALGORITHM && Double.isInfinite(oldCandidate.getUb()))
+            return mergeContinuationMaps(oldCandidate.getContinuationMap(), candidate.getContinuationMap());
+        return candidate.getContinuationMap();
     }
 
     private Map<Sequence, Set<Action>> mergeContinuationMaps(Map<Sequence, Set<Action>> continuationMap1, Map<Sequence, Set<Action>> continuationMap2) {
