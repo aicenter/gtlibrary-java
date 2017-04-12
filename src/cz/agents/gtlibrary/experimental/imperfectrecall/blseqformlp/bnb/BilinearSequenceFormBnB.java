@@ -871,7 +871,7 @@ public class BilinearSequenceFormBnB {
         Action action = findMostViolatedBilinearConstraints(config, lpData);
         int[] exactProbability = getExactProbability(p1Strategy.get(action), table.getPrecisionFor(action), action, changes);
 
-        assert lowerBound <= upperBound + 1e-6;
+//        assert lowerBound <= upperBound + 1e-6;
         return new OracleCandidate(lowerBound, upperBound, changes, action, exactProbability, 0, extractRPStrategy(config, lpData), null, null, 0);
     }
 

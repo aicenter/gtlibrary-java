@@ -13,7 +13,7 @@ public class ResultComparison {
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
 
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 0;
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 30;
         int endingSeed = (args.length > 1) ? new Integer(args[1]) : 1000;
 
         int BF = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_BF;

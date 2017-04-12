@@ -563,7 +563,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
             List<Action> actions = expander.getActions(state);
             Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE ? new HashMap<>(actions.size()) : dummyInstance);
 
-            if (config.getTerminalStates().contains(state) && !state.isGameEnd()) {
+            if (DoubleOracleBilinearSequenceFormBnB.USE_CORRECT_ALGORITHM && config.getTerminalStates().contains(state) && !state.isGameEnd()) {
                 double utilityUB = getUtilityUBForCombo(state, possibleBestResponses);
                 double storedUtility = config.getActualNonzeroUtilityValues(state);
 
