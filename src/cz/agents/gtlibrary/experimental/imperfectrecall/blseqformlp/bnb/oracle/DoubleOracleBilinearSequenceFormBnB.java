@@ -550,7 +550,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                 currentBest.setUb(Double.POSITIVE_INFINITY);
             }
             if (DEBUG) System.out.println("most violated action: " + currentBest.getAction());
-            if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getLb());
+            if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
 
             fringe.add(currentBest);
             int it = 1;
@@ -577,12 +577,10 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     if (RESOLVE_CURRENT_BEST)
                         updateCurrentBest(restrictedGameConfig);
                 } else {
-//                if (expandCondition.validForExpansion(restrictedGameConfig, current)) {
-                    boolean expanded = gameExpander.expand(restrictedGameConfig, current);
+                    boolean expanded = expandGame(restrictedGameConfig, current);
 
-                    if (expanded) {
+                    if (expanded)
                         expansionCount++;
-                    }
                     expanderTime += gameExpander.getSelfTime();
                     BRTime += gameExpander.getBRTime();
                     table.clearTable();
@@ -592,7 +590,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //                    OracleCandidate samePrecisionCandidate = createCandidate(current.getChanges(), table.toCplex(), restrictedGameConfig);
 //
 //                    fringe.add(samePrecisionCandidate);
-                    if (expansionCount > current.getExpansionCount()) {
+                    if (Double.isInfinite(current.getUb()) || expansionCount > current.getExpansionCount()) {
                         System.out.println("expand " + current.getPrecisionError());
                         current.getChanges().updateTable(table);
                         applyNewChangeAndSolve(fringe, restrictedGameConfig, current.getChanges(), Change.EMPTY, current);
@@ -645,6 +643,19 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         System.out.println("TEST TIME: " + ((TempLeafDoubleOracleGameExpander) gameExpander).getTestTime());
         System.out.println("TEST TIME1: " + testTime);
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6 - getLpBuildingTime() - getBRTime() - getExpanderTime() - getCPLEXTime() - getStrategyLPTime());
+    }
+
+    private boolean expandGame(DoubleOracleIRConfig restrictedGameConfig, DoubleOracleCandidate current) {
+        boolean expanded;
+
+        if (USE_CORRECT_ALGORITHM && Double.isInfinite(current.getUb())) {
+            System.out.println("Max player oracle");
+            expanded = ((TempLeafDoubleOracleGameExpander) gameExpander).expandByMaxPlayerOracle(restrictedGameConfig, current);
+        } else {
+            System.out.println("Both oracles");
+            expanded = gameExpander.expand(restrictedGameConfig, current);
+        }
+        return expanded;
     }
 
     protected void initRestrictedGame(SequenceFormIRConfig restrictedGameConfig) {
@@ -848,7 +859,6 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                     DoubleOracleCandidate candidate = (DoubleOracleCandidate) createCandidate(newChanges, lpData, config);
 
 //                    assert Math.abs(candidate.getUb() - checkOnCleanLP(config, candidate)) < 1e-4;
-                    if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
 
                     if (candidate.getLb() > currentBest.getLb()) {
                         currentBest = candidate;
@@ -859,11 +869,14 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //                   assert ((DoubleOracleIRConfig) config).pendingAvailable(expander, candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses(), gameInfo.getOpponent(player)) == ((TempLeafDoubleOracleGameExpander) gameExpander).pendingAvailable(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getPossibleBestResponses());
 //                    testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
 //                    ((TempLeafDoubleOracleGameExpander) gameExpander).tempHack = candidate.getContinuationMap();
-                    if (((TempLeafDoubleOracleGameExpander) gameExpander).isResolveNeeded(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), candidate.getContinuationMap())) {
+                    Map<Sequence, Set<Action>> contMap = mergeContinuationMaps(oldCandidate.getContinuationMap(), candidate.getContinuationMap());
+
+                    if (((TempLeafDoubleOracleGameExpander) gameExpander).isResolveNeeded(root, ((DoubleOracleIRConfig) config), candidate.getMaxPlayerStrategy(), contMap)) {
                         candidate.setUb(Double.POSITIVE_INFINITY);
                         if (USE_CORRECT_ALGORITHM)
-                            candidate.mergeContinuationMap(oldCandidate.getContinuationMap());
+                            candidate.setContinuationMap(contMap);
                     }
+                    if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
                     if (isConverged(candidate)) {
                         if (candidate.getLb() > currentBest.getLb()) {
                             currentBest = candidate;
@@ -879,6 +892,14 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         } catch (IloException e) {
             e.printStackTrace();
         }
+    }
+
+    private Map<Sequence, Set<Action>> mergeContinuationMaps(Map<Sequence, Set<Action>> continuationMap1, Map<Sequence, Set<Action>> continuationMap2) {
+        Map<Sequence, Set<Action>> continuationMap = new HashMap<>();
+
+        continuationMap1.forEach((k, v) -> continuationMap.computeIfAbsent(k, key -> new HashSet<>()).addAll(v));
+        continuationMap2.forEach((k, v) -> continuationMap.computeIfAbsent(k, key -> new HashSet<>()).addAll(v));
+        return continuationMap;
     }
 
 //    private List<Map<Action, Double>> splitToSeparateBRs(Map<Sequence, Set<Action>> possibleBestResponseActions, SequenceFormIRConfig config) {

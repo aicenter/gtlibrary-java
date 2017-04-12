@@ -46,7 +46,7 @@ public class DoubleOracleCandidate extends OracleCandidate {
         return lpUB;
     }
 
-    public void mergeContinuationMap(Map<Sequence, Set<Action>> continuationMap) {
-        continuationMap.forEach((k, v) -> this.continuationMap.computeIfAbsent(k, key -> new HashSet<>()).addAll(v));
+    public void setContinuationMap(Map<Sequence, Set<Action>> continuationMap) {
+        this.continuationMap = continuationMap;
     }
 }
