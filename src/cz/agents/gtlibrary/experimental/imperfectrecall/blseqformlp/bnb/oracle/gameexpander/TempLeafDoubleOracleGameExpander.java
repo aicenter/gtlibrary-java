@@ -76,6 +76,40 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
         return isExpanded(config, terminalLeafCount, sequenceCount, informationSetCount, terminalStatesCopy);
     }
 
+    public boolean expandByMaxPlayerOracle(SequenceFormIRConfig config, OracleCandidate candidate) {
+        brTime = 0;
+        long start = mxBean.getCurrentThreadCpuTime();
+        int terminalLeafCount = config.getTerminalStates().size();
+        int sequenceCount = config.getAllSequences().size();
+        int informationSetCount = config.getAllInformationSets().size();
+
+        if (DoubleOracleBilinearSequenceFormBnB.DEBUG) {
+            System.out.println("terminal states before expand: " + config.getTerminalStates().size());
+            System.out.println("information sets before expand: " + config.getAllInformationSets().size());
+            System.out.println("sequences before expand: " + config.getAllSequences().size());
+        }
+        Set<GameState> terminalStatesCopy = new HashSet<>(config.getTerminalStates());
+
+        updatePendingAndTempLeafsForced(root, (DoubleOracleIRConfig) config, ((DoubleOracleCandidate) candidate).getContinuationMap());
+//        updatePending(root, (DoubleOracleIRConfig) config, ((DoubleOracleCandidate) candidate).getContinuationMap());
+        addPending((DoubleOracleIRConfig) config, (DoubleOracleCandidate) candidate, ((DoubleOracleCandidate) candidate).getContinuationMap());
+        validateRestrictedGame(root, config, ((DoubleOracleCandidate) candidate).getContinuationMap());
+        assert validAddedActions(config);
+        assert validOutgoingSequences(config);
+//        updatePending(root, (DoubleOracleIRConfig) config, candidate.getMinPlayerBestResponse());
+//        }
+        if (DoubleOracleBilinearSequenceFormBnB.DEBUG) {
+            System.out.println("terminal states after expand: " + config.getTerminalStates().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getTerminalStates().size());
+            System.out.println("information sets after expand: " + config.getAllInformationSets().size() + " vs " + expander.getAlgorithmConfig().getAllInformationSets().size());
+            System.out.println("sequences after expand: " + config.getAllSequences().size() + " vs " + ((SequenceFormIRConfig) expander.getAlgorithmConfig()).getAllSequences().size());
+        }
+        if (DoubleOracleBilinearSequenceFormBnB.EXPORT_GBT)
+            new PartialGambitEFG().writeZeroSum("OracleBnBRG.gbt", root, expander, config.getActualUtilityValuesInLeafs(), config);
+        config.updateUtilitiesReachableBySequences();
+        selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - start) / 1e6 - brTime);
+        return isExpanded(config, terminalLeafCount, sequenceCount, informationSetCount, terminalStatesCopy);
+    }
+
     private boolean isExpanded(SequenceFormIRConfig config, int terminalLeafCount, int sequenceCount, int informationSetCount, Set<GameState> terminalStatesCopy) {
         return config.getTerminalStates().size() > terminalLeafCount || config.getAllSequences().size() > sequenceCount || config.getAllInformationSets().size() > informationSetCount || !terminalStatesCopy.equals(config.getTerminalStates());
     }
@@ -533,7 +567,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
                 double utilityUB = getUtilityUBForCombo(state, possibleBestResponses);
                 double storedUtility = config.getActualNonzeroUtilityValues(state);
 
-                assert utilityUB >= storedUtility;
+//                assert utilityUB >= storedUtility;
                 if (utilityUB > storedUtility + 1e-4)
                     return true;
                 continue;
