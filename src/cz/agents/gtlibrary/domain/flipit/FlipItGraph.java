@@ -19,12 +19,31 @@ public class FlipItGraph extends Graph {
     private double UNIFORM_REWARD = 4.0;
     private double UNIFORM_COST = 1.5;
 
+    private double MAX_REWARD;
+    private double MIN_CONTROLCOST;
+
     public FlipItGraph(String graphFile) {
         super(graphFile);
         rewards = new HashMap<>();
         controlCosts = new HashMap<>();
         publicNodes = new HashSet<>();
         initFlipItGraph();
+
+        MAX_REWARD = Double.MIN_VALUE;
+        for (Double reward : rewards.values())
+            if (reward > MAX_REWARD) MAX_REWARD = reward;
+
+        MIN_CONTROLCOST = Double.MAX_VALUE;
+        for (Double controlCost : controlCosts.values())
+            if (controlCost < MIN_CONTROLCOST) MIN_CONTROLCOST = controlCost;
+    }
+
+    public double getMaxReward(){
+        return MAX_REWARD;
+    }
+
+    public double getMinControlCost(){
+        return MIN_CONTROLCOST;
     }
 
     private void initFlipItGraph(){
