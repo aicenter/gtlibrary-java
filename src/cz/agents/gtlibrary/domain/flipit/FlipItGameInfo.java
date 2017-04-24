@@ -19,7 +19,7 @@ public class FlipItGameInfo implements GameInfo {
     // problem pro gr=3, d=3, nT=2;
 
     // GRAPH FILE : topology, rewards and control costs
-    public static String graphFile = "flipit_simple2.txt";
+    public static String graphFile = "flipit_simple3.txt";
     public static FlipItGraph graph = new FlipItGraph(graphFile);
 
     // PLAYERS
@@ -29,15 +29,15 @@ public class FlipItGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[] {DEFENDER, ATTACKER, NATURE};
 
     public static long seed = 11;
-    public static int depth = 2;    // 2 / 0.4 chybka uz je
+    public static int depth = 3;    // 2 / 0.4 chybka uz je
     public static final boolean RANDOM_TIE = false;
 
 
     // TYPES
-    public static int numTypes = 1;
+    public static int numTypes = 2;
     public static FollowerType[] types;
-    private static double[] typesPrior = new double[] {1.0};//{0.4, 0.6, 0.5};
-    private static double[] typesDiscounts = new double[] {0.4};//{0.5, 0.8, 0.6};
+    private static double[] typesPrior = new double[] {0.3, 0.7, 0.5};
+    private static double[] typesDiscounts = new double[] {0.3, 0.8, 0.6};
 
 //    public static final String[] type1optimum = new String[]{"Attacker: []","Attacker: [{N0, _, _, 10893061}]",
 //            "Attacker: [{N0, _, _, 10893061}, {_, NOOP, _, 1088511256}]",
@@ -129,7 +129,11 @@ public class FlipItGameInfo implements GameInfo {
 
     @Override
     public double getMaxUtility() {
-        return 10000;
+        double max = 0.0;
+        for (int d = 1; d <= depth; d++){
+            max += Math.min(d, graph.getAllNodes().size())*graph.getMaxReward() - graph.getMinControlCost();
+        }
+        return max;
     }
 
     @Override

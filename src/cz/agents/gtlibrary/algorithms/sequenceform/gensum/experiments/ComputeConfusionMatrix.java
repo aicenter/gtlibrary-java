@@ -193,7 +193,7 @@ public class ComputeConfusionMatrix {
         StackelbergRunner runner = new StackelbergRunner(root, expander, info, stackelbergConfig);
         StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), player, info.getOpponent(player), info, expander);
 
-        return runner.generate(player, solver);
+        return runner.generate(player, solver).getRight();
     }
 
     private static void runGenSumBPG(int depth) {

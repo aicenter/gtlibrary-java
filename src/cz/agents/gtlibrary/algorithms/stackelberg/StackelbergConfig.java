@@ -94,6 +94,8 @@ public class StackelbergConfig extends GenSumSequenceFormConfig {
             }
         }
 
+        updateProbabilitiesForSeqComb(leaf, activePlayerMap);
+
         actualNonZeroUtilityValuesInLeafs.put(leaf, utility);
         utilityForSequenceCombination.put(activePlayerMap, existingUtility);
     }

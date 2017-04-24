@@ -22,6 +22,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg.flipit;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.flipit.iterative.ShallowestBrokenCplexBayesianStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.flipit.iterative.SumForbiddingBayesianStackelbergLP;
 import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
@@ -76,13 +77,14 @@ public class BayesianStackelbergRunner {
         FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
         BayesianStackelbergRunner runner = new BayesianStackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-        double LP = runner.generate(rootState.getAllPlayers()[0], new SumForbiddingBayesianStackelbergLP( gameInfo, expander));
+//        double LP = runner.generate(rootState.getAllPlayers()[0], new SumForbiddingBayesianStackelbergLP( gameInfo, expander));
+        double LP = runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexBayesianStackelbergLP( gameInfo, expander));
 
-        runner = new BayesianStackelbergRunner(rootState, expander, gameInfo, algConfig);
-        double MILP = runner.generate(rootState.getAllPlayers()[0], new BayesianStackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner = new BayesianStackelbergRunner(rootState, expander, gameInfo, algConfig);
+//        double MILP = runner.generate(rootState.getAllPlayers()[0], new BayesianStackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
 //        new GambitEFG().write("flipit.gbt", rootState, expander);
 
-        System.out.println("LP : " + LP + "; MILP : " + MILP);
+//        System.out.println("LP : " + LP + "; MILP : " + MILP);
     }
 
     private GameState rootState;
