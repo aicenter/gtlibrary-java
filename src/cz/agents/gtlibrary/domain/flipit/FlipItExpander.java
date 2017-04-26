@@ -51,14 +51,11 @@ public class FlipItExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
     protected List<Action> getAttackerActions(GameState gameState){
 
-//        System.out.println("Expander : attacker");
         // take only public nodes + nodes accessible from last known controlled
         HashSet<Node> nodesToAttack = new HashSet<Node>();
         List<Action> actions = new ArrayList<Action>();
         for (Node parent : ((FlipItGameState)gameState).getAttackerPossiblyControlledNodes()){
-//            System.out.println("------> adding possibly controlled node");
             for (Edge edge : FlipItGameInfo.graph.getEdgesOf(parent)){
-//                System.out.println("------> adding possibly controlled node");
                 nodesToAttack.add(edge.getTarget());
             }
         }
@@ -69,7 +66,6 @@ public class FlipItExpander<I extends InformationSet> extends ExpanderImpl<I> {
             actions.add(new FlipItAction(node, getAlgorithmConfig().getInformationSetFor(gameState)));
         }
         actions.add(new FlipItAction(getAlgorithmConfig().getInformationSetFor(gameState)));
-//        System.out.println("att " + actions.size());
         return actions;
     }
 }
