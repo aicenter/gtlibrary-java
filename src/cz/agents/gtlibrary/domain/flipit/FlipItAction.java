@@ -86,7 +86,7 @@ public class FlipItAction extends ActionImpl {
         int result = controlNode != null ? controlNode.hashCode() : 23;
         result = 31 * result + (isNoop ? 13 : 29);
         result = 31 * result + (controller != null ? controller.hashCode() : 37);
-        result = 31 * result + informationSet.hashCode();
+        result = 31 * result + (informationSet!=null ? informationSet.hashCode() : 0);
         return result;
     }
 

@@ -55,6 +55,9 @@ public class BayesianStackelbergRunner {
     static String outputFile;
     static String output;
 
+    static String alg = "AI-MILP";
+//    static String alg = "MILP";
+
     public static void main(String[] args) {
 
         FlipItGameInfo gameInfo;
@@ -64,10 +67,13 @@ public class BayesianStackelbergRunner {
             int depth = Integer.parseInt(args[0]);
             int numTypes = Integer.parseInt(args[1]);
             String graphFile = args[2];
-            gameInfo = new FlipItGameInfo(depth,numTypes,graphFile);
+            long seed  = Integer.parseInt(args[3]);
+            gameInfo = new FlipItGameInfo(depth,numTypes,graphFile, seed);
             gameInfo.setInfo(depth,numTypes,graphFile);
-            outputFile = args[3];
-            output = depth + " " + numTypes + " " + graphFile + " ";
+            outputFile = args[4];
+            output = depth + " " + numTypes + " " + graphFile + " " + seed + " ";
+
+            alg = args[5];
 
             OUTPUT = true;
         }
@@ -77,8 +83,17 @@ public class BayesianStackelbergRunner {
         FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
         BayesianStackelbergRunner runner = new BayesianStackelbergRunner(rootState, expander, gameInfo, algConfig);
 
+        switch(alg){
+            case "AI-LP" : runner.generate(rootState.getAllPlayers()[0], new SumForbiddingBayesianStackelbergLP( gameInfo, expander));
+                break;
+            case "AI-MILP" : runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexBayesianStackelbergLP( gameInfo, expander));
+                break;
+            case "MILP" : runner.generate(rootState.getAllPlayers()[0], new BayesianStackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+                break;
+        }
+
 //        double LP = runner.generate(rootState.getAllPlayers()[0], new SumForbiddingBayesianStackelbergLP( gameInfo, expander));
-        double LP = runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexBayesianStackelbergLP( gameInfo, expander));
+//        double LP = runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexBayesianStackelbergLP( gameInfo, expander));
 
 //        runner = new BayesianStackelbergRunner(rootState, expander, gameInfo, algConfig);
 //        double MILP = runner.generate(rootState.getAllPlayers()[0], new BayesianStackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
@@ -109,6 +124,7 @@ public class BayesianStackelbergRunner {
     public double generate(Player leader, StackelbergSequenceFormLP solver) {
         if (solver instanceof BayesianStackelbergSequenceFormMILP) debugOutput.println("Bayesian Stackelberg MILP");
         if (solver instanceof SumForbiddingBayesianStackelbergLP) debugOutput.println("Bayesian Stackelberg Iterative LP");
+        if (solver instanceof ShallowestBrokenCplexBayesianStackelbergLP) debugOutput.println("Bayesian Stackelberg Iterative MILP");
         debugOutput.println(gameConfig.getInfo());
         threadBean = ManagementFactory.getThreadMXBean();
 
@@ -122,8 +138,6 @@ public class BayesianStackelbergRunner {
         System.out.println("Game tree built...");
         System.out.println("Information set count: " + algConfig.getAllInformationSets().size());
         overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
-
-//        if (true) return null;
 
         Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
         System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
@@ -181,6 +195,7 @@ public class BayesianStackelbergRunner {
         System.out.println("final IS count: " + algConfig.getAllInformationSets().size());
 
         if (OUTPUT){
+            output += alg + " ";
             output += gameValue + " ";
             output += (algConfig.getSequencesFor(actingPlayers[0]).size() + " ");
             output += (algConfig.getSequencesFor(actingPlayers[1]).size() + " ");
