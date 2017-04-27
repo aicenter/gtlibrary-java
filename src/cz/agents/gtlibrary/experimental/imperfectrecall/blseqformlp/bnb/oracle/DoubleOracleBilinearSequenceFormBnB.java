@@ -76,12 +76,12 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     private long testTime = 0;
 
     public static void main(String[] args) {
-        new Scanner(System.in).next();
+//        new Scanner(System.in).next();
 //        runCPRRAbstractedRandomGame();
 //        runRandomGame();
-        runAbstractedRandomGame();
+//        runAbstractedRandomGame();
 //        runTTT();
-//        runBPG();
+        runBPG();
 //        runAttackerBPG();
 //        runBothIRBPG();
 //        runGoofSpiel();
