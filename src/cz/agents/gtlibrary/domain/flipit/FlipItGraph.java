@@ -50,13 +50,14 @@ public class FlipItGraph extends Graph {
         for (Node node : getAllNodes().values()){
             rewards.put(node, UNIFORM_REWARD);
             controlCosts.put(node, UNIFORM_COST);
+            if(getEdgesOf(node).isEmpty()) publicNodes.add(node);
             for (Edge edge : getEdgesOf(node)){
                 if (edge.getTarget().equals(node))
                     break;
                 publicNodes.add(node);
             }
         }
-//        System.out.println("Public nodes size : " + publicNodes.size());
+        System.out.println("Public nodes size : " + publicNodes.size());
     }
 
     public HashSet<Node> getPublicNodes(){

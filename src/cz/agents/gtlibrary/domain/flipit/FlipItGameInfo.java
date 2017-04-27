@@ -17,7 +17,7 @@ import java.util.Random;
 public class FlipItGameInfo implements GameInfo {
 
     // GRAPH FILE : topology, rewards and control costs
-    public static String graphFile = "flipit_simple3.txt";
+    public static String graphFile = "flipit_simple5.txt";
     public static FlipItGraph graph = new FlipItGraph(graphFile);
 
     // PLAYERS
@@ -32,10 +32,10 @@ public class FlipItGameInfo implements GameInfo {
 
 
     // TYPES
-    public static int numTypes = 3;
+    public static int numTypes = 1;
     public static FollowerType[] types;
-    private static double[] typesPrior = new double[] {0.3, 0.7, 0.5};
-    private static double[] typesDiscounts = new double[] {0.3, 0.8, 0.6};
+    private static double[] typesPrior = new double[] {1.0, 0.7, 0.5};
+    private static double[] typesDiscounts = new double[] {1.0, 0.8, 0.6};
 
     public static final String[] type1optimum = new String[]{"Attacker: []",
             "Attacker: [{N0, _, _, 10893061}, {N0, _, _, 1087200722}]",
