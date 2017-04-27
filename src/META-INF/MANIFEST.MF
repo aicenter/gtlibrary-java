@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
-Main-Class: cz.agents.gtlibrary.experimental.imperfectrecall.automated
- abstractions.IJCAI2017Experiments
+Main-Class: cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.G
+ eneralDoubleOracle
 
