@@ -86,8 +86,8 @@ public class GeneralDoubleOracle {
 
     public static void main(String[] args) {
 //		runAC();
-//        runBP();
-        runGenericPoker();
+        runBP();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runIIOshiZumo();
