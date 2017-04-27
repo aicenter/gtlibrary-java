@@ -394,7 +394,7 @@ public class StrategyStrengthLargeExperiments {
         Expander<SequenceInformationSet> stackelbergExpander = new RandomGameExpander<>(stackelbergConfig);
         StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
         StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(root.getAllPlayers(), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
-        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
+        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver).getRight();
 
 
         if (qpResult != null && neResult != null) {

@@ -79,9 +79,9 @@ public class MDPCoreLP {
                     cplex.setParam(IloCplex.IntParam.RootAlg, IloCplex.Algorithm.Primal);
                 }
                 String seed = System.getProperty("CPLEX_SEED");
-                if (seed != null){
-                    cplex.setParam(IloCplex.IntParam.RandomSeed, Integer.parseInt(seed));
-                }
+//                if (seed != null){
+//                    cplex.setParam(IloCplex.IntParam.RandomSeed, Integer.parseInt(seed));
+//                }
                 
 //                cplex.setParam(IloCplex.DoubleParam.BarEpComp, 0.1);
 //                cplex.setParam(IloCplex.DoubleParam.EpOpt, 0.1);
