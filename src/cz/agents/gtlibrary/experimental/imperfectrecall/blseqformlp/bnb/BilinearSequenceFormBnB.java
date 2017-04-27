@@ -87,11 +87,11 @@ public class BilinearSequenceFormBnB {
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
 //        runRandomGame();
-        runCPRRAbstractedRandomGame();
+//        runCPRRAbstractedRandomGame();
 //        runAbstractedRandomGame();
 //        runKuhnPoker();
 //        runGenericPoker();
-//        runBPG();
+        runBPG();
 //        runBRTest();
     }
 
@@ -217,6 +217,7 @@ public class BilinearSequenceFormBnB {
         solver.setExpander(expander);
         System.out.println("Information sets: " + config.getCountIS(0));
         System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        System.out.println("Sequences P2: " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
         ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
         long start = mxBean.getCurrentThreadCpuTime();
 
