@@ -36,21 +36,23 @@ public class FlipItGameState extends SimultaneousGameState {
     // rewards
     protected HashMap<Node,Double> defenderRewards;
     protected HashMap<FollowerType,HashMap<Node,Double>> attackerRewards;
+    protected double attackerPoints;
 
     protected int round;
     protected int currentPlayerIndex;
 
     protected Node defenderControlNode;
     protected Node attackerControlNode;
-    protected Player randomSelectedPlayer;
+    protected Player selectedNodeOwner;
 
     public FlipItGameState(FlipItGameState gameState) {
         super(gameState);
-        this.randomSelectedPlayer = gameState.randomSelectedPlayer;
+        this.selectedNodeOwner = gameState.selectedNodeOwner;
         this.attackerControlNode = gameState.attackerControlNode;
         this.defenderControlNode = gameState.defenderControlNode;
         this.round = gameState.round;
         this.currentPlayerIndex = gameState.currentPlayerIndex;
+        this.attackerPoints = gameState.attackerPoints;
 
 
 //        System.out.println(currentPlayerIndex + " " + getPlayerToMove());
@@ -72,13 +74,14 @@ public class FlipItGameState extends SimultaneousGameState {
     public FlipItGameState() {
         super(FlipItGameInfo.ALL_PLAYERS);
         // init all structures
-        defenderControlledNodes = new HashSet<Node>();
+        defenderControlledNodes = new HashSet<Node>(FlipItGameInfo.graph.getAllNodes().values());
         attackerControlledNodes = new HashSet<Node>();
         attackerPossiblyControlledNodes = new HashSet<Node>();
         defenderObservations = new ArrayList<>();
         attackerObservations = new ArrayList<>();
         defenderRewards = new HashMap<>();
         attackerRewards = new HashMap<>();
+        attackerPoints = FlipItGameInfo.INITIAL_POINTS;
 
         // set current player
         currentPlayerIndex = 0;
@@ -93,6 +96,7 @@ public class FlipItGameState extends SimultaneousGameState {
             defenderRewards.put(node,0.0);
             for (FollowerType type : FlipItGameInfo.types){
                 attackerRewards.get(type).put(node,0.0);
+                if (node.getIntID() == 0) attackerRewards.get(type).put(node,FlipItGameInfo.INITIAL_POINTS);
             }
         }
 
@@ -197,7 +201,7 @@ public class FlipItGameState extends SimultaneousGameState {
             return false;
         if (attackerControlNode != null ? !attackerControlNode.equals(that.attackerControlNode) : that.attackerControlNode != null)
             return false;
-        return randomSelectedPlayer != null ? randomSelectedPlayer.equals(that.randomSelectedPlayer) : that.randomSelectedPlayer == null;
+        return selectedNodeOwner != null ? selectedNodeOwner.equals(that.selectedNodeOwner) : that.selectedNodeOwner == null;
 
     }
 
@@ -214,7 +218,7 @@ public class FlipItGameState extends SimultaneousGameState {
         result = 31 * result + currentPlayerIndex;
         result = 31 * result + (defenderControlNode != null ? defenderControlNode.hashCode() : 23);
         result = 31 * result + (attackerControlNode != null ? attackerControlNode.hashCode() : 29);
-        result = 31 * result + (randomSelectedPlayer != null ? randomSelectedPlayer.hashCode() : 37);
+        result = 31 * result + (selectedNodeOwner != null ? selectedNodeOwner.hashCode() : 37);
         result = 31 * result + history.hashCode();
         return result;
     }
@@ -229,16 +233,26 @@ public class FlipItGameState extends SimultaneousGameState {
 
             if (FlipItGameInfo.RANDOM_TIE) currentPlayerIndex = 2;
             else{
-                randomSelectedPlayer = FlipItGameInfo.DEFENDER;
+                if (FlipItGameInfo.PREDETERMINED_RANDOM_TIE_WINNER) {
+                    selectedNodeOwner = FlipItGameInfo.RANDOM_TIE_WINNER;
+                }
+                else{
+                    selectedNodeOwner = getLastOwnerOf(attackerControlNode);
+                }
                 endRound();
             }
         }
         else{
-            randomSelectedPlayer = null;
+            selectedNodeOwner = null;
             endRound();
         }
+    }
 
-
+    private Player getLastOwnerOf(Node node){
+        for (Node defenderNode : defenderControlledNodes)
+            if (defenderNode.equals(node))
+                return FlipItGameInfo.DEFENDER;
+        return FlipItGameInfo.ATTACKER;
     }
 
     public void executeDefenderAction(FlipItAction flipItAction) {
@@ -252,8 +266,28 @@ public class FlipItGameState extends SimultaneousGameState {
     }
 
     public void executeNatureAction(FlipItAction flipItAction) {
-        randomSelectedPlayer = flipItAction.getController();
+        selectedNodeOwner = flipItAction.getController();
         endRound();
+    }
+
+    private boolean attackerHasEnoughPointsToControl(FollowerType type){
+//        Double points = 0.0;
+//        for (Double reward : attackerRewards.get(type).values())
+//            points += reward;
+//        return points >= FlipItGameInfo.graph.getControlCost(attackerControlNode);
+        return attackerPoints >= FlipItGameInfo.graph.getControlCost(attackerControlNode);
+    }
+
+    private boolean attackerHasEnoughPointsToControl(){
+        return attackerPoints >= FlipItGameInfo.graph.getControlCost(attackerControlNode);
+    }
+
+    private boolean defenderHasEnoughPointsToControl(){
+        Double points = 0.0;
+        for (Double reward : defenderRewards.values())
+            points += reward;
+        return points >= FlipItGameInfo.graph.getControlCost(defenderControlNode);
+
     }
 
     private boolean attackerControlsParent(){
@@ -272,6 +306,7 @@ public class FlipItGameState extends SimultaneousGameState {
         for (Node node : attackerControlledNodes){
             if (node.equals(attackerControlNode)) continue;
 //            if (node == null) System.out.println("NULL node");
+            attackerPoints += FlipItGameInfo.graph.getReward(node);
             for (FollowerType type : FlipItGameInfo.types){
                 attackerRewards.get(type).put(node,attackerRewards.get(type).get(node) + type.getReward(this,node));
             }
@@ -283,12 +318,14 @@ public class FlipItGameState extends SimultaneousGameState {
 
 
         // add control cost
-        for (FollowerType type : FlipItGameInfo.types){
-            attackerRewards.get(type).put(attackerControlNode,attackerRewards.get(type).get(attackerControlNode) - FlipItGameInfo.graph.getControlCost(attackerControlNode));
+        for (FollowerType type : FlipItGameInfo.types) {
+            if (attackerHasEnoughPointsToControl(type)) {
+                attackerRewards.get(type).put(attackerControlNode, attackerRewards.get(type).get(attackerControlNode) - FlipItGameInfo.graph.getControlCost(attackerControlNode));
+            }
         }
 
 
-        if (attackerControlsParent()){
+        if (attackerControlsParent() && attackerHasEnoughPointsToControl()){
             if (attackerControlNode == null) System.out.println("NULL node");
             attackerControlledNodes.add(attackerControlNode);
             defenderControlledNodes.remove(attackerControlNode);
@@ -297,22 +334,31 @@ public class FlipItGameState extends SimultaneousGameState {
             for (FollowerType type : FlipItGameInfo.types){
                 attackerRewards.get(type).put(attackerControlNode,attackerRewards.get(type).get(attackerControlNode) + type.getReward(this,attackerControlNode));
             }
+            attackerPoints += FlipItGameInfo.graph.getReward(attackerControlNode);
 
             // attacker knows he controls the node
-            attackerPossiblyControlledNodes.add(attackerControlNode);
-            attackerObservations.add(new Pair<>(true,attackerRewards.get(FlipItGameInfo.types[0]).get(attackerControlNode)));
+            if (FlipItGameInfo.INFORMED_PLAYERS) {
+                attackerPossiblyControlledNodes.add(attackerControlNode);
+                attackerObservations.add(new Pair<>(true, attackerRewards.get(FlipItGameInfo.types[0]).get(attackerControlNode)));
+            }
         }
         else{
             // attacker knows his control failed
-            attackerPossiblyControlledNodes.remove(attackerControlNode);
-            attackerObservations.add(new Pair<>(false,0.0));
+            if (FlipItGameInfo.INFORMED_PLAYERS) {
+                attackerPossiblyControlledNodes.remove(attackerControlNode);
+                //TODO: pick different constants to signify fail by uncontrolled parent or not enough points (or both ?)
+                attackerObservations.add(new Pair<>(false, 0.0));
+            }
+            else{
+                attackerPossiblyControlledNodes.add(attackerControlNode);
+            }
         }
     }
 
     private void updateDefenderInfo(){
 
         // is not noop action
-        if (defenderControlNode != null) {
+        if (defenderControlNode != null && defenderHasEnoughPointsToControl()) {
             defenderControlledNodes.add(defenderControlNode);
             attackerControlledNodes.remove(defenderControlNode);
         }
@@ -326,10 +372,14 @@ public class FlipItGameState extends SimultaneousGameState {
         if (defenderControlNode == null)
             return;
 
-        defenderRewards.put(defenderControlNode, defenderRewards.get(defenderControlNode) - FlipItGameInfo.graph.getControlCost(defenderControlNode));
+        if (defenderHasEnoughPointsToControl()){
+            defenderRewards.put(defenderControlNode, defenderRewards.get(defenderControlNode) - FlipItGameInfo.graph.getControlCost(defenderControlNode));
+        }
 
         // defender knows he controls the node
-        defenderObservations.add(new Pair<>(true,defenderRewards.get(defenderControlNode)));
+        if (FlipItGameInfo.INFORMED_PLAYERS) {
+            defenderObservations.add(new Pair<>(true, defenderRewards.get(defenderControlNode)));
+        }
     }
 
     private void endRound() {
@@ -345,30 +395,40 @@ public class FlipItGameState extends SimultaneousGameState {
         // for all nodes the players control
         // for current control action
 
-        if (randomSelectedPlayer == null){
+        if (selectedNodeOwner == null){
             updateAttackerInfo();
             updateDefenderInfo();
         }
         else {
 
-            if (randomSelectedPlayer.equals(FlipItGameInfo.DEFENDER)) {
+            if (selectedNodeOwner.equals(FlipItGameInfo.DEFENDER)) {
                 updateDefenderInfo();
 
                 // attacker knows his control failed
-                attackerPossiblyControlledNodes.remove(attackerControlNode);
-                attackerObservations.add(new Pair<>(false, 1.0));
+                if (FlipItGameInfo.INFORMED_PLAYERS) {
+                    attackerPossiblyControlledNodes.remove(attackerControlNode);
+                    attackerObservations.add(new Pair<>(false, 1.0));
+                }
             }
 
-            if (randomSelectedPlayer.equals(FlipItGameInfo.ATTACKER)) {
+            if (selectedNodeOwner.equals(FlipItGameInfo.ATTACKER)) {
                 updateAttackerInfo();
 
                 // defender knows his control failed
-                defenderObservations.add(new Pair<>(false, 0.0));
+                if (FlipItGameInfo.INFORMED_PLAYERS) {
+                    defenderObservations.add(new Pair<>(false, 0.0));
+                }
             }
         }
 
         round = round + 1;
         currentPlayerIndex = 0;
+
+        if (!FlipItGameInfo.INFORMED_PLAYERS){
+            assert attackerObservations.size() == 0;
+            assert defenderObservations.size() == 0;
+        }
+
     }
 
     public Node getAttackerControlNode(){

@@ -49,8 +49,6 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 
     protected int restrictingTypeIndex = 0;
 
-    protected Collection<Triplet> problematicConstr;
-
     public SumForbiddingBayesianStackelbergLP(FlipItGameInfo info, Expander expander) {
         super(new Player[]{info.getAllPlayers()[0], info.getAllPlayers()[1]}, FlipItGameInfo.DEFENDER, FlipItGameInfo.ATTACKER);
         lpTable = new RecyclingMILPTable();
@@ -648,9 +646,6 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
     protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Iterable<Pair<FollowerType,Sequence>> followerBrokenStrategyCauses) {
         Pair<Map<Sequence, Double>, Double> currentBest = dummyResult;
 
-
-        // TODO restrikce neuvazuje triplety, chybi typ, mozna by se po vystupu z rekurze mel updatovat restrictingTypeIndex
-//        FollowerType currentType = FlipItGameInfo.types[typeIndex];
         for (Pair<FollowerType,Sequence> brokenStrategyCause : followerBrokenStrategyCauses) {
             restrictFollowerPlay(brokenStrategyCause.getRight(), lpData, brokenStrategyCause.getLeft());
             Pair<Map<Sequence, Double>, Double> result = solve(getLowerBound(lowerBound, currentBest), upperBound);

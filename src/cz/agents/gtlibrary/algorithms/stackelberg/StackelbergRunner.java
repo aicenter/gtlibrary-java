@@ -96,7 +96,7 @@ public class StackelbergRunner {
 //        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 //        Double MILP = runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander)).getLeft();
 //        System.out.println("MLP : " + MLP + " ; LP : " + LP + " ; MILP : " + MILP);
-        runner.generate(rootState.getAllPlayers()[0], new CompleteBFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
     }
 
     private static void runIAoS() {
@@ -223,7 +223,7 @@ public class StackelbergRunner {
     private StackelbergConfig algConfig;
 
     private PrintStream debugOutput = System.out;
-    final private static boolean DEBUG = false;
+    final private static boolean DEBUG = true;
     private ThreadMXBean threadBean;
 
     private double gameValue = Double.NaN;
@@ -271,15 +271,15 @@ public class StackelbergRunner {
         finalTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
 
         int[] support_size = new int[]{0, 0};
-//        for (Player player : actingPlayers) {
-//            for (Sequence sequence : realizationPlans.get(player).keySet()) {
-//                if (realizationPlans.get(player).get(sequence) > 0) {
-//                    support_size[player.getId()]++;
-//                    if (DEBUG)
-//                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
-//                }
-//            }
-//        }
+        for (Player player : actingPlayers) {
+            for (Sequence sequence : realizationPlans.get(player).keySet()) {
+                if (realizationPlans.get(player).get(sequence) > 0) {
+                    support_size[player.getId()]++;
+                    if (DEBUG)
+                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+                }
+            }
+        }
 
         try {
             Runtime.getRuntime().gc();
