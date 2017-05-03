@@ -36,12 +36,12 @@ import java.util.List;
  */
 public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider {
     public static boolean useEpsilonRM = false;
+    protected List<Action> actions;
     public static double epsilon = 0.001;
-    List<Action> actions;
     /**
      * Mean strategy.
      */
-    double[] mp;
+    protected double[] mp;
     /**
      * Cumulative regret.
      */
@@ -66,7 +66,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
             Arrays.fill(output, 0, K, 1.0 / K);
         } else {
             for (int i = 0; i < r.length; i++) {
-                output[i] = useEpsilonRM ? 1 - epsilon * Math.max(0, r[i]) / R + epsilon / K : Math.max(0, r[i]) / R;
+                output[i] = useEpsilonRM ? (1 - epsilon) * Math.max(0, r[i]) / R + epsilon / K : Math.max(0, r[i]) / R;
             }
         }
     }
@@ -114,6 +114,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return actions;
     }
 
+    public void setActions(List<Action> actions) {
+        this.actions = actions;
+    }
+
     @Override
     public double[] getMp() {
         return mp;
@@ -122,6 +126,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     @Override
     public int getNbSamples() {
         return nbSamples;
+    }
+
+    public double[] getRegrets() {
+        return r;
     }
 
     public void clear() {

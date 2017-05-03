@@ -21,28 +21,28 @@ public class RandomGameInfo implements GameInfo {
      **/
     public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
 
-    public static double CORRELATION = 0;// -1 for zero sum, 1 for identical utilities
+    public static double CORRELATION = -1;// -1 for zero sum, 1 for identical utilities
     public static int MAX_DEPTH = 6;
     public static int MAX_BF = 4;
-    public static int MIN_BF = 3;
-    public static int MAX_OBSERVATION = 3;
-    public static int MAX_UTILITY = 100;
-    public static boolean BINARY_UTILITY = false;
-    public static boolean UTILITY_CORRELATION = false;
-    public static boolean MULTIPLE_PLAYER_DEPTHS = true;
-    public static int MAX_CENTER_MODIFICATION = 10;
+    public static int MIN_BF = 4;
+    public static int MAX_OBSERVATION = 4;
+    public static int MAX_UTILITY = 1;
+    public static boolean INTEGER_UTILITY = false;
+    public static boolean UTILITY_CORRELATION = true;
+    public static boolean MULTIPLE_PLAYER_DEPTHS = false;
+    public static int MAX_CENTER_MODIFICATION = 2;
     public static boolean FIXED_SIZE_BF = false;
     public static double NATURE_STATE_PROBABILITY = 0;
     public static int[] ACTIONS;
 
-    public static boolean IMPERFECT_RECALL = true;
-    public static boolean IMPERFECT_RECALL_ONLYFORP1 = true;
+    public static boolean IMPERFECT_RECALL = false;
+    public static boolean IMPERFECT_RECALL_ONLYFORP1 = false;
     public static boolean ABSENT_MINDEDNESS = false;
-    public static double EMPTY_OBSERVATION_PROBABILITY = 0;
+    public static double EMPTY_OBSERVATION_PROBABILITY = 0.5;
     public static ObservationsType OBSERVATIONS_TYPE = ObservationsType.FORGETFUL;
-    public static double FORGET_OBSERVATION_PROBABILITY = 0;
+    public static double FORGET_OBSERVATION_PROBABILITY = 0.5;
 
-    public static long seed = 1;
+    public static long seed = 12;
 
     public static Random rnd = new HighQualityRandom(seed);
     public static ModificationGenerator modificationGenerator = new UniformModificationGenerator(MAX_CENTER_MODIFICATION);
@@ -50,10 +50,7 @@ public class RandomGameInfo implements GameInfo {
     public RandomGameInfo() {
         rnd = new HighQualityRandom(seed);
         if (UTILITY_CORRELATION) {
-            if (BINARY_UTILITY)
-                MAX_UTILITY = 1;
-            else
-                MAX_UTILITY = 2 * MAX_CENTER_MODIFICATION * MAX_DEPTH;
+            MAX_UTILITY = 2 * MAX_CENTER_MODIFICATION * MAX_DEPTH;
         }
         ACTIONS = new int[MAX_BF - 1];
         for (int i = 0; i < MAX_BF - 1; i++) {
@@ -80,7 +77,7 @@ public class RandomGameInfo implements GameInfo {
 
     @Override
     public String getInfo() {
-        return "Random game:\nMAX_UTILITY:" + MAX_UTILITY + ", MAX_BF:" + MAX_BF + ", MAX_OBSERVATIONS:" + MAX_OBSERVATION + ", MAX_DEPTH:" + MAX_DEPTH + ", BIN_UTIL:" + BINARY_UTILITY + ", UTIL_CORR:" + UTILITY_CORRELATION + ", CORR:" + CORRELATION + ", SEED:" + seed;
+        return "Random game:\nMAX_UTILITY:" + MAX_UTILITY + ", MAX_BF:" + MAX_BF + ", MAX_OBSERVATIONS:" + MAX_OBSERVATION + ", MAX_DEPTH:" + MAX_DEPTH + ", BIN_UTIL:" + INTEGER_UTILITY + ", UTIL_CORR:" + UTILITY_CORRELATION + ", CORR:" + CORRELATION + ", SEED:" + seed;
     }
 
     @Override

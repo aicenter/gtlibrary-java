@@ -72,7 +72,7 @@ public class StrategyCollector {
                 else if (curNodeIS.getPlayer().equals(player) && !processed.contains(curNodeIS)){
                     Map<Action, Double> actionDistribution = distribution.getDistributionFor(curNodeIS.getAlgorithmData());
                     double prefix = strategy.get(curNodeIS.getPlayersHistory());
-                    if (actionDistribution == null || !(prefix>1e-4)) continue; //unreachable/unreached state
+                    if (actionDistribution == null || !(prefix>1e-20)) continue; //unreachable/unreached state
                     for (Map.Entry<Action, Double> en : actionDistribution.entrySet()){
                         if (en.getValue()>0){
                             Sequence sq = new ArrayListSequenceImpl(curNodeIS.getPlayersHistory());

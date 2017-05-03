@@ -69,13 +69,13 @@ public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>
 	}
 
 	protected void addActionsAfterAggressiveAction(KuhnPokerGameState kpState, List<Action> actions, I informationSets) {
-		actions.add(createAction(kpState, "c", informationSets));
-		actions.add(createAction(kpState, "f", informationSets));
+		actions.add(createAction(kpState, "c", informationSets, kpState.getCardForActingPlayer().getActionType()));
+		actions.add(createAction(kpState, "f", informationSets, kpState.getCardForActingPlayer().getActionType()));
 	}
 
 	protected void addActionsAfterPasiveAction(KuhnPokerGameState kpState, List<Action> actions, I informationSet) {
-		actions.add(createAction(kpState, "b", informationSet));
-		actions.add(createAction(kpState, "ch", informationSet));
+		actions.add(createAction(kpState, "b", informationSet, kpState.getCardForActingPlayer().getActionType()));
+		actions.add(createAction(kpState, "ch", informationSet, kpState.getCardForActingPlayer().getActionType()));
 	}
 
 	protected void addActionsOfNature(KuhnPokerGameState kpState, List<Action> actions, I informationSet) {
@@ -89,6 +89,10 @@ public class KuhnPokerExpander<I extends InformationSet> extends ExpanderImpl<I>
 
 	protected PokerAction createAction(KuhnPokerGameState state, String action, I informationSet) {
 		return new KuhnPokerAction(action, informationSet, state.getPlayerToMove());
+	}
+
+	protected PokerAction createAction(KuhnPokerGameState state, String action, I informationSet, String card) {
+		return new KuhnPokerAction(action, informationSet, state.getPlayerToMove(), card);
 	}
 
 	protected boolean isCardAvailableInState(String card, KuhnPokerGameState state) {

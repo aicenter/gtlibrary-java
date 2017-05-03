@@ -1,17 +1,24 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change;
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.number.DigitArray;
 import cz.agents.gtlibrary.interfaces.Action;
 import ilog.concert.IloException;
 
 import java.util.Arrays;
 
 public abstract class Change {
+    public static Change EMPTY = new EmptyChange();
     protected Action action;
-    protected int[] fixedDigitArrayValue;
+    protected DigitArray fixedDigitArrayValue;
     protected double fixedDigitNumericValue;
 
     public Change(Action action, int[] fixedDigitArrayValue) {
+        this.action = action;
+        this.fixedDigitArrayValue = new DigitArray(fixedDigitArrayValue, true);
+    }
+
+    public Change(Action action, DigitArray fixedDigitArrayValue) {
         this.action = action;
         this.fixedDigitArrayValue = fixedDigitArrayValue;
     }
@@ -20,7 +27,7 @@ public abstract class Change {
         return action;
     }
 
-    public int[] getFixedDigitArrayValue() {
+    public DigitArray getFixedDigitArrayValue() {
         return fixedDigitArrayValue;
     }
 
@@ -29,7 +36,7 @@ public abstract class Change {
     }
 
     public int getFixedDigitCount() {
-        return fixedDigitArrayValue.length - 1;
+        return fixedDigitArrayValue.size() - 1;
     }
 
     public abstract boolean isChangeCompliant(int[] digitArray);
@@ -45,7 +52,7 @@ public abstract class Change {
 
         if (Double.compare(change.fixedDigitNumericValue, fixedDigitNumericValue) != 0) return false;
         if (!action.equals(change.action)) return false;
-        return Arrays.equals(fixedDigitArrayValue, change.fixedDigitArrayValue);
+        return fixedDigitArrayValue.equals(change.fixedDigitArrayValue);
     }
 
     @Override
@@ -53,7 +60,7 @@ public abstract class Change {
         int result;
         long temp;
         result = action.hashCode();
-        result = 31 * result + Arrays.hashCode(fixedDigitArrayValue);
+        result = 31 * result + fixedDigitArrayValue.hashCode();
         temp = Double.doubleToLongBits(fixedDigitNumericValue);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
@@ -71,7 +78,7 @@ public abstract class Change {
 
     @Override
     public String toString() {
-        return action.toString() + ", " + Arrays.toString(fixedDigitArrayValue);
+        return action.toString() + ", " + fixedDigitArrayValue.toString();
     }
 
 }

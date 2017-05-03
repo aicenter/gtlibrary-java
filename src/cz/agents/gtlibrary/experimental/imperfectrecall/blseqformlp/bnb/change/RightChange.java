@@ -1,11 +1,16 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change;
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.change.number.DigitArray;
 import cz.agents.gtlibrary.interfaces.Action;
 
 public class RightChange extends Change {
 
     public RightChange(Action action, int[] fixedDigitArray) {
+        super(action, fixedDigitArray);
+    }
+
+    public RightChange(Action action, DigitArray fixedDigitArray) {
         super(action, fixedDigitArray);
     }
 

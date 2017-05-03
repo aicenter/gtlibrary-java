@@ -174,8 +174,8 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	@Override
 	public int hashCode() {
-		if (hashCode != -1)
-			return hashCode;
+//		if (hashCode != -1)
+//			return hashCode;
 
 		final int prime = 31;
 		hashCode = 1;

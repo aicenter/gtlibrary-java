@@ -1,7 +1,11 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl;
 
-import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
+import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponseImpl;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.domain.bpg.BPGExpander;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
@@ -51,7 +55,7 @@ public class BilinearSequenceFormBNB {
 
     private static void runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new RandomGameInfo());
         GameState root = new RandomGameState();
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
@@ -83,9 +87,43 @@ public class BilinearSequenceFormBNB {
 //        }
     }
 
+    private static void runBPG() {
+        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BPGGameInfo());
+        GameState root = new IRBPGGameState();
+        Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
+
+        builder.build(root, config, expander);
+
+//        if (config.isPlayer2IR()) {
+//            System.out.println(" Player 2 has IR ... skipping ...");
+//            return;
+//        }
+
+        BilinearSequenceFormBNB solver = new BilinearSequenceFormBNB(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
+
+        GambitEFG exporter = new GambitEFG();
+        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+        System.out.println("Information sets: " + config.getCountIS(0));
+        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        solver.solve(config);
+
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+
+
+//        System.out.println("IR SETS");
+//        for (SequenceFormIRInformationSet is : config.getAllInformationSets().values()) {
+//            if (is.isHasIR()) {
+//                System.out.println(is.getISKey());
+//            }
+//        }
+    }
+
     private static void runBRTest() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
 
         Expander expander = new BRTestExpander<>(config);
 
@@ -124,7 +162,7 @@ public class BilinearSequenceFormBNB {
             assert definedEverywhere(P1Strategy, config);
             assert equalsInPRInformationSets(P1Strategy, config, lpData);
             assert isConvexCombination(P1Strategy, lpData, config);
-            ImperfectRecallBestResponse br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+            ImperfectRecallBestResponseImpl br = new ImperfectRecallBestResponseImpl(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
             br.getBestResponse(P1Strategy);
 
             TreeSet<BNBCandidate> fringe = new TreeSet<>();

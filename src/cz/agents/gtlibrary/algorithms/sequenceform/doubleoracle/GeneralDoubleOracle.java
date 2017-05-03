@@ -30,10 +30,14 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
-import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
+import cz.agents.gtlibrary.domain.oshizumo.IIOshiZumoGameState;
+import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
@@ -82,10 +86,11 @@ public class GeneralDoubleOracle {
 
     public static void main(String[] args) {
 //		runAC();
-//        runBP();
+        runBP();
 //        runGenericPoker();
-        runKuhnPoker();
+//        runKuhnPoker();
 //        runGoofSpiel();
+//        runIIOshiZumo();
 //        runRandomGame();
 //		runSimRandomGame();
 //                runLiarsDice();
@@ -171,6 +176,7 @@ public class GeneralDoubleOracle {
 //        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpanderDomain<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
+        System.out.println(algConfig.getAllInformationSets().size());
     }
 
     public static void runBP() {
@@ -184,10 +190,19 @@ public class GeneralDoubleOracle {
 
     public static void runGoofSpiel() {
         GSGameInfo.useFixedNatureSequence = true;
-        GameState rootState = new GoofSpielGameState();
+        GameState rootState = new IIGoofSpielGameState();
         GSGameInfo gameInfo = new GSGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new GoofSpielExpander<DoubleOracleInformationSet>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        doefg.generate(null);
+    }
+
+    public static void runIIOshiZumo() {
+        GameState rootState = new IIOshiZumoGameState();
+        GameInfo gameInfo = new OZGameInfo();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new OshiZumoExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
     }
@@ -466,8 +481,8 @@ public class GeneralDoubleOracle {
                 if (realizationPlans.get(player).get(sequence) > 0) {
                     support_size[player.getId()]++;
 //                    maxIt[player.getId()] = Math.max(maxIt[player.getId()], algConfig.getIterationForSequence(sequence));
-                    if (DEBUG)
-                        debugOutput.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+//                    if (DEBUG)
+                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
                 }
             }
         }

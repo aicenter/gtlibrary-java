@@ -14,15 +14,25 @@ import java.util.Set;
 
 public class IRInformationSetImpl implements InformationSet {
     protected Player player;
-    protected LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<GameState>();
+    protected LinkedHashSet<GameState> statesInformationSet = new LinkedHashSet<>();
     private final int hashCode;
     private final ImperfectRecallISKey key;
 
     public IRInformationSetImpl(GameState state) {
         this.player = state.getPlayerToMove();
-        this.statesInInformationSet.add(state);
-        this.key = (ImperfectRecallISKey) state.getISKeyForPlayerToMove();
+        this.statesInformationSet.add(state);
+//        if (state.getISKeyForPlayerToMove() instanceof PerfectRecallISKey)
+//            this.key = wrap((PerfectRecallISKey) state.getISKeyForPlayerToMove());
+//        else
+            this.key = (ImperfectRecallISKey) state.getISKeyForPlayerToMove();
         this.hashCode = key.hashCode();
+    }
+
+    private ImperfectRecallISKey wrap(PerfectRecallISKey isKeyForPlayerToMove) {
+        Observations perfectRecallObservations = new Observations(player, player);
+
+        perfectRecallObservations.add(new PerfectRecallObservation(isKeyForPlayerToMove));
+        return new ImperfectRecallISKey(perfectRecallObservations, null, null);
     }
 
     @Override
@@ -54,17 +64,16 @@ public class IRInformationSetImpl implements InformationSet {
 
     public void addStateToIS(GameState state) {
         assert state.getPlayerToMove().equals(player);
-        statesInInformationSet.add(state);
+        statesInformationSet.add(state);
     }
 
     public void addAllStatesToIS(Collection<GameState> states) {
-        assert states.stream().allMatch(state -> state.getPlayerToMove().equals(player));
-        statesInInformationSet.addAll(states);
+        states.forEach(this::addStateToIS);
     }
 
     @Override
     public Set<GameState> getAllStates() {
-        return statesInInformationSet;
+        return statesInformationSet;
     }
 
     @Override
@@ -74,6 +83,6 @@ public class IRInformationSetImpl implements InformationSet {
 
     @Override
     public String toString() {
-        return "IS:(" + statesInInformationSet + ")";
+        return "IS:(" + statesInformationSet + ")";
     }
 }

@@ -45,7 +45,7 @@ public class OshiZumoGameState extends SimultaneousGameState {
     protected int p2Coins;
     protected int p1Bid;
     protected int p2Bid;
-    private int currentPlayerIndex;
+    protected int currentPlayerIndex;
 
     protected ISKey key;
     private int hashCode = -1;

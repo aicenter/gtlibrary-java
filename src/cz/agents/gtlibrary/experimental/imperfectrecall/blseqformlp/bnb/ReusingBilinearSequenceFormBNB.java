@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb;
 
-import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
+import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponseImpl;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
@@ -62,7 +62,7 @@ public class ReusingBilinearSequenceFormBNB {
 
     private static void runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new RandomGameInfo());
         GameState root = new RandomGameState();
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
@@ -86,7 +86,7 @@ public class ReusingBilinearSequenceFormBNB {
 
     private static void runBRTest() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
         Expander<SequenceFormIRInformationSet> expander = new BRTestExpander<>(config);
 
         builder.build(new BRTestGameState(), config, expander);
@@ -334,7 +334,7 @@ public class ReusingBilinearSequenceFormBNB {
 
         if (isZero(probability))
             return;
-        if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && Arrays.equals(probability, change.getFixedDigitArrayValue()))))
+        if (newChanges.stream().anyMatch(change -> (change instanceof LeftChange && probability.equals(change.getFixedDigitArrayValue()))))
             probability[probability.length - 1]--;
         Change change = new LeftChange(current.getAction(), probability);
 
@@ -473,7 +473,7 @@ public class ReusingBilinearSequenceFormBNB {
     }
 
     private double getLowerBound(Map<Action, Double> p1Strategy) {
-        ImperfectRecallBestResponse br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+        ImperfectRecallBestResponseImpl br = new ImperfectRecallBestResponseImpl(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
 
         br.getBestResponse(p1Strategy);
         return -br.getValue();

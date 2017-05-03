@@ -70,6 +70,12 @@ public class GenSumSequenceFormConfig extends SequenceFormConfig<SequenceInforma
         return utilityForSequenceCombination.get(sequenceCombination)[player.getId()];
     }
 
+    public Double getUtilityFor(Map<Player, Sequence> sequenceCombination, int playerId) {
+        if (!utilityForSequenceCombination.containsKey(sequenceCombination))
+            return null;
+        return utilityForSequenceCombination.get(sequenceCombination)[playerId];
+    }
+
     public Double getUtilityFor(Sequence sequence1, Sequence sequence2, Player player) {
         return getUtilityFor(getPlayerSequenceMap(sequence1, sequence2), player);
     }

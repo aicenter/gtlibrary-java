@@ -11,7 +11,6 @@ import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
 import java.util.*;
-import java.util.stream.IntStream;
 
 public class BilinearTable extends RecyclingLPTable {
 
@@ -40,7 +39,7 @@ public class BilinearTable extends RecyclingLPTable {
     final int digits = 10;
     final int maxPrecision = 7;
 
-    protected final int INITIAL_MDT_PRECISION = 2;
+    public final int INITIAL_MDT_PRECISION = 2;
 
     public BilinearTable() {
         super();
@@ -74,6 +73,7 @@ public class BilinearTable extends RecyclingLPTable {
     public LPData toCplex() throws IloException {
         LPData data = super.toCplex();
 
+        deleteBilinearConstraints(data);
         for (Map.Entry<Object, Pair<Object, Object>> bilinKey : bilinearVars.entrySet()) {
             addBilinearConstraint(data, bilinKey.getKey(), bilinKey.getValue().getLeft(), bilinKey.getValue().getRight(),
                     getPrecisionFor(bilinKey.getValue().getRight()), getHighestPrecisionFor(bilinKey.getValue().getRight()));
@@ -81,6 +81,18 @@ public class BilinearTable extends RecyclingLPTable {
         bilinearVarsToUpdate.clear();
         updateWBounds();
         return data;
+    }
+
+    private void deleteBilinearConstraints(LPData data) throws IloException {
+        Set<IloCopyable> toDelete = new HashSet<>();
+
+        for (Map.Entry<Object, Pair<Object, Object>> bilinKey : bilinearVars.entrySet()) {
+            if (outgoingBilinearConstraints.containsKey(bilinKey.getKey()))
+                toDelete.add(outgoingBilinearConstraints.get(bilinKey.getKey()));
+            if (behavioralBilinearConstraints.containsKey(bilinKey.getValue().getRight()))
+                toDelete.add(behavioralBilinearConstraints.get(bilinKey.getValue().getRight()));
+        }
+        data.getSolver().delete(toDelete.toArray(new IloCopyable[toDelete.size()]));
     }
 
     protected void updateWBounds() throws IloException {
@@ -101,10 +113,6 @@ public class BilinearTable extends RecyclingLPTable {
     }
 
     protected void addBilinearConstraint(LPData data, Object bilinVarKey, Object factor1, Object factor2, int precision, int highestPrecision) throws IloException {
-        if (outgoingBilinearConstraints.containsKey(bilinVarKey))
-            data.getSolver().delete(outgoingBilinearConstraints.get(bilinVarKey));
-        if (behavioralBilinearConstraints.containsKey(factor2))
-            data.getSolver().delete(behavioralBilinearConstraints.get(factor2));
         IloRange[] newConstraints = addMDTConstraints(data, bilinVarKey, factor1, factor2, precision);
 
         behavioralBilinearConstraints.put(factor2, newConstraints[0]);
@@ -249,7 +257,7 @@ public class BilinearTable extends RecyclingLPTable {
 
         ubs[1][0] = 0;
         lbs[0][0] = 1;
-        if (change.getFixedDigitArrayValue()[0] == 1) {
+        if (change.getFixedDigitArrayValue().get(0) == 1) {
             assert false;
             return true;
         }
@@ -259,7 +267,7 @@ public class BilinearTable extends RecyclingLPTable {
         if (digitToFix == 0)
             return false;
         for (int k = digitToFix; k < digits; k++) {
-            if ((change.getFixedDigitArrayValue().length == 0) && (k > 1))
+            if ((change.getFixedDigitArrayValue().size() == 0) && (k > 1))
                 continue;
             if (lbs[k][change.getFixedDigitCount()] < 1) {
                 if (ubs[k][change.getFixedDigitCount()] == 1)
@@ -276,7 +284,7 @@ public class BilinearTable extends RecyclingLPTable {
 
         boolean changed = false;
 
-        if (change.getFixedDigitArrayValue()[0] == 1) {
+        if (change.getFixedDigitArrayValue().get(0) == 1) {
             lbs[1][0] = 1;
             ubs[0][0] = 0;
         } else {
@@ -324,7 +332,7 @@ public class BilinearTable extends RecyclingLPTable {
         double[][] ubs = getUBs(change.getAction());
         boolean changed = false;
 
-        if (change.getFixedDigitArrayValue()[0] == 1) {
+        if (change.getFixedDigitArrayValue().get(0) == 1) {
             lbs[1][0] = 1;
             ubs[0][0] = 0;
             assert false;
@@ -333,9 +341,9 @@ public class BilinearTable extends RecyclingLPTable {
             ubs[1][0] = 0;
         }
         for (int k = 0; k < digits; k++) {
-            for (int l = 1; l < change.getFixedDigitArrayValue().length; l++) {
+            for (int l = 1; l < change.getFixedDigitArrayValue().size(); l++) {
                 if ((l == 0) && (k > 1)) continue;
-                if (k != change.getFixedDigitArrayValue()[l]) {
+                if (k != change.getFixedDigitArrayValue().get(l)) {
                     if (ubs[k][l] > 0) {
                         changed = true;
                         ubs[k][l] = 0;
@@ -355,7 +363,7 @@ public class BilinearTable extends RecyclingLPTable {
     }
 
     protected int getLastFixedDigit(Change change) {
-        return change.getFixedDigitArrayValue()[change.getFixedDigitArrayValue().length - 1];
+        return change.getFixedDigitArrayValue().get(change.getFixedDigitArrayValue().size() - 1);
     }
 
     public int getPrecisionFor(Object factor2) {
@@ -372,6 +380,14 @@ public class BilinearTable extends RecyclingLPTable {
         if (precisionValue == null)
             return INITIAL_MDT_PRECISION;
         return precisionValue;
+    }
+
+    public Map<Object, Integer> getHighestPrecision() {
+        return highestPrecision;
+    }
+
+    public Map<Object, Integer> getPrecision() {
+        return precision;
     }
 
     public void removeWUpdate(Change change) throws IloException {

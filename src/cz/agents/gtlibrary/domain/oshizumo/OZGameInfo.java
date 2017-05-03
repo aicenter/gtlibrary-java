@@ -34,7 +34,7 @@ public class OZGameInfo implements GameInfo {
     public static long seed = 1;
 
     // parameters taken from http://skatgame.net/mburo/ps/sumo.pdf
-    public static int startingCoins = 10;        // N from paper
+    public static int startingCoins = 9;        // N from paper
     public static int locK = 3;                 // locations (2K+1)
     public static int minBid = 1;               // B from paper
 

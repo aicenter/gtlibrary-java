@@ -30,6 +30,9 @@ import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenc
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
+import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSExpander;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameInfo;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
@@ -47,6 +50,7 @@ import cz.agents.gtlibrary.domain.stacktest.StackTestExpander;
 import cz.agents.gtlibrary.domain.stacktest.StackTestGameInfo;
 import cz.agents.gtlibrary.domain.stacktest.StackTestGameState;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.PrintStream;
@@ -67,12 +71,32 @@ public class StackelbergRunner {
 
     public static void main(String[] args) {
 //        runKuhn();
-        runGenSumRandom();
+//        runGenSumRandom();
 //        runIAoS();
 //        runBPG(args[0], Integer.parseInt(args[1]));
 //        runSGSG();
 //        runPEG();
 //        runStackTest();
+
+        runFlipIt();
+    }
+
+    public static void runFlipIt() {
+
+        System.out.println("Running FLIPIT domain");
+
+        GameInfo gameInfo = new FlipItGameInfo();
+        GameState rootState = new FlipItGameState();
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+//        Double MLP = runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander)).getLeft();
+        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+//        Double LP = runner.generate(rootState.getAllPlayers()[0], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo)).getLeft();
+//        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+//        Double MILP = runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander)).getLeft();
+//        System.out.println("MLP : " + MLP + " ; LP : " + LP + " ; MILP : " + MILP);
+        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
     }
 
     private static void runIAoS() {
@@ -199,7 +223,7 @@ public class StackelbergRunner {
     private StackelbergConfig algConfig;
 
     private PrintStream debugOutput = System.out;
-    final private static boolean DEBUG = false;
+    final private static boolean DEBUG = true;
     private ThreadMXBean threadBean;
 
     private double gameValue = Double.NaN;
@@ -212,7 +236,7 @@ public class StackelbergRunner {
         this.algConfig = algConfig;
     }
 
-    public Map<Player, Map<Sequence, Double>> generate(Player leader, StackelbergSequenceFormLP solver) {
+    public Pair<Double, Map<Player, Map<Sequence, Double>>> generate(Player leader, StackelbergSequenceFormLP solver) {
         debugOutput.println("Full Sequence Multiple LP Stackelberg");
         debugOutput.println(gameConfig.getInfo());
         threadBean = ManagementFactory.getThreadMXBean();
@@ -247,15 +271,15 @@ public class StackelbergRunner {
         finalTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
 
         int[] support_size = new int[]{0, 0};
-//        for (Player player : actingPlayers) {
-//            for (Sequence sequence : realizationPlans.get(player).keySet()) {
-//                if (realizationPlans.get(player).get(sequence) > 0) {
-//                    support_size[player.getId()]++;
-//                    if (DEBUG)
-//                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
-//                }
-//            }
-//        }
+        for (Player player : actingPlayers) {
+            for (Sequence sequence : realizationPlans.get(player).keySet()) {
+                if (realizationPlans.get(player).get(sequence) > 0) {
+                    support_size[player.getId()]++;
+                    if (DEBUG)
+                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+                }
+            }
+        }
 
         try {
             Runtime.getRuntime().gc();
@@ -295,7 +319,7 @@ public class StackelbergRunner {
 
             algConfig.validateGameStructure(rootState, expander);
         }
-        return realizationPlans;
+        return new Pair<>(gameValue,realizationPlans);
     }
 
     public void generateCompleteGame() {

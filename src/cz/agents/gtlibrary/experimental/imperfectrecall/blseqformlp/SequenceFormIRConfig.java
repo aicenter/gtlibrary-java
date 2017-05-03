@@ -1,15 +1,17 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSet> {
-    protected Map<GameState, Double> actualNonZeroUtilityValuesInLeafs = new HashMap<>();
+    protected Map<GameState, Double> actualUtilityValuesInLeafs = new HashMap<>();
     protected Map<Sequence, Set<SequenceFormIRInformationSet>> reachableSetsBySequence = new HashMap<>();
     protected Map<Map<Player, Sequence>, Double> utilityForSequenceCombination = new HashMap<>();
     protected Map<Map<Player, Sequence>, Double> natureProbabilityForSequenceCombination = new HashMap<>();
@@ -25,6 +27,12 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     protected int[] countIS = {0, 0};
     protected boolean player2IR = false;
 
+    protected GameInfo gameInfo;
+
+    public SequenceFormIRConfig(GameInfo gameInfo) {
+        this.gameInfo = gameInfo;
+    }
+
     @Override
     public SequenceFormIRInformationSet createInformationSetFor(GameState gameState) {
         return new SequenceFormIRInformationSet(gameState);
@@ -36,13 +44,14 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
             updateHighestReachableUtilities(state);
             updateLowestReachableUtilities(state);
             terminalStates.add(state);
-        } else
+        } else {
             super.addInformationSetFor(state);
-        if (state.isPlayerToMoveNature())
-            return;
+        }
+        getOrCreateInformationSet(state);
         fixTheInformationSetInSequences(state);
         setOutgoingSequences(state);
-        getOrCreateInformationSet(state);
+        if (state.isPlayerToMoveNature())
+            return;
         setReachableSetBySequence(state);
         addCompatibleSequence(state);
         addPlayerSequences(state);
@@ -86,6 +95,63 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         }
     }
 
+    protected void updateP1LowestReachableUtilitiesFromActualUtilities(GameState state) {
+        for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[0]).getAllPrefixes()) {
+            Double p1Utility = actualUtilityValuesInLeafs.get(state);
+
+            if (p1Utility == null)
+                continue;
+            Double currentValue = p1LowestReachableUtility.get(prefix);
+
+            if (currentValue == null || currentValue > p1Utility)
+                currentValue = p1Utility;
+            p1LowestReachableUtility.put(prefix, currentValue);
+        }
+    }
+
+    protected void updateP1HighestReachableUtilitiesFromActualUtilities(GameState state) {
+        for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[0]).getAllPrefixes()) {
+            Double p1Utility = actualUtilityValuesInLeafs.get(state);
+
+            if (p1Utility == null)
+                continue;
+            Double currentValue = p1HighestReachableUtility.get(prefix);
+
+            if (currentValue == null || currentValue < p1Utility)
+                currentValue = p1Utility;
+            p1HighestReachableUtility.put(prefix, currentValue);
+        }
+    }
+
+    protected void updateP2LowestReachableUtilitiesFromActualUtilities(GameState state) {
+        for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[1]).getAllPrefixes()) {
+            Double p2Utility = -actualUtilityValuesInLeafs.get(state);
+
+            if (p2Utility == null)
+                continue;
+            Double currentValue = p2LowestReachableUtility.get(prefix);
+
+            if (currentValue == null || currentValue > p2Utility)
+                currentValue = p2Utility;
+            p2LowestReachableUtility.put(prefix, currentValue);
+        }
+    }
+
+    protected void updateP2HighestReachableUtilitiesFromActualUtilities(GameState state) {
+        for (Sequence prefix : state.getSequenceFor(state.getAllPlayers()[1]).getAllPrefixes()) {
+            Double p2Utility = actualUtilityValuesInLeafs.get(state);
+
+            if (p2Utility == null)
+                continue;
+            Double currentValue = p2HighestReachableUtility.get(prefix);
+
+            if (currentValue == null || currentValue < p2Utility)
+                currentValue = p2Utility;
+            p2HighestReachableUtility.put(prefix, currentValue);
+        }
+    }
+
+
     public void fixTheInformationSetInSequences(GameState state) {
         for (Player player : state.getAllPlayers()) {
             if (player.getId() == 2)
@@ -97,9 +163,9 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
             SequenceFormIRInformationSet informationSet = getAllInformationSets().get(sequence.getLastInformationSet().getISKey());
 
             if (informationSet != null) { // if there is a particular IS in the algConfig for the previous state, we set it to be the IS in the stored sequences
-                Set<GameState> oldStates = sequence.getLast().getInformationSet().getAllStates();
-
-                informationSet.addAllStatesToIS(oldStates);
+//                Set<GameState> oldStates = sequence.getLast().getInformationSet().getAllStates();
+//
+//                informationSet.addAllStatesToIS(oldStates);
                 sequence.getLast().setInformationSet(informationSet);
             } else {
                 System.out.print("");
@@ -141,7 +207,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         Sequence sequence = state.getSequenceFor(player);
 
         if (sequence != null && sequence.size() > 0) {
-            SequenceFormIRInformationSet prevIS = (SequenceFormIRInformationSet) sequence.getLastInformationSet();
+            SequenceFormIRInformationSet prevIS = allInformationSets.get(sequence.getLastInformationSet().getISKey());
 
             prevIS.addOutgoingSequenceFor(sequence.getSubSequence(sequence.size() - 1), sequence);
         }
@@ -186,7 +252,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
 
         if (infoSet == null) {
             infoSet = createInformationSetFor(state);
-            countIS[state.getPlayerToMove().getId()]++;
+//            countIS[state.getPlayerToMove().getId()]++;
         } else if (!state.isGameEnd() && !infoSet.hasIR()) {
             Player plToMove = infoSet.getPlayer();
             Sequence currentHistory = state.getHistory().getSequenceOf(plToMove);
@@ -205,25 +271,25 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     public void setUtility(GameState leaf) {
         final double[] utilities = leaf.getUtilities();
 
-        assert utilities[0] == -utilities[1] : "not a zero-sum game";
+//        assert utilities[0] == -utilities[1] : "not a zero-sum game";
         double utility = utilities[0] * leaf.getNatureProbability();
         setUtility(leaf, utility);
     }
 
     public void setUtility(GameState leaf, double utility) {
-        if (actualNonZeroUtilityValuesInLeafs.containsKey(leaf)) {
-            assert (actualNonZeroUtilityValuesInLeafs.get(leaf) == utility);
+        if (actualUtilityValuesInLeafs.containsKey(leaf)) {
+            assert (actualUtilityValuesInLeafs.get(leaf) == utility);
             return; // we have already stored this leaf
         }
-        if (utility == 0) // we do not store zero-utility
-            return;
+//        if (utility == 0) // we do not store zero-utility
+//            return;
         FixedSizeMap<Player, Sequence> activePlayerMap = createActivePlayerMap(leaf);
         double existingUtility = utility;
 
         if (utilityForSequenceCombination.containsKey(activePlayerMap))
             existingUtility += utilityForSequenceCombination.get(activePlayerMap);
 
-        actualNonZeroUtilityValuesInLeafs.put(leaf, utility);
+        actualUtilityValuesInLeafs.put(leaf, utility);
         utilityForSequenceCombination.put(activePlayerMap, existingUtility);
     }
 
@@ -255,7 +321,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
         } else {
             utilityForSequenceCombination.put(activePlayerMap, existingUtility);
         }
-        actualNonZeroUtilityValuesInLeafs.remove(oldLeaf);
+        actualUtilityValuesInLeafs.remove(oldLeaf);
     }
 
     protected FixedSizeMap<Player, Sequence> createActivePlayerMap(GameState leaf) {
@@ -270,7 +336,7 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     }
 
     public Double getActualNonzeroUtilityValues(GameState leaf) {
-        return actualNonZeroUtilityValuesInLeafs.get(leaf);
+        return actualUtilityValuesInLeafs.get(leaf);
     }
 
     public Double getUtilityFor(Map<Player, Sequence> sequenceCombination) {
@@ -290,11 +356,12 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     }
 
     public Collection<Sequence> getAllSequences() {
-        return compatibleSequences.keySet();
+        return playerSequences.values().stream().flatMap(v -> v.stream()).collect(Collectors.toSet());
+//        return compatibleSequences.keySet();
     }
 
     public Set<SequenceFormIRInformationSet> getReachableSets(Sequence sequence) {
-        return reachableSetsBySequence.get(sequence);
+        return reachableSetsBySequence.getOrDefault(sequence, Collections.emptySet());
     }
 
     public Collection<Sequence> getSequencesFor(Player player) {
@@ -336,14 +403,32 @@ public class SequenceFormIRConfig extends ConfigImpl<SequenceFormIRInformationSe
     public double getHighestReachableUtilityFor(Sequence sequence) {
         assert sequence.getPlayer().getId() != 2;
         if (sequence.getPlayer().getId() == 0)
-            return p1HighestReachableUtility.get(sequence);
-        return p2HighestReachableUtility.get(sequence);
+            return p1HighestReachableUtility.getOrDefault(sequence, gameInfo.getMaxUtility());
+        return p2HighestReachableUtility.getOrDefault(sequence, gameInfo.getMaxUtility());
     }
 
     public double getLowestReachableUtilityFor(Sequence sequence) {
         assert sequence.getPlayer().getId() != 2;
         if (sequence.getPlayer().getId() == 0)
-            return p1LowestReachableUtility.get(sequence);
-        return p2LowestReachableUtility.get(sequence);
+            return p1LowestReachableUtility.getOrDefault(sequence, -gameInfo.getMaxUtility());
+        return p2LowestReachableUtility.getOrDefault(sequence, -gameInfo.getMaxUtility());
+    }
+
+    public Map<GameState, Double> getActualUtilityValuesInLeafs() {
+        return actualUtilityValuesInLeafs;
+    }
+
+    public void updateUtilitiesReachableBySequences() {
+        p1HighestReachableUtility.clear();
+        p1LowestReachableUtility.clear();
+        p2HighestReachableUtility.clear();
+        p2LowestReachableUtility.clear();
+
+        for (GameState terminalState : terminalStates) {
+            updateP1HighestReachableUtilitiesFromActualUtilities(terminalState);
+            updateP1LowestReachableUtilitiesFromActualUtilities(terminalState);
+            updateP2HighestReachableUtilitiesFromActualUtilities(terminalState);
+            updateP2LowestReachableUtilitiesFromActualUtilities(terminalState);
+        }
     }
 }

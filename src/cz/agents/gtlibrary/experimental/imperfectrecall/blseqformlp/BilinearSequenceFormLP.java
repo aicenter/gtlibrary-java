@@ -1,14 +1,24 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp;
 
-import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponse;
+import cz.agents.gtlibrary.algorithms.bestresponse.ImperfectRecallBestResponseImpl;
+import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.domain.bpg.BPGExpander;
+import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
+import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
+import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearTable;
+import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.DoubleOracleIRConfig;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
@@ -19,7 +29,7 @@ import ilog.concert.IloException;
 
 import java.util.*;
 
-public class BilinearSeqenceFormLP {
+public class BilinearSequenceFormLP {
     private final Player player;
     private final Player opponent;
     private cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oldimpl.BilinearTable table;
@@ -35,13 +45,41 @@ public class BilinearSeqenceFormLP {
     private final double EPS = 0.000001;
 
     public static void main(String[] args) {
-        runRandomGame();
+        runAbstractedRandomGame();
+//        runRandomGame();
+//        runBPG();
 //        runBRTest();
+    }
+
+    public static double runAbstractedRandomGame() {
+        GameState wrappedRoot = new RandomGameState();
+        SequenceFormConfig<SequenceInformationSet> wrappedConfig = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> wrappedExpander = new RandomGameExpander<>(wrappedConfig);
+        FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, new RandomGameInfo(), wrappedConfig);
+        efg.generateCompleteGame();
+
+        DoubleOracleIRConfig config = new DoubleOracleIRConfig(new RandomAbstractionGameInfo(new RandomGameInfo()));
+        GameState root = new P1RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        Expander<SequenceFormIRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, config);
+        BilinearSequenceFormLP solver = new BilinearSequenceFormLP(RandomGameInfo.FIRST_PLAYER, new RandomAbstractionGameInfo(new RandomGameInfo()));
+
+        cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+        GambitEFG exporter = new GambitEFG();
+        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+
+        solver.solve(config);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
+
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        return solver.finalValue;
     }
 
     public static double runRandomGame() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new RandomGameInfo());
         GameState root = new RandomGameState();
         Expander<SequenceFormIRInformationSet> expander = new RandomGameExpander<>(config);
 
@@ -52,7 +90,41 @@ public class BilinearSeqenceFormLP {
 //            return;
 //        }
 
-        BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
+        BilinearSequenceFormLP solver = new BilinearSequenceFormLP(BRTestGameInfo.FIRST_PLAYER, new RandomGameInfo());
+
+        GambitEFG exporter = new GambitEFG();
+        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
+        solver.solve(config);
+
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        return solver.finalValue;
+
+//        System.out.println("IR SETS");
+//        for (SequenceFormIRInformationSet is : config.getAllInformationSets().values()) {
+//            if (is.isHasIR()) {
+//                System.out.println(is.getISKey());
+//            }
+//        }
+    }
+
+    public static double runBPG() {
+        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BPGGameInfo());
+        GameState root = new IRBPGGameState();
+        Expander<SequenceFormIRInformationSet> expander = new BPGExpander<>(config);
+
+        builder.build(root, config, expander);
+
+//        if (config.isPlayer2IR()) {
+//            System.out.println(" Player 2 has IR ... skipping ...");
+//            return;
+//        }
+
+        BilinearSequenceFormLP solver = new BilinearSequenceFormLP(BPGGameInfo.DEFENDER, new BPGGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -75,15 +147,15 @@ public class BilinearSeqenceFormLP {
 
     private static void runBRTest() {
         BasicGameBuilder builder = new BasicGameBuilder();
-        SequenceFormIRConfig config = new SequenceFormIRConfig();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new BRTestGameInfo());
 
         builder.build(new BRTestGameState(), config, new BRTestExpander<>(config));
-        BilinearSeqenceFormLP solver = new BilinearSeqenceFormLP(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());
+        BilinearSequenceFormLP solver = new BilinearSequenceFormLP(BRTestGameInfo.FIRST_PLAYER, new BRTestGameInfo());
 
         solver.solve(config);
     }
 
-    public BilinearSeqenceFormLP(Player player, GameInfo info) {
+    public BilinearSequenceFormLP(Player player, GameInfo info) {
         this.table = new BilinearTable();
         this.player = player;
         this.opponent = info.getOpponent(player);
@@ -132,7 +204,7 @@ public class BilinearSeqenceFormLP {
 //                }
                 sequencesToTighten = findMostViolatedBilinearConstraints(lpData);
             }
-            ImperfectRecallBestResponse br = new ImperfectRecallBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
+            ImperfectRecallBestResponseImpl br = new ImperfectRecallBestResponseImpl(opponent, expander, gameInfo);
 
             if (DEBUG) System.out.println("-------------------");
             if (DEBUG) {
@@ -146,6 +218,9 @@ public class BilinearSeqenceFormLP {
                     }
                 }
             }
+            Map<Sequence, Double> rp = extractRPStrategy(config, lpData);
+
+            System.out.println("Support: " + rp.values().stream().filter(v -> v > 1e-8).count());
 //            IRSequenceBestResponse br2 = new IRSequenceBestResponse(RandomGameInfo.SECOND_PLAYER, expander, gameInfo);
 //            br2.getBestResponseSequence(extractRPStrategy(config, lpData));
             br.getBestResponse(P1Strategy);
@@ -202,7 +277,7 @@ public class BilinearSeqenceFormLP {
                 Double utility = config.getUtilityFor(sequence, compatibleSequence);
 
                 if (utility != null)
-                    table.setConstraint(eqKey, compatibleSequence, -utility);
+                    table.setConstraint(eqKey, compatibleSequence, (player.getId() == 0 ? -1 : 1) * utility);
             }
         }
     }

@@ -89,7 +89,7 @@ public class IRCFR {
                 strategy.putAll(actionDistribution);
                 processed.add(curNodeIS);
             }
-            List<Action> tmp = (curNodeIS != null) ? curNodeIS.getData().getActions() : expander.getActions(curNode);
+            List<Action> tmp = expander.getActions(curNode);
 
             for (Action a : tmp) {
                 GameState newState = curNode.performAction(a);

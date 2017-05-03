@@ -10,10 +10,12 @@ import java.util.stream.Collectors;
 
 public class SequenceFormIRInformationSet extends IRInformationSetImpl {
     private Map<Sequence, Set<Sequence>> outgoingSequences;
+    private Action first;
 
     public SequenceFormIRInformationSet(GameState state) {
         super(state);
         outgoingSequences = new HashMap<>();
+        first = null;
     }
 
     public void addOutgoingSequenceFor(Sequence sequence, Sequence outgoingSequence) {
@@ -23,6 +25,8 @@ public class SequenceFormIRInformationSet extends IRInformationSetImpl {
             currentOutgoing = new LinkedHashSet<>(outgoingSequences.size());
         currentOutgoing.add(outgoingSequence);
         this.outgoingSequences.put(sequence, currentOutgoing);
+        if(first == null)
+            first = outgoingSequence.getLast();
     }
 
     public void addOutgoingSequencesFor(Sequence sequence, Collection<Sequence> outgoingSequences) {
@@ -55,4 +59,7 @@ public class SequenceFormIRInformationSet extends IRInformationSetImpl {
         return outgoingSequences.size() > 1;
     }
 
+    public Action getFirst() {
+        return first;
+    }
 }

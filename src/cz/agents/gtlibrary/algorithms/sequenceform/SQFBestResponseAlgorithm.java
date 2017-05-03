@@ -20,23 +20,18 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.ConfigImpl;
-import cz.agents.gtlibrary.iinodes.LinkedListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.FirstActionStrategyForMissingSequences;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.ValueComparator;
-import org.apache.wicket.util.collections.ArrayListStack;
 
 import java.util.*;
 
 /**
- *
  * Best-response algorithm with pruning. It calculates best-response value for a
  * game described by the root state and the expander.
- *
  */
 public class SQFBestResponseAlgorithm {
 
@@ -177,16 +172,20 @@ public class SQFBestResponseAlgorithm {
                 alternativeNodesProbs.put(currentNode, currentNodeProb);
             }
 
-//            if (!nonZeroOppRP && !nonZeroOppRPAlt && ISProbability > gameState.getNatureProbability()) {
-//                // if there is zero OppRP prob we keep only those nodes in IS that are caused by the moves of nature
-//                // i.e., -> we keep all the nodes that share the same history of the opponent
-//                for (GameState state : new ArrayList<GameState>(alternativeNodes)) {
-//                    if (!state.getHistory().getSequenceOf(players[opponentPlayerIndex]).equals(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex]))) {
-//                        alternativeNodes.remove(state);
-//                        alternativeNodesProbs.remove(state);
-//                    }
-//                }
-//            }
+            if (!nonZeroOppRP && !nonZeroOppRPAlt && ISProbability > gameState.getNatureProbability()) {
+                // if there is zero OppRP prob we keep only those nodes in IS that are caused by the moves of nature
+                // i.e., -> we keep all the nodes that share the same history of the opponent
+                for (GameState state : new ArrayList<GameState>(alternativeNodes)) {
+                    if (!state.getHistory().getSequenceOf(players[opponentPlayerIndex]).equals(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex]))) {
+                        alternativeNodes.remove(state);
+                        alternativeNodesProbs.remove(state);
+                    }
+                }
+            }
+            new ArrayList<GameState>(alternativeNodes).stream().filter(state -> !state.getSequenceForPlayerToMove().equals(gameState.getSequenceForPlayerToMove())).forEach(state -> {
+                alternativeNodes.remove(state);
+                alternativeNodesProbs.remove(state);
+            });
 
             BRSrchSelection sel = new BRSrchSelection(lowerBound, ISProbability, alternativeNodesProbs, nonZeroOppRP);
             Collections.sort(alternativeNodes, comparator);
@@ -279,7 +278,7 @@ public class SQFBestResponseAlgorithm {
         }
 
         assert (returnValue != null);
-        assert (returnValue <= MAX_UTILITY_VALUE*(1.01));
+        assert (returnValue <= MAX_UTILITY_VALUE * (1.01));
         return returnValue;
     }
 
@@ -619,11 +618,11 @@ public class SQFBestResponseAlgorithm {
         return cachedValuesForNodes.get(state);
     }
 
-	public Strategy getBRStategy(){
-        Strategy out= new FirstActionStrategyForMissingSequences();
+    public Strategy getBRStategy() {
+        Strategy out = new FirstActionStrategyForMissingSequences();
         out.put(new ArrayListSequenceImpl(players[searchingPlayerIndex]), 1.0);
-        for (HashSet<Sequence> col : BRresult.values()){
-            for (Sequence seq : col){
+        for (HashSet<Sequence> col : BRresult.values()) {
+            for (Sequence seq : col) {
                 out.put(seq, 1.0);
             }
         }

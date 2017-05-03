@@ -19,10 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.bpg;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.improvedBR.DoubleOracleWithBestMinmaxImprovement.PlayerSelection;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
@@ -46,7 +43,7 @@ import cz.agents.gtlibrary.utils.graph.Node;
 public class BPGGameState extends GameStateImpl {
 
 	protected static final long serialVersionUID = 7703160415991328955L;
-	
+
 	protected BorderPatrollingGraph graph;
 	protected Player playerToMove;
 	protected Node attackerPosition;
@@ -55,7 +52,7 @@ public class BPGGameState extends GameStateImpl {
 
 	protected Set<Node> flaggedNodesObservedByPatroller;
 	protected Set<Node> flaggedNodes;
-	
+
 	protected Set<Action> addedToFlagged;
 	protected Map<Action, boolean[]> addedToObserved;
 
@@ -67,6 +64,9 @@ public class BPGGameState extends GameStateImpl {
 	protected int hashCode = -1;
 	protected ISKey key;
 
+	protected List<Node> patrollerMoves;
+	protected List<Pair<Node, AttackerMovementType>> attackerMoves;
+
 	public BPGGameState() {
 		this(new BorderPatrollingGraph(BPGGameInfo.graphFile));
 	}
@@ -76,13 +76,15 @@ public class BPGGameState extends GameStateImpl {
         slowAttackerMovement = false;
         playerToMove = BPGGameInfo.ATTACKER;
         this.graph = graph;
-        flaggedNodesObservedByPatroller = new HashSet<Node>();
-        flaggedNodes = new HashSet<Node>();
-        addedToFlagged = new HashSet<Action>();
-        addedToObserved = new HashMap<Action,boolean[]>();
+        flaggedNodesObservedByPatroller = new HashSet<>();
+        flaggedNodes = new HashSet<>();
+        addedToFlagged = new HashSet<>();
+        addedToObserved = new HashMap<>();
         attackerPosition = graph.getOrigin();
         p1Position = graph.getP1Start();
         p2Position = graph.getP2Start();
+		patrollerMoves = new ArrayList<>();
+		attackerMoves = new ArrayList<>();
     }
 
 	public BPGGameState(BPGGameState gameState) {
@@ -90,13 +92,15 @@ public class BPGGameState extends GameStateImpl {
 		this.graph = gameState.getGraph();
 		this.slowAttackerMovement = gameState.slowAttackerMovement;
 		this.playerToMove = gameState.playerToMove;
-		this.flaggedNodes = new HashSet<Node>(gameState.flaggedNodes);
-		this.flaggedNodesObservedByPatroller = new HashSet<Node>(gameState.flaggedNodesObservedByPatroller);
-		this.addedToFlagged = new HashSet<Action>(gameState.addedToFlagged);
-		this.addedToObserved = new HashMap<Action, boolean[]>(gameState.addedToObserved);
+		this.flaggedNodes = new HashSet<>(gameState.flaggedNodes);
+		this.flaggedNodesObservedByPatroller = new HashSet<>(gameState.flaggedNodesObservedByPatroller);
+		this.addedToFlagged = new HashSet<>(gameState.addedToFlagged);
+		this.addedToObserved = new HashMap<>(gameState.addedToObserved);
 		this.attackerPosition = gameState.attackerPosition;
 		this.p1Position = gameState.p1Position;
 		this.p2Position = gameState.p2Position;
+		this.attackerMoves = new ArrayList<>(gameState.attackerMoves);
+		this.patrollerMoves = new ArrayList<>(gameState.patrollerMoves);
 	}
 
 	@Override
@@ -126,6 +130,7 @@ public class BPGGameState extends GameStateImpl {
 			slowAttackerMovement = true;
 		}
 		playerToMove = BPGGameInfo.DEFENDER;
+		attackerMoves.add(new Pair<>(attackerPosition, action.getType()));
 	}
 
 	public void executePatrollerAction(PatrollerAction action) {
@@ -139,7 +144,7 @@ public class BPGGameState extends GameStateImpl {
 			if (flaggedNodesObservedByPatroller.add(action.getToNodeForP1())){
 				added[0] = true;
 			}
-				
+
 		}
 		if (flaggedNodes.contains(action.getToNodeForP2())) {
 			if (flaggedNodesObservedByPatroller.add(action.getToNodeForP2()))
@@ -148,6 +153,8 @@ public class BPGGameState extends GameStateImpl {
 		if(added[0] || added[1])
 			addedToObserved.put(action, added);
 		playerToMove = BPGGameInfo.ATTACKER;
+		patrollerMoves.add(p1Position);
+		patrollerMoves.add(p2Position);
 	}
 
 	protected void clearCache() {
@@ -277,7 +284,7 @@ public class BPGGameState extends GameStateImpl {
 	@Override
 	public int hashCode() {
 		if (hashCode == -1) {
-			final int prime = 31;		
+			final int prime = 31;
 			hashCode = 1;
 			hashCode = prime * hashCode + ((history == null) ? 0 : history.hashCode());
 		}
@@ -293,12 +300,22 @@ public class BPGGameState extends GameStateImpl {
 		if (getClass() != obj.getClass())
 			return false;
 		BPGGameState other = (BPGGameState) obj;
-		
-		if (!history.equals(other.history))
+
+		if(!playerToMove.equals(other.playerToMove))
+			return false;
+		if(!p1Position.equals(other.p1Position))
+			return false;
+		if(!p2Position.equals(p2Position))
+			return false;
+		if(!attackerPosition.equals(attackerPosition))
+			return false;
+		if (!attackerMoves.equals(other.attackerMoves))
+			return false;
+		if (!patrollerMoves.equals(other.patrollerMoves))
 			return false;
 		return true;
 	}
-	
+
 	@Override
 	public void reverseAction(){
 		if (playerToMove.equals(BPGGameInfo.ATTACKER)){
@@ -308,7 +325,7 @@ public class BPGGameState extends GameStateImpl {
 			reverseAttackerAction();
 		}
 		clearCache();
-		super.reverseAction();	
+		super.reverseAction();
 	}
 
 	private void reverseAttackerAction() {
@@ -329,14 +346,14 @@ public class BPGGameState extends GameStateImpl {
 		p2Position = action.getFromNodeForP2();
 		checkFlaggedByPatroller(action);
 	}
-	
+
 	private void checkFlaggedByAttacker(AttackerAction action){
 		if(addedToFlagged.contains(action)){
 			addedToFlagged.remove(action);
 			flaggedNodes.remove(action.getToNode());
 		}
 	}
-	
+
 	private void checkFlaggedByPatroller(PatrollerAction action){
 		boolean[] added = addedToObserved.get(action);
 		if(added != null){
