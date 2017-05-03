@@ -101,11 +101,19 @@ public class GeneralDoubleOracle {
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
-        runFlipIt();
+        runFlipIt(args);
     }
 
-    private static void runFlipIt(){
-        FlipItGameInfo gameInfo = new FlipItGameInfo();
+    private static void runFlipIt(String[] args){
+        FlipItGameInfo gameInfo;
+        if (args.length == 0)
+            gameInfo = new FlipItGameInfo();
+        else {
+            int depth = Integer.parseInt(args[0]);
+            int graphSize = Integer.parseInt(args[1]);
+            String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
+            gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
+        }
         gameInfo.ZERO_SUM_APPROX = true;
         GameState rootState = new NoInfoFlipItGameState();//FlipItGameState();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);

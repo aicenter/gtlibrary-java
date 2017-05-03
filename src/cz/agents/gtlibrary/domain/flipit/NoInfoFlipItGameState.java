@@ -1,19 +1,14 @@
 package cz.agents.gtlibrary.domain.flipit;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
-import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.utils.Pair;
-import cz.agents.gtlibrary.utils.graph.Edge;
 import cz.agents.gtlibrary.utils.graph.Node;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -24,8 +19,8 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
     double defenderReward;
     HashMap<FollowerType, Double> attackerReward;
-    boolean[] defenderNodes;
-    boolean[] attackerPossibleNodes;
+    boolean[] defenderOwnedNodes;
+    boolean[] attackerPossiblyOwnedNodes;
 
     public NoInfoFlipItGameState(NoInfoFlipItGameState gameState) {
 //        super(gameState);
@@ -39,8 +34,8 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 //        this.defenderControlledNodes = new HashSet<>(gameState.defenderControlledNodes);
 //        this.attackerControlledNodes = new HashSet<>(gameState.attackerControlledNodes);
 //        this.attackerPossiblyControlledNodes = new HashSet<>(gameState.attackerPossiblyControlledNodes);
-        this.defenderNodes = copyNodes(gameState.defenderNodes);
-        this.attackerPossibleNodes = copyNodes(gameState.attackerPossibleNodes);
+        this.defenderOwnedNodes = copyNodes(gameState.defenderOwnedNodes);
+        this.attackerPossiblyOwnedNodes = copyNodes(gameState.attackerPossiblyOwnedNodes);
 
         this.history = gameState.getHistory().copy();
         this.natureProbability = gameState.getNatureProbability();
@@ -78,12 +73,12 @@ public class NoInfoFlipItGameState extends FlipItGameState {
             attackerReward.put(type, 0.0);
         }
 
-        attackerPossibleNodes = new boolean[FlipItGameInfo.graph.getAllNodes().size()];
-        defenderNodes = new boolean[FlipItGameInfo.graph.getAllNodes().size()];
+        attackerPossiblyOwnedNodes = new boolean[FlipItGameInfo.graph.getAllNodes().size()];
+        defenderOwnedNodes = new boolean[FlipItGameInfo.graph.getAllNodes().size()];
 
-        for(int i = 0; i < defenderNodes.length; i++){
-            defenderNodes[i] = true;
-            attackerPossibleNodes[i] = false;
+        for(int i = 0; i < defenderOwnedNodes.length; i++){
+            defenderOwnedNodes[i] = true;
+            attackerPossiblyOwnedNodes[i] = false;
         }
 
 //        System.out.println("NO INFO INIT");
@@ -143,8 +138,8 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         if (defenderReward != that.defenderReward) return false;
         if (round != that.round) return false;
         if (currentPlayerIndex != that.currentPlayerIndex) return false;
-        if (!defenderNodes.equals(that.defenderNodes)) return false;
-        if (!attackerPossibleNodes.equals(that.attackerPossibleNodes)) return false;
+        if (!defenderOwnedNodes.equals(that.defenderOwnedNodes)) return false;
+        if (!attackerPossiblyOwnedNodes.equals(that.attackerPossiblyOwnedNodes)) return false;
 //        if (!defenderControlledNodes.equals(that.defenderControlledNodes)) return false;
 //        if (!attackerControlledNodes.equals(that.attackerControlledNodes)) return false;
 //        if (!attackerPossiblyControlledNodes.equals(that.attackerPossiblyControlledNodes)) return false;
@@ -168,8 +163,8 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         result = 31 * result + (int)(defenderReward*100);
         result = 31 * result + attackerReward.hashCode();
         result = 31 * result + currentPlayerIndex;
-        result = 31 * result + defenderNodes.hashCode();
-        result = 31 * result + attackerPossibleNodes.hashCode();
+        result = 31 * result + defenderOwnedNodes.hashCode();
+        result = 31 * result + attackerPossiblyOwnedNodes.hashCode();
         result = 31 * result + (defenderControlNode != null ? defenderControlNode.hashCode() : 23);
         result = 31 * result + (attackerControlNode != null ? attackerControlNode.hashCode() : 29);
         result = 31 * result + (selectedNodeOwner != null ? selectedNodeOwner.hashCode() : 37);
@@ -181,7 +176,7 @@ public class NoInfoFlipItGameState extends FlipItGameState {
     public HashSet<Node> getAttackerPossiblyControlledNodes(){
         HashSet<Node> attackerNodes = new HashSet<>();
         for (Node node : FlipItGameInfo.graph.getAllNodes().values())
-            if (attackerPossibleNodes[node.getIntID()])
+            if (attackerPossiblyOwnedNodes[node.getIntID()])
                 attackerNodes.add(node);
         return attackerNodes;
     }
@@ -203,14 +198,14 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
     @Override
     protected Player getLastOwnerOf(Node node){
-        return defenderNodes[node.getIntID()] ? FlipItGameInfo.DEFENDER : FlipItGameInfo.ATTACKER;
+        return defenderOwnedNodes[node.getIntID()] ? FlipItGameInfo.DEFENDER : FlipItGameInfo.ATTACKER;
     }
 
     @Override
     protected void updateAttackerInfo(){
         // recalculate reward for all nodes, but attackNode
         for (Node node : FlipItGameInfo.graph.getAllNodes().values()){
-            if (!defenderNodes[node.getIntID()]) {
+            if (!defenderOwnedNodes[node.getIntID()]) {
                 if (node.equals(attackerControlNode)) continue;
 //            if (node == null) System.out.println("NULL node");
                 attackerPoints += FlipItGameInfo.graph.getReward(node);
@@ -236,10 +231,10 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
 
 //        attackerPossiblyControlledNodes.add(attackerControlNode);
-        attackerPossibleNodes[attackerControlNode.getIntID()] = true;
-        if (attackerControlsParent() && attackerWasSelected() && defenderNodes[attackerControlNode.getIntID()]){//!attackerControlledNodes.contains(attackerControlNode)){
+        attackerPossiblyOwnedNodes[attackerControlNode.getIntID()] = true;
+        if (attackerControlsParent() && attackerWasSelected() && defenderOwnedNodes[attackerControlNode.getIntID()]){//!attackerControlledNodes.contains(attackerControlNode)){
             if (attackerControlNode == null) System.out.println("NULL node");
-            defenderNodes[attackerControlNode.getIntID()] = false;
+            defenderOwnedNodes[attackerControlNode.getIntID()] = false;
 //            attackerControlledNodes.add(attackerControlNode);
 //            defenderControlledNodes.remove(attackerControlNode);
 
@@ -272,14 +267,14 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
         // is not noop action
         if (defenderControlNode != null && defenderWasSelected()) {
-            defenderNodes[defenderControlNode.getIntID()] = true;
+            defenderOwnedNodes[defenderControlNode.getIntID()] = true;
 //            defenderControlledNodes.add(defenderControlNode);
 //            attackerControlledNodes.remove(defenderControlNode);
         }
 
         // recalculate reward for all noded
         for (Node node : FlipItGameInfo.graph.getAllNodes().values()){
-            if (defenderNodes[node.getIntID()]) {
+            if (defenderOwnedNodes[node.getIntID()]) {
 //            defenderRewards.put(node, defenderRewards.get(node) + FlipItGameInfo.graph.getReward(node));
                 defenderReward += FlipItGameInfo.graph.getReward(node);
             }
