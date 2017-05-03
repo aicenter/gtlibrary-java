@@ -73,8 +73,7 @@ public class FlipItGameState extends SimultaneousGameState {
 
     }
 
-    public FlipItGameState() {
-        super(FlipItGameInfo.ALL_PLAYERS);
+    protected void init(){
         // init all structures
         defenderControlledNodes = new HashSet<Node>(FlipItGameInfo.graph.getAllNodes().values());
         attackerControlledNodes = new HashSet<Node>();
@@ -104,6 +103,11 @@ public class FlipItGameState extends SimultaneousGameState {
 
 //        System.out.println("FULL INFO INIT");
 
+    }
+
+    public FlipItGameState() {
+        super(FlipItGameInfo.ALL_PLAYERS);
+        init();
     }
 
     @Override

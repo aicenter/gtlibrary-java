@@ -52,6 +52,11 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
     }
 
+    @Override
+    protected void init(){
+
+    }
+
     protected boolean[] copyNodes(boolean[] nodes){
         boolean[] newNodes = new boolean[nodes.length];
         for (int i = 0; i < nodes.length; i++)
@@ -61,6 +66,7 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
     public NoInfoFlipItGameState() {
         super();
+        super.init();
         defenderRewards = null;
         attackerRewards = null;
         attackerObservations = null;
