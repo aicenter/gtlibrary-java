@@ -28,6 +28,10 @@ import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
@@ -86,7 +90,7 @@ public class GeneralDoubleOracle {
 
     public static void main(String[] args) {
 //		runAC();
-        runBP();
+//        runBP();
 //        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
@@ -97,6 +101,27 @@ public class GeneralDoubleOracle {
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
+        runFlipIt();
+    }
+
+    private static void runFlipIt(){
+        FlipItGameInfo gameInfo = new FlipItGameInfo();
+        gameInfo.ZERO_SUM_APPROX = true;
+        GameState rootState = new NoInfoFlipItGameState();//FlipItGameState();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander =new FlipItExpander<DoubleOracleInformationSet>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        Map<Player, Map<Sequence, Double>> rps = doefg.generate(null);
+
+//        for (Map.Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
+//            if(entry.getValue() > doefg.EPS)
+//                System.out.println(entry);
+//        }
+//        System.out.println("**********");
+//        for (Map.Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
+//            if(entry.getValue() > doefg.EPS)
+//                System.out.println(entry);
+//        }
     }
 
     public static void runAC() {
@@ -229,6 +254,7 @@ public class GeneralDoubleOracle {
         threadBean = ManagementFactory.getThreadMXBean();
 
         long start = threadBean.getCurrentThreadCpuTime();
+        long systemStart = System.currentTimeMillis();
         long overallSequenceGeneration = 0;
         long overallBRCalculation = 0;
         long overallCPLEX = 0;
@@ -295,6 +321,7 @@ public class GeneralDoubleOracle {
 
             iterations++;
             debugOutput.println("Iteration " + iterations + ": Cumulative Time from Beginning:" + ((threadBean.getCurrentThreadCpuTime() - start) / 1000000l));
+            debugOutput.println("Iteration " + iterations + ": Cumulative Time:" + ((System.currentTimeMillis()) - systemStart));
 
 //            diffSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex];
 
@@ -527,7 +554,7 @@ public class GeneralDoubleOracle {
     }
 
     public static void traverseCompleteGameTree(GameState rootState, Expander<DoubleOracleInformationSet> expander) {
-        System.out.println("Claculating the size of the game.");
+        System.out.println("Calculating the size of the game.");
         LinkedList<GameState> queue = new LinkedList<GameState>();
         long nodes = 0;
         queue.add(rootState);

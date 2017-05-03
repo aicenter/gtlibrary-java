@@ -27,6 +27,7 @@ import cz.agents.gtlibrary.algorithms.stackelberg.flipit.iterative.SumForbidding
 import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
@@ -55,7 +56,8 @@ public class BayesianStackelbergRunner {
     static String outputFile;
     static String output;
 
-    static String alg = "AI-MILP";
+    static String alg = "AI-LP";
+    static boolean NO_INFO = true;
 //    static String alg = "MILP";
 
     public static void main(String[] args) {
@@ -69,6 +71,7 @@ public class BayesianStackelbergRunner {
             String graphFile = args[2];
             long seed  = Integer.parseInt(args[3]);
             gameInfo = new FlipItGameInfo(depth,numTypes,graphFile, seed);
+            gameInfo.ZERO_SUM_APPROX = false;
             gameInfo.setInfo(depth,numTypes,graphFile);
             outputFile = args[4];
             output = depth + " " + numTypes + " " + graphFile + " " + seed + " ";
@@ -77,8 +80,9 @@ public class BayesianStackelbergRunner {
 
             OUTPUT = true;
         }
-
-        GameState rootState = new FlipItGameState();
+        GameState rootState;
+        if (NO_INFO) rootState = new NoInfoFlipItGameState();
+        else rootState = new FlipItGameState();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
         BayesianStackelbergRunner runner = new BayesianStackelbergRunner(rootState, expander, gameInfo, algConfig);

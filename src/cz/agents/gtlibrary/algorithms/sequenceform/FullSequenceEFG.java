@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
+import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -31,6 +32,9 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitExpander;
 import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameInfo;
 import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameState;
+import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
@@ -90,11 +94,13 @@ public class FullSequenceEFG {
 
 	private double gameValue = Double.NaN;
 
+	private static double eps = 1e-6;
+
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
 //		runKuhnPoker();
-		runGenericPoker();
+//		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
@@ -105,6 +111,25 @@ public class FullSequenceEFG {
 //		runUpOrDown();
 //        runOshiZumo();
 //        testExploitGame();
+		runFlipIt();
+	}
+
+	private static void runFlipIt(){
+		FlipItGameInfo gameInfo = new FlipItGameInfo();
+		GameState rootState = new FlipItGameState();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new FlipItExpander<>(algConfig), gameInfo, algConfig);
+		Map<Player, Map<Sequence, Double>> rps = efg.generate();
+
+		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
+			if(entry.getValue() > eps)
+				System.out.println(entry);
+		}
+		System.out.println("**********");
+		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
+			if(entry.getValue() > eps)
+				System.out.println(entry);
+		}
 	}
 
     private static void testExploitGame() {

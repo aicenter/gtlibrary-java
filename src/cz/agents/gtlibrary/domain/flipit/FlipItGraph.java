@@ -19,6 +19,12 @@ public class FlipItGraph extends Graph {
     private double UNIFORM_REWARD = 4.0;
     private double UNIFORM_COST = 1.5;
 
+    private final boolean USE_UNIFORM_REWARD = false;
+    private final boolean USE_UNIFORM_COST = false;
+
+    private double[] init_costs = new double[]  {2.0, 4.0, 4.0, 6.0, 7.0};
+    private double[] init_rewards = new double[]{3.0, 4.0, 6.0, 7.0, 4.0};
+
     private double MAX_REWARD;
     private double MIN_CONTROLCOST;
 
@@ -36,6 +42,8 @@ public class FlipItGraph extends Graph {
         MIN_CONTROLCOST = Double.MAX_VALUE;
         for (Double controlCost : controlCosts.values())
             if (controlCost < MIN_CONTROLCOST) MIN_CONTROLCOST = controlCost;
+
+        System.out.println("GRAPH INIT");
     }
 
     public double getMaxReward(){
@@ -48,8 +56,10 @@ public class FlipItGraph extends Graph {
 
     private void initFlipItGraph(){
         for (Node node : getAllNodes().values()){
-            rewards.put(node, UNIFORM_REWARD);
-            controlCosts.put(node, UNIFORM_COST);
+            if (USE_UNIFORM_REWARD) rewards.put(node, UNIFORM_REWARD);
+            else rewards.put(node, init_rewards[node.getIntID()]);
+            if (USE_UNIFORM_COST ) controlCosts.put(node, UNIFORM_COST);
+            else controlCosts.put(node, init_costs[node.getIntID()]);
             if(getEdgesOf(node).isEmpty()) publicNodes.add(node);
             for (Edge edge : getEdgesOf(node)){
                 if (edge.getTarget().equals(node))

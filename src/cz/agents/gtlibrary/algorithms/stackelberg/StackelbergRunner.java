@@ -33,6 +33,7 @@ import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
 import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSExpander;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameInfo;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
@@ -85,8 +86,10 @@ public class StackelbergRunner {
 
         System.out.println("Running FLIPIT domain");
 
-        GameInfo gameInfo = new FlipItGameInfo();
-        GameState rootState = new FlipItGameState();
+        FlipItGameInfo gameInfo = new FlipItGameInfo();
+        gameInfo.ZERO_SUM_APPROX = false;
+//        GameState rootState = new FlipItGameState();
+        GameState rootState = new NoInfoFlipItGameState();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
