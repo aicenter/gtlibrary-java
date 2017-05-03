@@ -83,22 +83,22 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 //        followerBestResponse = new FollowerBestResponse(algConfig.getRootState(), expander, algConfig, leader, follower);
         long startTime = threadBean.getCurrentThreadCpuTime();
 
-//        checkHashCollisions(algConfig.getAllSequences());
-//        checkHashCollisions(algConfig.getAllInformationSets().values());
-//        checkHashCollisions(Arrays.asList(FlipItGameInfo.types));
-//        ArrayList<GameState> gameStates = new ArrayList<>();
-//        for (InformationSet set : algConfig.getAllInformationSets().values()) {
-//            gameStates.addAll(set.getAllStates());
-////            boolean hashColision = checkHashCollisions(set.getAllStates());
-////            if (hashColision) {
-////                System.out.println("----");
-////                System.out.println(set.getPlayer());
-////                for (GameState state : set.getAllStates()) {
-//////                    System.out.println(state);
-////                }
-//            }
-////        }
-//        checkHashCollisions(gameStates);
+        checkHashCollisions(algConfig.getAllSequences());
+        checkHashCollisions(algConfig.getAllInformationSets().values());
+        checkHashCollisions(Arrays.asList(FlipItGameInfo.types));
+        ArrayList<GameState> gameStates = new ArrayList<>();
+        for (InformationSet set : algConfig.getAllInformationSets().values()) {
+            gameStates.addAll(set.getAllStates());
+//            boolean hashColision = checkHashCollisions(set.getAllStates());
+//            if (hashColision) {
+//                System.out.println("----");
+//                System.out.println(set.getPlayer());
+//                for (GameState state : set.getAllStates()) {
+////                    System.out.println(state);
+//                }
+            }
+//        }
+        checkHashCollisions(gameStates);
 
         addObjective();                     // READY
 //        addObjectiveViaConstraint(algConfig);
