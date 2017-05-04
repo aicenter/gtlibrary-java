@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.RecyclingMILPTable
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.br.FollowerBestResponse;
 import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -67,7 +68,13 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
         boolean hashColision = false;
         for (Object sequence : objects) {
             if (hashes.keySet().contains(sequence.hashCode())) {
-//                System.out.println("HASH COLLISION : " + sequence + " ; " + hashes.get(sequence.hashCode()) + " : " + sequence.hashCode());
+                System.out.println("HASH COLLISION : " + sequence + " ; " + hashes.get(sequence.hashCode()) + " : " + sequence.hashCode());
+                if (sequence instanceof FlipItGameState){
+                    System.out.println(((FlipItGameState)sequence).getISKeyForPlayerToMove());
+                    System.out.println(((FlipItGameState)hashes.get(sequence.hashCode())).getISKeyForPlayerToMove());
+                    System.out.println(hashes.get(sequence.hashCode()).hashCode());
+                    System.out.println(sequence.hashCode());
+                }
                 hashColision = true;
             }
             hashes.put(sequence.hashCode(),sequence);
@@ -96,8 +103,8 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 //                for (GameState state : set.getAllStates()) {
 ////                    System.out.println(state);
 //                }
-            }
-//        }
+//            }
+        }
         checkHashCollisions(gameStates);
 
         addObjective();                     // READY

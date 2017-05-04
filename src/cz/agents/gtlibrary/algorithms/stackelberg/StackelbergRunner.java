@@ -89,7 +89,9 @@ public class StackelbergRunner {
         FlipItGameInfo gameInfo = new FlipItGameInfo();
         gameInfo.ZERO_SUM_APPROX = false;
 //        GameState rootState = new FlipItGameState();
-        GameState rootState = new NoInfoFlipItGameState();
+        GameState rootState;
+        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
+        else rootState = new FlipItGameState();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);

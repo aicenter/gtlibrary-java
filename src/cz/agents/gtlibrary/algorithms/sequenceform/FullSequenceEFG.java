@@ -35,6 +35,7 @@ import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameState;
 import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
@@ -116,7 +117,10 @@ public class FullSequenceEFG {
 
 	private static void runFlipIt(){
 		FlipItGameInfo gameInfo = new FlipItGameInfo();
-		GameState rootState = new FlipItGameState();
+		gameInfo.ZERO_SUM_APPROX = true;
+		GameState rootState;
+		if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
+		else rootState = new FlipItGameState();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new FlipItExpander<>(algConfig), gameInfo, algConfig);
 		Map<Player, Map<Sequence, Double>> rps = efg.generate();

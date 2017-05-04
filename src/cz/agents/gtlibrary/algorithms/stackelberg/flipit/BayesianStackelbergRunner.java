@@ -57,7 +57,7 @@ public class BayesianStackelbergRunner {
     static String output;
 
     static String alg = "AI-LP";
-    static boolean NO_INFO = true;
+//    static boolean NO_INFO = true;
 //    static String alg = "MILP";
 
     public static void main(String[] args) {
@@ -81,7 +81,7 @@ public class BayesianStackelbergRunner {
             OUTPUT = true;
         }
         GameState rootState;
-        if (NO_INFO) rootState = new NoInfoFlipItGameState();
+        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
         else rootState = new FlipItGameState();
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
