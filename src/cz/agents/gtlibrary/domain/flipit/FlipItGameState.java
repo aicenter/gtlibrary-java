@@ -209,16 +209,23 @@ public class FlipItGameState extends SimultaneousGameState {
 
         FlipItGameState that = (FlipItGameState) o;
 
-        if (attackerPoints != that.attackerPoints) return false;
+        if (Double.compare(that.attackerPoints, attackerPoints) != 0) return false;
         if (round != that.round) return false;
         if (currentPlayerIndex != that.currentPlayerIndex) return false;
-        if (!defenderControlledNodes.equals(that.defenderControlledNodes)) return false;
-        if (!attackerControlledNodes.equals(that.attackerControlledNodes)) return false;
-        if (!attackerPossiblyControlledNodes.equals(that.attackerPossiblyControlledNodes)) return false;
-        if (!defenderObservations.equals(that.defenderObservations)) return false;
-        if (!attackerObservations.equals(that.attackerObservations)) return false;
-        if (!defenderRewards.equals(that.defenderRewards)) return false;
-        if (!attackerRewards.equals(that.attackerRewards)) return false;
+        if (defenderControlledNodes != null ? !defenderControlledNodes.equals(that.defenderControlledNodes) : that.defenderControlledNodes != null)
+            return false;
+        if (attackerControlledNodes != null ? !attackerControlledNodes.equals(that.attackerControlledNodes) : that.attackerControlledNodes != null)
+            return false;
+        if (attackerPossiblyControlledNodes != null ? !attackerPossiblyControlledNodes.equals(that.attackerPossiblyControlledNodes) : that.attackerPossiblyControlledNodes != null)
+            return false;
+        if (defenderObservations != null ? !defenderObservations.equals(that.defenderObservations) : that.defenderObservations != null)
+            return false;
+        if (attackerObservations != null ? !attackerObservations.equals(that.attackerObservations) : that.attackerObservations != null)
+            return false;
+        if (defenderRewards != null ? !defenderRewards.equals(that.defenderRewards) : that.defenderRewards != null)
+            return false;
+        if (attackerRewards != null ? !attackerRewards.equals(that.attackerRewards) : that.attackerRewards != null)
+            return false;
         if (defenderControlNode != null ? !defenderControlNode.equals(that.defenderControlNode) : that.defenderControlNode != null)
             return false;
         if (attackerControlNode != null ? !attackerControlNode.equals(that.attackerControlNode) : that.attackerControlNode != null)
@@ -230,22 +237,70 @@ public class FlipItGameState extends SimultaneousGameState {
 
     @Override
     public int hashCode() {
-        int result = defenderControlledNodes.hashCode();
-        result = 31 * result + attackerControlledNodes.hashCode();
-        result = 31 * result + attackerPossiblyControlledNodes.hashCode();
-        result = 31 * result + defenderObservations.hashCode();
-        result = 31 * result + attackerObservations.hashCode();
-        result = 31 * result + defenderRewards.hashCode();
-        result = 31 * result + attackerRewards.hashCode();
+        int result;
+        long temp;
+        result = defenderControlledNodes != null ? defenderControlledNodes.hashCode() : 0;
+        result = 31 * result + (attackerControlledNodes != null ? attackerControlledNodes.hashCode() : 0);
+        result = 31 * result + (attackerPossiblyControlledNodes != null ? attackerPossiblyControlledNodes.hashCode() : 0);
+        result = 31 * result + (defenderObservations != null ? defenderObservations.hashCode() : 0);
+        result = 31 * result + (attackerObservations != null ? attackerObservations.hashCode() : 0);
+        result = 31 * result + (defenderRewards != null ? defenderRewards.hashCode() : 0);
+        result = 31 * result + (attackerRewards != null ? attackerRewards.hashCode() : 0);
+        temp = Double.doubleToLongBits(attackerPoints);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + round;
-        result = 31 * result + (int)(attackerPoints*100);
         result = 31 * result + currentPlayerIndex;
-        result = 31 * result + (defenderControlNode != null ? defenderControlNode.hashCode() : 23);
-        result = 31 * result + (attackerControlNode != null ? attackerControlNode.hashCode() : 29);
-        result = 31 * result + (selectedNodeOwner != null ? selectedNodeOwner.hashCode() : 37);
+        result = 31 * result + (defenderControlNode != null ? defenderControlNode.hashCode() : 0);
+        result = 31 * result + (attackerControlNode != null ? attackerControlNode.hashCode() : 0);
+        result = 31 * result + (selectedNodeOwner != null ? selectedNodeOwner.hashCode() : 0);
         result = 31 * result + history.hashCode();
         return result;
     }
+
+    //    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//
+//        FlipItGameState that = (FlipItGameState) o;
+//
+//        if (attackerPoints != that.attackerPoints) return false;
+//        if (round != that.round) return false;
+//        if (currentPlayerIndex != that.currentPlayerIndex) return false;
+//        if (!defenderControlledNodes.equals(that.defenderControlledNodes)) return false;
+//        if (!attackerControlledNodes.equals(that.attackerControlledNodes)) return false;
+//        if (!attackerPossiblyControlledNodes.equals(that.attackerPossiblyControlledNodes)) return false;
+//        if (!defenderObservations.equals(that.defenderObservations)) return false;
+//        if (!attackerObservations.equals(that.attackerObservations)) return false;
+//        if (!defenderRewards.equals(that.defenderRewards)) return false;
+//        if (!attackerRewards.equals(that.attackerRewards)) return false;
+//        if (defenderControlNode != null ? !defenderControlNode.equals(that.defenderControlNode) : that.defenderControlNode != null)
+//            return false;
+//        if (attackerControlNode != null ? !attackerControlNode.equals(that.attackerControlNode) : that.attackerControlNode != null)
+//            return false;
+//        if (!history.equals(that.history)) return false;
+//        return selectedNodeOwner != null ? selectedNodeOwner.equals(that.selectedNodeOwner) : that.selectedNodeOwner == null;
+//
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        int result = (defenderControlledNodes != null ? defenderControlledNodes.hashCode() : 0);
+//        result = 31 * result + (attackerControlledNodes != null ? attackerControlledNodes.hashCode() : 0);
+//        result = 31 * result + (attackerPossiblyControlledNodes != null ? attackerPossiblyControlledNodes.hashCode() : 0);
+//        result = 31 * result + (defenderObservations != null ? defenderObservations.hashCode() : 0);
+//        result = 31 * result + (attackerObservations != null ? attackerObservations.hashCode() : 0);
+//        result = 31 * result + (defenderRewards != null ? defenderRewards.hashCode() : 0);
+//        result = 31 * result + (attackerRewards != null ? attackerRewards.hashCode() : 0);
+//        result = 31 * result + round;
+//        result = 31 * result + (int)(attackerPoints*100);
+//        result = 31 * result + currentPlayerIndex;
+//        result = 31 * result + (defenderControlNode != null ? defenderControlNode.hashCode() : 23);
+//        result = 31 * result + (attackerControlNode != null ? attackerControlNode.hashCode() : 29);
+//        result = 31 * result + (selectedNodeOwner != null ? selectedNodeOwner.hashCode() : 37);
+//        result = 31 * result + history.hashCode();
+//        return result;
+//    }
 
     public void executeAttackerAction(FlipItAction attackerAction) {
         // execute

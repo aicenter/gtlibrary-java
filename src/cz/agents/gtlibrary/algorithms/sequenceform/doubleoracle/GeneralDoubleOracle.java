@@ -115,7 +115,9 @@ public class GeneralDoubleOracle {
             gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
         }
         gameInfo.ZERO_SUM_APPROX = true;
-        GameState rootState = new NoInfoFlipItGameState();//FlipItGameState();
+        GameState rootState;
+        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
+        else rootState = new FlipItGameState();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander =new FlipItExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
@@ -329,7 +331,7 @@ public class GeneralDoubleOracle {
 
             iterations++;
             debugOutput.println("Iteration " + iterations + ": Cumulative Time from Beginning:" + ((threadBean.getCurrentThreadCpuTime() - start) / 1000000l));
-            debugOutput.println("Iteration " + iterations + ": Cumulative Time:" + ((System.currentTimeMillis()) - systemStart));
+            debugOutput.println("Iteration " + iterations + ": System Cumulative Time:" + ((System.currentTimeMillis()) - systemStart));
 
 //            diffSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex];
 

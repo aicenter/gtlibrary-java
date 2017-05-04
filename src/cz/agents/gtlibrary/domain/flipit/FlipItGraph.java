@@ -43,7 +43,7 @@ public class FlipItGraph extends Graph {
         for (Double controlCost : controlCosts.values())
             if (controlCost < MIN_CONTROLCOST) MIN_CONTROLCOST = controlCost;
 
-        System.out.println("GRAPH INIT");
+//        System.out.println("GRAPH INIT");
     }
 
     public double getMaxReward(){
@@ -67,7 +67,7 @@ public class FlipItGraph extends Graph {
                 publicNodes.add(node);
             }
         }
-        System.out.println("Public nodes size : " + publicNodes.size());
+//        System.out.println("Public nodes size : " + publicNodes.size());
     }
 
     public HashSet<Node> getPublicNodes(){

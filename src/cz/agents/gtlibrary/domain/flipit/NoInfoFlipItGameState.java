@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.utils.graph.Node;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -66,11 +67,15 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         attackerRewards = null;
         attackerObservations = null;
         defenderObservations = null;
+        attackerControlledNodes = null;
+        defenderControlledNodes = null;
+        attackerPossiblyControlledNodes = null;
 
         defenderReward = 0.0;
         attackerReward = new HashMap<>();
         for (FollowerType type : FlipItGameInfo.types){
             attackerReward.put(type, 0.0);
+            attackerReward.put(type, FlipItGameInfo.INITIAL_POINTS);
         }
 
         attackerPossiblyOwnedNodes = new boolean[FlipItGameInfo.graph.getAllNodes().size()];
@@ -131,6 +136,34 @@ public class NoInfoFlipItGameState extends FlipItGameState {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        NoInfoFlipItGameState that = (NoInfoFlipItGameState) o;
+
+        if (Double.compare(that.defenderReward, defenderReward) != 0) return false;
+        if (!attackerReward.equals(that.attackerReward)) return false;
+        if (!Arrays.equals(defenderOwnedNodes, that.defenderOwnedNodes)) return false;
+        return Arrays.equals(attackerPossiblyOwnedNodes, that.attackerPossiblyOwnedNodes);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        long temp;
+        temp = Double.doubleToLongBits(defenderReward);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + attackerReward.hashCode();
+        result = 31 * result + Arrays.hashCode(defenderOwnedNodes);
+        result = 31 * result + Arrays.hashCode(attackerPossiblyOwnedNodes);
+        result = 31 * result + history.hashCode();
+        return result;
+    }
+
+    //    @Override
+    public boolean equals2(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
         NoInfoFlipItGameState that = (NoInfoFlipItGameState) o;
 
@@ -153,8 +186,8 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
     }
 
-    @Override
-    public int hashCode() {
+//    @Override
+    public int hashCode2() {
         int result = 0;//defenderControlledNodes.hashCode();
 //        result = 31 * result + attackerControlledNodes.hashCode();
 //        result = 31 * result + attackerPossiblyControlledNodes.hashCode();
@@ -290,7 +323,7 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         }
     }
 
-    // TODO tady je bug !! v pripade vybrani viteze se musi delat update obou !! a na zacatku dalsiho kola musi byt seletedNodeOwner opet null !!
+//     TODO tady je bug !! v pripade vybrani viteze se musi delat update obou !! a na zacatku dalsiho kola musi byt seletedNodeOwner opet null !!
 
     @Override
     protected void endRound() {
