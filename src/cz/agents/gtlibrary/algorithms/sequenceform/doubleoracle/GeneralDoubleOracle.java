@@ -75,6 +75,8 @@ public class GeneralDoubleOracle {
     private PrintStream debugOutput = System.out;
     private long finishTime;
 
+    private int iterations;
+
     final private double EPS = 0.00000001;
     final public static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
@@ -258,6 +260,8 @@ public class GeneralDoubleOracle {
         this.algConfig = algConfig;
     }
 
+    public int getIterations(){ return  iterations;}
+
     public Map<Player, Map<Sequence, Double>> generate(Map<Player, Map<Sequence, Double>> initializationRG) {
         debugOutput.println("Double Oracle");
         debugOutput.println(gameInfo.getInfo());
@@ -269,7 +273,8 @@ public class GeneralDoubleOracle {
         long overallBRCalculation = 0;
         long overallCPLEX = 0;
         long overallRGBuilding = 0;
-        int iterations = 0;
+
+        iterations = 0;
 
         Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
         DoubleOracleBestResponse[] brAlgorithms = new DoubleOracleBestResponse[]{
@@ -532,6 +537,7 @@ public class GeneralDoubleOracle {
 
         debugOutput.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         debugOutput.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
+        debugOutput.println("final support_percent: FirstPlayer: " + 100*((double)support_size[0])/algConfig.getSequencesFor(actingPlayers[0]).size() + "% \t SecondPlayer: " + 100*((double)support_size[1])/algConfig.getSequencesFor(actingPlayers[1]).size()+"%");
         debugOutput.println("final result:" + doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]));
         debugOutput.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
         debugOutput.println("final time: " + finishTime);

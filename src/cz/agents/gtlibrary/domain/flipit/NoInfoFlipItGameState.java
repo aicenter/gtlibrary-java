@@ -22,9 +22,9 @@ public class NoInfoFlipItGameState extends FlipItGameState {
     HashMap<FollowerType, Double> attackerReward;
     boolean[] defenderOwnedNodes;
     boolean[] attackerPossiblyOwnedNodes;
+    int hashCode;
 
     public NoInfoFlipItGameState(NoInfoFlipItGameState gameState) {
-//        super(gameState);
         this.selectedNodeOwner = gameState.selectedNodeOwner;
         this.attackerControlNode = gameState.attackerControlNode;
         this.defenderControlNode = gameState.defenderControlNode;
@@ -32,9 +32,6 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         this.currentPlayerIndex = gameState.currentPlayerIndex;
         this.attackerPoints = gameState.attackerPoints;
 
-//        this.defenderControlledNodes = new HashSet<>(gameState.defenderControlledNodes);
-//        this.attackerControlledNodes = new HashSet<>(gameState.attackerControlledNodes);
-//        this.attackerPossiblyControlledNodes = new HashSet<>(gameState.attackerPossiblyControlledNodes);
         this.defenderOwnedNodes = copyNodes(gameState.defenderOwnedNodes);
         this.attackerPossiblyOwnedNodes = copyNodes(gameState.attackerPossiblyOwnedNodes);
 
@@ -45,6 +42,7 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
         this.defenderReward = gameState.defenderReward;
         this.attackerReward = new HashMap<>(gameState.attackerReward);
+        this.hashCode = -1;
 
     }
 
@@ -63,6 +61,7 @@ public class NoInfoFlipItGameState extends FlipItGameState {
     public NoInfoFlipItGameState() {
         super();
         super.init();
+        hashCode = -1;
         defenderRewards = null;
         attackerRewards = null;
         attackerObservations = null;
@@ -87,6 +86,11 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         }
 
 //        System.out.println("NO INFO INIT");
+    }
+
+    @Override
+    public boolean isPossiblyOwnedByAttacker(Node node){
+        return attackerPossiblyOwnedNodes[node.getIntID()];
     }
 
     @Override
@@ -147,10 +151,16 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
     }
 
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
+    protected int calculateHashCode(){
+        int result = history.hashCode();
         long temp;
+        temp = Double.doubleToLongBits(attackerPoints);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + round;
+        result = 31 * result + currentPlayerIndex;
+        result = 31 * result + (defenderControlNode != null ? defenderControlNode.hashCode() : 1);
+        result = 31 * result + (attackerControlNode != null ? attackerControlNode.hashCode() : 2);
+        result = 31 * result + (selectedNodeOwner != null ? selectedNodeOwner.hashCode() : 3);
         temp = Double.doubleToLongBits(defenderReward);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + attackerReward.hashCode();
@@ -160,54 +170,18 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         return result;
     }
 
-    //    @Override
-    public boolean equals2(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        NoInfoFlipItGameState that = (NoInfoFlipItGameState) o;
-
-        if (attackerPoints != that.attackerPoints) return false;
-        if (defenderReward != that.defenderReward) return false;
-        if (round != that.round) return false;
-        if (currentPlayerIndex != that.currentPlayerIndex) return false;
-        if (!defenderOwnedNodes.equals(that.defenderOwnedNodes)) return false;
-        if (!attackerPossiblyOwnedNodes.equals(that.attackerPossiblyOwnedNodes)) return false;
-//        if (!defenderControlledNodes.equals(that.defenderControlledNodes)) return false;
-//        if (!attackerControlledNodes.equals(that.attackerControlledNodes)) return false;
-//        if (!attackerPossiblyControlledNodes.equals(that.attackerPossiblyControlledNodes)) return false;
-        if (defenderControlNode != null ? !defenderControlNode.equals(that.defenderControlNode) : that.defenderControlNode != null)
-            return false;
-        if (attackerControlNode != null ? !attackerControlNode.equals(that.attackerControlNode) : that.attackerControlNode != null)
-            return false;
-        if (!history.equals(that.history)) return false;
-        if (!attackerReward.equals(that.attackerReward)) return false;
-        return selectedNodeOwner != null ? selectedNodeOwner.equals(that.selectedNodeOwner) : that.selectedNodeOwner == null;
-
-    }
-
-//    @Override
-    public int hashCode2() {
-        int result = 0;//defenderControlledNodes.hashCode();
-//        result = 31 * result + attackerControlledNodes.hashCode();
-//        result = 31 * result + attackerPossiblyControlledNodes.hashCode();
-        result = 31 * result + round;
-        result = 31 * result + (int)(attackerPoints*100);
-        result = 31 * result + (int)(defenderReward*100);
-        result = 31 * result + attackerReward.hashCode();
-        result = 31 * result + currentPlayerIndex;
-        result = 31 * result + defenderOwnedNodes.hashCode();
-        result = 31 * result + attackerPossiblyOwnedNodes.hashCode();
-        result = 31 * result + (defenderControlNode != null ? defenderControlNode.hashCode() : 23);
-        result = 31 * result + (attackerControlNode != null ? attackerControlNode.hashCode() : 29);
-        result = 31 * result + (selectedNodeOwner != null ? selectedNodeOwner.hashCode() : 37);
-        result = 31 * result + history.hashCode();
-        return result;
+    @Override
+    public int hashCode() {
+        if (hashCode == -1) {
+            hashCode = calculateHashCode();//FlipItGameInfo.hashCodeCounter + 1;
+//            FlipItGameInfo.hashCodeCounter = hashCode;
+        }
+        return hashCode;
     }
 
     @Override
     public HashSet<Node> getAttackerPossiblyControlledNodes(){
-        HashSet<Node> attackerNodes = new HashSet<>();
+        HashSet<Node> attackerNodes = new HashSet<>(FlipItGameInfo.graph.getAllNodes().size()+1, 1);
         for (Node node : FlipItGameInfo.graph.getAllNodes().values())
             if (attackerPossiblyOwnedNodes[node.getIntID()])
                 attackerNodes.add(node);
@@ -240,7 +214,6 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         for (Node node : FlipItGameInfo.graph.getAllNodes().values()){
             if (!defenderOwnedNodes[node.getIntID()]) {
                 if (node.equals(attackerControlNode)) continue;
-//            if (node == null) System.out.println("NULL node");
                 attackerPoints += FlipItGameInfo.graph.getReward(node);
                 for (FollowerType type : FlipItGameInfo.types) {
 //                attackerRewards.get(type).put(node,attackerRewards.get(type).get(node) + type.getReward(this,node));
@@ -301,8 +274,6 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         // is not noop action
         if (defenderControlNode != null && defenderWasSelected()) {
             defenderOwnedNodes[defenderControlNode.getIntID()] = true;
-//            defenderControlledNodes.add(defenderControlNode);
-//            attackerControlledNodes.remove(defenderControlNode);
         }
 
         // recalculate reward for all noded
@@ -323,28 +294,12 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         }
     }
 
-//     TODO tady je bug !! v pripade vybrani viteze se musi delat update obou !! a na zacatku dalsiho kola musi byt seletedNodeOwner opet null !!
-
     @Override
     protected void endRound() {
 
         updateAttackerInfo();
         updateDefenderInfo();
 
-//        if (selectedNodeOwner == null){
-//            updateAttackerInfo();
-//            updateDefenderInfo();
-//        }
-//        else {
-//
-//            if (selectedNodeOwner.equals(FlipItGameInfo.DEFENDER)) {
-//                updateDefenderInfo();
-//            }
-//
-//            if (selectedNodeOwner.equals(FlipItGameInfo.ATTACKER)) {
-//                updateAttackerInfo();
-//            }
-//        }
 
         round = round + 1;
         currentPlayerIndex = 0;
@@ -384,6 +339,21 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         for (Node node : defenderControlledNodes) {
             defenderReward -= FlipItGameInfo.graph.getReward(node);
         }
+
+
+//        this.selectedNodeOwner = gameState.selectedNodeOwner;
+//        OK this.attackerControlNode = gameState.attackerControlNode;
+//        OK this.defenderControlNode = gameState.defenderControlNode;
+//        OK this.round = gameState.round;
+//        OK this.currentPlayerIndex = gameState.currentPlayerIndex;
+//        OK this.attackerPoints = gameState.attackerPoints;
+//
+//        this.defenderOwnedNodes = copyNodes(gameState.defenderOwnedNodes);
+//        this.attackerPossiblyOwnedNodes = copyNodes(gameState.attackerPossiblyOwnedNodes);
+//
+//
+//        OK this.defenderReward = gameState.defenderReward;
+//        OK this.attackerReward = new HashMap<>(gameState.attackerReward);
     }
 
     private void reverseDefenderAction() {

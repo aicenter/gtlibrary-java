@@ -107,8 +107,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             }
         }
 //        System.out.println();
-//        System.out.println("ISMCTS Iters: " + iters);
-//        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("ISMCTS Iters: " + iters);
+        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
 //        System.out.println("CurIS size: " + curISArray.length);
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();

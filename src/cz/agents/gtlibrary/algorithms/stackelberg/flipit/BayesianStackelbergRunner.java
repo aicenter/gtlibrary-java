@@ -57,7 +57,6 @@ public class BayesianStackelbergRunner {
     static String output;
 
     static String alg = "AI-LP";
-//    static boolean NO_INFO = true;
 //    static String alg = "MILP";
 
     public static void main(String[] args) {
@@ -71,7 +70,6 @@ public class BayesianStackelbergRunner {
             String graphFile = args[2];
             long seed  = Integer.parseInt(args[3]);
             gameInfo = new FlipItGameInfo(depth,numTypes,graphFile, seed);
-            gameInfo.ZERO_SUM_APPROX = false;
             gameInfo.setInfo(depth,numTypes,graphFile);
             outputFile = args[4];
             output = depth + " " + numTypes + " " + graphFile + " " + seed + " ";
@@ -80,6 +78,7 @@ public class BayesianStackelbergRunner {
 
             OUTPUT = true;
         }
+        gameInfo.ZERO_SUM_APPROX = false;
         GameState rootState;
         if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
         else rootState = new FlipItGameState();

@@ -6,6 +6,9 @@ import cz.agents.gtlibrary.utils.graph.Node;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by Jakub on 13/03/17.
@@ -15,6 +18,8 @@ public class FlipItGraph extends Graph {
     private HashSet<Node> publicNodes;
     private HashMap<Node,Double> rewards;
     private HashMap<Node,Double> controlCosts;
+
+    private Map<Node, Double> sortedNodes;
 
     private double UNIFORM_REWARD = 4.0;
     private double UNIFORM_COST = 1.5;
@@ -55,6 +60,7 @@ public class FlipItGraph extends Graph {
     }
 
     private void initFlipItGraph(){
+        Map<Node, Double> nodes = new HashMap<Node,Double>();
         for (Node node : getAllNodes().values()){
             if (USE_UNIFORM_REWARD) rewards.put(node, UNIFORM_REWARD);
             else rewards.put(node, init_rewards[node.getIntID()]);
@@ -66,8 +72,14 @@ public class FlipItGraph extends Graph {
                     break;
                 publicNodes.add(node);
             }
+            nodes.put(node, getControlCost(node)/getReward(node));
         }
+        sortedNodes = sortByValue(nodes);
 //        System.out.println("Public nodes size : " + publicNodes.size());
+    }
+
+    public Map<Node,Double> getSortedNodes(){
+        return sortedNodes;
     }
 
     public HashSet<Node> getPublicNodes(){
@@ -79,5 +91,17 @@ public class FlipItGraph extends Graph {
         return rewards.get(node); }
 
     public double getControlCost(Node node){ return controlCosts.get(node); }
+
+    private <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
+        return map.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue(/*Collections.reverseOrder()*/))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+    }
 
 }
