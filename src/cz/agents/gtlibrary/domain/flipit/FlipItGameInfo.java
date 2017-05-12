@@ -17,7 +17,7 @@ import java.util.Random;
 public class FlipItGameInfo implements GameInfo {
 
     // GRAPH FILE : topology, rewards and control costs
-    public static String graphFile = "flipit_empty4.txt";
+    public static String graphFile = "flipit_empty3.txt";
     public static FlipItGraph graph = new FlipItGraph(graphFile);
 
     // PLAYERS
@@ -27,7 +27,7 @@ public class FlipItGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[] {DEFENDER, ATTACKER, NATURE};
 
     public static long seed = 11;
-    public static int depth = 3;
+    public static int depth = 5;
     public static final boolean RANDOM_TIE = false;
     public static final boolean PREDETERMINED_RANDOM_TIE_WINNER = false;
     public static final Player RANDOM_TIE_WINNER = FlipItGameInfo.DEFENDER;
@@ -40,6 +40,8 @@ public class FlipItGameInfo implements GameInfo {
 
     public static final boolean NO_INFO = true;
 
+    public static int hashCodeCounter = 0;
+
 
     // TYPES
     public static int numTypes = 1;
@@ -47,16 +49,11 @@ public class FlipItGameInfo implements GameInfo {
     private static double[] typesPrior = new double[] {1.0, 0.7, 0.5};
     private static double[] typesDiscounts = new double[] {1.0, 0.8, 0.6};
 
-    public static final String[] type1optimum = new String[]{"Attacker: []",
-            "Attacker: [{N0, _, _, 10893061}, {N0, _, _, 1087200722}]",
-            "Attacker: [{N0, _, _, 10893061}]",
-            "Attacker: [{N0, _, _, 10893061}, {_, NOOP, _, 1088511256}]"};
-    public static final ArrayList<String> type1optimumSet = new ArrayList<>(Arrays.asList(type1optimum));
 
-    public static final String[] type2optimum = new String[]{"Attacker: []",
-                "Attacker: [{N0, _, _, 10893061}, {N0, _, _, 1087200722}]",
-                "Attacker: [{N0, _, _, 10893061}]",
-                "Attacker: [{N0, _, _, 10893061}, {_, NOOP, _, 1088511256}]"};
+    // Forced optima for debugging
+    public static final String[] type1optimum = new String[]{};
+    public static final ArrayList<String> type1optimumSet = new ArrayList<>(Arrays.asList(type1optimum));
+    public static final String[] type2optimum = new String[]{};
     public static final ArrayList<String> type2optimumSet = new ArrayList<>(Arrays.asList(type2optimum));
 
 
@@ -183,7 +180,7 @@ public class FlipItGameInfo implements GameInfo {
 
     @Override
     public String getInfo() {
-        return "Flip It Game : depth = " + depth + "; attacker types = "+getAttackerInfo() + "; graph = " +graphFile;
+        return "Flip It Game : depth = " + depth + "; attacker types = "+getAttackerInfo() + "; graph = " +graphFile + "; info = "+(NO_INFO ? "NO" : "FULL") + "; zero-sum = "+ZERO_SUM_APPROX;
     }
 
     public String getLpExportName(){

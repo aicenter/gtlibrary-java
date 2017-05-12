@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormLP {
 
     public static boolean USE_BR_CUT = false;
+    private static final boolean CHECK_HASH_COLLISIONS = true;
 
     protected double eps;
     protected RecyclingMILPTable lpTable;
@@ -90,12 +91,13 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 //        followerBestResponse = new FollowerBestResponse(algConfig.getRootState(), expander, algConfig, leader, follower);
         long startTime = threadBean.getCurrentThreadCpuTime();
 
-        checkHashCollisions(algConfig.getAllSequences());
-        checkHashCollisions(algConfig.getAllInformationSets().values());
-        checkHashCollisions(Arrays.asList(FlipItGameInfo.types));
-        ArrayList<GameState> gameStates = new ArrayList<>();
-        for (InformationSet set : algConfig.getAllInformationSets().values()) {
-            gameStates.addAll(set.getAllStates());
+        if (CHECK_HASH_COLLISIONS) {
+            checkHashCollisions(algConfig.getAllSequences());
+            checkHashCollisions(algConfig.getAllInformationSets().values());
+            checkHashCollisions(Arrays.asList(FlipItGameInfo.types));
+            ArrayList<GameState> gameStates = new ArrayList<>();
+            for (InformationSet set : algConfig.getAllInformationSets().values()) {
+                gameStates.addAll(set.getAllStates());
 //            boolean hashColision = checkHashCollisions(set.getAllStates());
 //            if (hashColision) {
 //                System.out.println("----");
@@ -104,8 +106,9 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 ////                    System.out.println(state);
 //                }
 //            }
+            }
+            checkHashCollisions(gameStates);
         }
-        checkHashCollisions(gameStates);
 
         addObjective();                     // READY
 //        addObjectiveViaConstraint(algConfig);

@@ -26,6 +26,10 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleSequ
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
@@ -77,11 +81,42 @@ public class DoubleOracleWithBestMinmaxImprovement {
 //        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-        runRandomGame();
+//        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
+        runFlipIt(args);
 	}
+
+    private static void runFlipIt(String[] args){
+        FlipItGameInfo gameInfo;
+        if (args.length == 0)
+            gameInfo = new FlipItGameInfo();
+        else {
+            int depth = Integer.parseInt(args[0]);
+            int graphSize = Integer.parseInt(args[1]);
+            String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
+            gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
+        }
+        gameInfo.ZERO_SUM_APPROX = true;
+        GameState rootState;
+        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
+        else rootState = new FlipItGameState();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander =new FlipItExpander<DoubleOracleInformationSet>(algConfig);
+        DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState, expander, gameInfo, algConfig);
+        Map<Player, Map<Sequence, Double>> rps = doefg.generate(null);
+
+//        for (Map.Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
+//            if(entry.getValue() > doefg.EPS)
+//                System.out.println(entry);
+//        }
+//        System.out.println("**********");
+//        for (Map.Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
+//            if(entry.getValue() > doefg.EPS)
+//                System.out.println(entry);
+//        }
+    }
 
     public static void runPhantomTTT() {
         GameState rootState = new TTTState();

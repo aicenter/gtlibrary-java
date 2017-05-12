@@ -54,9 +54,6 @@ public class FlipItGameState extends SimultaneousGameState {
         this.currentPlayerIndex = gameState.currentPlayerIndex;
         this.attackerPoints = gameState.attackerPoints;
 
-
-//        System.out.println(currentPlayerIndex + " " + getPlayerToMove());
-
         this.defenderControlledNodes = new HashSet<>(gameState.defenderControlledNodes);
         this.attackerControlledNodes = new HashSet<>(gameState.attackerControlledNodes);
         this.attackerPossiblyControlledNodes = new HashSet<>(gameState.attackerPossiblyControlledNodes);
@@ -257,50 +254,9 @@ public class FlipItGameState extends SimultaneousGameState {
         return result;
     }
 
-    //    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//
-//        FlipItGameState that = (FlipItGameState) o;
-//
-//        if (attackerPoints != that.attackerPoints) return false;
-//        if (round != that.round) return false;
-//        if (currentPlayerIndex != that.currentPlayerIndex) return false;
-//        if (!defenderControlledNodes.equals(that.defenderControlledNodes)) return false;
-//        if (!attackerControlledNodes.equals(that.attackerControlledNodes)) return false;
-//        if (!attackerPossiblyControlledNodes.equals(that.attackerPossiblyControlledNodes)) return false;
-//        if (!defenderObservations.equals(that.defenderObservations)) return false;
-//        if (!attackerObservations.equals(that.attackerObservations)) return false;
-//        if (!defenderRewards.equals(that.defenderRewards)) return false;
-//        if (!attackerRewards.equals(that.attackerRewards)) return false;
-//        if (defenderControlNode != null ? !defenderControlNode.equals(that.defenderControlNode) : that.defenderControlNode != null)
-//            return false;
-//        if (attackerControlNode != null ? !attackerControlNode.equals(that.attackerControlNode) : that.attackerControlNode != null)
-//            return false;
-//        if (!history.equals(that.history)) return false;
-//        return selectedNodeOwner != null ? selectedNodeOwner.equals(that.selectedNodeOwner) : that.selectedNodeOwner == null;
-//
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        int result = (defenderControlledNodes != null ? defenderControlledNodes.hashCode() : 0);
-//        result = 31 * result + (attackerControlledNodes != null ? attackerControlledNodes.hashCode() : 0);
-//        result = 31 * result + (attackerPossiblyControlledNodes != null ? attackerPossiblyControlledNodes.hashCode() : 0);
-//        result = 31 * result + (defenderObservations != null ? defenderObservations.hashCode() : 0);
-//        result = 31 * result + (attackerObservations != null ? attackerObservations.hashCode() : 0);
-//        result = 31 * result + (defenderRewards != null ? defenderRewards.hashCode() : 0);
-//        result = 31 * result + (attackerRewards != null ? attackerRewards.hashCode() : 0);
-//        result = 31 * result + round;
-//        result = 31 * result + (int)(attackerPoints*100);
-//        result = 31 * result + currentPlayerIndex;
-//        result = 31 * result + (defenderControlNode != null ? defenderControlNode.hashCode() : 23);
-//        result = 31 * result + (attackerControlNode != null ? attackerControlNode.hashCode() : 29);
-//        result = 31 * result + (selectedNodeOwner != null ? selectedNodeOwner.hashCode() : 37);
-//        result = 31 * result + history.hashCode();
-//        return result;
-//    }
+    public boolean isPossiblyOwnedByAttacker(Node node){
+        return attackerPossiblyControlledNodes.contains(node);
+    }
 
     public void executeAttackerAction(FlipItAction attackerAction) {
         // execute
@@ -360,10 +316,6 @@ public class FlipItGameState extends SimultaneousGameState {
     }
 
     private boolean attackerHasEnoughPointsToControl(FollowerType type){
-//        Double points = 0.0;
-//        for (Double reward : attackerRewards.get(type).values())
-//            points += reward;
-//        return points >= FlipItGameInfo.graph.getControlCost(attackerControlNode);
         return attackerPoints >= FlipItGameInfo.graph.getControlCost(attackerControlNode);
     }
 

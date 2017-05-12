@@ -39,6 +39,10 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
@@ -136,6 +140,14 @@ public class ConvergenceExperiment {
         //sfExpander = new GenericPokerExpander<SequenceInformationSet>(sfAlgConfig);
         //efg = new FullSequenceEFG(rootState, sfExpander , gameInfo, sfAlgConfig);
         //efg.generateCompleteGame();
+    }
+
+    public static void setupFlipIt(){
+        gameInfo = new FlipItGameInfo();
+        ((FlipItGameInfo)gameInfo).ZERO_SUM_APPROX = true;
+        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
+        else rootState = new FlipItGameState();
+        expander = new FlipItExpander<MCTSInformationSet>(new MCTSConfig());
     }
 
     public static void buildCompleteTree(InnerNode r) {
@@ -258,7 +270,8 @@ public class ConvergenceExperiment {
 //          setupIIGoofSpielExpl();
 //          setupPoker();
 //          setupRnd(13);
-            setupBP();
+//            setupBP();
+            setupFlipIt();
             runMCTS();
         }
     }
