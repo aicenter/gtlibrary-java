@@ -52,6 +52,8 @@ public class SQFBestResponseAlgorithm {
     protected ORComparator comparator;
     protected GameState gameTreeRoot = null;
 
+    public static boolean useOriginalBRFormulation = false;
+
     public SQFBestResponseAlgorithm(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo) {
         this.searchingPlayerIndex = searchingPlayerIndex;
         this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
@@ -132,23 +134,25 @@ public class SQFBestResponseAlgorithm {
         if (currentPlayer.equals(players[searchingPlayerIndex])) { // searching player to move
             List<GameState> alternativeNodes = new ArrayList<GameState>();
 
-            boolean nonZeroOppRP = (getOpponentRealizationPlan().get(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex])) != null && getOpponentRealizationPlan().get(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex])) > 0);
+            boolean nonZeroOppRP = (opponentRealizationPlan.get(gameState.getSequenceFor(players[opponentPlayerIndex])) != null && opponentRealizationPlan.get(gameState.getSequenceFor(players[opponentPlayerIndex])) > 0);
             boolean nonZeroOppRPAlt = false;
 
             InformationSet currentIS = algConfig.getInformationSetFor(gameState);
             if (currentIS != null) {
                 alternativeNodes.addAll(currentIS.getAllStates());
+
                 if (!alternativeNodes.contains(gameState)) {
                     alternativeNodes.add(gameState);
                 }
-                if (alternativeNodes.size() == 1 && !nonZeroOppRP) {
+
+                if (alternativeNodes.size() == 1 && ((!useOriginalBRFormulation || !nonZeroOppRP) && (useOriginalBRFormulation || nonZeroOppRP)) ) {
                     alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
                 }
             } // if we do not have alternative nodes stored in the currentIS, there is no RP leading to these nodes --> we do not need to consider them
             else {
-//                alternativeNodes.add(gameState);
                 alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
             }
+
 
             assert (alternativeNodes.contains(gameState));
             HashMap<GameState, Double> alternativeNodesProbs = new HashMap<GameState, Double>();
@@ -241,6 +245,8 @@ public class SQFBestResponseAlgorithm {
             Sequence resultSequence = new ArrayListSequenceImpl(currentHistory.get(players[searchingPlayerIndex]));
             resultSequence.addLast(resultAction);
 
+
+
             HashSet<Sequence> tmpBRSet = BRresult.get(currentHistory.get(players[searchingPlayerIndex]));
             if (tmpBRSet == null) {
                 tmpBRSet = new HashSet<Sequence>();
@@ -298,7 +304,7 @@ public class SQFBestResponseAlgorithm {
 
             double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
             if (newLowerBound <= MAX_UTILITY_VALUE) {
-                double value = bestResponse(newState, newLowerBound);
+                double value = bestResponse(newState, newLowerBound) ;
                 selection.addValue(action, value, natureProb, oppRP);
             }
         }
@@ -641,7 +647,8 @@ public class SQFBestResponseAlgorithm {
         while (!queue.isEmpty()) {
             GameState currentState = queue.pop();
             if (currentState.getHistory().getLength() == length) {
-                if (currentState.getISKeyForPlayerToMove().equals(state.getISKeyForPlayerToMove()) && !currentState.equals(state) && !opponentRealizationPlan.containsKey(currentState.getSequenceFor(gameInfo.getOpponent(mainPlayer)))) {
+                boolean oppRPContains = opponentRealizationPlan.containsKey(currentState.getSequenceFor(gameInfo.getOpponent(mainPlayer)));
+                if (currentState.getISKeyForPlayerToMove().equals(state.getISKeyForPlayerToMove()) && !currentState.equals(state) && ((!useOriginalBRFormulation || !oppRPContains) && (useOriginalBRFormulation || oppRPContains))) {
                     alternativeNodes.add(currentState);
                 }
                 continue;

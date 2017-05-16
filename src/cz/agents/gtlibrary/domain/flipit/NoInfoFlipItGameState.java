@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.utils.graph.Edge;
 import cz.agents.gtlibrary.utils.graph.Node;
 
 import java.util.Arrays;
@@ -85,7 +86,6 @@ public class NoInfoFlipItGameState extends FlipItGameState {
             attackerPossiblyOwnedNodes[i] = false;
         }
 
-//        System.out.println("NO INFO INIT");
     }
 
     @Override
@@ -147,12 +147,13 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         if (Double.compare(that.defenderReward, defenderReward) != 0) return false;
         if (!attackerReward.equals(that.attackerReward)) return false;
         if (!Arrays.equals(defenderOwnedNodes, that.defenderOwnedNodes)) return false;
+//        if (hashCode != that.hashCode) return false;
         return Arrays.equals(attackerPossiblyOwnedNodes, that.attackerPossiblyOwnedNodes);
 
     }
 
     protected int calculateHashCode(){
-        int result = history.hashCode();
+        int result = getSequenceFor(FlipItGameInfo.DEFENDER).hashCode();//history.hashCode();
         long temp;
         temp = Double.doubleToLongBits(attackerPoints);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
@@ -166,7 +167,8 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         result = 31 * result + attackerReward.hashCode();
         result = 31 * result + Arrays.hashCode(defenderOwnedNodes);
         result = 31 * result + Arrays.hashCode(attackerPossiblyOwnedNodes);
-        result = 31 * result + history.hashCode();
+//        result = 31 * result + history.hashCode();
+        result = 31 * result + getSequenceFor(FlipItGameInfo.ATTACKER).hashCode();
         return result;
     }
 
@@ -252,6 +254,18 @@ public class NoInfoFlipItGameState extends FlipItGameState {
             attackerPoints += FlipItGameInfo.graph.getReward(attackerControlNode);
 
         }
+    }
+
+    @Override
+    protected boolean attackerControlsParent(){
+        if (FlipItGameInfo.graph.getPublicNodes().contains(attackerControlNode)) return true;
+        if (!defenderOwnedNodes[attackerControlNode.getIntID()]) return true;
+        for (Edge edge : FlipItGameInfo.graph.getEdgesOf(attackerControlNode)){
+            if(edge.getTarget().equals(attackerControlNode) && !defenderOwnedNodes[edge.getSource().getIntID()]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected boolean attackerWasSelected(){
@@ -366,5 +380,8 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         currentPlayerIndex = 0;
     }
 
-
+    @Override
+    public String toString() {
+        return "FlipIt : No Info GS of " + getPlayerToMove() + ": "+getSequenceFor(FlipItGameInfo.DEFENDER) + " / " +getSequenceFor(FlipItGameInfo.ATTACKER);
+    }
 }
