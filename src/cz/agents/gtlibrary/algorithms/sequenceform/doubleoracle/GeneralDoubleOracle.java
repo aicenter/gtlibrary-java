@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
+import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -41,7 +42,6 @@ import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.oshizumo.IIOshiZumoGameState;
 import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
-import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
@@ -60,6 +60,7 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -84,6 +85,8 @@ public class GeneralDoubleOracle {
 
     private double gameValue;
 
+//    private boolean useSQFnegation = true;
+
     public enum PlayerSelection {
         BOTH, SINGLE_ALTERNATING, SINGLE_IMPROVED
     }
@@ -104,6 +107,70 @@ public class GeneralDoubleOracle {
 //        runPhantomTTT();
 //		runAoS();
         runFlipIt(args);
+//        runImprovedRandomTests();
+    }
+
+    private static void runImprovedRandomTests(){
+        ArrayList<String> results = new ArrayList<>();
+        final int MAX_DEPTH = 10;
+        final int MAX_BF = 4;
+        final int MIN_BF = 4;
+        final int MAX_OBSERVATION = 5;
+        final int MAX_SEED = 7;
+        double gameValue;
+        int instances = 0;
+        int errors = 0;
+        int trueSequences = 0;
+        int falseSequences = 0;
+        for (int depth = 3; depth < MAX_DEPTH; depth++){
+            for (int minBf = 2; minBf < MIN_BF; minBf ++){
+                for (int maxBF = minBf; maxBF < MAX_BF; maxBF++){
+                    for (int obs = 2; obs < MAX_OBSERVATION; obs++){
+                        for (int seed = 4; seed < MAX_SEED; seed++) {
+                            instances++;
+                            SQFBestResponseAlgorithm.useOriginalBRFormulation = true;
+                            GameInfo gameInfo = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo();
+                            ((cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo) gameInfo).MAX_DEPTH = depth;
+                            ((cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo) gameInfo).MIN_BF = minBf;
+                            ((cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo) gameInfo).MAX_BF = maxBF;
+                            ((cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo) gameInfo).MAX_OBSERVATION = obs;
+                            ((cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo) gameInfo).seed = seed;
+                            gameInfo = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo();
+                            GameState rootState = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState();
+                            DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+                            Expander<DoubleOracleInformationSet> expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<DoubleOracleInformationSet>(algConfig);
+                            GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+                            SQFBestResponseAlgorithm.useOriginalBRFormulation = true;
+                            doefg.generate(null);
+                            String out = "";
+                            out += ((cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo) gameInfo).MAX_DEPTH + " ";
+                            out += ((cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo) gameInfo).MIN_BF + " ";
+                            out += ((cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo) gameInfo).MAX_BF + " ";
+                            out += ((cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo) gameInfo).MAX_OBSERVATION + " ";
+                            out += doefg.gameValue;
+                            gameValue = doefg.gameValue;
+                            trueSequences += algConfig.getSequencesFor(gameInfo.getAllPlayers()[0]).size() + algConfig.getSequencesFor(gameInfo.getAllPlayers()[1]).size();
+//                        results.add(out);
+
+                            SQFBestResponseAlgorithm.useOriginalBRFormulation = false;
+                            algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+                            expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<DoubleOracleInformationSet>(algConfig);
+                            doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+                            SQFBestResponseAlgorithm.useOriginalBRFormulation = false;
+                            doefg.generate(null);
+                            if (Math.abs(gameValue - doefg.gameValue) > 1e-6) {
+                                errors++;
+                            }
+                            falseSequences += algConfig.getSequencesFor(gameInfo.getAllPlayers()[0]).size() + algConfig.getSequencesFor(gameInfo.getAllPlayers()[1]).size();
+//
+                        }
+
+                    }
+                }
+            }
+        }
+        System.out.println("Evaluation : " + errors + " errors on " + instances + " instances.");
+        System.out.println("With negation sequences : " + trueSequences + ", without negation sequences : "+falseSequences);
     }
 
     private static void runFlipIt(String[] args){
@@ -124,6 +191,10 @@ public class GeneralDoubleOracle {
         Expander<DoubleOracleInformationSet> expander =new FlipItExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         Map<Player, Map<Sequence, Double>> rps = doefg.generate(null);
+
+        GambitEFG ggg = new GambitEFG();
+//        ggg.write("flipit.gbt", rootState, (Expander) expander);
+
 
 //        for (Map.Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
 //            if(entry.getValue() > doefg.EPS)
@@ -213,7 +284,7 @@ public class GeneralDoubleOracle {
 //        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpanderDomain<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
-        System.out.println(algConfig.getAllInformationSets().size());
+        System.out.println("number of ISs: "+algConfig.getAllInformationSets().size());
     }
 
     public static void runBP() {
@@ -281,6 +352,8 @@ public class GeneralDoubleOracle {
                 new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameInfo),
                 new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameInfo)};
         Map<Player, Map<Sequence, Double>> realizationPlans = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
+
+//        SQFBestResponseAlgorithm.useOriginalBRFormulation = useSQFnegation;
 
         if (initializationRG == null || initializationRG.isEmpty()) {
             GameState firstState = findFirstNonNatureState(rootState, expander);
@@ -541,6 +614,7 @@ public class GeneralDoubleOracle {
         debugOutput.println("final result:" + doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]));
         debugOutput.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
         debugOutput.println("final time: " + finishTime);
+        debugOutput.println("final number of iterations: " + iterations);
         debugOutput.println("final CPLEX time: " + overallCPLEX);
         debugOutput.println("final BR time: " + overallBRCalculation);
         debugOutput.println("final RGB time: " + overallRGBuilding);
