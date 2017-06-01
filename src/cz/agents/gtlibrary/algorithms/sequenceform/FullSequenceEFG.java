@@ -116,6 +116,7 @@ public class FullSequenceEFG {
 	}
 
 	private static void runFlipIt(){
+		boolean PRINT_STRATEGY = false;
 		FlipItGameInfo gameInfo = new FlipItGameInfo();
 		gameInfo.ZERO_SUM_APPROX = true;
 		GameState rootState;
@@ -125,15 +126,24 @@ public class FullSequenceEFG {
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new FlipItExpander<>(algConfig), gameInfo, algConfig);
 		Map<Player, Map<Sequence, Double>> rps = efg.generate();
 
-		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
-			if(entry.getValue() > eps)
-				System.out.println(entry);
+		if (PRINT_STRATEGY) {
+			for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
+				if (entry.getValue() > eps)
+					System.out.println(entry);
+			}
+			System.out.println("**********");
+			for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
+				if (entry.getValue() > eps)
+					System.out.println(entry);
+			}
 		}
-		System.out.println("**********");
-		for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
-			if(entry.getValue() > eps)
-				System.out.println(entry);
+
+		Double maxUtility = Double.MIN_VALUE;
+		for (Double utility : algConfig.getActualNonZeroUtilityValuesInLeafs().values()){
+			if (Math.abs(utility) > maxUtility)
+				maxUtility = Math.abs(utility);
 		}
+		System.out.println("GI maxUtility : "+gameInfo.getMaxUtility() + "; GT maxUtility : " + maxUtility);
 	}
 
     private static void testExploitGame() {

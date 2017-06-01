@@ -231,7 +231,7 @@ public class BestMinmaxValueOracle extends SQFBestResponseAlgorithm {
         }
 
         @Override
-        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb) {
+        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb, GameState state) {
             return Double.NEGATIVE_INFINITY;
         }
     }
@@ -243,7 +243,7 @@ public class BestMinmaxValueOracle extends SQFBestResponseAlgorithm {
         }
 
         @Override
-        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb) {
+        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb, GameState state) {
             if (maxAction == null) return Double.NEGATIVE_INFINITY;
             else return Double.POSITIVE_INFINITY;
         }

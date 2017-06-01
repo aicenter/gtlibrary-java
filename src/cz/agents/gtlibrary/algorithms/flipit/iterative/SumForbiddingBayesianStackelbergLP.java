@@ -1,13 +1,11 @@
-package cz.agents.gtlibrary.algorithms.stackelberg.flipit.iterative;
+package cz.agents.gtlibrary.algorithms.flipit.iterative;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.ParamSimplexData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.RecyclingMILPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.br.FollowerBestResponse;
-import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
@@ -21,13 +19,10 @@ import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
-import sun.java2d.jules.TrapezoidList;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormLP {
 
@@ -78,6 +73,9 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
                 }
                 hashColision = true;
             }
+//            for (Object object : hashes.values())
+//                if (object.equals(sequence))
+//                    System.out.println("EQUALS collision");
             hashes.put(sequence.hashCode(),sequence);
         }
         if (!hashColision) System.out.println("NO HASH COLLISION : " + objects.iterator().next().getClass().getSimpleName());

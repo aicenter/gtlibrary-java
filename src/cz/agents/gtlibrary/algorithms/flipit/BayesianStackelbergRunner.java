@@ -17,19 +17,18 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.stackelberg.flipit;
+package cz.agents.gtlibrary.algorithms.flipit;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.flipit.iterative.ShallowestBrokenCplexBayesianStackelbergLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.flipit.iterative.SumForbiddingBayesianStackelbergLP;
+import cz.agents.gtlibrary.algorithms.flipit.iterative.ShallowestBrokenCplexBayesianStackelbergLP;
+import cz.agents.gtlibrary.algorithms.flipit.iterative.SumForbiddingBayesianStackelbergLP;
 import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
 import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.IOException;
 import java.io.PrintStream;

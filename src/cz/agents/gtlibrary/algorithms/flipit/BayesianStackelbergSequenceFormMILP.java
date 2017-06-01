@@ -17,7 +17,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.stackelberg.flipit;
+package cz.agents.gtlibrary.algorithms.flipit;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;

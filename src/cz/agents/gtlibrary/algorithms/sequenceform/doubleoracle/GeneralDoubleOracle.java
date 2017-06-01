@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
+import cz.agents.gtlibrary.algorithms.flipit.bestresponse.FlipItBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
@@ -112,7 +113,7 @@ public class GeneralDoubleOracle {
 
     private static void runImprovedRandomTests(){
         ArrayList<String> results = new ArrayList<>();
-        final int MAX_DEPTH = 10;
+        final int MAX_DEPTH = 7;
         final int MAX_BF = 4;
         final int MIN_BF = 4;
         final int MAX_OBSERVATION = 5;
@@ -122,7 +123,10 @@ public class GeneralDoubleOracle {
         int errors = 0;
         int trueSequences = 0;
         int falseSequences = 0;
-        for (int depth = 3; depth < MAX_DEPTH; depth++){
+        int p1seqs;
+        int p2seqs;
+        int smallerRG = 0;
+        for (int depth = 4; depth < MAX_DEPTH; depth++){
             for (int minBf = 2; minBf < MIN_BF; minBf ++){
                 for (int maxBF = minBf; maxBF < MAX_BF; maxBF++){
                     for (int obs = 2; obs < MAX_OBSERVATION; obs++){
@@ -149,7 +153,9 @@ public class GeneralDoubleOracle {
                             out += ((cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo) gameInfo).MAX_OBSERVATION + " ";
                             out += doefg.gameValue;
                             gameValue = doefg.gameValue;
-                            trueSequences += algConfig.getSequencesFor(gameInfo.getAllPlayers()[0]).size() + algConfig.getSequencesFor(gameInfo.getAllPlayers()[1]).size();
+                            p1seqs =  algConfig.getSequencesFor(gameInfo.getAllPlayers()[0]).size();
+                            p2seqs = algConfig.getSequencesFor(gameInfo.getAllPlayers()[1]).size();
+                            trueSequences += p1seqs + p2seqs;
 //                        results.add(out);
 
                             SQFBestResponseAlgorithm.useOriginalBRFormulation = false;
@@ -163,6 +169,9 @@ public class GeneralDoubleOracle {
                             }
                             falseSequences += algConfig.getSequencesFor(gameInfo.getAllPlayers()[0]).size() + algConfig.getSequencesFor(gameInfo.getAllPlayers()[1]).size();
 //
+                            if (p1seqs < algConfig.getSequencesFor(gameInfo.getAllPlayers()[0]).size() || p2seqs < algConfig.getSequencesFor(gameInfo.getAllPlayers()[1]).size()){
+                                smallerRG ++;
+                            }
                         }
 
                     }
@@ -171,6 +180,7 @@ public class GeneralDoubleOracle {
         }
         System.out.println("Evaluation : " + errors + " errors on " + instances + " instances.");
         System.out.println("With negation sequences : " + trueSequences + ", without negation sequences : "+falseSequences);
+        System.out.println("Smaller RG with original formulation on "+smallerRG+" instances.");
     }
 
     private static void runFlipIt(String[] args){
@@ -185,6 +195,7 @@ public class GeneralDoubleOracle {
         }
         gameInfo.ZERO_SUM_APPROX = true;
         GameState rootState;
+        gameInfo.calculateMinMaxBounds();
         if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
         else rootState = new FlipItGameState();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
@@ -348,9 +359,18 @@ public class GeneralDoubleOracle {
         iterations = 0;
 
         Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
-        DoubleOracleBestResponse[] brAlgorithms = new DoubleOracleBestResponse[]{
-                new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameInfo),
-                new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameInfo)};
+        DoubleOracleBestResponse[] brAlgorithms;
+
+        if (gameInfo instanceof FlipItGameInfo){
+            brAlgorithms = new DoubleOracleBestResponse[]{
+                    new FlipItBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameInfo),
+                    new FlipItBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameInfo)};
+        }
+        else{
+            brAlgorithms = new DoubleOracleBestResponse[]{
+                    new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameInfo),
+                    new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameInfo)};
+        }
         Map<Player, Map<Sequence, Double>> realizationPlans = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
 
 //        SQFBestResponseAlgorithm.useOriginalBRFormulation = useSQFnegation;
@@ -475,6 +495,7 @@ public class GeneralDoubleOracle {
                     && doRestrictedGameSolver.getNewSequencesSinceLastLPCalc(actingPlayers[0]).isEmpty()
                     && doRestrictedGameSolver.getNewSequencesSinceLastLPCalc(actingPlayers[1]).isEmpty()) {
                 debugOutput.println("ERROR : NOT CONVERGED");
+//                System.exit(0);
                 break;
             }
 
