@@ -28,6 +28,7 @@ import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.ValueComparator;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Best-response algorithm with pruning. It calculates the best-response value for a
@@ -35,8 +36,9 @@ import java.util.*;
  */
 public class SQFBestResponseAlgorithm {
 
+    private static final boolean USE_FIX = true;
     public long nodes = 0;
-    protected Expander expander;
+    protected Expander<? extends InformationSet> expander;
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<GameState, Double>();
     protected Map<Sequence, Double> opponentRealizationPlan = new HashMap<Sequence, Double>();
     protected Map<Sequence, Double> myRealizationPlan = new HashMap<Sequence, Double>();
@@ -145,7 +147,7 @@ public class SQFBestResponseAlgorithm {
                     alternativeNodes.add(gameState);
                 }
 
-                if (alternativeNodes.size() == 1 && ((!useOriginalBRFormulation || !nonZeroOppRP) && (useOriginalBRFormulation || nonZeroOppRP)) ) {
+                if (alternativeNodes.size() == 1 && ((!useOriginalBRFormulation || !nonZeroOppRP) && (useOriginalBRFormulation || nonZeroOppRP))) {
                     alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
                 }
             } // if we do not have alternative nodes stored in the currentIS, there is no RP leading to these nodes --> we do not need to consider them
@@ -246,7 +248,6 @@ public class SQFBestResponseAlgorithm {
             resultSequence.addLast(resultAction);
 
 
-
             HashSet<Sequence> tmpBRSet = BRresult.get(currentHistory.get(players[searchingPlayerIndex]));
             if (tmpBRSet == null) {
                 tmpBRSet = new HashSet<Sequence>();
@@ -304,7 +305,7 @@ public class SQFBestResponseAlgorithm {
 
             double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
             if (newLowerBound <= MAX_UTILITY_VALUE) {
-                double value = bestResponse(newState, newLowerBound) ;
+                double value = bestResponse(newState, newLowerBound);
                 selection.addValue(action, value, natureProb, oppRP);
             }
         }
@@ -635,7 +636,91 @@ public class SQFBestResponseAlgorithm {
         return out;
     }
 
+    public List<GameState> getAlternativeNodesOutsideRGFix(GameState state) {
+        List<GameState> alternativeNodes = new ArrayList<>();
+
+        getAlternativeNodesOutsideRGFix(gameTreeRoot, state, alternativeNodes, 1);
+        return alternativeNodes;
+    }
+
+    private void getAlternativeNodesOutsideRGFix(GameState currentState, GameState stateForAlternatives, List<GameState> alternativeNodes, double opponentProbability) {
+        if (currentState.isGameEnd())
+            return;
+        if (currentState.getPlayerToMove().getId() == searchingPlayerIndex) {
+            int actionIndex = currentState.getSequenceForPlayerToMove().size();
+            int desiredSeqLength = stateForAlternatives.getSequenceFor(currentState.getPlayerToMove()).size();
+
+            if (actionIndex == desiredSeqLength && stateForAlternatives.getISKeyForPlayerToMove().equals(currentState.getISKeyForPlayerToMove())) {
+                alternativeNodes.add(currentState);
+                return;
+            }
+            if (actionIndex >= desiredSeqLength)
+                return;
+            Action actionToPlay = stateForAlternatives.getSequenceFor(currentState.getPlayerToMove()).get(actionIndex);
+
+            if (currentState.checkConsistency(actionToPlay))
+                getAlternativeNodesOutsideRGFix(currentState.performAction(actionToPlay), stateForAlternatives, alternativeNodes, opponentProbability);
+            return;
+        }
+        if (currentState.getPlayerToMove().getId() == opponentPlayerIndex) {
+            List<Action> actions = expander.getActions(currentState);
+            List<GameState> nonZeroChildren = actions.stream().filter(a -> {
+                Sequence seqCopy = new ArrayListSequenceImpl(currentState.getSequenceForPlayerToMove());
+
+                seqCopy.addLast(a);
+                return opponentRealizationPlan.getOrDefault(seqCopy, 0d) > 1e-8;
+            }).map(a -> currentState.performAction(a)).collect(Collectors.toList());
+
+            assert opponentProbability > 1e-8;
+            if (nonZeroChildren.isEmpty()) { //default strategy case
+                getAlternativeNodesOutsideRGDefaultFix(currentState.performAction(actions.get(0)), stateForAlternatives,
+                        alternativeNodes, 1);
+            } else {
+                nonZeroChildren.forEach(s ->
+                        getAlternativeNodesOutsideRGFix(s, stateForAlternatives,
+                                alternativeNodes, opponentRealizationPlan.get(s.getSequenceFor(currentState.getPlayerToMove())))
+                );
+            }
+            return;
+        }
+        expander.getActions(currentState).forEach(a ->
+                getAlternativeNodesOutsideRGFix(currentState.performAction(a), stateForAlternatives, alternativeNodes, opponentProbability)
+        );
+    }
+
+    private void getAlternativeNodesOutsideRGDefaultFix(GameState currentState, GameState stateForAlternatives, List<GameState> alternativeNodes, double opponentProbability) {
+        if (currentState.isGameEnd())
+            return;
+        if (currentState.getPlayerToMove().getId() == searchingPlayerIndex) {
+            int actionIndex = currentState.getSequenceForPlayerToMove().size();
+            int desiredSeqLength = stateForAlternatives.getSequenceFor(currentState.getPlayerToMove()).size();
+
+            if (actionIndex == desiredSeqLength && stateForAlternatives.getISKeyForPlayerToMove().equals(currentState.getISKeyForPlayerToMove())) {
+                alternativeNodes.add(currentState);
+                return;
+            }
+            if (actionIndex >= desiredSeqLength)
+                return;
+            Action actionToPlay = stateForAlternatives.getSequenceFor(currentState.getPlayerToMove()).get(actionIndex);
+
+            if (currentState.checkConsistency(actionToPlay))
+                getAlternativeNodesOutsideRGDefaultFix(currentState.performAction(actionToPlay), stateForAlternatives, alternativeNodes, opponentProbability);
+            return;
+        }
+        if (currentState.getPlayerToMove().getId() == opponentPlayerIndex) {
+            getAlternativeNodesOutsideRGDefaultFix(currentState.performAction(expander.getActions(currentState).get(0)), stateForAlternatives,
+                    alternativeNodes, 1);
+            return;
+        }
+        expander.getActions(currentState).forEach(a ->
+                getAlternativeNodesOutsideRGDefaultFix(currentState.performAction(a), stateForAlternatives, alternativeNodes, opponentProbability)
+        );
+    }
+
+
     public List<GameState> getAlternativeNodesOutsideRG(GameState state) {
+        if (USE_FIX)
+            return getAlternativeNodesOutsideRGFix(state);
         List<GameState> alternativeNodes = new ArrayList<GameState>();
         Stack<GameState> queue = new Stack<GameState>();
         queue.add(gameTreeRoot);
@@ -708,6 +793,7 @@ public class SQFBestResponseAlgorithm {
             }
 
         }
+//        assert new HashSet<>(alternativeNodesOutsideRGFix).equals(new HashSet<>(alternativeNodes));
         return alternativeNodes;
     }
 
