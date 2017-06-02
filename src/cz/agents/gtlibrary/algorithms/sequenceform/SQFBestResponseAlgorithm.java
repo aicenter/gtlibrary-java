@@ -30,7 +30,7 @@ import cz.agents.gtlibrary.utils.ValueComparator;
 import java.util.*;
 
 /**
- * Best-response algorithm with pruning. It calculates best-response value for a
+ * Best-response algorithm with pruning. It calculates the best-response value for a
  * game described by the root state and the expander.
  */
 public class SQFBestResponseAlgorithm {
