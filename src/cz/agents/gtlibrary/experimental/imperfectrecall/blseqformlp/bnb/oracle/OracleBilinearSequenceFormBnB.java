@@ -49,7 +49,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
     public static boolean DEBUG = false;
     public static boolean EXPORT_GBT = false;
     public static boolean SAVE_LPS = false;
-    public static boolean RESOLVE_CURRENT_BEST = true;
+    public static boolean RESOLVE_CURRENT_BEST = false;
     public static double EPS = 1e-3;
 
     protected ImperfectRecallBestResponse br;

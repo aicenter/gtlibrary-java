@@ -195,7 +195,7 @@ public class GeneralDoubleOracle {
         }
         gameInfo.ZERO_SUM_APPROX = true;
         GameState rootState;
-        gameInfo.calculateMinMaxBounds();
+        if (FlipItGameInfo.CALCULATE_UTILITY_BOUNDS) gameInfo.calculateMinMaxBounds();
         if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
         else rootState = new FlipItGameState();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
