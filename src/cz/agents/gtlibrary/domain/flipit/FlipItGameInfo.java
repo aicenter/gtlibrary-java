@@ -20,7 +20,7 @@ import java.util.Random;
 public class FlipItGameInfo implements GameInfo {
 
     // GRAPH FILE : topology, rewards and control costs
-    public static String graphFile = "flipit_empty2.txt";
+    public static String graphFile = "flipit_empty3.txt";
     public static FlipItGraph graph = new FlipItGraph(graphFile);
 
     // PLAYERS
@@ -30,7 +30,7 @@ public class FlipItGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[] {DEFENDER, ATTACKER, NATURE};
 
     public static long seed = 11;
-    public static int depth = 5;
+    public static int depth = 4;
     public static final boolean RANDOM_TIE = false;
     public static final boolean PREDETERMINED_RANDOM_TIE_WINNER = false;
     public static final Player RANDOM_TIE_WINNER = FlipItGameInfo.DEFENDER;
@@ -45,6 +45,8 @@ public class FlipItGameInfo implements GameInfo {
     public static final double INITIAL_POINTS = 5.0;
 
     public static final boolean NO_INFO = false;
+
+    public static final boolean CALCULATE_UTILITY_BOUNDS = false;
 
     public static int hashCodeCounter = 0;
 

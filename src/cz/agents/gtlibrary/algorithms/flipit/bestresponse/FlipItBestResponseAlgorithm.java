@@ -109,6 +109,11 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
             BRSrchSelection sel = new BRSrchFlipItSelection(lowerBound, ISProbability, alternativeNodesProbs, nonZeroOppRP);
             Collections.sort(alternativeNodes, comparator);
 
+//            if (!useOriginalBRFormulation) {
+//                if (lowerBound > ISProbability * ((FlipItGameState) gameState).getUpperBoundForUtilityFor(searchingPlayerIndex))
+//                    return Double.NEGATIVE_INFINITY;
+//            }
+
             List<Action> actionsToExplore = expander.getActions(gameState);
             actionsToExplore = sel.sortActions(gameState, actionsToExplore);
 
@@ -235,16 +240,16 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
 
             double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP, state);
             double upperBound;
-            if (state instanceof FlipItGameState && !useOriginalBRFormulation)// && state.getPlayerToMove().getId() != searchingPlayerIndex)
+            if (!useOriginalBRFormulation)// && state.getPlayerToMove().getId() != searchingPlayerIndex)
                 upperBound = MAX_UTILITY_VALUE;//Math.min(MAX_UTILITY_VALUE, ((FlipItGameState)state).getUpperBoundForUtilityFor(searchingPlayerIndex));
             else
                 upperBound = MAX_UTILITY_VALUE;
 
 
-            if (newLowerBound > stateProb * upperBound && newLowerBound < 1000 * MAX_UTILITY_VALUE) {
+//            if (newLowerBound > stateProb * upperBound && newLowerBound < 1000 * MAX_UTILITY_VALUE) {
 //                System.err.println(newLowerBound + " " +stateProb*upperBound + " " + upperBound + " " + MAX_UTILITY_VALUE );
-//                System.exit(0);
-            }
+////                System.exit(0);
+//            }
 
             // nasobeni stateProb tady nebyvalo
             if (newLowerBound <= stateProb * upperBound) {
@@ -280,7 +285,7 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
                     return Double.POSITIVE_INFINITY;
                 }
             }
-            if (state instanceof FlipItGameState && !useOriginalBRFormulation) {
+            if (!useOriginalBRFormulation) {
                 return (lowerBound - (value + (nodeProbability - probability) * ((FlipItGameState) state).getUpperBoundForUtilityFor(searchingPlayerIndex)));
             }
             return (lowerBound - (value + (nodeProbability - probability) * MAX_UTILITY_VALUE));
@@ -306,7 +311,7 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
 //					double probability = natureProb;
 //					if (nonZeroORP) probability *= orpProb;
 
-                    if (!useOriginalBRFormulation && state instanceof FlipItGameState && useBoundInSearchingPlayerNodes) {
+                    if (!useOriginalBRFormulation && useBoundInSearchingPlayerNodes) {
                         return ((previousMaxValue + this.allNodesProbability * (((FlipItGameState) state).getLowerBoundForUtilityFor(searchingPlayerIndex)))
                                 - (actionExpectedValues.get(action) + (this.allNodesProbability - alternativeNodesProbs.get(currentNode)) * ((FlipItGameState) state).getUpperBoundForUtilityFor(searchingPlayerIndex)));
                     } else {

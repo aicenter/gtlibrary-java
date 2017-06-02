@@ -114,6 +114,13 @@ public class FlipItGameState extends SimultaneousGameState {
     }
 
     public double getUpperBoundForUtilityFor(int playerIndex){
+        if (!FlipItGameInfo.CALCULATE_UTILITY_BOUNDS) {
+            double max = 0.0;
+            for (Node node : FlipItGameInfo.graph.getAllNodes().values())
+                max += FlipItGameInfo.graph.getReward(node);
+            max = depth * max;
+            return max;
+        }
         if (!FlipItGameInfo.maxUtility.containsKey(this)){
             System.out.println("chybka"); FlipItGameInfo.calculateMinMaxBoundsFor(this);
         }
@@ -125,6 +132,13 @@ public class FlipItGameState extends SimultaneousGameState {
     }
 
     public double getLowerBoundForUtilityFor(int playerIndex){
+        if (!FlipItGameInfo.CALCULATE_UTILITY_BOUNDS) {
+            double max = 0.0;
+            for (Node node : FlipItGameInfo.graph.getAllNodes().values())
+                max += FlipItGameInfo.graph.getReward(node);
+            max = depth * max;
+            return -max;
+        }
 //        return -FlipItGameInfo.maxUtility.get(this);
         return (playerIndex==0) ? FlipItGameInfo.minUtility.get(this) : -FlipItGameInfo.maxUtility.get(this);
     }
