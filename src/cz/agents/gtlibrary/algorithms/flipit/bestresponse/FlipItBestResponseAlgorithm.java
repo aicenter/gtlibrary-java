@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInfo
 import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 
 import java.util.*;
 
@@ -20,6 +21,7 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
 
     public FlipItBestResponseAlgorithm(Expander<DoubleOracleInformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, DoubleOracleConfig algConfig, GameInfo gameInfo) {
         super(expander, searchingPlayerIndex, actingPlayers, algConfig, gameInfo);
+        this.useOriginalBRFormulation = false;
     }
 
 
@@ -89,6 +91,22 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
                 }
                 ISProbability += currentNodeProb;
                 alternativeNodesProbs.put(currentNode, currentNodeProb);
+//                if (currentNode.equals(gameState)) {
+//                    System.out.println("contains " + currentNodeProb + " " + currentNode.hashCode() + " " + gameState.hashCode());
+//                }
+//                System.out.println(alternativeNodesProbs.get(gameState));
+            }
+
+            if (!useOriginalBRFormulation) {
+//                System.out.println(alternativeNodes.contains(gameState));
+//                System.out.println(alternativeNodesProbs.containsKey(gameState));
+                Double stateProb = alternativeNodesProbs.get(gameState);
+                if (stateProb == null){
+                    System.err.println("NULL AlternativeNodes state : " + gameState);
+                    stateProb = 1.0d;
+                }
+                if (lowerBound > stateProb * ((FlipItGameState) gameState).getUpperBoundForUtilityFor(searchingPlayerIndex))
+                    return Double.NEGATIVE_INFINITY;
             }
 
             if (!nonZeroOppRP && !nonZeroOppRPAlt && ISProbability > gameState.getNatureProbability()) {
