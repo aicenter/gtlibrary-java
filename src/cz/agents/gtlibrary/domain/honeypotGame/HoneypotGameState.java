@@ -94,7 +94,7 @@ public class HoneypotGameState extends GameStateImpl {
 
     @Override
     public boolean isGameEnd() {
-        return attackerBudget == 0;
+        return attackerBudget <= 0d;
     }
 
     @Override
