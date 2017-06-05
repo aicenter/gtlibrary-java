@@ -26,15 +26,19 @@ public class HoneypotGameState extends GameStateImpl {
     double attackerActualReward;
     int lastDefendedNode = Integer.MIN_VALUE;
 
-    HoneypotGameState(HoneypotGameNode[] possibleNodes) {
+    public HoneypotGameState(HoneypotGameNode[] possibleNodes) {
         super(HoneypotGameInfo.ALL_PLAYERS);
 
         this.possibleNodes = possibleNodes;
-        honeypots = new boolean[possibleNodes.length];
-        attackedNodes = new int[possibleNodes.length];
-        observedHoneypots = new boolean[possibleNodes.length];
-        playerToMove = HoneypotGameInfo.DEFENDER;
-        attackerActualReward = 0;
+        this.honeypots = new boolean[possibleNodes.length];
+        this.attackedNodes = new int[possibleNodes.length];
+        this.observedHoneypots = new boolean[possibleNodes.length];
+        this.playerToMove = HoneypotGameInfo.DEFENDER;
+        this.attackerActualReward = 0;
+
+        this.attackerBudget = HoneypotGameInfo.initialAttackerBudget;
+        this.defenderBudget = HoneypotGameInfo.initialDefenderBudget;
+        this.attackCost = HoneypotGameInfo.attackCost;
     }
 
     private HoneypotGameState(HoneypotGameState gameState) {
