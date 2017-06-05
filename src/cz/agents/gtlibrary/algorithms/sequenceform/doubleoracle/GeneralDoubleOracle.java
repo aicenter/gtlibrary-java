@@ -20,7 +20,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
 import cz.agents.gtlibrary.algorithms.flipit.bestresponse.FlipItBestResponseAlgorithm;
-import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -89,8 +88,6 @@ public class GeneralDoubleOracle {
 
     public double gameValue;
 
-//    private boolean useSQFnegation = true;
-
     public enum PlayerSelection {
         BOTH, SINGLE_ALTERNATING, SINGLE_IMPROVED
     }
@@ -111,11 +108,15 @@ public class GeneralDoubleOracle {
 //        runPhantomTTT();
 //		runAoS();
 //        runFlipIt(args);
-        runHoneyPot();
+        runHoneyPot(args);
     }
 
-    private static void runHoneyPot() {
-        HoneypotGameInfo gameInfo = new HoneypotGameInfo();
+    private static void runHoneyPot(String[] args) {
+        HoneypotGameInfo gameInfo;
+        if (args.length == 0)
+            gameInfo = new HoneypotGameInfo();
+        else
+            gameInfo = new HoneypotGameInfo(args[0]);
         HoneypotGameState rootState = new HoneypotGameState(gameInfo.allNodes);
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<>(rootState, gameInfo);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, new HoneypotExpander<>(algConfig), gameInfo, algConfig);
@@ -313,7 +314,6 @@ public class GeneralDoubleOracle {
         }
         Map<Player, Map<Sequence, Double>> realizationPlans = new FixedSizeMap<Player, Map<Sequence, Double>>(2);
 
-//        SQFBestResponseAlgorithm.useOriginalBRFormulation = useSQFnegation;
 
         if (initializationRG == null || initializationRG.isEmpty()) {
             GameState firstState = findFirstNonNatureState(rootState, expander);

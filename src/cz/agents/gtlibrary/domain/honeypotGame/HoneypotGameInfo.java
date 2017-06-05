@@ -13,13 +13,13 @@ public class HoneypotGameInfo implements GameInfo {
 
     public static Player DEFENDER = new PlayerImpl(0, "Defender");
     public static Player ATTACKER = new PlayerImpl(1, "Attacker");
-    public static final Player NATURE = new PlayerImpl(2, "Nature");
-    public static final Player[] ALL_PLAYERS = new Player[]{DEFENDER, ATTACKER, NATURE};
+//    public static final Player NATURE = new PlayerImpl(2, "Nature");
+    public static final Player[] ALL_PLAYERS = new Player[]{DEFENDER, ATTACKER};//, NATURE};
     public static final int NO_ACTION_ID = -1;
 
-    public static int attacksAllowed = 5;
+    public static int attacksAllowed = 8;
     public static HoneypotGameNode[] allNodes;
-    public static final double[] nodeValues = new double[]{10, 60, 50, 46, 70, 4};
+    public static final double[] nodeValues = new double[]{10, 26, 50, 4};
     public static double initialAttackerBudget = 50;
     public static double initialDefenderBudget = 70;
     public static double minValue = Double.MAX_VALUE;
@@ -35,13 +35,14 @@ public class HoneypotGameInfo implements GameInfo {
         else initNodes();
     }
 
-    public HoneypotGameInfo(String inputFile) throws IOException {
+    public HoneypotGameInfo(String inputFile){
         this.inputFile = inputFile;
         if (readInputFile) readGraph();
         else initNodes();
     }
 
     private void initNodes() {
+        allNodes = new HoneypotGameNode[nodeValues.length];
         for (int i = 0; i < nodeValues.length; i++) {
             allNodes[i] = new HoneypotGameNode(i + 1, nodeValues[i]);
             if (nodeValues[i] < minValue) {
