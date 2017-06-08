@@ -26,11 +26,16 @@ import java.util.Map;
 
 /**
  * Created by Jakub Cerny on 07/05/17.
+ *
+ *
+ * Experiments with using fast equilibrium approximate by MCTS or CFR as a starting strategy for DO.
+ * The approximate strategy has large support, which has to be cut off in order to begin with a small enough
+ * restricted game.
  */
 public class ConvergenceExperiment {
 
     private static int RUN_MS = 280000;
-    private static boolean RUN_CFR = false;
+    private static boolean RUN_CFR = false; // use MCTS if false
     private static int SUPPORT_SIZE = 2;
     private static double SUPPORT_MIN = 0.2;
 
