@@ -63,7 +63,6 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -107,24 +106,44 @@ public class GeneralDoubleOracle {
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
-//        runFlipIt(args);
-        runHoneyPot(args);
+        runFlipIt(args);
+//        runHoneyPot(args);
     }
 
     private static void runHoneyPot(String[] args) {
         HoneypotGameInfo gameInfo;
-        if (args.length == 0)
+        if (args.length == 0) {
             gameInfo = new HoneypotGameInfo();
-        else
+        }
+        else {
             gameInfo = new HoneypotGameInfo(args[0]);
+        }
+
         HoneypotGameState rootState = new HoneypotGameState(gameInfo.allNodes);
-        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<>(rootState, gameInfo);
-        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, new HoneypotExpander<>(algConfig), gameInfo, algConfig);
-        doefg.generate(null);
+
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig;
+        GeneralDoubleOracle doefg;
+        Map<Player, Map<Sequence, Double>> init = null;
+        int depth = gameInfo.attacksAllowed;
+
+        if (HoneypotGameInfo.ENABLE_ITERATIVE_SOLVING) {
+            depth = Math.max(depth / 2, 1);
+        }
+
+        for (int i = depth; i <= gameInfo.attacksAllowed; i++) {
+            System.out.println("CURRENT DEPTH: " + i);
+            rootState.setRemainingAttacks(i);
+            algConfig = new DoubleOracleConfig<>(rootState, gameInfo);
+            doefg = new GeneralDoubleOracle(rootState, new HoneypotExpander<>(algConfig), gameInfo, algConfig);
+            init = doefg.generate(init);
+            System.out.println();
+        }
+
     }
 
 
     private static void runFlipIt(String[] args){
+        // args for flipit : depth::int graphSize::int
         FlipItGameInfo gameInfo;
         if (args.length == 0)
             gameInfo = new FlipItGameInfo();
@@ -134,17 +153,35 @@ public class GeneralDoubleOracle {
             String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
             gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
         }
+        int depth = FlipItGameInfo.depth;
+        if (FlipItGameInfo.ENABLE_ITERATIVE_SOLVING) {
+            FlipItGameInfo.depth = FlipItGameInfo.depth - 2;
+        }
         gameInfo.ZERO_SUM_APPROX = true;
+
         GameState rootState;
         if (FlipItGameInfo.CALCULATE_UTILITY_BOUNDS) gameInfo.calculateMinMaxBounds();
+
         if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
         else rootState = new FlipItGameState();
+
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new FlipItExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         Map<Player, Map<Sequence, Double>> rps = doefg.generate(null);
 
-        GambitEFG ggg = new GambitEFG();
+        if (FlipItGameInfo.ENABLE_ITERATIVE_SOLVING) {
+            for (int i = FlipItGameInfo.depth + 1; i <= depth; i++) {
+                FlipItGameInfo.depth = i;
+                if (FlipItGameInfo.CALCULATE_UTILITY_BOUNDS) gameInfo.calculateMinMaxBounds();
+                algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+                expander = new FlipItExpander<DoubleOracleInformationSet>(algConfig);
+                doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+                rps = doefg.generate(rps);
+            }
+        }
+
+//        GambitEFG ggg = new GambitEFG();
 //        ggg.write("flipit.gbt", rootState, (Expander) expander);
 
 

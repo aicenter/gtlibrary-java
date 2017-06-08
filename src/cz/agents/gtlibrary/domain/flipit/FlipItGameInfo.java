@@ -4,6 +4,8 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.flipit.types.ExponentialGreedyType;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.SynchronousQueue;
 
 /**
  * Created by Jakub on 13/03/17.
@@ -20,7 +23,7 @@ import java.util.Random;
 public class FlipItGameInfo implements GameInfo {
 
     // GRAPH FILE : topology, rewards and control costs
-    public static String graphFile = "flipit_empty2.txt";
+    public static String graphFile = "flipit_empty3.txt";
     public static FlipItGraph graph = new FlipItGraph(graphFile);
 
     // PLAYERS
@@ -30,7 +33,7 @@ public class FlipItGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[] {DEFENDER, ATTACKER, NATURE};
 
     public static long seed = 11;
-    public static int depth = 6;
+    public static int depth = 5;
     public static final boolean RANDOM_TIE = false;
     public static final boolean PREDETERMINED_RANDOM_TIE_WINNER = false;
     public static final Player RANDOM_TIE_WINNER = FlipItGameInfo.DEFENDER;
@@ -46,15 +49,18 @@ public class FlipItGameInfo implements GameInfo {
 
     public static final boolean NO_INFO = false;
 
-    public static final boolean CALCULATE_UTILITY_BOUNDS = false;
+    public static final boolean CALCULATE_UTILITY_BOUNDS = true;
+    public static final boolean ENABLE_ITERATIVE_SOLVING = false;
 
     public static int hashCodeCounter = 0;
 
     public static double MAX_UTILITY;
 
+    private static double[] determinedBounds;
 
-    public static HashMap<FlipItGameState,Double> minUtility;
-    public static HashMap<FlipItGameState,Double> maxUtility;
+
+    public static HashMap<ISKey,HashMap<GameState,Double>> minUtility;
+    public static HashMap<ISKey,HashMap<GameState,Double>> maxUtility;
 
 
     // TYPES
@@ -225,7 +231,7 @@ public class FlipItGameInfo implements GameInfo {
         Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
         minUtility = new HashMap<>();
         maxUtility =  new HashMap<>();
-        traverseTree(root,expander);
+        traverseTree(root,expander, null);
         root = new FlipItGameState();
 //        System.out.println(minUtility.get(root));
     }
@@ -236,32 +242,60 @@ public class FlipItGameInfo implements GameInfo {
         Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
 //        minUtility = new HashMap<>();
 //        maxUtility =  new HashMap<>();
-        return traverseTree(state,expander);
+        return traverseTree(state,expander, null);
 //        root = new FlipItGameState();
 //        System.out.println(minUtility.get(root));
     }
 
-    private static double[] traverseTree(GameState state, Expander<SequenceInformationSet> expander){
+    public static double[] determineMinMaxBoundsFor(GameState state) {
+        SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+        Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
+//        minUtility = new HashMap<>();
+//        maxUtility =  new HashMap<>();
+        traverseTree(new FlipItGameState(),expander, state);
+        return determinedBounds;
+    }
+
+    private static double[] traverseTree(GameState state, Expander<SequenceInformationSet> expander, GameState target){
         double[] bounds = new double[2];
         bounds[0] = Double.MAX_VALUE;
         bounds[1] = Double.MIN_VALUE;
         ((SequenceFormConfig)expander.getAlgorithmConfig()).addStateToSequenceForm(state);
         if (state.isGameEnd()) {
             double utility = state.getUtilities()[0];
-            minUtility.put((FlipItGameState) state, utility);
-            maxUtility.put((FlipItGameState) state, utility);
+            if (!minUtility.containsKey(state.getISKeyForPlayerToMove())){
+                minUtility.put(state.getISKeyForPlayerToMove(), new HashMap<>());
+                maxUtility.put(state.getISKeyForPlayerToMove(), new HashMap<>());
+            }
+            minUtility.get(state.getISKeyForPlayerToMove()).put(state,utility);
+            maxUtility.get(state.getISKeyForPlayerToMove()).put(state,utility);
+//            minUtility.put((FlipItGameState) state, utility);
+//            maxUtility.put((FlipItGameState) state, utility);
             return new double[]{utility, utility};
         }
         else{
             double[] actionBounds;
             for (Action action : expander.getActions(state))   {
-                actionBounds = traverseTree(state.performAction(action), expander);
+                actionBounds = traverseTree(state.performAction(action), expander, target);
                 if (actionBounds[0] < bounds[0]) bounds[0] = actionBounds[0];
                 if (actionBounds[1] > bounds[1]) bounds[1] = actionBounds[1];
             }
         }
-        minUtility.put((FlipItGameState) state,bounds[0]);
-        maxUtility.put((FlipItGameState) state,bounds[1]);
+
+        if(state.equals(target)){
+            determinedBounds = bounds;
+        }
+
+        if (!minUtility.containsKey(state.getISKeyForPlayerToMove())){
+            minUtility.put(state.getISKeyForPlayerToMove(), new HashMap<>());
+            maxUtility.put(state.getISKeyForPlayerToMove(), new HashMap<>());
+        }
+        if (minUtility.get(state.getISKeyForPlayerToMove()).containsKey(state) && Math.abs(minUtility.get(state.getISKeyForPlayerToMove()).get(state) - bounds[0]) > 0.01){
+            System.err.println("ERROR : " + Math.abs(minUtility.get(state.getISKeyForPlayerToMove()).get(state) - bounds[0]));
+//            System.exit(0);
+        }
+        minUtility.get(state.getISKeyForPlayerToMove()).put(state,bounds[0]);
+        maxUtility.get(state.getISKeyForPlayerToMove()).put(state,bounds[1]);
         return bounds;
     }
 }

@@ -12,6 +12,9 @@ import java.util.ArrayList;
 
 /**
  * Created by Jakub Cerny on 05/06/2017.
+ *
+ * Experiments ensuring correctness of several versions of SQFBestResponse algorithm used in DO.
+ * Compares calculated game values.
  */
 public class BRVersionsExperiments{
 

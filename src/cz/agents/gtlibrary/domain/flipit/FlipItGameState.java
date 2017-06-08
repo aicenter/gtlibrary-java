@@ -114,21 +114,31 @@ public class FlipItGameState extends SimultaneousGameState {
     }
 
     public double getUpperBoundForUtilityFor(int playerIndex){
+//        double[] bounds = FlipItGameInfo.determineMinMaxBoundsFor(this);
+//        if (true) return playerIndex==0 ? bounds[1] : -bounds[0];
+
         if (!FlipItGameInfo.CALCULATE_UTILITY_BOUNDS) {
             double max = 0.0;
             for (Node node : FlipItGameInfo.graph.getAllNodes().values())
                 max += FlipItGameInfo.graph.getReward(node);
-            max = depth * max;
+            max = FlipItGameInfo.depth * max;
             return max;
         }
-        if (!FlipItGameInfo.maxUtility.containsKey(this)){
-            System.out.println("chybka"); FlipItGameInfo.calculateMinMaxBoundsFor(this);
+//        if (!FlipItGameInfo.maxUtility.containsKey(getISKeyForPlayerToMove()) || !FlipItGameInfo.maxUtility.get(getISKeyForPlayerToMove()).containsKey(this) &&)
+        if (!FlipItGameInfo.maxUtility.containsKey(getISKeyForPlayerToMove()) || !FlipItGameInfo.maxUtility.get(getISKeyForPlayerToMove()).containsKey(this)){
+            System.out.println("chybka"); //FlipItGameInfo.calculateMinMaxBoundsFor(this);
+            System.out.println(history);
+            double max = 0.0;
+            for (Node node : FlipItGameInfo.graph.getAllNodes().values())
+                max += FlipItGameInfo.graph.getReward(node);
+            max = FlipItGameInfo.depth * max;
+            return max;
         }
         else{
 //            System.out.println("mam ho");
         }
 //        return FlipItGameInfo.maxUtility.get(this);
-        return (playerIndex==0) ? FlipItGameInfo.maxUtility.get(this) : -FlipItGameInfo.minUtility.get(this);
+        return (playerIndex==0) ? FlipItGameInfo.maxUtility.get(getISKeyForPlayerToMove()).get(this) : -FlipItGameInfo.minUtility.get(getISKeyForPlayerToMove()).get(this);
     }
 
     public double getLowerBoundForUtilityFor(int playerIndex){
@@ -136,11 +146,11 @@ public class FlipItGameState extends SimultaneousGameState {
             double max = 0.0;
             for (Node node : FlipItGameInfo.graph.getAllNodes().values())
                 max += FlipItGameInfo.graph.getReward(node);
-            max = depth * max;
+            max = FlipItGameInfo.depth * max;
             return -max;
         }
 //        return -FlipItGameInfo.maxUtility.get(this);
-        return (playerIndex==0) ? FlipItGameInfo.minUtility.get(this) : -FlipItGameInfo.maxUtility.get(this);
+        return (playerIndex==0) ? FlipItGameInfo.minUtility.get(getISKeyForPlayerToMove()).get(this) : -FlipItGameInfo.maxUtility.get(getISKeyForPlayerToMove()).get(this);
     }
 
     protected void init(){
@@ -727,4 +737,10 @@ public class FlipItGameState extends SimultaneousGameState {
         depth += getSequenceFor(FlipItGameInfo.NATURE).size() + 1;
         return depth;
     }
+
+    @Override
+    public String toString() {
+        return "D = [" + getLowerBoundForUtilityFor(0) + ", " + getUpperBoundForUtilityFor(0) +"]; A = [" + + getLowerBoundForUtilityFor(1) + ", " + getUpperBoundForUtilityFor(1) +"]";
+    }
+
 }

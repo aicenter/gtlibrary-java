@@ -46,6 +46,11 @@ import java.util.Map;
  * User: Jakub Cerny
  * Date: 14/3/17
  * Time: 2:43 PM
+ *
+ * This implementation of algorithms computing BSSE assumes that the utilities are in format
+ * [ u(leader) ; u(follower :: type 1) ; u(follower : type 2) ; ... ; u(follower :: type n) ; u(nature) ]
+ *
+ *
  */
 
 public class BayesianStackelbergRunner {

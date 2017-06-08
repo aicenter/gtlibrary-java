@@ -258,8 +258,10 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
 
             double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP, state);
             double upperBound;
+            double bound = ((FlipItGameState)state).getUpperBoundForUtilityFor(searchingPlayerIndex);
+            if (bound < 0.0) bound = 0.0;
             if (!useOriginalBRFormulation)// && state.getPlayerToMove().getId() != searchingPlayerIndex)
-                upperBound = MAX_UTILITY_VALUE;//Math.min(MAX_UTILITY_VALUE, ((FlipItGameState)state).getUpperBoundForUtilityFor(searchingPlayerIndex));
+                upperBound = Math.min(MAX_UTILITY_VALUE, bound);
             else
                 upperBound = MAX_UTILITY_VALUE;
 
@@ -270,6 +272,13 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
 //            }
 
             // nasobeni stateProb tady nebyvalo
+
+            if (newLowerBound <= stateProb * MAX_UTILITY_VALUE && newLowerBound > stateProb * upperBound){
+
+//                System.out.println(newLowerBound + " " + stateProb + " " + upperBound + " " + stateProb * upperBound);
+//                System.out.println(newLowerBound + " " + stateProb + " " + upperBound + " " + stateProb * upperBound);
+            }
+
             if (newLowerBound <= stateProb * upperBound) {
                 double value = bestResponse(newState, newLowerBound);
                 selection.addValue(action, value, natureProb, oppRP);
