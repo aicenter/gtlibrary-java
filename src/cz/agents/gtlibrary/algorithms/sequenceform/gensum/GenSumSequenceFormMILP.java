@@ -219,9 +219,9 @@ public class GenSumSequenceFormMILP {
             lpTime = (long) ((threadMXBean.getCurrentThreadCpuTime() - start) / 1e6);
             System.out.println("LP time: " + lpTime);
             System.out.println(data.getSolver().getStatus());
-            System.out.println("p0 value: " + data.getSolver().getValue(data.getVariables()[lpTable.getVariableIndex(new Pair<>("v", 0))]) / info.getUtilityStabilizer());
-            System.out.println("p1 value: " + data.getSolver().getValue(data.getVariables()[lpTable.getVariableIndex(new Pair<>("v", 1))]) / info.getUtilityStabilizer());
-            System.out.println("obj. value: " + data.getSolver().getObjValue());
+            System.out.println("p0 reward: " + data.getSolver().getValue(data.getVariables()[lpTable.getVariableIndex(new Pair<>("v", 0))]) / info.getUtilityStabilizer());
+            System.out.println("p1 reward: " + data.getSolver().getValue(data.getVariables()[lpTable.getVariableIndex(new Pair<>("v", 1))]) / info.getUtilityStabilizer());
+            System.out.println("obj. reward: " + data.getSolver().getObjValue());
             objectiveValue =  data.getSolver().getObjValue();
 //            System.out.println("Strategies: ");
             for (Map<Sequence, Double> realPan : getStrategyProfile(data).values()) {

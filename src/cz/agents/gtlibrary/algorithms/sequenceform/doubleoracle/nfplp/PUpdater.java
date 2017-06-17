@@ -81,10 +81,10 @@ public class PUpdater extends InitialPBuilder {
 //            lpTable.setConstraintIfNotPresent(p2Sequence, "t", 1);
 //        else
 //            lpTable.removeFromConstraint(p2Sequence, "t");
-//        Double value = explSeqSum.get(p2Sequence);
+//        Double reward = explSeqSum.get(p2Sequence);
 //
-//        if (value != null)
-//            lpTable.setConstant(p2Sequence, -value);
+//        if (reward != null)
+//            lpTable.setConstant(p2Sequence, -reward);
 //    }
 //
 //    @Override

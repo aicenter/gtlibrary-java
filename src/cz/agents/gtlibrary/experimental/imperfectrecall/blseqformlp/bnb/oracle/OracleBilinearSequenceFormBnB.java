@@ -313,7 +313,7 @@ public class OracleBilinearSequenceFormBnB extends BilinearSequenceFormBnB {
                 }
             }
             finalValue = currentBest.getLb();
-            System.out.println("final value: " + finalValue);
+            System.out.println("final reward: " + finalValue);
 //            table.clearTable();
 //            buildBaseLP(config);
 //            LPData checkData = table.toCplex();

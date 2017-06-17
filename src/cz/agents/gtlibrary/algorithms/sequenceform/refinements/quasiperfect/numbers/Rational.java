@@ -59,7 +59,7 @@ public class Rational extends Real<Rational> implements Serializable {
 		return this;
 	}
 	
-	/** builds Rational with value <tt>n</tt>/<tt>d</tt>.
+	/** builds Rational with reward <tt>n</tt>/<tt>d</tt>.
 	 *  @param n is the numerator of a new Rational
 	 *  @param d is the denominator of a new Rational */
 	public Rational(BigInteger n, BigInteger d) {
@@ -116,19 +116,19 @@ public class Rational extends Real<Rational> implements Serializable {
 		}
 	}
 
-	/** builds Rational with value <tt>i</tt>. */
+	/** builds Rational with reward <tt>i</tt>. */
 	public Rational(int i) {
 		den = one;
 		num = new BigInteger("" + i);
 	}
 
-	/** builds Rational with value <tt>i</tt>. */
+	/** builds Rational with reward <tt>i</tt>. */
 	public Rational(BigInteger i) {
 		den = one;
 		num = i;
 	}
 
-	/** returns a Rational whose value is 0 */
+	/** returns a Rational whose reward is 0 */
 	public Rational zero()   { return ZERO; }
 	public Rational one()    { return ONE; }
 	public Rational negInf() { return NEG_INF; }

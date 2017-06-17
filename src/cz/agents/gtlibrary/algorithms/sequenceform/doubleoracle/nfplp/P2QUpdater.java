@@ -51,9 +51,9 @@ public class P2QUpdater extends InitialP2QBuilder {
 
 //    @Override
 //    protected void updateForP1(Sequence p1Sequence) {
-//        Double value = explSeqSum.get(p1Sequence);
+//        Double reward = explSeqSum.get(p1Sequence);
 //
-//        if (value != null)
+//        if (reward != null)
 //            lpTable.setConstraint(p1Sequence, "s", explSeqSum.get(p1Sequence));
 //    }
 

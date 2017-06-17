@@ -95,7 +95,7 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
                     if (currentBR.leaderUpperBound > maxValue) {
                         maxValue = currentBR.leaderUpperBound;
                         leaderResult = currentBR.realizationPlan;
-                        debugOutput.println("Best value is " + maxValue);
+                        debugOutput.println("Best reward is " + maxValue);
                     }
                     continue;
                 }
@@ -122,7 +122,7 @@ public class StackelbergSequenceFormMILPOracle extends StackelbergSequenceFormMI
 
                     if (cplex.getCplexStatus() == IloCplex.CplexStatus.Optimal || cplex.getCplexStatus() == IloCplex.CplexStatus.OptimalTol) {
                         double v = cplex.getValue(v0);
-//                        debugOutput.println("Best value is " + v);
+//                        debugOutput.println("Best reward is " + v);
                         HashMap<Sequence, Double> tmp = new HashMap<>();
                         tmp.putAll(nextBR);
                         tmp.put(newSequence,1d);

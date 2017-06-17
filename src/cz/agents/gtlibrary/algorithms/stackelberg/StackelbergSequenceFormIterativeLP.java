@@ -145,7 +145,7 @@ public class StackelbergSequenceFormIterativeLP extends SequenceFormLP {
 //                    assert v <= upperBound;
 //                    GeneralSumBestResponse br = new GeneralSumBestResponse(expander, followerIdx, players, algConfig, info);
 
-//                    debugOutput.println("Best value is " + v + " for follower strategy: ");
+//                    debugOutput.println("Best reward is " + v + " for follower strategy: ");
 //                    for (Sequence sequence : pureRP) {
 //                        debugOutput.println(sequence);
 //                    }
@@ -171,7 +171,7 @@ public class StackelbergSequenceFormIterativeLP extends SequenceFormLP {
         }
         resultStrategies.put(leader, leaderResult);
         resultValues.put(leader, lowerBound);
-        System.out.println("final result with value " + lowerBound + ": ");
+        System.out.println("final result with reward " + lowerBound + ": ");
 //        for (Map.Entry<Sequence, Double> entry : leaderResult.entrySet()) {
 //            if (entry.getValue() > 0)
 //                System.out.println(entry);

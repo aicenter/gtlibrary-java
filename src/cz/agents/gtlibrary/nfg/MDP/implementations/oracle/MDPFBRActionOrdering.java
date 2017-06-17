@@ -89,7 +89,7 @@ public class MDPFBRActionOrdering extends MDPFristBetterResponse {
         this.currentBest = currentBest;
     }
 
-    // returns <<best value, original value (given current strategy; null if not applicable)>, false/true if there is a change from default strategy
+    // returns <<best reward, original reward (given current strategy; null if not applicable)>, false/true if there is a change from default strategy
     private Pair<Pair<Double, Double>, Boolean> calculateBRValue(MDPState state, MDPStrategy myStrategy, MDPStrategy opponentStrategy, double alpha, double probability) {
 
         final Map<MDPAction, Double> actionValues = new HashMap<MDPAction, Double>();

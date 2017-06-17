@@ -826,12 +826,12 @@ public class BilinearSequenceFormBnB {
     }
 
 
-//    protected int getDigit(double value, int digit) {
-//        int firstDigit = (int) Math.floor(value);
+//    protected int getDigit(double reward, int digit) {
+//        int firstDigit = (int) Math.floor(reward);
 //
 //        if (digit == 0)
 //            return firstDigit;
-//        double tempValue = value - firstDigit;
+//        double tempValue = reward - firstDigit;
 //
 //        tempValue = Math.floor(tempValue * Math.pow(10, digit));
 //        return (int) (tempValue - 10 * (long) (tempValue / 10));

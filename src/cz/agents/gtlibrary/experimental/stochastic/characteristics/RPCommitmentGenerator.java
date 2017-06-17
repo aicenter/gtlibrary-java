@@ -367,8 +367,8 @@ public class RPCommitmentGenerator implements Iterator<Map<Path,Integer>> {
                 System.out.println("*****************");
             }
             break;
-//            System.out.print("Testing set for value " + value + " ..... " );
-//            Map<Characteristic,Set<Characteristic>> evidence = Characteristic.isClosed(chars.get(value));
+//            System.out.print("Testing set for reward " + reward + " ..... " );
+//            Map<Characteristic,Set<Characteristic>> evidence = Characteristic.isClosed(chars.get(reward));
 //            if (!evidence.isEmpty()) {
 //                System.out.println("closed");
 //

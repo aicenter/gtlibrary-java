@@ -612,7 +612,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
             }
             System.out.println("Nodes expanded by BR: " + gameExpander.getBRExpandedNodes());
             finalValue = currentBest.getLb();
-            System.out.println("final value: " + finalValue);
+            System.out.println("final reward: " + finalValue);
             Map<Sequence, Double> rp = ((OracleCandidate) currentBest).getMaxPlayerRealPlan();
 
             System.out.println("Support: " + rp.values().stream().filter(v -> v > 1e-8).count());

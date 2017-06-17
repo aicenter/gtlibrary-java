@@ -74,7 +74,7 @@ public class BayesianStackelbergRunner {
             String graphFile = args[2];
             long seed  = Integer.parseInt(args[3]);
             gameInfo = new FlipItGameInfo(depth,numTypes,graphFile, seed);
-            gameInfo.setInfo(depth,numTypes,graphFile);
+//            gameInfo.setInfo(depth,numTypes,graphFile);
             outputFile = args[4];
             output = depth + " " + numTypes + " " + graphFile + " " + seed + " ";
 

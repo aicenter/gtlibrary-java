@@ -128,7 +128,7 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
 
                         evaluatedLPCount++;
                         System.out.println(iteration);
-                        debugOutput.println("Best value is " + v + " for follower strategy: ");
+                        debugOutput.println("Best reward is " + v + " for follower strategy: ");
                         for (Sequence sequence : pureRP) {
                             debugOutput.println(sequence);
                         }
@@ -160,7 +160,7 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
         }
         resultStrategies.put(leader, leaderResult);
         resultValues.put(leader, maxValue);
-        System.out.println("final result with value " + maxValue + ": ");
+        System.out.println("final result with reward " + maxValue + ": ");
         for (Map.Entry<Sequence, Double> entry : leaderResult.entrySet()) {
             if (entry.getValue() > 0)
                 System.out.println(entry);

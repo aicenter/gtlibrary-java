@@ -95,7 +95,7 @@ public class ValueIteration {
 				AlphaBeta alphabeta = new AlphaBetaImpl(expander, values, root, -1, 0);
 
 				values.put(root, alphabeta.getFirstLevelValue(root, -1, 0));
-				System.out.println("final root value: " + values.get(root));
+				System.out.println("final root reward: " + values.get(root));
 				pool.killAll();
 				return values;
 			}

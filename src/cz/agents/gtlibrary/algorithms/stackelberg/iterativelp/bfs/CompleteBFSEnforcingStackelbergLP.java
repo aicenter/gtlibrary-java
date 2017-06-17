@@ -71,7 +71,7 @@ public class CompleteBFSEnforcingStackelbergLP extends BFSEnforcingStackelbergLP
                 double value = lpData.getSolver().getObjValue();
 
                 System.out.println("-----------------------");
-                System.out.println("LP value: " + value + " lower bound: " + lowerBound);
+                System.out.println("LP reward: " + value + " lower bound: " + lowerBound);
 //                System.out.println("n it: " + lpData.getSolver().getNiterations());
 //                System.out.println("n nodes: " + lpData.getSolver().getNnodes());
 //                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
@@ -94,7 +94,7 @@ public class CompleteBFSEnforcingStackelbergLP extends BFSEnforcingStackelbergLP
 //                    System.out.println(entry);
 //                }
                 if (brokenStrategyCauses == null) {
-//                    System.out.println("Found solution candidate with value: " + value);
+//                    System.out.println("Found solution candidate with reward: " + reward);
 //                    Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
 //                    Map<Sequence, Double> followerRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, follower));
 ////

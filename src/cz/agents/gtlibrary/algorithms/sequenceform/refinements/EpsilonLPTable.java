@@ -319,7 +319,7 @@ public class EpsilonLPTable {
     }
 
     /**
-     * Set lower bound for variable represented by varKey, default value is 0
+     * Set lower bound for variable represented by varKey, default reward is 0
      *
      * @param varKey
      * @param value
@@ -329,7 +329,7 @@ public class EpsilonLPTable {
     }
 
     /**
-     * Set upper bound for variable represented by varKey, default value is POSITIVE_INFINITY
+     * Set upper bound for variable represented by varKey, default reward is POSITIVE_INFINITY
      *
      * @param varKey
      * @param value

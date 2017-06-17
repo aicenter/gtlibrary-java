@@ -30,7 +30,7 @@ import cz.agents.gtlibrary.utils.ValueComparator;
 import java.util.*;
 
 /**
- * Best-response algorithm with pruning. It calculates the best-response value for a
+ * Best-response algorithm with pruning. It calculates the best-response reward for a
  * game described by the root state and the expander.
  */
 public class SQFBestResponseAlgorithm {
@@ -124,7 +124,7 @@ public class SQFBestResponseAlgorithm {
 
         Double tmpVal = cachedValuesForNodes.get(gameState);
         if (tmpVal != null) { // we have already solved this node as a part of an evaluated information set
-            //maybe we could remove the cached value at this point? No in double-oracle -> we are using it in restricted game
+            //maybe we could remove the cached reward at this point? No in double-oracle -> we are using it in restricted game
             return tmpVal;
         }
 

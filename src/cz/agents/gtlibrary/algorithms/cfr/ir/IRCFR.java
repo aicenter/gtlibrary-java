@@ -152,7 +152,7 @@ public class IRCFR {
      * @param state     current state
      * @param pi1       probability with which the opponent of the searching player and chance want to reach the current state
      * @param expPlayer the exploring player for this iteration
-     * @return iteration game value is actually returned. Other return values are in global x and l
+     * @return iteration game reward is actually returned. Other return values are in global x and l
      */
     protected double iteration(GameState state, double pi1, double pi2, Player expPlayer) {
         if (pi1 == 0 && pi2 == 0)

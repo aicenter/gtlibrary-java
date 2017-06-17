@@ -181,7 +181,7 @@ public class VanillaInformationSet extends CFRInformationSet {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		
-		builder.append("Game value: ");
+		builder.append("Game reward: ");
 		builder.append(valueOfGame);
 		builder.append("\n");
 		builder.append("Strategy: ");

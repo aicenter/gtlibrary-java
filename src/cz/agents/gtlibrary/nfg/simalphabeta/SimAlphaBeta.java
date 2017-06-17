@@ -181,7 +181,7 @@ public class SimAlphaBeta {
 
             System.out.println("****************");
 			System.out.println("root state: " + rootState);
-            System.out.println("game value: " + result);
+            System.out.println("game reward: " + result);
 //            System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //            System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
         }
@@ -212,7 +212,7 @@ public class SimAlphaBeta {
             return null;
         System.out.println("****************");
 		System.out.println("root state: " + rootState);
-        System.out.println("game value: " + oracle.getGameValue());
+        System.out.println("game reward: " + oracle.getGameValue());
 //        System.out.println("P1 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[0]));
 //        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
 //        gameValue = oracle.getGameValue();
