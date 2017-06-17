@@ -376,7 +376,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
                 double value = lpData.getSolver().getObjValue();
 
                 System.out.println("-----------------------");
-                System.out.println("LP value: " + value + " lower bound: " + lowerBound);
+                System.out.println("LP reward: " + value + " lower bound: " + lowerBound);
 //                System.out.println("n it: " + lpData.getSolver().getNiterations());
 //                System.out.println("n nodes: " + lpData.getSolver().getNnodes());
 //                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
@@ -461,7 +461,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 //                }
                 if (causes.isEmpty()) {
 
-                    System.out.println("Found solution candidate with value: " + value);
+                    System.out.println("Found solution candidate with reward: " + value);
 
 //                    System.out.println("/////// START ////////");
 //                    for (FollowerType type : FlipItGameInfo.types) {
@@ -516,9 +516,9 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 //                            lowerBound = result.getRight();
 //                        }
 //
-//                        if (Math.abs(lowerBound - value) < eps) {
+//                        if (Math.abs(lowerBound - reward) < eps) {
 //                            System.out.println("solution found BR");
-//                            return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
+//                            return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), reward);
 //                        }
 //                    }
                     if (value <= lowerBound + eps) {
@@ -661,7 +661,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
             if (result.getRight() > currentBest.getRight()) {
                 currentBest = result;
                 if (currentBest.getRight()  >= value - eps) {
-                    System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent value " + value + "----------------");
+                    System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent reward " + value + "----------------");
                     removeRestriction(brokenStrategyCause.getRight(), lpData, brokenStrategyCause.getLeft());
                     return currentBest;
                 }

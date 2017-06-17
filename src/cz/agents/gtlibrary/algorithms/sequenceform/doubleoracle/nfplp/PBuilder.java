@@ -87,10 +87,10 @@ public class PBuilder extends InitialPBuilder {
 //        super.updateForP2(p2Sequence);
 //        if (lastItSeq.contains(p2Sequence))
 //            lpTable.setConstraint(p2Sequence, "t", 1);
-//        Double value = explSeqSum.get(p2Sequence);
+//        Double reward = explSeqSum.get(p2Sequence);
 //
-//        if (value != null)
-//            lpTable.setConstant(p2Sequence, -value);
+//        if (reward != null)
+//            lpTable.setConstant(p2Sequence, -reward);
 //    }
 //
 //    public void updateSolver() {

@@ -112,8 +112,8 @@ public class RPSAction extends ActionImpl implements Comparable<RPSAction> {
                     //intentionally empty
                 }*/
 
-        //builder.append("[" + value + ", " + descIS + ", " + player);
-        //builder.append("[" + value + ", " + player);
+        //builder.append("[" + reward + ", " + descIS + ", " + player);
+        //builder.append("[" + reward + ", " + player);
         //builder.append("]");
 
         String str = "";

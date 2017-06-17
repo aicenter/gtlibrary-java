@@ -33,7 +33,7 @@ public class FlipItGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[] {DEFENDER, ATTACKER, NATURE};
 
     public static long seed = 11;
-    public static int depth = 1;
+    public static int depth = 4;
     public static final boolean RANDOM_TIE = false;
     public static final boolean PREDETERMINED_RANDOM_TIE_WINNER = false;
     public static final Player RANDOM_TIE_WINNER = FlipItGameInfo.DEFENDER;
@@ -49,10 +49,8 @@ public class FlipItGameInfo implements GameInfo {
 
     public static final boolean NO_INFO = false;
 
-    public static final boolean CALCULATE_UTILITY_BOUNDS = true;
+    public static final boolean CALCULATE_UTILITY_BOUNDS = false;
     public static final boolean ENABLE_ITERATIVE_SOLVING = false;
-
-    public static int hashCodeCounter = 0;
 
     public static double MAX_UTILITY;
 
@@ -83,6 +81,7 @@ public class FlipItGameInfo implements GameInfo {
         for(int i = 0; i < numTypes; i++) {
             types[i] = new ExponentialGreedyType(typesPrior[i], typesDiscounts[i],i);
         }
+        MAX_UTILITY = getMaxUtility();
     }
 
     public FlipItGameInfo(int depth, int numTypes, String graphFile, long seed){
@@ -114,6 +113,9 @@ public class FlipItGameInfo implements GameInfo {
         for(int i = 0; i < numTypes; i++) {
             types[i] = new ExponentialGreedyType(typesPrior[i], typesDiscounts[i],i);
         }
+        MAX_UTILITY = getMaxUtility();
+
+
     }
 
     public FlipItGameInfo(int depth, int numTypes, String graphFile){

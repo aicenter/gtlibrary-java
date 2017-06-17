@@ -106,8 +106,8 @@ public class GeneralDoubleOracle {
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
-        runFlipIt(args);
-//        runHoneyPot(args);
+//        runFlipIt(args);
+        runHoneyPot(args);
     }
 
     private static void runHoneyPot(String[] args) {
@@ -510,7 +510,7 @@ public class GeneralDoubleOracle {
 
                 case SINGLE_IMPROVED:
                     if (doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]) == null ||
-                            doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]) == null) { // we have not calculated the value for the current player in RG yet
+                            doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]) == null) { // we have not calculated the reward for the current player in RG yet
                         currentPlayerIndex = opponentPlayerIndex;
                     } else {
                         double oldLPResult = doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]);

@@ -304,13 +304,13 @@ public class GoofSpielGameState extends SimultaneousGameState {
             return new double[]{-scale, scale, 0};
         if (unwinnableFor(players[1]))
             return new double[]{scale, -scale, 0};
-        // double value = (playerScore[0] - sum / 2) / (sum / 2);
-        // if(value > 0)
-        // value -= 1e-3;
-        // else if(value < 0)
-        // value += 1e-3;
-        // assert value < 1 && value > -1;
-        // return new double[]{value, -value, 0};
+        // double reward = (playerScore[0] - sum / 2) / (sum / 2);
+        // if(reward > 0)
+        // reward -= 1e-3;
+        // else if(reward < 0)
+        // reward += 1e-3;
+        // assert reward < 1 && reward > -1;
+        // return new double[]{reward, -reward, 0};
         int sumRemCardsP1 = 0;
         for (Integer i : playerCards.get(GSGameInfo.FIRST_PLAYER))
             sumRemCardsP1 += i;

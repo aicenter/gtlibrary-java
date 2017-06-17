@@ -348,7 +348,7 @@ public class ReverseDoubleOracle {
 
                 case SINGLE_IMPROVED:
                     if (doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]) == null ||
-                            doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]) == null) { // we have not calculated the value for the current player in RG yet
+                            doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]) == null) { // we have not calculated the reward for the current player in RG yet
                             currentPlayerIndex = opponentPlayerIndex;
                     } else {
                         double oldLPResult = doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]);

@@ -39,6 +39,9 @@ import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.honeypotGame.HoneypotExpander;
+import cz.agents.gtlibrary.domain.honeypotGame.HoneypotGameInfo;
+import cz.agents.gtlibrary.domain.honeypotGame.HoneypotGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
@@ -112,7 +115,19 @@ public class FullSequenceEFG {
 //		runUpOrDown();
 //        runOshiZumo();
 //        testExploitGame();
-		runFlipIt();
+//		runFlipIt();
+		runHoneyPot();
+	}
+
+	private static void runHoneyPot(){
+		HoneypotGameInfo gameInfo = new HoneypotGameInfo();
+		HoneypotGameState rootState = new HoneypotGameState(gameInfo.allNodes);
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new HoneypotExpander<>(algConfig), gameInfo, algConfig);
+		efg.generate();
+
+		GambitEFG gambit = new GambitEFG();
+		gambit.buildAndWrite("HPG_test.gbt", rootState, new HoneypotExpander<>(algConfig));
 	}
 
 	private static void runFlipIt(){

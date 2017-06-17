@@ -22,8 +22,8 @@ public class HoneypotGameState extends GameStateImpl {
     protected Player playerToMove;
     protected double attackerBudget;
     protected double defenderBudget;
-    protected double attackCost;
-    protected double attackerActualReward;
+//    protected double uniformAttackCost;
+    protected double attackerCurrentReward;
     protected double highestValueReceived = Integer.MIN_VALUE;
     protected int lastDefendedNode = Integer.MIN_VALUE;
     protected int remainingAttacks;
@@ -36,12 +36,12 @@ public class HoneypotGameState extends GameStateImpl {
         this.attackedNodes = new int[possibleNodes.length];
         this.observedHoneypots = new boolean[possibleNodes.length];
         this.playerToMove = HoneypotGameInfo.DEFENDER;
-        this.attackerActualReward = 0;
+        this.attackerCurrentReward = 0;
 
         this.remainingAttacks = HoneypotGameInfo.attacksAllowed;
         this.attackerBudget = HoneypotGameInfo.initialAttackerBudget;
         this.defenderBudget = HoneypotGameInfo.initialDefenderBudget;
-        this.attackCost = HoneypotGameInfo.attackCost;
+//        this.uniformAttackCost = HoneypotGameInfo.uniformAttackCost;
     }
 
     private HoneypotGameState(HoneypotGameState gameState) {
@@ -54,8 +54,8 @@ public class HoneypotGameState extends GameStateImpl {
         this.playerToMove = gameState.playerToMove;
         this.attackerBudget = gameState.attackerBudget;
         this.defenderBudget = gameState.defenderBudget;
-        this.attackCost = gameState.attackCost;
-        this.attackerActualReward = gameState.attackerActualReward;
+//        this.uniformAttackCost = gameState.uniformAttackCost;
+        this.attackerCurrentReward = gameState.attackerCurrentReward;
         this.highestValueReceived = gameState.highestValueReceived;
         this.remainingAttacks = gameState.remainingAttacks;
         if (playerToMove != HoneypotGameInfo.ATTACKER) {
@@ -81,13 +81,13 @@ public class HoneypotGameState extends GameStateImpl {
 //
 //        for (HoneypotGameNode attackedNode : attackedNodes) {
 //            if (!observedHoneypots.contains(attackedNode)) {
-//                utilities[0] -= attackedNode.value;
-//                utilities[1] += attackedNode.value;
+//                utilities[0] -= attackedNode.reward;
+//                utilities[1] += attackedNode.reward;
 //            }
 //        }
 
-        utilities[0] = -attackerActualReward;
-        utilities[1] = attackerActualReward;
+        utilities[0] = -attackerCurrentReward;
+        utilities[1] = attackerCurrentReward;
 
         return utilities;
     }
@@ -99,7 +99,14 @@ public class HoneypotGameState extends GameStateImpl {
 
     @Override
     public boolean isGameEnd() {
-        return remainingAttacks == 0;
+        return remainingAttacks == 0 || !attackerCanAttack();
+    }
+
+    private boolean attackerCanAttack(){
+        for (HoneypotGameNode node : HoneypotGameInfo.allNodes)
+            if (node.attackCost <= attackerBudget)
+                return true;
+        return false;
     }
 
     @Override
@@ -165,13 +172,13 @@ public class HoneypotGameState extends GameStateImpl {
         HoneypotGameNode node = action.node;
         if (node.id != HoneypotGameInfo.NO_ACTION_ID) {
             honeypots[node.id - 1] = true;
-            defenderBudget -= node.value;
+            defenderBudget -= node.defendCost;
             lastDefendedNode = node.id;
 
             double minValue = Double.MAX_VALUE;
             for (HoneypotGameNode possibleNode : possibleNodes) {
-                if (!honeypots[possibleNode.id - 1] && possibleNode.value < minValue && possibleNode.id > lastDefendedNode) {
-                    minValue = possibleNode.value;
+                if (!honeypots[possibleNode.id - 1] && possibleNode.defendCost < minValue && possibleNode.id > lastDefendedNode) {
+                    minValue = possibleNode.defendCost;
                 }
             }
 
@@ -186,25 +193,21 @@ public class HoneypotGameState extends GameStateImpl {
     void executeAttackerAction(HoneypotAction action) {
         HoneypotGameNode node = action.node;
 
-        attackerBudget -= attackCost;
+        attackerBudget -= node.attackCost;//uniformAttackCost;
         remainingAttacks--;
 
         if (honeypots[node.id - 1]) {
             observedHoneypots[node.id - 1] = true;
         } else if (attackedNodes[node.id - 1] > 0) {
-            attackerActualReward += node.value / 2;
+            attackerCurrentReward += node.reward / 2;
         } else {
-            attackerActualReward += node.value;
+            attackerCurrentReward += node.reward;
 
-            if (node.value > highestValueReceived){
-                highestValueReceived = node.value;
+            if (node.reward > highestValueReceived) {
+                highestValueReceived = node.reward;
             }
         }
         attackedNodes[node.id - 1]++;
-    }
-
-    double getDefenderBudget() {
-        return defenderBudget;
     }
 
     public void setRemainingAttacks(int remainingAttacks){

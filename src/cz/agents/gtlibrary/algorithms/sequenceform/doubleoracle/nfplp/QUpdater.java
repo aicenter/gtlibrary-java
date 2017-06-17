@@ -42,9 +42,9 @@ public class QUpdater extends InitialQBuilder {
 
 //    @Override
 //    protected void updateForP2(Sequence p2Sequence) {
-//        Double value = explSeqSum.get(p2Sequence);
+//        Double reward = explSeqSum.get(p2Sequence);
 //
-//        if (value != null)
+//        if (reward != null)
 //            lpTable.setConstraint(p2Sequence, "s", explSeqSum.get(p2Sequence));
 //    }
 

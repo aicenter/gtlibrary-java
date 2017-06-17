@@ -6,11 +6,15 @@ package cz.agents.gtlibrary.domain.honeypotGame;
 public class HoneypotGameNode {
 
     protected int id;
-    protected double value;
+    protected double reward;
+    protected double attackCost;
+    protected double defendCost;
 
-    public HoneypotGameNode(int id, double value){
+    public HoneypotGameNode(int id, double reward, double attackCost, double defendCost){
         this.id = id;
-        this.value = value;
+        this.reward = reward;
+        this.attackCost = attackCost;
+        this.defendCost = defendCost;
     }
 
     @Override
@@ -36,7 +40,7 @@ public class HoneypotGameNode {
     @Override
     public String toString() {
         if (id != HoneypotGameInfo.NO_ACTION_ID) {
-            return "ID: " + id + " | VALUE: " + value;
+            return "ID: " + id + " | REWARD: " + reward + " | ACOST: " + attackCost + " | DCOST: " + defendCost;
         } else {
             return "DONE";
         }

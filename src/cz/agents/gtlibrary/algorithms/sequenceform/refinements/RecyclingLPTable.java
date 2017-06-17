@@ -69,8 +69,8 @@ public class RecyclingLPTable extends LPTable {
         updateVariableIndices(varKey);
     }
 
-//    public void setConstraint(Object eqKey, Object varKey, double value) {
-//        if (Math.abs(value) < Double.MIN_VALUE)
+//    public void setConstraint(Object eqKey, Object varKey, double reward) {
+//        if (Math.abs(reward) < Double.MIN_VALUE)
 //            return;
 //        Map<Object, Double> row = constraints.get(eqKey);
 //
@@ -78,22 +78,22 @@ public class RecyclingLPTable extends LPTable {
 //            row = new LinkedHashMap<Object, Double>();
 //            constraints.put(eqKey, row);
 //            newConstraints.put(eqKey, row);
-//            row.put(varKey, value);
+//            row.put(varKey, reward);
 //        } else {
 //            if (newConstraints.containsKey(eqKey)) {
-//                row.put(varKey, value);
+//                row.put(varKey, reward);
 //            } else {
 //                Map<Object, Double> rowDiff = new LinkedHashMap<Object, Double>();
 //
 //                if (row.containsKey(varKey)) {
-//                    if (Math.abs(value - row.get(varKey)) < 1e-10)
+//                    if (Math.abs(reward - row.get(varKey)) < 1e-10)
 //                        return;
-//                    rowDiff.put(varKey, value - row.get(varKey));
+//                    rowDiff.put(varKey, reward - row.get(varKey));
 //                } else {
-//                    rowDiff.put(varKey, value);
+//                    rowDiff.put(varKey, reward);
 //                }
 //                updatedConstraints.put(eqKey, rowDiff);
-//                row.put(varKey, value);
+//                row.put(varKey, reward);
 //            }
 //        }
 //
@@ -102,7 +102,7 @@ public class RecyclingLPTable extends LPTable {
 //    }
 
     public void setConstraint(Object eqKey, Object varKey, double value) {
-//        if (Math.abs(value) < Double.MIN_VALUE)
+//        if (Math.abs(reward) < Double.MIN_VALUE)
 //            return;
         Map<Object, Double> row = constraints.get(eqKey);
 

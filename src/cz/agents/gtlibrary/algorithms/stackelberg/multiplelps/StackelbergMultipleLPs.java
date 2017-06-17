@@ -71,7 +71,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormMultipleLPs {
 //                              debugOutput.println(entry);
 //                      }
                     if (v > maxValue) {
-                        debugOutput.println("Best value is " + v + " for follower strategy: ");
+                        debugOutput.println("Best reward is " + v + " for follower strategy: ");
                         maxValue = v;
                         resultValues.put(leader, maxValue);
                         iterator.setBestValue(maxValue);
