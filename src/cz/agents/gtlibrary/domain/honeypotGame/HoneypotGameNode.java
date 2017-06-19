@@ -17,24 +17,25 @@ public class HoneypotGameNode {
         this.defendCost = defendCost;
     }
 
-    @Override
-    public int hashCode() {
-        return (id + 7) * 17;
+    public double getRewardAfterNumberOfAttacks(int numberOfAttacks){
+        if (numberOfAttacks == 0) return reward;
+        else return 0; // Math.pow(reward, 1/numberOfAttacks); // reward / Math.pow(2,numberOfAttacks);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        HoneypotGameNode other = (HoneypotGameNode) obj;
-        if (this.id != other.id) {
-            return false;
-        }
-        return true;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        HoneypotGameNode that = (HoneypotGameNode) o;
+
+        return id == that.id;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
     }
 
     @Override
