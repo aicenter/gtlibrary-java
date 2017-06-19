@@ -22,7 +22,7 @@ public class HoneypotGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[]{DEFENDER, ATTACKER};//, NATURE};
     public static final int NO_ACTION_ID = -1;
 
-    public static int attacksAllowed = 8;
+    public static int attacksAllowed = 6;
     public static HoneypotGameNode[] allNodes;
     public static final double[] NODE_REWARDS = new double[]{10, 60, 50, 46, 70, 4, 23, 12, 34, 45};
     public static final double[] NODE_ATTACKERCOSTS = new double[]{15, 25, 25, 5, 15, 55, 25, 5, 15, 5};
@@ -133,7 +133,7 @@ public class HoneypotGameInfo implements GameInfo {
         String info = "Honeypot Game : defender budget = " + initialDefenderBudget + "; attacker budget = " + initialAttackerBudget +
                 "; attacks allowed = " + attacksAllowed;
         if (readInputFile) info += "; input file = " + inputFile;
-        else info += "; node values = "  + Arrays.toString(NODE_REWARDS);
+        else info += "; node rewards = "  + Arrays.toString(NODE_REWARDS);
         return info;
     }
 

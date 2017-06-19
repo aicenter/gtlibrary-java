@@ -49,6 +49,9 @@ public class HoneypotExpander<I extends InformationSet> extends ExpanderImpl<I> 
             }
         }
 
+        // attacker can also pass -> then the game ends
+        actions.add(new HoneypotAction(new HoneypotGameNode(HoneypotGameInfo.NO_ACTION_ID, 0, 0, 0), getAlgorithmConfig().getInformationSetFor(gameState), gameState.getPlayerToMove()));
+
         return actions;
     }
 
@@ -63,7 +66,7 @@ public class HoneypotExpander<I extends InformationSet> extends ExpanderImpl<I> 
     private boolean isAttackable(HoneypotGameNode node, HoneypotGameState gameState){
         if (node.attackCost > gameState.attackerBudget ) return false;
         if (gameState.observedHoneypots[node.id - 1]) return false;
-        if (realNodeValue(node, gameState.attackedNodes[node.id - 1]) < gameState.highestValueReceived / 2) return false;
+//        if (realNodeValue(node, gameState.attackedNodes[node.id - 1]) < gameState.highestValueReceived / 2) return false;
 
         return true;
     }
