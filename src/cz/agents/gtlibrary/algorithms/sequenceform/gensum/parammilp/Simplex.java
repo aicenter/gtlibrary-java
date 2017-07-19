@@ -274,7 +274,7 @@ public class Simplex implements Algorithm {
             assert getFirstPhaseSlacksInBasis(data.basis).isEmpty();
             System.out.println("***************************");
             System.out.println("First phase results: ");
-            System.out.println("value: " + value);
+            System.out.println("reward: " + value);
             printRealPlan(p1Rp);
             printRealPlan(p2Rp);
         }
@@ -306,7 +306,7 @@ public class Simplex implements Algorithm {
             printVariableValues(variableValues);
             System.out.println("***************************");
             System.out.println("Second phase results: ");
-            System.out.println("value: " + value);
+            System.out.println("reward: " + value);
             printRealPlan(p1Rp);
             printRealPlan(p2Rp);
         }

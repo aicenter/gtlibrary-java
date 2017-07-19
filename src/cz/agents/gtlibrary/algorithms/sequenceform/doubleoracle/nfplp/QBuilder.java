@@ -66,10 +66,10 @@ public class QBuilder extends InitialQBuilder {
 //    @Override
 //    protected void updateForP2(Sequence p2Sequence) {
 //        super.updateForP2(p2Sequence);
-//        Double value = explSeqSum.get(p2Sequence);
+//        Double reward = explSeqSum.get(p2Sequence);
 //
-//        if (value != null)
-//            lpTable.setConstraint(p2Sequence, "s", value);
+//        if (reward != null)
+//            lpTable.setConstraint(p2Sequence, "s", reward);
 //    }
 
 	@Override

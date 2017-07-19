@@ -81,7 +81,8 @@ public abstract class ActionImpl implements Action {
                     if (myAction.getInformationSet().hashCode() != otherAction.getInformationSet().hashCode())
                         return false;
             }
-        } else if(!informationSet.equals(((ActionImpl) obj).informationSet)) {
+        } else
+            if(!informationSet.equals(((ActionImpl) obj).informationSet)) {
             return false;
         }
 //        } else if (!informationSet.equals(((ActionImpl) obj).informationSet))

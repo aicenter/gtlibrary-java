@@ -97,7 +97,7 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
 
             if (cplex.getCplexStatus() == CplexStatus.Optimal || cplex.getCplexStatus() == CplexStatus.OptimalTol) {
                 double v = cplex.getValue(v0);
-                debugOutput.println("Best value is " + v);
+                debugOutput.println("Best reward is " + v);
 
                 maxValue = v;
 

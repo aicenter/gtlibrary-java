@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.stackelberg.flipit.experiments;
+package cz.agents.gtlibrary.algorithms.flipit.experiments;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRISAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.DefaultSimulator;
@@ -7,7 +7,6 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.*;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
@@ -24,15 +23,19 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.IntBinaryOperator;
 
 /**
  * Created by Jakub Cerny on 07/05/17.
+ *
+ *
+ * Experiments with using fast equilibrium approximate by MCTS or CFR as a starting strategy for DO.
+ * The approximate strategy has large support, which has to be cut off in order to begin with a small enough
+ * restricted game.
  */
 public class ConvergenceExperiment {
 
     private static int RUN_MS = 280000;
-    private static boolean RUN_CFR = false;
+    private static boolean RUN_CFR = false; // use MCTS if false
     private static int SUPPORT_SIZE = 2;
     private static double SUPPORT_MIN = 0.2;
 

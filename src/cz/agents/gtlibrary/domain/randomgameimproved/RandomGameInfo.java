@@ -30,9 +30,9 @@ public class RandomGameInfo implements GameInfo {
     public static boolean INTEGER_UTILITY = false;
     public static boolean UTILITY_CORRELATION = true;
     public static boolean MULTIPLE_PLAYER_DEPTHS = false;
-    public static int MAX_CENTER_MODIFICATION = 2;
+    public static int MAX_CENTER_MODIFICATION = 3;
     public static boolean FIXED_SIZE_BF = false;
-    public static double NATURE_STATE_PROBABILITY = 0;
+    public static double NATURE_STATE_PROBABILITY = 0.3;
     public static int[] ACTIONS;
 
     public static boolean IMPERFECT_RECALL = false;
@@ -42,7 +42,7 @@ public class RandomGameInfo implements GameInfo {
     public static ObservationsType OBSERVATIONS_TYPE = ObservationsType.FORGETFUL;
     public static double FORGET_OBSERVATION_PROBABILITY = 0.5;
 
-    public static long seed = 12;
+    public static long seed = 11;
 
     public static Random rnd = new HighQualityRandom(seed);
     public static ModificationGenerator modificationGenerator = new UniformModificationGenerator(MAX_CENTER_MODIFICATION);

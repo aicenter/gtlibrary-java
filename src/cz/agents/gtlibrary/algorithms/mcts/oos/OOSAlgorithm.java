@@ -395,7 +395,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
      * @param bs        probability that the current (possibly biased) sample reaches this node
      * @param us        probability that the unbiased sample reaches this node
      * @param expPlayer the exploring player for this iteration
-     * @return iteration game value is actually returned. Other return values are in global x and l
+     * @return iteration game reward is actually returned. Other return values are in global x and l
      */
     protected double iteration(Node node, double pi, double pi_, double bs, double us, Player expPlayer) {
         //useful for debugging

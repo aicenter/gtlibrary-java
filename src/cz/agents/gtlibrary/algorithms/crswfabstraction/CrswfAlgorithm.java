@@ -631,7 +631,7 @@ public class CrswfAlgorithm {
      *                            cluster. The order should be the same as the order of the corresponding set partitions.
      * @param cplex The cplex object containg a solved instance of MILP used in the Crswf Algorithm.
      * @return A collection of lists of information sets. All sets in each lists should be merged.
-     * @throws IloException The exception is thrown when cplex cannot read the value of clustering variables.
+     * @throws IloException The exception is thrown when cplex cannot read the reward of clustering variables.
      */
     private Collection<List<InformationSet>> getSetsToMerge(List<Set<InformationSet>> partitionedSets,
                                                             List<Map<InformationSet, List<IloNumVar>>> clusteringVariables,

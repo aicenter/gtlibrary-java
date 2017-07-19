@@ -26,7 +26,7 @@ public class SumEnforcingStackelbergLP extends SumForbiddingStackelbergLP {
     protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Iterable<Sequence> brokenStrategyCauses) {
         Pair<Map<Sequence, Double>, Double> currentBest = dummyResult;
 
-//        current.setValue(value);
+//        current.setValue(reward);
         for (Sequence brokenStrategyCause : brokenStrategyCauses) {
             restrictFollowerPlay(brokenStrategyCause, brokenStrategyCauses, lpData);
 //            currentSequences.add(brokenStrategyCause);
@@ -39,15 +39,15 @@ public class SumEnforcingStackelbergLP extends SumForbiddingStackelbergLP {
 //            }
 //            SequenceSet temp = current;
 //
-//            current = current.createSuperSet(brokenStrategyCause, value);
-//            temp.setValue(value);
+//            current = current.createSuperSet(brokenStrategyCause, reward);
+//            temp.setValue(reward);
             Pair<Map<Sequence, Double>, Double> result = solve(getLowerBound(lowerBound, currentBest), upperBound);
 
 //            current.setValue(result.getRight());
             if (result.getRight() > currentBest.getRight()) {
                 currentBest = result;
                 if (currentBest.getRight() >= value - eps) {
-                    System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent value " + value + "----------------");
+                    System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent reward " + value + "----------------");
                     return currentBest;
                 }
             }

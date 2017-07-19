@@ -94,7 +94,7 @@ public class MDPEpsilonFristBetterResponse extends MDPBestResponse {
                 cachedIsChange.clear();
                 bestResponseData.clear();
                 epsilon = epsilon / 2.0;
-                System.out.println("BR("+getPlayer()+"): recalculating value ");
+                System.out.println("BR("+getPlayer()+"): recalculating reward ");
             }
 
             result = calculateBRValue(myStrategy.getRootState(), myStrategy, opponentStrategy, getConfig().getBestUtilityValue(getConfig().getOtherPlayer(getPlayer())), 1d);
@@ -102,7 +102,7 @@ public class MDPEpsilonFristBetterResponse extends MDPBestResponse {
         return result.getLeft().getLeft();
     }
 
-    // returns <<best value, original value (given current strategy; null if not applicable)>, false/true if there is a change from default strategy
+    // returns <<best reward, original reward (given current strategy; null if not applicable)>, false/true if there is a change from default strategy
     private Pair<Pair<Double, Double>, Boolean> calculateBRValue(MDPState state, MDPContractingStrategy myStrategy, MDPStrategy opponentStrategy, double alpha, double probability) {
 
         if (!myStrategy.hasAllStateASuccessor(state)) { // terminal state

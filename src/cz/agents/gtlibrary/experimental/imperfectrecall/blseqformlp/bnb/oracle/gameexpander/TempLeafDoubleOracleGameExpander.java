@@ -680,7 +680,7 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
 
 //    private double getUtilityUBForCombo(GameState state, List<Map<Action, Double>> minPlayerBestResponses) {
 //        long testStart = mxBean.getCurrentThreadCpuTime();
-//        double value = minPlayerBestResponses.stream().mapToDouble(bestResponse -> {
+//        double reward = minPlayerBestResponses.stream().mapToDouble(bestResponse -> {
 //            if (bestResponse.isEmpty())
 //                return Double.NEGATIVE_INFINITY;
 //            long start = mxBean.getCurrentThreadCpuTime();
@@ -693,19 +693,19 @@ public class TempLeafDoubleOracleGameExpander extends DoubleOracleGameExpander {
 ////        if(tempHack != null) {
 //        double value1 = getUtilityUBForCombo(state, tempHack);
 //
-////            if(Math.abs(value - value1) > 1e-8) {
+////            if(Math.abs(reward - value1) > 1e-8) {
 ////                getUtilityUBForCombo(state, tempHack);
 ////                assert false;
 ////            }
 ////        }
-////        double value = Double.NEGATIVE_INFINITY;
+////        double reward = Double.NEGATIVE_INFINITY;
 ////        for (Map<Action, Double> bestResponse : minPlayerBestResponses) {
 ////            long start = mxBean.getCurrentThreadCpuTime();
 ////
 ////            br.getBestResponseIn(state, bestResponse);
 ////            brTime += (mxBean.getCurrentThreadCpuTime() - start) / 1e6;
-////            if (br.getValue() > value)
-////                value = br.getValue();
+////            if (br.getValue() > reward)
+////                reward = br.getValue();
 ////        }
 //        testTime += (mxBean.getCurrentThreadCpuTime() - testStart) / 1e6;
 //        return value1;

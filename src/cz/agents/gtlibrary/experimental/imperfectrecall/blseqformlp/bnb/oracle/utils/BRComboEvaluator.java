@@ -35,7 +35,7 @@ public class BRComboEvaluator {
 //            Map<Action, Double> currentValues = expander.getActions(state).stream().collect(Collectors.toMap(a -> a, a -> computeEvaluation(state.performAction(a))));
 //            Map<Action, Double> currentStoredValues = expectedValues.getOrDefault(state.getSequenceForPlayerToMove(), new HashMap<>(currentValues.size()));
 //
-//            currentValues.forEach((key, val) -> currentStoredValues.compute(key, (actionKey, value) -> Math.max(currentValues.get(key), value)));
+//            currentValues.forEach((key, val) -> currentStoredValues.compute(key, (actionKey, reward) -> Math.max(currentValues.get(key), reward)));
 //            expectedValues.put(state.getSequenceForPlayerToMove(), currentStoredValues);
 //            return currentValues.values().stream().max(Double::compare).get();
 //        }
@@ -48,7 +48,7 @@ public class BRComboEvaluator {
 //
 //        Map<Action, Double> currentStoredValues = expectedValues.getOrDefault(state.getSequenceForPlayerToMove(), new HashMap<>(currentValues.size()));
 //
-//        currentValues.forEach((key, val) -> currentStoredValues.compute(key, (actionKey, value) -> Math.max(currentValues.get(key), value)));
+//        currentValues.forEach((key, val) -> currentStoredValues.compute(key, (actionKey, reward) -> Math.max(currentValues.get(key), reward)));
 //        expectedValues.put(state.getSequenceForPlayerToMove(), currentStoredValues);
 //        return minPlayerValuesAggregator.apply(currentValues.values().stream().mapToDouble(v -> v)).orElse(computeEvaluation(state.performAction(actions.get(0))));
 //    }

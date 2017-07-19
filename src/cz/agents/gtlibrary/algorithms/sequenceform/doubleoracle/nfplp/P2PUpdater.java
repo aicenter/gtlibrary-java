@@ -55,10 +55,10 @@ public class P2PUpdater extends InitialP2PBuilder {
 //            lpTable.setConstraint(p1Sequence, "t", 1);
 //        else
 //            lpTable.removeFromConstraint(p1Sequence, "t");
-//        Double value = explSeqSum.get(p1Sequence);
+//        Double reward = explSeqSum.get(p1Sequence);
 //
-//        if (value != null)
-//            lpTable.setConstant(p1Sequence, -value);
+//        if (reward != null)
+//            lpTable.setConstant(p1Sequence, -reward);
 //    }
 
 //    @Override

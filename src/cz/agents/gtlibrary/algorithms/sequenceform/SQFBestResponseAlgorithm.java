@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 public class SQFBestResponseAlgorithm {
 
-    private static final boolean USE_FIX = true;
+    private static final boolean USE_FIX = false;
     public long nodes = 0;
     protected Expander<? extends InformationSet> expander;
     protected Map<GameState, Double> cachedValuesForNodes = new HashMap<GameState, Double>();
@@ -292,6 +292,14 @@ public class SQFBestResponseAlgorithm {
     public void selectAction(GameState state, BRActionSelection selection, List<Action> actionsToExplore) {
 //        List<Action> actionsToExplore = expander.getActions(state);
 //        actionsToExplore = selection.sortActions(state, actionsToExplore);
+
+        Double rP = getOpponentRealizationPlan().get(state.getHistory().getSequenceOf(players[opponentPlayerIndex]));
+        if (rP == null) {
+            rP = 0d;
+        }
+
+        double stateProb = rP*state.getNatureProbability();
+
         for (Action act : actionsToExplore) {
             Action action = act;
 
@@ -303,9 +311,13 @@ public class SQFBestResponseAlgorithm {
                 oppRP = 0d;
             }
 
-            double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
-            if (newLowerBound <= MAX_UTILITY_VALUE) {
-                double value = bestResponse(newState, newLowerBound);
+            if (state.getPlayerToMove().getId() != searchingPlayerIndex) stateProb = natureProb*oppRP;
+
+            double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP, state);
+
+            // nasobeni stateProb tady nebyvalo
+            if (newLowerBound <= stateProb * MAX_UTILITY_VALUE) {
+                double value = bestResponse(newState, newLowerBound) ;
                 selection.addValue(action, value, natureProb, oppRP);
             }
         }
@@ -329,7 +341,7 @@ public class SQFBestResponseAlgorithm {
 
         public abstract List<Action> sortActions(GameState state, List<Action> actions);
 
-        public abstract double calculateNewBoundForAction(Action action, double natureProb, double orpProb);
+        public abstract double calculateNewBoundForAction(Action action, double natureProb, double orpProb, GameState state);
     }
 
     public class BROppSelection extends BRActionSelection {
@@ -375,7 +387,7 @@ public class SQFBestResponseAlgorithm {
         }
 
         @Override
-        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb) {
+        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb, GameState state) {
             double probability = natureProb;
             if (nonZeroORP) {
                 probability *= orpProb;
@@ -501,7 +513,7 @@ public class SQFBestResponseAlgorithm {
         }
 
         @Override
-        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb) {
+        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb, GameState state) {
             if (nonZeroORP && orpProb <= 0) {
                 return Double.POSITIVE_INFINITY;
             }
@@ -514,7 +526,7 @@ public class SQFBestResponseAlgorithm {
 //					double probability = natureProb;
 //					if (nonZeroORP) probability *= orpProb;
                     return ((previousMaxValue + this.allNodesProbability * (-MAX_UTILITY_VALUE))
-                            - (actionExpectedValues.get(action) + (this.allNodesProbability - alternativeNodesProbs.get(currentNode)) * MAX_UTILITY_VALUE));
+                                - (actionExpectedValues.get(action) + (this.allNodesProbability - alternativeNodesProbs.get(currentNode)) * MAX_UTILITY_VALUE));
                 }
             }
         }
@@ -526,7 +538,7 @@ public class SQFBestResponseAlgorithm {
             }
 
             List<Action> result = new ArrayList<Action>();
-            // sort according to my old realizaiton plan
+            // sort according to my old realization plan
             Sequence currentSequence = state.getSequenceFor(players[searchingPlayerIndex]);
             Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
             boolean hasPositiveProb = false;
@@ -793,7 +805,6 @@ public class SQFBestResponseAlgorithm {
             }
 
         }
-//        assert new HashSet<>(alternativeNodesOutsideRGFix).equals(new HashSet<>(alternativeNodes));
         return alternativeNodes;
     }
 

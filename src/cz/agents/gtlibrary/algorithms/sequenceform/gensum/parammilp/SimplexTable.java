@@ -256,7 +256,7 @@ public class SimplexTable {
     }
 
     /**
-     * Set upper bound for variable represented by varObject, default value is POSITIVE_INFINITY
+     * Set upper bound for variable represented by varObject, default reward is POSITIVE_INFINITY
      *
      * @param varKey
      * @param value

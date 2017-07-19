@@ -23,7 +23,6 @@ public class NoInfoFlipItGameState extends FlipItGameState {
     HashMap<FollowerType, Double> attackerReward;
     boolean[] defenderOwnedNodes;
     boolean[] attackerPossiblyOwnedNodes;
-    int hashCode;
 
     public NoInfoFlipItGameState(NoInfoFlipItGameState gameState) {
         this.selectedNodeOwner = gameState.selectedNodeOwner;
@@ -65,13 +64,15 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         hashCode = -1;
         defenderRewards = null;
         attackerRewards = null;
-        attackerObservations = null;
-        defenderObservations = null;
-        attackerControlledNodes = null;
+//        attackerObservations = null;
+//        defenderObservations = null;
+//        attackerControlledNodes = null;
         defenderControlledNodes = null;
         attackerPossiblyControlledNodes = null;
+        defenderObservationFlags = null;
+        attackerObservationFlags = null;
 
-        defenderReward = 0.0;
+        defenderReward = FlipItGameInfo.INITIAL_POINTS;
         attackerReward = new HashMap<>();
         for (FollowerType type : FlipItGameInfo.types){
             attackerReward.put(type, 0.0);
@@ -201,6 +202,7 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
     @Override
     protected boolean defenderHasEnoughPointsToControl(){
+        if (FlipItGameInfo.DEFENDER_CAN_ALWAYS_ATTACK) return true;
         return defenderReward >= FlipItGameInfo.graph.getControlCost(defenderControlNode);
 
     }
@@ -268,19 +270,19 @@ public class NoInfoFlipItGameState extends FlipItGameState {
         return false;
     }
 
-    protected boolean attackerWasSelected(){
-        if (selectedNodeOwner == null)
-            return attackerHasEnoughPointsToControl();
-        else
-            return attackerHasEnoughPointsToControl() && selectedNodeOwner.equals(FlipItGameInfo.ATTACKER);
-    }
-
-    protected boolean defenderWasSelected(){
-        if (selectedNodeOwner == null)
-            return defenderHasEnoughPointsToControl();
-        else
-            return defenderHasEnoughPointsToControl() && selectedNodeOwner.equals(FlipItGameInfo.DEFENDER);
-    }
+//    protected boolean attackerWasSelected(){
+//        if (selectedNodeOwner == null)
+//            return attackerHasEnoughPointsToControl();
+//        else
+//            return attackerHasEnoughPointsToControl() && selectedNodeOwner.equals(FlipItGameInfo.ATTACKER);
+//    }
+//
+//    protected boolean defenderWasSelected(){
+//        if (selectedNodeOwner == null)
+//            return defenderHasEnoughPointsToControl();
+//        else
+//            return defenderHasEnoughPointsToControl() && selectedNodeOwner.equals(FlipItGameInfo.DEFENDER);
+//    }
 
     @Override
     protected void updateDefenderInfo(){
@@ -344,15 +346,15 @@ public class NoInfoFlipItGameState extends FlipItGameState {
 
         // reverse infos -- rewards, points, cost(?), update ownership (?)
 
-        for (Node node : attackerControlledNodes){
-            attackerPoints -= FlipItGameInfo.graph.getReward(node);
-            for (FollowerType type : FlipItGameInfo.types){
-                attackerReward.put(type, attackerReward.get(type) - type.getReward(this,node));
-            }
-        }
-        for (Node node : defenderControlledNodes) {
-            defenderReward -= FlipItGameInfo.graph.getReward(node);
-        }
+//        for (Node node : attackerControlledNodes){
+//            attackerPoints -= FlipItGameInfo.graph.getReward(node);
+//            for (FollowerType type : FlipItGameInfo.types){
+//                attackerReward.put(type, attackerReward.get(type) - type.getReward(this,node));
+//            }
+//        }
+//        for (Node node : defenderControlledNodes) {
+//            defenderReward -= FlipItGameInfo.graph.getReward(node);
+//        }
 
 
 //        this.selectedNodeOwner = gameState.selectedNodeOwner;

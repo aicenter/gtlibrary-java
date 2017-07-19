@@ -64,13 +64,13 @@ public class CFRISIRAlgorithm extends CFRISAlgorithm {
         long start = threadBean.getCurrentThreadCpuTime();
 
         for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
-            System.out.println("P0 value: " + iteration(rootState, 1, 1, rootState.getAllPlayers()[0]));
+            System.out.println("P0 reward: " + iteration(rootState, 1, 1, rootState.getAllPlayers()[0]));
             update(rootState, 1, 1, rootState.getAllPlayers()[0]);
             printMeanStrategy(rootState.getAllPlayers()[0]);
             printStrategy(rootState.getAllPlayers()[0]);
             iters++;
 
-            System.out.println("P1 value: " + iteration(rootState, 1, 1, rootState.getAllPlayers()[1]));
+            System.out.println("P1 reward: " + iteration(rootState, 1, 1, rootState.getAllPlayers()[1]));
             update(rootState, 1, 1, rootState.getAllPlayers()[1]);
             printMeanStrategy(rootState.getAllPlayers()[1]);
             printStrategy(rootState.getAllPlayers()[1]);

@@ -222,7 +222,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 							exactValue = bestResponseAlgorithms[brPlayerIdx].calculateBRNoClear(currentState);
 						}
 						if (brPlayerIdx != 0)
-							exactValue *= -1; // we are storing the utility value for the first player
+							exactValue *= -1; // we are storing the utility reward for the first player
 						Double oppRP = bestResponseAlgorithms[brPlayerIdx].getOpponentRealizationPlan().get(currentState.getHistory().getSequenceOf(currentState.getPlayerToMove()));
 						if (oppRP != null && oppRP > 0)
 							exactValue = exactValue / oppRP;
@@ -360,7 +360,7 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 					if (oppRP != null && oppRP > 0)
 						exactValue = exactValue / oppRP;
 					if (gameInfo.getOpponent(currentState.getPlayerToMove()).getId() != 0)
-						exactValue *= -1; // we are storing the utility value for the first player
+						exactValue *= -1; // we are storing the utility reward for the first player
 					if (exactValue == 0) {
 						assert (getActualNonzeroUtilityValues(currentState) == null);
 					} else {

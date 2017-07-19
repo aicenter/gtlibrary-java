@@ -88,10 +88,10 @@ public class P2PBuilder extends InitialP2PBuilder {
 //
 //        if (lastItSeq.contains(p1Sequence))
 //            lpTable.setConstraint(p1Sequence, "t", 1);
-//        Double value = explSeqSum.get(p1Sequence);
+//        Double reward = explSeqSum.get(p1Sequence);
 //
-//        if (value != null)
-//            lpTable.setConstant(p1Sequence, -value);
+//        if (reward != null)
+//            lpTable.setConstant(p1Sequence, -reward);
 //    }
 
 //    public void updateSolver() {

@@ -61,7 +61,7 @@ public class BFSEnforcingStackelbergLP extends SumEnforcingStackelbergLP {
                     if (result.getRight() > currentBest.getRight()) {
                         currentBest = result;
                         if (currentBest.getRight() >= value - eps) {
-//                            System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent value " + value + "----------------");
+//                            System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent reward " + reward + "----------------");
                             return currentBest;
                         }
                     }
@@ -88,7 +88,7 @@ public class BFSEnforcingStackelbergLP extends SumEnforcingStackelbergLP {
                 double value = lpData.getSolver().getObjValue();
 
                 System.out.println("**************");
-                System.out.println("prober LP value: " + value);
+                System.out.println("prober LP reward: " + value);
 //                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
 //                    if (entry.getKey() instanceof Pair && ((Pair) entry.getKey()).getLeft().equals("v")) {
 //                        double variableValue = lpData.getSolver().getValue(entry.getValue());

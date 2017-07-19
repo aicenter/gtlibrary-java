@@ -1,13 +1,11 @@
-package cz.agents.gtlibrary.algorithms.stackelberg.flipit.iterative;
+package cz.agents.gtlibrary.algorithms.flipit.iterative;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.gensum.parammilp.ParamSimplexData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.RecyclingMILPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.br.FollowerBestResponse;
-import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
@@ -21,13 +19,10 @@ import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
-import sun.java2d.jules.TrapezoidList;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormLP {
 
@@ -78,6 +73,9 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
                 }
                 hashColision = true;
             }
+//            for (Object object : hashes.values())
+//                if (object.equals(sequence))
+//                    System.out.println("EQUALS collision");
             hashes.put(sequence.hashCode(),sequence);
         }
         if (!hashColision) System.out.println("NO HASH COLLISION : " + objects.iterator().next().getClass().getSimpleName());
@@ -378,7 +376,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
                 double value = lpData.getSolver().getObjValue();
 
                 System.out.println("-----------------------");
-                System.out.println("LP value: " + value + " lower bound: " + lowerBound);
+                System.out.println("LP reward: " + value + " lower bound: " + lowerBound);
 //                System.out.println("n it: " + lpData.getSolver().getNiterations());
 //                System.out.println("n nodes: " + lpData.getSolver().getNnodes());
 //                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
@@ -463,7 +461,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 //                }
                 if (causes.isEmpty()) {
 
-                    System.out.println("Found solution candidate with value: " + value);
+                    System.out.println("Found solution candidate with reward: " + value);
 
 //                    System.out.println("/////// START ////////");
 //                    for (FollowerType type : FlipItGameInfo.types) {
@@ -518,9 +516,9 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 //                            lowerBound = result.getRight();
 //                        }
 //
-//                        if (Math.abs(lowerBound - value) < eps) {
+//                        if (Math.abs(lowerBound - reward) < eps) {
 //                            System.out.println("solution found BR");
-//                            return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
+//                            return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), reward);
 //                        }
 //                    }
                     if (value <= lowerBound + eps) {
@@ -663,7 +661,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
             if (result.getRight() > currentBest.getRight()) {
                 currentBest = result;
                 if (currentBest.getRight()  >= value - eps) {
-                    System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent value " + value + "----------------");
+                    System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent reward " + value + "----------------");
                     removeRestriction(brokenStrategyCause.getRight(), lpData, brokenStrategyCause.getLeft());
                     return currentBest;
                 }

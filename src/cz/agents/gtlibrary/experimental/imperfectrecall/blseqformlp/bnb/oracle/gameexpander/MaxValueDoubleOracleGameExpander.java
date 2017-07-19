@@ -24,10 +24,10 @@ public class MaxValueDoubleOracleGameExpander extends TempLeafDoubleOracleGameEx
 //    private double getHighestReachableUtility(GameState state) {
 //        if (state.isGameEnd())
 //            return state.getUtilities()[0];
-//        Double value = p1HighestReachableUtility.get(state);
+//        Double reward = p1HighestReachableUtility.get(state);
 //
-//        if (value != null)
-//            return value;
+//        if (reward != null)
+//            return reward;
 //        Map<Action, GameState> successors = getStateCache().computeIfAbsent(state, s -> new HashMap<>());
 //        OptionalDouble max = expander.getActions(state).stream().map(a -> successors.computeIfAbsent(a, action -> state.performAction(a))).mapToDouble(s -> getHighestReachableUtility(s)).max();
 //

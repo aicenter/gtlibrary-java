@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.stackelberg.flipit.iterative;
+package cz.agents.gtlibrary.algorithms.flipit.iterative;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;

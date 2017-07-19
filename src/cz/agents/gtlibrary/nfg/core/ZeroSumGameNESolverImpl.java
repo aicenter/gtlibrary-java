@@ -168,7 +168,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
             return;
 		MixedStrategy<U> mixedStrategy = new MixedStrategy<U>();
 
-		int i = 1 + 1; //indexed from 1, first value is sumX
+		int i = 1 + 1; //indexed from 1, first reward is sumX
 		for (U strategy : playerTwoStrategySet) {
 			double prob = -getConstraintDual(i); //+1
 			mixedStrategy.put(strategy, prob);
@@ -182,7 +182,7 @@ public class ZeroSumGameNESolverImpl<T extends PureStrategy, U extends PureStrat
 	private void extractPlayerOneStrategy() {
 		MixedStrategy<T> mixedStrategy = new MixedStrategy<T>();
 
-		int i = 1 + 1; //indexed from 1, first value is d - game value
+		int i = 1 + 1; //indexed from 1, first reward is d - game reward
 		for (T strategy : playerOneStrategySet) {
 			double prob = getVariablePrimal(i);
 			mixedStrategy.put(strategy, prob);
