@@ -157,7 +157,7 @@ public class IRGenericPokerGameState extends GenericPokerGameState {
         public ImperfectPokerObservation(GenericPokerAction action) {
             type = action.getActionType();
 //            if(type.equals("b") || type.equals("r")) {
-//                value = action.getValue();
+//                reward = action.getValue();
 //            }
         }
 

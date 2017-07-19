@@ -243,7 +243,7 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
 
                 debugOutput.println("Iteration for depth " + depth + " ended in " + (threadBean.getCurrentThreadCpuTime() - start) / 1e6);
                 if (result != null)
-                    debugOutput.println("Game value " + result.gameValue);
+                    debugOutput.println("Game reward " + result.gameValue);
                 if (Killer.kill) {
                     System.out.println("limit: " + (limit / 1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start) / 1e6));
                     debugOutput.println("Time run out for depth " + depth);

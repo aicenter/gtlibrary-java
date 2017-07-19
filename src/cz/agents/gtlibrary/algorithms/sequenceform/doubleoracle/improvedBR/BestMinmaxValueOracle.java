@@ -78,7 +78,7 @@ public class BestMinmaxValueOracle extends SQFBestResponseAlgorithm {
 
         Double tmpVal = cachedValuesForNodes.get(gameState);
         if (tmpVal != null) { // we have already solved this node as a part of an evaluated information set
-            //maybe we could remove the cached value at this point? No in double-oracle -> we are using it in restricted game
+            //maybe we could remove the cached reward at this point? No in double-oracle -> we are using it in restricted game
             return tmpVal;
         }
 
@@ -231,7 +231,7 @@ public class BestMinmaxValueOracle extends SQFBestResponseAlgorithm {
         }
 
         @Override
-        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb) {
+        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb, GameState state) {
             return Double.NEGATIVE_INFINITY;
         }
     }
@@ -243,7 +243,7 @@ public class BestMinmaxValueOracle extends SQFBestResponseAlgorithm {
         }
 
         @Override
-        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb) {
+        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb, GameState state) {
             if (maxAction == null) return Double.NEGATIVE_INFINITY;
             else return Double.POSITIVE_INFINITY;
         }

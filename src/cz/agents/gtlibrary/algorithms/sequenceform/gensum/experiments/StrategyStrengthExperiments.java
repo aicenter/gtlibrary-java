@@ -1202,12 +1202,12 @@ public class StrategyStrengthExperiments {
 //        UtilityCalculator calculator = new UtilityCalculator(root, expander);
 //        Strategy p1Strtategy = new NoMissingSeqStrategy(p1RealPlan);
 //        Strategy p2Strtategy = new NoMissingSeqStrategy(p2RealPlan);
-//        double value =  calculator.computeUtility(p1Strtategy, p2Strtategy);
-//        values[0] = value;
-//        if(Math.abs(value - values[0]) > 1e-3)
+//        double reward =  calculator.computeUtility(p1Strtategy, p2Strtategy);
+//        values[0] = reward;
+//        if(Math.abs(reward - values[0]) > 1e-3)
 //            System.err.println("");
         if (values[0] > upperBound + 1e-2 || values[0] < lowerBound - 1e-2)
-            System.err.println("error value: " + values[0] + " brNE: " + upperBound + " wr: " + lowerBound);
+            System.err.println("error reward: " + values[0] + " brNE: " + upperBound + " wr: " + lowerBound);
         write(writer, values);
     }
 

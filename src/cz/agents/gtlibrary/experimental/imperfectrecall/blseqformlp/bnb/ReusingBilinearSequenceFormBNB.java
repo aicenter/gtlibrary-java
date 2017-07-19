@@ -197,20 +197,20 @@ public class ReusingBilinearSequenceFormBNB {
     }
 
 //    public int[] getNonDeltaValue(Object object, LPData data) {
-//        double value = 0;
+//        double reward = 0;
 //        IloNumVar[][] actionWValues = table.getWVariablesFor(object);
 //        int[] exactValue = new int[actionWValues[0].length];
 //
 //        try {
 //            for (int k = 0; k < 2; k++) {
-//                value += k*data.getSolver().getValue(actionWValues[k][0]);
+//                reward += k*data.getSolver().getValue(actionWValues[k][0]);
 //            }
 //            for (int k = 1; k < 10; k++) {
 //                for (int i = 1; i < actionWValues[k].length; i++) {
-//                    value += k * data.getSolver().getValue(actionWValues[k][i]) * Math.pow(10, -i);
+//                    reward += k * data.getSolver().getValue(actionWValues[k][i]) * Math.pow(10, -i);
 //                }
 //            }
-//            int intValue = (int)Math.round(value*Math.pow(10, exactValue.length - 1));
+//            int intValue = (int)Math.round(reward*Math.pow(10, exactValue.length - 1));
 //
 //            for (int i = 0; i < exactValue.length; i++) {
 //                exactValue[i] = (int) (intValue/Math.pow(10, exactValue.length - 1 - i));

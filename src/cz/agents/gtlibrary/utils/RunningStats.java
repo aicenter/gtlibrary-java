@@ -31,7 +31,7 @@ public final class RunningStats {
 
 	public void add(double value) {
 		if (Double.isInfinite(value) || Double.isNaN(value)) {
-			throw new IllegalArgumentException("Bad value: " + value);
+			throw new IllegalArgumentException("Bad reward: " + value);
 		}
 		n++;
 

@@ -433,8 +433,8 @@ public class RefCompExperiments {
 //        writer.write("\r\n");
 //        for (Map.Entry<String, double[]> result : p1AbsResults.entrySet()) {
 //            writer.write(result.getKey());
-//            for (double value : result.getValue()) {
-//                writer.write("," + value);
+//            for (double reward : result.getValue()) {
+//                writer.write("," + reward);
 //            }
 //            writer.write("\r\n");
 //        }

@@ -70,25 +70,25 @@ public class FlipItAction extends ActionImpl {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-//        if (!super.equals(o)) return false;
 
         FlipItAction that = (FlipItAction) o;
 
         if (isNoop != that.isNoop) return false;
         if (controlNode != null ? !controlNode.equals(that.controlNode) : that.controlNode != null) return false;
-        if (informationSet != null ? !informationSet.equals(that.informationSet) : that.informationSet != null) return false;
-        return controller != null ? controller.equals(that.controller) : that.controller == null;
+        if (controller  != null ? !controller.equals(that.controller)   : that.controller != null)  return false;
+        return super.equals(o);
 
     }
 
     @Override
     public int hashCode() {
-        int result = controlNode != null ? controlNode.hashCode() : 23;
-        result = 31 * result + (isNoop ? 13 : 29);
-        result = 31 * result + (controller != null ? controller.hashCode() : 37);
-        result = 31 * result + (informationSet!=null ? informationSet.hashCode() : 0);
+        int result = controlNode != null ? controlNode.getIntID()+1/*hashCode()*/ : 0;
+        result = 31 * result + (isNoop ? 1 : 2);
+        result = 31 * result + (controller != null ? (controller.equals(FlipItGameInfo.DEFENDER) ? 3 : 7) : 5);
+        result = 31 * result + (getInformationSet()!=null ? getInformationSet().hashCode() : 0);
         return result;
     }
+
 
     @Override
     public String toString() {

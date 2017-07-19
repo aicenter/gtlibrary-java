@@ -54,7 +54,7 @@ public class Interval {
 
     public double getRelativePosition(double value) {
         if(size < 1e-8) {
-//            assert Math.abs(value - upperBound) < 1e-5;
+//            assert Math.abs(reward - upperBound) < 1e-5;
             return 1;
         }
         return (value - lowerBound)/size;

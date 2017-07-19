@@ -111,7 +111,7 @@ public class OshiZumoAction extends ActionImpl implements Comparable<OshiZumoAct
                     //intentionally empty
                 }*/
 
-        //builder.append("[" + value + ", " + descIS + ", " + player);
+        //builder.append("[" + reward + ", " + descIS + ", " + player);
         builder.append("[" + value + ", " + player);
         builder.append("]");
         return builder.toString();

@@ -28,7 +28,7 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
             }
         });
 
-//        current.setValue(value);
+//        current.setValue(reward);
         for (Sequence brokenStrategyCause : brokenStrategyCauses) {
             restrictFollowerPlay(brokenStrategyCause, brokenStrategyCauses, lpData);
 //            currentSequences.add(brokenStrategyCause);
@@ -41,7 +41,7 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
 //            }
 //            SequenceSet temp = current;
 //
-//            current = current.createSuperSet(brokenStrategyCause, value);
+//            current = current.createSuperSet(brokenStrategyCause, reward);
             Pair<Iterable<Sequence>, Double> result = probe();
 
             if (result.getRight() > Double.NEGATIVE_INFINITY) {
@@ -74,7 +74,7 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
 //            }
 //            SequenceSet temp = this.current;
 //
-//            this.current = this.current.createSuperSet(current.getSecond(), current.getThird() == Double.NEGATIVE_INFINITY ? value : current.getThird());
+//            this.current = this.current.createSuperSet(current.getSecond(), current.getThird() == Double.NEGATIVE_INFINITY ? reward : current.getThird());
             restrictFollowerPlay(current.getSecond(), brokenStrategyCauses, lpData);
             if (current.getThird() > lowerBound)
                 for (Sequence brokenStrategyCause : current.getFirst()) {
@@ -90,7 +90,7 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
 //                    }
 //                    SequenceSet tempTemp = this.current;
 //
-//                    this.current = this.current.createSuperSet(brokenStrategyCause, current.getThird() == Double.NEGATIVE_INFINITY ? value : current.getThird());
+//                    this.current = this.current.createSuperSet(brokenStrategyCause, current.getThird() == Double.NEGATIVE_INFINITY ? reward : current.getThird());
 
                     Pair<Map<Sequence, Double>, Double> result = solve(lowerBound, upperBound);
 
@@ -98,7 +98,7 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
                     if (result.getRight() > currentBest.getRight()) {
                         currentBest = result;
                         if (currentBest.getRight() >= value - eps) {
-//                            System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent value " + value + "----------------");
+//                            System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent reward " + reward + "----------------");
                             return currentBest;
                         }
                     }
@@ -129,7 +129,7 @@ public class BFSForbiddingStackelbergLP extends SumForbiddingStackelbergLP {
                 double value = lpData.getSolver().getObjValue();
 
                 System.out.println("**************");
-                System.out.println("prober LP value: " + value);
+                System.out.println("prober LP reward: " + value);
 //                for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
 //                    if (entry.getKey() instanceof Pair && ((Pair) entry.getKey()).getLeft().equals("v")) {
 //                        double variableValue = lpData.getSolver().getValue(entry.getValue());

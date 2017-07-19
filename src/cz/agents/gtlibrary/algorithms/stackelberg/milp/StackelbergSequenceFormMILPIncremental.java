@@ -64,7 +64,7 @@ public class StackelbergSequenceFormMILPIncremental extends StackelbergSequenceF
 
                 if (cplex.getCplexStatus() == IloCplex.CplexStatus.Optimal || cplex.getCplexStatus() == IloCplex.CplexStatus.OptimalTol) {
                     double v = cplex.getValue(v0);
-                    debugOutput.println("Best value is " + v);
+                    debugOutput.println("Best reward is " + v);
 
                     maxValue = v;
 

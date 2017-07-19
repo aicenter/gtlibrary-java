@@ -17,7 +17,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.stackelberg.flipit;
+package cz.agents.gtlibrary.algorithms.flipit;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
@@ -108,7 +108,7 @@ public class BayesianStackelbergSequenceFormMILP extends StackelbergSequenceForm
 
             if (cplex.getCplexStatus() == CplexStatus.Optimal || cplex.getCplexStatus() == CplexStatus.OptimalTol) {
                 double v = cplex.getValue(v0);
-                debugOutput.println("Best value is " + v);
+                debugOutput.println("Best reward is " + v);
 
                 maxValue = v;
 

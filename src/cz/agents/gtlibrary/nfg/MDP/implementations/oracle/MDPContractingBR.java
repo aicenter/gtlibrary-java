@@ -74,7 +74,7 @@ public class MDPContractingBR extends MDPBestResponse {
         return result.getLeft().getLeft();
     }
 
-    // returns <<best value, original value (given current strategy; null if not applicable)>, false/true if there is a change from default strategy
+    // returns <<best reward, original reward (given current strategy; null if not applicable)>, false/true if there is a change from default strategy
     private Pair<Pair<Double, Double>, Boolean> calculateBRValue(MDPState state, MDPContractingStrategy myStrategy, MDPStrategy opponentStrategy, double alpha, double probability) {
 
         if (!myStrategy.hasAllStateASuccessor(state)) { // terminal state
@@ -155,11 +155,11 @@ public class MDPContractingBR extends MDPBestResponse {
                 for (MDPAction a : actions) {
                     if (myStrategy.isActionInFixedSupport(state, a)) {
                         if (Math.abs(actionValues.get(a) - bestValue) > 1e-6) {
-                            statesToExpand.add(state); //action has to be a part of the BR -- the value must be the best -- if not, the state is again expanded
+                            statesToExpand.add(state); //action has to be a part of the BR -- the reward must be the best -- if not, the state is again expanded
                         }
                     } else {
                         if (Math.abs(actionValues.get(a) - bestValue) <= 1e-6) {
-                            statesToExpand.add(state); //action cannot be a part of the BR -- the value must be worse -- if not, the state is again expanded
+                            statesToExpand.add(state); //action cannot be a part of the BR -- the reward must be worse -- if not, the state is again expanded
                         }
                     }
                 }

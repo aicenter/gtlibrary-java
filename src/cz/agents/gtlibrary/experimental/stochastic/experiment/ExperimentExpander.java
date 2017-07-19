@@ -414,8 +414,8 @@ public class ExperimentExpander implements StochasticExpander {
 //	private int getFirstNonZeroIndex(Map<Node, Double> distribution) {
 //		int index = 0;
 //
-//		for (Double value : distribution.values()) {
-//			if (value > 0)
+//		for (Double reward : distribution.values()) {
+//			if (reward > 0)
 //				return index;
 //			index++;
 //		}
