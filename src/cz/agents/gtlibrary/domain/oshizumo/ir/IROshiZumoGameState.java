@@ -3,12 +3,11 @@ package cz.agents.gtlibrary.domain.oshizumo.ir;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielAction;
 import cz.agents.gtlibrary.domain.oshizumo.*;
 import cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
-import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
-import cz.agents.gtlibrary.iinodes.Observations;
+import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.ArrayList;
@@ -16,6 +15,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class IROshiZumoGameState extends OshiZumoGameState {
+
+    public static int REMEMBERED_MOVES = 1;
 
     public static void main(String[] args) {
         GameState prGameState = new IIOshiZumoGameState();
@@ -56,33 +57,37 @@ public class IROshiZumoGameState extends OshiZumoGameState {
                 for (int i = 0; i < sequence.size(); i++) {
                     wins.add((int) Math.signum(((OshiZumoAction) sequence.get(i)).compareTo((OshiZumoAction) opponentSequence.get(i))));
                 }
+                for (int i = 1; i <= REMEMBERED_MOVES; i++) {
+                    if (getSequenceForPlayerToMove().size() >= i)
+                        observations.add(new ObservationImpl(((OshiZumoAction) getSequenceForPlayerToMove().get(getSequenceForPlayerToMove().size() - i)).getValue()));
+                }
                 Observations opponentObservations = new Observations(getPlayerToMove(), players[1 - currentPlayerIndex]);
 
                 opponentObservations.add(new OpponentObservation(wins, isGameEnd()));
                 key = new ImperfectRecallISKey(observations, opponentObservations, null);
             } else {
 
-                Observations observations = new Observations(getPlayerToMove(), getPlayerToMove());
-
-                observations.add(new OshiZumoBoardObservation(wrestlerLoc, currentPlayerIndex == 0 ? p1Coins : p2Coins));
-                Sequence sequence = getSequenceForPlayerToMove();
-                Sequence opponentSequence = getSequenceFor(players[1 - getPlayerToMove().getId()]);
-                List<Integer> wins = new ArrayList(sequence.size());
-
-                for (int i = 0; i < sequence.size(); i++) {
-                    wins.add((int) Math.signum(((OshiZumoAction) sequence.get(i)).compareTo((OshiZumoAction) opponentSequence.get(i))));
-                }
-                Observations opponentObservations = new Observations(getPlayerToMove(), players[1 - currentPlayerIndex]);
-
-                opponentObservations.add(new OpponentObservation(wins, isGameEnd()));
-                key = new ImperfectRecallISKey(observations, opponentObservations, null);
-            }
+//                Observations observations = new Observations(getPlayerToMove(), getPlayerToMove());
 //
-//                Observations observations = new Observations(players[currentPlayerIndex], players[1 - currentPlayerIndex]);
+//                observations.add(new OshiZumoBoardObservation(wrestlerLoc, currentPlayerIndex == 0 ? p1Coins : p2Coins));
+//                Sequence sequence = getSequenceForPlayerToMove();
+//                Sequence opponentSequence = getSequenceFor(players[1 - getPlayerToMove().getId()]);
+//                List<Integer> wins = new ArrayList(sequence.size());
 //
-//                observations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
-//                key = new ImperfectRecallISKey(observations, null, null);
+//                for (int i = 0; i < sequence.size(); i++) {
+//                    wins.add((int) Math.signum(((OshiZumoAction) sequence.get(i)).compareTo((OshiZumoAction) opponentSequence.get(i))));
+//                }
+//                Observations opponentObservations = new Observations(getPlayerToMove(), players[1 - currentPlayerIndex]);
+//
+//                opponentObservations.add(new OpponentObservation(wins, isGameEnd()));
+//                key = new ImperfectRecallISKey(observations, opponentObservations, null);
 //            }
+//
+                Observations observations = new Observations(players[currentPlayerIndex], players[1 - currentPlayerIndex]);
+
+                observations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
+                key = new ImperfectRecallISKey(observations, null, null);
+            }
         }
         return key;
     }

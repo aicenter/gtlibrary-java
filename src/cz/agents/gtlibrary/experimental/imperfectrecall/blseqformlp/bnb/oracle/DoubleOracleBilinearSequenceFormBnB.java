@@ -74,6 +74,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
     protected GameState root;
     private long testTime = 0;
+    private int it = 0;
+    private long selfStart;
 
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
@@ -518,7 +520,8 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
     }
 
     public void solve(DoubleOracleIRConfig restrictedGameConfig) {
-        long selfStart = mxBean.getCurrentThreadCpuTime();
+        double ub =  Double.POSITIVE_INFINITY;
+        selfStart = mxBean.getCurrentThreadCpuTime();
         restrictedGameConfig.setBr(new LimitedActionsALossBRAlgorithm(root, expander, 1 - player.getId(),
                 new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]}, restrictedGameConfig, gameInfo, stateCache));
         expansionCount = 0;
@@ -553,11 +556,17 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
             if (DEBUG) System.out.println("LB: " + currentBest.getLb() + " UB: " + currentBest.getUb());
 
             fringe.add(currentBest);
-            int it = 1;
+            it = 1;
 
             while (!fringe.isEmpty()) {
                 DoubleOracleCandidate current = (DoubleOracleCandidate) pollCandidateWithUBHigherThanBestLB(fringe);
+                ub = Math.min(ub, current.getUb());
 
+                System.out.println("lb: " + currentBest.getLb() + ", " + ((long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6)));
+                System.out.println("ub: " + ub + ", " + ((long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6)));
+                System.out.println("IS count: " + restrictedGameConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().equals(player)).count());
+                System.out.println("P1 sequences: " + restrictedGameConfig.getSequencesFor(root.getAllPlayers()[0]).size());
+                System.out.println("P2 sequences: " + restrictedGameConfig.getSequencesFor(root.getAllPlayers()[1]).size());
                 it++;
 //                System.out.println(current.getPrecisionError());
 //                System.out.println(current + " vs " + currentBest);
@@ -610,10 +619,19 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //                    addRightChildOf(current, fringe, restrictedGameConfig);
 //                }
             }
+            System.out.println("lb: " + currentBest.getLb() + ", " + ((long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6)));
+            System.out.println("ub: " + ub + ", " + ((long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6)));
+            System.out.println("IS count: " + restrictedGameConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().equals(player)).count());
+            System.out.println("P1 sequences: " + restrictedGameConfig.getSequencesFor(root.getAllPlayers()[0]).size());
+            System.out.println("P2 sequences: " + restrictedGameConfig.getSequencesFor(root.getAllPlayers()[1]).size());
             System.out.println("Nodes expanded by BR: " + gameExpander.getBRExpandedNodes());
             finalValue = currentBest.getLb();
             System.out.println("final value: " + finalValue);
             Map<Sequence, Double> rp = ((OracleCandidate) currentBest).getMaxPlayerRealPlan();
+            Set<Action> usedActions = new HashSet<>();
+
+            countUsedActions(((DoubleOracleCandidate) currentBest).getMaxPlayerStrategy(), root, player, usedActions);
+            System.out.println("Strategy size: " + usedActions.size());
 
             System.out.println("Support: " + rp.values().stream().filter(v -> v > 1e-8).count());
 //            table.clearTable();
@@ -643,6 +661,21 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
         System.out.println("TEST TIME: " + ((TempLeafDoubleOracleGameExpander) gameExpander).getTestTime());
         System.out.println("TEST TIME1: " + testTime);
         selfTime = (long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6 - getLpBuildingTime() - getBRTime() - getExpanderTime() - getCPLEXTime() - getStrategyLPTime());
+    }
+
+    private void countUsedActions(Map<Action, Double> strategy, GameState state, Player player, Set<Action> usedActions) {
+        if(state.isGameEnd())
+            return;
+        if(state.getPlayerToMove().equals(player)) {
+            expander.getActions(state).stream().filter(a -> strategy.getOrDefault(a, 0d) > 1e-8)
+                    .forEach(a -> {
+                        usedActions.add(a);
+                        countUsedActions(strategy, state.performAction(a), player, usedActions);});
+            return;
+        }
+        expander.getActions(state).stream()
+                .forEach(a -> countUsedActions(strategy, state.performAction(a), player, usedActions));
+
     }
 
     private boolean expandGame(DoubleOracleIRConfig restrictedGameConfig, DoubleOracleCandidate current) {
@@ -689,7 +722,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
                 if (DEBUG) System.out.println("Candidate: " + candidate + " vs " + currentBest);
                 if (candidate.getLb() > currentBest.getLb()) {
                     currentBest = candidate;
-                    System.out.println("current best: " + currentBest);
+                    System.out.println("current best: " + currentBest + ", " + it + ", " + ((long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6)));
                 }
             }
         } catch (IloException e) {
@@ -858,7 +891,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 
                     if (candidate.getLb() > currentBest.getLb()) {
                         currentBest = candidate;
-                        System.out.println("current best: " + currentBest);
+                        System.out.println("current best: " + currentBest.getLb() +  ", "  + currentBest.getUb() + ", " +  it + ", " + ((long) ((mxBean.getCurrentThreadCpuTime() - selfStart) / 1e6)));
                     }
 //                    long testStart = mxBean.getCurrentThreadCpuTime();
 //                    ((TempLeafDoubleOracleGameExpander) gameExpander).updatePendingAndTempLeafsForced(root, (DoubleOracleIRConfig) config, ((DoubleOracleCandidate)candidate).getPossibleBestResponses());
