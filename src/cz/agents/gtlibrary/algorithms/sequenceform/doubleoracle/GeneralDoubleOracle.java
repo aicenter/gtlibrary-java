@@ -54,10 +54,10 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -99,18 +99,18 @@ public class GeneralDoubleOracle {
 //        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-//        runIIOshiZumo();
+        runIIOshiZumo();
 //        runRandomGame();
 //		runSimRandomGame();
 //                runLiarsDice();
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
-        runFlipIt(args);
+//        runFlipIt(args);
 //        runImprovedRandomTests();
     }
 
-    private static void runImprovedRandomTests(){
+    private static void runImprovedRandomTests() {
         ArrayList<String> results = new ArrayList<>();
         final int MAX_DEPTH = 10;
         final int MAX_BF = 4;
@@ -122,10 +122,10 @@ public class GeneralDoubleOracle {
         int errors = 0;
         int trueSequences = 0;
         int falseSequences = 0;
-        for (int depth = 3; depth < MAX_DEPTH; depth++){
-            for (int minBf = 2; minBf < MIN_BF; minBf ++){
-                for (int maxBF = minBf; maxBF < MAX_BF; maxBF++){
-                    for (int obs = 2; obs < MAX_OBSERVATION; obs++){
+        for (int depth = 3; depth < MAX_DEPTH; depth++) {
+            for (int minBf = 2; minBf < MIN_BF; minBf++) {
+                for (int maxBF = minBf; maxBF < MAX_BF; maxBF++) {
+                    for (int obs = 2; obs < MAX_OBSERVATION; obs++) {
                         for (int seed = 4; seed < MAX_SEED; seed++) {
                             instances++;
                             SQFBestResponseAlgorithm.useOriginalBRFormulation = true;
@@ -170,17 +170,17 @@ public class GeneralDoubleOracle {
             }
         }
         System.out.println("Evaluation : " + errors + " errors on " + instances + " instances.");
-        System.out.println("With negation sequences : " + trueSequences + ", without negation sequences : "+falseSequences);
+        System.out.println("With negation sequences : " + trueSequences + ", without negation sequences : " + falseSequences);
     }
 
-    private static void runFlipIt(String[] args){
+    private static void runFlipIt(String[] args) {
         FlipItGameInfo gameInfo;
         if (args.length == 0)
             gameInfo = new FlipItGameInfo();
         else {
             int depth = Integer.parseInt(args[0]);
             int graphSize = Integer.parseInt(args[1]);
-            String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
+            String graphFile = (graphSize == 3) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
             gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
         }
         gameInfo.ZERO_SUM_APPROX = true;
@@ -188,7 +188,7 @@ public class GeneralDoubleOracle {
         if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
         else rootState = new FlipItGameState();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
-        Expander<DoubleOracleInformationSet> expander =new FlipItExpander<DoubleOracleInformationSet>(algConfig);
+        Expander<DoubleOracleInformationSet> expander = new FlipItExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         Map<Player, Map<Sequence, Double>> rps = doefg.generate(null);
 
@@ -255,14 +255,17 @@ public class GeneralDoubleOracle {
     }
 
     public static void runRandomGame() {
-        GameState rootState = new RandomGameState();
-        GameInfo gameInfo = new RandomGameInfo();
-        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
-        Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
+        for (int i = 0; i < 100; i++) {
+            GameState rootState = new RandomGameState();
+            RandomGameInfo.seed = i;
+            GameInfo gameInfo = new RandomGameInfo();
+            DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+            Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
 //        Expander<DoubleOracleInformationSet> expander = new RandomGameExpanderWithMoveOrdering<DoubleOracleInformationSet>(algConfig, new int[] {1, 2, 0});
-        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
-        doefg.generate(null);
+            GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+            doefg.generate(null);
 //        GambitEFG.write("randomgame.gbt", rootState, (Expander) expander);
+        }
     }
 
     public static void runSimRandomGame() {
@@ -284,7 +287,7 @@ public class GeneralDoubleOracle {
 //        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpanderDomain<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
-        System.out.println("number of ISs: "+algConfig.getAllInformationSets().size());
+        System.out.println("number of ISs: " + algConfig.getAllInformationSets().size());
     }
 
     public static void runBP() {
@@ -331,7 +334,9 @@ public class GeneralDoubleOracle {
         this.algConfig = algConfig;
     }
 
-    public int getIterations(){ return  iterations;}
+    public int getIterations() {
+        return iterations;
+    }
 
     public Map<Player, Map<Sequence, Double>> generate(Map<Player, Map<Sequence, Double>> initializationRG) {
         debugOutput.println("Double Oracle");
@@ -597,7 +602,7 @@ public class GeneralDoubleOracle {
                     support_size[player.getId()]++;
 //                    maxIt[player.getId()] = Math.max(maxIt[player.getId()], algConfig.getIterationForSequence(sequence));
 //                    if (DEBUG)
-                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+                    System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
                 }
             }
         }
@@ -610,7 +615,8 @@ public class GeneralDoubleOracle {
 
         debugOutput.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         debugOutput.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
-        debugOutput.println("final support_percent: FirstPlayer: " + 100*((double)support_size[0])/algConfig.getSequencesFor(actingPlayers[0]).size() + "% \t SecondPlayer: " + 100*((double)support_size[1])/algConfig.getSequencesFor(actingPlayers[1]).size()+"%");
+        debugOutput.println("final support_percent: FirstPlayer: " + 100 * ((double) support_size[0]) / algConfig.getSequencesFor(actingPlayers[0]).size() + "% \t SecondPlayer: " + 100 * ((double) support_size[1]) / algConfig.getSequencesFor(actingPlayers[1]).size() + "%");
+        debugOutput.println("final size: FirstPlayer ISs: " + algConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() == 0).count() + " \t SecondPlayer ISs : " + algConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() == 1).count());
         debugOutput.println("final result:" + doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]));
         debugOutput.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
         debugOutput.println("final time: " + finishTime);

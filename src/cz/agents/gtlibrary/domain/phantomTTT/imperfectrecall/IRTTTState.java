@@ -64,7 +64,7 @@ public class IRTTTState extends TTTState {
             Observations myObservations = new Observations(getPlayerToMove(), getPlayerToMove());
 
             myObservations.add(new TTTObservation(myPositions));
-            for (int i = 1; i < REMEMBERED_MOVES; i++) {
+            for (int i = 1; i <= REMEMBERED_MOVES; i++) {
                 if (getSequenceForPlayerToMove().size() >= i)
                     myObservations.add(new PositionObservation(((TTTAction) getSequenceForPlayerToMove().get(getSequenceForPlayerToMove().size() - i)).fieldID));
             }
