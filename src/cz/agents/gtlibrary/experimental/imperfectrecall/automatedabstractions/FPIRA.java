@@ -24,8 +24,8 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     }
 
-//    @Override
-//    protected void iteration(Player opponent) {
+    @Override
+    protected void iteration(Player opponent) {
 //        Map<Action, Double> strategy = getStrategyFor(opponent);
 //        SQFBestResponseAlgorithm br = getBestResponseAlg(opponent);
 //        double value = br.calculateBR(rootState, strategy);
@@ -37,7 +37,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 //        updateISs(rootState, fullBestResponseResult, strategy, opponent);
 ////        updateData(rootState, bestResponse, strategy);
 //        return value;
-//    }
+    }
 
     private SQFBestResponseAlgorithm getBestResponseAlg(Player opponent) {
         return opponent.getId() == 0 ? p1BR : p0BR;
