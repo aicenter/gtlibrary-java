@@ -11,6 +11,7 @@ import cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.Observations;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
@@ -22,7 +23,7 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected final Expander<? extends InformationSet> expander;
     protected final GameInfo gameInfo;
     protected final Map<ISKey, IRCFRInformationSet> currentAbstractionInformationSets;
-    protected final Map<GameState, ISKey> currentAbstractionISKeys;
+    protected final Map<PerfectRecallISKey, ImperfectRecallISKey> currentAbstractionISKeys;
     protected int iteration = 1;
     protected int isKeyCounter = 0;
 
@@ -50,7 +51,7 @@ public abstract class AutomatedAbstractionAlgorithm {
         this.expander = expander;
         this.gameInfo = info;
         currentAbstractionInformationSets = new HashMap<>();
-        currentAbstractionISKeys = new HashMap<>();
+        currentAbstractionISKeys = new InformationSetMap();
         buildInitialAbstraction();
     }
 
@@ -65,7 +66,6 @@ public abstract class AutomatedAbstractionAlgorithm {
                     ImperfectRecallISKey key = createISKey(state);
                     IRCFRInformationSet set = currentAbstractionInformationSets.computeIfAbsent(key, k -> new IRCFRInformationSet(state, key));
 
-                    i.getAllStates().forEach(s -> currentAbstractionISKeys.put(s, key));
                     set.addAllStatesToIS(i.getAllStates());
                 }
         );
