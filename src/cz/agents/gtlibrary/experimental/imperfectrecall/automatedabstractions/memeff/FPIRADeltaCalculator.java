@@ -1,7 +1,5 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
 
-import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.DeltaCalculator;
-import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.StrategyDiffs;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
@@ -11,7 +9,7 @@ import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.*;
 
-public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm  {
+public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
 
     protected FPIRAStrategyDiffs strategyDiffs;
     private Map<ISKey, double[]> opponentAbstractedStrategy;
@@ -70,7 +68,7 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm  {
                 if (!alternativeNodes.contains(gameState)) {
                     alternativeNodes.add(gameState);
                 }
-                if (alternativeNodes.size() == 1 && !nonZeroOppRP) {
+                if (alternativeNodes.size() == 1 && nonZeroOppRP) {
                     alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
                 }
             } // if we do not have alternative nodes stored in the currentIS, there is no RP leading to these nodes --> we do not need to consider them
@@ -93,7 +91,7 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm  {
 //                // if there is zero OppRP prob we keep only those nodes in IS that are caused by the moves of nature
 //                // i.e., -> we keep all the nodes that share the same history of the opponent
 //                for (GameState state : new ArrayList<GameState>(alternativeNodes)) {
-//                    if (!state.getHistory().getSequenceOf(players[opponentPlayerIndex]).equals(gameState.getHistory().getSequenceOf(players[opponentPlayerIndex]))) {
+//                    if (!state.getHistory().getSequenceOf(players[opponentPlayerIndex]).equals(gameState.getHistory().getSequenceOf(players[opponentPlayerIndaboveDeltaex]))) {
 //                        alternativeNodes.remove(state);
 //                        alternativeNodesProbs.remove(state);
 //                    }
@@ -212,11 +210,13 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm  {
         return probability;
     }
 
-    protected double getProbability(ISKey key, Action action, Map<PerfectRecallISKey, Map<Action, Double>> strategyDiff) {
-        Map<Action, Double> diffForKey = strategyDiff.get(key);
-        double diffProbability = diffForKey == null ? 0 : diffForKey.getOrDefault(action, 0d);
+    protected double getProbability(ISKey key, Action action, Map<PerfectRecallISKey, double[]> strategyDiff) {
+        List<Action> actions = expander.getActions(action.getInformationSet().getAllStates().stream().findAny().get());
+        double[] diffForKey = strategyDiff.get(key);
+        int actionIndex = getIndex(action, actions);
+        double diffProbability = diffForKey == null ? 0 : diffForKey[actionIndex];
 
-        return getProbabilityForAction(action) + diffProbability;
+        return getProbabilityForActionIndex((PerfectRecallISKey) key, actionIndex, actions) + diffProbability;
     }
 
     public double calculateDeltaForAbstractedStrategy(Map<ISKey, double[]> opponentAbstractedStrategy, FPIRAStrategyDiffs strategyDiffs) {
@@ -248,6 +248,21 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm  {
         for (int i = 0; i < actions.size(); i++) {
             if (actions.get(i).equals(action)) {
                 return realizations[i];
+            }
+        }
+        throw new InvalidStateException("Action not found");
+    }
+
+    private double getProbabilityForActionIndex(PerfectRecallISKey isKey, int actionIndex, List<Action> actions) {
+        double[] realizations = opponentAbstractedStrategy.get(currentAbstractionISKeys.get(isKey, actions));
+
+        return realizations[actionIndex];
+    }
+
+    private int getIndex(Action action, List<Action> actions) {
+        for (int i = 0; i < actions.size(); i++) {
+            if (actions.get(i).equals(action)) {
+                return i;
             }
         }
         throw new InvalidStateException("Action not found");

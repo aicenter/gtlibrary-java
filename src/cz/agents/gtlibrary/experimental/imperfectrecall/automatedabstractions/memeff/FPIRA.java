@@ -52,13 +52,8 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         FPIRABestResponse br = getBestResponseAlg(opponent);
         double value = br.calculateBRForAbstractedStrategy(rootState, strategy);
         Map<Action, Double> bestResponse = br.getBestResponse();
-//
-//        Set<ISKey> visitedISs = new HashSet<>();
-//        countISsVisited(fullBestResponseResult, rootState, rootState.getAllPlayers()[1 - opponent.getId()], visitedISs);
-//        maxBRInformationSets = Math.max(maxBRInformationSets, visitedISs.size());
+
         updateAbstractionInformationSets(rootState, bestResponse, strategy, opponent);
-////        updateData(rootState, bestResponse, strategy);
-//        return value;
     }
 
     private FPIRABestResponse getBestResponseAlg(Player opponent) {
@@ -156,6 +151,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
             delta = p1Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs);
         else
             delta = p0Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs);
+        System.out.println(delta);
         return delta > 0;
     }
 
@@ -187,17 +183,17 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                 int actionIndex = entry.getKey();
 
                 for (Map.Entry<PerfectRecallISKey, double[]> keyValuesEntry : entry.getValue().entrySet()) {
-                    double[] meanStratDiffForSequence = new double[actions.size()];
+                    double[] meanStratDiffForKey = new double[actions.size()];
 
 //                    if(keyValuesEntry.getValue()[0] + keyValuesEntry.getValue()[1] < 1e-3)
 //                        continue;
                     for (int i = 0; i < actions.size(); i++) {
-                        meanStratDiffForSequence[i] = keyValuesEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]);
-                        meanStratDiffForAction[i] += meanStratDiffForSequence[i];
-                        meanStratDiffForSequence[i] /= keyValuesEntry.getValue()[0] + keyValuesEntry.getValue()[1];
+                        meanStratDiffForKey[i] = keyValuesEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]);
+                        meanStratDiffForAction[i] += meanStratDiffForKey[i];
+                        meanStratDiffForKey[i] /= keyValuesEntry.getValue()[0] + keyValuesEntry.getValue()[1];
                     }
                     meanStratDiffForActionNormalizer += keyValuesEntry.getValue()[0] + keyValuesEntry.getValue()[1];
-                    strategyDiffs.prStrategyDiff.put(keyValuesEntry.getKey(), toMapNoNorm(actions, meanStratDiffForSequence));
+                    strategyDiffs.prStrategyDiff.put(keyValuesEntry.getKey(), meanStratDiffForKey);
                 }
 //                if(meanStratDiffForActionNormalizer < 1e-3)
 //                    continue;
@@ -205,7 +201,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                     meanStratDiffForAction[i] /= meanStratDiffForActionNormalizer;
                 }
                 actionMapEntry.getKey().getAllStates().stream().map(s -> (PerfectRecallISKey) s.getISKeyForPlayerToMove()).forEach(key ->
-                        strategyDiffs.irStrategyDiff.put(key, toMapNoNorm(actions, meanStratDiffForAction))
+                        strategyDiffs.irStrategyDiff.put(key, meanStratDiffForAction)
                 );
             }
         }
