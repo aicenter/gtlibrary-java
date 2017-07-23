@@ -93,7 +93,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         }
         IRCFRInformationSet is = currentAbstractionInformationSets.get(getAbstractionISKey(state));
         List<Action> actions = expander.getActions(state);
-        Action currentStateBestResponseAction = actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).findAny().get();
         double[] meanStrategy = is.getData().getMp();
 
         assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() <= 1;
@@ -103,6 +102,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         Set<GameState> isStates = is.getAllStates();
 
         if (pBR > 1 - 1e-8 && isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(state.getSequenceForPlayerToMove())).count() != isStates.size()) {
+            Action currentStateBestResponseAction = actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).findAny().get();
             int actionIndex = getIndex(actions, currentStateBestResponseAction);
             Map<Integer, Map<PerfectRecallISKey, double[]>> actionMap = toSplit.compute(is, (k, v) -> v == null ? new HashMap<>() : v);
             Map<PerfectRecallISKey, double[]> currentSplitSequences = actionMap.compute(actionIndex, (k, v) -> v == null ? new HashMap<>() : v);
@@ -116,6 +116,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
             double avgIncrement = ((double) iteration) / (iteration + 1) * pAvg;
 
             if (pBR > 1 - 1e-8) {
+                Action currentStateBestResponseAction = actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).findAny().get();
                 int actionIndex = getIndex(actions, currentStateBestResponseAction);
 
                 for (int i = 0; i < actions.size(); i++) {
