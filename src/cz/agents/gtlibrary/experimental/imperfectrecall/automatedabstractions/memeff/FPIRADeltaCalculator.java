@@ -1,23 +1,31 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
 
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.DeltaCalculator;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.StrategyDiffs;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
+import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.*;
 
-public class DeltaCalculator extends ALossBestResponseAlgorithm {
+public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm  {
 
-    protected StrategyDiffs strategyDiffs;
+    protected FPIRAStrategyDiffs strategyDiffs;
+    private Map<ISKey, double[]> opponentAbstractedStrategy;
+    private InformationSetKeyMap currentAbstractionISKeys;
     protected double prProbability;
     protected double irProbability;
 
-    public DeltaCalculator(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse) {
+    public FPIRADeltaCalculator(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex,
+                                AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse, InformationSetKeyMap currentAbstractionISKeys) {
         super(root, expander, searchingPlayerIndex, new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]}, algConfig, gameInfo, stateCacheUse);
+        this.currentAbstractionISKeys = currentAbstractionISKeys;
     }
 
-    public double calculateDelta(Map<Action, Double> strategy, StrategyDiffs strategyDiffs) {
+    public double calculateDelta(Map<Action, Double> strategy, FPIRAStrategyDiffs strategyDiffs) {
         this.strategyDiffs = strategyDiffs;
         prProbability = 1;
         irProbability = 1;
@@ -182,40 +190,66 @@ public class DeltaCalculator extends ALossBestResponseAlgorithm {
 //        }
     }
 
-    protected double getOpponentProbability(Sequence sequence) {
-        return 1;
-    }
-
     protected double getIRProbability(GameState state, Action action) {
-        Sequence sequence = new ArrayListSequenceImpl(players[opponentPlayerIndex]);
         double probability = 1;
 
         for (Action oldAction : state.getSequenceFor(players[opponentPlayerIndex])) {
-            probability *= getProbability(sequence, oldAction, strategyDiffs.irStrategyDiff);
-            sequence.addLast(oldAction);
+            probability *= getProbability(oldAction.getInformationSet().getISKey(), oldAction, strategyDiffs.irStrategyDiff);
         }
         if (state.getPlayerToMove().equals(players[opponentPlayerIndex]))
-            probability *= getProbability(state.getSequenceForPlayerToMove(), action, strategyDiffs.irStrategyDiff);
+            probability *= getProbability(state.getISKeyForPlayerToMove(), action, strategyDiffs.irStrategyDiff);
         return probability;
     }
 
     protected double getPRProbability(GameState state, Action action) {
-        Sequence sequence = new ArrayListSequenceImpl(players[opponentPlayerIndex]);
         double probability = 1;
 
         for (Action oldAction : state.getSequenceFor(players[opponentPlayerIndex])) {
-            probability *= getProbability(sequence, oldAction, strategyDiffs.prStrategyDiff);
-            sequence.addLast(oldAction);
+            probability *= getProbability(oldAction.getInformationSet().getISKey(), oldAction, strategyDiffs.prStrategyDiff);
         }
         if (state.getPlayerToMove().equals(players[opponentPlayerIndex]))
-            probability *= getProbability(state.getSequenceForPlayerToMove(), action, strategyDiffs.prStrategyDiff);
+            probability *= getProbability(state.getISKeyForPlayerToMove(), action, strategyDiffs.prStrategyDiff);
         return probability;
     }
 
-    protected double getProbability(Sequence sequence, Action action, Map<Sequence, Map<Action, Double>> strategyDiff) {
-        Map<Action, Double> diffForSequence = strategyDiff.get(sequence);
-        double diffProbability = diffForSequence == null ? 0 : diffForSequence.getOrDefault(action, 0d);
+    protected double getProbability(ISKey key, Action action, Map<PerfectRecallISKey, Map<Action, Double>> strategyDiff) {
+        Map<Action, Double> diffForKey = strategyDiff.get(key);
+        double diffProbability = diffForKey == null ? 0 : diffForKey.getOrDefault(action, 0d);
 
-        return opponentBehavioralStrategy.getOrDefault(action, 0d) + diffProbability;
+        return getProbabilityForAction(action) + diffProbability;
+    }
+
+    public double calculateDeltaForAbstractedStrategy(Map<ISKey, double[]> opponentAbstractedStrategy, FPIRAStrategyDiffs strategyDiffs) {
+        this.opponentAbstractedStrategy = opponentAbstractedStrategy;
+        this.strategyDiffs = strategyDiffs;
+        prProbability = 1;
+        irProbability = 1;
+        return calculateBR(gameTreeRoot, new HashMap<>());
+    }
+
+    @Override
+    protected double getOpponentProbability(Sequence sequence) {
+        if (sequence.isEmpty())
+            return 1;
+        double probability = 1;
+
+        for (Action action : sequence) {
+            probability *= getProbabilityForAction(action);
+        }
+        return probability;
+    }
+
+    private double getProbabilityForAction(Action action) {
+        InformationSet informationSet = action.getInformationSet();
+        List<Action> actions = expander.getActions(informationSet.getAllStates().stream().findAny().get());
+        double[] realizations = opponentAbstractedStrategy.get(currentAbstractionISKeys.get((PerfectRecallISKey) informationSet.getISKey(), actions));
+
+
+        for (int i = 0; i < actions.size(); i++) {
+            if (actions.get(i).equals(action)) {
+                return realizations[i];
+            }
+        }
+        throw new InvalidStateException("Action not found");
     }
 }
