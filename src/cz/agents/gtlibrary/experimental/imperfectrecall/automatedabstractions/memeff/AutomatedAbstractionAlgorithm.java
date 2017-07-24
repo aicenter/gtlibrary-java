@@ -66,7 +66,7 @@ public abstract class AutomatedAbstractionAlgorithm {
 
 
     protected void addData(Collection<IRCFRInformationSet> informationSets) {
-        informationSets.forEach(i -> i.setData(new CFRBRData(this.expander.getActions(i.getAllStates().stream().findAny().get()))));
+        informationSets.forEach(i -> i.setData(new CFRBRData(this.expander.getActions(i.getAllStates().stream().findAny().get()).size())));
     }
 
     public void runIterations(int iterations) {

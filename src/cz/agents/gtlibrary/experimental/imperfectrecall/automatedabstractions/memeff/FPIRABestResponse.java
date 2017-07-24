@@ -40,7 +40,7 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
         return probability;
     }
 
-    private double getProbabilityForAction(Action action) {
+    protected double getProbabilityForAction(Action action) {
         InformationSet informationSet = action.getInformationSet();
         List<Action> actions = expander.getActions(informationSet.getAllStates().stream().findAny().get());
         double[] realizations = opponentAbstractedStrategy.get(currentAbstractionISKeys.get((PerfectRecallISKey) informationSet.getISKey(), actions));
