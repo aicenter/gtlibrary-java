@@ -52,6 +52,8 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         FPIRABestResponse br = getBestResponseAlg(opponent);
         double value = br.calculateBRForAbstractedStrategy(rootState, strategy);
         Map<Action, Double> bestResponse = br.getBestResponse();
+        System.out.println(gameInfo.getOpponent(opponent) + ": " + value);
+        System.out.println("IS count: " + currentAbstractionInformationSets.size());
 
         updateAbstractionInformationSets(rootState, bestResponse, strategy, opponent);
     }
@@ -96,7 +98,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                 .mapToInt(a -> updateISStructure(state.performAction(a), bestResponse, opponentStrategy, opponent, toSplit, bestResponse.getOrDefault(a, 0d), pAvg * getProbability(meanStrategy, a, actions))).sum();
         Set<GameState> isStates = is.getAllStates();
 
-        if (pBR > 1 - 1e-8 && isStates.stream().filter(isState -> isState.getSequenceForPlayerToMove().equals(state.getSequenceForPlayerToMove())).count() != isStates.size()) {
+        if (pBR > 1 - 1e-8 && isStates.stream().filter(isState -> isState.getISKeyForPlayerToMove().equals(state.getISKeyForPlayerToMove())).count() != isStates.size()) {
             Action currentStateBestResponseAction = actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).findAny().get();
             int actionIndex = getIndex(actions, currentStateBestResponseAction);
             Map<Integer, Map<PerfectRecallISKey, double[]>> actionMap = toSplit.compute(is, (k, v) -> v == null ? new HashMap<>() : v);
