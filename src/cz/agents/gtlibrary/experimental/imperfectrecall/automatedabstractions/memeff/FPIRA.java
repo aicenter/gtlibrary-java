@@ -2,11 +2,15 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
+import cz.agents.gtlibrary.domain.wichardtne.PerfectInformationWichardtState;
+import cz.agents.gtlibrary.domain.wichardtne.WichardtExpander;
+import cz.agents.gtlibrary.domain.wichardtne.WichardtGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.CFRBRData;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.StrategyDiffs;
 import cz.agents.gtlibrary.iinodes.ISKey;
@@ -19,19 +23,42 @@ import java.util.*;
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
+//        runKuhnPoker();
+        runRandomGame();
+//        runWichardtCounterexample();
+    }
+
+    private static void runKuhnPoker() {
         GameState root = new KuhnPokerGameState();
         Expander<MCTSInformationSet> expander = new KuhnPokerExpander<>(new FPIRAConfig());
 
         FPIRA fpira = new FPIRA(root, expander, new KPGameInfo());
 
-        fpira.runIterations(1000);
+        fpira.runIterations(100000);
+    }
+
+    private static void runRandomGame() {
+        GameState root = new RandomGameState();
+        Expander<MCTSInformationSet> expander = new RandomGameExpander<>(new FPIRAConfig());
+
+        FPIRA fpira = new FPIRA(root, expander, new RandomGameInfo());
+
+        fpira.runIterations(100000);
+    }
+
+    private static void runWichardtCounterexample() {
+        GameState root = new PerfectInformationWichardtState();
+        Expander<MCTSInformationSet> expander = new WichardtExpander<>(new FPIRAConfig());
+
+        FPIRA fpira = new FPIRA(root, expander, new WichardtGameInfo());
+
+        fpira.runIterations(100000);
     }
 
     private final FPIRADeltaCalculator p0Delta;
     private final FPIRADeltaCalculator p1Delta;
     private final FPIRABestResponse p0BR;
     private final FPIRABestResponse p1BR;
-
 
     public FPIRA(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info) {
         super(rootState, expander, info);
@@ -43,7 +70,13 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     @Override
     protected void printStatistics() {
+        Map<ISKey, double[]> p0Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[0]);
+        Map<ISKey, double[]> p1Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[1]);
 
+        System.out.println("Iteration: " + iteration);
+        System.out.println("p0BR: " + p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy));
+        System.out.println("p1BR: " + -p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy));
+        System.out.println("Current IS count: " + currentAbstractionInformationSets.size());
     }
 
     @Override
@@ -52,8 +85,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         FPIRABestResponse br = getBestResponseAlg(opponent);
         double value = br.calculateBRForAbstractedStrategy(rootState, strategy);
         Map<Action, Double> bestResponse = br.getBestResponse();
-        System.out.println(gameInfo.getOpponent(opponent) + ": " + value);
-        System.out.println("IS count: " + currentAbstractionInformationSets.size());
 
         updateAbstractionInformationSets(rootState, bestResponse, strategy, opponent);
     }
@@ -153,7 +184,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
             delta = p1Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs);
         else
             delta = p0Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs);
-        System.out.println(delta);
+//        System.out.println(delta);
         return delta > 0;
     }
 
@@ -291,7 +322,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                     int actionIndex = entry.getKey();
 
                     for (Map.Entry<PerfectRecallISKey, double[]> isKeyEntry : entry.getValue().entrySet()) {
-                        for (int i = 0; i < ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData().getActions().size(); i++) {
+                        for (int i = 0; i < ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData().getActionCount(); i++) {
                             data.addToMeanStrategyUpdateNumerator(i, isKeyEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]));
                         }
                         data.addToMeanStrategyUpdateDenominator(isKeyEntry.getValue()[0] + isKeyEntry.getValue()[1]);

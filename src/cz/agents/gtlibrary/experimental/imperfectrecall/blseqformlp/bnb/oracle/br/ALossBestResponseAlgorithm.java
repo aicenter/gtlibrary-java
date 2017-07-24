@@ -144,15 +144,12 @@ public class ALossBestResponseAlgorithm {
 
             if (currentIS != null) {
                 alternativeNodes.addAll(currentIS.getAllStates());
-                if (!alternativeNodes.contains(gameState)) {
+                if (!alternativeNodes.contains(gameState))
                     alternativeNodes.add(gameState);
-                }
-                if (alternativeNodes.size() == 1 && nonZeroOppRP) {
+                if (alternativeNodes.size() == 1 && nonZeroOppRP)
                     alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
-                }
-            } // if we do not have alternative nodes stored in the currentIS, there is no RP leading to these nodes --> we do not need to consider them
-            else {
-//                alternativeNodes.add(gameState);
+            } else {
+                alternativeNodes.add(gameState);
                 alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
             }
 
@@ -751,7 +748,7 @@ public class ALossBestResponseAlgorithm {
                 nonZeroChildren.forEach(s ->
                         getAlternativeNodesOutsideRGFix(s, stateForAlternatives,
                                 alternativeNodes,
-                                opponentProbability*getProbabilityForAction(s.getSequenceFor(currentState.getPlayerToMove()).getLast()))
+                                opponentProbability * getProbabilityForAction(s.getSequenceFor(currentState.getPlayerToMove()).getLast()))
                 );
             }
             return;
@@ -766,7 +763,7 @@ public class ALossBestResponseAlgorithm {
     }
 
     public List<GameState> getAlternativeNodesOutsideRG(GameState state) {
-        if(USE_FIX)
+        if (USE_FIX)
             return getAlternativeNodesOutsideRGFix(state);
         List<GameState> alternativeNodes = new ArrayList<GameState>();
         Stack<GameState> queue = new Stack<GameState>();

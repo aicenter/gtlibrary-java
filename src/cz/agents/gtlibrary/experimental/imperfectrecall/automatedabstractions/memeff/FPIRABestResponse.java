@@ -28,6 +28,16 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
         return calculateBR(root, new HashMap<>(), new HashMap<>());
     }
 
+    protected Double calculateEvaluation(GameState gameState, double currentStateProbability) {
+        double utRes = gameState.getUtilities()[0] * gameState.getNatureProbability();
+
+        if (searchingPlayerIndex == 1)
+            utRes *= -1; // a zero sum game
+        if (currentStateProbability == 0)
+            currentStateProbability = 1d;
+        return utRes * currentStateProbability; // weighting with opponent's realization plan
+    }
+
     @Override
     protected double getOpponentProbability(Sequence sequence) {
         if (sequence.isEmpty())

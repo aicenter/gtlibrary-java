@@ -99,7 +99,7 @@ public class GeneralDoubleOracle {
 //		runAC();
 //        runBP();
 //        runGenericPoker();
-//        runKuhnPoker();
+        runKuhnPoker();
 //        runGoofSpiel();
 //        runIIOshiZumo();
 //        runRandomGame();
@@ -108,9 +108,9 @@ public class GeneralDoubleOracle {
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
-        runFlipIt(args);
+//        runFlipIt(args);
 //        runImprovedRandomTests();
-        runHoneyPot(args);
+//        runHoneyPot(args);
     }
 
     private static void runHoneyPot(String[] args) {

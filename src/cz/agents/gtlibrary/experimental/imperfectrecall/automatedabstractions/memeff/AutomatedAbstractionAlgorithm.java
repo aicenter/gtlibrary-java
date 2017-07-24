@@ -19,7 +19,7 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected final GameInfo gameInfo;
     protected final Map<ISKey, IRCFRInformationSet> currentAbstractionInformationSets;
     protected final InformationSetKeyMap currentAbstractionISKeys;
-    protected int iteration = 1;
+    protected int iteration = 0;
     protected int isKeyCounter = 0;
 
 //    public static void main(String[] args) {
