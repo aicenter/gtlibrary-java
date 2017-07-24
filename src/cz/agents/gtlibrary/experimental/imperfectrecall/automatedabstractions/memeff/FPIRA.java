@@ -303,7 +303,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
     protected IRCFRInformationSet createNewIS(Set<GameState> states, Player player, CFRBRData data) {
         ImperfectRecallISKey newISKey = createCounterISKey(player);
         GameState state = states.stream().findAny().get();
-        IRCFRInformationSet is = new IRCFRInformationSet(state, currentAbstractionISKeys.get(state, expander));
+        IRCFRInformationSet is = new IRCFRInformationSet(state, newISKey);
 
         is.addAllStatesToIS(states);
         is.setData(new CFRBRData(data));
