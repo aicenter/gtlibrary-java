@@ -295,7 +295,7 @@ public class ALossBestResponseAlgorithm {
         double probability = 1;
 
         for (Action action : sequence) {
-            double currentProbability = opponentBehavioralStrategy.getOrDefault(action, 0d);
+            double currentProbability = getProbabilityForAction(action);
 
             if (currentProbability == 0)
                 return 0;
@@ -444,7 +444,7 @@ public class ALossBestResponseAlgorithm {
                 Map<Action, Double> actionMap = new FixedSizeMap<>(actions.size());
 
                 for (Action a : actions) {
-                    Double prob = opponentBehavioralStrategy.getOrDefault(a, 0d);
+                    Double prob = getProbabilityForAction(a);
 
                     actionMap.put(a, prob);
                     if (prob > 0)
@@ -740,7 +740,7 @@ public class ALossBestResponseAlgorithm {
         }
         if (currentState.getPlayerToMove().getId() == opponentPlayerIndex) {
             List<Action> actions = expander.getActions(currentState);
-            List<GameState> nonZeroChildren = actions.stream().filter(a -> opponentBehavioralStrategy.getOrDefault(a, 0d) > 1e-8)
+            List<GameState> nonZeroChildren = actions.stream().filter(a -> getProbabilityForAction(a) > 1e-8)
                     .map(a -> currentState.performAction(a)).collect(Collectors.toList());
 
             assert opponentProbability > 1e-8;
@@ -751,7 +751,7 @@ public class ALossBestResponseAlgorithm {
                 nonZeroChildren.forEach(s ->
                         getAlternativeNodesOutsideRGFix(s, stateForAlternatives,
                                 alternativeNodes,
-                                opponentProbability*opponentBehavioralStrategy.get(s.getSequenceFor(currentState.getPlayerToMove()).getLast()))
+                                opponentProbability*getProbabilityForAction(s.getSequenceFor(currentState.getPlayerToMove()).getLast()))
                 );
             }
             return;
@@ -759,6 +759,10 @@ public class ALossBestResponseAlgorithm {
         expander.getActions(currentState).forEach(a ->
                 getAlternativeNodesOutsideRGFix(currentState.performAction(a), stateForAlternatives, alternativeNodes, opponentProbability)
         );
+    }
+
+    protected double getProbabilityForAction(Action a) {
+        return opponentBehavioralStrategy.getOrDefault(a, 0d);
     }
 
     public List<GameState> getAlternativeNodesOutsideRG(GameState state) {

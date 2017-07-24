@@ -176,18 +176,18 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
         for (Map.Entry<InformationSet, Map<Integer, Map<PerfectRecallISKey, double[]>>> actionMapEntry : toSplit.entrySet()) {
             for (Map.Entry<Integer, Map<PerfectRecallISKey, double[]>> entry : actionMapEntry.getValue().entrySet()) {
-                List<Action> actions = ((IRCFRInformationSet) actionMapEntry.getKey()).getData().getActions();
-                double[] meanStratDiffForAction = new double[actions.size()];
+                int actionCount = ((IRCFRInformationSet) actionMapEntry.getKey()).getData().getActionCount();
+                double[] meanStratDiffForAction = new double[actionCount];
                 double[] meanStrategy = ((IRCFRInformationSet) actionMapEntry.getKey()).getData().getMp();
                 double meanStratDiffForActionNormalizer = 0;
                 int actionIndex = entry.getKey();
 
                 for (Map.Entry<PerfectRecallISKey, double[]> keyValuesEntry : entry.getValue().entrySet()) {
-                    double[] meanStratDiffForKey = new double[actions.size()];
+                    double[] meanStratDiffForKey = new double[actionCount];
 
 //                    if(keyValuesEntry.getValue()[0] + keyValuesEntry.getValue()[1] < 1e-3)
 //                        continue;
-                    for (int i = 0; i < actions.size(); i++) {
+                    for (int i = 0; i < actionCount; i++) {
                         meanStratDiffForKey[i] = keyValuesEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]);
                         meanStratDiffForAction[i] += meanStratDiffForKey[i];
                         meanStratDiffForKey[i] /= keyValuesEntry.getValue()[0] + keyValuesEntry.getValue()[1];
@@ -240,7 +240,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                     }
                     double[] meanStrategy = newIS.getData().getMp();
 
-                    for (int i = 0; i < newIS.getData().getActions().size(); i++) {
+                    for (int i = 0; i < newIS.getData().getActionCount(); i++) {
                         ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateNumerator(i, isKeyEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]));
                     }
                     ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateDenominator(isKeyEntry.getValue()[0] + isKeyEntry.getValue()[1]);
@@ -302,7 +302,8 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     protected IRCFRInformationSet createNewIS(Set<GameState> states, Player player, CFRBRData data) {
         ImperfectRecallISKey newISKey = createCounterISKey(player);
-        IRCFRInformationSet is = new IRCFRInformationSet(states.stream().findAny().get());
+        GameState state = states.stream().findAny().get();
+        IRCFRInformationSet is = new IRCFRInformationSet(state, currentAbstractionISKeys.get(state, expander));
 
         is.addAllStatesToIS(states);
         is.setData(new CFRBRData(data));
