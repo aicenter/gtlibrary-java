@@ -8,6 +8,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
+import cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder;
 import cz.agents.gtlibrary.domain.wichardtne.PerfectInformationWichardtState;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtExpander;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtGameInfo;
@@ -17,14 +18,15 @@ import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.util.*;
 
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-//        runKuhnPoker();
-        runRandomGame();
+        runKuhnPoker();
+//        runRandomGame();
 //        runWichardtCounterexample();
     }
 
@@ -44,6 +46,9 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         FPIRA fpira = new FPIRA(root, expander, new RandomGameInfo());
 
         fpira.runIterations(100000);
+        GambitEFG gambit = new GambitEFG();
+
+        gambit.write("FPIRAtest.gbt", root, expander);
     }
 
     private static void runWichardtCounterexample() {
