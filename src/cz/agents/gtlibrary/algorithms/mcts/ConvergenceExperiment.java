@@ -39,10 +39,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
-import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
-import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
@@ -145,8 +142,14 @@ public class ConvergenceExperiment {
     public static void setupFlipIt(){
         gameInfo = new FlipItGameInfo();
         ((FlipItGameInfo)gameInfo).ZERO_SUM_APPROX = true;
-        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
-        else rootState = new FlipItGameState();
+        GameState rootState = null;
+        switch (FlipItGameInfo.gameVersion){
+            case NO:                    rootState = new NoInfoFlipItGameState(); break;
+            case FULL:                  rootState = new FullInfoFlipItGameState(); break;
+            case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
+            case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+
+        }
         expander = new FlipItExpander<MCTSInformationSet>(new MCTSConfig());
     }
 
