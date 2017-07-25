@@ -168,7 +168,7 @@ public class ComparatorAlgorithm implements GamePlayingAlgorithm {
                 state.setDepth(depth++);
                 SimAlphaBeta solver = new SimAlphaBeta();
                 long currentIterationStart = threadBean.getCurrentThreadCpuTime();
-                SimAlphaBetaResult result = solver.runSimAlpabeta(state, expander, player, false, false, sortingOwnActions, false, gameInfo);
+                SimAlphaBetaResult result = solver.runSimAlphabeta(state, expander, player, false, false, sortingOwnActions, false, gameInfo);
                 long currentIterationTime = threadBean.getCurrentThreadCpuTime() - currentIterationStart;
 
                 debugOutput.println("Iteration for depth " + (depth - 1) + " ended in " + (threadBean.getCurrentThreadCpuTime() - start));
@@ -180,7 +180,7 @@ public class ComparatorAlgorithm implements GamePlayingAlgorithm {
                     double oldValue = result.gameValue;
                     System.out.println("//////////////////////////////////////");
                     solver = new SimAlphaBeta();
-                    SimAlphaBetaResult doResult = solver.runSimAlpabeta(state, expander, player, true, true, sortingOwnActions, false, gameInfo);
+                    SimAlphaBetaResult doResult = solver.runSimAlphabeta(state, expander, player, true, true, sortingOwnActions, false, gameInfo);
                     if(Math.abs(oldValue - doResult.gameValue) > 1e-8) {
                         throw new IllegalStateException(oldValue + " vs " + doResult.gameValue);
                     }
@@ -195,7 +195,7 @@ public class ComparatorAlgorithm implements GamePlayingAlgorithm {
                     double oldValue = result.gameValue;
                     System.out.println("//////////////////////////////////////");
                     solver = new SimAlphaBeta();
-                    SimAlphaBetaResult doResult = solver.runSimAlpabeta(state, expander, player, true, true, sortingOwnActions, false, gameInfo);
+                    SimAlphaBetaResult doResult = solver.runSimAlphabeta(state, expander, player, true, true, sortingOwnActions, false, gameInfo);
                     if(Math.abs(oldValue - doResult.gameValue) > 1e-8) {
                         throw new IllegalStateException(oldValue + " vs " + doResult.gameValue);
                     }

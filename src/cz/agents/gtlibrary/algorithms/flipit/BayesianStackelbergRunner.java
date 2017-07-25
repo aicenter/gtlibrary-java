@@ -24,10 +24,7 @@ import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.flipit.iterative.ShallowestBrokenCplexBayesianStackelbergLP;
 import cz.agents.gtlibrary.algorithms.flipit.iterative.SumForbiddingBayesianStackelbergLP;
-import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
-import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.io.IOException;
@@ -83,9 +80,15 @@ public class BayesianStackelbergRunner {
             OUTPUT = true;
         }
         gameInfo.ZERO_SUM_APPROX = false;
-        GameState rootState;
-        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
-        else rootState = new FlipItGameState();
+        GameState rootState = null;
+
+        switch (FlipItGameInfo.gameVersion){
+            case NO:                    rootState = new NoInfoFlipItGameState(); break;
+            case FULL:                  rootState = new FullInfoFlipItGameState(); break;
+            case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
+            case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+
+        }
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
         BayesianStackelbergRunner runner = new BayesianStackelbergRunner(rootState, expander, gameInfo, algConfig);

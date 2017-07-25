@@ -14,7 +14,7 @@ import java.util.Random;
 public class RandomGameInfo implements GameInfo {
     public static final Player FIRST_PLAYER = new PlayerImpl(0);
     public static final Player SECOND_PLAYER = new PlayerImpl(1);
-    public static final Player NATURE = new PlayerImpl(2);
+    public static final Player NATURE = new PlayerImpl(2, "Nature");
 
     /**
      * Nature should always be last
@@ -22,17 +22,17 @@ public class RandomGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
 
     public static double CORRELATION = -1;// -1 for zero sum, 1 for identical utilities
-    public static int MAX_DEPTH = 6;
-    public static int MAX_BF = 4;
-    public static int MIN_BF = 4;
-    public static int MAX_OBSERVATION = 4;
-    public static int MAX_UTILITY = 1;
+    public static int MAX_DEPTH = 3;
+    public static int MAX_BF = 2;
+    public static int MIN_BF = 2;
+    public static int MAX_OBSERVATION = 3;
+    public static int MAX_UTILITY = 100;
     public static boolean INTEGER_UTILITY = false;
     public static boolean UTILITY_CORRELATION = true;
-    public static boolean MULTIPLE_PLAYER_DEPTHS = false;
+    public static boolean MULTIPLE_PLAYER_DEPTHS = true;
     public static int MAX_CENTER_MODIFICATION = 3;
     public static boolean FIXED_SIZE_BF = false;
-    public static double NATURE_STATE_PROBABILITY = 0.3;
+    public static double NATURE_STATE_PROBABILITY = 0.0;
     public static int[] ACTIONS;
 
     public static boolean IMPERFECT_RECALL = false;
@@ -42,7 +42,7 @@ public class RandomGameInfo implements GameInfo {
     public static ObservationsType OBSERVATIONS_TYPE = ObservationsType.FORGETFUL;
     public static double FORGET_OBSERVATION_PROBABILITY = 0.5;
 
-    public static long seed = 11;
+    public static long seed = 15;
 
     public static Random rnd = new HighQualityRandom(seed);
     public static ModificationGenerator modificationGenerator = new UniformModificationGenerator(MAX_CENTER_MODIFICATION);

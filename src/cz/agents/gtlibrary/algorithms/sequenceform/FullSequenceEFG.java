@@ -19,7 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
-import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -32,10 +31,7 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitExpander;
 import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameInfo;
 import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameState;
-import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
-import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
@@ -115,8 +111,8 @@ public class FullSequenceEFG {
 //		runUpOrDown();
 //        runOshiZumo();
 //        testExploitGame();
-//		runFlipIt();
-		runHoneyPot();
+		runFlipIt();
+//		runHoneyPot();
 	}
 
 	private static void runHoneyPot(){
@@ -134,9 +130,15 @@ public class FullSequenceEFG {
 		boolean PRINT_STRATEGY = false;
 		FlipItGameInfo gameInfo = new FlipItGameInfo();
 		gameInfo.ZERO_SUM_APPROX = true;
-		GameState rootState;
-		if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
-		else rootState = new FlipItGameState();
+		GameState rootState = null;
+
+		switch (FlipItGameInfo.gameVersion){
+			case NO:                    rootState = new NoInfoFlipItGameState(); break;
+			case FULL:                  rootState = new FullInfoFlipItGameState(); break;
+			case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
+			case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+
+		}
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new FlipItExpander<>(algConfig), gameInfo, algConfig);
 		Map<Player, Map<Sequence, Double>> rps = efg.generate();
@@ -159,6 +161,20 @@ public class FullSequenceEFG {
 				maxUtility = Math.abs(utility);
 		}
 		System.out.println("GI maxUtility : "+gameInfo.getMaxUtility() + "; GT maxUtility : " + maxUtility);
+
+		GambitEFG gambit = new GambitEFG();
+		gambit.buildAndWrite("flipit.gbt", rootState, new FlipItExpander<>(algConfig));
+
+		int larger = 0;
+		for (InformationSet set : algConfig.getAllInformationSets().values()) {
+			if (set.getPlayer().equals(FlipItGameInfo.DEFENDER) && set.getAllStates().size()>1)
+				larger++;
+			if (set.getPlayer().equals(FlipItGameInfo.ATTACKER) && set.getAllStates().size()>(FlipItGameInfo.graph.getAllNodes().size()+1))
+				larger++;
+		}
+
+		System.out.println("Number of non-simultaneous ISs: "+larger);
+
 	}
 
     private static void testExploitGame() {
