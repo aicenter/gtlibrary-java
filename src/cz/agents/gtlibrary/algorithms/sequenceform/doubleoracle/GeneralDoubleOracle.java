@@ -164,7 +164,6 @@ public class GeneralDoubleOracle {
                 System.out.println(seq + " : " + init.get(HoneypotGameInfo.DEFENDER).get(seq));
         }
         if (sum < 0.9999) System.out.println("Sum does NOT correspond to distribution.");
-
     }
 
 
