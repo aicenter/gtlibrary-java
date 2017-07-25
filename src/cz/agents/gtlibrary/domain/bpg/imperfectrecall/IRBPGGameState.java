@@ -8,24 +8,22 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.bpg.PatrollerAction;
 import cz.agents.gtlibrary.domain.bpg.data.BorderPatrollingGraph;
-import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
-import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
-import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRConfig;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.SequenceFormIRInformationSet;
-import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.OracleBilinearSequenceFormBnB;
-import cz.agents.gtlibrary.iinodes.*;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
+import cz.agents.gtlibrary.iinodes.Observations;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
-import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.graph.Node;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class IRBPGGameState extends BPGGameState {
+    public static int REMEMBERED_MOVES = 1;
 
     public static void main(String[] args) {
         SequenceFormIRConfig config = new SequenceFormIRConfig(new BPGGameInfo());
@@ -34,7 +32,7 @@ public class IRBPGGameState extends BPGGameState {
 
         BasicGameBuilder.build(root, config, expander);
 
-        System.out.println(config.getAllInformationSets().size());
+        System.out.println("IS count: " + config.getAllInformationSets().size());
         System.out.println(config.getSequencesFor(BPGGameInfo.DEFENDER).size());
 
         root = new BPGGameState();
@@ -43,7 +41,7 @@ public class IRBPGGameState extends BPGGameState {
 
         FullSequenceEFG efg = new FullSequenceEFG(root, expander1, new BPGGameInfo(), config1);
         efg.generateCompleteGame();
-        System.out.println(config1.getAllInformationSets().size());
+        System.out.println("IS count: " + config1.getAllInformationSets().size());
         System.out.println(config1.getSequencesFor(BPGGameInfo.DEFENDER).size());
 //        GambitEFG exporter = new GambitEFG();
 //        exporter.write("IRBPG.gbt", root, expander);
@@ -88,9 +86,10 @@ public class IRBPGGameState extends BPGGameState {
             defenderObservations.add(new BPGDefenderDefenderObservation(p1Position, p2Position, getSequenceFor(BPGGameInfo.DEFENDER).size()));
             Sequence sequence = getSequenceForPlayerToMove();
 
-            if(!sequence.isEmpty())
-                defenderObservations.add(new BPGDefenderDefenderObservation(((PatrollerAction)sequence.getLast()).getFromNodeForP1(), ((PatrollerAction)sequence.getLast()).getFromNodeForP2(), getSequenceFor(BPGGameInfo.DEFENDER).size()));
-            defenderObservations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
+            for (int i = 1; i <= REMEMBERED_MOVES; i++) {
+                if (sequence.size() >= i)
+                    defenderObservations.add(new BPGDefenderDefenderObservation(((PatrollerAction) sequence.get(sequence.size() - i)).getFromNodeForP1(), ((PatrollerAction) sequence.get(sequence.size() - i)).getFromNodeForP2(), getSequenceFor(BPGGameInfo.DEFENDER).size()));
+            }
             key = new ImperfectRecallISKey(defenderObservations, attackerObservations, null);
         }
         return key;

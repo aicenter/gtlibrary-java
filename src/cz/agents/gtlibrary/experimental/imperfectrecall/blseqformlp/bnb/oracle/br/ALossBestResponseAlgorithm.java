@@ -28,6 +28,7 @@ import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.ValueComparator;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Best-response algorithm with pruning. It calculates best-response reward for a
@@ -35,6 +36,7 @@ import java.util.*;
  */
 public class ALossBestResponseAlgorithm {
 
+    private static final boolean USE_FIX = true;
     protected boolean USE_STATE_CACHE = false;
     protected DummyMap<Action, GameState> dummyInstance = new DummyMap<>();
     protected Map<GameState, Map<Action, GameState>> stateCache;
@@ -142,20 +144,17 @@ public class ALossBestResponseAlgorithm {
 
             if (currentIS != null) {
                 alternativeNodes.addAll(currentIS.getAllStates());
-                if (!alternativeNodes.contains(gameState)) {
+                if (!alternativeNodes.contains(gameState))
                     alternativeNodes.add(gameState);
-                }
-                if (alternativeNodes.size() == 1 && !nonZeroOppRP) {
+                if (alternativeNodes.size() == 1 && nonZeroOppRP)
                     alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
-                }
-            } // if we do not have alternative nodes stored in the currentIS, there is no RP leading to these nodes --> we do not need to consider them
-            else {
-//                alternativeNodes.add(gameState);
+            } else {
+                alternativeNodes.add(gameState);
                 alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
             }
 
             assert (alternativeNodes.contains(gameState));
-            HashMap<GameState, Double> alternativeNodesProbs = new HashMap<GameState, Double>();
+            HashMap<GameState, Double> alternativeNodesProbs = new HashMap<>();
             double ISProbability = 0;
 
             for (GameState currentNode : alternativeNodes) {
@@ -293,7 +292,7 @@ public class ALossBestResponseAlgorithm {
         double probability = 1;
 
         for (Action action : sequence) {
-            double currentProbability = opponentBehavioralStrategy.getOrDefault(action, 0d);
+            double currentProbability = getProbabilityForAction(action);
 
             if (currentProbability == 0)
                 return 0;
@@ -442,7 +441,7 @@ public class ALossBestResponseAlgorithm {
                 Map<Action, Double> actionMap = new FixedSizeMap<>(actions.size());
 
                 for (Action a : actions) {
-                    Double prob = opponentBehavioralStrategy.getOrDefault(a, 0d);
+                    Double prob = getProbabilityForAction(a);
 
                     actionMap.put(a, prob);
                     if (prob > 0)
@@ -710,7 +709,63 @@ public class ALossBestResponseAlgorithm {
 //        return out;
 //    }
 
+    public List<GameState> getAlternativeNodesOutsideRGFix(GameState state) {
+        List<GameState> alternativeNodes = new ArrayList<>();
+
+        getAlternativeNodesOutsideRGFix(gameTreeRoot, state, alternativeNodes, 1);
+        return alternativeNodes;
+    }
+
+    private void getAlternativeNodesOutsideRGFix(GameState currentState, GameState stateForAlternatives, List<GameState> alternativeNodes, double opponentProbability) {
+        if (currentState.isGameEnd())
+            return;
+        if (currentState.getPlayerToMove().getId() == searchingPlayerIndex) {
+            int actionIndex = currentState.getSequenceForPlayerToMove().size();
+            int desiredSeqLength = stateForAlternatives.getSequenceFor(currentState.getPlayerToMove()).size();
+
+            if (actionIndex == desiredSeqLength && stateForAlternatives.getISKeyForPlayerToMove().equals(currentState.getISKeyForPlayerToMove()) &&
+                    !stateForAlternatives.equals(currentState)) {
+                alternativeNodes.add(currentState);
+                return;
+            }
+            if (actionIndex >= desiredSeqLength)
+                return;
+            Action actionToPlay = stateForAlternatives.getSequenceFor(currentState.getPlayerToMove()).get(actionIndex);
+
+            if (currentState.checkConsistency(actionToPlay))
+                getAlternativeNodesOutsideRGFix(currentState.performAction(actionToPlay), stateForAlternatives, alternativeNodes, opponentProbability);
+            return;
+        }
+        if (currentState.getPlayerToMove().getId() == opponentPlayerIndex) {
+            List<Action> actions = expander.getActions(currentState);
+            List<GameState> nonZeroChildren = actions.stream().filter(a -> getProbabilityForAction(a) > 1e-8)
+                    .map(a -> currentState.performAction(a)).collect(Collectors.toList());
+
+            assert opponentProbability > 1e-8;
+            if (nonZeroChildren.isEmpty()) { //default strategy case
+                getAlternativeNodesOutsideRGFix(currentState.performAction(actions.get(0)), stateForAlternatives,
+                        alternativeNodes, 1);
+            } else {
+                nonZeroChildren.forEach(s ->
+                        getAlternativeNodesOutsideRGFix(s, stateForAlternatives,
+                                alternativeNodes,
+                                opponentProbability * getProbabilityForAction(s.getSequenceFor(currentState.getPlayerToMove()).getLast()))
+                );
+            }
+            return;
+        }
+        expander.getActions(currentState).forEach(a ->
+                getAlternativeNodesOutsideRGFix(currentState.performAction(a), stateForAlternatives, alternativeNodes, opponentProbability)
+        );
+    }
+
+    protected double getProbabilityForAction(Action a) {
+        return opponentBehavioralStrategy.getOrDefault(a, 0d);
+    }
+
     public List<GameState> getAlternativeNodesOutsideRG(GameState state) {
+        if (USE_FIX)
+            return getAlternativeNodesOutsideRGFix(state);
         List<GameState> alternativeNodes = new ArrayList<GameState>();
         Stack<GameState> queue = new Stack<GameState>();
         queue.add(gameTreeRoot);

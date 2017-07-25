@@ -46,7 +46,7 @@ public class OshiZumoExpander<I extends InformationSet> extends ExpanderImpl<I> 
         List<Action> actions = new ArrayList<Action>();
 
         addBidsForPlayerToMove(gsState, actions);
-        Collections.shuffle(actions, new HighQualityRandom(OZGameInfo.seed));
+//        Collections.shuffle(actions, new HighQualityRandom(OZGameInfo.seed));
 
         return actions;
     }

@@ -1,6 +1,12 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.experiments;
 
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
+import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.ir.IRGoofSpielGameState;
+import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
+import cz.agents.gtlibrary.domain.oshizumo.ir.IROshiZumoGameState;
+import cz.agents.gtlibrary.domain.poker.generic.ir.IRGenericPokerGameState;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.BilinearSequenceFormLP;
@@ -11,6 +17,8 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.b
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class ExperimentRunner {
     public static void main(String[] args) {
@@ -18,6 +26,19 @@ public class ExperimentRunner {
             DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = false;
             DoubleOracleBilinearSequenceFormBnB.RESOLVE_CURRENT_BEST = Boolean.parseBoolean(args[1]);
             DoubleOracleBilinearSequenceFormBnB.runTTT();
+        } else if (args[0].equals("GS")) {
+            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = false;
+            GSGameInfo.depth = Integer.parseInt(args[1]);
+            IRGoofSpielGameState.REMEMBERED_MOVES = Integer.parseInt(args[2]);
+            GSGameInfo.CARDS_FOR_PLAYER = IntStream.range(1, GSGameInfo.depth + 1).toArray();
+            DoubleOracleBilinearSequenceFormBnB.runGoofSpiel();
+        } else if (args[0].equals("OZ")) {
+            DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = false;
+            OZGameInfo.startingCoins= Integer.parseInt(args[1]);
+            OZGameInfo.locK = Integer.parseInt(args[2]);
+            OZGameInfo.minBid = Integer.parseInt(args[3]);
+            IROshiZumoGameState.REMEMBERED_MOVES = Integer.parseInt(args[4]);
+            DoubleOracleBilinearSequenceFormBnB.runOshiZumo();
         } else if (args[0].equals("BPG")) {
             DoubleOracleBilinearSequenceFormBnB.STATE_CACHE_USE = false;
             BPGGameInfo.DEPTH = Integer.parseInt(args[1]);
@@ -26,6 +47,7 @@ public class ExperimentRunner {
                 BilinearSequenceFormBnB.runBPG();
             } else {
                 DoubleOracleBilinearSequenceFormBnB.RESOLVE_CURRENT_BEST = Boolean.parseBoolean(args[4]);
+                IRBPGGameState.REMEMBERED_MOVES = Integer.parseInt(args[5]);
                 DoubleOracleBilinearSequenceFormBnB.runBPG();
             }
         } else {

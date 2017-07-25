@@ -13,8 +13,8 @@ public class ResultComparison {
     public static void main(String[] args) {
 //        new Scanner(System.in).next();
 
-        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 30;
-        int endingSeed = (args.length > 1) ? new Integer(args[1]) : 1000;
+        int startingSeed = (args.length > 0) ? new Integer(args[0]) : 1005;
+        int endingSeed = (args.length > 1) ? new Integer(args[1]) : 2000;
 
         int BF = (args.length > 3) ? new Integer(args[3]) : RandomGameInfo.MAX_BF;
         int DEPTH = (args.length > 4) ? new Integer(args[4]) : RandomGameInfo.MAX_DEPTH;
@@ -36,7 +36,7 @@ public class ResultComparison {
             System.err.println("*******DO*******");
             double milpValue = DoubleOracleBilinearSequenceFormBnB.runAbstractedRandomGame();
             System.err.println("**************BnB*******************");
-            double oracleBnBValue = BilinearSequenceFormBnB.runAbstractedRandomGame();
+            double oracleBnBValue = BilinearSequenceFormLP.runAbstractedRandomGame();
 
             System.out.println("seed: " + seed + ": " + milpValue + " vs " + oracleBnBValue/* + " vs " + milpValue*/);
             if (Math.abs(oracleBnBValue - milpValue) > 0.05) {/* &&  < 1e-2*/

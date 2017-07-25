@@ -10,6 +10,12 @@ public class FixedForIterationData extends OOSAlgorithmData {
     protected double[] regretUpdate;
     protected boolean updated;
 
+    public FixedForIterationData(int actionCount) {
+        super(actionCount);
+        regretUpdate = new double[r.length];
+        updated = false;
+    }
+
     public FixedForIterationData(List<Action> actions) {
         super(actions);
         regretUpdate = new double[r.length];

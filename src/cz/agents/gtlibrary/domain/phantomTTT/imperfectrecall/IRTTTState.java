@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.phantomTTT.imperfectrecall;
 
+import cz.agents.gtlibrary.domain.phantomTTT.TTTAction;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
@@ -19,6 +20,7 @@ import java.util.Set;
 
 public class IRTTTState extends TTTState {
 
+    public static int REMEMBERED_MOVES = 0;
     public ISKey key;
 
     public static void main(String[] args) {
@@ -44,7 +46,7 @@ public class IRTTTState extends TTTState {
 
     @Override
     public ISKey getISKeyForPlayerToMove() {
-        if(key == null) {
+        if (key == null) {
             Set<Integer> myPositions = new HashSet<>();
             Set<Integer> observed = new HashSet<>();
             char currentPlayerSymbol = toMove;
@@ -58,9 +60,14 @@ public class IRTTTState extends TTTState {
                 else if (currentPositionSymbol == opponentPlayerSymbol && getTried(currentPlayerSymbol, i))
                     observed.add(i);
             }
+
             Observations myObservations = new Observations(getPlayerToMove(), getPlayerToMove());
 
             myObservations.add(new TTTObservation(myPositions));
+            for (int i = 1; i <= REMEMBERED_MOVES; i++) {
+                if (getSequenceForPlayerToMove().size() >= i)
+                    myObservations.add(new PositionObservation(((TTTAction) getSequenceForPlayerToMove().get(getSequenceForPlayerToMove().size() - i)).fieldID));
+            }
             Observations oppObservations = new Observations(getPlayerToMove(), getAllPlayers()[1 - getPlayerToMove().getId()]);
 
             oppObservations.add(new TTTObservation(observed));
@@ -87,7 +94,7 @@ public class IRTTTState extends TTTState {
             if (this == o) return true;
             if (!(o instanceof TTTObservation)) return false;
 
-            if(o.hashCode() != hashCode())
+            if (o.hashCode() != hashCode())
                 return false;
             TTTObservation that = (TTTObservation) o;
 
@@ -97,9 +104,38 @@ public class IRTTTState extends TTTState {
 
         @Override
         public int hashCode() {
-            if(hashCode == -1)
+            if (hashCode == -1)
                 hashCode = positions != null ? positions.hashCode() : 0;
             return hashCode;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return false;
+        }
+    }
+
+    private class PositionObservation implements Observation {
+        private byte fieldID;
+
+        public PositionObservation(byte fieldID) {
+            this.fieldID = fieldID;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof PositionObservation)) return false;
+
+            PositionObservation that = (PositionObservation) o;
+
+            return fieldID == that.fieldID;
+
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) fieldID;
         }
 
         @Override

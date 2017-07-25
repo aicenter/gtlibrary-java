@@ -11,6 +11,14 @@ public class CFRBRData extends FixedForIterationData {
     private double[] meanStrategyUpdateNumerator;
     private double meanStrategyUpdateDenominator;
 
+    public CFRBRData(int actionCount) {
+        super(actionCount);
+        meanStrategyUpdateNumerator = new double[actionCount];
+//        Arrays.fill(mp, 1./mp.length);
+        if (mp.length > 0)
+            mp[0] = 1;
+    }
+
     public CFRBRData(List<Action> actions) {
         super(actions);
         meanStrategyUpdateNumerator = new double[actions.size()];
@@ -20,10 +28,9 @@ public class CFRBRData extends FixedForIterationData {
     }
 
     public CFRBRData(CFRBRData data) {
-        this(data.getActions());
+        this(data.getActionCount());
         System.arraycopy(data.getMp(), 0, mp, 0, mp.length);
         nbSamples = data.nbSamples;
-
     }
 
     public void setRegretAtIndex(int index, double regret) {

@@ -11,6 +11,9 @@ import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
+import cz.agents.gtlibrary.domain.oshizumo.ir.IROshiZumoGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.ir.IRGenericPokerGameState;
@@ -93,6 +96,7 @@ public class BilinearSequenceFormBnB {
 //        runGenericPoker();
         runBPG();
 //        runBRTest();
+//        runOZ();
     }
 
     public static double runCPRRAbstractedRandomGame() {
@@ -237,6 +241,42 @@ public class BilinearSequenceFormBnB {
         System.out.println("Sequence count: " + config.getSequencesFor(BPGGameInfo.DEFENDER).size() + ", " + config.getSequencesFor(BPGGameInfo.ATTACKER).size());
         return solver.finalValue;
     }
+
+    public static double runOZ() {
+        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new OZGameInfo());
+        GameState root = new IROshiZumoGameState();
+        Expander<SequenceFormIRInformationSet> expander = new OshiZumoExpander<>(config);
+
+        builder.build(root, config, expander);
+        BilinearSequenceFormBnB solver = new BilinearSequenceFormBnB(OZGameInfo.FIRST_PLAYER, expander, new OZGameInfo());
+
+        solver.setExpander(expander);
+        System.out.println("Information sets: " + config.getCountIS(0));
+        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        System.out.println("Sequences P2: " + config.getSequencesFor(OZGameInfo.SECOND_PLAYER).size());
+        ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+        long start = mxBean.getCurrentThreadCpuTime();
+
+        solver.solve(config);
+        System.out.println("CPLEX time: " + solver.getCPLEXTime());
+        System.out.println("StrategyLP time: " + solver.getStrategyLPTime());
+        System.out.println("Overall time: " + (mxBean.getCurrentThreadCpuTime() - start) / 1e6);
+        System.out.println("CPLEX invocation count: " + solver.getCPLEXInvocationCount());
+        System.out.println("BR time: " + solver.getBRTime());
+        System.out.println("LP building time: " + solver.getLpBuildingTime());
+
+        System.out.println("Memory: " + Runtime.getRuntime().totalMemory());
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        System.out.println("cuts: " + solver.cuts);
+        System.out.println("invalid cuts: " + solver.invalidCuts);
+        System.out.println("IS count: " + config.getAllInformationSets().size());
+        System.out.println("Sequence count: " + config.getSequencesFor(OZGameInfo.FIRST_PLAYER).size() + ", " + config.getSequencesFor(OZGameInfo.SECOND_PLAYER).size());
+        return solver.finalValue;
+    }
+
+
+
 
     public static double runKuhnPoker() {
         BasicGameBuilder builder = new BasicGameBuilder();

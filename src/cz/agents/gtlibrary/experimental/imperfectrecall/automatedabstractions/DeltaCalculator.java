@@ -9,9 +9,9 @@ import java.util.*;
 
 public class DeltaCalculator extends ALossBestResponseAlgorithm {
 
-    private StrategyDiffs strategyDiffs;
-    private double prProbability;
-    private double irProbability;
+    protected StrategyDiffs strategyDiffs;
+    protected double prProbability;
+    protected double irProbability;
 
     public DeltaCalculator(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse) {
         super(root, expander, searchingPlayerIndex, new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]}, algConfig, gameInfo, stateCacheUse);
@@ -186,7 +186,7 @@ public class DeltaCalculator extends ALossBestResponseAlgorithm {
         return 1;
     }
 
-    private double getIRProbability(GameState state, Action action) {
+    protected double getIRProbability(GameState state, Action action) {
         Sequence sequence = new ArrayListSequenceImpl(players[opponentPlayerIndex]);
         double probability = 1;
 
@@ -199,7 +199,7 @@ public class DeltaCalculator extends ALossBestResponseAlgorithm {
         return probability;
     }
 
-    private double getPRProbability(GameState state, Action action) {
+    protected double getPRProbability(GameState state, Action action) {
         Sequence sequence = new ArrayListSequenceImpl(players[opponentPlayerIndex]);
         double probability = 1;
 
@@ -212,7 +212,7 @@ public class DeltaCalculator extends ALossBestResponseAlgorithm {
         return probability;
     }
 
-    private double getProbability(Sequence sequence, Action action, Map<Sequence, Map<Action, Double>> strategyDiff) {
+    protected double getProbability(Sequence sequence, Action action, Map<Sequence, Map<Action, Double>> strategyDiff) {
         Map<Action, Double> diffForSequence = strategyDiff.get(sequence);
         double diffProbability = diffForSequence == null ? 0 : diffForSequence.getOrDefault(action, 0d);
 
