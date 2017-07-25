@@ -2,6 +2,9 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
@@ -25,9 +28,19 @@ import java.util.*;
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-        runKuhnPoker();
-//        runRandomGame();
+//        runGenericPoker();
+//        runKuhnPoker();
+        runRandomGame();
 //        runWichardtCounterexample();
+    }
+
+    private static void runGenericPoker() {
+        GameState root = new GenericPokerGameState();
+        Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new FPIRAConfig());
+
+        FPIRA fpira = new FPIRA(root, expander, new GPGameInfo());
+
+        fpira.runIterations(100000);
     }
 
     private static void runKuhnPoker() {
@@ -190,7 +203,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         else
             delta = p0Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs);
 //        System.out.println(delta);
-        return delta > 0;
+        return delta > 1e-8;
     }
 
     private boolean valid(StrategyDiffs strategyDiffs, Map<Action, Double> strategy) {
