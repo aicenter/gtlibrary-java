@@ -320,7 +320,6 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     private void countISsVisited(Map<Sequence, Map<ISKey, Action>> fullBestResponseResult, GameState state, Player player, Set<ISKey> visitesISs) {
         if(state.isGameEnd())
             return;
-        visitesISs.add(state.getISKeyForPlayerToMove());
         if(state.getPlayerToMove().equals(player)) {
             visitesISs.add(state.getISKeyForPlayerToMove());
             expander.getActions(state).stream().filter(a -> a.equals(fullBestResponseResult.getOrDefault(state.getSequenceForPlayerToMove(), new HashMap<>()).get(state.getISKeyForPlayerToMove())))

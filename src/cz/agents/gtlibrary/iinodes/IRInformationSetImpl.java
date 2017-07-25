@@ -28,6 +28,16 @@ public class IRInformationSetImpl implements InformationSet {
         this.hashCode = key.hashCode();
     }
 
+    public IRInformationSetImpl(GameState state, ImperfectRecallISKey isKey) {
+        this.player = state.getPlayerToMove();
+        this.statesInformationSet.add(state);
+//        if (state.getISKeyForPlayerToMove() instanceof PerfectRecallISKey)
+//            this.key = wrap((PerfectRecallISKey) state.getISKeyForPlayerToMove());
+//        else
+        this.key = isKey;
+        this.hashCode = key.hashCode();
+    }
+
     private ImperfectRecallISKey wrap(PerfectRecallISKey isKeyForPlayerToMove) {
         Observations perfectRecallObservations = new Observations(player, player);
 

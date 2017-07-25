@@ -11,6 +11,9 @@ import cz.agents.gtlibrary.domain.bpg.imperfectrecall.IRBPGGameState;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameInfo;
 import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
+import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
+import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
+import cz.agents.gtlibrary.domain.oshizumo.ir.IROshiZumoGameState;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionExpander;
 import cz.agents.gtlibrary.domain.randomabstraction.RandomAbstractionGameInfo;
 import cz.agents.gtlibrary.domain.randomabstraction.P1RandomAbstractionGameStateFactory;
@@ -45,10 +48,11 @@ public class BilinearSequenceFormLP {
     private final double EPS = 0.000001;
 
     public static void main(String[] args) {
-        runAbstractedRandomGame();
+//        runAbstractedRandomGame();
 //        runRandomGame();
-//        runBPG();
+        runBPG();
 //        runBRTest();
+//        runOZ();
     }
 
     public static double runAbstractedRandomGame() {
@@ -125,6 +129,40 @@ public class BilinearSequenceFormLP {
 //        }
 
         BilinearSequenceFormLP solver = new BilinearSequenceFormLP(BPGGameInfo.DEFENDER, new BPGGameInfo());
+
+        GambitEFG exporter = new GambitEFG();
+        exporter.write("RG.gbt", root, expander);
+
+        solver.setExpander(expander);
+        System.out.println("Information sets: " + config.getCountIS(0));
+        System.out.println("Sequences P1: " + config.getSequencesFor(solver.player).size());
+        solver.solve(config);
+
+        System.out.println("GAME ID " + RandomGameInfo.seed + " = " + solver.finalValue);
+        return solver.finalValue;
+
+//        System.out.println("IR SETS");
+//        for (SequenceFormIRInformationSet is : config.getAllInformationSets().values()) {
+//            if (is.isHasIR()) {
+//                System.out.println(is.getISKey());
+//            }
+//        }
+    }
+
+    public static double runOZ() {
+        BasicGameBuilder builder = new BasicGameBuilder();
+        SequenceFormIRConfig config = new SequenceFormIRConfig(new OZGameInfo());
+        GameState root = new IROshiZumoGameState();
+        Expander<SequenceFormIRInformationSet> expander = new OshiZumoExpander<>(config);
+
+        builder.build(root, config, expander);
+
+//        if (config.isPlayer2IR()) {
+//            System.out.println(" Player 2 has IR ... skipping ...");
+//            return;
+//        }
+
+        BilinearSequenceFormLP solver = new BilinearSequenceFormLP(OZGameInfo.FIRST_PLAYER, new OZGameInfo());
 
         GambitEFG exporter = new GambitEFG();
         exporter.write("RG.gbt", root, expander);
@@ -226,7 +264,7 @@ public class BilinearSequenceFormLP {
             br.getBestResponse(P1Strategy);
 //            br.getBestResponseSequence(P1StrategySeq);
 //            System.out.println("-------------------\nP1 Actions " + extractRPStrategy(config, lpData));
-            finalValue = -br.getValue();
+            finalValue = lpData.getSolver().getObjValue();
 //            System.out.println("NEW BR = " + br2.getValue());
 
 //            finalValue = lpData.getSolver().getObjValue();

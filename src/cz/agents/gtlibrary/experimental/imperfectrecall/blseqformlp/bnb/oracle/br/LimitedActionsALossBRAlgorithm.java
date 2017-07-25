@@ -65,7 +65,7 @@ public class LimitedActionsALossBRAlgorithm extends ALossBestResponseAlgorithm {
                 if (!alternativeNodes.contains(gameState)) {
                     alternativeNodes.add(gameState);
                 }
-                if (alternativeNodes.size() == 1 && !nonZeroOppRP) {
+                if (alternativeNodes.size() == 1 && nonZeroOppRP) {
                     alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
                 }
             } // if we do not have alternative nodes stored in the currentIS, there is no RP leading to these nodes --> we do not need to consider them

@@ -50,9 +50,17 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
      * Number of strategy update samples.
      */
     protected int nbSamples;
+    private int actionCount;
+
+    public OOSAlgorithmData(int actionCount) {
+        mp = new double[actionCount];
+        r = new double[actionCount];
+        this.actionCount = actionCount;
+    }
 
     public OOSAlgorithmData(List<Action> actions) {
         this.actions = actions;
+        this.actionCount = actions.size();
         mp = new double[actions.size()];
         r = new double[actions.size()];
     }
@@ -136,6 +144,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         Arrays.fill(r, 0);
         Arrays.fill(mp, 0);
         nbSamples = 0;
+    }
+
+    public int getActionCount() {
+        return actionCount;
     }
 }
 

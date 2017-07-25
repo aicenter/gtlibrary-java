@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.domain.goofspiel.ir;
 
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielAction;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.iinodes.*;
@@ -13,6 +14,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IRGoofSpielGameState extends IIGoofSpielGameState {
+
+    public static int REMEMBERED_MOVES = 2;
 
     public IRGoofSpielGameState(GoofSpielGameState gameState) {
         super(gameState);
@@ -35,7 +38,10 @@ public class IRGoofSpielGameState extends IIGoofSpielGameState {
                 Observations observations = new Observations(player, player);
 
                 observations.add(new GSObservation(playerScore[player.getId()], new HashSet<>(getCardsFor(player))));
-//                observations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
+                for (int i = 1; i <= REMEMBERED_MOVES; i++) {
+                    if (getSequenceForPlayerToMove().size() >= i)
+                        observations.add(new ObservationImpl(((GoofSpielAction) getSequenceForPlayerToMove().get(getSequenceForPlayerToMove().size() - i)).getValue()));
+                }
                 key = new ImperfectRecallISKey(observations, null, null);
             } else {
                 Observations observations = new Observations(player, player);
