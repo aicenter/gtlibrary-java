@@ -22,24 +22,6 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected int iteration = 0;
     protected int isKeyCounter = 0;
 
-//    public static void main(String[] args) {
-//        runGenericPoker();
-//    }
-//
-//    protected static void runGenericPoker() {
-//        GameState root = new GenericPokerGameState();
-//        Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new MCTSConfig());
-//
-//        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
-//        AutomatedAbstractionAlgorithm cfr = new AutomatedAbstractionAlgorithm(root, expander, new GPGameInfo());
-//
-//        cfr.runIterations(1000000);
-//        GambitEFG gambit = new GambitEFG();
-//
-//        gambit.write("cfrbrtest.gbt", root, expander);
-//    }
-
-
     public AutomatedAbstractionAlgorithm(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info) {
         this.rootState = rootState;
         this.expander = expander;

@@ -154,7 +154,7 @@ public class ALossBestResponseAlgorithm {
             }
 
             assert (alternativeNodes.contains(gameState));
-            HashMap<GameState, Double> alternativeNodesProbs = new HashMap<GameState, Double>();
+            HashMap<GameState, Double> alternativeNodesProbs = new HashMap<>();
             double ISProbability = 0;
 
             for (GameState currentNode : alternativeNodes) {
@@ -723,7 +723,8 @@ public class ALossBestResponseAlgorithm {
             int actionIndex = currentState.getSequenceForPlayerToMove().size();
             int desiredSeqLength = stateForAlternatives.getSequenceFor(currentState.getPlayerToMove()).size();
 
-            if (actionIndex == desiredSeqLength && stateForAlternatives.getISKeyForPlayerToMove().equals(currentState.getISKeyForPlayerToMove())) {
+            if (actionIndex == desiredSeqLength && stateForAlternatives.getISKeyForPlayerToMove().equals(currentState.getISKeyForPlayerToMove()) &&
+                    !stateForAlternatives.equals(currentState)) {
                 alternativeNodes.add(currentState);
                 return;
             }
