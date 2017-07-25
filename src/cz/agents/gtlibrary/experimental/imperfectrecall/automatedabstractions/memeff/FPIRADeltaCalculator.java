@@ -174,7 +174,7 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
         return returnValue;
     }
 
-    protected void handleState(BRActionSelection selection, Action action, GameState state) {
+    protected void handleState(BRActionSelection selection, Action action, GameState state, double parentProb) {
         Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
         GameState newState = successors.computeIfAbsent(action, a -> state.performAction(a));
         double natureProb = state.getNatureProbability();
