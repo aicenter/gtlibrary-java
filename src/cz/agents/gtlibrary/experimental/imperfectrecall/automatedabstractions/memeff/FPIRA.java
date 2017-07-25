@@ -27,16 +27,15 @@ import java.util.*;
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
-//        runRandomGame();
+        runRandomGame();
 //        runWichardtCounterexample();
     }
 
     private static void runGenericPoker() {
         GameState root = new GenericPokerGameState();
         Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new FPIRAConfig());
-
         FPIRA fpira = new FPIRA(root, expander, new GPGameInfo());
 
         fpira.runIterations(100000);
@@ -45,7 +44,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
     private static void runKuhnPoker() {
         GameState root = new KuhnPokerGameState();
         Expander<MCTSInformationSet> expander = new KuhnPokerExpander<>(new FPIRAConfig());
-
         FPIRA fpira = new FPIRA(root, expander, new KPGameInfo());
 
         fpira.runIterations(100000);
@@ -54,7 +52,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
     private static void runRandomGame() {
         GameState root = new RandomGameState();
         Expander<MCTSInformationSet> expander = new RandomGameExpander<>(new FPIRAConfig());
-
         FPIRA fpira = new FPIRA(root, expander, new RandomGameInfo());
 
         fpira.runIterations(100000);
@@ -66,7 +63,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
     private static void runWichardtCounterexample() {
         GameState root = new PerfectInformationWichardtState();
         Expander<MCTSInformationSet> expander = new WichardtExpander<>(new FPIRAConfig());
-
         FPIRA fpira = new FPIRA(root, expander, new WichardtGameInfo());
 
         fpira.runIterations(100000);
@@ -326,7 +322,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                     double[] meanStrategy = newIS.getData().getMp();
 
                     for (Map.Entry<PerfectRecallISKey, double[]> isKeyEntry : entry.getValue().entrySet()) {
-                        for (int i = 0; i < ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData().getActions().size(); i++) {
+                        for (int i = 0; i < ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData().getActionCount(); i++) {
                             ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateNumerator(i, isKeyEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]));
                         }
                         ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateDenominator(isKeyEntry.getValue()[0] + isKeyEntry.getValue()[1]);

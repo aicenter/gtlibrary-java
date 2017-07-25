@@ -55,11 +55,9 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
         List<Action> actions = expander.getActions(informationSet.getAllStates().stream().findAny().get());
         double[] realizations = opponentAbstractedStrategy.get(currentAbstractionISKeys.get((PerfectRecallISKey) informationSet.getISKey(), actions));
 
-
         for (int i = 0; i < actions.size(); i++) {
-            if (actions.get(i).equals(action)) {
+            if (actions.get(i).equals(action))
                 return realizations[i];
-            }
         }
         throw new InvalidStateException("Action not found");
     }
