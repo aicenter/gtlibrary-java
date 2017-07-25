@@ -27,9 +27,9 @@ import java.util.*;
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
-        runRandomGame();
+//        runRandomGame();
 //        runWichardtCounterexample();
     }
 

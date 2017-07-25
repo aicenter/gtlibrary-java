@@ -161,7 +161,7 @@ public class ALossBestResponseAlgorithm {
                 double currentNodeProb = currentNode.getNatureProbability();
 
                 if (nonZeroOppRP) {
-                    double altProb = getOpponentProbability(currentNode.getSequenceFor(players[opponentPlayerIndex]));
+                    double altProb = currentNode.equals(gameState) ? currentStateProb : getOpponentProbability(currentNode.getSequenceFor(players[opponentPlayerIndex]));
 
                     currentNodeProb *= altProb;
                     if (altProb > 0)
@@ -324,7 +324,7 @@ public class ALossBestResponseAlgorithm {
         Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
         GameState newState = successors.computeIfAbsent(action, a -> state.performAction(a));
         double natureProb = newState.getNatureProbability(); // TODO extract these probabilities from selection Map
-        double oppRP = ((state.getPlayerToMove().getId() == opponentPlayerIndex)?parentProb * getProbabilityForAction(action): parentProb);
+        double oppRP = ((state.getPlayerToMove().getId() == opponentPlayerIndex) ? parentProb * getProbabilityForAction(action) : parentProb);
         double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
 
         assert Math.abs(oppRP - getOpponentProbability(newState.getSequenceFor(players[opponentPlayerIndex]))) < 1e-8;
