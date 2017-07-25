@@ -22,7 +22,7 @@ public class CFRBRData extends FixedForIterationData {
     public CFRBRData(List<Action> actions) {
         super(actions);
         meanStrategyUpdateNumerator = new double[actions.size()];
-//        Arrays.fill(multiplayer, 1./multiplayer.length);
+//        Arrays.fill(mp, 1./mp.length);
         if (mp.length > 0)
             mp[0] = 1;
     }

@@ -316,17 +316,18 @@ public class ALossBestResponseAlgorithm {
 
     public void selectAction(GameState state, BRActionSelection selection, List<Action> actionsToExplore, double currentStateProb) {
         for (Action action : actionsToExplore) {
-            handleState(selection, action, state);
+            handleState(selection, action, state, currentStateProb);
         }
     }
 
-    protected void handleState(BRActionSelection selection, Action action, GameState state) {
+    protected void handleState(BRActionSelection selection, Action action, GameState state, double parentProb) {
         Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
         GameState newState = successors.computeIfAbsent(action, a -> state.performAction(a));
         double natureProb = newState.getNatureProbability(); // TODO extract these probabilities from selection Map
-        double oppRP = getOpponentProbability(newState.getSequenceFor(players[opponentPlayerIndex]));
+        double oppRP = ((state.getPlayerToMove().getId() == opponentPlayerIndex)?parentProb * getProbabilityForAction(action): parentProb);
         double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
 
+        assert Math.abs(oppRP - getOpponentProbability(newState.getSequenceFor(players[opponentPlayerIndex]))) < 1e-8;
         if (newLowerBound <= MAX_UTILITY_VALUE) {
             double value = bestResponse(newState, newLowerBound, oppRP);
             selection.addValue(action, value, natureProb, oppRP);
