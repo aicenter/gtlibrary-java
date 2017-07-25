@@ -193,7 +193,7 @@ public class GeneralDoubleOracle {
                         break;
                     case "AP":
                         FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_ALL_POINTS;
-                        break;
+                        break;//
                 }
             }
         }
