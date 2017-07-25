@@ -11,6 +11,7 @@ import java.util.*;
 
 public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
 
+    private static byte UTILITY_MULTIPLIER = 1;
     protected FPIRAStrategyDiffs strategyDiffs;
     private Map<ISKey, double[]> opponentAbstractedStrategy;
     private InformationSetKeyMap currentAbstractionISKeys;
@@ -34,7 +35,7 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
     protected Double calculateEvaluation(GameState gameState, double currentStateProbability) {
         double utRes = gameState.getUtilities()[searchingPlayerIndex] * gameState.getNatureProbability();
 
-        return Math.abs(utRes * irProbability - utRes * prProbability);
+        return UTILITY_MULTIPLIER * (utRes * irProbability - utRes * prProbability);
 //        return utRes * irProbability - utRes * prProbability;
     }
 
@@ -224,6 +225,16 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
         this.strategyDiffs = strategyDiffs;
         prProbability = 1;
         irProbability = 1;
+        UTILITY_MULTIPLIER = 1;
+        return calculateBR(gameTreeRoot, new HashMap<>());
+    }
+
+    public double calculateNegativeDeltaForAbstractedStrategy(Map<ISKey, double[]> opponentAbstractedStrategy, FPIRAStrategyDiffs strategyDiffs) {
+        this.opponentAbstractedStrategy = opponentAbstractedStrategy;
+        this.strategyDiffs = strategyDiffs;
+        prProbability = 1;
+        irProbability = 1;
+        UTILITY_MULTIPLIER = -1;
         return calculateBR(gameTreeRoot, new HashMap<>());
     }
 

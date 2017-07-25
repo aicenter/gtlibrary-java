@@ -11,7 +11,6 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
-import cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder;
 import cz.agents.gtlibrary.domain.wichardtne.PerfectInformationWichardtState;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtExpander;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtGameInfo;
@@ -28,9 +27,9 @@ import java.util.*;
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
-        runRandomGame();
+//        runRandomGame();
 //        runWichardtCounterexample();
     }
 
@@ -199,9 +198,11 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
 //        assert valid(strategyDiffs, strategy);
         if (player.getId() == 0)
-            delta = p1Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs);
+            delta = Math.max(p1Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs),
+                    -p1Delta.calculateNegativeDeltaForAbstractedStrategy(strategy, strategyDiffs));
         else
-            delta = p0Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs);
+            delta = Math.max(p0Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs),
+                    -p0Delta.calculateNegativeDeltaForAbstractedStrategy(strategy, strategyDiffs));
 //        System.out.println(delta);
         return delta > 1e-8;
     }
