@@ -24,13 +24,6 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
         this.currentAbstractionISKeys = currentAbstractionISKeys;
     }
 
-    public double calculateDelta(Map<Action, Double> strategy, FPIRAStrategyDiffs strategyDiffs) {
-        this.strategyDiffs = strategyDiffs;
-        prProbability = 1;
-        irProbability = 1;
-        return super.calculateBR(gameTreeRoot, strategy);
-    }
-
     @Override
     protected Double calculateEvaluation(GameState gameState, double currentStateProbability) {
         double utRes = gameState.getUtilities()[searchingPlayerIndex] * gameState.getNatureProbability();
@@ -40,10 +33,6 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
     }
 
     protected Double bestResponse(GameState gameState, double lowerBound, double currentStateProb) {
-
-//        Map<Player, Sequence> currentHistory = new HashMap<Player, Sequence>();
-//        currentHistory.put(players[searchingPlayerIndex], gameState.getSequenceFor(players[searchingPlayerIndex]));
-//        currentHistory.put(players[opponentPlayerIndex], gameState.getSequenceFor(players[opponentPlayerIndex]));
         nodes++;
         Double returnValue = null;
 
@@ -51,8 +40,7 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
             return calculateEvaluation(gameState, currentStateProb);
 
         Double tmpVal = cachedValuesForNodes.get(gameState);
-        if (tmpVal != null) { // we have already solved this node as a part of an evaluated information set
-            //maybe we could remove the cached reward at this point? No in double-oracle -> we are using it in restricted game
+        if (tmpVal != null) {
             return tmpVal;
         }
         Player currentPlayer = gameState.getPlayerToMove();
@@ -72,44 +60,20 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
                 if (alternativeNodes.size() == 1 && nonZeroOppRP) {
                     alternativeNodes.addAll(getAlternativeNodesOutsideRG(gameState));
                 }
-            } // if we do not have alternative nodes stored in the currentIS, there is no RP leading to these nodes --> we do not need to consider them
-
-            assert (alternativeNodes.contains(gameState));
-            HashMap<GameState, Double> alternativeNodesProbs = new HashMap<GameState, Double>();
-
-            for (GameState currentNode : alternativeNodes) {
-                double currentNodeProb = currentNode.getNatureProbability();
-
-                if (nonZeroOppRP) {
-                    double altProb = getOpponentProbability(currentNode.getSequenceFor(players[opponentPlayerIndex]));
-
-                    currentNodeProb *= altProb;
-                }
-                alternativeNodesProbs.put(currentNode, currentNodeProb);
             }
 
-//            if (!nonZeroOppRP && !nonZeroOppRPAlt && ISProbability > gameState.getNatureProbability()) {
-//                // if there is zero OppRP prob we keep only those nodes in IS that are caused by the moves of nature
-//                // i.e., -> we keep all the nodes that share the same history of the opponent
-//                for (GameState state : new ArrayList<GameState>(alternativeNodes)) {
-//                    if (!state.getHistory().getSequenceOf(players[opponentPlayerIndex]).equals(gameState.getHistory().getSequenceOf(players[opponentPlayerIndaboveDeltaex]))) {
-//                        alternativeNodes.remove(state);
-//                        alternativeNodesProbs.remove(state);
-//                    }
-//                }
-//            }
+            assert (alternativeNodes.contains(gameState));
             new ArrayList<>(alternativeNodes).stream().filter(state -> !state.getSequenceForPlayerToMove().equals(gameState.getSequenceForPlayerToMove())).forEach(state -> {
                 alternativeNodes.remove(state);
-                alternativeNodesProbs.remove(state);
             });
 
-            BRSrchSelection sel = new BRSrchSelection(lowerBound, Double.POSITIVE_INFINITY, alternativeNodesProbs, nonZeroOppRP);
+            BRSrchSelection sel = new FPIRADeltaCalculatorBRSrchSelection(lowerBound, Double.POSITIVE_INFINITY, nonZeroOppRP);
 
             List<Action> actionsToExplore = expander.getActions(gameState);
 
             for (GameState currentNode : alternativeNodes) {
                 sel.setCurrentNode(currentNode);
-                selectAction(currentNode, sel, actionsToExplore, alternativeNodesProbs.get(currentNode) / currentNode.getNatureProbability());
+                selectAction(currentNode, sel, actionsToExplore, 0);
                 sel.abandonCurrentNode();
             }
 
@@ -119,7 +83,6 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
                 if (sel.actionRealValues.get(currentNode) == null || sel.actionRealValues.get(currentNode).isEmpty()) {
                     assert false;
                     if (currentNode.equals(gameState)) {
-//                        returnValue = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
                         returnValue = Double.NEGATIVE_INFINITY;
                     }
                     continue;
@@ -127,7 +90,6 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
                 double v;
                 if (resultAction == null) {
                     assert false;
-//                    v = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
                     v = Double.NEGATIVE_INFINITY;
                 } else {
                     v = sel.actionRealValues.get(currentNode).get(resultAction);
@@ -178,15 +140,12 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
         Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
         GameState newState = successors.computeIfAbsent(action, a -> state.performAction(a));
         double natureProb = state.getNatureProbability();
-//        double oppRP = getOpponentProbability(state.getSequenceFor(players[opponentPlayerIndex]));
 
         prProbability = getPRProbability(state, action);
         irProbability = getIRProbability(state, action);
-//        if (newLowerBound <= MAX_UTILITY_VALUE) {
         double value = Math.abs(irProbability) < 1e-8 && Math.abs(prProbability) < 1e-8 ? 0 : bestResponse(newState, Double.NEGATIVE_INFINITY, 1);
 
         selection.addValue(action, value, natureProb, 1e-3 * state.getNatureProbability());
-//        }
     }
 
     protected double getIRProbability(GameState state, Action action) {
@@ -277,5 +236,22 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
             }
         }
         throw new InvalidStateException("Action not found");
+    }
+
+    private class FPIRADeltaCalculatorBRSrchSelection extends BRSrchSelection {
+        public FPIRADeltaCalculatorBRSrchSelection(double lowerBound, double allNodesProbability, boolean nonZeroORP) {
+            super(lowerBound, allNodesProbability, null, nonZeroORP);
+        }
+
+        @Override
+        public void abandonCurrentNode() {
+            this.currentNode = null;
+            previousMaxValue = actionExpectedValues.get(maxAction);
+        }
+
+        @Override
+        public double calculateNewBoundForAction(Action action, double natureProb, double orpProb) {
+            throw new UnsupportedOperationException("Bound should not be used here");
+        }
     }
 }
