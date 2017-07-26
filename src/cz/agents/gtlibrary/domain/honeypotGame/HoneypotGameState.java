@@ -6,7 +6,7 @@ import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import cz.agents.gtlibrary.interfaces.Sequence;
 
 import java.util.*;
 
@@ -24,7 +24,7 @@ public class HoneypotGameState extends GameStateImpl {
     protected double attackerBudget;
     protected double defenderBudget;
 //    protected double uniformAttackCost;
-    protected double attackerCurrentReward;
+    protected double attackerReward;
     protected double highestValueReceived = Integer.MIN_VALUE;
     protected int lastDefendedNode = Integer.MIN_VALUE;
     protected int remainingAttacks;
@@ -37,7 +37,7 @@ public class HoneypotGameState extends GameStateImpl {
         this.attackedNodes = new int[possibleNodes.length];
         this.observedHoneypots = new boolean[possibleNodes.length];
         this.playerToMove = HoneypotGameInfo.DEFENDER;
-        this.attackerCurrentReward = 0.0;
+        this.attackerReward = 0.0;
         this.highestValueReceived = Integer.MIN_VALUE;
 
         this.remainingAttacks = HoneypotGameInfo.attacksAllowed;
@@ -58,7 +58,7 @@ public class HoneypotGameState extends GameStateImpl {
         this.attackerBudget = gameState.attackerBudget;
         this.defenderBudget = gameState.defenderBudget;
 //        this.uniformAttackCost = gameState.uniformAttackCost;
-        this.attackerCurrentReward = gameState.attackerCurrentReward;
+        this.attackerReward = gameState.attackerReward;
         this.highestValueReceived = gameState.highestValueReceived;
         this.remainingAttacks = gameState.remainingAttacks;
         if (playerToMove != HoneypotGameInfo.ATTACKER) {
@@ -89,8 +89,8 @@ public class HoneypotGameState extends GameStateImpl {
 //            }
 //        }
 
-        utilities[0] = -attackerCurrentReward;
-        utilities[1] = attackerCurrentReward;
+        utilities[0] = -attackerReward;
+        utilities[1] = attackerReward;
 
         return utilities;
     }
@@ -105,10 +105,18 @@ public class HoneypotGameState extends GameStateImpl {
         return remainingAttacks == 0 || !attackerCanAttack() || attackerPassed(); }
 
     private boolean attackerPassed(){
-        return history != null && history.getLength() > 0  && HoneypotGameInfo.ATTACKER.equals(history.getLastPlayer()) && history.getLastAction() != null
-                && ((HoneypotAction)history.getLastAction()).node.id == HoneypotGameInfo.NO_ACTION_ID;
+        Sequence sequence = history.getSequenceOf(HoneypotGameInfo.ATTACKER);
+        if (sequence == null || sequence.size() < HoneypotGameInfo.NUMBER_OF_PASSES_TO_END_GAME) return false;
+        for (int i = 0; i < HoneypotGameInfo.NUMBER_OF_PASSES_TO_END_GAME; i++){
+            if (((HoneypotAction)sequence.get(sequence.size() - i - 1)).node.id != HoneypotGameInfo.NO_ACTION_ID)
+                return false;
+        }
+        return true;
+//        return history != null && history.getLength() > 0  && HoneypotGameInfo.ATTACKER.equals(history.getLastPlayer()) && history.getLastAction() != null
+//                && ((HoneypotAction)history.getLastAction()).node.id == HoneypotGameInfo.NO_ACTION_ID;
     }
     private boolean attackerCanAttack(){
+        if (HoneypotGameInfo.CAN_ATTACK_WITH_NEGATIVE_POINTS) return true;
         for (HoneypotGameNode node : HoneypotGameInfo.allNodes)
             if (node.attackCost <= attackerBudget)
                 return true;
@@ -214,16 +222,16 @@ public class HoneypotGameState extends GameStateImpl {
         } else{
 //            if (attackedNodes[node.id - 1] > 0) {
 //                // zero reward after
-//                attackerCurrentReward += node.reward / 2;
+//                attackerReward += node.reward / 2;
 //            } else {
-//                attackerCurrentReward += node.reward;
+//                attackerReward += node.reward;
 //
 //                if (node.reward > highestValueReceived) {
 //                    highestValueReceived = node.reward;
 //                }
 //            }
 
-            attackerCurrentReward += node.getRewardAfterNumberOfAttacks(attackedNodes[node.id - 1]);
+            attackerReward += node.getRewardAfterNumberOfAttacks(attackedNodes[node.id - 1]);
             if (node.getRewardAfterNumberOfAttacks(attackedNodes[node.id - 1]) > highestValueReceived) {
                     highestValueReceived = node.getRewardAfterNumberOfAttacks(attackedNodes[node.id - 1]);
             }

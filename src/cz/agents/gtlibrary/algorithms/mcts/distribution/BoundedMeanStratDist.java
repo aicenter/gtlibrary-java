@@ -51,7 +51,7 @@ public class BoundedMeanStratDist implements Distribution {
         for (double d : mp) sum += d;
 
         Map<Action, Double> distribution = new HashMap<>(stat.getActions().size());
-//        System.out.println(mp.length);
+//        System.out.println(multiplayer.length);
 
         int i = 0;
         for (Action a : stat.getActions())

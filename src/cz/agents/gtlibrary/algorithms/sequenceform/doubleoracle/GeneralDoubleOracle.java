@@ -20,6 +20,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
 import cz.agents.gtlibrary.algorithms.flipit.bestresponse.FlipItBestResponseAlgorithm;
+import cz.agents.gtlibrary.algorithms.flipit.iskeys.FlipItPerfectRecallISKey;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
@@ -30,10 +31,7 @@ import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
-import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
-import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
@@ -62,6 +60,7 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -98,8 +97,8 @@ public class GeneralDoubleOracle {
     public static void main(String[] args) {
 //		runAC();
 //        runBP();
-        runGenericPoker();
-//        runKuhnPoker();
+//        runGenericPoker();
+        runKuhnPoker();
 //        runGoofSpiel();
 //        runIIOshiZumo();
 //        runRandomGame();
@@ -141,7 +140,32 @@ public class GeneralDoubleOracle {
             init = doefg.generate(init);
             System.out.println();
         }
+        ArrayList<Sequence> seqs = new ArrayList<>();//init.get(HoneypotGameInfo.DEFENDER).keySet());
+        for (Sequence seq : init.get(HoneypotGameInfo.DEFENDER).keySet()) {
+            boolean isprefix = false;
+            for (Sequence seq2 : init.get(HoneypotGameInfo.DEFENDER).keySet()) {
+                if (!seq.equals(seq2) && seq.isPrefixOf(seq2)){
+                    isprefix = true;
+                    break;
+                }
+            }
+            if (!isprefix) seqs.add(seq);
+        }
 
+        Collections.sort(seqs, new Comparator<Sequence>() {
+            @Override
+            public int compare(Sequence o1, Sequence o2) {
+                return o1.toString().compareTo(o2.toString());
+            }
+        });
+
+        double sum = 0.0;
+        for (Sequence seq : seqs) {
+            sum += init.get(HoneypotGameInfo.DEFENDER).get(seq);
+            if (init.get(HoneypotGameInfo.DEFENDER).get(seq) > 0.0001)
+                System.out.println(seq + " : " + init.get(HoneypotGameInfo.DEFENDER).get(seq));
+        }
+        if (sum < 0.9999) System.out.println("Sum does NOT correspond to distribution.");
     }
 
 
@@ -218,18 +242,41 @@ public class GeneralDoubleOracle {
             int graphSize = Integer.parseInt(args[1]);
             String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
             gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
+            FlipItGameInfo.OUTPUT_STRATEGY = true;
+            if (args.length > 2) {
+                String version = args[2];
+                switch (version) {
+                    case "F":
+                        FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.FULL;
+                        break;
+                    case "N":
+                        FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.NO;
+                        break;
+                    case "NP":
+                        FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_NODE_POINTS;
+                        break;
+                    case "AP":
+                        FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_ALL_POINTS;
+                        break;//
+                }
+            }
         }
         int depth = FlipItGameInfo.depth;
         if (FlipItGameInfo.ENABLE_ITERATIVE_SOLVING) {
-            FlipItGameInfo.depth = FlipItGameInfo.depth - 2;
+            FlipItGameInfo.depth = FlipItGameInfo.depth / 2;
         }
         gameInfo.ZERO_SUM_APPROX = true;
 
-        GameState rootState;
+        GameState rootState = null;
         if (FlipItGameInfo.CALCULATE_UTILITY_BOUNDS) gameInfo.calculateMinMaxBounds();
 
-        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
-        else rootState = new FlipItGameState();
+        switch (FlipItGameInfo.gameVersion){
+            case NO:                    rootState = new NoInfoFlipItGameState(); break;
+            case FULL:                  rootState = new FullInfoFlipItGameState(); break;
+            case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
+            case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+
+        }
 
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander = new FlipItExpander<DoubleOracleInformationSet>(algConfig);
@@ -246,6 +293,54 @@ public class GeneralDoubleOracle {
                 rps = doefg.generate(rps);
             }
         }
+
+        Map<InformationSet,Map<Action,Double>> behavioral = new HashMap<>();
+        for (Sequence sequence : rps.get(FlipItGameInfo.DEFENDER).keySet()){
+            if(sequence.isEmpty()) continue;
+            if (!behavioral.containsKey(sequence.getLastInformationSet()))
+                behavioral.put(sequence.getLastInformationSet(),new HashMap<Action,Double>());
+            behavioral.get(sequence.getLastInformationSet())
+                    .put(sequence.getLast(),rps.get(FlipItGameInfo.DEFENDER).get(sequence));
+        }
+
+        ArrayList<InformationSet> sets = new ArrayList<>();
+        for(InformationSet set : behavioral.keySet()){
+            double realization = 0.0;
+            for(Action a : behavioral.get(set).keySet())
+                realization += behavioral.get(set).get(a);
+            if(realization > 0.000001) sets.add(set);
+            else continue;
+            for(Action a : behavioral.get(set).keySet())
+                behavioral.get(set).replace(a, behavioral.get(set).get(a)/realization);
+        }
+
+        Collections.sort(sets, new Comparator<InformationSet>() {
+            @Override
+            public int compare(InformationSet o1, InformationSet o2) {
+                Integer i1 = o1.getAllStates().iterator().next().getSequenceForPlayerToMove().size();
+                Integer i2 = o2.getAllStates().iterator().next().getSequenceForPlayerToMove().size();
+                return i1.compareTo(i2);
+            }
+        });
+
+        if (FlipItGameInfo.OUTPUT_STRATEGY) {
+            for (InformationSet set : sets) {
+                GameState state = set.getAllStates().iterator().next();
+                System.out.println(state.getSequenceFor(FlipItGameInfo.DEFENDER));
+                if (set.getISKey() instanceof FlipItPerfectRecallISKey)
+                    System.out.println(((FlipItPerfectRecallISKey)set.getISKey()).getObservation());
+                System.out.println(state.getSequenceFor(FlipItGameInfo.ATTACKER));
+                if (!state.getSequenceFor(FlipItGameInfo.ATTACKER).isEmpty() && state.getSequenceFor(FlipItGameInfo.ATTACKER).getLastInformationSet().getISKey()
+                        instanceof FlipItPerfectRecallISKey)
+                    System.out.println(((FlipItPerfectRecallISKey)state.getSequenceFor(FlipItGameInfo.ATTACKER)
+                            .getLastInformationSet().getISKey()).getObservation());
+                for (Action a : behavioral.get(set).keySet())
+                    if (behavioral.get(set).get(a) > 0.00001)
+                        System.out.printf("\t %s : %f\n", a, behavioral.get(set).get(a));
+            }
+        }
+
+
 
 //        GambitEFG ggg = new GambitEFG();
 //        ggg.write("flipit.gbt", rootState, (Expander) expander);
@@ -540,6 +635,7 @@ public class GeneralDoubleOracle {
                     && doRestrictedGameSolver.getNewSequencesSinceLastLPCalc(actingPlayers[0]).isEmpty()
                     && doRestrictedGameSolver.getNewSequencesSinceLastLPCalc(actingPlayers[1]).isEmpty()) {
                 debugOutput.println("ERROR : NOT CONVERGED");
+                System.exit(0);
                 break;
             }
 
@@ -662,7 +758,7 @@ public class GeneralDoubleOracle {
                     support_size[player.getId()]++;
 //                    maxIt[player.getId()] = Math.max(maxIt[player.getId()], algConfig.getIterationForSequence(sequence));
 //                    if (DEBUG)
-                    System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+//                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
                 }
             }
         }

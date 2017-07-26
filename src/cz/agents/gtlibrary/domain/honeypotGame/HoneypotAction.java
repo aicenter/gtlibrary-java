@@ -59,6 +59,8 @@ public class HoneypotAction extends ActionImpl {
 
     @Override
     public String toString() {
-        return player + " - " + node;
+//        return "node " + node.getID();
+        return "("+node+")";
+//        return player + " - " + node;
     }
 }

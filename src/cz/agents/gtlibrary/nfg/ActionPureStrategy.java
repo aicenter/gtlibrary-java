@@ -19,7 +19,10 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.nfg;
 
+import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBeta;
 
 /**
  * Created with IntelliJ IDEA.
@@ -48,6 +51,25 @@ public class ActionPureStrategy implements PureStrategy {
 
 	@Override
 	public int hashCode() {
+		if (action == null){
+			SimAlphaBeta.CUT = true;
+			System.out.println("NULL STRATEGY");
+//			action = new ActionImpl(null) {
+//				@Override
+//				public void perform(GameState gameState) {
+//					System.out.println("Performing NULL action.");
+//				}
+//				@Override
+//				public String toString(){
+//					return "NULL action";
+//				}
+//				@Override
+//				public int hashCode() {
+//					return 0;
+//				}
+//			};
+			return 0;
+		}
 		return action.hashCode();
 	}
 

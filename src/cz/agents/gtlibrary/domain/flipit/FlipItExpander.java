@@ -50,11 +50,11 @@ public class FlipItExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
     protected List<Action> getAttackerActions(GameState gameState){
 
-        // take only public nodes + nodes accessible from last known controlled
+        // take only public nodes + nodes accessible from assumed  controlled
         HashSet<Node> nodesToAttack = new HashSet<Node>();
         List<Action> actions = new ArrayList<Action>();
-        for (Node parent : FlipItGameInfo.graph.getAllNodes().values() ){//((FlipItGameState)gameState).getAttackerPossiblyControlledNodes()){
-            if (!((FlipItGameState)gameState).isPossiblyOwnedByAttacker(parent)) continue;
+        for (Node parent : FlipItGameInfo.graph.getAllNodes().values() ){//((NodePointsFlipItGameState)gameState).getAttackerPossiblyControlledNodes()){
+            if (!((NodePointsFlipItGameState)gameState).isPossiblyOwnedByAttacker(parent)) continue;
             for (Edge edge : FlipItGameInfo.graph.getEdgesOf(parent)){
                 nodesToAttack.add(edge.getTarget());
             }

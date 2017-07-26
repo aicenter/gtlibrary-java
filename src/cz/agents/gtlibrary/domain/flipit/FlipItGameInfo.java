@@ -2,10 +2,10 @@ package cz.agents.gtlibrary.domain.flipit;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.domain.flipit.types.ExponentialGreedyType;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
 import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
-import java.util.concurrent.SynchronousQueue;
 
 /**
  * Created by Jakub on 13/03/17.
@@ -23,17 +22,17 @@ import java.util.concurrent.SynchronousQueue;
 public class FlipItGameInfo implements GameInfo {
 
     // GRAPH FILE : topology, rewards and control costs
-    public static String graphFile = "flipit_empty3.txt";
+    public static String graphFile = "flipit_empty5.txt";
     public static FlipItGraph graph = new FlipItGraph(graphFile);
 
     // PLAYERS
     public static final Player DEFENDER = new PlayerImpl(0, "Defender");
     public static final Player ATTACKER = new PlayerImpl(1, "Attacker");
     public static final Player NATURE = new PlayerImpl(2, "Nature");
-    public static final Player[] ALL_PLAYERS = new Player[] {DEFENDER, ATTACKER, NATURE};
+    public static final Player[] ALL_PLAYERS = new Player[] {DEFENDER, ATTACKER};//, NATURE};
 
     public static long seed = 11;
-    public static int depth = 4;
+    public static int depth = 3;
     public static final boolean RANDOM_TIE = false;
     public static final boolean PREDETERMINED_RANDOM_TIE_WINNER = false;
     public static final Player RANDOM_TIE_WINNER = FlipItGameInfo.DEFENDER;
@@ -45,12 +44,20 @@ public class FlipItGameInfo implements GameInfo {
     private static final boolean FULLY_RATIONAL_ATTACKER = true;
     public static boolean ZERO_SUM_APPROX = true;
 
-    public static final double INITIAL_POINTS = 5.0;
+    public static final double INITIAL_POINTS = 50.0;
 
-    public static final boolean NO_INFO = false;
+    public enum FlipItInfo {
+        NO, FULL, REVEALED_ALL_POINTS, REVEALED_NODE_POINTS
+    }
+
+    public static FlipItInfo gameVersion = FlipItInfo.FULL;
+
+    public static final boolean PERFECT_RECALL = true;
 
     public static final boolean CALCULATE_UTILITY_BOUNDS = false;
     public static final boolean ENABLE_ITERATIVE_SOLVING = false;
+    public static boolean OUTPUT_STRATEGY = true;
+    public static final boolean USE_ISKEY_WITH_OBSERVATIONS = false;
 
     public static double MAX_UTILITY;
 
@@ -205,7 +212,10 @@ public class FlipItGameInfo implements GameInfo {
 
     @Override
     public String getInfo() {
-        return "Flip It Game : depth = " + depth + "; attacker types = "+getAttackerInfo() + "; graph = " +graphFile + "; info = "+(NO_INFO ? "NO" : "PARTIAL") + "; zero-sum = "+ZERO_SUM_APPROX;
+        String info = "";
+        info+= "Flip It Game : depth = " + depth + "; attacker types = "+getAttackerInfo() + "; graph = " +graphFile + "; initial points = " + INITIAL_POINTS + "; info = "+gameVersion + "; zero-sum = "+ZERO_SUM_APPROX;
+        info+= "\n" + graph.getInfo();
+        return info;
     }
 
     public String getLpExportName(){
@@ -228,24 +238,24 @@ public class FlipItGameInfo implements GameInfo {
     }
 
     public void calculateMinMaxBounds(){
-        GameState root = new FlipItGameState();
+        GameState root = new NodePointsFlipItGameState();
         SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
         Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
         minUtility = new HashMap<>();
         maxUtility =  new HashMap<>();
         traverseTree(root,expander, null);
-        root = new FlipItGameState();
+        root = new NodePointsFlipItGameState();
 //        System.out.println(minUtility.get(root));
     }
 
     public static double[] calculateMinMaxBoundsFor(GameState state){
-//        GameState root = new FlipItGameState();
+//        GameState root = new NodePointsFlipItGameState();
         SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
         Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
 //        minUtility = new HashMap<>();
 //        maxUtility =  new HashMap<>();
         return traverseTree(state,expander, null);
-//        root = new FlipItGameState();
+//        root = new NodePointsFlipItGameState();
 //        System.out.println(minUtility.get(root));
     }
 
@@ -254,7 +264,7 @@ public class FlipItGameInfo implements GameInfo {
         Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
 //        minUtility = new HashMap<>();
 //        maxUtility =  new HashMap<>();
-        traverseTree(new FlipItGameState(),expander, state);
+        traverseTree(new NodePointsFlipItGameState(),expander, state);
         return determinedBounds;
     }
 
@@ -271,8 +281,8 @@ public class FlipItGameInfo implements GameInfo {
             }
             minUtility.get(state.getISKeyForPlayerToMove()).put(state,utility);
             maxUtility.get(state.getISKeyForPlayerToMove()).put(state,utility);
-//            minUtility.put((FlipItGameState) state, utility);
-//            maxUtility.put((FlipItGameState) state, utility);
+//            minUtility.put((NodePointsFlipItGameState) state, utility);
+//            maxUtility.put((NodePointsFlipItGameState) state, utility);
             return new double[]{utility, utility};
         }
         else{

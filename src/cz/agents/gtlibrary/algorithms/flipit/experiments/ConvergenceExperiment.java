@@ -10,10 +10,7 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
-import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
-import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 
@@ -68,9 +65,15 @@ public class ConvergenceExperiment {
             }
         }
         gameInfo.ZERO_SUM_APPROX = true;
-        GameState rootState;
-        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
-        else rootState = new FlipItGameState();
+        GameState rootState = null;
+
+        switch (FlipItGameInfo.gameVersion){
+            case NO:                    rootState = new NoInfoFlipItGameState(); break;
+            case FULL:                  rootState = new FullInfoFlipItGameState(); break;
+            case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
+            case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+
+        }
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander expander = new FlipItExpander<MCTSInformationSet>(new MCTSConfig());
 
@@ -118,7 +121,7 @@ public class ConvergenceExperiment {
         alg = null;
 
 //        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
-//        else rootState = new FlipItGameState();
+//        else rootState = new NodePointsFlipItGameState();
         expander = new FlipItExpander<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         Map<Player, Map<Sequence, Double>> rp = new HashMap<>();

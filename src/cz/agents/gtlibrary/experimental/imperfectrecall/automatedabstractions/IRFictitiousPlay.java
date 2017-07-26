@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.ir.CPRRConstIRGenericPokerGameState;
@@ -35,7 +36,8 @@ public class IRFictitiousPlay extends ALossPRCFRBR {
 
     public static void main(String[] args) {
 //        runGenericPoker();
-        runIRGenericPoker();
+//        runIRGenericPoker();
+        runFlipIt();
 //        runWichardtCounterExample();
 //        runBothIRRandomAbstractionGame();
 //        runCPRRBothIRRandomAbstractionGame();
@@ -43,6 +45,37 @@ public class IRFictitiousPlay extends ALossPRCFRBR {
 //        runSimpleCPRRBothIRRandomAbstractionGame();
 //        runRandomAbstractionGame();
 //        runCPRRRandomAbstractionGame();
+    }
+
+    private static void runFlipIt() {
+
+        FlipItGameInfo gameInfo = new FlipItGameInfo();
+        gameInfo.ZERO_SUM_APPROX = true;
+
+        GameState wrappedRoot = null;
+
+        switch (FlipItGameInfo.gameVersion){
+            case NO:                    wrappedRoot = new NoInfoFlipItGameState(); break;
+            case FULL:                  wrappedRoot = new FullInfoFlipItGameState(); break;
+            case REVEALED_ALL_POINTS:   wrappedRoot = new AllPointsFlipItGameState(); break;
+            case REVEALED_NODE_POINTS:  wrappedRoot = new NodePointsFlipItGameState(); break;
+
+        }
+
+        SequenceFormConfig<SequenceInformationSet> config = new SequenceFormConfig<>();
+        Expander<SequenceInformationSet> wrappedExpander = new FlipItExpander<>(config);
+
+        FullSequenceEFG efg = new FullSequenceEFG(wrappedRoot, wrappedExpander, gameInfo, config);
+        efg.generateCompleteGame();
+
+        GameState root = new RandomAbstractionGameStateFactory().createRoot(wrappedRoot, wrappedExpander.getAlgorithmConfig());
+        Expander<IRCFRInformationSet> expander = new RandomAbstractionExpander<>(wrappedExpander, new IRCFRConfig());
+
+        BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
+        System.out.println("Abstracted IS count: " + expander.getAlgorithmConfig().getAllInformationSets().size());
+        ALossPRCFRBR cfr = new IRFictitiousPlay(root, expander, new GPGameInfo());
+
+        cfr.runIterations(1000);
     }
 
     protected static void runGenericPoker() {

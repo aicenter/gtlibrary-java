@@ -54,15 +54,15 @@ public class FlipItAction extends ActionImpl {
     @Override
     public void perform(GameState gameState) {
         if (gameState.getPlayerToMove().equals(FlipItGameInfo.DEFENDER)){
-            ((FlipItGameState)gameState).executeDefenderAction(this);
+            ((NodePointsFlipItGameState)gameState).executeDefenderAction(this);
             return;
         }
         if (gameState.getPlayerToMove().equals(FlipItGameInfo.ATTACKER)) {
-            ((FlipItGameState) gameState).executeAttackerAction(this);
+            ((NodePointsFlipItGameState) gameState).executeAttackerAction(this);
             return;
         }
         if (gameState.getPlayerToMove().equals(FlipItGameInfo.NATURE))
-            ((FlipItGameState)gameState).executeNatureAction(this);
+            ((NodePointsFlipItGameState)gameState).executeNatureAction(this);
 
     }
 
@@ -92,9 +92,11 @@ public class FlipItAction extends ActionImpl {
 
     @Override
     public String toString() {
-        return "{" + (controlNode == null ? "_" : controlNode) +
-                ", " + (isNoop ? "NOOP" : "_") +
-                ", " + (controller == null ? "_" : ((controller.equals(FlipItGameInfo.DEFENDER)) ? "D" : "A")) + ", " + getInformationSet().hashCode() +
-                '}';
+        if(isNoop) return "PASS";
+        else return controlNode.toString();
+//        return "{" + (controlNode == null ? "_" : controlNode) +
+//                ", " + (isNoop ? "NOOP" : "_") +
+//                ", " + (controller == null ? "_" : ((controller.equals(FlipItGameInfo.DEFENDER)) ? "D" : "A")) + ", " + getInformationSet().hashCode() +
+//                '}';
     }
 }
