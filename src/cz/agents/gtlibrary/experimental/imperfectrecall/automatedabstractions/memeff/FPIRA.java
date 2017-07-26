@@ -33,7 +33,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 //        runWichardtCounterexample();
     }
 
-    private static void runGenericPoker() {
+    public static void runGenericPoker() {
         GameState root = new GenericPokerGameState();
         Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new FPIRAConfig());
         FPIRA fpira = new FPIRA(root, expander, new GPGameInfo());
@@ -41,7 +41,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         fpira.runIterations(100000);
     }
 
-    private static void runKuhnPoker() {
+    public static void runKuhnPoker() {
         GameState root = new KuhnPokerGameState();
         Expander<MCTSInformationSet> expander = new KuhnPokerExpander<>(new FPIRAConfig());
         FPIRA fpira = new FPIRA(root, expander, new KPGameInfo());
@@ -49,7 +49,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         fpira.runIterations(100000);
     }
 
-    private static void runRandomGame() {
+    public static void runRandomGame() {
         GameState root = new RandomGameState();
         Expander<MCTSInformationSet> expander = new RandomGameExpander<>(new FPIRAConfig());
         FPIRA fpira = new FPIRA(root, expander, new RandomGameInfo());
@@ -60,7 +60,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         gambit.write("FPIRAtest.gbt", root, expander);
     }
 
-    private static void runWichardtCounterexample() {
+    public static void runWichardtCounterexample() {
         GameState root = new PerfectInformationWichardtState();
         Expander<MCTSInformationSet> expander = new WichardtExpander<>(new FPIRAConfig());
         FPIRA fpira = new FPIRA(root, expander, new WichardtGameInfo());
@@ -98,6 +98,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         System.out.println("Current memory: " + mxBean.getHeapMemoryUsage().getUsed());
         System.out.println("Max memory: " + mxBean.getHeapMemoryUsage().getMax());
         System.out.println(mxBean.getHeapMemoryUsage().toString());
+        System.out.println("Memory measurement from DO: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
         System.out.println("*************************************************");
     }
 
@@ -119,7 +120,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     protected long getReachableAbstractedISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
         return currentAbstractionInformationSets.values().stream().filter(i ->
-                        i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1
+                i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1
         ).flatMap(i -> i.getAllStates().stream().filter(s ->
                 AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, expander) > 1e-8 &&
                         AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, expander) > 1e-8)

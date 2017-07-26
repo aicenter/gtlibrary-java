@@ -56,6 +56,9 @@ public class SQFBestResponseAlgorithm {
 
     public static boolean useOriginalBRFormulation = false;
 
+    public int maxBRResultSize = 0;
+    public int maxStateCacheSize = 0;
+
     public SQFBestResponseAlgorithm(Expander expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo) {
         this.searchingPlayerIndex = searchingPlayerIndex;
         this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
@@ -84,7 +87,11 @@ public class SQFBestResponseAlgorithm {
 
         comparator = new ORComparator(opponentRealizationPlan);
 
-        return bestResponse(root, -MAX_UTILITY_VALUE);
+        double value = bestResponse(root, -MAX_UTILITY_VALUE);
+
+        maxBRResultSize = (int) Math.max(maxBRResultSize, BRresult.values().stream().flatMap(s -> s.stream()).count());
+        maxStateCacheSize = Math.max(maxStateCacheSize, cachedValuesForNodes.size());
+        return value;
     }
 
     protected Double calculateEvaluation(Map<Player, Sequence> currentHistory, GameState gameState) {
@@ -108,7 +115,11 @@ public class SQFBestResponseAlgorithm {
     }
 
     public Double calculateBRNoClear(GameState root) {
-        return bestResponse(root, -MAX_UTILITY_VALUE);
+        double value = bestResponse(root, -MAX_UTILITY_VALUE);
+
+        maxBRResultSize = (int) Math.max(maxBRResultSize, BRresult.values().stream().flatMap(s -> s.stream()).count());
+        maxStateCacheSize = Math.max(maxStateCacheSize, cachedValuesForNodes.size());
+        return value;
     }
 
     protected Double bestResponse(GameState gameState, double lowerBound) {

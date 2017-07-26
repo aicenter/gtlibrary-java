@@ -97,8 +97,8 @@ public class GeneralDoubleOracle {
     public static void main(String[] args) {
 //		runAC();
 //        runBP();
-//        runGenericPoker();
-        runKuhnPoker();
+        runGenericPoker();
+//        runKuhnPoker();
 //        runGoofSpiel();
 //        runIIOshiZumo();
 //        runRandomGame();
@@ -562,6 +562,7 @@ public class GeneralDoubleOracle {
         double[] lastBRValue = new double[]{-1.0, -1.0};
 
 //        boolean[] newSeqs = new boolean[] {true, true};
+        int maxTemporaryLeafCount = 0;
 
         mainloop:
         while ((Math.abs(p1BoundUtility + p2BoundUtility) > EPS) ||
@@ -576,6 +577,7 @@ public class GeneralDoubleOracle {
             debugOutput.println("Last difference: " + (algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex]));
             debugOutput.println("Current Size: " + algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]));
             oldSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]);
+            maxTemporaryLeafCount = Math.max(maxTemporaryLeafCount, algConfig.getTemporaryLeafs().size());
 
 //            if (diffSize[0] == 0 && diffSize[1] == 0) {
 //                System.out.println("ERROR : NOT CONVERGED");
@@ -784,7 +786,9 @@ public class GeneralDoubleOracle {
         debugOutput.println("LP GenerationTime:" + doRestrictedGameSolver.getOverallGenerationTime());
         debugOutput.println("LP Constraint GenerationTime:" + doRestrictedGameSolver.getOverallConstraintGenerationTime());
         debugOutput.println("LP ComputationTime:" + doRestrictedGameSolver.getOverallConstraintLPSolvingTime());
-
+        debugOutput.println("BR result sizes: " + brAlgorithms[0].maxBRResultSize + ", " + brAlgorithms[1].maxBRResultSize);
+        debugOutput.println("State cache sizes: " + brAlgorithms[0].maxStateCacheSize + ", " + brAlgorithms[1].maxStateCacheSize);
+        debugOutput.println("Temporary leaf count: " + maxTemporaryLeafCount);
         gameValue = doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]);
         return realizationPlans;
     }
