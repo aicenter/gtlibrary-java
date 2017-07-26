@@ -2,13 +2,9 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
 import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
-import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class FPIRABestResponse extends ALossBestResponseAlgorithm {
@@ -40,26 +36,11 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
 
     @Override
     protected double getOpponentProbability(Sequence sequence) {
-        if (sequence.isEmpty())
-            return 1;
-        double probability = 1;
-
-        for (Action action : sequence) {
-            probability *= getProbabilityForAction(action);
-        }
-        return probability;
+        return AbstractedStrategyUtils.getProbability(sequence, opponentAbstractedStrategy, currentAbstractionISKeys, expander);
     }
 
     protected double getProbabilityForAction(Action action) {
-        InformationSet informationSet = action.getInformationSet();
-        List<Action> actions = expander.getActions(informationSet.getAllStates().stream().findAny().get());
-        double[] realizations = opponentAbstractedStrategy.get(currentAbstractionISKeys.get((PerfectRecallISKey) informationSet.getISKey(), actions));
-
-        for (int i = 0; i < actions.size(); i++) {
-            if (actions.get(i).equals(action))
-                return realizations[i];
-        }
-        throw new InvalidStateException("Action not found");
+        return AbstractedStrategyUtils.getProbabilityForAction(action, opponentAbstractedStrategy, currentAbstractionISKeys, expander);
     }
 
 }

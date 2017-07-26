@@ -101,20 +101,6 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
                 }
             }
             assert (returnValue != null);
-            resultActions.add(resultAction);
-            Sequence sequence = gameState.getSequenceFor(players[searchingPlayerIndex]);
-            Sequence sequenceCopy = new ArrayListSequenceImpl(sequence);
-
-            sequenceCopy.addLast(resultAction);
-            if (sequence.isEmpty() || gameState.equals(gameTreeRoot)) {
-                if (!firstLevelActions.containsKey(gameState.getISKeyForPlayerToMove()))
-                    firstLevelActions.put(gameState.getISKeyForPlayerToMove(), sequenceCopy);
-            } else {
-                Map<ISKey, Sequence> tmpActionMap = BRresult.getOrDefault(sequence, new HashMap<>());
-
-                tmpActionMap.putIfAbsent(gameState.getISKeyForPlayerToMove(), sequenceCopy);
-                BRresult.put(sequence, tmpActionMap);
-            }
         } else { // nature player or the opponent is to move
             double nodeProbability = gameState.getNatureProbability();
             boolean nonZeroORP = false;
@@ -128,7 +114,6 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
             actionsToExplore = sel.sortActions(gameState, actionsToExplore);
             selectAction(gameState, sel, actionsToExplore, currentStateProb);
             returnValue = sel.getResult().getRight();
-//            }
         }
 
         assert (returnValue != null);
