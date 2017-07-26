@@ -60,6 +60,9 @@ public class ALossBestResponseAlgorithm {
     protected Set<Action> resultActions = new HashSet<>();
     protected Map<ISKey, Sequence> firstLevelActions = new HashMap<>();
 
+    public int maxStateValueCache = 0;
+    public int maxBRResultSize = 0;
+
     public ALossBestResponseAlgorithm(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse) {
         this.searchingPlayerIndex = searchingPlayerIndex;
         this.opponentPlayerIndex = (1 + searchingPlayerIndex) % 2;
@@ -92,7 +95,11 @@ public class ALossBestResponseAlgorithm {
 
         comparator = new ORComparator();
 
-        return bestResponse(root, -MAX_UTILITY_VALUE, getOpponentProbability(root.getSequenceFor(players[opponentPlayerIndex])));
+        Double value = bestResponse(root, -MAX_UTILITY_VALUE, getOpponentProbability(root.getSequenceFor(players[opponentPlayerIndex])));
+
+        maxBRResultSize = (int) Math.max(maxBRResultSize, BRresult.values().stream().flatMap(s -> s.values().stream()).count());
+        maxStateValueCache = Math.max(maxStateValueCache, cachedValuesForNodes.size());
+        return value;
     }
 
     protected Double calculateEvaluation(GameState gameState, double currentStateProbability) {

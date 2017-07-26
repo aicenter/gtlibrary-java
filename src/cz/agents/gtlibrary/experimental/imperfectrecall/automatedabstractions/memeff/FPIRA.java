@@ -90,6 +90,49 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         System.out.println("p0BR: " + p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy));
         System.out.println("p1BR: " + -p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy));
         System.out.println("Current IS count: " + currentAbstractionInformationSets.size());
+        System.out.println("State cache from BR sizes: " + p0BR.maxStateValueCache + ", " + p1BR.maxStateValueCache);
+        System.out.println("BR result sizes: " + p0BR.maxBRResultSize + ", " + p1BR.maxBRResultSize);
+        System.out.println("State cache from deltaCalc sizes: " + p0Delta.maxStateValueCache + ", " + p1Delta.maxStateValueCache);
+        System.out.println("Reachable IS count: " + getReachableISCountFromOriginalGame(p0Strategy, p1Strategy));
+        System.out.println("Reachable abstracted IS count: " + getReachableAbstractedISCountFromOriginalGame(p0Strategy, p1Strategy));
+        System.out.println("Current memory: " + mxBean.getHeapMemoryUsage().getUsed());
+        System.out.println("Max memory: " + mxBean.getHeapMemoryUsage().getMax());
+        System.out.println(mxBean.getHeapMemoryUsage().toString());
+        System.out.println("*************************************************");
+    }
+
+    protected long getReachableISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
+        return currentAbstractionInformationSets.values().stream().flatMap(i -> i.getAllStates().stream().filter(s ->
+                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, expander) > 1e-8 &&
+                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, expander) > 1e-8)
+                .map(s -> s.getISKeyForPlayerToMove()).distinct()).count();
+    }
+
+    protected long getReachableAbstractedISCount(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
+        return currentAbstractionInformationSets.values().stream().filter(i ->
+                i.getAllStates().stream().anyMatch(s ->
+                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, expander) > 1e-8 &&
+                                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, expander) > 1e-8) &&
+                        i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1
+        ).count();
+    }
+
+    protected long getReachableAbstractedISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
+        return currentAbstractionInformationSets.values().stream().filter(i ->
+                        i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1
+        ).flatMap(i -> i.getAllStates().stream().filter(s ->
+                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, expander) > 1e-8 &&
+                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, expander) > 1e-8)
+                .map(s -> s.getISKeyForPlayerToMove()).distinct()).count();
+    }
+
+
+    protected long getReachableISCount(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
+        return currentAbstractionInformationSets.values().stream().filter(i ->
+                i.getAllStates().stream().anyMatch(s ->
+                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, expander) > 1e-8 &&
+                                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, expander) > 1e-8)
+        ).count();
     }
 
     @Override

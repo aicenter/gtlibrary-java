@@ -8,6 +8,8 @@ import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.Observations;
 import cz.agents.gtlibrary.interfaces.*;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,18 +24,23 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected int iteration = 0;
     protected int isKeyCounter = 0;
 
+    protected MemoryMXBean mxBean;
+
     public AutomatedAbstractionAlgorithm(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info) {
         this.rootState = rootState;
         this.expander = expander;
         this.gameInfo = info;
         currentAbstractionInformationSets = new HashMap<>();
         currentAbstractionISKeys = new InformationSetKeyMap();
+        mxBean = ManagementFactory.getMemoryMXBean();
         buildInitialAbstraction();
     }
 
     protected void buildInitialAbstraction() {
         buildInformationSets(rootState);
         addData(currentAbstractionInformationSets.values());
+        System.out.println("Init abstr P1 IS: " + currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() == 0).count());
+        System.out.println("Init abstr P2 IS: " + currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() == 1).count());
     }
 
     protected void buildInformationSets(GameState state) {
