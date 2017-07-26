@@ -63,6 +63,8 @@ public abstract class AutomatedAbstractionAlgorithm {
             this.iteration++;
             iteration(rootState.getAllPlayers()[1]);
             iteration(rootState.getAllPlayers()[0]);
+            if(isConverged(gameInfo.getMaxUtility()*1e-3))
+                return;
             if (i % 20 == 0 || iteration == 1)
                 printStatistics();
         }
@@ -87,6 +89,8 @@ public abstract class AutomatedAbstractionAlgorithm {
         observations.add(new IDObservation(isKeyCounter++));
         return new ImperfectRecallISKey(observations, null, null);
     }
+
+    protected abstract boolean isConverged(double v);
 
     protected abstract void printStatistics();
 

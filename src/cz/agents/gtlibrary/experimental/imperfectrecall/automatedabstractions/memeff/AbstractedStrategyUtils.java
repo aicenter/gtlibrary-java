@@ -6,7 +6,6 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Sequence;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.List;
 import java.util.Map;
@@ -37,6 +36,6 @@ public class AbstractedStrategyUtils {
             if (actions.get(i).equals(action))
                 return realizations[i];
         }
-        throw new InvalidStateException("Action not found");
+        throw new UnsupportedOperationException("Action not found");
     }
 }
