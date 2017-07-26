@@ -64,17 +64,18 @@ public class HoneypotExpander<I extends InformationSet> extends ExpanderImpl<I> 
     }
 
     private boolean isAttackable(HoneypotGameNode node, HoneypotGameState gameState){
-        if (node.attackCost > gameState.attackerBudget ) return false;
+        if (!HoneypotGameInfo.CAN_ATTACK_WITH_NEGATIVE_POINTS && node.attackCost > gameState.attackerBudget ) return false;
         if (gameState.observedHoneypots[node.id - 1]) return false;
+        if (node.getRewardAfterNumberOfAttacks(gameState.attackedNodes[node.id-1]) <= 0.0) return false;
 //        if (realNodeValue(node, gameState.attackedNodes[node.id - 1]) < gameState.highestValueReceived / 2) return false;
 
         return true;
     }
 
-    private double realNodeValue(HoneypotGameNode node, int attacks) {
-        if (attacks > 0) {
-            return node.reward / 2;
-        }
-        return node.reward;
-    }
+//    private double realNodeValue(HoneypotGameNode node, int attacks) {
+//        if (attacks > 0) {
+//            return node.reward / 2;
+//        }
+//        return node.reward;
+//    }
 }

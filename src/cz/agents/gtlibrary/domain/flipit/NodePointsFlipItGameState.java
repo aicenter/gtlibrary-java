@@ -9,20 +9,17 @@ import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.graph.Edge;
 import cz.agents.gtlibrary.utils.graph.Node;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 
 /**
  * Created by Jakub on 13/03/17.
  */
-public class FlipItGameState extends SimultaneousGameState {
+public class NodePointsFlipItGameState extends SimultaneousGameState {
 
     // real situation ... for computing rewards
 //    protected HashSet<Node> defenderControlledNodes;
@@ -60,7 +57,7 @@ public class FlipItGameState extends SimultaneousGameState {
     protected int hashCode;
     protected ISKey key;
 
-    public FlipItGameState(FlipItGameState gameState) {
+    public NodePointsFlipItGameState(NodePointsFlipItGameState gameState) {
         super(gameState);
         this.selectedNodeOwner = gameState.selectedNodeOwner;
         this.attackerControlNode = gameState.attackerControlNode;
@@ -211,14 +208,14 @@ public class FlipItGameState extends SimultaneousGameState {
         return newNodes;
     }
 
-    public FlipItGameState() {
+    public NodePointsFlipItGameState() {
         super(FlipItGameInfo.ALL_PLAYERS);
         init();
     }
 
     @Override
     public GameState copy() {
-        return new FlipItGameState(this);
+        return new NodePointsFlipItGameState(this);
     }
 
 //    public HashSet<Node> getAttackerPossiblyControlledNodes(){
@@ -283,6 +280,7 @@ public class FlipItGameState extends SimultaneousGameState {
 
     @Override
     public void setDepth(int depth) {
+//        this.depth = depth + round;
         throw new UnsupportedOperationException("Depth cannot be set.");
     }
 
@@ -359,7 +357,7 @@ public class FlipItGameState extends SimultaneousGameState {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        FlipItGameState that = (FlipItGameState) o;
+        NodePointsFlipItGameState that = (NodePointsFlipItGameState) o;
 
         if (Double.compare(that.defenderObservedReward, defenderObservedReward) != 0) return false;
         if (Double.compare(that.attackerObservedReward, attackerObservedReward) != 0) return false;
@@ -726,7 +724,8 @@ public class FlipItGameState extends SimultaneousGameState {
     public int getDepth(){
         int depth = getSequenceFor(FlipItGameInfo.ATTACKER).size();
         depth += getSequenceFor(FlipItGameInfo.DEFENDER).size();
-        depth += getSequenceFor(FlipItGameInfo.NATURE).size() + 1;
+        if (FlipItGameInfo.ALL_PLAYERS[FlipItGameInfo.ALL_PLAYERS.length-1].getName() == "Nature")
+            depth += getSequenceFor(FlipItGameInfo.NATURE).size() + 1;
         return depth;
     }
 

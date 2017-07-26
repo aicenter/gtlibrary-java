@@ -19,17 +19,12 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.improvedBR;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleSequenceFormLP;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
-import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
-import cz.agents.gtlibrary.domain.flipit.NoInfoFlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
@@ -99,9 +94,15 @@ public class DoubleOracleWithBestMinmaxImprovement {
             gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
         }
         gameInfo.ZERO_SUM_APPROX = true;
-        GameState rootState;
-        if (FlipItGameInfo.NO_INFO) rootState = new NoInfoFlipItGameState();
-        else rootState = new FlipItGameState();
+        GameState rootState = null;
+
+        switch (FlipItGameInfo.gameVersion){
+            case NO:                    rootState = new NoInfoFlipItGameState(); break;
+            case FULL:                  rootState = new FullInfoFlipItGameState(); break;
+            case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
+            case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+
+        }
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
         Expander<DoubleOracleInformationSet> expander =new FlipItExpander<DoubleOracleInformationSet>(algConfig);
         DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState, expander, gameInfo, algConfig);

@@ -19,7 +19,7 @@ public class HoneypotGameNode {
 
     public double getRewardAfterNumberOfAttacks(int numberOfAttacks){
         if (numberOfAttacks == 0) return reward;
-        else return 0; // Math.pow(reward, 1/numberOfAttacks); // reward / Math.pow(2,numberOfAttacks);
+        else return 0.0;// Math.pow(reward, 1/numberOfAttacks); // reward / Math.pow(2,numberOfAttacks);
     }
 
     @Override
@@ -45,5 +45,9 @@ public class HoneypotGameNode {
         } else {
             return "DONE";
         }
+    }
+
+    public int getID(){
+        return  id;
     }
 }

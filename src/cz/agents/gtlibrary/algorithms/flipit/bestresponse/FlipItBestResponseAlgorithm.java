@@ -1,13 +1,12 @@
 package cz.agents.gtlibrary.algorithms.flipit.bestresponse;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
+import cz.agents.gtlibrary.domain.flipit.NodePointsFlipItGameState;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.nfg.simalphabeta.doubleoracle.DoubleOracle;
 
 import java.util.*;
 
@@ -18,10 +17,13 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
 
 
     protected static final boolean useBoundInSearchingPlayerNodes = false;
+    protected static boolean useCustomBounds = true;
 
     public FlipItBestResponseAlgorithm(Expander<DoubleOracleInformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, DoubleOracleConfig algConfig, GameInfo gameInfo) {
         super(expander, searchingPlayerIndex, actingPlayers, algConfig, gameInfo);
         this.useOriginalBRFormulation = false;
+//        if (FlipItGameInfo.gameVersion == FlipItGameInfo.FlipItInfo.REVEALED_NODE_POINTS)
+//            useCustomBounds = true;
     }
 
 
@@ -105,7 +107,7 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
                     System.err.println("NULL AlternativeNodes state : " + gameState);
                     stateProb = 1.0d;
                 }
-                if (lowerBound > stateProb * ((FlipItGameState) gameState).getUpperBoundForUtilityFor(searchingPlayerIndex))
+                if (useCustomBounds && lowerBound > stateProb * ((NodePointsFlipItGameState) gameState).getUpperBoundForUtilityFor(searchingPlayerIndex))
                     return Double.NEGATIVE_INFINITY;
             }
 
@@ -128,7 +130,7 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
             Collections.sort(alternativeNodes, comparator);
 
 //            if (!useOriginalBRFormulation) {
-//                if (lowerBound > ISProbability * ((FlipItGameState) gameState).getUpperBoundForUtilityFor(searchingPlayerIndex))
+//                if (lowerBound > ISProbability * ((NodePointsFlipItGameState) gameState).getUpperBoundForUtilityFor(searchingPlayerIndex))
 //                    return Double.NEGATIVE_INFINITY;
 //            }
 
@@ -201,7 +203,7 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
                 nonZeroORP = true;
 
                 if (!useOriginalBRFormulation) {
-                    if (lowerBound > nodeProbability * ((FlipItGameState) gameState).getUpperBoundForUtilityFor(searchingPlayerIndex))
+                    if (useCustomBounds && lowerBound > nodeProbability * ((NodePointsFlipItGameState) gameState).getUpperBoundForUtilityFor(searchingPlayerIndex))
                         return Double.NEGATIVE_INFINITY;
                 }
 
@@ -258,9 +260,9 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
 
             double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP, state);
             double upperBound;
-            double bound = ((FlipItGameState)state).getUpperBoundForUtilityFor(searchingPlayerIndex);
+            double bound = ((NodePointsFlipItGameState)state).getUpperBoundForUtilityFor(searchingPlayerIndex);
             if (bound < 0.0) bound = 0.0;
-            if (!useOriginalBRFormulation)// && state.getPlayerToMove().getId() != searchingPlayerIndex)
+            if (useCustomBounds && !useOriginalBRFormulation)// && state.getPlayerToMove().getId() != searchingPlayerIndex)
                 upperBound = Math.min(MAX_UTILITY_VALUE, bound);
             else
                 upperBound = MAX_UTILITY_VALUE;
@@ -312,8 +314,8 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
                     return Double.POSITIVE_INFINITY;
                 }
             }
-            if (!useOriginalBRFormulation) {
-                return (lowerBound - (value + (nodeProbability - probability) * ((FlipItGameState) state).getUpperBoundForUtilityFor(searchingPlayerIndex)));
+            if (useCustomBounds && !useOriginalBRFormulation) {
+                return (lowerBound - (value + (nodeProbability - probability) * ((NodePointsFlipItGameState) state).getUpperBoundForUtilityFor(searchingPlayerIndex)));
             }
             return (lowerBound - (value + (nodeProbability - probability) * MAX_UTILITY_VALUE));
         }
@@ -338,9 +340,9 @@ public class FlipItBestResponseAlgorithm extends DoubleOracleBestResponse {
 //					double probability = natureProb;
 //					if (nonZeroORP) probability *= orpProb;
 
-                    if (!useOriginalBRFormulation && useBoundInSearchingPlayerNodes) {
-                        return ((previousMaxValue + this.allNodesProbability * (((FlipItGameState) state).getLowerBoundForUtilityFor(searchingPlayerIndex)))
-                                - (actionExpectedValues.get(action) + (this.allNodesProbability - alternativeNodesProbs.get(currentNode)) * ((FlipItGameState) state).getUpperBoundForUtilityFor(searchingPlayerIndex)));
+                    if (useCustomBounds && !useOriginalBRFormulation && useBoundInSearchingPlayerNodes) {
+                        return ((previousMaxValue + this.allNodesProbability * (((NodePointsFlipItGameState) state).getLowerBoundForUtilityFor(searchingPlayerIndex)))
+                                - (actionExpectedValues.get(action) + (this.allNodesProbability - alternativeNodesProbs.get(currentNode)) * ((NodePointsFlipItGameState) state).getUpperBoundForUtilityFor(searchingPlayerIndex)));
                     } else {
                         return ((previousMaxValue + this.allNodesProbability * (-MAX_UTILITY_VALUE))
                                 - (actionExpectedValues.get(action) + (this.allNodesProbability - alternativeNodesProbs.get(currentNode)) * MAX_UTILITY_VALUE));

@@ -220,7 +220,7 @@ public class RandomGameState extends GameStateImpl {
     }
 
     public double[] getUtilities() {
-        double[] utilities = new double[centers.length];
+        double[] utilities = new double[RandomGameInfo.ALL_PLAYERS.length];
 
         if (!isGameEnd())
             return utilities;

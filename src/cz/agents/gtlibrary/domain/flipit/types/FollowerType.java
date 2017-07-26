@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.domain.flipit.types;
 
-import cz.agents.gtlibrary.domain.flipit.FlipItGameState;
+import cz.agents.gtlibrary.domain.flipit.NodePointsFlipItGameState;
 import cz.agents.gtlibrary.utils.graph.Node;
 
 /**
@@ -10,7 +10,7 @@ public interface FollowerType {
 
     public double getPrior();
 
-    public double getReward(FlipItGameState gameState, Node node);
+    public double getReward(NodePointsFlipItGameState gameState, Node node);
 
     public int getID();
 
