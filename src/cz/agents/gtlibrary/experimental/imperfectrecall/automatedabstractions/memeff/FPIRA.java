@@ -27,9 +27,9 @@ import java.util.*;
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
-//        runRandomGame();
+        runRandomGame();
 //        runWichardtCounterexample();
     }
 
@@ -73,12 +73,21 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
     private final FPIRABestResponse p0BR;
     private final FPIRABestResponse p1BR;
 
+    double p0Exploitability;
+    double p1Exploitability;
+
     public FPIRA(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info) {
         super(rootState, expander, info);
         p0Delta = new FPIRADeltaCalculator(this.rootState, this.expander, 0, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
         p1Delta = new FPIRADeltaCalculator(this.rootState, this.expander, 1, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
         p0BR = new FPIRABestResponse(this.rootState, this.expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
         p1BR = new FPIRABestResponse(this.rootState, this.expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
+    }
+
+    @Override
+    protected boolean isConverged(double epsilon) {
+        System.out.println(p0Exploitability + ", " + p1Exploitability + ", " + epsilon);
+        return Math.abs(p0Exploitability - p1Exploitability) < epsilon;
     }
 
     @Override
@@ -143,6 +152,10 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         double value = br.calculateBRForAbstractedStrategy(rootState, strategy);
         Map<Action, Double> bestResponse = br.getBestResponse();
 
+        if(opponent.getId() == 0)
+            p0Exploitability = -value;
+        else
+            p1Exploitability = value;
         updateAbstractionInformationSets(rootState, bestResponse, strategy, opponent);
     }
 

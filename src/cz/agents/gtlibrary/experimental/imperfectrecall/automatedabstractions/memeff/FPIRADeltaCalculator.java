@@ -205,7 +205,7 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
                 return realizations[i];
             }
         }
-        throw new InvalidStateException("Action not found");
+        throw new UnsupportedOperationException("Action not found");
     }
 
     private double getProbabilityForActionIndex(PerfectRecallISKey isKey, int actionIndex, List<Action> actions) {
@@ -220,7 +220,7 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
                 return i;
             }
         }
-        throw new InvalidStateException("Action not found");
+        throw new UnsupportedOperationException("Action not found");
     }
 
     private class FPIRADeltaCalculatorBRSrchSelection extends BRSrchSelection {

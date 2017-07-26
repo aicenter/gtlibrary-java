@@ -51,7 +51,7 @@ public class KPGameInfo implements GameInfo {
 
 	@Override
 	public double getMaxUtility() {
-		return 50;
+		return 6;
 	}
 
 	@Override
