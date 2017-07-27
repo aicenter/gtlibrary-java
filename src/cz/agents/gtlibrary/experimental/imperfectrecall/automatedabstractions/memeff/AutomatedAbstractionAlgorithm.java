@@ -10,6 +10,7 @@ import cz.agents.gtlibrary.interfaces.*;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
+import java.lang.management.ThreadMXBean;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +25,9 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected int iteration = 0;
     protected int isKeyCounter = 0;
 
-    protected MemoryMXBean mxBean;
+    protected MemoryMXBean memoryBean;
+    protected ThreadMXBean threadBean;
+    long startTime;
 
     public AutomatedAbstractionAlgorithm(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info) {
         this.rootState = rootState;
@@ -32,7 +35,8 @@ public abstract class AutomatedAbstractionAlgorithm {
         this.gameInfo = info;
         currentAbstractionInformationSets = new HashMap<>();
         currentAbstractionISKeys = new InformationSetKeyMap();
-        mxBean = ManagementFactory.getMemoryMXBean();
+        memoryBean = ManagementFactory.getMemoryMXBean();
+        threadBean = ManagementFactory.getThreadMXBean();
         buildInitialAbstraction();
     }
 
@@ -59,11 +63,12 @@ public abstract class AutomatedAbstractionAlgorithm {
     }
 
     public void runIterations(int iterations) {
+        startTime = threadBean.getCurrentThreadCpuTime();
         for (int i = 0; i < iterations; i++) {
             this.iteration++;
             iteration(rootState.getAllPlayers()[1]);
             iteration(rootState.getAllPlayers()[0]);
-            if(isConverged(gameInfo.getMaxUtility()*1e-3))
+            if (isConverged(gameInfo.getMaxUtility() * 1e-3))
                 return;
             if (i % 20 == 0 || iteration == 1)
                 printStatistics();
@@ -92,7 +97,12 @@ public abstract class AutomatedAbstractionAlgorithm {
 
     protected abstract boolean isConverged(double v);
 
-    protected abstract void printStatistics();
+    protected void printStatistics() {
+        System.out.println("Current time: " + (threadBean.getCurrentThreadCpuTime() - startTime) / 1e6);
+        System.out.println("Current memory: " + memoryBean.getHeapMemoryUsage().getUsed());
+        System.out.println("Max memory: " + memoryBean.getHeapMemoryUsage().getMax());
+        System.out.println(memoryBean.getHeapMemoryUsage().toString());
+    }
 
     protected abstract void iteration(Player player);
 

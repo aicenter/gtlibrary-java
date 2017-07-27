@@ -86,12 +86,12 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     @Override
     protected boolean isConverged(double epsilon) {
-        System.out.println(p0Exploitability + ", " + p1Exploitability + ", " + epsilon);
         return Math.abs(p0Exploitability - p1Exploitability) < epsilon;
     }
 
     @Override
     protected void printStatistics() {
+        super.printStatistics();
         Map<ISKey, double[]> p0Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[0]);
         Map<ISKey, double[]> p1Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[1]);
 
@@ -101,13 +101,11 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         System.out.println("Current IS count: " + currentAbstractionInformationSets.size());
         System.out.println("State cache from BR sizes: " + p0BR.maxStateValueCache + ", " + p1BR.maxStateValueCache);
         System.out.println("BR result sizes: " + p0BR.maxBRResultSize + ", " + p1BR.maxBRResultSize);
+        System.out.println("BR probability cache: " + p0BR.maxProbCacheSize + ", " + p1BR.maxProbCacheSize);
         System.out.println("State cache from deltaCalc sizes: " + p0Delta.maxStateValueCache + ", " + p1Delta.maxStateValueCache);
+        System.out.println("deltaCalc probability cache: " + p0Delta.maxProbCacheSize + ", " + p1Delta.maxProbCacheSize);
         System.out.println("Reachable IS count: " + getReachableISCountFromOriginalGame(p0Strategy, p1Strategy));
         System.out.println("Reachable abstracted IS count: " + getReachableAbstractedISCountFromOriginalGame(p0Strategy, p1Strategy));
-        System.out.println("Current memory: " + mxBean.getHeapMemoryUsage().getUsed());
-        System.out.println("Max memory: " + mxBean.getHeapMemoryUsage().getMax());
-        System.out.println(mxBean.getHeapMemoryUsage().toString());
-        System.out.println("Memory measurement from DO: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
         System.out.println("*************************************************");
     }
 
@@ -352,7 +350,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                     }
                     ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateDenominator(isKeyEntry.getValue()[0] + isKeyEntry.getValue()[1]);
                     ((CFRBRData) newIS.getData()).updateMeanStrategy();
-                    System.err.println("PR " + newIS.getPlayer() + " creating IS in it " + iteration);
                 }
             }
         }
@@ -387,7 +384,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                         ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateDenominator(isKeyEntry.getValue()[0] + isKeyEntry.getValue()[1]);
                     }
                     ((CFRBRData) newIS.getData()).updateMeanStrategy();
-                    System.err.println("!!!BR creating IS in it " + iteration);
                 }
             } else {
                 for (Map.Entry<Integer, Map<PerfectRecallISKey, double[]>> entry : informationSetMapEntry.getValue().entrySet()) {

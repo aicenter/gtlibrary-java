@@ -12,6 +12,7 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
     private Map<ISKey, double[]> opponentAbstractedStrategy;
     private InformationSetKeyMap currentAbstractionISKeys;
     private Map<Action, Double> probabilityCache;
+    public int maxProbCacheSize = 0;
 
     public FPIRABestResponse(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex,
                              Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo,
@@ -23,8 +24,11 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
 
     public Double calculateBRForAbstractedStrategy(GameState root, Map<ISKey, double[]> opponentAbstractedStrategy) {
         this.opponentAbstractedStrategy = opponentAbstractedStrategy;
+        Double value = calculateBR(root, new HashMap<>(), new HashMap<>());
+
+        maxProbCacheSize = Math.max(maxProbCacheSize, probabilityCache.size());
         this.probabilityCache.clear();
-        return calculateBR(root, new HashMap<>(), new HashMap<>());
+        return value;
     }
 
     protected Double calculateEvaluation(GameState gameState, double currentStateProbability) {
