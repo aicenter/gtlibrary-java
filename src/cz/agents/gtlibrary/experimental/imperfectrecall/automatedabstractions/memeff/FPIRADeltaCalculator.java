@@ -1,11 +1,9 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
 
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.*;
 
@@ -19,6 +17,7 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
     protected double irProbability;
     private Map<Action, Double> prProbCache;
     private Map<Action, Double> irProbCache;
+    public int maxProbCacheSize = 0;
 
     public FPIRADeltaCalculator(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex,
                                 AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse, InformationSetKeyMap currentAbstractionISKeys) {
@@ -178,7 +177,11 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
         prProbability = 1;
         irProbability = 1;
         UTILITY_MULTIPLIER = 1;
-        return calculateBR(gameTreeRoot, new HashMap<>());
+        Double value = calculateBR(gameTreeRoot, new HashMap<>());
+
+        this.strategyDiffs = null;
+        maxProbCacheSize = Math.max(maxProbCacheSize, Math.max(prProbCache.size(), irProbCache.size()));
+        return value;
     }
 
     public double calculateNegativeDeltaForAbstractedStrategy(Map<ISKey, double[]> opponentAbstractedStrategy, FPIRAStrategyDiffs strategyDiffs) {
