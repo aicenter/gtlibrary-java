@@ -11,16 +11,19 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
 
     private Map<ISKey, double[]> opponentAbstractedStrategy;
     private InformationSetKeyMap currentAbstractionISKeys;
+    private Map<Action, Double> probabilityCache;
 
     public FPIRABestResponse(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex,
                              Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo,
                              boolean stateCacheUse, InformationSetKeyMap currentAbstractionISKeys) {
         super(root, expander, searchingPlayerIndex, actingPlayers, algConfig, gameInfo, stateCacheUse);
         this.currentAbstractionISKeys = currentAbstractionISKeys;
+        probabilityCache = new HashMap<>();
     }
 
     public Double calculateBRForAbstractedStrategy(GameState root, Map<ISKey, double[]> opponentAbstractedStrategy) {
         this.opponentAbstractedStrategy = opponentAbstractedStrategy;
+        this.probabilityCache.clear();
         return calculateBR(root, new HashMap<>(), new HashMap<>());
     }
 
@@ -36,11 +39,11 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
 
     @Override
     protected double getOpponentProbability(Sequence sequence) {
-        return AbstractedStrategyUtils.getProbability(sequence, opponentAbstractedStrategy, currentAbstractionISKeys, expander);
+        return AbstractedStrategyUtils.getProbability(sequence, opponentAbstractedStrategy, currentAbstractionISKeys, expander, probabilityCache);
     }
 
     protected double getProbabilityForAction(Action action) {
-        return AbstractedStrategyUtils.getProbabilityForAction(action, opponentAbstractedStrategy, currentAbstractionISKeys, expander);
+        return AbstractedStrategyUtils.getProbabilityForAction(action, opponentAbstractedStrategy, currentAbstractionISKeys, expander, probabilityCache);
     }
 
 }
