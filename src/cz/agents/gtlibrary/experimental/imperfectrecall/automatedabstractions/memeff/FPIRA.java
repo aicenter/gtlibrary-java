@@ -150,6 +150,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         double value = br.calculateBRForAbstractedStrategy(rootState, strategy);
         Map<Action, Double> bestResponse = br.getBestResponse();
 
+        System.gc();
         if (opponent.getId() == 0)
             p0Exploitability = -value;
         else
@@ -257,6 +258,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                     -p0Delta.calculateNegativeDeltaForAbstractedStrategy(strategy, strategyDiffs));
             p0Delta.clearProbabilityCache();
         }
+        System.gc();
         return delta > 1e-8;
     }
 
