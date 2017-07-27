@@ -67,6 +67,7 @@ import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
@@ -85,6 +86,7 @@ public class GeneralDoubleOracle {
     final public static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
     private ThreadMXBean threadBean;
+    private MemoryMXBean memoryBean;
 
     public double gameValue;
 
@@ -489,6 +491,7 @@ public class GeneralDoubleOracle {
         debugOutput.println("Double Oracle");
         debugOutput.println(gameInfo.getInfo());
         threadBean = ManagementFactory.getThreadMXBean();
+        memoryBean = ManagementFactory.getMemoryMXBean();
 
         long start = threadBean.getCurrentThreadCpuTime();
         long systemStart = System.currentTimeMillis();
@@ -776,6 +779,7 @@ public class GeneralDoubleOracle {
         debugOutput.println("final support_percent: FirstPlayer: " + 100*((double)support_size[0])/algConfig.getSequencesFor(actingPlayers[0]).size() + "% \t SecondPlayer: " + 100*((double)support_size[1])/algConfig.getSequencesFor(actingPlayers[1]).size()+"%");
         debugOutput.println("final result:" + doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]));
         debugOutput.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
+        debugOutput.println("memory bean: " + memoryBean.getHeapMemoryUsage());
         debugOutput.println("final time: " + finishTime);
         debugOutput.println("final number of iterations: " + iterations);
         debugOutput.println("final CPLEX time: " + overallCPLEX);
