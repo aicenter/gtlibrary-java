@@ -25,6 +25,26 @@ public class AbstractedStrategyUtils {
         return probability;
     }
 
+    public static double getProbability(Sequence sequence, Map<ISKey, double[]> abstractedStrategy,
+                                        InformationSetKeyMap currentAbstractionISKeys,
+                                        Expander<? extends InformationSet> expander,
+                                        Map<Action, Double> cache) {
+        if (sequence.isEmpty())
+            return 1;
+        double probability = 1;
+
+        for (Action action : sequence) {
+            probability *= getProbabilityForAction(action, abstractedStrategy, currentAbstractionISKeys, expander, cache);
+        }
+        return probability;
+    }
+
+    public static double getProbabilityForAction(Action action, Map<ISKey, double[]> abstractedStrategy,
+                                                 InformationSetKeyMap currentAbstractionISKeys,
+                                                 Expander<? extends InformationSet> expander, Map<Action, Double> cache) {
+        return cache.computeIfAbsent(action, a -> getProbabilityForAction(action, abstractedStrategy, currentAbstractionISKeys, expander));
+    }
+
     public static double getProbabilityForAction(Action action, Map<ISKey, double[]> abstractedStrategy,
                                              InformationSetKeyMap currentAbstractionISKeys,
                                              Expander<? extends InformationSet> expander) {

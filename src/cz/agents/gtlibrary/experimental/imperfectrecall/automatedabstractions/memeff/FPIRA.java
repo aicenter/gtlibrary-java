@@ -27,9 +27,9 @@ import java.util.*;
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
-        runRandomGame();
+//        runRandomGame();
 //        runWichardtCounterexample();
     }
 
@@ -152,7 +152,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         double value = br.calculateBRForAbstractedStrategy(rootState, strategy);
         Map<Action, Double> bestResponse = br.getBestResponse();
 
-        if(opponent.getId() == 0)
+        if (opponent.getId() == 0)
             p0Exploitability = -value;
         else
             p1Exploitability = value;
@@ -250,13 +250,15 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         double delta;
 
 //        assert valid(strategyDiffs, strategy);
-        if (player.getId() == 0)
+        if (player.getId() == 0) {
             delta = Math.max(p1Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs),
                     -p1Delta.calculateNegativeDeltaForAbstractedStrategy(strategy, strategyDiffs));
-        else
+            p1Delta.clearProbabilityCache();
+        } else {
             delta = Math.max(p0Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs),
                     -p0Delta.calculateNegativeDeltaForAbstractedStrategy(strategy, strategyDiffs));
-//        System.out.println(delta);
+            p0Delta.clearProbabilityCache();
+        }
         return delta > 1e-8;
     }
 

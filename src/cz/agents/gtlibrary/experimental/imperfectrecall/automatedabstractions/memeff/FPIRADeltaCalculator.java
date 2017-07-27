@@ -17,11 +17,15 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
     private InformationSetKeyMap currentAbstractionISKeys;
     protected double prProbability;
     protected double irProbability;
+    private Map<Action, Double> prProbCache;
+    private Map<Action, Double> irProbCache;
 
     public FPIRADeltaCalculator(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex,
                                 AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse, InformationSetKeyMap currentAbstractionISKeys) {
         super(root, expander, searchingPlayerIndex, new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]}, algConfig, gameInfo, stateCacheUse);
         this.currentAbstractionISKeys = currentAbstractionISKeys;
+        prProbCache = new HashMap<>();
+        irProbCache = new HashMap<>();
     }
 
     @Override
@@ -137,10 +141,10 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
         double probability = 1;
 
         for (Action oldAction : state.getSequenceFor(players[opponentPlayerIndex])) {
-            probability *= getProbability(oldAction.getInformationSet().getISKey(), oldAction, strategyDiffs.irStrategyDiff);
+            probability *= getProbability(oldAction.getInformationSet().getISKey(), oldAction, strategyDiffs.irStrategyDiff, irProbCache);
         }
         if (state.getPlayerToMove().equals(players[opponentPlayerIndex]))
-            probability *= getProbability(state.getISKeyForPlayerToMove(), action, strategyDiffs.irStrategyDiff);
+            probability *= getProbability(state.getISKeyForPlayerToMove(), action, strategyDiffs.irStrategyDiff, irProbCache);
         return probability;
     }
 
@@ -148,10 +152,10 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
         double probability = 1;
 
         for (Action oldAction : state.getSequenceFor(players[opponentPlayerIndex])) {
-            probability *= getProbability(oldAction.getInformationSet().getISKey(), oldAction, strategyDiffs.prStrategyDiff);
+            probability *= getProbability(oldAction.getInformationSet().getISKey(), oldAction, strategyDiffs.prStrategyDiff, prProbCache);
         }
         if (state.getPlayerToMove().equals(players[opponentPlayerIndex]))
-            probability *= getProbability(state.getISKeyForPlayerToMove(), action, strategyDiffs.prStrategyDiff);
+            probability *= getProbability(state.getISKeyForPlayerToMove(), action, strategyDiffs.prStrategyDiff, prProbCache);
         return probability;
     }
 
@@ -162,6 +166,10 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
         double diffProbability = diffForKey == null ? 0 : diffForKey[actionIndex];
 
         return getProbabilityForActionIndex((PerfectRecallISKey) key, actionIndex, actions) + diffProbability;
+    }
+
+    protected double getProbability(ISKey key, Action action, Map<PerfectRecallISKey, double[]> strategyDiff, Map<Action, Double> cache) {
+        return cache.computeIfAbsent(action, a -> getProbability(key, a, strategyDiff));
     }
 
     public double calculateDeltaForAbstractedStrategy(Map<ISKey, double[]> opponentAbstractedStrategy, FPIRAStrategyDiffs strategyDiffs) {
@@ -221,6 +229,11 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
             }
         }
         throw new UnsupportedOperationException("Action not found");
+    }
+
+    public void clearProbabilityCache() {
+        prProbCache.clear();
+        irProbCache.clear();
     }
 
     private class FPIRADeltaCalculatorBRSrchSelection extends BRSrchSelection {
