@@ -60,10 +60,8 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -118,8 +116,7 @@ public class GeneralDoubleOracle {
         HoneypotGameInfo gameInfo;
         if (args.length == 0) {
             gameInfo = new HoneypotGameInfo();
-        }
-        else {
+        } else {
             gameInfo = new HoneypotGameInfo(args[0]);
         }
 
@@ -146,7 +143,7 @@ public class GeneralDoubleOracle {
         for (Sequence seq : init.get(HoneypotGameInfo.DEFENDER).keySet()) {
             boolean isprefix = false;
             for (Sequence seq2 : init.get(HoneypotGameInfo.DEFENDER).keySet()) {
-                if (!seq.equals(seq2) && seq.isPrefixOf(seq2)){
+                if (!seq.equals(seq2) && seq.isPrefixOf(seq2)) {
                     isprefix = true;
                     break;
                 }
@@ -234,7 +231,7 @@ public class GeneralDoubleOracle {
         System.out.println("With negation sequences : " + trueSequences + ", without negation sequences : " + falseSequences);
     }
 
-    private static void runFlipIt(String[] args){
+    private static void runFlipIt(String[] args) {
         // args for flipit : depth::int graphSize::int
         FlipItGameInfo gameInfo;
         if (args.length == 0)
@@ -242,7 +239,7 @@ public class GeneralDoubleOracle {
         else {
             int depth = Integer.parseInt(args[0]);
             int graphSize = Integer.parseInt(args[1]);
-            String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
+            String graphFile = (graphSize == 3) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
             gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
             FlipItGameInfo.OUTPUT_STRATEGY = true;
             if (args.length > 2) {
@@ -272,11 +269,19 @@ public class GeneralDoubleOracle {
         GameState rootState = null;
         if (FlipItGameInfo.CALCULATE_UTILITY_BOUNDS) gameInfo.calculateMinMaxBounds();
 
-        switch (FlipItGameInfo.gameVersion){
-            case NO:                    rootState = new NoInfoFlipItGameState(); break;
-            case FULL:                  rootState = new FullInfoFlipItGameState(); break;
-            case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
-            case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+        switch (FlipItGameInfo.gameVersion) {
+            case NO:
+                rootState = new NoInfoFlipItGameState();
+                break;
+            case FULL:
+                rootState = new FullInfoFlipItGameState();
+                break;
+            case REVEALED_ALL_POINTS:
+                rootState = new AllPointsFlipItGameState();
+                break;
+            case REVEALED_NODE_POINTS:
+                rootState = new NodePointsFlipItGameState();
+                break;
 
         }
 
@@ -296,24 +301,24 @@ public class GeneralDoubleOracle {
             }
         }
 
-        Map<InformationSet,Map<Action,Double>> behavioral = new HashMap<>();
-        for (Sequence sequence : rps.get(FlipItGameInfo.DEFENDER).keySet()){
-            if(sequence.isEmpty()) continue;
+        Map<InformationSet, Map<Action, Double>> behavioral = new HashMap<>();
+        for (Sequence sequence : rps.get(FlipItGameInfo.DEFENDER).keySet()) {
+            if (sequence.isEmpty()) continue;
             if (!behavioral.containsKey(sequence.getLastInformationSet()))
-                behavioral.put(sequence.getLastInformationSet(),new HashMap<Action,Double>());
+                behavioral.put(sequence.getLastInformationSet(), new HashMap<Action, Double>());
             behavioral.get(sequence.getLastInformationSet())
-                    .put(sequence.getLast(),rps.get(FlipItGameInfo.DEFENDER).get(sequence));
+                    .put(sequence.getLast(), rps.get(FlipItGameInfo.DEFENDER).get(sequence));
         }
 
         ArrayList<InformationSet> sets = new ArrayList<>();
-        for(InformationSet set : behavioral.keySet()){
+        for (InformationSet set : behavioral.keySet()) {
             double realization = 0.0;
-            for(Action a : behavioral.get(set).keySet())
+            for (Action a : behavioral.get(set).keySet())
                 realization += behavioral.get(set).get(a);
-            if(realization > 0.000001) sets.add(set);
+            if (realization > 0.000001) sets.add(set);
             else continue;
-            for(Action a : behavioral.get(set).keySet())
-                behavioral.get(set).replace(a, behavioral.get(set).get(a)/realization);
+            for (Action a : behavioral.get(set).keySet())
+                behavioral.get(set).replace(a, behavioral.get(set).get(a) / realization);
         }
 
         Collections.sort(sets, new Comparator<InformationSet>() {
@@ -330,18 +335,17 @@ public class GeneralDoubleOracle {
                 GameState state = set.getAllStates().iterator().next();
                 System.out.println(state.getSequenceFor(FlipItGameInfo.DEFENDER));
                 if (set.getISKey() instanceof FlipItPerfectRecallISKey)
-                    System.out.println(((FlipItPerfectRecallISKey)set.getISKey()).getObservation());
+                    System.out.println(((FlipItPerfectRecallISKey) set.getISKey()).getObservation());
                 System.out.println(state.getSequenceFor(FlipItGameInfo.ATTACKER));
                 if (!state.getSequenceFor(FlipItGameInfo.ATTACKER).isEmpty() && state.getSequenceFor(FlipItGameInfo.ATTACKER).getLastInformationSet().getISKey()
                         instanceof FlipItPerfectRecallISKey)
-                    System.out.println(((FlipItPerfectRecallISKey)state.getSequenceFor(FlipItGameInfo.ATTACKER)
+                    System.out.println(((FlipItPerfectRecallISKey) state.getSequenceFor(FlipItGameInfo.ATTACKER)
                             .getLastInformationSet().getISKey()).getObservation());
                 for (Action a : behavioral.get(set).keySet())
                     if (behavioral.get(set).get(a) > 0.00001)
                         System.out.printf("\t %s : %f\n", a, behavioral.get(set).get(a));
             }
         }
-
 
 
 //        GambitEFG ggg = new GambitEFG();
@@ -436,7 +440,7 @@ public class GeneralDoubleOracle {
 //        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpanderDomain<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
-        System.out.println("number of ISs: " + algConfig.getAllInformationSets().size());
+        System.out.println("number of ISs: " + algConfig.getAllInformationSets().values().stream().filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
     }
 
     public static void runBP() {
@@ -505,12 +509,11 @@ public class GeneralDoubleOracle {
         Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
         DoubleOracleBestResponse[] brAlgorithms;
 
-        if (gameInfo instanceof FlipItGameInfo){
+        if (gameInfo instanceof FlipItGameInfo) {
             brAlgorithms = new DoubleOracleBestResponse[]{
                     new FlipItBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameInfo),
                     new FlipItBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameInfo)};
-        }
-        else{
+        } else {
             brAlgorithms = new DoubleOracleBestResponse[]{
                     new DoubleOracleBestResponse(expander, 0, actingPlayers, algConfig, gameInfo),
                     new DoubleOracleBestResponse(expander, 1, actingPlayers, algConfig, gameInfo)};
@@ -566,12 +569,13 @@ public class GeneralDoubleOracle {
 
 //        boolean[] newSeqs = new boolean[] {true, true};
         int maxTemporaryLeafCount = 0;
-
+        long maxMemory = 0;
         mainloop:
         while ((Math.abs(p1BoundUtility + p2BoundUtility) > EPS) ||
                 Math.abs(doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]) + doRestrictedGameSolver.getResultForPlayer(actingPlayers[1])) > EPS) {
 
             iterations++;
+            maxMemory = Math.max(maxMemory, memoryBean.getHeapMemoryUsage().getUsed());
             debugOutput.println("Iteration " + iterations + ": Cumulative Time from Beginning:" + ((threadBean.getCurrentThreadCpuTime() - start) / 1000000l));
             debugOutput.println("Iteration " + iterations + ": System Cumulative Time:" + ((System.currentTimeMillis()) - systemStart));
 
@@ -776,9 +780,9 @@ public class GeneralDoubleOracle {
 
         debugOutput.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
         debugOutput.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
-        debugOutput.println("final support_percent: FirstPlayer: " + 100*((double)support_size[0])/algConfig.getSequencesFor(actingPlayers[0]).size() + "% \t SecondPlayer: " + 100*((double)support_size[1])/algConfig.getSequencesFor(actingPlayers[1]).size()+"%");
+        debugOutput.println("final support_percent: FirstPlayer: " + 100 * ((double) support_size[0]) / algConfig.getSequencesFor(actingPlayers[0]).size() + "% \t SecondPlayer: " + 100 * ((double) support_size[1]) / algConfig.getSequencesFor(actingPlayers[1]).size() + "%");
         debugOutput.println("final result:" + doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]));
-        debugOutput.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
+        debugOutput.println("final memory:" + maxMemory);
         debugOutput.println("memory bean: " + memoryBean.getHeapMemoryUsage());
         debugOutput.println("final time: " + finishTime);
         debugOutput.println("final number of iterations: " + iterations);
