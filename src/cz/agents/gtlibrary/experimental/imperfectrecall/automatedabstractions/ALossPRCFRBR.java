@@ -301,7 +301,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
     }
 
     protected void update() {
-        informationSets.values().stream().filter(is -> is.getPlayer().equals(regretMatchingPlayer)).forEach(informationSet -> informationSet.getData().applyUpdate());
+        informationSets.values().stream().filter(is -> is.getPlayer().equals(regretMatchingPlayer)).forEach(informationSet -> ((FixedForIterationData) informationSet.getData()).applyUpdate());
     }
 
     protected double bestResponseIteration(Player opponent, ALossBestResponseAlgorithm br) {
@@ -349,7 +349,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         ExpectedValues expectedValues = getExpectedValues(state, bestResponse, avgStrategy, opponentStrategy, 1, 1, 1, valueMap, opponent);
 
         valueMap.forEach((k, v) -> {
-            FixedForIterationData data = informationSets.get(k).getData();
+            FixedForIterationData data = (FixedForIterationData) informationSets.get(k).getData();
 
             v.updateExpectedExpectedValue(1. / (data.getNbSamples() + 1));
         });
@@ -500,7 +500,7 @@ public class ALossPRCFRBR implements GamePlayingAlgorithm {
         ExpectedValues expectedValues = new ExpectedValues();
         double[] meanStrat = new double[actions.size()];
         int actionIndex = 0;
-        FixedForIterationData data = informationSets.get(state.getISKeyForPlayerToMove()).getData();
+        FixedForIterationData data = (FixedForIterationData) informationSets.get(state.getISKeyForPlayerToMove()).getData();
         Map<ISKey, Action> isKeyActionMap = bestResponse.get(state.getSequenceForPlayerToMove());
         Action bestResponseAction = isKeyActionMap == null ? null : isKeyActionMap.get(state.getISKeyForPlayerToMove());
 
