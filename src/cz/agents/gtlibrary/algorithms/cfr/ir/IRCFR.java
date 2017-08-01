@@ -143,7 +143,7 @@ public class IRCFR {
     }
 
     private void update() {
-        config.getAllInformationSets().values().forEach(informationSet -> informationSet.getData().applyUpdate());
+        config.getAllInformationSets().values().forEach(informationSet -> ((FixedForIterationData)informationSet.getData()).applyUpdate());
     }
 
     /**

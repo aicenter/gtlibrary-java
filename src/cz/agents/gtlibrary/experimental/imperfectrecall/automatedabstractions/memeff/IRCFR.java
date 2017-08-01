@@ -28,6 +28,11 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     protected void iteration(Player player) {
         perfectRecallIteration(rootState, 1, 1, player);
         imperfectRecallIteration(rootState, 1, 1, player);
+        updateImperfectRecallData();
+    }
+
+    private void updateImperfectRecallData() {
+        currentAbstractionInformationSets.values().forEach(i -> ((IRCFRData)i.getData()).applyUpdate());
     }
 
     protected double perfectRecallIteration(GameState node, double pi1, double pi2, Player expPlayer) {
