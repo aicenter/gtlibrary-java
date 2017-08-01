@@ -98,6 +98,9 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected abstract boolean isConverged(double v);
 
     protected void printStatistics() {
+        System.out.println("*************************************************");
+        System.out.println("Iteration: " + iteration);
+        System.out.println("Current IS count: " + currentAbstractionInformationSets.size());
         System.out.println("Current time: " + (threadBean.getCurrentThreadCpuTime() - startTime) / 1e6);
         System.out.println("Current memory: " + memoryBean.getHeapMemoryUsage().getUsed());
         System.out.println("Max memory: " + memoryBean.getHeapMemoryUsage().getMax());
