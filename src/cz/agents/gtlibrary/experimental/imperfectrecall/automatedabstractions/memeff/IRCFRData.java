@@ -16,13 +16,12 @@ public class IRCFRData extends OOSAlgorithmData {
     public IRCFRData(int actionCount) {
         super(actionCount);
         regretUpdates = new ArrayList<>();
+        expPlayerProbs = new ArrayList<>();
         updated = false;
     }
 
     public IRCFRData(List<Action> actions) {
-        super(actions);
-        regretUpdates = new ArrayList<>();
-        updated = false;
+        this(actions.size());
     }
 
     @Override

@@ -5,6 +5,9 @@ import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 
@@ -14,8 +17,17 @@ import java.util.List;
 public class IRCFR extends AutomatedAbstractionAlgorithm {
     private MCTSConfig perfectRecallConfig;
 
-    public IRCFR(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info, MCTSConfig perfectRecallConfig) {
-        super(rootState, expander, info);
+    public static void main(String[] args) {
+        GameState root = new KuhnPokerGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new KuhnPokerExpander<>(config);
+        IRCFR alg = new IRCFR(root, expander, new KPGameInfo(), config);
+
+        alg.runIterations(1000);
+    }
+
+    public IRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig) {
+        super(rootState, perfectRecallExpander, info);
         this.perfectRecallConfig = perfectRecallConfig;
     }
 
@@ -40,7 +52,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             return 0;
         if (node.isGameEnd())
             return node.getUtilities()[expPlayer.getId()];
-        MCTSInformationSet informationSet = perfectRecallConfig.getInformationSetFor(node);
+        MCTSInformationSet informationSet = perfectRecallConfig.getAllInformationSets().get(node.getSequenceForPlayerToMove());
 
         if (informationSet == null) {
             informationSet = perfectRecallConfig.createInformationSetFor(node);
@@ -99,7 +111,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             return node.getUtilities()[expPlayer.getId()];
         IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
         OOSAlgorithmData data = informationSet.getData();
-        List<Action> actions = data.getActions();
+        List<Action> actions = perfectRecallExpander.getActions(node);
 
         if (node.isPlayerToMoveNature()) {
             double expectedValue = 0;
@@ -137,7 +149,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     }
 
     private IRCFRInformationSet getAbstractedInformationSet(GameState node) {
-        return currentAbstractionInformationSets.get(currentAbstractionISKeys.get((PerfectRecallISKey) node.getISKeyForPlayerToMove(), expander.getActions(node)));
+        return currentAbstractionInformationSets.get(currentAbstractionISKeys.get((PerfectRecallISKey) node.getISKeyForPlayerToMove(), perfectRecallExpander.getActions(node)));
     }
 
     protected void updateForPerfectRecall(double pi1, double pi2, Player expPlayer, OOSAlgorithmData data,
@@ -162,11 +174,11 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     }
 
     protected AlgorithmData createPerfectRecallAlgData(GameState node) {
-        return new OOSAlgorithmData(expander.getActions(node));
+        return new OOSAlgorithmData(perfectRecallExpander.getActions(node));
     }
 
     protected void addData(Collection<IRCFRInformationSet> informationSets) {
-        informationSets.forEach(i -> i.setData(new IRCFRData(this.expander.getActions(i.getAllStates().stream().findAny().get()).size())));
+        informationSets.forEach(i -> i.setData(new IRCFRData(this.perfectRecallExpander.getActions(i.getAllStates().stream().findAny().get()).size())));
     }
 
     protected double[] getStrategy(OOSAlgorithmData data) {

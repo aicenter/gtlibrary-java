@@ -78,10 +78,10 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public FPIRA(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info) {
         super(rootState, expander, info);
-        p0Delta = new FPIRADeltaCalculator(this.rootState, this.expander, 0, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
-        p1Delta = new FPIRADeltaCalculator(this.rootState, this.expander, 1, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
-        p0BR = new FPIRABestResponse(this.rootState, this.expander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
-        p1BR = new FPIRABestResponse(this.rootState, this.expander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
+        p0Delta = new FPIRADeltaCalculator(this.rootState, this.perfectRecallExpander, 0, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
+        p1Delta = new FPIRADeltaCalculator(this.rootState, this.perfectRecallExpander, 1, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
+        p0BR = new FPIRABestResponse(this.rootState, this.perfectRecallExpander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
+        p1BR = new FPIRABestResponse(this.rootState, this.perfectRecallExpander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
     }
 
     @Override
@@ -108,16 +108,16 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     protected long getReachableISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
         return currentAbstractionInformationSets.values().stream().flatMap(i -> i.getAllStates().stream().filter(s ->
-                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, expander) > 1e-8 &&
-                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, expander) > 1e-8)
+                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
+                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8)
                 .map(s -> s.getISKeyForPlayerToMove()).distinct()).count();
     }
 
     protected long getReachableAbstractedISCount(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
         return currentAbstractionInformationSets.values().stream().filter(i ->
                 i.getAllStates().stream().anyMatch(s ->
-                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, expander) > 1e-8 &&
-                                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, expander) > 1e-8) &&
+                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
+                                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8) &&
                         i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1
         ).count();
     }
@@ -126,8 +126,8 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         return currentAbstractionInformationSets.values().stream().filter(i ->
                 i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1
         ).flatMap(i -> i.getAllStates().stream().filter(s ->
-                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, expander) > 1e-8 &&
-                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, expander) > 1e-8)
+                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
+                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8)
                 .map(s -> s.getISKeyForPlayerToMove()).distinct()).count();
     }
 
@@ -135,8 +135,8 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
     protected long getReachableISCount(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
         return currentAbstractionInformationSets.values().stream().filter(i ->
                 i.getAllStates().stream().anyMatch(s ->
-                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, expander) > 1e-8 &&
-                                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, expander) > 1e-8)
+                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
+                                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8)
         ).count();
     }
 
@@ -178,20 +178,20 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         if (state.isGameEnd())
             return 0;
         if (state.isPlayerToMoveNature())
-            return expander.getActions(state).stream().map(state::performAction).mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, opponent, toSplit, pBR, pAvg)).sum();
+            return perfectRecallExpander.getActions(state).stream().map(state::performAction).mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, opponent, toSplit, pBR, pAvg)).sum();
         if (state.getPlayerToMove().equals(opponent)) {
-            List<Action> actions = expander.getActions(state);
+            List<Action> actions = perfectRecallExpander.getActions(state);
 
             return actions.stream().filter(a -> getProbability(opponentStrategy, a, actions) > 1e-8)
                     .map(state::performAction).mapToInt(s -> updateISStructure(s, bestResponse, opponentStrategy, opponent, toSplit, pBR, pAvg)).sum();
         }
         IRCFRInformationSet is = currentAbstractionInformationSets.get(getAbstractionISKey(state));
-        List<Action> actions = expander.getActions(state);
+        List<Action> actions = perfectRecallExpander.getActions(state);
         double[] meanStrategy = is.getData().getMp();
 
         assert actions.stream().filter(a -> bestResponse.getOrDefault(a, 0d) > 1 - 1e-8).count() <= 1;
         assert Math.abs(Arrays.stream(meanStrategy).sum() - 1) < 1e-8 || (Math.abs(Arrays.stream(meanStrategy).sum()) < 1e-8 && iteration == 0);
-        int splitCount = expander.getActions(state).stream().filter(a -> getProbability(meanStrategy, a, actions) > 1e-8 || bestResponse.getOrDefault(a, 0d) > 1 - 1e-8)
+        int splitCount = perfectRecallExpander.getActions(state).stream().filter(a -> getProbability(meanStrategy, a, actions) > 1e-8 || bestResponse.getOrDefault(a, 0d) > 1 - 1e-8)
                 .mapToInt(a -> updateISStructure(state.performAction(a), bestResponse, opponentStrategy, opponent, toSplit, bestResponse.getOrDefault(a, 0d), pAvg * getProbability(meanStrategy, a, actions))).sum();
         Set<GameState> isStates = is.getAllStates();
 
