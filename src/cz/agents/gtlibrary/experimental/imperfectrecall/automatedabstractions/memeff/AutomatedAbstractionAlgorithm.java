@@ -18,7 +18,7 @@ import java.util.Map;
 public abstract class AutomatedAbstractionAlgorithm {
 
     protected final GameState rootState;
-    protected final Expander<? extends InformationSet> expander;
+    protected final Expander<? extends InformationSet> perfectRecallExpander;
     protected final GameInfo gameInfo;
     protected final Map<ISKey, IRCFRInformationSet> currentAbstractionInformationSets;
     protected final InformationSetKeyMap currentAbstractionISKeys;
@@ -29,9 +29,9 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected ThreadMXBean threadBean;
     long startTime;
 
-    public AutomatedAbstractionAlgorithm(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info) {
+    public AutomatedAbstractionAlgorithm(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info) {
         this.rootState = rootState;
-        this.expander = expander;
+        this.perfectRecallExpander = perfectRecallExpander;
         this.gameInfo = info;
         currentAbstractionInformationSets = new HashMap<>();
         currentAbstractionISKeys = new InformationSetKeyMap();
@@ -54,12 +54,12 @@ public abstract class AutomatedAbstractionAlgorithm {
         IRCFRInformationSet set = currentAbstractionInformationSets.computeIfAbsent(key, k -> new IRCFRInformationSet(state, key));
 
         set.addStateToIS(state);//is it really necessary to store the states here? maybe one for expander is enough
-        expander.getActions(state).stream().map(a -> state.performAction(a)).forEach(s -> buildInformationSets(s));
+        perfectRecallExpander.getActions(state).stream().map(a -> state.performAction(a)).forEach(s -> buildInformationSets(s));
     }
 
 
     protected void addData(Collection<IRCFRInformationSet> informationSets) {
-        informationSets.forEach(i -> i.setData(new CFRBRData(this.expander.getActions(i.getAllStates().stream().findAny().get()).size())));
+        informationSets.forEach(i -> i.setData(new CFRBRData(this.perfectRecallExpander.getActions(i.getAllStates().stream().findAny().get()).size())));
     }
 
     public void runIterations(int iterations) {
@@ -85,7 +85,7 @@ public abstract class AutomatedAbstractionAlgorithm {
     }
 
     protected ImperfectRecallISKey getAbstractionISKey(GameState state) {
-        return currentAbstractionISKeys.get(state, expander);
+        return currentAbstractionISKeys.get(state, perfectRecallExpander);
     }
 
     protected ImperfectRecallISKey createCounterISKey(Player player) {
