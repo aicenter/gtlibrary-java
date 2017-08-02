@@ -76,9 +76,11 @@ public class IRCFRData extends OOSAlgorithmData {
                 r[j] += regretUpdate[j] * weight;
             }
         }
-        regretUpdates = new ArrayList<>();
         updated = false;
         updateMeanStrategy(getRMStrategy(), opponentProbs.stream().collect(Collectors.summingDouble(d -> d)));
+        regretUpdates = new ArrayList<>();
+        expPlayerProbs = new ArrayList<>();
+        opponentProbs = new ArrayList<>();
         return oldUpdated;
     }
 
