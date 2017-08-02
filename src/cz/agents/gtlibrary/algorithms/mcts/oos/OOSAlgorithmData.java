@@ -149,5 +149,11 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     public int getActionCount() {
         return actionCount;
     }
+
+    public void setFrom(OOSAlgorithmData other) {
+        System.arraycopy(other.getMp(), 0, mp, 0, other.getMp().length);
+        System.arraycopy(other.getRegrets(), 0, r, 0, other.getRegrets().length);
+        nbSamples = other.getNbSamples();
+    }
 }
 
