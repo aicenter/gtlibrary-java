@@ -106,40 +106,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         System.out.println("Reachable abstracted IS count: " + getReachableAbstractedISCountFromOriginalGame(p0Strategy, p1Strategy));
     }
 
-    protected long getReachableISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
-        return currentAbstractionInformationSets.values().stream().flatMap(i -> i.getAllStates().stream().filter(s ->
-                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
-                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8)
-                .map(s -> s.getISKeyForPlayerToMove()).distinct()).count();
-    }
-
-    protected long getReachableAbstractedISCount(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
-        return currentAbstractionInformationSets.values().stream().filter(i ->
-                i.getAllStates().stream().anyMatch(s ->
-                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
-                                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8) &&
-                        i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1
-        ).count();
-    }
-
-    protected long getReachableAbstractedISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
-        return currentAbstractionInformationSets.values().stream().filter(i ->
-                i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1
-        ).flatMap(i -> i.getAllStates().stream().filter(s ->
-                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
-                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8)
-                .map(s -> s.getISKeyForPlayerToMove()).distinct()).count();
-    }
-
-
-    protected long getReachableISCount(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
-        return currentAbstractionInformationSets.values().stream().filter(i ->
-                i.getAllStates().stream().anyMatch(s ->
-                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
-                                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8)
-        ).count();
-    }
-
     @Override
     protected void iteration(Player opponent) {
         Map<ISKey, double[]> strategy = getBehavioralStrategyFor(opponent);

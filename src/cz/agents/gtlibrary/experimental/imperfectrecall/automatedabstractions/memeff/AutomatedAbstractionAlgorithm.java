@@ -3,9 +3,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.domain.randomabstraction.IDObservation;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.CFRBRData;
-import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
-import cz.agents.gtlibrary.iinodes.Observations;
+import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.lang.management.ManagementFactory;
@@ -38,6 +36,7 @@ public abstract class AutomatedAbstractionAlgorithm {
         memoryBean = ManagementFactory.getMemoryMXBean();
         threadBean = ManagementFactory.getThreadMXBean();
         buildInitialAbstraction();
+//        buildCompleteGame();
     }
 
     protected void buildInitialAbstraction() {
@@ -47,14 +46,42 @@ public abstract class AutomatedAbstractionAlgorithm {
         System.out.println("Init abstr P2 IS: " + currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() == 1).count());
     }
 
+    protected void buildCompleteGame() {
+        buildCompleteGameInformationSets(rootState);
+        addData(currentAbstractionInformationSets.values());
+        System.out.println("Init abstr P1 IS: " + currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() == 0).count());
+        System.out.println("Init abstr P2 IS: " + currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() == 1).count());
+    }
+
+
     protected void buildInformationSets(GameState state) {
         if (state.isGameEnd())
             return;
         ImperfectRecallISKey key = getAbstractionISKey(state);
         IRCFRInformationSet set = currentAbstractionInformationSets.computeIfAbsent(key, k -> new IRCFRInformationSet(state, key));
 
-        set.addStateToIS(state);//is it really necessary to store the states here? maybe one for expander is enough
+        set.addStateToIS(state);
         perfectRecallExpander.getActions(state).stream().map(a -> state.performAction(a)).forEach(s -> buildInformationSets(s));
+    }
+
+    protected void buildCompleteGameInformationSets(GameState state) {
+        if (state.isGameEnd())
+            return;
+        ImperfectRecallISKey key = getPerfectKey(state);
+        IRCFRInformationSet set = currentAbstractionInformationSets.computeIfAbsent(key, k -> new IRCFRInformationSet(state, key));
+
+        set.addStateToIS(state);
+        perfectRecallExpander.getActions(state).stream().map(a -> state.performAction(a)).forEach(s -> buildCompleteGameInformationSets(s));
+    }
+
+    protected ImperfectRecallISKey getPerfectKey(GameState state) {
+        Observations observations = new Observations(state.getPlayerToMove(), state.getPlayerToMove());
+
+        observations.add(new PerfectRecallObservation((PerfectRecallISKey) state.getISKeyForPlayerToMove()));
+        ImperfectRecallISKey perfectKey = new ImperfectRecallISKey(observations, null, null);
+
+        currentAbstractionISKeys.put((PerfectRecallISKey) state.getISKeyForPlayerToMove(), perfectKey);
+        return perfectKey;
     }
 
 
@@ -105,6 +132,22 @@ public abstract class AutomatedAbstractionAlgorithm {
         System.out.println("Current memory: " + memoryBean.getHeapMemoryUsage().getUsed());
         System.out.println("Max memory: " + memoryBean.getHeapMemoryUsage().getMax());
         System.out.println(memoryBean.getHeapMemoryUsage().toString());
+    }
+
+    protected long getReachableAbstractedISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
+        return currentAbstractionInformationSets.values().stream().filter(i ->
+                i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1
+        ).flatMap(i -> i.getAllStates().stream().filter(s ->
+                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
+                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8)
+                .map(s -> s.getISKeyForPlayerToMove()).distinct()).count();
+    }
+
+    protected long getReachableISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
+        return currentAbstractionInformationSets.values().stream().flatMap(i -> i.getAllStates().stream().filter(s ->
+                AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
+                        AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8)
+                .map(s -> s.getISKeyForPlayerToMove()).distinct()).count();
     }
 
     protected abstract void iteration(Player player);
