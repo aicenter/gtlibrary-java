@@ -31,8 +31,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
 //        runKuhnPoker();
-        runGenericPoker();
-//        runRandomGame();
+//        runGenericPoker();
+        runRandomGame();
     }
 
     public static void runGenericPoker() {
@@ -83,6 +83,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         Map<ISKey, double[]> p0Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[0]);
         Map<ISKey, double[]> p1Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[1]);
 
+        assert validStrategy(p0Strategy);
+        assert validStrategy(p1Strategy);
         removeSmallValues(p0Strategy);
         removeSmallValues(p1Strategy);
 
@@ -93,6 +95,10 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         }
         System.out.println("Reachable IS count: " + getReachableISCountFromOriginalGame(p0Strategy, p1Strategy));
         System.out.println("Reachable abstracted IS count: " + getReachableAbstractedISCountFromOriginalGame(p0Strategy, p1Strategy));
+    }
+
+    private boolean validStrategy(Map<ISKey, double[]> strategy) {
+        return strategy.values().stream().allMatch(array -> Math.abs(Arrays.stream(array).sum() - 1) < 1e-8);
     }
 
     private void removeSmallValues(Map<ISKey, double[]> strategy) {
@@ -191,7 +197,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             return 0;
         if (node.isGameEnd())
             return node.getUtilities()[expPlayer.getId()];
-        MCTSInformationSet informationSet = perfectRecallConfig.getAllInformationSets().get(node.getSequenceForPlayerToMove());
+        MCTSInformationSet informationSet = perfectRecallConfig.getAllInformationSets().get(node.getISKeyForPlayerToMove());
 
         if (informationSet == null) {
             informationSet = perfectRecallConfig.createInformationSetFor(node);
