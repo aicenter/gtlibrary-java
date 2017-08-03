@@ -5,16 +5,24 @@ import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class IRCFR extends AutomatedAbstractionAlgorithm {
     private final MCTSConfig perfectRecallConfig;
@@ -22,12 +30,39 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     private final FPIRABestResponse p1BR;
 
     public static void main(String[] args) {
+//        runKuhnPoker();
+        runGenericPoker();
+//        runRandomGame();
+    }
+
+    public static void runGenericPoker() {
+        GameState root = new GenericPokerGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(config);
+        IRCFR alg = new IRCFR(root, expander, new GPGameInfo(), config);
+
+        alg.runIterations(100000);
+    }
+
+    public static void runRandomGame() {
+        GameState root = new RandomGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new RandomGameExpander<>(config);
+        IRCFR alg = new IRCFR(root, expander, new RandomGameInfo(), config);
+
+        alg.runIterations(100000);
+        GambitEFG gambit = new GambitEFG();
+
+        gambit.buildAndWrite("rgIRCFR.gbt", root, expander);
+    }
+
+    private static void runKuhnPoker() {
         GameState root = new KuhnPokerGameState();
         MCTSConfig config = new MCTSConfig();
         Expander<MCTSInformationSet> expander = new KuhnPokerExpander<>(config);
         IRCFR alg = new IRCFR(root, expander, new KPGameInfo(), config);
 
-        alg.runIterations(10000);
+        alg.runIterations(100000);
     }
 
     public IRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig) {
@@ -48,11 +83,32 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         Map<ISKey, double[]> p0Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[0]);
         Map<ISKey, double[]> p1Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[1]);
 
+        removeSmallValues(p0Strategy);
+        removeSmallValues(p1Strategy);
+
 //        p0Strategy.forEach((k, v) -> System.out.print(k+ ": " + Arrays.toString(v)));
-        System.out.println("p0BR: " + p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy));
-        System.out.println("p1BR: " + -p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy));
+        if (iteration > 1) {
+            System.out.println("p0BR: " + p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy));
+            System.out.println("p1BR: " + -p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy));
+        }
         System.out.println("Reachable IS count: " + getReachableISCountFromOriginalGame(p0Strategy, p1Strategy));
         System.out.println("Reachable abstracted IS count: " + getReachableAbstractedISCountFromOriginalGame(p0Strategy, p1Strategy));
+    }
+
+    private void removeSmallValues(Map<ISKey, double[]> strategy) {
+        strategy.values().forEach(array -> {
+            IntStream.range(0, array.length).forEach(i -> {
+                if (array[i] < 1e-2)
+                    array[i] = 0;
+                normalize(array);
+            });
+        });
+    }
+
+    private void normalize(double[] array) {
+        double sum = Arrays.stream(array).sum();
+
+        IntStream.range(0, array.length).forEach(i -> array[i] /= sum);
     }
 
     protected Map<ISKey, double[]> getBehavioralStrategyFor(Player player) {
@@ -78,17 +134,17 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         regretDifferences.forEach((irISKey, splitMap) -> {
             IRCFRInformationSet setToSplit = currentAbstractionInformationSets.get(irISKey);
             Set<GameState> isStates = setToSplit.getAllStates();
+
             splitMap.forEach((prISKey, data) -> {
                 Set<GameState> toRemove = isStates.stream().filter(isState -> isState.getISKeyForPlayerToMove().equals(prISKey)).collect(Collectors.toSet());
-                if (!toRemove.isEmpty()) {
 
+                if (!toRemove.isEmpty()) {
                     if (toRemove.size() < isStates.size()) {
                         isStates.removeAll(toRemove);
                         createNewIS(toRemove, data);
                     }
                 }
             });
-
         });
     }
 

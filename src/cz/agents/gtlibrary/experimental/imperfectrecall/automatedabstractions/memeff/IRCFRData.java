@@ -13,7 +13,7 @@ public class IRCFRData extends OOSAlgorithmData {
 
     protected List<double[]> regretUpdates;
     protected List<Double> expPlayerProbs;
-    private List<Double> opponentProbs;
+    protected List<Double> opponentProbs;
     protected boolean updated;
 
     public IRCFRData(int actionCount) {
@@ -65,9 +65,9 @@ public class IRCFRData extends OOSAlgorithmData {
     }
 
     public boolean applyUpdate() {
-        boolean oldUpdated = updated;
-
-        normalize(expPlayerProbs);
+        if(!updated)
+            return false;
+        expPlayerProbs = normalize(expPlayerProbs);
         for (int i = 0; i < regretUpdates.size(); i++) {
             double[] regretUpdate = regretUpdates.get(i);
             double weight = expPlayerProbs.get(i);
@@ -81,12 +81,14 @@ public class IRCFRData extends OOSAlgorithmData {
         regretUpdates = new ArrayList<>();
         expPlayerProbs = new ArrayList<>();
         opponentProbs = new ArrayList<>();
-        return oldUpdated;
+        return true;
     }
 
     private List<Double> normalize(List<Double> expPlayerProbs) {
         double sum = expPlayerProbs.stream().collect(Collectors.summingDouble(d -> d));
 
+        if(sum == 0)
+            return expPlayerProbs.stream().mapToDouble(d -> 1. / expPlayerProbs.size()).boxed().collect(Collectors.toList());
         return expPlayerProbs.stream().mapToDouble(d -> d / sum).boxed().collect(Collectors.toList());
     }
 
@@ -94,7 +96,9 @@ public class IRCFRData extends OOSAlgorithmData {
         double[] meanStrategy = getMp();
         double sum = Arrays.stream(meanStrategy).sum();
 
-        return IntStream.range(0, meanStrategy.length).mapToDouble(i -> meanStrategy[i]/sum).toArray();
+        return IntStream.range(0, meanStrategy.length).mapToDouble(i ->
+                sum == 0 ? (1. / meanStrategy.length) : (meanStrategy[i] / sum)
+        ).toArray();
     }
 
 }

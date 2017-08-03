@@ -35,8 +35,8 @@ public abstract class AutomatedAbstractionAlgorithm {
         currentAbstractionISKeys = new InformationSetKeyMap();
         memoryBean = ManagementFactory.getMemoryMXBean();
         threadBean = ManagementFactory.getThreadMXBean();
-        buildInitialAbstraction();
-//        buildCompleteGame();
+//        buildInitialAbstraction();
+        buildCompleteGame();
     }
 
     protected void buildInitialAbstraction() {
@@ -97,7 +97,7 @@ public abstract class AutomatedAbstractionAlgorithm {
             iteration(rootState.getAllPlayers()[0]);
             if (isConverged(gameInfo.getMaxUtility() * 1e-3))
                 return;
-            if (i % 20 == 0 || iteration == 1)
+            if (this.iteration % 20 == 0 || iteration == 1)
                 printStatistics();
         }
     }
@@ -127,7 +127,8 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected void printStatistics() {
         System.out.println("*************************************************");
         System.out.println("Iteration: " + iteration);
-        System.out.println("Current IS count: " + currentAbstractionInformationSets.size());
+        System.out.println("Current IS count: " + currentAbstractionInformationSets.values().stream()
+                .filter(i -> i.getPlayer().getId() != 2).count());
         System.out.println("Current time: " + (threadBean.getCurrentThreadCpuTime() - startTime) / 1e6);
         System.out.println("Current memory: " + memoryBean.getHeapMemoryUsage().getUsed());
         System.out.println("Max memory: " + memoryBean.getHeapMemoryUsage().getMax());
@@ -135,7 +136,7 @@ public abstract class AutomatedAbstractionAlgorithm {
     }
 
     protected long getReachableAbstractedISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
-        return currentAbstractionInformationSets.values().stream().filter(i ->
+        return currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i ->
                 i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1
         ).flatMap(i -> i.getAllStates().stream().filter(s ->
                 AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
@@ -144,7 +145,7 @@ public abstract class AutomatedAbstractionAlgorithm {
     }
 
     protected long getReachableISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
-        return currentAbstractionInformationSets.values().stream().flatMap(i -> i.getAllStates().stream().filter(s ->
+        return currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() != 2).flatMap(i -> i.getAllStates().stream().filter(s ->
                 AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[0]), p0Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8 &&
                         AbstractedStrategyUtils.getProbability(s.getSequenceFor(gameInfo.getAllPlayers()[1]), p1Strategy, currentAbstractionISKeys, perfectRecallExpander) > 1e-8)
                 .map(s -> s.getISKeyForPlayerToMove()).distinct()).count();
