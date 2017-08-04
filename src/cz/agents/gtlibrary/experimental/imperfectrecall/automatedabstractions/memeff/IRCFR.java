@@ -122,8 +122,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             IntStream.range(0, array.length).forEach(i -> {
                 if (array[i] < 1e-4)
                     array[i] = 0;
-                normalize(array);
             });
+            normalize(array);
         });
     }
 
@@ -209,7 +209,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             isKeys.forEach(k -> {
                 OOSAlgorithmData algorithmData = (OOSAlgorithmData) perfectRecallConfig.getAllInformationSets().get(k).getAlgorithmData();
 
-                if (!Arrays.equals(abstractionRegrets, algorithmData.getRegrets())) {
+                if (!IntStream.range(0, abstractionRegrets.length).allMatch(j -> Math.abs(abstractionRegrets[j] - algorithmData.getRegrets()[j]) < 1e-6)) {
                     Map<PerfectRecallISKey, OOSAlgorithmData> dataMap = toSplit.computeIfAbsent((ImperfectRecallISKey) i.getISKey(), key -> new HashMap<>());
 
                     dataMap.put((PerfectRecallISKey) k, algorithmData);
