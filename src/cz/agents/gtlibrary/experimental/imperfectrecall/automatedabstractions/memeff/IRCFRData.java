@@ -70,7 +70,7 @@ public class IRCFRData extends OOSAlgorithmData {
         expPlayerProbs = normalize(expPlayerProbs);
         for (int i = 0; i < regretUpdates.size(); i++) {
             double[] regretUpdate = regretUpdates.get(i);
-            double weight = expPlayerProbs.get(i);
+            double weight = 1;//expPlayerProbs.get(i);
 
             for (int j = 0; j < regretUpdate.length; j++) {
                 r[j] += regretUpdate[j] * weight;

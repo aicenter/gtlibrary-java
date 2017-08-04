@@ -15,6 +15,8 @@ import java.util.Map;
 
 public abstract class AutomatedAbstractionAlgorithm {
 
+    public static boolean USE_ABSTRACTION = false;
+
     protected final GameState rootState;
     protected final Expander<? extends InformationSet> perfectRecallExpander;
     protected final GameInfo gameInfo;
@@ -35,8 +37,10 @@ public abstract class AutomatedAbstractionAlgorithm {
         currentAbstractionISKeys = new InformationSetKeyMap();
         memoryBean = ManagementFactory.getMemoryMXBean();
         threadBean = ManagementFactory.getThreadMXBean();
-//        buildInitialAbstraction();
-        buildCompleteGame();
+        if (USE_ABSTRACTION)
+            buildInitialAbstraction();
+        else
+            buildCompleteGame();
     }
 
     protected void buildInitialAbstraction() {

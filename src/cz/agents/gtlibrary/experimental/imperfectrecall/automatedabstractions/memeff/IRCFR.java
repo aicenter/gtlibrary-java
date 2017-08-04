@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
 
+import cz.agents.gtlibrary.algorithms.cfr.ir.FixedForIterationData;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
@@ -31,8 +32,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
 //        runKuhnPoker();
-//        runGenericPoker();
-        runRandomGame();
+        runGenericPoker();
+//        runRandomGame();
     }
 
     public static void runGenericPoker() {
@@ -128,12 +129,27 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
     @Override
     protected void iteration(Player player) {
+        replacePerfectRecallDataWithImperfectRecall();
         perfectRecallIteration(rootState, 1, 1, player);
+        updatePerfectRecallData();
         imperfectRecallIteration(rootState, 1, 1, player);
         updateImperfectRecallData();
         Map<ImperfectRecallISKey, Map<PerfectRecallISKey, OOSAlgorithmData>> regretDifferences = getRegretDifferences();
 
         updateAbstraction(regretDifferences);
+    }
+
+    private void replacePerfectRecallDataWithImperfectRecall() {
+        perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2)
+                .forEach(i ->
+                        ((OOSAlgorithmData)i.getAlgorithmData())
+                                .setFrom(getAbstractedInformationSet(i.getAllStates().stream().findAny().get()).getData())
+                );
+    }
+
+    private void updatePerfectRecallData() {
+        perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2)
+                .forEach(i -> ((FixedForIterationData)i.getAlgorithmData()).applyUpdate());
     }
 
     private void updateAbstraction(Map<ImperfectRecallISKey, Map<PerfectRecallISKey, OOSAlgorithmData>> regretDifferences) {
@@ -207,7 +223,6 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         if (!informationSet.getAllStates().contains(node)) {
             perfectRecallConfig.addInformationSetFor(node, informationSet);
         }
-
         OOSAlgorithmData data = (OOSAlgorithmData) informationSet.getAlgorithmData();
         List<Action> actions = data.getActions();
 
@@ -215,7 +230,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             double expectedValue = 0;
 
             for (Action ai : actions) {
-                ai.setInformationSet(informationSet);
+//                ai.setInformationSet(informationSet);
 
                 final double p = node.getProbabilityOfNatureFor(ai);
                 double new_p1 = expPlayer.getId() == 1 ? pi1 * p : pi1;
@@ -226,16 +241,14 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             }
             return expectedValue;
         }
-        data.setFrom(getAbstractedInformationSet(node).getData());
-
         double[] currentStrategy = getStrategy(data);
         double[] expectedValuesForActions = new double[currentStrategy.length];
         double expectedValue = 0;
-
         int i = -1;
+
         for (Action ai : actions) {
             i++;
-            ai.setInformationSet(informationSet);
+//            ai.setInformationSet(informationSet);
             GameState newState = node.performAction(ai);
 
             if (informationSet.getPlayer().getId() == 0) {
@@ -276,8 +289,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         double[] currentStrategy = getStrategy(data);
         double[] expectedValuesForActions = new double[currentStrategy.length];
         double expectedValue = 0;
-
         int i = -1;
+
         for (Action ai : actions) {
             i++;
             GameState newState = node.performAction(ai);
@@ -300,11 +313,6 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
     protected void updateForPerfectRecall(double pi1, double pi2, Player expPlayer, OOSAlgorithmData data,
                                           double[] currentStrategy, double[] expectedValuesForActions, double expectedValue) {
-        double[] expPlayerVals = new double[expectedValuesForActions.length];
-
-        for (int i = 0; i < expectedValuesForActions.length; i++) {
-            expPlayerVals[i] = expectedValuesForActions[i];
-        }
         data.updateAllRegrets(expectedValuesForActions, expectedValue, (expPlayer.getId() == 0 ? pi2 : pi1)/*pi1*pi2*/);
         data.updateMeanStrategy(currentStrategy, (expPlayer.getId() == 0 ? pi1 : pi2)/*pi1*pi2*/);
     }
@@ -320,7 +328,14 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     }
 
     protected AlgorithmData createPerfectRecallAlgData(GameState node) {
-        return new OOSAlgorithmData(perfectRecallExpander.getActions(node));
+        FixedForIterationData prData = new FixedForIterationData(perfectRecallExpander.getActions(node));
+
+        if(!node.isPlayerToMoveNature()) {
+            OOSAlgorithmData data = getAbstractedInformationSet(node).getData();
+
+            prData.setFrom(data);
+        }
+        return prData;
     }
 
     protected void addData(Collection<IRCFRInformationSet> informationSets) {
