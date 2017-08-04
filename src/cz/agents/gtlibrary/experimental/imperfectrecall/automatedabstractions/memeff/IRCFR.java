@@ -31,8 +31,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     private final FPIRABestResponse p1BR;
 
     public static void main(String[] args) {
-//        runKuhnPoker();
-        runGenericPoker();
+        runKuhnPoker();
+//        runGenericPoker();
 //        runRandomGame();
     }
 
@@ -303,7 +303,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             expectedValue += currentStrategy[i] * expectedValuesForActions[i];
         }
         if (informationSet.getPlayer().equals(expPlayer))
-            updateForImperfectRecall(pi1, pi2, expPlayer, data, expectedValuesForActions, expectedValue);
+            updateForImperfectRecall(node, pi1, pi2, expPlayer, data, expectedValuesForActions, expectedValue);
         return expectedValue;
     }
 
@@ -317,14 +317,14 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         data.updateMeanStrategy(currentStrategy, (expPlayer.getId() == 0 ? pi1 : pi2)/*pi1*pi2*/);
     }
 
-    protected void updateForImperfectRecall(double pi1, double pi2, Player expPlayer, OOSAlgorithmData data,
+    protected void updateForImperfectRecall(GameState state, double pi1, double pi2, Player expPlayer, OOSAlgorithmData data,
                                             double[] expectedValuesForActions, double expectedValue) {
         double[] expPlayerVals = new double[expectedValuesForActions.length];
 
         for (int i = 0; i < expectedValuesForActions.length; i++) {
             expPlayerVals[i] = expectedValuesForActions[i];
         }
-        ((IRCFRData) data).updateAllRegrets(expectedValuesForActions, expectedValue, (expPlayer.getId() == 0 ? pi2 : pi1), (expPlayer.getId() == 0 ? pi1 : pi2));
+        ((IRCFRData) data).updateAllRegrets(expectedValuesForActions, expectedValue, (expPlayer.getId() == 0 ? pi2 : pi1), state, (expPlayer.getId() == 0 ? pi1 : pi2));
     }
 
     protected AlgorithmData createPerfectRecallAlgData(GameState node) {

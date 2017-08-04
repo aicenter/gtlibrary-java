@@ -2,25 +2,25 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Sequence;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class IRCFRData extends OOSAlgorithmData {
 
-    protected List<double[]> regretUpdates;
-    protected List<Double> expPlayerProbs;
-    protected List<Double> opponentProbs;
+    protected Map<GameState, double[]> regretUpdates;
+    protected Map<Sequence, Double> expPlayerProbs;
+    protected Map<GameState, Double> opponentProbs;
     protected boolean updated;
 
     public IRCFRData(int actionCount) {
         super(actionCount);
-        regretUpdates = new ArrayList<>();
-        expPlayerProbs = new ArrayList<>();
-        opponentProbs = new ArrayList<>();
+        regretUpdates = new HashMap<>();
+        expPlayerProbs = new HashMap<>();
+        opponentProbs = new HashMap<>();
         updated = false;
     }
 
@@ -38,7 +38,7 @@ public class IRCFRData extends OOSAlgorithmData {
         throw new UnsupportedOperationException("Wrong method used");
     }
 
-    public void updateRegret(int actionIndex, double W, double c, double x, double expPlayerProb) {
+    public void updateRegret(int actionIndex, double W, double c, double x, GameState state, double expPlayerProb) {
         double[] regretUpdate = new double[getActionCount()];
 
         for (int i = 0; i < getActionCount(); i++) {
@@ -47,49 +47,49 @@ public class IRCFRData extends OOSAlgorithmData {
             else
                 regretUpdate[i] += -x * W;
         }
-        regretUpdates.add(regretUpdate);
-        expPlayerProbs.add(expPlayerProb);
+        regretUpdates.put(state, regretUpdate);
+        expPlayerProbs.put(state.getSequenceForPlayerToMove(), expPlayerProb);
         updated = true;
     }
 
-    public void updateAllRegrets(double[] Vs, double meanV, double opponentProb, double expPlayerProb) {
+    public void updateAllRegrets(double[] Vs, double meanV, double opponentProb, GameState state, double expPlayerProb) {
         double[] regretUpdate = new double[getActionCount()];
 
         for (int i = 0; i < getActionCount(); i++) {
             regretUpdate[i] += opponentProb * (Vs[i] - meanV);
         }
-        regretUpdates.add(regretUpdate);
-        expPlayerProbs.add(expPlayerProb);
-        opponentProbs.add(opponentProb);
+        regretUpdates.put(state, regretUpdate);
+        expPlayerProbs.put(state.getSequenceForPlayerToMove(), expPlayerProb);
+        opponentProbs.put(state, opponentProb);
         updated = true;
     }
 
     public boolean applyUpdate() {
         if(!updated)
             return false;
-        expPlayerProbs = normalize(expPlayerProbs);
-        for (int i = 0; i < regretUpdates.size(); i++) {
-            double[] regretUpdate = regretUpdates.get(i);
-            double weight = 1;//expPlayerProbs.get(i);
+        Map<Sequence, Double> normalizedExpPlayerProbs = normalize(expPlayerProbs);
+
+        regretUpdates.forEach((state, regretUpdate) -> {
+            double weight = normalizedExpPlayerProbs.get(state.getSequenceForPlayerToMove());
 
             for (int j = 0; j < regretUpdate.length; j++) {
                 r[j] += regretUpdate[j] * weight;
             }
-        }
+        });
         updated = false;
-        updateMeanStrategy(getRMStrategy(), opponentProbs.stream().collect(Collectors.summingDouble(d -> d)));
-        regretUpdates = new ArrayList<>();
-        expPlayerProbs = new ArrayList<>();
-        opponentProbs = new ArrayList<>();
+        updateMeanStrategy(getRMStrategy(), expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
+        regretUpdates = new HashMap<>();
+        expPlayerProbs = new HashMap<>();
+        opponentProbs = new HashMap<>();
         return true;
     }
 
-    private List<Double> normalize(List<Double> expPlayerProbs) {
-        double sum = expPlayerProbs.stream().collect(Collectors.summingDouble(d -> d));
+    private Map<Sequence, Double> normalize(Map<Sequence, Double> expPlayerProbs) {
+        double sum = expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d));
 
         if(sum == 0)
-            return expPlayerProbs.stream().mapToDouble(d -> 1. / expPlayerProbs.size()).boxed().collect(Collectors.toList());
-        return expPlayerProbs.stream().mapToDouble(d -> d / sum).boxed().collect(Collectors.toList());
+            return expPlayerProbs.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> 1./expPlayerProbs.size()));
+        return expPlayerProbs.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()/sum));
     }
 
     public double[] getNormalizedMeanStrategy() {
