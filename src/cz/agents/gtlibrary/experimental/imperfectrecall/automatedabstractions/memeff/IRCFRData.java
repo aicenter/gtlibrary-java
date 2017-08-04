@@ -22,6 +22,7 @@ public class IRCFRData extends OOSAlgorithmData {
         expPlayerProbs = new HashMap<>();
         opponentProbs = new HashMap<>();
         updated = false;
+        r[0] = 1;
     }
 
     public IRCFRData(List<Action> actions) {
@@ -30,6 +31,7 @@ public class IRCFRData extends OOSAlgorithmData {
         expPlayerProbs = new HashMap<>();
         opponentProbs = new HashMap<>();
         updated = false;
+        r[0] = 1;
     }
 
     public IRCFRData(OOSAlgorithmData data) {
