@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
 
-import cz.agents.gtlibrary.algorithms.cfr.ir.FixedForIterationData;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
@@ -105,7 +104,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     private void removeSmallValues(Map<ISKey, double[]> strategy) {
         strategy.values().forEach(array -> {
             IntStream.range(0, array.length).forEach(i -> {
-                if (array[i] < 1e-2)
+                if (array[i] < 1e-4)
                     array[i] = 0;
                 normalize(array);
             });
@@ -149,7 +148,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
     private void updatePerfectRecallData() {
         perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2)
-                .forEach(i -> ((FixedForIterationData)i.getAlgorithmData()).applyUpdate());
+                .forEach(i -> ((IRCFRData)i.getAlgorithmData()).applyUpdate());
     }
 
     private void updateAbstraction(Map<ImperfectRecallISKey, Map<PerfectRecallISKey, OOSAlgorithmData>> regretDifferences) {
@@ -230,8 +229,6 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             double expectedValue = 0;
 
             for (Action ai : actions) {
-//                ai.setInformationSet(informationSet);
-
                 final double p = node.getProbabilityOfNatureFor(ai);
                 double new_p1 = expPlayer.getId() == 1 ? pi1 * p : pi1;
                 double new_p2 = expPlayer.getId() == 0 ? pi2 * p : pi2;
@@ -248,7 +245,6 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
         for (Action ai : actions) {
             i++;
-//            ai.setInformationSet(informationSet);
             GameState newState = node.performAction(ai);
 
             if (informationSet.getPlayer().getId() == 0) {
@@ -259,7 +255,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             expectedValue += currentStrategy[i] * expectedValuesForActions[i];
         }
         if (informationSet.getPlayer().equals(expPlayer))
-            updateForPerfectRecall(pi1, pi2, expPlayer, data, currentStrategy, expectedValuesForActions, expectedValue);
+            updateData(node, pi1, pi2, expPlayer, data, expectedValuesForActions, expectedValue);
         return expectedValue;
     }
 
@@ -303,7 +299,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             expectedValue += currentStrategy[i] * expectedValuesForActions[i];
         }
         if (informationSet.getPlayer().equals(expPlayer))
-            updateForImperfectRecall(node, pi1, pi2, expPlayer, data, expectedValuesForActions, expectedValue);
+            updateData(node, pi1, pi2, expPlayer, data, expectedValuesForActions, expectedValue);
         return expectedValue;
     }
 
@@ -311,24 +307,13 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         return currentAbstractionInformationSets.get(currentAbstractionISKeys.get((PerfectRecallISKey) node.getISKeyForPlayerToMove(), perfectRecallExpander.getActions(node)));
     }
 
-    protected void updateForPerfectRecall(double pi1, double pi2, Player expPlayer, OOSAlgorithmData data,
-                                          double[] currentStrategy, double[] expectedValuesForActions, double expectedValue) {
-        data.updateAllRegrets(expectedValuesForActions, expectedValue, (expPlayer.getId() == 0 ? pi2 : pi1)/*pi1*pi2*/);
-        data.updateMeanStrategy(currentStrategy, (expPlayer.getId() == 0 ? pi1 : pi2)/*pi1*pi2*/);
-    }
-
-    protected void updateForImperfectRecall(GameState state, double pi1, double pi2, Player expPlayer, OOSAlgorithmData data,
-                                            double[] expectedValuesForActions, double expectedValue) {
-        double[] expPlayerVals = new double[expectedValuesForActions.length];
-
-        for (int i = 0; i < expectedValuesForActions.length; i++) {
-            expPlayerVals[i] = expectedValuesForActions[i];
-        }
+     protected void updateData(GameState state, double pi1, double pi2, Player expPlayer, OOSAlgorithmData data,
+                               double[] expectedValuesForActions, double expectedValue) {
         ((IRCFRData) data).updateAllRegrets(expectedValuesForActions, expectedValue, (expPlayer.getId() == 0 ? pi2 : pi1), state, (expPlayer.getId() == 0 ? pi1 : pi2));
     }
 
     protected AlgorithmData createPerfectRecallAlgData(GameState node) {
-        FixedForIterationData prData = new FixedForIterationData(perfectRecallExpander.getActions(node));
+        IRCFRData prData = new IRCFRData(perfectRecallExpander.getActions(node));
 
         if(!node.isPlayerToMoveNature()) {
             OOSAlgorithmData data = getAbstractedInformationSet(node).getData();
