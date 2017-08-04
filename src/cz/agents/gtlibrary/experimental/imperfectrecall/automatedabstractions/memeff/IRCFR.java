@@ -30,8 +30,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     private final FPIRABestResponse p1BR;
 
     public static void main(String[] args) {
-        runKuhnPoker();
-//        runGenericPoker();
+//        runKuhnPoker();
+        runGenericPoker();
 //        runRandomGame();
     }
 
@@ -163,6 +163,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
                     if (toRemove.size() < isStates.size()) {
                         isStates.removeAll(toRemove);
                         createNewIS(toRemove, data);
+                    } else {
+                        setToSplit.setData(new IRCFRData(data));
                     }
                 }
             });

@@ -15,7 +15,7 @@ import java.util.Map;
 
 public abstract class AutomatedAbstractionAlgorithm {
 
-    public static boolean USE_ABSTRACTION = false;
+    public static boolean USE_ABSTRACTION = true;
 
     protected final GameState rootState;
     protected final Expander<? extends InformationSet> perfectRecallExpander;
