@@ -25,7 +25,11 @@ public class IRCFRData extends OOSAlgorithmData {
     }
 
     public IRCFRData(List<Action> actions) {
-        this(actions.size());
+        super(actions);
+        regretUpdates = new HashMap<>();
+        expPlayerProbs = new HashMap<>();
+        opponentProbs = new HashMap<>();
+        updated = false;
     }
 
     public IRCFRData(OOSAlgorithmData data) {
@@ -67,6 +71,7 @@ public class IRCFRData extends OOSAlgorithmData {
     public boolean applyUpdate() {
         if(!updated)
             return false;
+        updateMeanStrategy(getRMStrategy(), expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
         Map<Sequence, Double> normalizedExpPlayerProbs = normalize(expPlayerProbs);
 
         regretUpdates.forEach((state, regretUpdate) -> {
@@ -77,7 +82,6 @@ public class IRCFRData extends OOSAlgorithmData {
             }
         });
         updated = false;
-        updateMeanStrategy(getRMStrategy(), expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
         regretUpdates = new HashMap<>();
         expPlayerProbs = new HashMap<>();
         opponentProbs = new HashMap<>();
