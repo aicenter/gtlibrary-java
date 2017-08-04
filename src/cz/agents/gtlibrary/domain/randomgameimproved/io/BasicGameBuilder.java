@@ -37,4 +37,22 @@ public class BasicGameBuilder {
                 System.out.println(algConfig.getAllInformationSets().size());
         }
     }
+
+    public void buildWithoutTerminalIS(GameState rootState, AlgorithmConfig<? extends InformationSet> algConfig, Expander<? extends InformationSet> expander) {
+        ArrayDeque<GameState> queue = new ArrayDeque<>();
+
+        queue.add(rootState);
+
+        while (queue.size() > 0) {
+            GameState currentState = queue.removeLast();
+
+            if (currentState.isGameEnd())
+                continue;
+            algConfig.addInformationSetFor(currentState);
+            queue.addAll(expander.getActions(currentState).stream().map(currentState::performAction).collect(Collectors.toList()));
+
+            if(algConfig.getAllInformationSets().size() % 100000 == 0)
+                System.out.println(algConfig.getAllInformationSets().size());
+        }
+    }
 }
