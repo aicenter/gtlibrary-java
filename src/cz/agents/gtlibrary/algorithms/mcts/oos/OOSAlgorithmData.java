@@ -26,10 +26,12 @@ package cz.agents.gtlibrary.algorithms.mcts.oos;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionAlgorithm;
 import cz.agents.gtlibrary.interfaces.Action;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * @author vilo
@@ -151,8 +153,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     }
 
     public void setFrom(OOSAlgorithmData other) {
-        System.arraycopy(other.getMp(), 0, mp, 0, other.getMp().length);
-        System.arraycopy(other.getRegrets(), 0, r, 0, other.getRegrets().length);
+        assert IntStream.range(0, r.length).allMatch(i -> Math.abs(r[i] - other.r[i]) < 1e-6);
+//        assert AutomatedAbstractionAlgorithm.USE_ABSTRACTION || Arrays.equals(mp, other.mp);
+        System.arraycopy(other.mp, 0, mp, 0, other.mp.length);
+        System.arraycopy(other.r, 0, r, 0, other.r.length);
         nbSamples = other.getNbSamples();
     }
 }
