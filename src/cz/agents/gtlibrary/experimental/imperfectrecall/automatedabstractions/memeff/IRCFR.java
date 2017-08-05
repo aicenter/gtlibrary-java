@@ -30,6 +30,12 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     private final FPIRABestResponse p0BR;
     private final FPIRABestResponse p1BR;
 
+    public enum SPLIT_HEURISTIC {
+        NONE, AVG_VISITED, VISITED, UPDATED
+    }
+
+    public static SPLIT_HEURISTIC heuristic = SPLIT_HEURISTIC.NONE;
+
     public static void main(String[] args) {
 //        runKuhnPoker();
         runGenericPoker();
@@ -109,6 +115,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             System.out.println("p0BR: " + p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy));
             System.out.println("p1BR: " + -p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy));
         }
+        System.out.println("ISs in perfect recall config: " + perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).count());
         System.out.println("Reachable IS count: " + getReachableISCountFromOriginalGame(p0Strategy, p1Strategy));
         System.out.println("Reachable abstracted IS count: " + getReachableAbstractedISCountFromOriginalGame(p0Strategy, p1Strategy));
     }
@@ -147,11 +154,48 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         replacePerfectRecallDataWithImperfectRecall();
         perfectRecallIteration(rootState, 1, 1, player);
         updatePerfectRecallData();
+        setVisitedByAvgStrategy();
         imperfectRecallIteration(rootState, 1, 1, player);
         updateImperfectRecallData();
         Map<ImperfectRecallISKey, Map<PerfectRecallISKey, OOSAlgorithmData>> regretDifferences = getRegretDifferences();
 
         updateAbstraction(regretDifferences);
+        markUnvisited();
+    }
+
+    private void setVisitedByAvgStrategy() {
+        Map<ISKey, double[]> p0Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[0]);
+        Map<ISKey, double[]> p1Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[1]);
+
+        setVisitedByAvgStrategy(rootState, p0Strategy, p1Strategy, 1d);
+    }
+
+    private void setVisitedByAvgStrategy(GameState state, Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy, double prob) {
+        if (state.isGameEnd())
+            return;
+        if (prob < 1e-6)
+            return;
+        if (!state.isPlayerToMoveNature())
+            ((IRCFRData) perfectRecallConfig.getAllInformationSets().get(state.getISKeyForPlayerToMove()).getAlgorithmData()).setVisitedByAvgStrategy(true);
+        perfectRecallExpander.getActions(state).forEach(a ->
+                setVisitedByAvgStrategy(state.performAction(a), p0Strategy, p1Strategy, prob * getProbabilityOf(a, state, p0Strategy, p1Strategy))
+        );
+    }
+
+    private double getProbabilityOf(Action action, GameState state, Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
+        if (state.isPlayerToMoveNature())
+            return 1;
+        if (state.getPlayerToMove().getId() == 0)
+            return AbstractedStrategyUtils.getProbabilityForAction(action, p0Strategy, currentAbstractionISKeys, perfectRecallExpander);
+        return AbstractedStrategyUtils.getProbabilityForAction(action, p1Strategy, currentAbstractionISKeys, perfectRecallExpander);
+    }
+
+    private void markUnvisited() {
+        perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2)
+                .forEach(i -> {
+                    ((IRCFRData) i.getAlgorithmData()).setVisitedInLastIteration(false);
+                    ((IRCFRData) i.getAlgorithmData()).setVisitedByAvgStrategy(false);
+                });
     }
 
     private void replacePerfectRecallDataWithImperfectRecall() {
@@ -207,9 +251,10 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             Set<ISKey> isKeys = i.getAllStates().stream().filter(s -> !s.isPlayerToMoveNature()).map(s -> s.getISKeyForPlayerToMove()).collect(Collectors.toSet());
 
             isKeys.forEach(k -> {
-                OOSAlgorithmData algorithmData = (OOSAlgorithmData) perfectRecallConfig.getAllInformationSets().get(k).getAlgorithmData();
+                IRCFRData algorithmData = (IRCFRData) perfectRecallConfig.getAllInformationSets().get(k).getAlgorithmData();
 
-                if (!IntStream.range(0, abstractionRegrets.length).allMatch(j -> Math.abs(abstractionRegrets[j] - algorithmData.getRegrets()[j]) < 1e-6)) {
+                if ((splitAccordingToHeuristic(algorithmData)) &&
+                        IntStream.range(0, abstractionRegrets.length).anyMatch(j -> Math.abs(abstractionRegrets[j] - algorithmData.getRegrets()[j]) >= 1e-6)) {
                     Map<PerfectRecallISKey, OOSAlgorithmData> dataMap = toSplit.computeIfAbsent((ImperfectRecallISKey) i.getISKey(), key -> new HashMap<>());
 
                     dataMap.put((PerfectRecallISKey) k, algorithmData);
@@ -219,6 +264,17 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         return toSplit;
     }
 
+    private boolean splitAccordingToHeuristic(IRCFRData algorithmData) {
+        if (heuristic == SPLIT_HEURISTIC.AVG_VISITED)
+            return algorithmData.getVisitedByAvgStrategy();
+        if (heuristic == SPLIT_HEURISTIC.UPDATED)
+            return algorithmData.updatedInLastIteration;
+        if (heuristic == SPLIT_HEURISTIC.VISITED)
+            return algorithmData.visitedInLastIteration;
+        else
+            return true;
+    }
+
     private void updateImperfectRecallData() {
         currentAbstractionInformationSets.values().forEach(i -> {
             ((IRCFRData) i.getData()).applyUpdate();
@@ -226,7 +282,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     }
 
     protected double perfectRecallIteration(GameState node, double pi1, double pi2, Player expPlayer) {
-        if (pi1 == 0 && pi2 == 0)
+        if (pi1 <= 1e-6 && pi2 <= 1e-6)
             return 0;
         if (node.isGameEnd())
             return node.getUtilities()[expPlayer.getId()];
@@ -243,6 +299,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         OOSAlgorithmData data = (OOSAlgorithmData) informationSet.getAlgorithmData();
         List<Action> actions = data.getActions();
 
+        if (pi1 > 1e-6 && pi2 > 1e-6)
+            ((IRCFRData) data).setVisitedInLastIteration(true);
         if (node.isPlayerToMoveNature()) {
             double expectedValue = 0;
 
@@ -278,7 +336,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     }
 
     protected double imperfectRecallIteration(GameState node, double pi1, double pi2, Player expPlayer) {
-        if (pi1 == 0 && pi2 == 0)
+        if (pi1 <= 1e-6 && pi2 <= 1e-6)
             return 0;
         if (node.isGameEnd())
             return node.getUtilities()[expPlayer.getId()];

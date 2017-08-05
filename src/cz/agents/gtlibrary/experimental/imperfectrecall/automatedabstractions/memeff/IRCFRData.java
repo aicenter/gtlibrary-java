@@ -15,6 +15,9 @@ public class IRCFRData extends OOSAlgorithmData {
     protected Map<Sequence, Double> expPlayerProbs;
     protected Map<GameState, Double> opponentProbs;
     protected boolean updated;
+    protected boolean updatedInLastIteration;
+    protected boolean visitedInLastIteration;
+    protected boolean visitedByAvgStrategy;
 
     public IRCFRData(int actionCount) {
         super(actionCount);
@@ -71,6 +74,7 @@ public class IRCFRData extends OOSAlgorithmData {
     }
 
     public boolean applyUpdate() {
+        updatedInLastIteration = updated;
         if(!updated)
             return false;
         updateMeanStrategy(getRMStrategy(), expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
@@ -107,4 +111,23 @@ public class IRCFRData extends OOSAlgorithmData {
         ).toArray();
     }
 
+    public boolean isUpdatedInLastIteration() {
+        return updatedInLastIteration;
+    }
+
+    public boolean isVisitedInLastIteration() {
+        return visitedInLastIteration;
+    }
+
+    public void setVisitedInLastIteration(boolean visitedInLastIteration) {
+        this.visitedInLastIteration = visitedInLastIteration;
+    }
+
+    public void setVisitedByAvgStrategy(boolean visitedByAvgStrategy) {
+        this.visitedByAvgStrategy = visitedByAvgStrategy;
+    }
+
+    public boolean getVisitedByAvgStrategy() {
+        return visitedByAvgStrategy;
+    }
 }

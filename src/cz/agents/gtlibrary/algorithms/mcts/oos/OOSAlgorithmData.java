@@ -153,8 +153,8 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     }
 
     public void setFrom(OOSAlgorithmData other) {
-        assert nbSamples == 0 || IntStream.range(0, r.length).allMatch(i -> Math.abs(r[i] - other.r[i]) < 1e-6);
-        assert AutomatedAbstractionAlgorithm.USE_ABSTRACTION || IntStream.range(0, mp.length).allMatch(i -> Math.abs(mp[i] - other.mp[i]) < 1e-6);
+//        assert nbSamples == 0 || IntStream.range(0, r.length).allMatch(i -> Math.abs(r[i] - other.r[i]) < 1e-6);
+//        assert AutomatedAbstractionAlgorithm.USE_ABSTRACTION || IntStream.range(0, mp.length).allMatch(i -> Math.abs(mp[i] - other.mp[i]) < 1e-6);
         System.arraycopy(other.mp, 0, mp, 0, other.mp.length);
         System.arraycopy(other.r, 0, r, 0, other.r.length);
         nbSamples = other.getNbSamples();
