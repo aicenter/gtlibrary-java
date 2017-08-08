@@ -22,6 +22,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform;
 import java.util.*;
 
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
@@ -35,6 +36,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	protected Map<Player, Set<Sequence>> playerSequences = new HashMap<Player, Set<Sequence>>();
 	protected Map<Map<Player, Sequence>, Double> allUtilitiesForSeqComb = new HashMap<Map<Player, Sequence>, Double>();
 
+	//TODO: This method should override addInformationSetFor(GameState)
 	public void addStateToSequenceForm(GameState state) {
 		if (state.isPlayerToMoveNature())
 			return;
@@ -53,7 +55,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 			Sequence s = state.getSequenceFor(p);
 			if (s.size() == 0)
 				continue;
-			I i = getAllInformationSets().get(new Pair<Integer, Sequence>(s.getLast().getInformationSet().hashCode(), s.getLast().getInformationSet().getPlayersHistory()));
+			I i = getAllInformationSets().get(s.getLastInformationSet().getISKey());
 			if (i != null) { // if there is a particular IS in the algConfig for the previous state, we set it to be the IS in the stored sequences
 				Set<GameState> oldStates = s.getLast().getInformationSet().getAllStates();
 				i.addAllStateToIS(oldStates);
@@ -240,19 +242,11 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	}
 
 	public Double getUtilityFor(Sequence sequence1, Sequence sequence2) {
-		Map<Player, Sequence> sequenceMap = new HashMap<Player, Sequence>();
-
-		sequenceMap.put(sequence1.getPlayer(), sequence1);
-		sequenceMap.put(sequence2.getPlayer(), sequence2);
-		return getUtilityFor(sequenceMap);
+		return getUtilityFor(getPlayerSequenceMap(sequence1, sequence2));
 	}
 
 	public Double getUtilityFromAllFor(Sequence sequence1, Sequence sequence2) {
-		Map<Player, Sequence> sequenceMap = new HashMap<Player, Sequence>();
-
-		sequenceMap.put(sequence1.getPlayer(), sequence1);
-		sequenceMap.put(sequence2.getPlayer(), sequence2);
-		return getUtilityFromAllFor(sequenceMap);
+		return getUtilityFromAllFor(getPlayerSequenceMap(sequence1, sequence2));
 	}
 
 	protected Double getUtilityFromAllFor(Map<Player, Sequence> sequenceMap) {
@@ -264,11 +258,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	}
 
 	public Double getNatureProbabilityFor(Sequence sequence1, Sequence sequence2) {
-		Map<Player, Sequence> sequenceMap = new HashMap<Player, Sequence>();
-
-		sequenceMap.put(sequence1.getPlayer(), sequence1);
-		sequenceMap.put(sequence2.getPlayer(), sequence2);
-		return getNatureProbabilityFor(sequenceMap);
+		return getNatureProbabilityFor(getPlayerSequenceMap(sequence1, sequence2));
 	}
 
 	public Collection<Sequence> getAllSequences() {
@@ -358,4 +348,12 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 	public I createInformationSetFor(GameState gameState) {
 		return (I) new SequenceInformationSet(gameState);
 	}
+
+    protected Map<Player, Sequence> getPlayerSequenceMap(Sequence sequence1, Sequence sequence2) {
+        Map<Player, Sequence> sequenceCombination = new HashMap<>(2);
+
+        sequenceCombination.put(sequence1.getPlayer(), sequence1);
+        sequenceCombination.put(sequence2.getPlayer(), sequence2);
+        return sequenceCombination;
+    }
 }

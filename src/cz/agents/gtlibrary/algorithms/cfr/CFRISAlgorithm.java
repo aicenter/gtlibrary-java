@@ -35,6 +35,8 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestExpander;
+import cz.agents.gtlibrary.domain.imperfectrecall.brtest.BRTestGameState;
 import cz.agents.gtlibrary.domain.ir.leftright.LRExpander;
 import cz.agents.gtlibrary.domain.ir.leftright.LRGameState;
 import cz.agents.gtlibrary.domain.ir.memoryloss.MLExpander;
@@ -46,9 +48,11 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
@@ -61,8 +65,9 @@ import java.util.*;
 public class CFRISAlgorithm implements GamePlayingAlgorithm {
 
     public static void main(String[] args) {
-         runKuhnPoker();
-//        runGenericPoker();
+//         runKuhnPoker();
+//           runBRTest();
+        runGenericPoker();
 //        runML();
     }
 
@@ -72,6 +77,15 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
         CFRISAlgorithm cfr = new CFRISAlgorithm(rootState.getAllPlayers()[0], rootState, cfrExpander1);
 
         cfr.runMiliseconds(10000);
+    }
+
+    private static void runBRTest() {
+        GameState rootState = new BRTestGameState();
+        Expander<MCTSInformationSet> cfrExpander1 = new BRTestExpander<>(new MCTSConfig());
+        CFRISAlgorithm cfr = new CFRISAlgorithm(rootState.getAllPlayers()[0], rootState, cfrExpander1);
+
+        cfr.runMiliseconds(10000);
+        new GambitEFG().write("BRTest.gbt", rootState, cfrExpander1);
     }
 
     private static void runKuhnPoker() {
@@ -133,7 +147,7 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
     protected Expander expander;
     protected AlgorithmConfig<MCTSInformationSet> config;
 
-    protected HashMap<Pair<Integer, Sequence>, MCTSInformationSet> informationSets = new HashMap<>();
+    protected HashMap<ISKey, MCTSInformationSet> informationSets = new HashMap<>();
     protected boolean firstIteration = true;
 
     public CFRISAlgorithm(Player searchingPlayer, GameState rootState, Expander expander) {
@@ -175,7 +189,7 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
      * @param node current node
      * @param pi1 probability with which the opponent of the searching player and chance want to reach the current node
      * @param expPlayer the exploring player for this iteration
-     * @return iteration game value is actually returned. Other return values are in global x and l
+     * @return iteration game reward is actually returned. Other return values are in global x and l
      */
     protected double iteration(GameState node, double pi1, double pi2, Player expPlayer){
         if (pi1==0 && pi2==0) return 0;
@@ -256,7 +270,7 @@ public class CFRISAlgorithm implements GamePlayingAlgorithm {
         throw new NotImplementedException();
     }
 
-    public HashMap<Pair<Integer, Sequence>, MCTSInformationSet> getInformationSets() {
+    public HashMap<ISKey, MCTSInformationSet> getInformationSets() {
         return informationSets;
     }
 

@@ -33,8 +33,8 @@ import cz.agents.gtlibrary.nfg.simalphabeta.utility.SimUtility;
 
 public class FullLP extends DoubleOracle {
 
-    private SimOracle p1Oracle;
-    private SimOracle p2Oracle;
+    protected SimOracle p1Oracle;
+    protected SimOracle p2Oracle;
     private boolean isRoot;
     private DOCache cache;
 
@@ -67,6 +67,7 @@ public class FullLP extends DoubleOracle {
         coreSolver.computeNashEquilibrium();
         if(Killer.kill)
             return;
+
         int NEsize1 = Stats.getInstance().addToP1NESize(coreSolver.getPlayerOneStrategy());
         int NEsize2 = Stats.getInstance().addToP2NESize(coreSolver.getPlayerTwoStrategy());
 

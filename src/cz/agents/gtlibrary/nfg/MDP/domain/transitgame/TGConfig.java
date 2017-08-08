@@ -52,7 +52,7 @@ public class TGConfig extends MDPConfigImpl{
 //    public static int WIDTH_OF_GRID = 3;
     public static int MAX_TIME_STEP = 14;
     public static int LENGTH_OF_GRID = 10;
-    public static int WIDTH_OF_GRID = 6;
+    public static int WIDTH_OF_GRID = 5;
 //    public static int MAX_TIME_STEP = 24;
 //    public static int LENGTH_OF_GRID = 22;
 //    public static int WIDTH_OF_GRID = 11;
@@ -63,12 +63,18 @@ public class TGConfig extends MDPConfigImpl{
     public static double MOVEMENT_UNCERTAINTY = 0.1;
     public static boolean SHUFFLE = false;
     public static int SHUFFLE_ID = 0;
+    public static double PATROLLER_NOT_RETURNED_PENALTY = 1000d;
 
     public TGConfig() {
         allPlayers = new ArrayList<Player>(2);
         allPlayers.add(new PlayerImpl(0));
         allPlayers.add(new PlayerImpl(1));
         PATROLLER_BASES = new int[] {Math.max(LENGTH_OF_GRID/2-1,0)};
+        String shuffle = System.getProperty("ACTION_SHUFFLE");
+        if (shuffle != null){
+            SHUFFLE = true;
+            SHUFFLE_ID = Integer.parseInt(shuffle);
+        }
     }
 
     @Override
@@ -137,17 +143,16 @@ public class TGConfig extends MDPConfigImpl{
                  (attAction.getTargetCol()[0] == defState.getCol()[0] && attAction.getTargetRow()[0] == defState.getRow()[0] && attState.getCol()[0] == defAction.getTargetCol()[0] && attState.getRow()[0] == defAction.getTargetRow()[0]) ||
                  (attAction.getTargetCol()[0] == defAction.getTargetCol()[0] && attAction.getTargetRow()[0] == defAction.getTargetRow()[0])
                 )
-            result = -1d;
+            result = -1d*UTILITY_MULTIPLIER;
         else if (attAction.getTargetCol()[0] == TGConfig.LENGTH_OF_GRID - 1) {
 //            result = 20d;
 //            result = result - attState.getTimeStep() * 2.0;
-//            result = 1d;
-//            result = result - attState.getTimeStep() * 0.01;
-            result = UTILITY_MULTIPLIER+1d;
-            result = result - attState.getTimeStep() * (0.01 + UTILITY_MULTIPLIER/100d);
-        }
-        else if (defState.getTimeStep()+1 == getMaxTimeStep() && !((defState.getRow()[0] == 0 && defState.getCol()[0] != TGConfig.PATROLLER_BASES[0]) || (defAction.getTargetCol()[0] == TGConfig.PATROLLER_BASES[0] && defAction.getTargetRow()[0] == 0))) {
-            result = 1000d;
+            result = 1d*UTILITY_MULTIPLIER;
+            result = result - attState.getTimeStep() * 0.02;
+//            result = UTILITY_MULTIPLIER+1d;
+//            result = result - attState.getTimeStep() * (0.01 + UTILITY_MULTIPLIER/100d);
+        } else if (defState.getTimeStep()+1 == getMaxTimeStep() && !((defState.getRow()[0] == 0 && defState.getCol()[0] != TGConfig.PATROLLER_BASES[0]) || (defAction.getTargetCol()[0] == TGConfig.PATROLLER_BASES[0] && defAction.getTargetRow()[0] == 0))) {
+            result = PATROLLER_NOT_RETURNED_PENALTY;
         }
         return result;
     }
@@ -155,9 +160,9 @@ public class TGConfig extends MDPConfigImpl{
     @Override
     public double getBestUtilityValue(Player player) {
         if (player.getId() == 0) {
-            return 1d;
+            return 1d*UTILITY_MULTIPLIER;
         } else {
-            return -1d;
+            return -1d*UTILITY_MULTIPLIER;
         }
     }
 
@@ -169,4 +174,13 @@ public class TGConfig extends MDPConfigImpl{
     public static int getMaxTimeStep() {
         return MAX_TIME_STEP;
     }
+
+    @Override
+    public String toString() {
+        return "TG" + WIDTH_OF_GRID + "x" + LENGTH_OF_GRID + "|" + MAX_TIME_STEP + "; Penalty=" +
+          PATROLLER_NOT_RETURNED_PENALTY + "; Uncertainty=" + (useUncertainty ? MOVEMENT_UNCERTAINTY : "NA") + "; "
+                + (rememberHistory ? "Full Game" : "");
+    }
+    
+    
 }

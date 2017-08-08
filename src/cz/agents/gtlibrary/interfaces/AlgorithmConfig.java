@@ -19,23 +19,26 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.interfaces;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.utils.Pair;
 
 import java.io.Serializable;
 import java.util.HashMap;
 
 public interface AlgorithmConfig<I extends InformationSet> extends Serializable {
-	
+
 	public I getInformationSetFor(GameState gameState);
 
 	public void addInformationSetFor(GameState gameState, I informationSet);
 
+	public void addInformationSetFor(GameState gameState);
+
 	public I createInformationSetFor(GameState gameState);
 
-    public Double getActualNonzeroUtilityValues(GameState gameState);
+	public Double getActualNonzeroUtilityValues(GameState gameState);
 
-    public void setUtility(GameState gameState, double utility);
+	public void setUtility(GameState gameState, double utility);
 
-	public HashMap<Pair<Integer, Sequence>, I> getAllInformationSets();
+	public HashMap<ISKey, I> getAllInformationSets();
 
 }

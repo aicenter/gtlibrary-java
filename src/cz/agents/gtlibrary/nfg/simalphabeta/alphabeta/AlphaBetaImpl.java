@@ -67,14 +67,28 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
         return getValue(state, alpha, beta, new NullDOCache());
     }
 
+    public void printCache(){
+        System.out.println("Cache size: "+cache.size());
+    }
+
     private double getValue(GameState state, double alpha, double beta, DOCache doCache) {
         Double value = cache.get(state);
         p1Action = null;
         p2Action = null;
         tempAction = null;
 
-        if (value != null)
+//        if (cache.size() > 0)
+//            System.out.println("Cache not empty!");
+
+        if (value != null) {
+            System.out.println("Cached : " + state.getHistory().toString());
             return value;
+        }
+
+//        if (SimAlphaBeta.COMPUTED) {
+//            System.out.println(cache.size());
+//            return -10000;
+//        }
 
         boolean prune = false;
 
@@ -154,8 +168,14 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
     private double getInsideValue(GameState state, double alpha, double beta) {
         Double value = cache.get(state);
 
-        if (value != null)
+//        if (cache.size() > 0)
+//            System.out.println("Cache not empty!" + cache.size());
+
+        if (value != null) {
+            System.out.println("IS CACHED !!");
             return value;
+        }
+//        System.out.println("IS not CACHED");
 
         boolean prune = false;
 
@@ -286,7 +306,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
             if (iterator.previousIndex() > index)
                 utility += state.getProbabilityOfNatureFor(action) * -gameInfo.getMaxUtility();
         }
-        return (upperBound - utility) / probability;
+        return (upperBound - utility) / probability + 1e-8;
     }
 
     private double getLowerBound(List<Action> actions, GameState state, double lowerBound, double probability, double utilityValue, int index) {
@@ -299,7 +319,7 @@ public abstract class AlphaBetaImpl implements AlphaBeta {
             if (iterator.previousIndex() > index)
                 utility += state.getProbabilityOfNatureFor(action) * gameInfo.getMaxUtility();
         }
-        return (lowerBound - utility) / probability;
+        return (lowerBound - utility) / probability - 1e-8;
     }
 
     public Action getTopLevelAction(Player player) {

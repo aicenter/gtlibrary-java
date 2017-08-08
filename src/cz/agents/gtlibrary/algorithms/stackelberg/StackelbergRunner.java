@@ -21,12 +21,20 @@ package cz.agents.gtlibrary.algorithms.stackelberg;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.stackelberg.milp.DOBSS;
+import cz.agents.gtlibrary.algorithms.stackelberg.experiments.StackelbergExperiments;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.*;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.BFSEnforcingStackelbergLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.CompleteBFSEnforcingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenceFormMultipleLPs;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
+import cz.agents.gtlibrary.domain.informeraos.InformerAoSExpander;
+import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameInfo;
+import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
+import cz.agents.gtlibrary.domain.poker.kuhn.*;
 import cz.agents.gtlibrary.domain.pursuit.GenSumPursuitGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
@@ -40,6 +48,7 @@ import cz.agents.gtlibrary.domain.stacktest.StackTestExpander;
 import cz.agents.gtlibrary.domain.stacktest.StackTestGameInfo;
 import cz.agents.gtlibrary.domain.stacktest.StackTestGameState;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.PrintStream;
@@ -58,12 +67,118 @@ import java.util.Map;
  */
 public class StackelbergRunner {
 
+    final static int LEADER = 1;
+    final static int depth = 2;
+
     public static void main(String[] args) {
-        runGenSumRandom();
-//        runBPG();
+//        runKuhn();
+//        runGenSumRandom();
+        runGenSumRandomImproved();
+//        runIAoS();
+//        runBPG(args[0], Integer.parseInt(args[1]));
 //        runSGSG();
 //        runPEG();
 //        runStackTest();
+//        runBPG("", depth);
+//        runFlipIt();
+    }
+
+    public static void runFlipIt() {
+
+        System.out.println("Running FLIPIT domain");
+
+        FlipItGameInfo gameInfo = new FlipItGameInfo();
+        gameInfo.ZERO_SUM_APPROX = false;
+//        GameState rootState = new NodePointsFlipItGameState();
+        GameState rootState = null;
+
+        switch (FlipItGameInfo.gameVersion){
+            case NO:                    rootState = new NoInfoFlipItGameState(); break;
+            case FULL:                  rootState = new FullInfoFlipItGameState(); break;
+            case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
+            case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+
+        }
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+//        Double MLP = runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander)).getLeft();
+        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+//        Double LP = runner.generate(rootState.getAllPlayers()[0], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo)).getLeft();
+//        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+//        Double MILP = runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander)).getLeft();
+//        System.out.println("MLP : " + MLP + " ; LP : " + LP + " ; MILP : " + MILP);
+        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+    }
+
+    public static void runGenSumRandomImproved() {
+        GameInfo gameInfo = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo();
+        GameState rootState = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState();
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        Expander<SequenceInformationSet> expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<>(algConfig);
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+
+//        runner.generate(rootState.getAllPlayers()[LEADER], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[LEADER], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ExpValEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ExpValEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new BFSForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ExpValForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new SumEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//          runner.generate(rootState.getAllPlayers()[0], new CustomMaxEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CustomSumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new MaxForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CustomMaxForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CompleteBFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        new GambitEFG().write("randomGame.gbt", rootState, expander);
+//        new DotEFG().writeII("", rootState,expander);
+        new GambitEFG().write("randomGameImproved_Stack.gbt", rootState, expander);
+    }
+
+    private static void runIAoS() {
+        GameState rootState = new InformerAoSGameState();
+        GameInfo gameInfo = new InformerAoSGameInfo();
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        Expander<SequenceInformationSet> expander = new InformerAoSExpander<>(algConfig);
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+
+//        runner.generate(rootState.getAllPlayers()[1], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[1], rootState.getAllPlayers()[0], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[1], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[1], rootState.getAllPlayers()[0], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[1], new ExpValEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+        runner.generate(rootState.getAllPlayers()[1], new CompleteBFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ExpValEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new BFSForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ExpValForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new SumEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//          runner.generate(rootState.getAllPlayers()[0], new CustomMaxEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CustomSumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new MaxForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CustomMaxForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+        new GambitEFG().write("iaos.gbt", rootState, expander);
+
+    }
+
+    private static void runKuhn() {
+        GameInfo gameInfo = new KPGameInfo();
+        GameState rootState = new GenSumKPGameState(0.1);
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        Expander<SequenceInformationSet> expander = new KuhnPokerExpander<>(algConfig);
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+        runner.generate(rootState.getAllPlayers()[0], new CompleteBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CompleteAllCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+        new GambitEFG().write("kp.gbt", rootState, expander);
+
     }
 
     public static void runGenSumRandom() {
@@ -73,27 +188,36 @@ public class StackelbergRunner {
         Expander<SequenceInformationSet> expander = new RandomGameExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-//        runner.generate(rootState.getAllPlayers()[0], new StackelbergMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-//        runner.generate(rootState.getAllPlayers()[0], new DOBSS(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ExpValEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ExpValEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new BFSForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ExpValForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new SumEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//          runner.generate(rootState.getAllPlayers()[0], new CustomMaxEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CustomSumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new MaxForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CustomMaxForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+        runner.generate(rootState.getAllPlayers()[0], new CompleteBFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
         new GambitEFG().write("randomGame.gbt", rootState, expander);
     }
 
-    public static void runBPG() {
+    public static void runBPG(String alg, int depth) {
         GameState rootState = new GenSumBPGGameState();
         BPGGameInfo gameInfo = new BPGGameInfo();
+        BPGGameInfo.DEPTH = depth;
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander<SequenceInformationSet> expander = new BPGExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
-//        runner.generate(rootState.getAllPlayers()[1], /*new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, gameInfo, expander)*/
-//                new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[1], rootState.getAllPlayers()[0], gameInfo, expander));
-//        runner.generate(rootState.getAllPlayers()[1],
-//                new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[1], rootState.getAllPlayers()[0], gameInfo, expander));
-//        runner.generate(rootState.getAllPlayers()[1],
-//                new StackelbergMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-        runner.generate(rootState.getAllPlayers()[0], new DOBSS(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[1], StackelbergExperiments.getStackelbergSolver(alg, rootState, rootState.getAllPlayers()[1], rootState.getAllPlayers()[0], gameInfo, expander));
 
     }
 
@@ -127,8 +251,8 @@ public class StackelbergRunner {
         Expander<SequenceInformationSet> expander = new StackTestExpander(algConfig);
 
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
-//        runner.generate(rootState.getAllPlayers()[0], new StackelbergMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]/*, gameInfo, expander*/));
-        runner.generate(rootState.getAllPlayers()[0], new DOBSS(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[0], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
         new GambitEFG().write("stackTest.gbt", rootState, expander);
     }
 
@@ -138,7 +262,7 @@ public class StackelbergRunner {
     private StackelbergConfig algConfig;
 
     private PrintStream debugOutput = System.out;
-    final private static boolean DEBUG = false;
+    final private static boolean DEBUG = true;
     private ThreadMXBean threadBean;
 
     private double gameValue = Double.NaN;
@@ -151,8 +275,9 @@ public class StackelbergRunner {
         this.algConfig = algConfig;
     }
 
-    public Map<Player, Map<Sequence, Double>> generate(Player leader, StackelbergSequenceFormLP solver) {
-        debugOutput.println("Full Sequence Multiple LP Stackelberg");
+    public Pair<Double, Map<Player, Map<Sequence, Double>>> generate(Player leader, StackelbergSequenceFormLP solver) {
+//        debugOutput.println("Full Sequence Multiple LP Stackelberg");
+        debugOutput.println(solver.getClass().getSimpleName().replaceAll("([A-Z])", " $1").replaceFirst(" ",""));
         debugOutput.println(gameConfig.getInfo());
         threadBean = ManagementFactory.getThreadMXBean();
 
@@ -220,6 +345,10 @@ public class StackelbergRunner {
             System.out.println("pruned rp count: " + ((StackelbergSequenceFormMultipleLPs) solver).prunnedRPCountWhileBuilding(algConfig));
         }
 
+        if (solver instanceof SumForbiddingStackelbergLP) {
+            System.out.println("LP invocations: " + ((SumForbiddingStackelbergLP)solver).getLPInvocationCount());
+        }
+
         if (DEBUG) {
             // sanity check -> calculation of Full BR on the solution of SQF LP
             SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
@@ -230,7 +359,7 @@ public class StackelbergRunner {
 
             algConfig.validateGameStructure(rootState, expander);
         }
-        return realizationPlans;
+        return new Pair<>(gameValue,realizationPlans);
     }
 
     public void generateCompleteGame() {

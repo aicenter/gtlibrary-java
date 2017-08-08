@@ -19,10 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.iinodes;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -39,12 +36,12 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	public ArrayListSequenceImpl(Player player) {
 		this.player = player;
-		actions = new ArrayList<Action>();
+		actions = new ArrayList<>();
 	}
 
 	public ArrayListSequenceImpl(Sequence sequence) {
 		player = sequence.getPlayer();
-		actions = new ArrayList<Action>(sequence.size()+1);
+		actions = new ArrayList<>(sequence.size()+1);
 		addAllAsLast(sequence);
 	}
 
@@ -177,8 +174,8 @@ public class ArrayListSequenceImpl implements Sequence {
 
 	@Override
 	public int hashCode() {
-		if (hashCode != -1)
-			return hashCode;
+//		if (hashCode != -1)
+//			return hashCode;
 
 		final int prime = 31;
 		hashCode = 1;
@@ -215,5 +212,18 @@ public class ArrayListSequenceImpl implements Sequence {
 	@Override
 	public List<Action> getAsList() {
 		return actions;
+	}
+
+    @Override
+    public boolean isEmpty() {
+        return actions.isEmpty();
+    }
+
+	public ListIterator<Action> listIterator() {
+		 return actions.listIterator();
+	}
+
+	public ListIterator<Action> listIterator(int index) {
+		return actions.listIterator(index);
 	}
 }

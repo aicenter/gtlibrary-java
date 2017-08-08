@@ -24,12 +24,13 @@ import java.util.LinkedHashMap;
 
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
-public abstract class ConfigImpl<I extends InformationSetImpl> implements AlgorithmConfig<I> {
+public abstract class ConfigImpl<I extends InformationSet> implements AlgorithmConfig<I> {
 
-	protected HashMap<Pair<Integer, Sequence>, I> allInformationSets;
+	protected HashMap<ISKey, I> allInformationSets;
 
 	public ConfigImpl() {
 		allInformationSets = new LinkedHashMap<>();
@@ -42,11 +43,22 @@ public abstract class ConfigImpl<I extends InformationSetImpl> implements Algori
 	}
 
 	@Override
+	public void addInformationSetFor(GameState gameState) {
+		if(gameState.isPlayerToMoveNature())
+			return;
+		I informationSet = getInformationSetFor(gameState);
+
+		if(informationSet == null)
+			informationSet = createInformationSetFor(gameState);
+		addInformationSetFor(gameState, informationSet);
+	}
+
+	@Override
 	public I getInformationSetFor(GameState gameState) {
 		return allInformationSets.get(gameState.getISKeyForPlayerToMove());
 	}
 
-	public HashMap<Pair<Integer, Sequence>, I> getAllInformationSets() {
+	public HashMap<ISKey, I> getAllInformationSets() {
 		return allInformationSets;
 	}
 

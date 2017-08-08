@@ -27,7 +27,7 @@ import cz.agents.gtlibrary.utils.graph.Node;
 public class AttackerAction extends ActionImpl {
 
 	private static final long serialVersionUID = -8635820135191985365L;
-	
+
 	final private Node fromNode;
 	final private Node toNode;
 	final private AttackerMovementType type;
@@ -35,7 +35,7 @@ public class AttackerAction extends ActionImpl {
 
 	public enum AttackerMovementType {
 		QUICK, SLOW, WAIT
-	};
+	}
 
 	public AttackerAction(Node fromNode, Node toNode, InformationSet informationSet, AttackerMovementType type) {
 		super(informationSet);
@@ -43,7 +43,7 @@ public class AttackerAction extends ActionImpl {
 		this.toNode = toNode;
 		this.type = type;
 	}
-	
+
 	@Override
 	public void perform(GameState gameState) {
 		((BPGGameState) gameState).executeAttackerAction(this);
@@ -56,7 +56,7 @@ public class AttackerAction extends ActionImpl {
 	public Node getToNode() {
 		return toNode;
 	}
-	
+
 	public AttackerMovementType getType() {
 		return type;
 	}
@@ -72,7 +72,7 @@ public class AttackerAction extends ActionImpl {
 			return hashCode;
 		final int prime = 31;
 		hashCode = 1;
-		
+
 		hashCode = prime * hashCode + ((fromNode == null) ? 0 : fromNode.hashCode());
 		hashCode = prime * hashCode + ((toNode == null) ? 0 : toNode.hashCode());
 		hashCode = prime * hashCode + ((type == null) ? 0 : type.ordinal());
@@ -82,9 +82,10 @@ public class AttackerAction extends ActionImpl {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!super.equals(obj))
+		if(obj == null || !(obj instanceof AttackerAction))
 			return false;
 		AttackerAction other = (AttackerAction) obj;
+
 		if (fromNode == null) {
 			if (other.fromNode != null)
 				return false;
@@ -96,6 +97,8 @@ public class AttackerAction extends ActionImpl {
 		} else if (!toNode.equals(other.toNode))
 			return false;
 		if (type != other.type)
+			return false;
+		if (!super.equals(obj))
 			return false;
 		return true;
 	}

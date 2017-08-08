@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.domain.randomgame;
 
 
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -53,7 +54,7 @@ public class RandomGameExpander<I extends InformationSet> extends ExpanderImpl<I
 
         int MOVES = RandomGameInfo.MAX_BF;
         if (!RandomGameInfo.FIXED_SIZE_BF) {
-            MOVES = new HighQualityRandom(firstSeed+gsState.getISKeyForPlayerToMove().getLeft()).nextInt(RandomGameInfo.MAX_BF-1)+2;
+            MOVES = new HighQualityRandom(firstSeed+((PerfectRecallISKey)gsState.getISKeyForPlayerToMove()).getHash()).nextInt(RandomGameInfo.MAX_BF-1)+2;
         }
         for (int i=0; i<MOVES; i++) {
             RandomGameAction action = new RandomGameAction(informationSet, newVal + "_" + i, i);

@@ -103,22 +103,33 @@ public class SMJournalOnlineExperiments {
 
     public void handleDomain(String[] args) {
         if (args[2].equalsIgnoreCase("GS")) {  // Goofspiel
-            if (args.length != 5) {
-                throw new IllegalArgumentException("Illegal domain arguments count: 2 parameters are required {SEED} {DEPTH}");
+            if (args.length != 7) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {DEPTH} {BIN_UTIL} {FIXED_CARDS}");
             }
             GSGameInfo.seed = new Integer(args[3]);
             int depth = new Integer(args[4]);
             GSGameInfo.depth = depth;
+
+            boolean binUtil = new Boolean(args[5]);
+            GSGameInfo.BINARY_UTILITIES = binUtil;
+
+            boolean fixedCards = new Boolean(args[6]);
+            GSGameInfo.useFixedNatureSequence = fixedCards;
+
             GSGameInfo.regenerateCards = true;
+
             //GSGameInfo.useFixedNatureSequence = false;
         } else if (args[2].equalsIgnoreCase("OZ")) { // Oshi Zumo
-            if (args.length != 7) {
-                throw new IllegalArgumentException("Illegal domain arguments count: 4 parameters are required {SEED} {COINS} {LOC_K} {MIN_BID}");
+            if (args.length != 8) {
+                throw new IllegalArgumentException("Illegal domain arguments count: 5 parameters are required {SEED} {COINS} {LOC_K} {MIN_BID} {BIN_UTIL}");
             }
             OZGameInfo.seed = new Integer(args[3]);
             OZGameInfo.startingCoins = new Integer(args[4]);
             OZGameInfo.locK = new Integer(args[5]);
             OZGameInfo.minBid = new Integer(args[6]);
+            
+            boolean binUtil = new Boolean(args[7]);
+            OZGameInfo.BINARY_UTILITIES = binUtil;
         } else if (args[2].equalsIgnoreCase("PE")) { // Pursuit evasion
             if (args.length != 6) {
                 throw new IllegalArgumentException("Illegal pursuit evasion domain arguments count: 3 parameters are required {SEED} {DEPTH} {GRAPH}");
@@ -214,7 +225,7 @@ public class SMJournalOnlineExperiments {
                         explorationString = System.getProperty("EXPL"+(posIndex+1));
                         exploration = 0.2d;
                         if (explorationString != null) exploration = new Double(explorationString);
-                        fact = new Exp3BackPropFactory(-1, 1, exploration, random);
+                        fact = new Exp3BackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), exploration, random);
                         break;
                     case "MCTS-DRM":
                         explorationString = System.getProperty("EXPL"+(posIndex+1));
@@ -311,13 +322,13 @@ public class SMJournalOnlineExperiments {
 
                 if (printDebugInfo)
                     System.out.println("Searching player 1...");
-                Action a1 = p1.runMiliseconds(compTime, curState);
+                Action a1 = p1.runMiliseconds(compTime, curState.copy());
                 if (printDebugInfo)
                     System.out.println("P1 chose: " + a1);
 
                 if (printDebugInfo)
                     System.out.println("Searching player 2...");
-                Action a2 = p2.runMiliseconds(compTime, curState);
+                Action a2 = p2.runMiliseconds(compTime, curState.copy());
                 if (printDebugInfo)
                     System.out.println("P2 chose: " + a2);
 

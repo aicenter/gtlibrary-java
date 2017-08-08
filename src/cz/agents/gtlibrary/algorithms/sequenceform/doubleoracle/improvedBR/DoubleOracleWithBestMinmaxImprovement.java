@@ -19,13 +19,12 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.improvedBR;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleBestResponse;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleSequenceFormLP;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
@@ -77,11 +76,48 @@ public class DoubleOracleWithBestMinmaxImprovement {
 //        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
-        runRandomGame();
+//        runRandomGame();
 //		runSimRandomGame();
 //		runPursuit();
 //        runPhantomTTT();
+        runFlipIt(args);
 	}
+
+    private static void runFlipIt(String[] args){
+        FlipItGameInfo gameInfo;
+        if (args.length == 0)
+            gameInfo = new FlipItGameInfo();
+        else {
+            int depth = Integer.parseInt(args[0]);
+            int graphSize = Integer.parseInt(args[1]);
+            String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
+            gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
+        }
+        gameInfo.ZERO_SUM_APPROX = true;
+        GameState rootState = null;
+
+        switch (FlipItGameInfo.gameVersion){
+            case NO:                    rootState = new NoInfoFlipItGameState(); break;
+            case FULL:                  rootState = new FullInfoFlipItGameState(); break;
+            case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
+            case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+
+        }
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander =new FlipItExpander<DoubleOracleInformationSet>(algConfig);
+        DoubleOracleWithBestMinmaxImprovement doefg = new DoubleOracleWithBestMinmaxImprovement(rootState, expander, gameInfo, algConfig);
+        Map<Player, Map<Sequence, Double>> rps = doefg.generate(null);
+
+//        for (Map.Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
+//            if(entry.getValue() > doefg.EPS)
+//                System.out.println(entry);
+//        }
+//        System.out.println("**********");
+//        for (Map.Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
+//            if(entry.getValue() > doefg.EPS)
+//                System.out.println(entry);
+//        }
+    }
 
     public static void runPhantomTTT() {
         GameState rootState = new TTTState();
@@ -325,7 +361,7 @@ public class DoubleOracleWithBestMinmaxImprovement {
 
                 case SINGLE_IMPROVED:
                     if (doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]) == null ||
-                            doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]) == null) { // we have not calculated the value for the current player in RG yet
+                            doRestrictedGameSolver.getResultForPlayer(actingPlayers[opponentPlayerIndex]) == null) { // we have not calculated the reward for the current player in RG yet
                             currentPlayerIndex = opponentPlayerIndex;
                     } else {
                         double oldLPResult = doRestrictedGameSolver.getResultForPlayer(actingPlayers[currentPlayerIndex]);

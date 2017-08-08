@@ -325,7 +325,7 @@ public class LPDictionary<T extends Real<T>> {
 		return basic_vars[i];
 	}
 
-	/** returns the value of the objective function on the solution
+	/** returns the reward of the objective function on the solution
 	 *  associated with the dictionary (even if the solution is not
 	 *  feasible). */
 	public T getValue(){
@@ -333,7 +333,7 @@ public class LPDictionary<T extends Real<T>> {
 	}
 
 	/** returns the solution associated with the dictionary as a <tt>Real</tt>
-	 *  array of size <tt>m</tt>+<tt>n</tt>+1. The value of variable
+	 *  array of size <tt>m</tt>+<tt>n</tt>+1. The reward of variable
 	 *  <i>x<sub>i</sub></i> is in entry <i>i</i> of the array. */
 	public T[] getSolution() {
 		T[] sol = new ArrayList<T>(Collections.nCopies(m + n + 1, zero)).toArray(tableau[0]); 
@@ -345,7 +345,7 @@ public class LPDictionary<T extends Real<T>> {
 
 	/** returns a <tt>Real</tt> array of size <tt>m</tt>+<tt>n</tt>+1 which, if
 	 *  this dictionary is optimal, contains the optimal dual
-	 *  solution. The value of variable <i>y<sub>j</sub></i> is in entry
+	 *  solution. The reward of variable <i>y<sub>j</sub></i> is in entry
 	 *  <i>j</i> of the array. Here, <i>y<sub>j</sub></i> for <i>j</i>
 	 *  in 1,..,<tt>n</tt> are the dual slack variables corresponding to the
 	 *  non-slack variables of the original dictionary (i.e., 
@@ -704,10 +704,10 @@ public class LPDictionary<T extends Real<T>> {
 	 *  updated, so the methods {@link #getSolution() getSolution()},
 	 {@link #getDualSolution() getDualSolution()} and
 	 *  {@link #getValue() getValue()} extracting the optimal solutions and their 
-	 *  value from the dictionary do <i>not</i> in general give the 
-	 *  optimal value after applying {@link #PCxSolve() PCxSolve()}.
+	 *  reward from the dictionary do <i>not</i> in general give the
+	 *  optimal reward after applying {@link #PCxSolve() PCxSolve()}.
 	 *  Instead, an optimal primal solution, an optimal dual solution and
-	 *  the optimal value of the objective function is printed out by 
+	 *  the optimal reward of the objective function is printed out by
 	 {@link #PCxSolve() PCxSolve()}.
 	 *  If the dictionary is
 	 *  initially infeasible, INFEASIBLE is

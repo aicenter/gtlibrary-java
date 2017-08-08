@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.iinodes.ir.ImperfectRecallAction;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
+@Deprecated
 public class LRAction extends ImperfectRecallAction {
 
 
@@ -35,7 +36,7 @@ public class LRAction extends ImperfectRecallAction {
         final int prime = 31;
         int hashCode = 1;
 
-        hashCode = prime * hashCode + type.hashCode();
+        hashCode = prime * hashCode + type.substring(0,1).hashCode();
         return hashCode;
     }
 

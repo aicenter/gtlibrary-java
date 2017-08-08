@@ -32,15 +32,15 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
-    protected final double M = 1e6;
+    protected double M;
 
     protected Player[] players;
     protected GameInfo info;
 
     protected IloRange leaderObj = null;
 
-    protected Map<Object, IloNumVar> slackVariables = new HashMap<Object, IloNumVar>();
-    protected Map<Object, IloRange[]> slackConstraints = new HashMap<Object, IloRange[]>(); // constraints for slack variables and p(h)
+    protected Map<Object, IloNumVar> slackVariables = new HashMap<>();
+    protected Map<Object, IloRange[]> slackConstraints = new HashMap<>(); // constraints for slack variables and p(h)
     protected Expander<SequenceInformationSet> expander;
 
     protected ThreadMXBean threadBean;
@@ -52,6 +52,7 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
         this.expander = expander;
         this.info = info;
         this.threadBean = ManagementFactory.getThreadMXBean();
+        M = info.getMaxUtility()*info.getUtilityStabilizer()*2 + 1;
     }
 
 
@@ -87,23 +88,26 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
 //            cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
             startTime = threadBean.getCurrentThreadCpuTime();
             debugOutput.println("Solving");
+            long cplexTime = threadBean.getCurrentThreadCpuTime();
             cplex.solve();
+
+            System.out.println("cplex solving time: " + (threadBean.getCurrentThreadCpuTime() - cplexTime)/1e6);;
             overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
             debugOutput.println("Status: " + cplex.getCplexStatus());
 
             if (cplex.getCplexStatus() == CplexStatus.Optimal || cplex.getCplexStatus() == CplexStatus.OptimalTol) {
                 double v = cplex.getValue(v0);
-                debugOutput.println("Best value is " + v);
+                debugOutput.println("Best reward is " + v);
 
                 maxValue = v;
 
-//                for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
-//                    try {
-//                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-//                    } catch (IloCplex.UnknownObjectException e) {
-//                        continue;
-//                    }
-//                }
+                for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
+                    try {
+                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
+                    } catch (IloCplex.UnknownObjectException e) {
+                        continue;
+                    }
+                }
 //                debugOutput.println("-------");
 //                for (Map.Entry<Object, IloNumVar> ee : slackVariables.entrySet()) {
 //                    try {

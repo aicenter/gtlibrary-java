@@ -37,7 +37,7 @@ public class BasicStats implements Serializable {
 
 	public double onBackPropagate(double value) {
 		if (Double.isInfinite(value) || Double.isNaN(value)) {
-			throw new IllegalArgumentException("Bad value: " + value);
+			throw new IllegalArgumentException("Bad reward: " + value);
 		}
 		n++;
 

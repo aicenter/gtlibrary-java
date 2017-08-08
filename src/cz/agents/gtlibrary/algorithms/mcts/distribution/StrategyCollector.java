@@ -29,6 +29,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
@@ -71,7 +72,7 @@ public class StrategyCollector {
                 else if (curNodeIS.getPlayer().equals(player) && !processed.contains(curNodeIS)){
                     Map<Action, Double> actionDistribution = distribution.getDistributionFor(curNodeIS.getAlgorithmData());
                     double prefix = strategy.get(curNodeIS.getPlayersHistory());
-                    if (actionDistribution == null || !(prefix>1e-4)) continue; //unreachable/unreached state
+                    if (actionDistribution == null || !(prefix>1e-20)) continue; //unreachable/unreached state
                     for (Map.Entry<Action, Double> en : actionDistribution.entrySet()){
                         if (en.getValue()>0){
                             Sequence sq = new ArrayListSequenceImpl(curNodeIS.getPlayersHistory());
@@ -89,7 +90,7 @@ public class StrategyCollector {
             return strategy;
         }
 
-    static public Strategy getStrategyFor(GameState rootState, Player player, Distribution distribution, Map<Pair<Integer, Sequence>, MCTSInformationSet> informationSets, Expander expander) {
+    static public Strategy getStrategyFor(GameState rootState, Player player, Distribution distribution, Map<ISKey, MCTSInformationSet> informationSets, Expander expander) {
         Strategy strategy = new UniformStrategyForMissingSequences();
         strategy.put(new ArrayListSequenceImpl(player),1.0);
         HashSet<MCTSInformationSet> processed = new HashSet();
@@ -161,7 +162,7 @@ public class StrategyCollector {
         
         double wSumSupp=0, sumW=0;
         for (Map.Entry<InformationSet, Integer> en : counts.entrySet()){
-            double w = strategy.get(en.getKey().getPlayersHistory());
+            double w = strategy.get(((MCTSInformationSet)en.getKey()).getPlayersHistory());
             wSumSupp += en.getValue()*w;
             sumW += w;
         }
@@ -184,7 +185,7 @@ public class StrategyCollector {
         
         double wSumSupp=0, sumW=0;
         for (Map.Entry<InformationSet, Double> en : maxes.entrySet()){
-            double w = strategy.get(en.getKey().getPlayersHistory());
+            double w = strategy.get(((MCTSInformationSet)en.getKey()).getPlayersHistory());
             wSumSupp += en.getValue()*w;
             sumW += w;
         }

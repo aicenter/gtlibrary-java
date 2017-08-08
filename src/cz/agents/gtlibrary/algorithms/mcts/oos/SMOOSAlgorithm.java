@@ -136,7 +136,7 @@ protected double epsilon = 0.6;
      *
      * @param node      current node
      * @param expPlayer the exploring player for this iteration
-     * @return iteration game value is actually returned. Other return values are in global x and l
+     * @return iteration game reward is actually returned. Other return values are in global x and l
      */
     protected double iteration(Node node, Player expPlayer) {
         if (node instanceof LeafNode) {

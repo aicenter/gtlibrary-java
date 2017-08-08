@@ -22,23 +22,26 @@ package cz.agents.gtlibrary.algorithms.mcts.distribution;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+
+import java.util.HashMap;
 import java.util.Map;
 
 public class MeanStratDist implements Distribution {
-    
-	@Override
-	public Map<Action, Double> getDistributionFor(AlgorithmData data) {
-                MeanStrategyProvider stat = (MeanStrategyProvider) data;
-                if (stat == null) return null;
-                final double[] mp = stat.getMp();
-                double sum = 0;
-                for (double d : mp) sum += d;
-                
-		Map<Action, Double> distribution = new FixedSizeMap<Action, Double>(stat.getActions().size());
 
-                int i=0;
-		for (Action a : stat.getActions()) distribution.put(a, sum == 0 ? 1.0/mp.length : mp[i++]/sum);
-                
-		return distribution;
-	}
+    @Override
+    public Map<Action, Double> getDistributionFor(AlgorithmData data) {
+        MeanStrategyProvider stat = (MeanStrategyProvider) data;
+        if (stat == null) return null;
+        final double[] mp = stat.getMp();
+        double sum = 0;
+        for (double d : mp) sum += d;
+
+        Map<Action, Double> distribution = new HashMap<>(stat.getActions().size());
+
+        int i = 0;
+        for (Action a : stat.getActions())
+            distribution.put(a, sum == 0 ? 1.0 / mp.length : mp[i++] / sum);
+
+        return distribution;
+    }
 }

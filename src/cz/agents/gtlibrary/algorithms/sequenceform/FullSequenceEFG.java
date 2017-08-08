@@ -19,15 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
-import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.util.*;
-import java.util.Map.Entry;
-
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.nfplp.FullNFPSolver;
-import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.undominated.FullUndominatedSolver;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.QuasiPerfectBuilder;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -40,9 +31,13 @@ import cz.agents.gtlibrary.domain.bpg.BPGGameState;
 import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitExpander;
 import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameInfo;
 import cz.agents.gtlibrary.domain.exploitabilityGame.ExploitGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.honeypotGame.HoneypotExpander;
+import cz.agents.gtlibrary.domain.honeypotGame.HoneypotGameInfo;
+import cz.agents.gtlibrary.domain.honeypotGame.HoneypotGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
@@ -68,16 +63,21 @@ import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.domain.upordown.UDExpander;
 import cz.agents.gtlibrary.domain.upordown.UDGameInfo;
 import cz.agents.gtlibrary.domain.upordown.UDGameState;
-import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
-import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
-import cz.agents.gtlibrary.utils.HighQualityRandom;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
+
+import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class FullSequenceEFG {
 
@@ -94,6 +94,8 @@ public class FullSequenceEFG {
 
 	private double gameValue = Double.NaN;
 
+	private static double eps = 1e-6;
+
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
@@ -103,12 +105,76 @@ public class FullSequenceEFG {
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
-        runLiarsDice();
+//        runLiarsDice();
 //		runPursuit();
 //      runPhantomTTT();
 //		runUpOrDown();
 //        runOshiZumo();
 //        testExploitGame();
+		runFlipIt();
+//		runHoneyPot();
+	}
+
+	private static void runHoneyPot(){
+		HoneypotGameInfo gameInfo = new HoneypotGameInfo();
+		HoneypotGameState rootState = new HoneypotGameState(gameInfo.allNodes);
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new HoneypotExpander<>(algConfig), gameInfo, algConfig);
+		efg.generate();
+
+		GambitEFG gambit = new GambitEFG();
+		gambit.buildAndWrite("HPG_test.gbt", rootState, new HoneypotExpander<>(algConfig));
+	}
+
+	private static void runFlipIt(){
+		boolean PRINT_STRATEGY = false;
+		FlipItGameInfo gameInfo = new FlipItGameInfo();
+		gameInfo.ZERO_SUM_APPROX = true;
+		GameState rootState = null;
+
+		switch (FlipItGameInfo.gameVersion){
+			case NO:                    rootState = new NoInfoFlipItGameState(); break;
+			case FULL:                  rootState = new FullInfoFlipItGameState(); break;
+			case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
+			case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+
+		}
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new FlipItExpander<>(algConfig), gameInfo, algConfig);
+		Map<Player, Map<Sequence, Double>> rps = efg.generate();
+
+		if (PRINT_STRATEGY) {
+			for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[0]).entrySet()) {
+				if (entry.getValue() > eps)
+					System.out.println(entry);
+			}
+			System.out.println("**********");
+			for (Entry<Sequence, Double> entry : rps.get(rootState.getAllPlayers()[1]).entrySet()) {
+				if (entry.getValue() > eps)
+					System.out.println(entry);
+			}
+		}
+
+		Double maxUtility = Double.MIN_VALUE;
+		for (Double utility : algConfig.getActualNonZeroUtilityValuesInLeafs().values()){
+			if (Math.abs(utility) > maxUtility)
+				maxUtility = Math.abs(utility);
+		}
+		System.out.println("GI maxUtility : "+gameInfo.getMaxUtility() + "; GT maxUtility : " + maxUtility);
+
+		GambitEFG gambit = new GambitEFG();
+		gambit.buildAndWrite("flipit.gbt", rootState, new FlipItExpander<>(algConfig));
+
+		int larger = 0;
+		for (InformationSet set : algConfig.getAllInformationSets().values()) {
+			if (set.getPlayer().equals(FlipItGameInfo.DEFENDER) && set.getAllStates().size()>1)
+				larger++;
+			if (set.getPlayer().equals(FlipItGameInfo.ATTACKER) && set.getAllStates().size()>(FlipItGameInfo.graph.getAllNodes().size()+1))
+				larger++;
+		}
+
+		System.out.println("Number of non-simultaneous ISs: "+larger);
+
 	}
 
     private static void testExploitGame() {
@@ -341,6 +407,7 @@ public class FullSequenceEFG {
 		generateCompleteGame();
         debugOutput.println("Game tree built...");
         debugOutput.println("Information set count: " + algConfig.getAllInformationSets().size());
+		debugOutput.println("Sequences: " + algConfig.getSequencesFor(gameConfig.getAllPlayers()[0]).size() + ", " + algConfig.getSequencesFor(gameConfig.getAllPlayers()[1]).size());
 		overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
 
 		Player[] actingPlayers = new Player[] { rootState.getAllPlayers()[0], rootState.getAllPlayers()[1] };

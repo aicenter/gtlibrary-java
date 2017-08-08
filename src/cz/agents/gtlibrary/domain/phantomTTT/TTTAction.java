@@ -23,6 +23,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.domain.phantomTTT;
 
+import cz.agents.gtlibrary.domain.phantomTTT.imperfectrecall.IRTTTState;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -30,6 +31,7 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 public class TTTAction extends ActionImpl  {
 	
 	private static final long serialVersionUID = -542752552988722459L;
+    private int hashCode = -1;
 	
 	public byte fieldID;
 
@@ -43,12 +45,16 @@ public class TTTAction extends ActionImpl  {
         final TTTState s = (TTTState) gameState;
         assert !s.getTried(s.toMove, fieldID);
         s.setTried(s.toMove, fieldID);
+
+        if(s instanceof IRTTTState)
+            ((IRTTTState)s).key = null;
         
         if (' ' == s.getSymbol(fieldID)){
             s.setSymbol(fieldID, s.toMove);
             s.toMove = (s.toMove == 'x' ? 'o' : 'x' );
         }
         s.moveNum++;
+        s.hashCode = -1;
     }
 
     @Override
@@ -65,20 +71,23 @@ public class TTTAction extends ActionImpl  {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        if (!super.equals(obj))	return false;
         final TTTAction other = (TTTAction) obj;
+
         if (this.fieldID != other.fieldID) {
             return false;
         }
+        if (!super.equals(obj))	return false;
         return true;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 37 * hash + this.fieldID;
-        if (getInformationSet() != null) hash = 37 * hash + (int) getInformationSet().hashCode();
-        return hash;
+        if(hashCode == -1) {
+            hashCode = 7;
+            hashCode = 37 * hashCode + this.fieldID;
+            if (getInformationSet() != null) hashCode = 37 * hashCode + getInformationSet().hashCode();
+        }
+        return hashCode;
     }
     
     

@@ -46,14 +46,14 @@ public class HistoryImpl implements History {
 	public HistoryImpl(Player[] players) {
 		this.players = players;
 		playersSequence = new ArrayList<>();
-		sequencesOfPlayers = new LinkedHashMap<Player, Sequence>(players.length);
+		sequencesOfPlayers = new LinkedHashMap<>(players.length);
 		for (Player player : players) {
 			sequencesOfPlayers.put(player, new ArrayListSequenceImpl(player));
 		}
 	}
 
 	public HistoryImpl(Map<Player, Sequence> sequencesOfPlayers, Player[] players, List<Integer> playersSequence) {
-		this.sequencesOfPlayers = new LinkedHashMap<Player, Sequence>(sequencesOfPlayers.size());
+		this.sequencesOfPlayers = new LinkedHashMap<>(sequencesOfPlayers.size());
 		this.players = players;
 		for (Entry<Player, Sequence> entry : sequencesOfPlayers.entrySet()) {
 			this.sequencesOfPlayers.put(entry.getKey(), new ArrayListSequenceImpl(entry.getValue()));

@@ -31,6 +31,10 @@ public class KuhnPokerAction extends PokerAction {
 		super(action, i, player);
 	}
 
+    public KuhnPokerAction(String action, InformationSet i, Player player, String card) {
+        super(action, i, player, card);
+    }
+
 	@Override
 	public int computeHashCode() {
 		return new HashCodeBuilder(17,37).append(action).append(player).append(getInformationSet()).toHashCode();

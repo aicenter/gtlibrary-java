@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMSelector;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
@@ -69,10 +70,10 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet> {
      * @param p2ActionPosition
      */
     public void cleanSetsNotContaining(Action p1Action, int p1ActionPosition, Action p2Action, int p2ActionPosition) {
-        Iterator<Map.Entry<Pair<Integer, Sequence>, MCTSInformationSet>> iterator = allInformationSets.entrySet().iterator();
+        Iterator<Map.Entry<ISKey, MCTSInformationSet>> iterator = allInformationSets.entrySet().iterator();
 
         while (iterator.hasNext()) {
-            Map.Entry<Pair<Integer, Sequence>, MCTSInformationSet> entry = iterator.next();
+            Map.Entry<ISKey, MCTSInformationSet> entry = iterator.next();
             MCTSInformationSet is = entry.getValue();
             GameState state = is.getAllNodes().iterator().next().getGameState();
 

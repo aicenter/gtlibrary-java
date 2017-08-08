@@ -20,6 +20,9 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.nfg.simalphabeta;
 
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
+import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
+import cz.agents.gtlibrary.domain.flipit.FullInfoFlipItGameState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
@@ -32,7 +35,6 @@ import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCache;
 import cz.agents.gtlibrary.nfg.simalphabeta.cache.DOCacheRoot;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Triplet;
-import cz.agents.gtlibrary.utils.io.EmptyPrintStream;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -49,18 +51,35 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
     private final Player player;
     private final HighQualityRandom random;
     private final Expander<SimABInformationSet> expander;
-    private final PrintStream debugOutput = new PrintStream(EmptyPrintStream.getInstance());
+    private final PrintStream debugOutput = System.out;//new PrintStream(EmptyPrintStream.getInstance());
     private volatile MixedStrategy<ActionPureStrategy> currentBest;
     private ThreadMXBean threadBean;
     private volatile int lastIterationDepth = 1;
     private volatile DOCache lastIterationResults = null;
 
     public static void main(String[] args) {
+//        runGoofSpiel();
+        runFlipIt();
+    }
+
+    private static void runGoofSpiel(){
         SimAlphaBetaAlgorithm algorithm = new SimAlphaBetaAlgorithm(new PlayerImpl(1), new GoofSpielExpander<>(new SimABConfig()), new GSGameInfo(), true, true, true, false);
         GoofSpielGameState root = new GoofSpielGameState();
         long start = System.currentTimeMillis();
 
         algorithm.runMiliseconds(2000, root.performAction(root.getNatureSequence().getFirst()));
+        System.out.println("Actual time needed " + (System.currentTimeMillis() - start));
+    }
+
+    private static void runFlipIt(){
+        FlipItGameInfo gameInfo = new FlipItGameInfo();
+        FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.FULL;
+        FlipItGameInfo.ZERO_SUM_APPROX = true;
+        SimAlphaBetaAlgorithm algorithm = new SimAlphaBetaAlgorithm(FlipItGameInfo.DEFENDER, new FlipItExpander<>(new SimABConfig()), gameInfo, true, true, true, false);
+        FullInfoFlipItGameState root = new FullInfoFlipItGameState();
+        long start = System.currentTimeMillis();
+
+        algorithm.runMiliseconds(20000, root);
         System.out.println("Actual time needed " + (System.currentTimeMillis() - start));
     }
 
@@ -238,12 +257,12 @@ public class SimAlphaBetaAlgorithm implements GamePlayingAlgorithm {
                 ((SimultaneousGameState) state).setDepth(depth);
                 SimAlphaBeta solver = new SimAlphaBeta();
                 long currentIterationStart = threadBean.getCurrentThreadCpuTime();
-                SimAlphaBetaResult result = solver.runSimAlpabeta(state, expander, player, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
+                SimAlphaBetaResult result = solver.runSimAlphabeta(state, expander, player, alphaBetaBounds, doubleOracle, sortingOwnActions, useGlobalCache, gameInfo);
                 long currentIterationTime = threadBean.getCurrentThreadCpuTime() - currentIterationStart;
 
                 debugOutput.println("Iteration for depth " + depth + " ended in " + (threadBean.getCurrentThreadCpuTime() - start) / 1e6);
                 if (result != null)
-                    debugOutput.println("Game value " + result.gameValue);
+                    debugOutput.println("Game reward " + result.gameValue);
                 if (Killer.kill) {
                     System.out.println("limit: " + (limit / 1e6) + " time taken: " + ((threadBean.getCurrentThreadCpuTime() - start) / 1e6));
                     debugOutput.println("Time run out for depth " + depth);

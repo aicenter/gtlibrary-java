@@ -36,7 +36,7 @@ public class GenericPokerExpanderDomain<I extends InformationSet> extends Generi
 	}
 
 	/**
-	 * For player with card, which has value >= than highest card*ratio return aggressive move ordering {(r, c, f), (b, ch), ...}
+	 * For player with card, which has reward >= than highest card*ratio return aggressive move ordering {(r, c, f), (b, ch), ...}
 	 * otherwise passive move ordering {(f, c, r), (ch, b), ...}
 	 */
 	private double ratio = 0.9;

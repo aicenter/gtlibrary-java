@@ -24,6 +24,7 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.stacktest.StackTestExpander;
 import cz.agents.gtlibrary.domain.stacktest.StackTestGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.Pair;
@@ -92,7 +93,7 @@ public class CFRISGenSumAlg implements GamePlayingAlgorithm {
     protected Expander expander;
     protected AlgorithmConfig<MCTSInformationSet> config;
 
-    protected HashMap<Pair<Integer, Sequence>, MCTSInformationSet> informationSets = new HashMap<>();
+    protected HashMap<ISKey, MCTSInformationSet> informationSets = new HashMap<>();
     protected boolean firstIteration = true;
 
     public CFRISGenSumAlg(Player searchingPlayer, GameState rootState, Expander expander) {
@@ -140,7 +141,7 @@ public class CFRISGenSumAlg implements GamePlayingAlgorithm {
      * @param node current node
      * @param pi1 probability with which the opponent of the searching player and chance want to reach the current node
      * @param expPlayer the exploring player for this iteration
-     * @return iteration game value is actually returned. Other return values are in global x and l
+     * @return iteration game reward is actually returned. Other return values are in global x and l
      */
     protected double[] iteration(GameState node, double pi1, double pi2, Player expPlayer){
         if (pi1==0 && pi2==0)
@@ -233,7 +234,7 @@ public class CFRISGenSumAlg implements GamePlayingAlgorithm {
         throw new NotImplementedException();
     }
 
-    public HashMap<Pair<Integer, Sequence>, MCTSInformationSet> getInformationSets() {
+    public HashMap<ISKey, MCTSInformationSet> getInformationSets() {
         return informationSets;
     }
 

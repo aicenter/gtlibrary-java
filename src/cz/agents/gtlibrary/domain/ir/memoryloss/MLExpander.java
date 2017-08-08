@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.interfaces.InformationSet;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class MLExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
     public MLExpander(AlgorithmConfig<I> algConfig) {

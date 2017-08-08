@@ -39,13 +39,12 @@ public class GPGameInfo implements GameInfo {
     public static Map<String, Integer> p2cardBounties = new HashMap<>();
 
     /**
-     * value of ante for one player
+     * reward of ante for one player
      */
     public static final int ANTE = 1;
     public static int MAX_RAISES_IN_ROW = 1;
-
     public static int MAX_DIFFERENT_BETS = 1;
-    public static int MAX_DIFFERENT_RAISES = MAX_DIFFERENT_BETS;
+    public static int MAX_DIFFERENT_RAISES = 1;//MAX_DIFFERENT_BETS;
     public static int[] BETS_FIRST_ROUND;
 
     {
@@ -55,7 +54,7 @@ public class GPGameInfo implements GameInfo {
     }
 
     /**
-     * represents value which will be added to previous aggressive action
+     * represents reward which will be added to previous aggressive action
      */
     public static int[] RAISES_FIRST_ROUND;
 
@@ -65,7 +64,7 @@ public class GPGameInfo implements GameInfo {
             RAISES_FIRST_ROUND[i] = (i + 1) * 2;
     }
 
-    public static int MAX_CARD_TYPES = 3;
+    public static int MAX_CARD_TYPES = 4;
     public static int[] CARD_TYPES;
 
     {
@@ -83,7 +82,7 @@ public class GPGameInfo implements GameInfo {
         }
     }
 
-    public static int MAX_CARD_OF_EACH_TYPE = 2;
+    public static int MAX_CARD_OF_EACH_TYPE = 3;
     public static int[] DECK;
 
     {

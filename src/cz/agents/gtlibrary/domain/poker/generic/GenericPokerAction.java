@@ -53,7 +53,7 @@ public class GenericPokerAction extends PokerAction {
         builder.append(", ");
 		builder.append(action);
 		builder.append(", ");
-		builder.append("value: ");
+		builder.append("reward: ");
 		builder.append(value);
 		builder.append("]");
 		return builder.toString();

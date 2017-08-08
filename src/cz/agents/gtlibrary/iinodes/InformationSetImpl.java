@@ -23,32 +23,29 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
 
-public abstract class InformationSetImpl implements InformationSet {
+public abstract class InformationSetImpl implements PerfectRecallInformationSet {
 	
 	private static final long serialVersionUID = 3656344734672077909L;
 	
 	protected Sequence playerHistory;
 	protected Player player;
-	protected LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<GameState>();
+	protected LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<>();
 	private final int hashCode;
 
 	public InformationSetImpl(GameState state) {
 		this.playerHistory = state.getSequenceForPlayerToMove();
 		this.player = state.getPlayerToMove();
 		this.statesInInformationSet.add(state);
-		this.hashCode = state.getISKeyForPlayerToMove().getLeft();
+		this.hashCode = ((PerfectRecallISKey)state.getISKeyForPlayerToMove()).getHash();
 	}
 	
 	public InformationSetImpl(GameState state, Sequence sequence) {
 		this.playerHistory = new ArrayListSequenceImpl(sequence);
 		this.player = state.getPlayerToMove();
 		this.statesInInformationSet.add(state);
-		this.hashCode = state.getISKeyForPlayerToMove().getLeft();
+		this.hashCode = ((PerfectRecallISKey)state.getISKeyForPlayerToMove()).getHash();
 	}
 
 	@Override
@@ -68,11 +65,13 @@ public abstract class InformationSetImpl implements InformationSet {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (obj == null)
+			return false;
 		if (this.hashCode != obj.hashCode())
 			return false;
-        if (!(obj instanceof InformationSet))
+        if (!(obj instanceof PerfectRecallInformationSet))
             return false;
-		InformationSet other = (InformationSet) obj;
+		PerfectRecallInformationSet other = (PerfectRecallInformationSet) obj;
 		
 		if (!this.player.equals(other.getPlayer()))
 			return false;
@@ -87,15 +86,18 @@ public abstract class InformationSetImpl implements InformationSet {
 	}
 
     public void addAllStateToIS(Collection<GameState> states) {
-    	for (GameState gameState : states) {
-			assert gameState.getPlayerToMove().equals(player);
-		}
+		assert states.stream().allMatch(state -> state.getPlayerToMove().equals(player));
         statesInInformationSet.addAll(states);
     }
 
     @Override
 	public Set<GameState> getAllStates() {
 		return statesInInformationSet;
+	}
+
+	@Override
+	public ISKey getISKey() {
+		return statesInInformationSet.iterator().next().getISKeyForPlayerToMove();
 	}
 
 	@Override

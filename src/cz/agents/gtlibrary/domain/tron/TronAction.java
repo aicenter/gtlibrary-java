@@ -116,7 +116,7 @@ public class TronAction extends ActionImpl implements Comparable<TronAction> {
                     //intentionally empty
                 }*/
 
-        //builder.append("[" + value + ", " + descIS + ", " + player);
+        //builder.append("[" + reward + ", " + descIS + ", " + player);
         builder.append("[" + value + ", " + player);
         builder.append("]");
         return builder.toString();

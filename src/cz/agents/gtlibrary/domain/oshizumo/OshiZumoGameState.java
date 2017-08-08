@@ -19,6 +19,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.oshizumo;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -43,9 +45,9 @@ public class OshiZumoGameState extends SimultaneousGameState {
     protected int p2Coins;
     protected int p1Bid;
     protected int p2Bid;
-    private int currentPlayerIndex;
+    protected int currentPlayerIndex;
 
-    protected Pair<Integer, Sequence> key;
+    protected ISKey key;
     private int hashCode = -1;
 
     public OshiZumoGameState() {
@@ -170,11 +172,15 @@ public class OshiZumoGameState extends SimultaneousGameState {
 
     @Override
     protected double[] getEndGameUtilities() {
-        if (wrestlerLoc < OZGameInfo.locK)
-            return new double[]{-1, 1, 0};
-        else if (wrestlerLoc > OZGameInfo.locK)
-            return new double[]{1, -1, 0};
-        return new double[]{0, 0, 0};
+        if (OZGameInfo.BINARY_UTILITIES) {
+            if (wrestlerLoc < OZGameInfo.locK)
+                return new double[]{-1, 1, 0};
+            else if (wrestlerLoc > OZGameInfo.locK)
+                return new double[]{1, -1, 0};
+            return new double[]{0, 0, 0};
+        } else {
+            return new double[] {wrestlerLoc - OZGameInfo.locK, OZGameInfo.locK - wrestlerLoc, 0};
+        }
     }
 
     @Override
@@ -229,7 +235,10 @@ public class OshiZumoGameState extends SimultaneousGameState {
         double delta = p1base + p1bonus;
         
         // seems to play too gredily with this
-        double p1eval = FastTanh.tanh(delta);
+        double p1eval = 0;
+        if (OZGameInfo.BINARY_UTILITIES)
+                p1eval = FastTanh.tanh(delta);
+        else p1eval = delta;
         //double p1eval = delta;
 
         return new double[]{p1eval, -p1eval, 0};
@@ -296,12 +305,12 @@ public class OshiZumoGameState extends SimultaneousGameState {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         if (key == null) {
             if (isPlayerToMoveNature())
-                key = new Pair<Integer, Sequence>(0, history.getSequenceOf(getPlayerToMove()));
+                key = new PerfectRecallISKey(0, history.getSequenceOf(getPlayerToMove()));
             else
-                key = new Pair<Integer, Sequence>(sequenceForAllPlayers.hashCode(), getSequenceForPlayerToMove());
+                key = new PerfectRecallISKey(sequenceForAllPlayers.hashCode(), getSequenceForPlayerToMove());
         }
         return key;
     }

@@ -4,6 +4,10 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.*;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.BFSEnforcingStackelbergLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.BFSForbiddingStackelbergLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.CompleteBFSEnforcingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.DOBSS;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergMultipleLPs;
@@ -131,12 +135,53 @@ public class StackelbergExperiments {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public static StackelbergSequenceFormLP getStackelbergSolver(String algType, GameState rootState, Player leader, Player follower, GameInfo gameInfo, Expander<SequenceInformationSet> expander) {
         if (algType.equals("MILP"))
             return new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, leader, follower, gameInfo, expander);
+        if (algType.equals("BFSEnforcingIterLP")) {
+            SumForbiddingStackelbergLP.USE_BR_CUT = false;
+            return new BFSEnforcingStackelbergLP(leader, gameInfo);
+        }
+        if (algType.equals("BFSEnforcingIterLPBR")) {
+            SumEnforcingStackelbergLP.USE_BR_CUT = true;
+            return new BFSEnforcingStackelbergLP(leader, gameInfo);
+        }
+        if (algType.equals("BFSCompleteEnforcingIterLP")) {
+            SumEnforcingStackelbergLP.USE_BR_CUT = false;
+            return new CompleteBFSEnforcingStackelbergLP(leader, gameInfo);
+        }
+        if (algType.equals("BFSForbiddingIterLP"))
+            return new BFSForbiddingStackelbergLP(leader, gameInfo);
+        if (algType.equals("IterLP"))
+            return new SumForbiddingStackelbergLP(leader, gameInfo);
+        if (algType.equals("IterLPCplexBroken")) {
+            SumForbiddingStackelbergLP.USE_BR_CUT = false;
+            return new ShallowestBrokenCplexStackelbergLP(leader, gameInfo);
+        }
+        if (algType.equals("IterLPCplexBrokenBR")) {
+            SumForbiddingStackelbergLP.USE_BR_CUT = true;
+            return new ShallowestBrokenCplexStackelbergLP(leader, gameInfo);
+        }
+        if (algType.equals("IterLPCplexBrokenAllShallowest"))
+            return new AllShallowestBrokenCplexStackelbergLP(leader, gameInfo);
+        if (algType.equals("IterLPCplexBrokenAll"))
+            return new CompleteBrokenCplexStackelbergLP(leader, gameInfo);
+        if (algType.equals("IterLPCplexCompleteAll"))
+            return new CompleteAllCplexStackelbergLP(leader, gameInfo);
+        if (algType.equals("IterLPCplexComplete"))
+            return new ShallowestAllCplexStackelbergLP(leader, gameInfo);
+        if(algType.equals("IterLPEnforcing"))
+            return new SumEnforcingStackelbergLP(leader, gameInfo);
+        if(algType.equals("MaxIterLPEnforcing"))
+            return new MaxEnforcingStackelbergLP(leader, gameInfo);
+        if(algType.equals("ExpValIterLPEnforcing"))
+            return new ExpValEnforcingStackelbergLP(leader, gameInfo);
+        if(algType.equals("ExpValIterLPForbidding"))
+            return new ExpValForbiddingStackelbergLP(leader, gameInfo);
+        if (algType.equals("MaxIterLP"))
+            return new MaxForbiddingStackelbergLP(leader, gameInfo);
         if (algType.startsWith("MultLP")) {
             StackelbergConfig.USE_FEASIBILITY_CUT = algType.startsWith("MultLPFeas");
             StackelbergConfig.USE_UPPERBOUND_CUT = !algType.endsWith("NoCut");

@@ -1,6 +1,8 @@
 package cz.agents.gtlibrary.domain.ir.memoryloss;
 
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.ir.ImperfectRecallAction;
 import cz.agents.gtlibrary.iinodes.ir.ImperfectRecallGameState;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -9,6 +11,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
+@Deprecated
 public class MLGameState extends ImperfectRecallGameState {
 
     private int round;
@@ -63,8 +66,8 @@ public class MLGameState extends ImperfectRecallGameState {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
-        return new Pair<>(0, getSequenceForPlayerToMove());
+    public ISKey getISKeyForPlayerToMove() {
+        return new PerfectRecallISKey(round, getSequenceForPlayerToMove());
     }
 
     @Override
@@ -82,7 +85,7 @@ public class MLGameState extends ImperfectRecallGameState {
 
     @Override
     public int hashCode() {
-        return history.hashCode();
+        return history.toString().hashCode();
     }
 
     public void increaseRound() {

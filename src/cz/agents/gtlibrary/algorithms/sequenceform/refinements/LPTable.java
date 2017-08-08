@@ -30,8 +30,11 @@ import java.util.Map.Entry;
 
 public class LPTable {
 
-    public int CPLEXALG = IloCplex.Algorithm.Barrier;
-    public int CPLEXTHREADS = 1; // change to 0 to have no restrictions
+    public enum ConstraintType {LE, EQ, GE}
+
+    public static boolean USE_CUSTOM_NAMES = true;
+    public static int CPLEXALG = IloCplex.Algorithm.Auto;
+    public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
 
     protected Map<Object, Double> objective;
     protected Map<Object, Map<Object, Double>> constraints;
@@ -159,7 +162,7 @@ public class LPTable {
     }
 
     public int rowCount() {
-        return constraints.size();
+        return equationIndices.size();
     }
 
     public int columnCount() {
@@ -196,7 +199,7 @@ public class LPTable {
         cplex.clearModel();
         cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
         cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
-        cplex.setParam(IloCplex.IntParam.MIPEmphasis, IloCplex.MIPEmphasis.Optimality);
+        cplex.setParam(IloCplex.IntParam.MIPEmphasis, IloCplex.MIPEmphasis.Balanced);
 //        cplex.setParam(IloCplex.DoubleParam.EpMrk, 0.99999);
 //		cplex.setParam(IloCplex.DoubleParam.BarEpComp, 1e-4);
 //		System.out.println("BarEpComp: " + cplex.getParam(IloCplex.DoubleParam.BarEpComp));
@@ -213,9 +216,13 @@ public class LPTable {
     protected IloNumVar[] getVariables() throws IloException {
         double[] ub = getUpperBounds();
         double[] lb = getLowerBounds();
-        String[] variableNames = getVariableNames();
+        if(USE_CUSTOM_NAMES) {
+            String[] variableNames = getVariableNames();
 
-        return cplex.numVarArray(variableNames.length, lb, ub, variableNames);
+            return cplex.numVarArray(variableNames.length, lb, ub, variableNames);
+        } else {
+            return cplex.numVarArray(lb.length, lb, ub);
+        }
     }
 
     protected Map<Object, IloRange> getRelaxableConstraints(IloRange[] constraints) {
@@ -286,13 +293,22 @@ public class LPTable {
 
             switch (constraintType) {
                 case 0:
-                    cplexConstraints[equationIndex] = cplex.addLe(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    if (USE_CUSTOM_NAMES)
+                        cplexConstraints[equationIndex] = cplex.addLe(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    else
+                        cplexConstraints[equationIndex] = cplex.addLe(rowExpr, getConstant(rowEntry.getKey()));
                     break;
                 case 1:
-                    cplexConstraints[equationIndex] = cplex.addEq(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    if (USE_CUSTOM_NAMES)
+                        cplexConstraints[equationIndex] = cplex.addEq(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    else
+                        cplexConstraints[equationIndex] = cplex.addEq(rowExpr, getConstant(rowEntry.getKey()));
                     break;
                 case 2:
-                    cplexConstraints[equationIndex] = cplex.addGe(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    if (USE_CUSTOM_NAMES)
+                        cplexConstraints[equationIndex] = cplex.addGe(rowExpr, getConstant(rowEntry.getKey()), rowEntry.getKey().toString());
+                    else
+                        cplexConstraints[equationIndex] = cplex.addGe(rowExpr, getConstant(rowEntry.getKey()));
                     break;
                 default:
                     break;
@@ -353,8 +369,12 @@ public class LPTable {
         constraintTypes.put(eqKey, type);
     }
 
+    public void setConstraintType(Object eqKey, ConstraintType type) {
+        setConstraintType(eqKey, type.ordinal());
+    }
+
     /**
-     * Set lower bound for variable represented by varObject, default value is 0
+     * Set lower bound for variable represented by varObject, default reward is 0
      *
      * @param varKey
      * @param value
@@ -364,7 +384,7 @@ public class LPTable {
     }
 
     /**
-     * Set upper bound for variable represented by varObject, default value is POSITIVE_INFINITY
+     * Set upper bound for variable represented by varObject, default reward is POSITIVE_INFINITY
      *
      * @param varKey
      * @param value
@@ -374,6 +394,19 @@ public class LPTable {
     }
 
     public void clearTable() {
+        cplex.setOut(null);
+        constants = new LinkedHashMap<>();
+        constraints = new LinkedHashMap<>();
+        objective = new LinkedHashMap<>();
+
+        equationIndices = new LinkedHashMap<>();
+        variableIndices = new LinkedHashMap<>();
+        primalWatch = new LinkedHashMap<>();
+        dualWatch = new LinkedHashMap<>();
+
+        constraintTypes = new LinkedHashMap<>();
+        lb = new LinkedHashMap<>();
+        ub = new LinkedHashMap<>();
         try {
             cplex.clearModel();
             cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
@@ -381,19 +414,6 @@ public class LPTable {
         } catch (IloException e) {
             e.printStackTrace();
         }
-        cplex.setOut(null);
-        constants = new LinkedHashMap<Object, Double>();
-        constraints = new LinkedHashMap<Object, Map<Object, Double>>();
-        objective = new LinkedHashMap<Object, Double>();
-
-        equationIndices = new LinkedHashMap<Object, Integer>();
-        variableIndices = new LinkedHashMap<Object, Integer>();
-        primalWatch = new LinkedHashMap<Object, Integer>();
-        dualWatch = new LinkedHashMap<Object, Integer>();
-
-        constraintTypes = new LinkedHashMap<Object, Integer>();
-        lb = new LinkedHashMap<Object, Double>();
-        ub = new LinkedHashMap<Object, Double>();
     }
 
     public void removeFromConstraint(Object eqKey, Object varKey) {
@@ -401,5 +421,15 @@ public class LPTable {
 
         if (row != null)
             row.remove(varKey);
+    }
+
+    public void watchAllPrimalVariables() {
+        for (Object varKey : variableIndices.keySet()) {
+            watchPrimalVariable(varKey, varKey);
+        }
+    }
+
+    public boolean exists(Object varKey) {
+        return variableIndices.containsKey(varKey);
     }
 }

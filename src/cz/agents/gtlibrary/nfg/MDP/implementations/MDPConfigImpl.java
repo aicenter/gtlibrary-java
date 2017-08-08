@@ -47,7 +47,7 @@ public abstract class MDPConfigImpl implements MDPConfig {
     }
 
     public static double getEpsilon() {
-        return 0.000001;
+        return 0.00001;
     }
 
     public abstract double getBestUtilityValue(Player player);

@@ -37,22 +37,30 @@ import java.util.List;
 public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider {
     public static boolean useEpsilonRM = false;
     public static double epsilon = 0.001;
-    List<Action> actions;
+    protected List<Action> actions;
     /** Mean strategy. */
     double[] mp;
     /** Cumulative regret. */
     protected double[] r;
     /** Number of strategy update samples. */
     protected int nbSamples;
+    private int actionCount;
+
+    public OOSAlgorithmData(int actionCount) {
+        mp = new double[actionCount];
+        r = new double[actionCount];
+        this.actionCount = actionCount;
+    }
 
     public OOSAlgorithmData(List<Action> actions) {
         this.actions = actions;
+        this.actionCount = actions.size();
         mp = new double[actions.size()];
         r = new double[actions.size()];
     }
-    
+
     public void getRMStrategy(double[] output) {
-        final int K = actions.size();
+        final int K = actionCount;
         double R = 0;
         for (double ri : r) R += Math.max(0,ri);
         
@@ -105,6 +113,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return actions;
     }
 
+    public void setActions(List<Action> actions) {
+        this.actions = actions;
+    }
+
     @Override
     public double[] getMp() {
         return mp;
@@ -114,11 +126,27 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     public int getNbSamples() {
         return nbSamples;
     }
-    
+
+    public double[] getRegrets() {
+        return r;
+    }
+
     public void clear() {
         Arrays.fill(r, 0);
         Arrays.fill(mp, 0);
         nbSamples=0;
+    }
+
+    public int getActionCount() {
+        return actionCount;
+    }
+
+    public void setFrom(OOSAlgorithmData other) {
+//        assert nbSamples == 0 || IntStream.range(0, r.length).allMatch(i -> Math.abs(r[i] - other.r[i]) < 1e-6);
+//        assert AutomatedAbstractionAlgorithm.USE_ABSTRACTION || IntStream.range(0, mp.length).allMatch(i -> Math.abs(mp[i] - other.mp[i]) < 1e-6);
+        System.arraycopy(other.mp, 0, mp, 0, other.mp.length);
+        System.arraycopy(other.r, 0, r, 0, other.r.length);
+        nbSamples = other.getNbSamples();
     }
 }
 

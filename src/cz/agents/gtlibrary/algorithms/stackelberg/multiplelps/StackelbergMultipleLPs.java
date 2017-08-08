@@ -2,7 +2,6 @@ package cz.agents.gtlibrary.algorithms.stackelberg.multiplelps;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
-import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.PureRealPlanIterator;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
@@ -72,7 +71,7 @@ public class StackelbergMultipleLPs extends StackelbergSequenceFormMultipleLPs {
 //                              debugOutput.println(entry);
 //                      }
                     if (v > maxValue) {
-                        debugOutput.println("Best value is " + v + " for follower strategy: ");
+                        debugOutput.println("Best reward is " + v + " for follower strategy: ");
                         maxValue = v;
                         resultValues.put(leader, maxValue);
                         iterator.setBestValue(maxValue);

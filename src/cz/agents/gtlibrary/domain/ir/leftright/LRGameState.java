@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.domain.ir.leftright;
 
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.ir.ImperfectRecallGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -7,6 +9,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
+@Deprecated
 public class LRGameState extends ImperfectRecallGameState {
 
     private int currentPlayerIdx;
@@ -39,7 +42,7 @@ public class LRGameState extends ImperfectRecallGameState {
     public double[] getUtilities() {
         if(((LRAction)getSequenceFor(LRGameInfo.SECOND_PLAYER).getLast()).getType().startsWith("A"))
             return new double[]{1, -1};
-        if(getFirstActionTypeFor(LRGameInfo.SECOND_PLAYER).equals(getFirstActionTypeFor(LRGameInfo.FIRST_PLAYER)))
+        if(((LRAction)getSequenceFor(LRGameInfo.SECOND_PLAYER).getLast()).getType().equals(getFirstActionTypeFor(LRGameInfo.FIRST_PLAYER)))
             return new double[]{-2, 2};
         return new double[]{10, -10};
     }
@@ -69,10 +72,10 @@ public class LRGameState extends ImperfectRecallGameState {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         if(getSequenceFor(LRGameInfo.SECOND_PLAYER).size() == 1)
-            return new Pair<>(0, getSequenceForPlayerToMove());
-        return new Pair<>(hashCode(), getSequenceForPlayerToMove());
+            return new PerfectRecallISKey(0, getSequenceForPlayerToMove());
+        return new PerfectRecallISKey(hashCode(), getSequenceForPlayerToMove());
     }
 
     @Override

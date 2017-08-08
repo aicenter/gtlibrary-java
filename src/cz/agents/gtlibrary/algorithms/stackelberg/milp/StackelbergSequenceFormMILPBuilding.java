@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.IloException;
@@ -16,8 +17,8 @@ import java.util.*;
 public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceFormMILP {
     private Map<GameState, BoundLeafInfo> boundLeafMap;
     private Set<GameState> tempLeafs;
-    Map<Pair<Integer, Sequence>, Set<GameState>> tempLeafMap;
-    Map<Pair<Integer, Sequence>, Set<GameState>> addedNonTerminals;
+    Map<ISKey, Set<GameState>> tempLeafMap;
+    Map<ISKey, Set<GameState>> addedNonTerminals;
 
     public StackelbergSequenceFormMILPBuilding(Player[] players, Player leader, Player follower, GameInfo info, Expander<SequenceInformationSet>expander) {
         super(players, leader, follower, info, expander);
@@ -38,9 +39,9 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
         try {
             while (true) {
                 StackelbergConfig partialConfig = generateRestrictedGame(algConfig.getRootState());
-                PartialGambitEFG gambit = new PartialGambitEFG();
-
-                gambit.write("MILPBuild" + it++ + ".gbt", algConfig.getRootState(), expander);
+//                PartialGambitEFG gambit = new PartialGambitEFG();
+//
+//                gambit.write("MILPBuild" + it++ + ".gbt", algConfig.getRootState(), expander);
 
                 long startTime = threadBean.getCurrentThreadCpuTime();
 
@@ -77,9 +78,9 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
                     System.out.println("actual leaf count: " + tempLeafs.size() + " vs " + algConfig.getAllLeafs().size());
                     System.out.println("actual IS count: " + partialConfig.getAllInformationSets().size());
                     System.out.println("actual size: FirstPlayer Sequences: " + partialConfig.getSequencesFor(players[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(players[1]).size());
-                    gambit = new PartialGambitEFG();
-
-                    gambit.write("finalMILPBuild.gbt", algConfig.getRootState(), expander);
+//                    gambit = new PartialGambitEFG();
+//
+//                    gambit.write("finalMILPBuild.gbt", algConfig.getRootState(), expander);
                     Map<Sequence, Double> leaderRP = createSolution(partialConfig, leader, cplex);
 
                     debugOutput.println("Leader rp:");
@@ -181,7 +182,7 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
     }
 
     private void expandTempLeafsFromISOf(BoundLeafInfo info, StackelbergConfig algConfig, GameState state) {
-        Pair<Integer, Sequence> key = state.getISKeyForPlayerToMove();
+        ISKey key = state.getISKeyForPlayerToMove();
         Set<GameState> tempLeafsInIS = tempLeafMap.get(key);
 
         if (tempLeafsInIS != null) {
@@ -195,8 +196,8 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
         }
     }
 
-    private void removeFrom(Map<Pair<Integer, Sequence>, Set<GameState>> map, GameState state) {
-        Pair<Integer, Sequence> key = state.getISKeyForPlayerToMove();
+    private void removeFrom(Map<ISKey, Set<GameState>> map, GameState state) {
+        ISKey key = state.getISKeyForPlayerToMove();
         Set<GameState> states = map.get(key);
 
         if (states == null)
@@ -206,8 +207,8 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
             map.remove(key);
     }
 
-    private void addToMap(Map<Pair<Integer, Sequence>, Set<GameState>> map, GameState tempLeaf) {
-        Pair<Integer, Sequence> key = tempLeaf.getISKeyForPlayerToMove();
+    private void addToMap(Map<ISKey, Set<GameState>> map, GameState tempLeaf) {
+        ISKey key = tempLeaf.getISKeyForPlayerToMove();
         Set<GameState> tempLeafs = map.get(key);
 
         if (tempLeafs == null) {
@@ -365,84 +366,4 @@ public class StackelbergSequenceFormMILPBuilding extends StackelbergSequenceForm
         return nonZeroTempLeafs;
     }
 
-    public class PartialGambitEFG {
-        private boolean wActionLabels = false;
-        private Map<Pair<Integer, Sequence>, Integer> infSetIndices;
-        private int maxIndex;
-
-
-        public PartialGambitEFG() {
-            infSetIndices = new HashMap<>();
-            maxIndex = 0;
-        }
-
-        public void write(String filename, GameState root, Expander<SequenceInformationSet> expander) {
-            write(filename, root, expander, Integer.MAX_VALUE);
-        }
-
-        public void write(String filename, GameState root, Expander<? extends InformationSet> expander, int cut_off_depth) {
-//        HashCodeEvaluator evaluator = new HashCodeEvaluator();
-//
-//        evaluator.build(root, expander);
-//        assert evaluator.getCollisionCount() == 0;
-            try {
-                PrintStream out = new PrintStream(filename);
-
-                out.print("EFG 2 R \"" + root.getClass() + expander.getClass() + "\" {");
-                Player[] players = root.getAllPlayers();
-                for (int i = 0; i < 2; i++) {//assumes 2 playter games (possibly with nature) nature is the last player and always present!!!
-                    if (i != 0) out.print(" ");
-                    out.print("\"" + players[i] + "\"");
-                }
-                out.println("}");
-                nextOutcome = 1;
-                nextChance = 1;
-                writeRec(out, root, expander, cut_off_depth);
-                out.flush();
-                out.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        int nextOutcome = 1;
-        int nextChance = 1;
-
-        private void writeRec(PrintStream out, GameState node, Expander<? extends InformationSet> expander, int cut_off_depth) {
-            if (node.isGameEnd() || cut_off_depth == 0 || tempLeafs.contains(node)) {
-                out.print("t \"" + node.toString() + "\" " + nextOutcome++ + " \"\" { ");
-                double[] u = getUtilityArray(node, boundLeafMap.get(node));
-
-                for (int i = 0; i < 2; i++) {
-                    out.print((i == 0 ? "" : ", ") + u[i]);
-                }
-                out.println("}");
-            } else {
-                List<Action> actions = expander.getActions(node);
-                if (node.isPlayerToMoveNature()) {
-                    out.print("c \"" + node.toString() + "\" " + nextChance++ + " \"\" { ");
-                    for (Action a : actions) {
-                        out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + node.getProbabilityOfNatureFor(a) + " ");
-                    }
-                } else {
-                    out.print("p \"" + node.toString() + "\" " + (node.getPlayerToMove().getId() + 1) + " " + getUniqueHash(node.getISKeyForPlayerToMove()) + " \"\" { ");
-                    for (Action a : actions) {
-                        out.print("\"" + (wActionLabels ? a.toString() : "") + "\" ");
-                    }
-                }
-                out.println("} 0");
-                for (Action a : actions) {
-                    GameState next = node.performAction(a);
-                    ((SequenceFormConfig<SequenceInformationSet>) expander.getAlgorithmConfig()).addStateToSequenceForm(next);
-                    writeRec(out, next, expander, cut_off_depth - 1);
-                }
-            }
-        }
-
-        private Integer getUniqueHash(Pair<Integer, Sequence> key) {
-            if (!infSetIndices.containsKey(key))
-                infSetIndices.put(key, ++maxIndex);
-            return infSetIndices.get(key);
-        }
-    }
 }

@@ -58,37 +58,37 @@ public class DoubleRational implements Arithmetic {
 
 //    @Override
 //    public void multiplyThis(Arithmetic y) {
-//          value = value*((DoubleRational)y).value;
+//          reward = reward*((DoubleRational)y).reward;
 //    }
 //
 //    @Override
 //    public void divideThis(Arithmetic y) {
-//        value = value/((DoubleRational)y).value;
+//        reward = reward/((DoubleRational)y).reward;
 //    }
 //
 //    @Override
 //    public void addToThis(Arithmetic y) {
-//        value = value+((DoubleRational)y).value;
+//        reward = reward+((DoubleRational)y).reward;
 //    }
 //
 //    @Override
 //    public void subtractFromThis(Arithmetic y) {
-//        value = value-((DoubleRational)y).value;
+//        reward = reward-((DoubleRational)y).reward;
 //    }
 //
 //    @Override
 //    public void negateThis() {
-//        value = -value;
+//        reward = -reward;
 //    }
 //
 //    @Override
 //    public void invertThis() {
-//        value = 1/value;
+//        reward = 1/reward;
 //    }
 //
 //    @Override
 //    public void absThis() {
-//         value = Math.abs(value);
+//         reward = Math.abs(reward);
 //    }
 
     @Override

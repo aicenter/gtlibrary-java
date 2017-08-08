@@ -6,6 +6,7 @@
 
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.interfaces.Action;
 import java.util.List;
 import java.util.Random;
@@ -23,7 +24,7 @@ public class ConjectureFactory implements BackPropFactory {
     
     @Override
     public Selector createSelector(List<Action> actions) {
-        if (actions.get(0).getInformationSet().getPlayersHistory().size()==0)
+        if (((MCTSInformationSet)actions.get(0).getInformationSet()).getPlayersHistory().size()==0)
             return new ConjuctureSelector(fact.createSelector(actions), actions.size());
         else return fact.createSelector(actions);
     }

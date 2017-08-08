@@ -17,9 +17,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.gensum.quantalresponse.QRESol
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.librarycom.DataBuilder;
 import cz.agents.gtlibrary.algorithms.stackelberg.*;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
-import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
-import cz.agents.gtlibrary.domain.goofspiel.GenSumGoofSpielGameState;
-import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
+import cz.agents.gtlibrary.domain.informeraos.InformerAoSExpander;
+import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.ExtendedGenSumKPGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.ExtendedKuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
@@ -46,7 +46,8 @@ public class StrategyStrengthExperiments {
      * @param args
      */
     public static void main(String[] args) {
-        runGenSumKuhnPoker(Double.parseDouble(args[0]));
+        runIAoS();
+//        runGenSumKuhnPoker(Double.parseDouble(args[0]));
 //        runGenSumBPG(Integer.parseInt(args[0]));
 //        runGenSumGenericPoker(0.1);
 //        runGenSumPursuit(1);
@@ -237,7 +238,7 @@ public class StrategyStrengthExperiments {
         Expander<SequenceInformationSet> stackelbergExpander = new ExtendedKuhnPokerExpander<>(stackelbergConfig);
         StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
         StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
-        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
+        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver).getRight();
 
 
         if (qpResult != null && undomResult != null && neResult != null) {
@@ -251,6 +252,82 @@ public class StrategyStrengthExperiments {
 
             MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
             Expander<MCTSInformationSet> cfrExpander = new ExtendedKuhnPokerExpander<>(cfrConfig);
+//            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
+            evaluateAgainstWRNE(cfrEpsilonP1RealPlan, maximinResult, neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateAgainstBRNE(cfrEpsilonP1RealPlan, maximinResult, neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
+            evaluateP1StrategiesAgainstMCTS(cfrEpsilonP1RealPlan, maximinResult, neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, mctsExpander, info, mctsConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstCFR(cfrEpsilonP1RealPlan, maximinResult, neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, cfrExpander, info, cfrConfig, root.getAllPlayers()[1], algConfig);
+            evaluateP1StrategiesAgainstQRE(cfrEpsilonP1RealPlan, maximinResult, neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1], algConfig);
+        }
+    }
+
+    public static void runIAoS() {
+        GameState root = new InformerAoSGameState();
+        GameInfo info = new AoSGameInfo();
+        GenSumSequenceFormConfig algConfig = new GenSumSequenceFormConfig();
+        Expander<SequenceInformationSet> expander = new InformerAoSExpander<>(algConfig);
+
+        generateCompleteGame(root, expander, algConfig, info);
+        FullSequenceFormLP lp = new SequenceFormLP(getActingPlayers(root));
+        GenSumSequenceFormMILP undomSolver = new UndomGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root, expander, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP p1MaxSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info, root.getAllPlayers()[0]);
+        GenSumSequenceFormMILP neSolver = new GenSumSequenceFormMILP(algConfig, root.getAllPlayers(), info);
+        GenSumSequenceFormMILP welfareSolver = new PlayerExpValMaxGenSumSequenceFormMILP(algConfig, getActingPlayers(root), info, root.getAllPlayers()[0], root.getAllPlayers()[1]);
+        DataBuilder.alg = DataBuilder.Alg.lemkeQuasiPerfect2;
+
+        GenSumSequenceFormConfig algConfig1 = new GenSumSequenceFormConfig();
+        Expander<SequenceInformationSet> expander1 = new InformerAoSExpander<>(algConfig1);
+        FullSequenceEFG builder1 = new FullSequenceEFG(root, expander1, info, algConfig1);
+
+        builder1.generateCompleteGame();
+        lp.calculateBothPlStrategy(root, algConfig);
+        SolverResult qpResult = DataBuilder.runDataBuilder(root, expander1, algConfig1, info, "KuhnPokerRepr");
+        SolverResult undomResult = undomSolver.compute();
+        SolverResult neResult = neSolver.compute();
+        SolverResult p1MaxResult = p1MaxSolver.compute();
+        SolverResult welfareResult = welfareSolver.compute();
+        SolverResult maximinResult = new SolverResult(lp.getResultStrategiesForPlayer(root.getAllPlayers()[0]), lp.getResultStrategiesForPlayer(root.getAllPlayers()[1]), 0);
+//        qpResult.p1RealPlan = filterLow(qpResult.p1RealPlan, root, expander, root.getAllPlayers()[0], 1e-4);
+//        undomResult.p1RealPlan = filterLow(undomResult.p1RealPlan, root, expander, root.getAllPlayers()[0], 1e-4);
+//        neResult.p1RealPlan = filterLow(neResult.p1RealPlan, root, expander, root.getAllPlayers()[0], 1e-4);
+//        p1MaxResult.p1RealPlan = filterLow(p1MaxResult.p1RealPlan, root, expander, root.getAllPlayers()[0], 1e-4);
+//        welfareResult.p1RealPlan = filterLow(welfareResult.p1RealPlan, root, expander, root.getAllPlayers()[0], 1e-4);
+        checkIfNE(root, info, algConfig, expander, qpResult);
+        checkIfNE(root, info, algConfig, expander, undomResult);
+        checkIfNE(root, info, algConfig, expander, neResult);
+        checkIfNE(root, info, algConfig, expander, p1MaxResult);
+        checkIfNE(root, info, algConfig, expander, welfareResult);
+        MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
+        Expander<MCTSInformationSet> mctsP1Expander = new InformerAoSExpander<>(mctsP1Config);
+        MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
+        Expander<MCTSInformationSet> cfrP1Expander = new InformerAoSExpander<>(cfrP1Config);
+
+        OOSAlgorithmData.useEpsilonRM = false;
+        Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
+        Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
+        OOSAlgorithmData.useEpsilonRM = true;
+        MCTSConfig cfrP1ConfigEps = new MCTSConfig(new Random(1));
+        Expander<MCTSInformationSet> cfrP1ExpanderEps = new InformerAoSExpander<>(cfrP1ConfigEps);
+        Map<Sequence, Double> cfrEpsilonP1RealPlan = getCFRStrategy(root, cfrP1ExpanderEps);
+
+        StackelbergConfig stackelbergConfig = new StackelbergConfig(root);
+        Expander<SequenceInformationSet> stackelbergExpander = new InformerAoSExpander<>(stackelbergConfig);
+        StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
+        StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(getActingPlayers(root), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
+        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver).getRight();
+
+
+        if (qpResult != null && undomResult != null && neResult != null) {
+            StackelbergConfig stackConfig = new StackelbergConfig(root);
+            Expander<SequenceInformationSet> stackExpander = new InformerAoSExpander<>(stackConfig);
+            FullSequenceEFG stackBuilder = new FullSequenceEFG(root, stackExpander, info, stackConfig);
+
+            stackBuilder.generateCompleteGame();
+            MCTSConfig mctsConfig = new MCTSConfig(new Random(1));
+            Expander<MCTSInformationSet> mctsExpander = new InformerAoSExpander<>(mctsConfig);
+
+            MCTSConfig cfrConfig = new MCTSConfig(new Random(1));
+            Expander<MCTSInformationSet> cfrExpander = new InformerAoSExpander<>(cfrConfig);
 //            evaluateP1StrategiesAgainstPureRps(neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, stackConfig.getIterator(root.getAllPlayers()[1], stackExpander, new EmptyFeasibilitySequenceFormLP()), root, expander);
             evaluateAgainstWRNE(cfrEpsilonP1RealPlan, maximinResult, neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
             evaluateAgainstBRNE(cfrEpsilonP1RealPlan, maximinResult, neResult, undomResult, qpResult, p1MaxResult, welfareResult, rps, cfrP1RealPlan, mctsP1RealPlan, root, expander, info, algConfig, root.getAllPlayers()[1]);
@@ -410,7 +487,7 @@ public class StrategyStrengthExperiments {
         Expander<SequenceInformationSet> stackelbergExpander = new RandomGameExpander<>(stackelbergConfig);
         StackelbergRunner runner = new StackelbergRunner(root, stackelbergExpander, info, stackelbergConfig);
         StackelbergSequenceFormLP solver = new StackelbergSequenceFormMILP(root.getAllPlayers(), root.getAllPlayers()[0], root.getAllPlayers()[1], info, expander);
-        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver);
+        Map<Player, Map<Sequence, Double>> rps = runner.generate(root.getAllPlayers()[0], solver).getRight();
 
         storeTimes(neResult, undomResult, qpResult, p1MaxResult, welfareResult, runner.getFinalTime(), cfrTime, mctsTime);
         if (qpResult != null && undomResult != null && neResult != null) {
@@ -1125,12 +1202,12 @@ public class StrategyStrengthExperiments {
 //        UtilityCalculator calculator = new UtilityCalculator(root, expander);
 //        Strategy p1Strtategy = new NoMissingSeqStrategy(p1RealPlan);
 //        Strategy p2Strtategy = new NoMissingSeqStrategy(p2RealPlan);
-//        double value =  calculator.computeUtility(p1Strtategy, p2Strtategy);
-//        values[0] = value;
-//        if(Math.abs(value - values[0]) > 1e-3)
+//        double reward =  calculator.computeUtility(p1Strtategy, p2Strtategy);
+//        values[0] = reward;
+//        if(Math.abs(reward - values[0]) > 1e-3)
 //            System.err.println("");
         if (values[0] > upperBound + 1e-2 || values[0] < lowerBound - 1e-2)
-            System.err.println("error value: " + values[0] + " brNE: " + upperBound + " wr: " + lowerBound);
+            System.err.println("error reward: " + values[0] + " brNE: " + upperBound + " wr: " + lowerBound);
         write(writer, values);
     }
 

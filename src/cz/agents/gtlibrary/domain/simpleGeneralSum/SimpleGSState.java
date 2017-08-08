@@ -21,6 +21,8 @@ package cz.agents.gtlibrary.domain.simpleGeneralSum;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -42,7 +44,7 @@ public class SimpleGSState extends GameStateImpl {
 
     private int hashCode;
     private boolean hashCodeChange = true;
-    private Pair<Integer, Sequence> key = null;
+    private ISKey key = null;
 
     private Player playerToMove;
 
@@ -107,10 +109,10 @@ public class SimpleGSState extends GameStateImpl {
     }
 
     @Override
-    public Pair<Integer, Sequence> getISKeyForPlayerToMove() {
+    public ISKey getISKeyForPlayerToMove() {
         if (key != null)
             return key;
-        key = new Pair<Integer, Sequence>(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).toHashCode(), history.getSequenceOf(playerToMove));
+        key = new PerfectRecallISKey(new HashCodeBuilder().append(isGameEnd()).append(getHistory().getSequenceOf(playerToMove)).toHashCode(), history.getSequenceOf(playerToMove));
         return key;
     }
 

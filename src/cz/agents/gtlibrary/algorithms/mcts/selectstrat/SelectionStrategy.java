@@ -46,7 +46,7 @@ public interface SelectionStrategy extends Serializable {
      */
     public Action select();
     /**
-    * This action updates the data based on the current sample and returns the value to be propagated up.
+    * This action updates the data based on the current sample and returns the reward to be propagated up.
     * @param actions
     * @param value
     * @return 

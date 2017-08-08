@@ -20,9 +20,11 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.strategy;
 
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
-import cz.agents.gtlibrary.utils.Pair;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -85,9 +87,9 @@ public class UniformStrategyForMissingSequences extends StrategyImpl {
             return out;
         }
 
-        public static UniformStrategyForMissingSequences fromBehavioralStrategy(Map<Pair<Integer,Sequence>, Map<Action,Double>> behav, GameState root, Expander expander){
+        public static UniformStrategyForMissingSequences fromBehavioralStrategy(Map<ISKey, Map<Action,Double>> behav, GameState root, Expander expander){
             UniformStrategyForMissingSequences out = new UniformStrategyForMissingSequences();
-            Player pl = behav.entrySet().iterator().next().getKey().getRight().getPlayer();
+            Player pl = ((PerfectRecallISKey)behav.entrySet().iterator().next().getKey()).getSequence().getPlayer();
             out.put(new ArrayListSequenceImpl(pl), 1.0);
             Deque<GameState> q = new ArrayDeque();
             q.add(root);

@@ -42,7 +42,7 @@ package cz.agents.gtlibrary.algorithms.sequenceform.experiments;
 //import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 //import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 //import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
-//import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+//import cz.agents.gtlibrary.strategy.ArrayListSequenceImpl;
 //import cz.agents.gtlibrary.interfaces.*;
 //import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
 //import cz.agents.gtlibrary.strategy.NoiseMaker;
@@ -433,8 +433,8 @@ public class RefCompExperiments {
 //        writer.write("\r\n");
 //        for (Map.Entry<String, double[]> result : p1AbsResults.entrySet()) {
 //            writer.write(result.getKey());
-//            for (double value : result.getValue()) {
-//                writer.write("," + value);
+//            for (double reward : result.getValue()) {
+//                writer.write("," + reward);
 //            }
 //            writer.write("\r\n");
 //        }

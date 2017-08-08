@@ -61,7 +61,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     public boolean useBelief = false;
 
     public boolean returnMeanValue = false;
-
+    public boolean useUCTMax = true;
+    
     public ISMCTSAlgorithm(Player searchingPlayer, Simulator simulator, BackPropFactory fact, GameState rootState, Expander expander) {
         this.searchingPlayer = searchingPlayer;
         this.simulator = simulator;
@@ -107,14 +108,13 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
 //        System.out.println();
         System.out.println("ISMCTS Iters: " + iters);
-//        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
 //        System.out.println("CurIS size: " + curISArray.length);
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
-        Map<Action, Double> distribution = meanDist.getDistributionFor(is.getAlgorithmData());
-        //Map<Action, Double> distribution = is.getAlgorithmData() instanceof UCTSelector 
-        //        ? (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData()) 
-        //        : meanDist.getDistributionFor(is.getAlgorithmData());
+        Map<Action, Double> distribution = is.getAlgorithmData() instanceof UCTSelector && useUCTMax
+                ? (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData()) 
+                : meanDist.getDistributionFor(is.getAlgorithmData());
 //        System.out.println("Strategy: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
         return Strategy.selectAction(distribution, fact.getRandom());
     }
@@ -274,8 +274,9 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         } else {
             InnerNode child = (InnerNode) curISArray[0].getChildren().values().iterator().next();
             is = child.getInformationSet();
-            Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
-            //Map<Action, Double> distribution = (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData());
+            Map<Action, Double> distribution = is.getAlgorithmData() instanceof UCTSelector && useUCTMax
+                ? (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData()) 
+                : meanDist.getDistributionFor(is.getAlgorithmData());
             action = Strategy.selectAction(distribution, fact.getRandom());
             clean(action);
             return action;

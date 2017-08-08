@@ -28,7 +28,7 @@ public class BigIntRational implements Arithmetic {
     }
 
     /**
-     * builds Rational with value <tt>n</tt>/<tt>d</tt>.
+     * builds Rational with reward <tt>n</tt>/<tt>d</tt>.
      *
      * @param n is the numerator of a new Rational
      * @param d is the denominator of a new Rational
@@ -52,7 +52,7 @@ public class BigIntRational implements Arithmetic {
     }
 
     /**
-     * builds Rational with value <tt>i</tt>.
+     * builds Rational with reward <tt>i</tt>.
      */
     public BigIntRational(int i) {
         denominator = BigInteger.ONE;
@@ -60,7 +60,7 @@ public class BigIntRational implements Arithmetic {
     }
 
     /**
-     * builds Rational with value <tt>i</tt>.
+     * builds Rational with reward <tt>i</tt>.
      */
     public BigIntRational(BigInteger i) {
         denominator = BigInteger.ONE;

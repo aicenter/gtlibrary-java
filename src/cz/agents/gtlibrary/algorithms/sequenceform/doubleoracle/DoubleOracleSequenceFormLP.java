@@ -103,7 +103,7 @@ public class DoubleOracleSequenceFormLP extends SequenceFormLP implements Double
             if (s.getPlayer().equals(firstPlayer)) {
                 sequences.get(firstPlayer).add(s);
                 if (s.size() > 0)
-                    sequences.get(firstPlayer).add(s.getLast().getInformationSet().getPlayersHistory());
+                    sequences.get(firstPlayer).add(((SequenceInformationSet)s.getLast().getInformationSet()).getPlayersHistory());
             } else if (s.getPlayer().equals(secondPlayer)) {
                 sequences.get(firstPlayer).addAll(algConfig.getCompatibleSequencesFor(s));
                 if (s.size() > 0)
