@@ -45,6 +45,11 @@ public class RMBackPropFactory implements BackPropFactory  {
         this.maxUtility = maxUtility;
     }
     
+    public RMBackPropFactory(double minUtility, double maxUtility, double gamma, Random random) {
+        this(minUtility,maxUtility,gamma);
+        this.random = random;
+    }
+    
     public RMBackPropFactory(double gamma) {
         this.gamma = gamma;
     }
