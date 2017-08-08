@@ -51,7 +51,7 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
     protected ThreadMXBean threadBean;
     protected MCTSConfig config;
     protected Expander expander;
-    protected double epsilon = 0.6;
+protected double epsilon = 0.6;
     public boolean dropTree = false;
     public boolean parallel = false;
 
@@ -78,24 +78,30 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
     @Override
     public Action runMiliseconds(int miliseconds) {
         int iters = 0;
+        int xNonZero = 0;
         long start = threadBean.getCurrentThreadCpuTime();
         if (parallel){
             for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
                 iteration2(rootNode, rootNode.getGameState().getAllPlayers()[0]);
                 iters++;
+                if (x>0) xNonZero++;
                 iteration2(rootNode, rootNode.getGameState().getAllPlayers()[1]);
                 iters++;
+                if (x>0) xNonZero++;
             }
         } else {
             for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
                 iteration(rootNode, rootNode.getGameState().getAllPlayers()[0]);
                 iters++;
+                if (x>0) xNonZero++;
                 iteration(rootNode, rootNode.getGameState().getAllPlayers()[1]);
                 iters++;
+                if (x>0) xNonZero++;
             }
         }
         System.out.println();
         System.out.println("OOS Iters: " + iters);
+        System.out.println("OOS xNonZero Iterations: " + xNonZero);
         if (!rootNode.getGameState().getPlayerToMove().equals(searchingPlayer))
             return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData());
@@ -355,19 +361,19 @@ public class SMOOSAlgorithm implements GamePlayingAlgorithm {
         rootNode = is.getAllNodes().iterator().next();
         rootNode.setParent(null);
         Action action = runMiliseconds(miliseconds);
-        //System.out.println("Mean OOS leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("Mean OOS leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
         //Pair<Double,Double> supportSize = StrategyCollector.meanSupportSize(rootNode, new MeanStratDist());
         //System.out.println("Mean OOS support size : " + supportSize.getLeft() + ", mean num of actions: " + supportSize.getRight());
-        //System.out.println("Mean OOS support size: " + StrategyCollector.meanSupportSize(StrategyCollector.getStrategyFor(rootNode, searchingPlayer, new MeanStratDist())));
+        System.out.println("Mean OOS support size: " + StrategyCollector.meanSupportSize(StrategyCollector.getStrategyFor(rootNode, searchingPlayer, new MeanStratDist())));
+        System.out.println("OOS p1: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
+        System.out.println("OOS p2: " + (new MeanStratDist()).getDistributionFor(((InnerNode) (rootNode.getChildren().values().iterator().next())).getInformationSet().getAlgorithmData()));
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
-            //System.out.println("OOS: " + (new MeanStratDist()).getDistributionFor(rootNode.getInformationSet().getAlgorithmData()));
             clean(action);
             return action;
         } else {
             InnerNode child = (InnerNode) rootNode.getChildFor(rootNode.getActions().get(0));
             is = child.getInformationSet();
             distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
-            //System.out.println("OOS: " + distribution);
             action = Strategy.selectAction(distribution, rnd);
             clean(action);
             return action;

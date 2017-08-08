@@ -106,14 +106,15 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             }
         }
 //        System.out.println();
-//        System.out.println("ISMCTS Iters: " + iters);
+        System.out.println("ISMCTS Iters: " + iters);
 //        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
 //        System.out.println("CurIS size: " + curISArray.length);
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
-        Map<Action, Double> distribution = is.getAlgorithmData() instanceof UCTSelector 
-                ? (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData()) 
-                : meanDist.getDistributionFor(is.getAlgorithmData());
+        Map<Action, Double> distribution = meanDist.getDistributionFor(is.getAlgorithmData());
+        //Map<Action, Double> distribution = is.getAlgorithmData() instanceof UCTSelector 
+        //        ? (new MostFrequentAction()).getDistributionFor(is.getAlgorithmData()) 
+        //        : meanDist.getDistributionFor(is.getAlgorithmData());
 //        System.out.println("Strategy: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
         return Strategy.selectAction(distribution, fact.getRandom());
     }
@@ -261,7 +262,11 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
         setCurrentIS(is);
         Action action = runMiliseconds(miliseconds);
-        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("Mean ISMCTS leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("Mean ISMCTS support size: " + StrategyCollector.meanSupportSize(StrategyCollector.getStrategyFor(rootNode, searchingPlayer, new MeanStratDist())));
+        
+        System.out.println("ISMCTS p1: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
+        System.out.println("ISMCTS p2: " + (new MeanStratDist()).getDistributionFor(((InnerNode) (rootNode.getChildren().values().iterator().next())).getInformationSet().getAlgorithmData()));
         
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
             clean(action);

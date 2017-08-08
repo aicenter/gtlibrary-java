@@ -28,6 +28,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
@@ -214,6 +215,12 @@ public class SMJournalOnlineExperiments {
                         exploration = 0.2d;
                         if (explorationString != null) exploration = new Double(explorationString);
                         fact = new Exp3BackPropFactory(-1, 1, exploration, random);
+                        break;
+                    case "MCTS-DRM":
+                        explorationString = System.getProperty("EXPL"+(posIndex+1));
+                        exploration = 0.1d;
+                        if (explorationString != null) exploration = new Double(explorationString);
+                        fact = new RMBackPropFactory(-1, 1, exploration, random);
                         break;
                 }
                 ISMCTSAlgorithm player = new ISMCTSAlgorithm(
