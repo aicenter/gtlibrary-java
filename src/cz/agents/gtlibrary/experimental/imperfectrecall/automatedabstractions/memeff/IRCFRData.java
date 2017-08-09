@@ -78,10 +78,10 @@ public class IRCFRData extends OOSAlgorithmData {
         if(!updated)
             return false;
         updateMeanStrategy(getRMStrategy(), expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
-        Map<Sequence, Double> normalizedExpPlayerProbs = normalize(expPlayerProbs);
+        Map<Sequence, Double> nonZeroExpPlayerProbs = update(expPlayerProbs);//normalize(expPlayerProbs);
 
         regretUpdates.forEach((state, regretUpdate) -> {
-            double weight = normalizedExpPlayerProbs.get(state.getSequenceForPlayerToMove());
+            double weight = nonZeroExpPlayerProbs.get(state.getSequenceForPlayerToMove());
 
             for (int j = 0; j < regretUpdate.length; j++) {
                 r[j] += regretUpdate[j] * weight;
@@ -92,6 +92,14 @@ public class IRCFRData extends OOSAlgorithmData {
         expPlayerProbs = new HashMap<>();
         opponentProbs = new HashMap<>();
         return true;
+    }
+
+    private Map<Sequence,Double> update(Map<Sequence, Double> expPlayerProbs) {
+        double sum = expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d));
+
+        if(sum == 0)
+            return expPlayerProbs.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> 1./expPlayerProbs.size()));
+        return expPlayerProbs;
     }
 
     private Map<Sequence, Double> normalize(Map<Sequence, Double> expPlayerProbs) {

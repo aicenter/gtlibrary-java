@@ -24,9 +24,14 @@ public class FPIRAExperiments {
                     IRCFR.heuristic = IRCFR.SPLIT_HEURISTIC.AVG_VISITED;
                 else if (args[5].equals("VISITED"))
                     IRCFR.heuristic = IRCFR.SPLIT_HEURISTIC.VISITED;
-                else if (args[5].equals("UDPATED"))
+                else if (args[5].equals("UPDATED"))
                     IRCFR.heuristic = IRCFR.SPLIT_HEURISTIC.UPDATED;
                 IRCFR.runGenericPoker();
+            }
+        } else if (args[0].equals("MRCFR")){
+            if(args[1].equals("GP")) {
+                setGP(args);
+                MaxRegretIRCFR.runGenericPoker();
             }
         }
     }
