@@ -262,7 +262,11 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
         setCurrentIS(is);
         Action action = runMiliseconds(miliseconds);
-        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("Mean ISMCTS leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("Mean ISMCTS support size: " + StrategyCollector.meanSupportSize(StrategyCollector.getStrategyFor(rootNode, searchingPlayer, new MeanStratDist())));
+        
+        System.out.println("ISMCTS p1: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
+        System.out.println("ISMCTS p2: " + (new MeanStratDist()).getDistributionFor(((InnerNode) (rootNode.getChildren().values().iterator().next())).getInformationSet().getAlgorithmData()));
         
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
             clean(action);

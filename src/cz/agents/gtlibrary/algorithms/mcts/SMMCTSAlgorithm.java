@@ -180,19 +180,21 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         rootNode = is.getAllNodes().iterator().next();
         rootNode.setParent(null);
         Action action = runMiliseconds(miliseconds);
-        //System.out.println("Mean SMMCTS leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.out.println("Mean SMMCTS leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
         //Pair<Double,Double> supportSize = StrategyCollector.meanSupportSize(rootNode, new MeanStratDist());
         //System.out.println("Mean SMMCTS support size : " + supportSize.getLeft() + ", mean num of actions: " + supportSize.getRight());
-        //System.out.println("Mean SMMCTS support size: " + StrategyCollector.meanSupportSize(StrategyCollector.getStrategyFor(rootNode, searchingPlayer, new MeanStratDist())));
+        System.out.println("Mean SMMCTS support size: " + StrategyCollector.meanSupportSize(StrategyCollector.getStrategyFor(rootNode, searchingPlayer, new MeanStratDist())));
+        
+        System.out.println("SMMCTS p1: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
+        System.out.println("SMMCTS p2: " + (new MeanStratDist()).getDistributionFor(((InnerNode) (rootNode.getChildren().values().iterator().next())).getInformationSet().getAlgorithmData()));
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
             clean(action);
-            //System.out.println("SMMCTS: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
+            
             return action;
         } else {
             InnerNode child = (InnerNode) rootNode.getChildFor(rootNode.getActions().get(0));
             is = child.getInformationSet();
             Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(is.getAlgorithmData());
-            //System.out.println("SMMCTS: " + distribution);
             action = Strategy.selectAction(distribution, fact.getRandom());
             clean(action);
             return action;
