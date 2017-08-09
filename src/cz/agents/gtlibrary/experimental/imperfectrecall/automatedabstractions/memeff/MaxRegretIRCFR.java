@@ -51,7 +51,7 @@ public class MaxRegretIRCFR extends IRCFR {
         GameInfo info = new GPGameInfo();
         MaxRegretIRCFR alg = new MaxRegretIRCFR(root, expander, info, config);
 
-        alg.runIterations(100000);
+        alg.runIterations(10000000);
     }
 
     private static void runKuhnPoker() {
