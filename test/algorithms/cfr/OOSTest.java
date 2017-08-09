@@ -132,7 +132,7 @@ public class OOSTest {
         Strategy strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
         UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
 
-        assertEquals(0, calculator.computeUtility(strategy0, strategy1), 1e-3);
+        assertEquals(0, calculator.computeUtility(strategy0, strategy1), 1e-1);
     }
 
     @Test
@@ -157,6 +157,6 @@ public class OOSTest {
         Strategy strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
         UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
 
-        assertEquals(0, calculator.computeUtility(strategy0, strategy1), 1e-3);
+        assertEquals(0, calculator.computeUtility(strategy0, strategy1), 1e-1);
     }
 }
