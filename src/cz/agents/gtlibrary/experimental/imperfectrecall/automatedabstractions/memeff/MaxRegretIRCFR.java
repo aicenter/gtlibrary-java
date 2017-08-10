@@ -4,6 +4,9 @@ import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -22,13 +25,29 @@ import java.util.stream.Collectors;
 
 public class MaxRegretIRCFR extends IRCFR {
 
+    public static boolean DELETE_REGRETS = true;
+    public static boolean USE_AVG_STRAT = false;
+    public static double ITERATION_MULTIPLIER = 100;
+
     private Map<ISKey, double[]> prRegrets;
 
     public static void main(String[] args) {
 //        runRandomGame();
 //        runKuhnPoker();
-        runGenericPoker();
+//        runGenericPoker();
+        runIIGoofspiel();
     }
+
+    public static void runIIGoofspiel() {
+        GameState root = new IIGoofSpielGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(config);
+        GameInfo info = new GSGameInfo();
+        MaxRegretIRCFR alg = new MaxRegretIRCFR(root, expander, info, config);
+
+        alg.runIterations(10000000);
+    }
+
 
     public static void runRandomGame() {
         GameState root = new RandomGameState();
@@ -74,9 +93,10 @@ public class MaxRegretIRCFR extends IRCFR {
         imperfectRecallIteration(rootState, 1, 1, player);
         updateImperfectRecallData();
 //        if (iteration % 1 == 0) {
-            computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[0]);
-            computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[1]);
-            updateAbstraction();
+        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[0]);
+        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[1]);
+        updateAbstraction();
+        if (DELETE_REGRETS)
             prRegrets.clear();
 //        }
     }
@@ -240,6 +260,12 @@ public class MaxRegretIRCFR extends IRCFR {
         for (int i = 0; i < regret.length; i++) {
             regret[i] += (expPlayer.getId() == 0 ? pi2 : pi1) * (expectedValuesForActions[i] - expectedValue);
         }
+    }
+
+    protected double[] getStrategy(OOSAlgorithmData data) {
+        if (USE_AVG_STRAT && iteration > 1)
+            return ((IRCFRData) data).getNormalizedMeanStrategy();
+        return data.getRMStrategy();
     }
 
 

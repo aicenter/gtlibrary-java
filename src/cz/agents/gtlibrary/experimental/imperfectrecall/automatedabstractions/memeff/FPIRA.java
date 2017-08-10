@@ -2,6 +2,9 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -27,10 +30,19 @@ import java.util.*;
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runRandomGame();
 //        runWichardtCounterexample();
+        runIIGoofspiel();
+    }
+
+    public static void runIIGoofspiel() {
+        GameState root = new IIGoofSpielGameState();
+        Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(new FPIRAConfig());
+        FPIRA fpira = new FPIRA(root, expander, new GSGameInfo());
+
+        fpira.runIterations(1000000);
     }
 
     public static void runGenericPoker() {
@@ -38,7 +50,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new FPIRAConfig());
         FPIRA fpira = new FPIRA(root, expander, new GPGameInfo());
 
-        fpira.runIterations(100000);
+        fpira.runIterations(1000000);
     }
 
     public static void runKuhnPoker() {
@@ -46,7 +58,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         Expander<MCTSInformationSet> expander = new KuhnPokerExpander<>(new FPIRAConfig());
         FPIRA fpira = new FPIRA(root, expander, new KPGameInfo());
 
-        fpira.runIterations(100000);
+        fpira.runIterations(1000000);
     }
 
     public static void runRandomGame() {
@@ -54,7 +66,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         Expander<MCTSInformationSet> expander = new RandomGameExpander<>(new FPIRAConfig());
         FPIRA fpira = new FPIRA(root, expander, new RandomGameInfo());
 
-        fpira.runIterations(100000);
+        fpira.runIterations(1000000);
         GambitEFG gambit = new GambitEFG();
 
         gambit.write("FPIRAtest.gbt", root, expander);
@@ -130,7 +142,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         Player currentPlayer = state.getAllPlayers()[1 - opponent.getId()];
 
         updateISStructure(state, bestResponse, opponentStrategy, opponent, toSplit, 1, 1);
-        currentAbstractionInformationSets.values().forEach(i -> ((CFRBRData) i.getData()).updateMeanStrategy());
+        currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() != 2).forEach(i -> ((CFRBRData) i.getData()).updateMeanStrategy());
         if (aboveDelta(getStrategyDiffs(toSplit), getBehavioralStrategyFor(currentPlayer), currentPlayer)) {
             splitISsToPR(toSplit, currentPlayer);
         } else {
