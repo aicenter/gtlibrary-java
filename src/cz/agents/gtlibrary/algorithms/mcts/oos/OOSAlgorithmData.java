@@ -39,7 +39,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     public static double epsilon = 0.001;
     protected List<Action> actions;
     /** Mean strategy. */
-    double[] mp;
+    protected double[] mp;
     /** Cumulative regret. */
     protected double[] r;
     /** Number of strategy update samples. */

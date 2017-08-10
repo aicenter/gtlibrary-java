@@ -95,9 +95,10 @@ public class GeneralDoubleOracle {
     public static PlayerSelection playerSelection = PlayerSelection.BOTH;
 
     public static void main(String[] args) {
+        runIIGoofspiel();
 //		runAC();
 //        runBP();
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runGoofSpiel();
 //        runIIOshiZumo();
@@ -391,6 +392,14 @@ public class GeneralDoubleOracle {
         doefg.generate(null);
     }
 
+    public static void runIIGoofspiel() {
+        GameState rootState = new IIGoofSpielGameState();
+        GameInfo gameInfo = new GSGameInfo();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new GoofSpielExpander<>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        doefg.generate(null);
+    }
 
     public static void runPursuit() {
         GameState rootState = new PursuitGameState();
@@ -440,7 +449,6 @@ public class GeneralDoubleOracle {
 //        Expander<DoubleOracleInformationSet> expander = new GenericPokerExpanderDomain<DoubleOracleInformationSet>(algConfig);
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
-        System.out.println("number of ISs: " + algConfig.getAllInformationSets().values().stream().filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
     }
 
     public static void runBP() {
@@ -797,6 +805,9 @@ public class GeneralDoubleOracle {
         debugOutput.println("BR result sizes: " + brAlgorithms[0].maxBRResultSize + ", " + brAlgorithms[1].maxBRResultSize);
         debugOutput.println("State cache sizes: " + brAlgorithms[0].maxStateCacheSize + ", " + brAlgorithms[1].maxStateCacheSize);
         debugOutput.println("Temporary leaf count: " + maxTemporaryLeafCount);
+        debugOutput.println("number of ISs: " + algConfig.getAllInformationSets().values().stream()
+                .filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd()))
+                .filter(i -> i.getPlayer().getId() != 2).count());
         gameValue = doRestrictedGameSolver.getResultForPlayer(actingPlayers[0]);
         return realizationPlans;
     }

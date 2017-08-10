@@ -5,6 +5,9 @@ import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -38,8 +41,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
 //                runKuhnPoker();
-//        runGenericPoker();
-        runRandomGame();
+        runGenericPoker();
+//        runRandomGame();
     }
 
     public static void runGenericPoker() {
@@ -47,6 +50,18 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         MCTSConfig config = new MCTSConfig();
         Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(config);
         GameInfo info = new GPGameInfo();
+
+        prepareGame(root, config, expander);
+        IRCFR alg = new IRCFR(root, expander, info, config);
+
+        alg.runIterations(100000);
+    }
+
+    public static void runIIGoofspiel() {
+        GameState root = new IIGoofSpielGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(config);
+        GameInfo info = new GSGameInfo();
 
         prepareGame(root, config, expander);
         IRCFR alg = new IRCFR(root, expander, info, config);

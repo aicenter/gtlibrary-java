@@ -90,7 +90,9 @@ public abstract class AutomatedAbstractionAlgorithm {
 
 
     protected void addData(Collection<IRCFRInformationSet> informationSets) {
-        informationSets.forEach(i -> i.setData(new CFRBRData(this.perfectRecallExpander.getActions(i.getAllStates().stream().findAny().get()).size())));
+        informationSets.stream()
+                .filter(i-> i.getPlayer().getId() != 2)
+                .forEach(i -> i.setData(new CFRBRData(this.perfectRecallExpander.getActions(i.getAllStates().stream().findAny().get()).size())));
     }
 
     public void runIterations(int iterations) {
