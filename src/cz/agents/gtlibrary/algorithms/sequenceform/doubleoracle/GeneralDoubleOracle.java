@@ -644,6 +644,10 @@ public class GeneralDoubleOracle {
             }
 
             debugOutput.println("Iteration " + iterations + ": Bounds Interval Size :" + (p1BoundUtility + p2BoundUtility));
+            debugOutput.println("Eps: " + (p1BoundUtility + p2BoundUtility));
+            debugOutput.println("number of ISs: " + algConfig.getAllInformationSets().values().stream()
+                    .filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd()))
+                    .filter(i -> i.getPlayer().getId() != 2).count());
 
             if (DEBUG) debugOutput.println(algConfig.getNewSequences());
 

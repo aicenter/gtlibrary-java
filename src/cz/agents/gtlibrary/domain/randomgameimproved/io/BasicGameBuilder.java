@@ -2,6 +2,9 @@ package cz.agents.gtlibrary.domain.randomgameimproved.io;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -12,12 +15,26 @@ import java.util.stream.Collectors;
 
 public class BasicGameBuilder {
     public static void main(String[] args) {
+//        buildGP();
+        buildGS();
+    }
+
+    private static void buildGP() {
         GameState root = new GenericPokerGameState();
         Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new MCTSConfig());
         new GPGameInfo();
 
         build(root, expander.getAlgorithmConfig(), expander);
-        System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
+        System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
+    }
+
+    private static void buildGS() {
+        GameState root = new IIGoofSpielGameState();
+        Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(new MCTSConfig());
+        new GSGameInfo();
+
+        build(root, expander.getAlgorithmConfig(), expander);
+        System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
     }
 
     public static void build(GameState rootState, AlgorithmConfig<? extends InformationSet> algConfig, Expander<? extends InformationSet> expander) {

@@ -5,7 +5,10 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -75,7 +78,7 @@ public class IRCFRData extends OOSAlgorithmData {
 
     public boolean applyUpdate() {
         updatedInLastIteration = updated;
-        if(!updated)
+        if (!updated)
             return false;
         updateMeanStrategy(getRMStrategy(), expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
         Map<Sequence, Double> nonZeroExpPlayerProbs = update(expPlayerProbs);//normalize(expPlayerProbs);
@@ -87,6 +90,8 @@ public class IRCFRData extends OOSAlgorithmData {
                 r[j] += regretUpdate[j] * weight;
             }
         });
+        if(IRCFR.REGRET_MATCHING_PLUS)
+            IntStream.range(0, r.length).forEach(i -> r[i] = Math.max(r[i], 0));
         updated = false;
         regretUpdates = new HashMap<>();
         expPlayerProbs = new HashMap<>();
@@ -94,20 +99,20 @@ public class IRCFRData extends OOSAlgorithmData {
         return true;
     }
 
-    private Map<Sequence,Double> update(Map<Sequence, Double> expPlayerProbs) {
+    private Map<Sequence, Double> update(Map<Sequence, Double> expPlayerProbs) {
         double sum = expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d));
 
-        if(sum == 0)
-            return expPlayerProbs.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> 1./expPlayerProbs.size()));
+        if (sum == 0)
+            return expPlayerProbs.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> 1. / expPlayerProbs.size()));
         return expPlayerProbs;
     }
 
     private Map<Sequence, Double> normalize(Map<Sequence, Double> expPlayerProbs) {
         double sum = expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d));
 
-        if(sum == 0)
-            return expPlayerProbs.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> 1./expPlayerProbs.size()));
-        return expPlayerProbs.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()/sum));
+        if (sum == 0)
+            return expPlayerProbs.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> 1. / expPlayerProbs.size()));
+        return expPlayerProbs.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue() / sum));
     }
 
     public double[] getNormalizedMeanStrategy() {

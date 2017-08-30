@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class IRCFR extends AutomatedAbstractionAlgorithm {
+    public static boolean REGRET_MATCHING_PLUS = false;
     protected final MCTSConfig perfectRecallConfig;
     private final FPIRABestResponse p0BR;
     private final FPIRABestResponse p1BR;
