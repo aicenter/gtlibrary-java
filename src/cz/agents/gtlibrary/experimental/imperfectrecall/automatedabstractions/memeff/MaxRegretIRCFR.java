@@ -99,7 +99,8 @@ public class MaxRegretIRCFR extends IRCFR {
         computeCurrentRegrets(rootState, 1, 1, player);
 //        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[0]);
 //        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[1]);
-        updatePRRegrets();
+        if (REGRET_MATCHING_PLUS)
+            removeNegativePRRegrets();
         updateAbstraction();
 //        }
         if (DELETE_REGRETS)
@@ -107,11 +108,10 @@ public class MaxRegretIRCFR extends IRCFR {
 //        }
     }
 
-    private void updatePRRegrets() {
-        if(REGRET_MATCHING_PLUS)
-            prRegrets.values().forEach(array ->
+    private void removeNegativePRRegrets() {
+        prRegrets.values().forEach(array ->
                 IntStream.range(0, array.length).forEach(i -> array[i] = Math.max(array[i], 0))
-            );
+        );
 
     }
 

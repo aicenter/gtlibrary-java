@@ -51,11 +51,13 @@ public class FPIRAExperiments {
                 setGP(args);
                 MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[5]);
                 MaxRegretIRCFR.ITERATION_MULTIPLIER = Double.parseDouble(args[6]);
+                IRCFR.REGRET_MATCHING_PLUS = Boolean.parseBoolean(args[7]);
                 MaxRegretIRCFR.runGenericPoker();
             } else if (args[1].equals("GS")) {
                 setGS(args);
                 MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[3]);
                 MaxRegretIRCFR.ITERATION_MULTIPLIER = Double.parseDouble(args[4]);
+                MaxRegretIRCFR.REGRET_MATCHING_PLUS = Boolean.parseBoolean(args[5]);
                 MaxRegretIRCFR.runIIGoofspiel();
             }
         }
