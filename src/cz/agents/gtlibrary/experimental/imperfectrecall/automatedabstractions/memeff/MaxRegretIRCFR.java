@@ -22,6 +22,7 @@ import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class MaxRegretIRCFR extends IRCFR {
 
@@ -34,8 +35,8 @@ public class MaxRegretIRCFR extends IRCFR {
     public static void main(String[] args) {
 //        runRandomGame();
 //        runKuhnPoker();
-//        runGenericPoker();
-        runIIGoofspiel();
+        runGenericPoker();
+//        runIIGoofspiel();
     }
 
     public static void runIIGoofspiel() {
@@ -93,12 +94,25 @@ public class MaxRegretIRCFR extends IRCFR {
         imperfectRecallIteration(rootState, 1, 1, player);
         updateImperfectRecallData();
 //        if (iteration % 1 == 0) {
-        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[0]);
-        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[1]);
+
+//        if (iteration % 4 == 0) {
+        computeCurrentRegrets(rootState, 1, 1, player);
+//        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[0]);
+//        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[1]);
+        updatePRRegrets();
         updateAbstraction();
+//        }
         if (DELETE_REGRETS)
             prRegrets.clear();
 //        }
+    }
+
+    private void updatePRRegrets() {
+        if(REGRET_MATCHING_PLUS)
+            prRegrets.values().forEach(array ->
+                IntStream.range(0, array.length).forEach(i -> array[i] = Math.max(array[i], 0))
+            );
+
     }
 
     private void updateAbstraction() {
