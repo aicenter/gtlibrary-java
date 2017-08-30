@@ -28,6 +28,7 @@ public class MaxRegretIRCFR extends IRCFR {
 
     public static boolean DELETE_REGRETS = true;
     public static boolean USE_AVG_STRAT = false;
+    public static boolean USE_SPLIT_TOLERANCE = true;
     public static double ITERATION_MULTIPLIER = 100;
 
     private Map<ISKey, double[]> prRegrets;
@@ -133,7 +134,7 @@ public class MaxRegretIRCFR extends IRCFR {
                     Set<Integer> maxRegretActionIndices = new HashSet<>();
 
                     for (int j = 0; j < regrets.length; j++) {
-                        if (regrets[j] > max - 1e-8)
+                        if (regrets[j] > max - (USE_SPLIT_TOLERANCE ? 1. / iteration : 1e-8))
                             maxRegretActionIndices.add(j);
                     }
                     compatibleISs.computeIfAbsent(maxRegretActionIndices, k -> new HashSet<>()).add(key);
