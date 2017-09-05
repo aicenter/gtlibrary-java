@@ -16,7 +16,6 @@ public class IRCFRData extends OOSAlgorithmData {
 
     protected Map<GameState, double[]> regretUpdates;
     protected Map<Sequence, Double> expPlayerProbs;
-    protected Map<GameState, Double> opponentProbs;
     protected boolean updated;
     protected boolean updatedInLastIteration;
     protected boolean visitedInLastIteration;
@@ -26,7 +25,6 @@ public class IRCFRData extends OOSAlgorithmData {
         super(actionCount);
         regretUpdates = new HashMap<>();
         expPlayerProbs = new HashMap<>();
-        opponentProbs = new HashMap<>();
         updated = false;
         r[0] = 1;
     }
@@ -35,7 +33,6 @@ public class IRCFRData extends OOSAlgorithmData {
         super(actions);
         regretUpdates = new HashMap<>();
         expPlayerProbs = new HashMap<>();
-        opponentProbs = new HashMap<>();
         updated = false;
         r[0] = 1;
     }
@@ -72,7 +69,6 @@ public class IRCFRData extends OOSAlgorithmData {
         }
         regretUpdates.put(state, regretUpdate);
         expPlayerProbs.put(state.getSequenceForPlayerToMove(), expPlayerProb);
-        opponentProbs.put(state, opponentProb);
         updated = true;
     }
 
@@ -95,7 +91,6 @@ public class IRCFRData extends OOSAlgorithmData {
         updated = false;
         regretUpdates = new HashMap<>();
         expPlayerProbs = new HashMap<>();
-        opponentProbs = new HashMap<>();
         return true;
     }
 
