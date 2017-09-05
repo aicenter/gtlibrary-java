@@ -134,7 +134,7 @@ public class MaxRegretIRCFR extends IRCFR {
                     Set<Integer> maxRegretActionIndices = new HashSet<>();
 
                     for (int j = 0; j < regrets.length; j++) {
-                        if (regrets[j] > max - (USE_SPLIT_TOLERANCE ? 1. / iteration : 1e-8))
+                        if (regrets[j] > max - (USE_SPLIT_TOLERANCE ? 0.2 / Math.sqrt(iteration) : 1e-8))
                             maxRegretActionIndices.add(j);
                     }
                     compatibleISs.computeIfAbsent(maxRegretActionIndices, k -> new HashSet<>()).add(key);
