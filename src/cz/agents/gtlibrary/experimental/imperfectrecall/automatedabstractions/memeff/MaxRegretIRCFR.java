@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
 public class MaxRegretIRCFR extends IRCFR {
 
     public static boolean DELETE_REGRETS = true;
-    public static boolean USE_AVG_STRAT = false;
+//    public static boolean USE_AVG_STRAT = false;
     public static boolean USE_SPLIT_TOLERANCE = true;
     public static double ITERATION_MULTIPLIER = 100;
 
@@ -271,57 +271,18 @@ public class MaxRegretIRCFR extends IRCFR {
                                       double[] expectedValuesForActions, double expectedValue) {
         double[] regret = prRegrets.computeIfAbsent(node.getISKeyForPlayerToMove(),
                 k -> new double[expectedValuesForActions.length]);
+        double currentProb = (expPlayer.getId() == 0 ? pi2 : pi1);
 
         for (int i = 0; i < regret.length; i++) {
-            regret[i] += (expPlayer.getId() == 0 ? pi2 : pi1) * (expectedValuesForActions[i] - expectedValue);
+            regret[i] += currentProb * (expectedValuesForActions[i] - expectedValue);
         }
     }
 
     protected double[] getStrategy(OOSAlgorithmData data) {
-        if (USE_AVG_STRAT && iteration > 1)
-            return ((IRCFRData) data).getNormalizedMeanStrategy();
+//        if (USE_AVG_STRAT && iteration > 1)
+//            return ((IRCFRData) data).getNormalizedMeanStrategy();
         return data.getRMStrategy();
     }
-
-
-//    @Override
-//    protected Map<ImperfectRecallISKey, Map<PerfectRecallISKey, OOSAlgorithmData>> getRegretDifferences() {
-//        Map<ImperfectRecallISKey, Map<PerfectRecallISKey, OOSAlgorithmData>> toSplit = new HashMap<>();
-//
-//        currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() != 2).forEach(i -> {  tohle nedelám dobře ne? potřebuju spočítat regret té strategie z IR abstraction jenom nic víc
-//                což v těch regretech je ale s špatnym ovážením a dělám to o krok zpět
-//            double[] abstractionRegrets = i.getData().getRegrets();
-//            Set<ISKey> isKeys = i.getAllStates().stream().filter(s -> !s.isPlayerToMoveNature())
-//                    .map(s -> s.getISKeyForPlayerToMove()).collect(Collectors.toSet());
-//            Map<ISKey, double[]> prRegretsForIS = isKeys.stream().collect(Collectors.toMap(key -> key,
-//                    key -> ((IRCFRData) perfectRecallConfig.getAllInformationSets().get(key).getAlgorithmData()).getRegrets()));   should be weighted?
-//
-//            if(computeRegret(abstractionRegrets) < computeRegret(prRegretsForIS)) {
-//                Map<PerfectRecallISKey, OOSAlgorithmData> dataMap = toSplit.computeIfAbsent((ImperfectRecallISKey) i.getISKey(), key -> new HashMap<>());
-//
-//                here choose only some
-//                isKeys.forEach(key -> dataMap.put((PerfectRecallISKey) key, (OOSAlgorithmData) perfectRecallConfig.getAllInformationSets().get(key).getAlgorithmData()));
-//            }
-//        });
-//        return toSplit;
-//    }
-
-//    private void updateAbstractionForRegrets(Map<ISKey, double[]> irRegrets, Map<ISKey, double[]> prRegrets) {
-//        currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() != 2).forEach(i -> {
-//            double[] irRegret = irRegrets.get(i.getISKey());
-//            Map<ISKey, double[]> currentISPRRegrets = getCurrentISPRRegrets(prRegrets, i);
-//
-//            if(computeRegret(irRegret) < computeRegret(currentISPRRegrets)) {
-//                updateIS(i, irRegret, currentISPRRegrets);
-//            }
-//        });
-//    }
-//
-//    private Map<ISKey, double[]> getCurrentISPRRegrets(Map<ISKey, double[]> prRegrets,
-//                                                       IRCFRInformationSet informationSet) {
-//        return informationSet.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove())
-//                .collect(Collectors.toMap(key -> (PerfectRecallISKey) key, key -> prRegrets.get(key)));
-//    }
 
     private double computeRegret(Map<ISKey, double[]> currentISPRRegrets) {
         return currentISPRRegrets.values().stream().flatMapToDouble(regret -> Arrays.stream(regret)).sum();
