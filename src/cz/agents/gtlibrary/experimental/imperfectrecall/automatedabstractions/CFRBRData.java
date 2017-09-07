@@ -33,13 +33,6 @@ public class CFRBRData extends FixedForIterationData {
         nbSamples = data.nbSamples;
     }
 
-    public void setRegretAtIndex(int index, double regret) {
-        for (int i = 0; i < r.length; i++) {
-            r[i] = 0;
-        }
-        r[index] = regret;
-    }
-
     public void updateMeanStrategy(int index, double w) {
         mp[index] += w;
         nbSamples++;
