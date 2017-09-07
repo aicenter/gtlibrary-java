@@ -59,6 +59,15 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         r = new double[actions.size()];
     }
 
+    public OOSAlgorithmData(OOSAlgorithmData data) {
+        this.actions = data.actions;
+        this.actionCount = data.getActionCount();
+        mp = new double[actionCount];
+        System.arraycopy(data.mp, 0, mp, 0, data.mp.length);
+        r = new double[actionCount];
+        System.arraycopy(data.r, 0, r, 0, data.r.length);
+    }
+
     public void getRMStrategy(double[] output) {
         final int K = actionCount;
         double R = 0;
@@ -104,7 +113,19 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         nbSamples++;
     }
 
-   public void setRegret(double[] r) {
+    public void setRegretAtIndex(int index, double regret) {
+        for (int i = 0; i < r.length; i++) {
+            r[i] = 0;
+        }
+        r[index] = regret;
+    }
+
+    public void addToRegretAtIndex(int index, double regret) {
+        r[index] += regret;
+    }
+
+
+    public void setRegret(double[] r) {
        this.r = r;
    }
         

@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 
 public class BasicGameBuilder {
     public static void main(String[] args) {
-//        buildGP();
-        buildGS();
+        buildGP();
+//        buildGS();
     }
 
     private static void buildGP() {
@@ -24,7 +24,7 @@ public class BasicGameBuilder {
         Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new MCTSConfig());
         new GPGameInfo();
 
-        build(root, expander.getAlgorithmConfig(), expander);
+        buildWithoutTerminalIS(root, expander.getAlgorithmConfig(), expander);
         System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
     }
 
@@ -55,7 +55,7 @@ public class BasicGameBuilder {
         }
     }
 
-    public void buildWithoutTerminalIS(GameState rootState, AlgorithmConfig<? extends InformationSet> algConfig, Expander<? extends InformationSet> expander) {
+    public static void buildWithoutTerminalIS(GameState rootState, AlgorithmConfig<? extends InformationSet> algConfig, Expander<? extends InformationSet> expander) {
         ArrayDeque<GameState> queue = new ArrayDeque<>();
 
         queue.add(rootState);
@@ -69,7 +69,7 @@ public class BasicGameBuilder {
             queue.addAll(expander.getActions(currentState).stream().map(currentState::performAction).collect(Collectors.toList()));
 
             if(algConfig.getAllInformationSets().size() % 100000 == 0)
-                System.out.println(algConfig.getAllInformationSets().size());
+                System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
         }
     }
 }

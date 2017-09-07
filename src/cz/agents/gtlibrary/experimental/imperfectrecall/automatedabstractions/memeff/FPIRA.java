@@ -18,7 +18,6 @@ import cz.agents.gtlibrary.domain.wichardtne.PerfectInformationWichardtState;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtExpander;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.CFRBRData;
-import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.StrategyDiffs;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
@@ -26,15 +25,16 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
 //        runRandomGame();
 //        runWichardtCounterexample();
-        runIIGoofspiel();
+//        runIIGoofspiel();
     }
 
     public static void runIIGoofspiel() {
@@ -79,6 +79,8 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
         fpira.runIterations(100000);
     }
+
+    public static boolean CHECK_BOTH_SIDES = false;
 
     private final FPIRADeltaCalculator p0Delta;
     private final FPIRADeltaCalculator p1Delta;
@@ -200,11 +202,11 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         return splitCount;
     }
 
-    private double getProbability(Map<ISKey, double[]> strategy, Action action, List<Action> actions) {
+    protected double getProbability(Map<ISKey, double[]> strategy, Action action, List<Action> actions) {
         return getProbability(strategy.get(currentAbstractionISKeys.get((PerfectRecallISKey) action.getInformationSet().getISKey(), actions)), action, actions);
     }
 
-    private double getProbability(double[] strategy, Action action, List<Action> actions) {
+    protected double getProbability(double[] strategy, Action action, List<Action> actions) {
         return strategy[getIndex(actions, action)];
     }
 
@@ -220,35 +222,49 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         return -1;
     }
 
-    private boolean aboveDelta(FPIRAStrategyDiffs strategyDiffs, Map<ISKey, double[]> strategy, Player player) {
+    protected boolean aboveDelta(FPIRAStrategyDiffs strategyDiffs, Map<ISKey, double[]> strategy, Player player) {
         double delta;
 
-//        assert valid(strategyDiffs, strategy);
+        assert valid(strategyDiffs, strategy);
         if (player.getId() == 0) {
-            delta = Math.max(p1Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs),
-                    -p1Delta.calculateNegativeDeltaForAbstractedStrategy(strategy, strategyDiffs));
+            if (CHECK_BOTH_SIDES)
+                delta = Math.max(p1Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs),
+                        -p1Delta.calculateNegativeDeltaForAbstractedStrategy(strategy, strategyDiffs));
+            else
+                delta = p1Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs);
             p1Delta.clearProbabilityCache();
         } else {
-            delta = Math.max(p0Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs),
-                    -p0Delta.calculateNegativeDeltaForAbstractedStrategy(strategy, strategyDiffs));
+            if (CHECK_BOTH_SIDES)
+                delta = Math.max(p0Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs),
+                        -p0Delta.calculateNegativeDeltaForAbstractedStrategy(strategy, strategyDiffs));
+            else
+                delta = p0Delta.calculateDeltaForAbstractedStrategy(strategy, strategyDiffs);
             p0Delta.clearProbabilityCache();
         }
         System.gc();
         return delta > 1e-8;
     }
 
-    private boolean valid(StrategyDiffs strategyDiffs, Map<Action, Double> strategy) {
-        for (Map<Action, Double> actionDoubleMap : strategyDiffs.prStrategyDiff.values()) {
-            for (Map.Entry<Action, Double> actionDoubleEntry : actionDoubleMap.entrySet()) {
-                if (strategy.getOrDefault(actionDoubleEntry.getKey(), 0d) + actionDoubleEntry.getValue() < 0)
-                    return false;
-            }
+    private boolean valid(FPIRAStrategyDiffs strategyDiffs, Map<ISKey, double[]> strategy) {
+        for (Map.Entry<PerfectRecallISKey, double[]> actionDoubleMap : strategyDiffs.prStrategyDiff.entrySet()) {
+            if (Math.abs(Arrays.stream(actionDoubleMap.getValue()).sum()) > 1e-8)
+                return false;
         }
-        for (Map<Action, Double> actionDoubleMap : strategyDiffs.irStrategyDiff.values()) {
-            for (Map.Entry<Action, Double> actionDoubleEntry : actionDoubleMap.entrySet()) {
-                if (strategy.getOrDefault(actionDoubleEntry.getKey(), 0d) + actionDoubleEntry.getValue() < 0)
-                    return false;
-            }
+        for (Map.Entry<PerfectRecallISKey, double[]> actionDoubleMap : strategyDiffs.irStrategyDiff.entrySet()) {
+            if (Math.abs(Arrays.stream(actionDoubleMap.getValue()).sum()) > 1e-8)
+                return false;
+        }
+        for (Map.Entry<PerfectRecallISKey, double[]> actionDoubleMap : strategyDiffs.prStrategyDiff.entrySet()) {
+            if (IntStream.range(0, actionDoubleMap.getValue().length)
+                    .anyMatch(i -> strategy.get(actionDoubleMap.getKey()) != null &&
+                            strategy.get(actionDoubleMap.getKey())[i] - actionDoubleMap.getValue()[i] < 0))
+                return false;
+        }
+        for (Map.Entry<PerfectRecallISKey, double[]> actionDoubleMap : strategyDiffs.irStrategyDiff.entrySet()) {
+            if (IntStream.range(0, actionDoubleMap.getValue().length)
+                    .anyMatch(i -> strategy.get(actionDoubleMap.getKey()) != null &&
+                            strategy.get(actionDoubleMap.getKey())[i] - actionDoubleMap.getValue()[i] < 0))
+                return false;
         }
         return true;
     }
