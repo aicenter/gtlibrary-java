@@ -38,6 +38,7 @@ public class FrequencyFPIRA extends FPIRA {
 
         updateISStructureFrequency(state, bestResponse, opponentStrategy, opponent, toSplit, 1, 1);
         splitISsAccordingToBRFrequency(toSplit, currentPlayer);
+        assert toSplit.values().stream().allMatch(map -> map.size() == 1);
         if (aboveDelta(getStrategyDiffsFrequency(toSplit), getBehavioralStrategyFor(currentPlayer), currentPlayer)) {
             splitISsToPRFrequency(toSplit, currentPlayer);
         } else {
@@ -54,8 +55,11 @@ public class FrequencyFPIRA extends FPIRA {
     }
 
     protected void splitISsAccordingToBRFrequency(Map<InformationSet, Map<Integer, Set<PerfectRecallISKey>>> toSplit, Player player) {
-        new HashMap<>(toSplit).entrySet().stream().filter(informationSetMapEntry -> informationSetMapEntry.getValue().size() > 1).forEach(informationSetMapEntry -> {
-            for (Map.Entry<Integer, Set<PerfectRecallISKey>> entry : new HashMap<>(informationSetMapEntry.getValue()).entrySet()) {
+        Map<InformationSet, Map<Integer, Set<PerfectRecallISKey>>> toSplitAdd = new HashMap<>();
+        Map<InformationSet, Set<Integer>> toSplitRemove = new HashMap<>();
+
+        toSplit.entrySet().stream().filter(informationSetMapEntry -> informationSetMapEntry.getValue().size() > 1).forEach(informationSetMapEntry -> {
+            for (Map.Entry<Integer, Set<PerfectRecallISKey>> entry : informationSetMapEntry.getValue().entrySet()) {
                 Set<GameState> isStates = informationSetMapEntry.getKey().getAllStates();
                 Set<GameState> toRemove = new HashSet<>();
 
@@ -72,15 +76,17 @@ public class FrequencyFPIRA extends FPIRA {
                     isStates.removeAll(toRemove);
                     newIS = createNewIS(toRemove, player, ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData());
                 }
-                Map<Integer, Set<PerfectRecallISKey>> newActionMap = new HashMap<>(1);
-
-                newActionMap.put(entry.getKey(), entry.getValue());
-                toSplit.put(newIS, newActionMap);
-                toSplit.get(informationSetMapEntry.getKey()).remove(entry.getKey());
+                toSplitAdd.computeIfAbsent(newIS, key ->  new HashMap<>()).put(entry.getKey(), entry.getValue());
+                toSplitRemove.computeIfAbsent(informationSetMapEntry.getKey(), key -> new HashSet<>()).add(entry.getKey());
             }
-            if (informationSetMapEntry.getValue().isEmpty())
-                toSplit.remove(informationSetMapEntry.getKey());
         });
+        toSplit.putAll(toSplitAdd);
+        toSplitRemove.forEach((k, v) -> {
+            Map<Integer, Set<PerfectRecallISKey>> map = toSplit.get(k);
+
+            v.forEach(actionIndex -> map.remove(actionIndex));
+        });
+        toSplit.entrySet().removeIf(e -> e.getValue().isEmpty());
     }
 
 
