@@ -22,6 +22,14 @@ public class FPIRAExperiments {
                 setGS(args);
                 FPIRA.runIIGoofspiel();
             }
+        }else if (args[0].equals("FreqFPIRA")) {
+                if (args[1].equals("GP")) {
+                    setGP(args);
+                    FrequencyFPIRA.runGenericPoker();
+                } else if (args[1].equals("GS")) {
+                    setGS(args);
+                    FrequencyFPIRA.runIIGoofspiel();
+                }
         } else if (args[0].equals("IRCFR")) {
             if (args[1].equals("GP")) {
                 setGP(args);
