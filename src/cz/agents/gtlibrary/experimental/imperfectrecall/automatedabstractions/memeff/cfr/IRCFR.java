@@ -132,11 +132,14 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 //        p0Strategy.forEach((k, v) -> System.out.print(k+ ": " + Arrays.toString(v)));
         if (iteration > 1) {
             System.out.println("p0BR: " + p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy));
+            p0BR.clearData();
             System.out.println("p1BR: " + -p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy));
+            p1BR.clearData();
         }
         System.out.println("ISs in perfect recall config: " + perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).count());
         System.out.println("Reachable IS count: " + getReachableISCountFromOriginalGame(p0Strategy, p1Strategy));
         System.out.println("Reachable abstracted IS count: " + getReachableAbstractedISCountFromOriginalGame(p0Strategy, p1Strategy));
+        System.gc();
     }
 
     private boolean validStrategy(Map<ISKey, double[]> strategy) {

@@ -31,11 +31,11 @@ import java.util.stream.IntStream;
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
 //        runRandomGame();
 //        runWichardtCounterexample();
-//        runIIGoofspiel();
+        runIIGoofspiel();
     }
 
     public static void runIIGoofspiel() {
@@ -111,7 +111,9 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         Map<ISKey, double[]> p1Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[1]);
 
         System.out.println("p0BR: " + p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy));
+        p0BR.clearData();
         System.out.println("p1BR: " + -p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy));
+        p1BR.clearData();
         System.out.println("State cache from BR sizes: " + p0BR.maxStateValueCache + ", " + p1BR.maxStateValueCache);
         System.out.println("BR result sizes: " + p0BR.maxBRResultSize + ", " + p1BR.maxBRResultSize);
         System.out.println("BR probability cache: " + p0BR.maxProbCacheSize + ", " + p1BR.maxProbCacheSize);
@@ -119,6 +121,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         System.out.println("deltaCalc probability cache: " + p0Delta.maxProbCacheSize + ", " + p1Delta.maxProbCacheSize);
         System.out.println("Reachable IS count: " + getReachableISCountFromOriginalGame(p0Strategy, p1Strategy));
         System.out.println("Reachable abstracted IS count: " + getReachableAbstractedISCountFromOriginalGame(p0Strategy, p1Strategy));
+        System.gc();
     }
 
     @Override

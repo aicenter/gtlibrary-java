@@ -14,16 +14,16 @@ import java.util.stream.IntStream;
 
 public class IRCFRData extends OOSAlgorithmData {
 
-    protected Map<GameState, double[]> regretUpdates;
-    protected Map<Sequence, Double> expPlayerProbs;
+    double[] regretUpdate;
     protected boolean updated;
     protected boolean updatedInLastIteration;
     protected boolean visitedInLastIteration;
     protected boolean visitedByAvgStrategy;
+    private Map<Sequence, Double> expPlayerProbs;
 
     public IRCFRData(int actionCount) {
         super(actionCount);
-        regretUpdates = new HashMap<>();
+        regretUpdate = new double[actionCount];
         expPlayerProbs = new HashMap<>();
         updated = false;
         r[0] = 1;
@@ -31,7 +31,7 @@ public class IRCFRData extends OOSAlgorithmData {
 
     public IRCFRData(List<Action> actions) {
         super(actions);
-        regretUpdates = new HashMap<>();
+        regretUpdate = new double[actions.size()];
         expPlayerProbs = new HashMap<>();
         updated = false;
         r[0] = 1;
@@ -56,18 +56,14 @@ public class IRCFRData extends OOSAlgorithmData {
             else
                 regretUpdate[i] += -x * W;
         }
-        regretUpdates.put(state, regretUpdate);
         expPlayerProbs.put(state.getSequenceForPlayerToMove(), expPlayerProb);
         updated = true;
     }
 
     public void updateAllRegrets(double[] Vs, double meanV, double opponentProb, GameState state, double expPlayerProb) {
-        double[] regretUpdate = new double[getActionCount()];
-
         for (int i = 0; i < getActionCount(); i++) {
             regretUpdate[i] += opponentProb * (Vs[i] - meanV);
         }
-        regretUpdates.put(state, regretUpdate);
         expPlayerProbs.put(state.getSequenceForPlayerToMove(), expPlayerProb);
         updated = true;
     }
@@ -78,17 +74,14 @@ public class IRCFRData extends OOSAlgorithmData {
             return false;
         updateMeanStrategy(getRMStrategy(), expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
 
-        regretUpdates.forEach((state, regretUpdate) -> {
-
-            for (int j = 0; j < regretUpdate.length; j++) {
-                r[j] += regretUpdate[j];
-            }
-        });
-        if(IRCFR.REGRET_MATCHING_PLUS)
+        for (int j = 0; j < regretUpdate.length; j++) {
+            r[j] += regretUpdate[j];
+        }
+        if (IRCFR.REGRET_MATCHING_PLUS)
             IntStream.range(0, r.length).forEach(i -> r[i] = Math.max(r[i], 0));
         updated = false;
-        regretUpdates = new HashMap<>();
         expPlayerProbs = new HashMap<>();
+        Arrays.fill(regretUpdate, 0);
         return true;
     }
 
