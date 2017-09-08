@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira;
 
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
@@ -18,6 +18,7 @@ import cz.agents.gtlibrary.domain.wichardtne.PerfectInformationWichardtState;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtExpander;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.CFRBRData;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionAlgorithm;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
