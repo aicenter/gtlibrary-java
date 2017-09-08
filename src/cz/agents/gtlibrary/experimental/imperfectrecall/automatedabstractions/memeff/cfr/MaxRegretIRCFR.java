@@ -36,8 +36,8 @@ public class MaxRegretIRCFR extends IRCFR {
     public static void main(String[] args) {
 //        runRandomGame();
 //        runKuhnPoker();
-//        runGenericPoker();
-        runIIGoofspiel();
+        runGenericPoker();
+//        runIIGoofspiel();
     }
 
     public static void runIIGoofspiel() {

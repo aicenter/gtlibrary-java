@@ -33,9 +33,11 @@ import java.util.stream.IntStream;
 
 public class IRCFR extends AutomatedAbstractionAlgorithm {
     public static boolean REGRET_MATCHING_PLUS = true;
+    public static int delay = 100;
     protected final MCTSConfig perfectRecallConfig;
     private final FPIRABestResponse p0BR;
     private final FPIRABestResponse p1BR;
+
 
     public enum SPLIT_HEURISTIC {
         NONE, AVG_VISITED, VISITED, UPDATED
@@ -230,7 +232,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
     protected void updatePerfectRecallData() {
         perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2)
-                .forEach(i -> ((IRCFRData) i.getAlgorithmData()).applyUpdate());
+                .forEach(i -> ((IRCFRData) i.getAlgorithmData()).applyUpdate(computeAvgStrategyWeight()));
     }
 
     private void updateAbstraction(Map<ImperfectRecallISKey, Map<PerfectRecallISKey, OOSAlgorithmData>> regretDifferences) {
@@ -300,8 +302,13 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
     protected void updateImperfectRecallData() {
         currentAbstractionInformationSets.values().forEach(i ->
-            ((IRCFRData) i.getData()).applyUpdate()
+                ((IRCFRData) i.getData()).applyUpdate(computeAvgStrategyWeight())
         );
+    }
+
+    private int computeAvgStrategyWeight() {
+//        return 1;
+        return Math.max(iteration - delay, 0);
     }
 
     protected double perfectRecallIteration(GameState node, double pi1, double pi2, Player expPlayer) {

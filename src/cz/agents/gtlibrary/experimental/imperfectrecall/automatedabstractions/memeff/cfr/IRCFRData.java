@@ -68,11 +68,12 @@ public class IRCFRData extends OOSAlgorithmData {
         updated = true;
     }
 
-    public boolean applyUpdate() {
+    public boolean applyUpdate(double avgStrategyWeight) {
         updatedInLastIteration = updated;
         if (!updated)
             return false;
-        updateMeanStrategy(getRMStrategy(), expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
+        updateMeanStrategy(getRMStrategy(),
+                avgStrategyWeight * expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
 
         for (int j = 0; j < regretUpdate.length; j++) {
             r[j] += regretUpdate[j];

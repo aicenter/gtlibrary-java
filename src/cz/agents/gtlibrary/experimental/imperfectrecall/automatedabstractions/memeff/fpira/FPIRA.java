@@ -31,11 +31,11 @@ import java.util.stream.IntStream;
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static void main(String[] args) {
-//        runGenericPoker();
+        runGenericPoker();
 //        runKuhnPoker();
 //        runRandomGame();
 //        runWichardtCounterexample();
-        runIIGoofspiel();
+//        runIIGoofspiel();
     }
 
     public static void runIIGoofspiel() {
