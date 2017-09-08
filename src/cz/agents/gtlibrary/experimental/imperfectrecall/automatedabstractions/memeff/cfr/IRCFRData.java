@@ -77,13 +77,11 @@ public class IRCFRData extends OOSAlgorithmData {
         if (!updated)
             return false;
         updateMeanStrategy(getRMStrategy(), expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
-        Map<Sequence, Double> nonZeroExpPlayerProbs = update(expPlayerProbs);//normalize(expPlayerProbs);
 
         regretUpdates.forEach((state, regretUpdate) -> {
-            double weight = nonZeroExpPlayerProbs.get(state.getSequenceForPlayerToMove());
 
             for (int j = 0; j < regretUpdate.length; j++) {
-                r[j] += regretUpdate[j] * weight;
+                r[j] += regretUpdate[j];
             }
         });
         if(IRCFR.REGRET_MATCHING_PLUS)
