@@ -151,7 +151,6 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
     }
 
     private void storeResult(GameState gameState, Action resultAction) {
-        resultActions.add(resultAction);
         Sequence sequence = gameState.getSequenceFor(players[searchingPlayerIndex]);
         Sequence sequenceCopy = new ArrayListSequenceImpl(sequence);
 
@@ -165,6 +164,33 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
             tmpActionMap.putIfAbsent(gameState.getISKeyForPlayerToMove(), sequenceCopy);
             BRresult.put(sequence, tmpActionMap);
         }
+    }
+
+    public Map<Action, Double> getBestResponse() {
+        if (BRresult == null) {
+            return null;
+        }
+        Map<Action, Double> result = new HashMap<>();
+        Queue<Sequence> queue = new ArrayDeque<>();
+
+        queue.addAll(firstLevelActions.values());
+        firstLevelActions.values().forEach(s -> result.put(s.getLast(), 1d));
+        while (queue.size() > 0) {
+            Sequence sequence = queue.poll();
+            Map<ISKey, Sequence> res = BRresult.get(sequence);
+
+            if (res != null) {
+                res.values().stream().forEach(s -> result.put(s.getLast(), 1d));
+                queue.addAll(res.values());
+            }
+        }
+        firstLevelActions.clear();
+        probabilityCache.clear();
+        cachedValuesForNodes.clear();
+        BRresult.clear();
+        opponentAbstractedStrategy = null;
+        opponentBehavioralStrategy = null;
+        return result;
     }
 
     public Double calculateBRForAbstractedStrategy(GameState root, Map<ISKey, double[]> opponentAbstractedStrategy) {

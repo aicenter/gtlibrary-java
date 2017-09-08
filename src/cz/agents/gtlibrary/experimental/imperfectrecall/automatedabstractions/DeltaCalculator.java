@@ -132,7 +132,6 @@ public class DeltaCalculator extends ALossBestResponseAlgorithm {
                 }
             }
             assert (returnValue != null);
-            resultActions.add(resultAction);
             Sequence sequence = gameState.getSequenceFor(players[searchingPlayerIndex]);
             Sequence sequenceCopy = new ArrayListSequenceImpl(sequence);
 

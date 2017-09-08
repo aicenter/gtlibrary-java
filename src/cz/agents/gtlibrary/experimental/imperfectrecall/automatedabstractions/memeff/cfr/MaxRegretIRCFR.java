@@ -106,6 +106,7 @@ public class MaxRegretIRCFR extends IRCFR {
 //        }
         if (DELETE_REGRETS)
             prRegrets.clear();
+        System.gc();
 //        }
     }
 
