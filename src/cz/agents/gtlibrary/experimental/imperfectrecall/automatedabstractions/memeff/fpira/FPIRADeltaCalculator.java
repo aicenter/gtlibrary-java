@@ -1,5 +1,6 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira;
 
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.InformationSetKeyMap;
 import cz.agents.gtlibrary.experimental.imperfectrecall.blseqformlp.bnb.oracle.br.ALossBestResponseAlgorithm;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;

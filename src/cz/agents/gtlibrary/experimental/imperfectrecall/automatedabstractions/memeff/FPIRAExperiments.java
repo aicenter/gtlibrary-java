@@ -3,6 +3,10 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.IRCFR;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.MaxRegretIRCFR;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FPIRA;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FrequencyFPIRA;
 
 public class FPIRAExperiments {
     public static void main(String[] args) {

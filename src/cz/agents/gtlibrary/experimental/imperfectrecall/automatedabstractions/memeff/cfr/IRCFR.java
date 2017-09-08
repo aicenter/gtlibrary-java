@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr;
 
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
@@ -18,6 +18,9 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AbstractedStrategyUtils;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionAlgorithm;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FPIRABestResponse;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;

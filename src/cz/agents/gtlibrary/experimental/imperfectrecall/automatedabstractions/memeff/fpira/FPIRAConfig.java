@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;

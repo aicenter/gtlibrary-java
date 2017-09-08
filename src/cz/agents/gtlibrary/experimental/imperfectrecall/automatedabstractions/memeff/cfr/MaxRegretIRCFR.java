@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
+package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr;
 
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
