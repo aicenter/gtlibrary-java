@@ -23,7 +23,8 @@ public class IRCFRData extends OOSAlgorithmData {
 
     public IRCFRData(int actionCount) {
         super(actionCount);
-        regretUpdate = new double[actionCount];
+        if (!IRCFR.DIRECT_REGRET_UPDATE)
+            regretUpdate = new double[actionCount];
         expPlayerProbs = new HashMap<>();
         updated = false;
         r[0] = 1;
@@ -31,7 +32,8 @@ public class IRCFRData extends OOSAlgorithmData {
 
     public IRCFRData(List<Action> actions) {
         super(actions);
-        regretUpdate = new double[actions.size()];
+        if (!IRCFR.DIRECT_REGRET_UPDATE)
+            regretUpdate = new double[actions.size()];
         expPlayerProbs = new HashMap<>();
         updated = false;
         r[0] = 1;
@@ -48,22 +50,33 @@ public class IRCFRData extends OOSAlgorithmData {
     }
 
     public void updateRegret(int actionIndex, double W, double c, double x, GameState state, double expPlayerProb) {
-        double[] regretUpdate = new double[getActionCount()];
-
-        for (int i = 0; i < getActionCount(); i++) {
-            if (i == actionIndex)
-                regretUpdate[i] += (c - x) * W;
-            else
-                regretUpdate[i] += -x * W;
-        }
+        if (IRCFR.DIRECT_REGRET_UPDATE)
+            for (int i = 0; i < getActionCount(); i++) {
+                if (i == actionIndex)
+                    r[i] += (c - x) * W;
+                else
+                    r[i] += -x * W;
+            }
+        else
+            for (int i = 0; i < getActionCount(); i++) {
+                if (i == actionIndex)
+                    regretUpdate[i] += (c - x) * W;
+                else
+                    regretUpdate[i] += -x * W;
+            }
         expPlayerProbs.put(state.getSequenceForPlayerToMove(), expPlayerProb);
         updated = true;
     }
 
     public void updateAllRegrets(double[] Vs, double meanV, double opponentProb, GameState state, double expPlayerProb) {
-        for (int i = 0; i < getActionCount(); i++) {
-            regretUpdate[i] += opponentProb * (Vs[i] - meanV);
-        }
+        if (IRCFR.DIRECT_REGRET_UPDATE)
+            for (int i = 0; i < getActionCount(); i++) {
+                r[i] += opponentProb * (Vs[i] - meanV);
+            }
+        else
+            for (int i = 0; i < getActionCount(); i++) {
+                regretUpdate[i] += opponentProb * (Vs[i] - meanV);
+            }
         expPlayerProbs.put(state.getSequenceForPlayerToMove(), expPlayerProb);
         updated = true;
     }
@@ -75,14 +88,16 @@ public class IRCFRData extends OOSAlgorithmData {
         updateMeanStrategy(getRMStrategy(),
                 avgStrategyWeight * expPlayerProbs.values().stream().collect(Collectors.summingDouble(d -> d)));
 
-        for (int j = 0; j < regretUpdate.length; j++) {
-            r[j] += regretUpdate[j];
-        }
+        if (!IRCFR.DIRECT_REGRET_UPDATE)
+            for (int j = 0; j < regretUpdate.length; j++) {
+                r[j] += regretUpdate[j];
+            }
         if (IRCFR.REGRET_MATCHING_PLUS)
             IntStream.range(0, r.length).forEach(i -> r[i] = Math.max(r[i], 0));
         updated = false;
         expPlayerProbs = new HashMap<>();
-        Arrays.fill(regretUpdate, 0);
+        if (!IRCFR.DIRECT_REGRET_UPDATE)
+            Arrays.fill(regretUpdate, 0);
         return true;
     }
 

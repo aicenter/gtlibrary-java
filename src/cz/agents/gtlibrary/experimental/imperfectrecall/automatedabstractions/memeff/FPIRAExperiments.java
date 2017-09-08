@@ -65,6 +65,7 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.ITERATION_MULTIPLIER = Double.parseDouble(args[6]);
                 IRCFR.REGRET_MATCHING_PLUS = Boolean.parseBoolean(args[7]);
                 MaxRegretIRCFR.USE_SPLIT_TOLERANCE = Boolean.parseBoolean(args[8]);
+                MaxRegretIRCFR.CLEAR_DATA = Boolean.parseBoolean(args[9]);
                 MaxRegretIRCFR.runGenericPoker();
             } else if (args[1].equals("GS")) {
                 setGS(args);
@@ -72,6 +73,7 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.ITERATION_MULTIPLIER = Double.parseDouble(args[4]);
                 MaxRegretIRCFR.REGRET_MATCHING_PLUS = Boolean.parseBoolean(args[5]);
                 MaxRegretIRCFR.USE_SPLIT_TOLERANCE = Boolean.parseBoolean(args[6]);
+                MaxRegretIRCFR.CLEAR_DATA = Boolean.parseBoolean(args[7]);
                 MaxRegretIRCFR.runIIGoofspiel();
             }
         }
