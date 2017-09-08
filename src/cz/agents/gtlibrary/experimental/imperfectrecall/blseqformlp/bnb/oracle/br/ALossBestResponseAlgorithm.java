@@ -57,7 +57,6 @@ public class ALossBestResponseAlgorithm {
     final protected double EPS_CONSTANT = 0.000000001; // zero for numerical-stability reasons
     protected ORComparator comparator;
     protected GameState gameTreeRoot = null;
-    protected Set<Action> resultActions = new HashSet<>();
     protected Map<ISKey, Sequence> firstLevelActions = new HashMap<>();
 
     public int maxStateValueCache = 0;
@@ -243,8 +242,6 @@ public class ALossBestResponseAlgorithm {
 //                System.out.println();
 //            }
             assert (returnValue != null);
-
-            resultActions.add(resultAction);
             Sequence sequence = gameState.getSequenceFor(players[searchingPlayerIndex]);
             Sequence sequenceCopy = new ArrayListSequenceImpl(sequence);
 
