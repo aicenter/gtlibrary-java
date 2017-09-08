@@ -193,6 +193,15 @@ public class FPIRABestResponse extends ALossBestResponseAlgorithm {
         return result;
     }
 
+    public void clearData() {
+        firstLevelActions.clear();
+        probabilityCache.clear();
+        cachedValuesForNodes.clear();
+        BRresult.clear();
+        opponentAbstractedStrategy = null;
+        opponentBehavioralStrategy = null;
+    }
+
     public Double calculateBRForAbstractedStrategy(GameState root, Map<ISKey, double[]> opponentAbstractedStrategy) {
         this.opponentAbstractedStrategy = opponentAbstractedStrategy;
         Double value = calculateBR(root, new HashMap<>(), new HashMap<>());
