@@ -66,10 +66,6 @@ public class FPIRADeltaCalculator extends ALossBestResponseAlgorithm {
             }
 
             assert (alternativeNodes.contains(gameState));
-            new ArrayList<>(alternativeNodes).stream().filter(state -> !state.getSequenceForPlayerToMove().equals(gameState.getSequenceForPlayerToMove())).forEach(state -> {
-                alternativeNodes.remove(state);
-            });
-
             BRSrchSelection sel = new FPIRADeltaCalculatorBRSrchSelection(lowerBound, Double.POSITIVE_INFINITY, nonZeroOppRP);
 
             List<Action> actionsToExplore = expander.getActions(gameState);

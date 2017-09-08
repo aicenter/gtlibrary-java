@@ -3,6 +3,9 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -23,6 +26,14 @@ public class FrequencyFPIRA extends FPIRA {
         GameState root = new GenericPokerGameState();
         Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new FPIRAConfig());
         FPIRA fpira = new FrequencyFPIRA(root, expander, new GPGameInfo());
+
+        fpira.runIterations(1000000);
+    }
+
+    public static void runIIGoofspiel() {
+        GameState root = new IIGoofSpielGameState();
+        Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(new FPIRAConfig());
+        FPIRA fpira = new FrequencyFPIRA(root, expander, new GSGameInfo());
 
         fpira.runIterations(1000000);
     }
