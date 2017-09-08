@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class IRCFR extends AutomatedAbstractionAlgorithm {
+    public static boolean DIRECT_REGRET_UPDATE = true;
     public static boolean REGRET_MATCHING_PLUS = true;
     public static int delay = 100;
     protected final MCTSConfig perfectRecallConfig;

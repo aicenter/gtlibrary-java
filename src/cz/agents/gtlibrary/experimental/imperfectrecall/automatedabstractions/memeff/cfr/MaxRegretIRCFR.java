@@ -26,8 +26,9 @@ import java.util.stream.IntStream;
 
 public class MaxRegretIRCFR extends IRCFR {
 
+    public static boolean CLEAR_DATA = true;
     public static boolean DELETE_REGRETS = true;
-//    public static boolean USE_AVG_STRAT = false;
+    //    public static boolean USE_AVG_STRAT = false;
     public static boolean USE_SPLIT_TOLERANCE = true;
     public static double ITERATION_MULTIPLIER = 100;
 
@@ -152,7 +153,7 @@ public class MaxRegretIRCFR extends IRCFR {
                 if (!toRemove.isEmpty()) {
                     if (toRemove.size() < isStates.size()) {
                         isStates.removeAll(toRemove);
-                        createNewIS(toRemove, new IRCFRData(i.getData().getActionCount()));
+                        createNewIS(toRemove, CLEAR_DATA ? new IRCFRData(i.getData().getActionCount()) : i.getData());
 //                        isKeys.forEach(key -> prRegrets.remove(key));
                     }
                 }
