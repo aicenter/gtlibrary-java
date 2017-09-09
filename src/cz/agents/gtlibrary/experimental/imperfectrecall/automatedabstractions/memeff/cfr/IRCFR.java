@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class IRCFR extends AutomatedAbstractionAlgorithm {
-    public static boolean DIRECT_REGRET_UPDATE = true;
+    public static boolean DIRECT_REGRET_UPDATE = false;
     public static boolean REGRET_MATCHING_PLUS = true;
     public static int delay = 100;
     protected final MCTSConfig perfectRecallConfig;
@@ -350,16 +350,22 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         double expectedValue = 0;
         int i = -1;
 
-        for (Action ai : actions) {
-            i++;
-            GameState newState = node.performAction(ai);
+        if (informationSet.getPlayer().getId() == 0) {
+            for (Action ai : actions) {
+                i++;
+                GameState newState = node.performAction(ai);
 
-            if (informationSet.getPlayer().getId() == 0) {
                 expectedValuesForActions[i] = perfectRecallIteration(newState, pi1 * currentStrategy[i], pi2, expPlayer);
-            } else {
-                expectedValuesForActions[i] = perfectRecallIteration(newState, pi1, currentStrategy[i] * pi2, expPlayer);
+                expectedValue += currentStrategy[i] * expectedValuesForActions[i];
             }
-            expectedValue += currentStrategy[i] * expectedValuesForActions[i];
+        } else {
+            for (Action ai : actions) {
+                i++;
+                GameState newState = node.performAction(ai);
+
+                expectedValuesForActions[i] = perfectRecallIteration(newState, pi1, currentStrategy[i] * pi2, expPlayer);
+                expectedValue += currentStrategy[i] * expectedValuesForActions[i];
+            }
         }
         if (informationSet.getPlayer().equals(expPlayer))
             updateData(node, pi1, pi2, expPlayer, data, expectedValuesForActions, expectedValue);

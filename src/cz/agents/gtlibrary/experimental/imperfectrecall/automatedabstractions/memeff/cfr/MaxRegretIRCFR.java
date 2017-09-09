@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 
 public class MaxRegretIRCFR extends IRCFR {
 
+    public static boolean SIMULTANEOUS_PR_IR = true;
     public static boolean CLEAR_DATA = true;
     public static boolean DELETE_REGRETS = true;
     //    public static boolean USE_AVG_STRAT = false;
@@ -93,12 +94,16 @@ public class MaxRegretIRCFR extends IRCFR {
 
     @Override
     protected void iteration(Player player) {
-        imperfectRecallIteration(rootState, 1, 1, player);
+        if (SIMULTANEOUS_PR_IR)
+            perfectAndImperfectRecallIteration(rootState, 1, 1, player);
+        else
+            imperfectRecallIteration(rootState, 1, 1, player);
         updateImperfectRecallData();
 //        if (iteration % 1 == 0) {
 
 //        if (iteration % 4 == 0) {
-        computeCurrentRegrets(rootState, 1, 1, player);
+        if (!SIMULTANEOUS_PR_IR)
+            computeCurrentRegrets(rootState, 1, 1, player);
 //        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[0]);
 //        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[1]);
         if (REGRET_MATCHING_PLUS)
@@ -109,6 +114,58 @@ public class MaxRegretIRCFR extends IRCFR {
             prRegrets.clear();
         System.gc();
 //        }
+    }
+
+    protected double perfectAndImperfectRecallIteration(GameState node, double pi1, double pi2, Player expPlayer) {
+        if (pi1 <= 1e-6 && pi2 <= 1e-6)
+            return 0;
+        if (node.isGameEnd())
+            return node.getUtilities()[expPlayer.getId()];
+        IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
+        OOSAlgorithmData data = informationSet.getData();
+        List<Action> actions = perfectRecallExpander.getActions(node);
+
+        if (node.isPlayerToMoveNature()) {
+            double expectedValue = 0;
+
+            for (Action ai : actions) {
+                final double p = node.getProbabilityOfNatureFor(ai);
+                double new_p1 = expPlayer.getId() == 1 ? pi1 * p : pi1;
+                double new_p2 = expPlayer.getId() == 0 ? pi2 * p : pi2;
+                GameState newState = node.performAction(ai);
+
+                expectedValue += p * perfectAndImperfectRecallIteration(newState, new_p1, new_p2, expPlayer);
+            }
+            return expectedValue;
+        }
+
+        double[] currentStrategy = getStrategy(data);
+        double[] expectedValuesForActions = new double[currentStrategy.length];
+        double expectedValue = 0;
+        int i = -1;
+
+        if (informationSet.getPlayer().getId() == 0) {
+            for (Action ai : actions) {
+                i++;
+                GameState newState = node.performAction(ai);
+
+                expectedValuesForActions[i] = perfectAndImperfectRecallIteration(newState, pi1 * currentStrategy[i], pi2, expPlayer);
+                expectedValue += currentStrategy[i] * expectedValuesForActions[i];
+            }
+        } else {
+            for (Action ai : actions) {
+                i++;
+                GameState newState = node.performAction(ai);
+
+                expectedValuesForActions[i] = perfectAndImperfectRecallIteration(newState, pi1, currentStrategy[i] * pi2, expPlayer);
+                expectedValue += currentStrategy[i] * expectedValuesForActions[i];
+            }
+        }
+        if (informationSet.getPlayer().equals(expPlayer)) {
+            updateData(node, pi1, pi2, expPlayer, data, expectedValuesForActions, expectedValue);
+            updateCurrentRegrets(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
+        }
+        return expectedValue;
     }
 
     private void removeNegativePRRegrets() {
