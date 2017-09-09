@@ -33,7 +33,7 @@ public class MaxRegretIRCFR extends IRCFR {
     public static boolean USE_SPLIT_TOLERANCE = true;
     public static double ITERATION_MULTIPLIER = 100;
 
-    private Map<ISKey, double[]> prRegrets;
+    protected Map<ISKey, double[]> prRegrets;
 
     public static void main(String[] args) {
 //        runRandomGame();
@@ -168,14 +168,14 @@ public class MaxRegretIRCFR extends IRCFR {
         return expectedValue;
     }
 
-    private void removeNegativePRRegrets() {
+    protected void removeNegativePRRegrets() {
         prRegrets.values().forEach(array ->
                 IntStream.range(0, array.length).forEach(i -> array[i] = Math.max(array[i], 0))
         );
 
     }
 
-    private void updateAbstraction() {
+    protected void updateAbstraction() {
         new HashMap<>(currentAbstractionInformationSets).values().stream().filter(i -> i.getPlayer().getId() != 2).forEach(i -> {
             Map<Set<Integer>, Set<ISKey>> compatibleISs = new HashMap<>();
             Set<ISKey> notVisitedISs = new HashSet<>();

@@ -55,11 +55,23 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     @Override
     protected void iteration(Player player) {
         findISsToUpdate(player);
-        super.iteration(player);
+        if (SIMULTANEOUS_PR_IR)
+            perfectAndImperfectRecallIteration(rootState, 1, 1, player);
+        else
+            imperfectRecallIteration(rootState, 1, 1, player);
+        updateImperfectRecallData();
+        if (!SIMULTANEOUS_PR_IR)
+            computeCurrentRegrets(rootState, 1, 1, player);
+        if (REGRET_MATCHING_PLUS)
+            removeNegativePRRegrets();
+        updateAbstraction();
+        if (DELETE_REGRETS)
+            prRegrets.clear();
+        toUpdate.clear();
+        System.gc();
     }
 
     protected void findISsToUpdate(Player player) {
-        toUpdate.clear();
         int abstractedISCount = getAbstractedISCount(player);
         int maxAllowed = Math.min(abstractedISCount, sizeLimit);
 
@@ -101,7 +113,6 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         }
         return null;
     }
-
 
     @Override
     protected void updateCurrentRegrets(GameState node, double pi1, double pi2, Player expPlayer, double[] expectedValuesForActions, double expectedValue) {
