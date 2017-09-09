@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOra
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.IRCFR;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.LimitedMemoryMaxRegretIRCFR;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.MaxRegretIRCFR;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FPIRA;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FrequencyFPIRA;
@@ -26,14 +27,14 @@ public class FPIRAExperiments {
                 setGS(args);
                 FPIRA.runIIGoofspiel();
             }
-        }else if (args[0].equals("FreqFPIRA")) {
-                if (args[1].equals("GP")) {
-                    setGP(args);
-                    FrequencyFPIRA.runGenericPoker();
-                } else if (args[1].equals("GS")) {
-                    setGS(args);
-                    FrequencyFPIRA.runIIGoofspiel();
-                }
+        } else if (args[0].equals("FreqFPIRA")) {
+            if (args[1].equals("GP")) {
+                setGP(args);
+                FrequencyFPIRA.runGenericPoker();
+            } else if (args[1].equals("GS")) {
+                setGS(args);
+                FrequencyFPIRA.runIIGoofspiel();
+            }
         } else if (args[0].equals("IRCFR")) {
             if (args[1].equals("GP")) {
                 setGP(args);
@@ -77,6 +78,27 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.CLEAR_DATA = Boolean.parseBoolean(args[7]);
                 MaxRegretIRCFR.SIMULTANEOUS_PR_IR = Boolean.parseBoolean(args[8]);
                 MaxRegretIRCFR.runIIGoofspiel();
+            }
+        } else if (args[0].equals("LMMRCFR")) {
+            if (args[1].equals("GP")) {
+                setGP(args);
+                MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[5]);
+                MaxRegretIRCFR.ITERATION_MULTIPLIER = Double.parseDouble(args[6]);
+                IRCFR.REGRET_MATCHING_PLUS = Boolean.parseBoolean(args[7]);
+                MaxRegretIRCFR.USE_SPLIT_TOLERANCE = Boolean.parseBoolean(args[8]);
+                MaxRegretIRCFR.CLEAR_DATA = Boolean.parseBoolean(args[9]);
+                MaxRegretIRCFR.SIMULTANEOUS_PR_IR = Boolean.parseBoolean(args[10]);
+                LimitedMemoryMaxRegretIRCFR.sizeLimit = Integer.parseInt(args[11]);
+                LimitedMemoryMaxRegretIRCFR.runGenericPoker();
+            } else if (args[1].equals("GS")) {
+                setGS(args);
+                MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[3]);
+                MaxRegretIRCFR.ITERATION_MULTIPLIER = Double.parseDouble(args[4]);
+                MaxRegretIRCFR.REGRET_MATCHING_PLUS = Boolean.parseBoolean(args[5]);
+                MaxRegretIRCFR.USE_SPLIT_TOLERANCE = Boolean.parseBoolean(args[6]);
+                MaxRegretIRCFR.CLEAR_DATA = Boolean.parseBoolean(args[7]);
+                MaxRegretIRCFR.SIMULTANEOUS_PR_IR = Boolean.parseBoolean(args[8]);
+                LimitedMemoryMaxRegretIRCFR.runIIGoofspiel();
             }
         }
     }
