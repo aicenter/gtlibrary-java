@@ -326,7 +326,7 @@ public class MaxRegretIRCFR extends IRCFR {
         return expectedValue;
     }
 
-    private void updateCurrentRegrets(GameState node, double pi1, double pi2, Player expPlayer,
+    protected void updateCurrentRegrets(GameState node, double pi1, double pi2, Player expPlayer,
                                       double[] expectedValuesForActions, double expectedValue) {
         double[] regret = prRegrets.computeIfAbsent(node.getISKeyForPlayerToMove(),
                 k -> new double[expectedValuesForActions.length]);
