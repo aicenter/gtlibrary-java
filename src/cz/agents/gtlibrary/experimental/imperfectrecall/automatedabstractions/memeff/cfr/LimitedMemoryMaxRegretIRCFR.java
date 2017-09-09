@@ -3,6 +3,9 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -28,8 +31,19 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         alg.runIterations(10000000);
     }
 
+    public static void runIIGoofspiel() {
+        GameState root = new IIGoofSpielGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(config);
+        GameInfo info = new GSGameInfo();
+        MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config);
+
+        alg.runIterations(10000000);
+    }
+
+
     private Random random;
-    private int sizeLimit = 100;
+    public static int sizeLimit = 100;
     private Set<ISKey> toUpdate;
 
     public LimitedMemoryMaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig) {
