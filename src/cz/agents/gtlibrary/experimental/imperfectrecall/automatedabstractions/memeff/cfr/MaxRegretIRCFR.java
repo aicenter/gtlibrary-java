@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 
 public class MaxRegretIRCFR extends IRCFR {
 
-    public static boolean SIMULTANEOUS_PR_IR = true;
+    public static boolean SIMULTANEOUS_PR_IR = false;
     public static boolean CLEAR_DATA = true;
     public static boolean DELETE_REGRETS = true;
     //    public static boolean USE_AVG_STRAT = false;

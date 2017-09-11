@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 
 public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
+    private boolean bellowLimit;
+
     public static void main(String[] args) {
         runGenericPoker();
     }
@@ -43,13 +45,14 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
 
     private Random random;
-    public static int sizeLimit = 100;
+    public static int sizeLimit = 3000;
     private Set<ISKey> toUpdate;
 
     public LimitedMemoryMaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig) {
         super(rootState, perfectRecallExpander, info, perfectRecallConfig);
         random = new Random(1);
         toUpdate = new HashSet<>(sizeLimit);
+        bellowLimit = false;
     }
 
     @Override
@@ -72,26 +75,53 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     }
 
     protected void findISsToUpdate(Player player) {
+        if(bellowLimit)
+            return;
         int abstractedISCount = getAbstractedISCount(player);
-        int maxAllowed = Math.min(abstractedISCount, sizeLimit);
 
         if (abstractedISCount <= sizeLimit) {
-            toUpdate = currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() == player.getId())
-                    .filter(i -> i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1)
-                    .flatMap(i -> i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct()).collect(Collectors.toSet());
+            bellowLimit = true;
         } else {
-            while (toUpdate.size() < maxAllowed) {
-                InformationSet randomAbstractedIS = getRandomAbstractedIS(player);
-                List<ISKey> collect = randomAbstractedIS.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().collect(Collectors.toList());
+           List<InformationSet> shuffledISs = currentAbstractionInformationSets.values().stream()
+                   .filter(i -> i.getPlayer().getId() == player.getId())
+                   .filter(i -> i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1)
+                   .collect(Collectors.toList());
 
-                if (collect.size() + toUpdate.size() > maxAllowed) {
+            Collections.shuffle(shuffledISs, random);
+            for (InformationSet informationSet : shuffledISs) {
+                List<ISKey> collect = informationSet.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().collect(Collectors.toList());
+
+                if (collect.size() + toUpdate.size() > sizeLimit) {
                     Collections.shuffle(collect, random);
-                    collect.subList(Math.min(maxAllowed - toUpdate.size(), collect.size()), collect.size()).clear();
+                    collect.subList(Math.min(sizeLimit - toUpdate.size(), collect.size()), collect.size()).clear();
                 }
                 toUpdate.addAll(collect);
             }
         }
     }
+
+
+//    protected void findISsToUpdate(Player player) {
+//        int abstractedISCount = getAbstractedISCount(player);
+//        int maxAllowed = Math.min(abstractedISCount, sizeLimit);
+//
+//        if (abstractedISCount <= sizeLimit) {
+//            toUpdate = currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() == player.getId())
+//                    .filter(i -> i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1)
+//                    .flatMap(i -> i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct()).collect(Collectors.toSet());
+//        } else {
+//            while (toUpdate.size() < maxAllowed) {
+//                InformationSet randomAbstractedIS = getRandomAbstractedIS(player);
+//                List<ISKey> collect = randomAbstractedIS.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().collect(Collectors.toList());
+//
+//                if (collect.size() + toUpdate.size() > maxAllowed) {
+//                    Collections.shuffle(collect, random);
+//                    collect.subList(Math.min(maxAllowed - toUpdate.size(), collect.size()), collect.size()).clear();
+//                }
+//                toUpdate.addAll(collect);
+//            }
+//        }
+//    }
 
     private int getAbstractedISCount(Player player) {
         return (int) currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() == player.getId())
@@ -116,7 +146,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
     @Override
     protected void updateCurrentRegrets(GameState node, double pi1, double pi2, Player expPlayer, double[] expectedValuesForActions, double expectedValue) {
-        if (toUpdate.contains(node.getISKeyForPlayerToMove()))
+        if (bellowLimit || toUpdate.contains(node.getISKeyForPlayerToMove()))
             super.updateCurrentRegrets(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
     }
 }
