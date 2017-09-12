@@ -17,6 +17,8 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
@@ -25,8 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class MaxRegretIRCFR extends IRCFR {
-
-    public static boolean SIMULTANEOUS_PR_IR = true;
+    public static boolean SIMULTANEOUS_PR_IR = false;
     public static boolean CLEAR_DATA = true;
     public static boolean DELETE_REGRETS = true;
     //    public static boolean USE_AVG_STRAT = false;
@@ -176,7 +177,8 @@ public class MaxRegretIRCFR extends IRCFR {
     }
 
     protected void updateAbstraction() {
-        new HashMap<>(currentAbstractionInformationSets).values().stream().filter(i -> i.getPlayer().getId() != 2).forEach(i -> {
+        new ArrayList<>(currentAbstractionInformationSets.values()).stream().forEach(i -> {
+            assert i.getPlayer().getId() != 2;
             Map<Set<Integer>, Set<ISKey>> compatibleISs = new HashMap<>();
             Set<ISKey> notVisitedISs = new HashSet<>();
 
@@ -204,19 +206,53 @@ public class MaxRegretIRCFR extends IRCFR {
             Set<GameState> isStates = i.getAllStates();
 
             distributeUnvisited(compatibleISs, notVisitedISs);
-            compatibleISs.forEach((maxRegretActionIndices, isKeys) -> {
-                Set<GameState> toRemove = isStates.stream().filter(isState -> isKeys.contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
-
-                if (!toRemove.isEmpty()) {
-                    if (toRemove.size() < isStates.size()) {
-                        isStates.removeAll(toRemove);
-                        createNewIS(toRemove, CLEAR_DATA ? new IRCFRData(i.getData().getActionCount()) : i.getData());
-//                        isKeys.forEach(key -> prRegrets.remove(key));
-                    }
-                }
-            });
+            if (CLEAR_DATA) {
+                updateWithClearData(i, compatibleISs, isStates);
+            } else {
+                updateWithReusedData(i, compatibleISs, isStates);
+            }
         });
     }
+
+    private void updateWithReusedData(IRCFRInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
+        compatibleISs.forEach((maxRegretActionIndices, isKeys) -> {
+            Set<GameState> toRemove = isStates.stream().filter(isState -> isKeys.contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
+
+            if (!toRemove.isEmpty()) {
+                if (toRemove.size() < isStates.size()) {
+                    isStates.removeAll(toRemove);
+                    createNewIS(toRemove, i.getData());
+                }
+            }
+        });
+    }
+
+    private void updateWithClearData(IRCFRInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
+        compatibleISs.forEach((maxRegretActionIndices, isKeys) -> {
+            Set<GameState> toRemove = isStates.stream().filter(isState -> isKeys.contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
+
+            if (!toRemove.isEmpty()) {
+                if (toRemove.size() < isStates.size()) {
+                    isStates.removeAll(toRemove);
+                    createNewISNoDataCopy(toRemove, new IRCFRData(i.getData().getActionCount()));
+                }
+            }
+        });
+    }
+
+
+    protected IRCFRInformationSet createNewISNoDataCopy(Set<GameState> states, OOSAlgorithmData data) {
+        GameState state = states.stream().findAny().get();
+        ImperfectRecallISKey newISKey = createCounterISKey(state.getPlayerToMove());
+        IRCFRInformationSet is = new IRCFRInformationSet(state, newISKey);
+
+        is.addAllStatesToIS(states);
+        is.setData(data);
+        currentAbstractionInformationSets.put(newISKey, is);
+        states.forEach(s -> currentAbstractionISKeys.put((PerfectRecallISKey) s.getISKeyForPlayerToMove(), newISKey));
+        return is;
+    }
+
 
     private void distributeUnvisited(Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<ISKey> notVisitedISs) {
         if (compatibleISs.isEmpty())
@@ -326,7 +362,7 @@ public class MaxRegretIRCFR extends IRCFR {
     }
 
     protected void updateCurrentRegrets(GameState node, double pi1, double pi2, Player expPlayer,
-                                      double[] expectedValuesForActions, double expectedValue) {
+                                        double[] expectedValuesForActions, double expectedValue) {
         double[] regret = prRegrets.computeIfAbsent(node.getISKeyForPlayerToMove(),
                 k -> new double[expectedValuesForActions.length]);
         double currentProb = (expPlayer.getId() == 0 ? pi2 : pi1);
