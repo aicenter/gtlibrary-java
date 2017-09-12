@@ -30,6 +30,7 @@ import java.util.stream.IntStream;
 
 public class FPIRA extends AutomatedAbstractionAlgorithm {
 
+
     public static void main(String[] args) {
         runGenericPoker();
 //        runKuhnPoker();
@@ -83,10 +84,10 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
     public static boolean CHECK_BOTH_SIDES = false;
 
-    private final FPIRADeltaCalculator p0Delta;
-    private final FPIRADeltaCalculator p1Delta;
-    private final FPIRABestResponse p0BR;
-    private final FPIRABestResponse p1BR;
+    protected final FPIRADeltaCalculator p0Delta;
+    protected final FPIRADeltaCalculator p1Delta;
+    protected final FPIRABestResponse p0BR;
+    protected final FPIRABestResponse p1BR;
 
     double p0Exploitability;
     double p1Exploitability;
@@ -111,9 +112,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         Map<ISKey, double[]> p1Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[1]);
 
         System.out.println("p0BR: " + p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy));
-        p0BR.clearData();
         System.out.println("p1BR: " + -p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy));
-        p1BR.clearData();
         System.out.println("State cache from BR sizes: " + p0BR.maxStateValueCache + ", " + p1BR.maxStateValueCache);
         System.out.println("BR result sizes: " + p0BR.maxBRResultSize + ", " + p1BR.maxBRResultSize);
         System.out.println("BR probability cache: " + p0BR.maxProbCacheSize + ", " + p1BR.maxProbCacheSize);
@@ -121,7 +120,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         System.out.println("deltaCalc probability cache: " + p0Delta.maxProbCacheSize + ", " + p1Delta.maxProbCacheSize);
         System.out.println("Reachable IS count: " + getReachableISCountFromOriginalGame(p0Strategy, p1Strategy));
         System.out.println("Reachable abstracted IS count: " + getReachableAbstractedISCountFromOriginalGame(p0Strategy, p1Strategy));
-        System.gc();
     }
 
     @Override
@@ -149,29 +147,10 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
         updateISStructure(state, bestResponse, opponentStrategy, opponent, toSplit, 1, 1);
         currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() != 2).forEach(i -> ((CFRBRData) i.getData()).updateMeanStrategy());
-        splitISsAccordingToBR(toSplit, currentPlayer);
-        assert toSplit.values().stream().allMatch(map -> map.size() == 1);
         if (aboveDelta(getStrategyDiffs(toSplit), getBehavioralStrategyFor(currentPlayer), currentPlayer)) {
             splitISsToPR(toSplit, currentPlayer);
         } else {
-            updateRegrets(toSplit);
-        }
-    }
-
-    private void updateRegrets(Map<InformationSet, Map<Integer, Map<PerfectRecallISKey, double[]>>> toSplit) {
-        for (Map.Entry<InformationSet, Map<Integer, Map<PerfectRecallISKey, double[]>>> actionMapEntry : toSplit.entrySet()) {
-            for (Map.Entry<Integer, Map<PerfectRecallISKey, double[]>> entry : actionMapEntry.getValue().entrySet()) {
-                for (Map.Entry<PerfectRecallISKey, double[]> isKeyEntry : entry.getValue().entrySet()) {
-                    CFRBRData data = (CFRBRData) ((IRCFRInformationSet)actionMapEntry.getKey()).getData();
-                    double[] meanStrategy = data.getMp();
-
-                    for (int i = 0; i < data.getActionCount(); i++) {
-                        data.addToMeanStrategyUpdateNumerator(i, isKeyEntry.getValue()[0] * ((i == entry.getKey() ? 1 : 0) - meanStrategy[i]));
-                    }
-                    data.addToMeanStrategyUpdateDenominator(isKeyEntry.getValue()[0] + isKeyEntry.getValue()[1]);
-                    data.updateMeanStrategy();
-                }
-            }
+            splitISsAccordingToBR(toSplit, currentPlayer);
         }
     }
 
@@ -372,14 +351,12 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
     }
 
     protected void splitISsAccordingToBR(Map<InformationSet, Map<Integer, Map<PerfectRecallISKey, double[]>>> toSplit, Player player) {
-        Map<InformationSet, Map<Integer, Map<PerfectRecallISKey, double[]>>> toSplitAdd = new HashMap<>();
-        Map<InformationSet, Set<Integer>> toSplitRemove = new HashMap<>();
-
         for (Map.Entry<InformationSet, Map<Integer, Map<PerfectRecallISKey, double[]>>> informationSetMapEntry : toSplit.entrySet()) {
             if (informationSetMapEntry.getValue().size() > 1) {
                 for (Map.Entry<Integer, Map<PerfectRecallISKey, double[]>> entry : informationSetMapEntry.getValue().entrySet()) {
                     Set<GameState> isStates = informationSetMapEntry.getKey().getAllStates();
                     Set<GameState> toRemove = new HashSet<>();
+                    int actionIndex = entry.getKey();
 
                     for (PerfectRecallISKey key : entry.getValue().keySet()) {
                         isStates.stream().filter(isState -> isState.getISKeyForPlayerToMove().equals(key)).forEach(toRemove::add);
@@ -393,18 +370,32 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                         isStates.removeAll(toRemove);
                         newIS = createNewIS(toRemove, player, (CFRBRData) ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData());
                     }
-                    toSplitAdd.computeIfAbsent(newIS, key ->  new HashMap<>()).put(entry.getKey(), entry.getValue());
-                    toSplitRemove.computeIfAbsent(informationSetMapEntry.getKey(), key -> new HashSet<>()).add(entry.getKey());
+                    double[] meanStrategy = newIS.getData().getMp();
+
+                    for (Map.Entry<PerfectRecallISKey, double[]> isKeyEntry : entry.getValue().entrySet()) {
+                        for (int i = 0; i < ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData().getActionCount(); i++) {
+                            ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateNumerator(i, isKeyEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]));
+                        }
+                        ((CFRBRData) newIS.getData()).addToMeanStrategyUpdateDenominator(isKeyEntry.getValue()[0] + isKeyEntry.getValue()[1]);
+                    }
+                    ((CFRBRData) newIS.getData()).updateMeanStrategy();
+                }
+            } else {
+                for (Map.Entry<Integer, Map<PerfectRecallISKey, double[]>> entry : informationSetMapEntry.getValue().entrySet()) {
+                    CFRBRData data = (CFRBRData) ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData();
+                    double[] meanStrategy = data.getMp();
+                    int actionIndex = entry.getKey();
+
+                    for (Map.Entry<PerfectRecallISKey, double[]> isKeyEntry : entry.getValue().entrySet()) {
+                        for (int i = 0; i < ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData().getActionCount(); i++) {
+                            data.addToMeanStrategyUpdateNumerator(i, isKeyEntry.getValue()[0] * ((i == actionIndex ? 1 : 0) - meanStrategy[i]));
+                        }
+                        data.addToMeanStrategyUpdateDenominator(isKeyEntry.getValue()[0] + isKeyEntry.getValue()[1]);
+                    }
+                    data.updateMeanStrategy();
                 }
             }
         }
-        toSplit.putAll(toSplitAdd);
-        toSplitRemove.forEach((k, v) -> {
-            Map<Integer, Map<PerfectRecallISKey, double[]>> map = toSplit.get(k);
-
-            v.forEach(actionIndex -> map.remove(actionIndex));
-        });
-        toSplit.entrySet().removeIf(e -> e.getValue().isEmpty());
     }
 
     protected IRCFRInformationSet createNewIS(Set<GameState> states, Player player, CFRBRData data) {
@@ -418,6 +409,4 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         states.forEach(s -> currentAbstractionISKeys.put((PerfectRecallISKey) s.getISKeyForPlayerToMove(), newISKey));
         return is;
     }
-
-
 }
