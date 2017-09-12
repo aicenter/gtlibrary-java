@@ -15,20 +15,6 @@ import java.util.List;
 
 public class InformationSetKeyMap extends HashMap<PerfectRecallISKey, ImperfectRecallISKey> {
 
-//    @Override
-//    public ImperfectRecallISKey get(Object key) {
-//        ImperfectRecallISKey value = super.get(key);
-//
-//        if(value != null)
-//            return value;
-//        PerfectRecallISKey prKey = (PerfectRecallISKey) key;
-//        Observations observations = new Observations(prKey.getSequence().getPlayer(), prKey.getSequence().getPlayer());
-//
-//        observations.add(new IDObservation(prKey.getSequence().size()));
-//        return new ImperfectRecallISKey(observations, null, null);
-//    }
-
-
     @Override
     public ImperfectRecallISKey get(Object key) {
         System.err.println("wrong call of ISKey Map");
