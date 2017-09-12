@@ -7,6 +7,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.me
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.LimitedMemoryMaxRegretIRCFR;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.MaxRegretIRCFR;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FPIRA;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FPIRABRFirst;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FrequencyFPIRA;
 
 public class FPIRAExperiments {
@@ -22,10 +23,10 @@ public class FPIRAExperiments {
         } else if (args[0].equals("FPIRA")) {
             if (args[1].equals("GP")) {
                 setGP(args);
-                FPIRA.runGenericPoker();
+                FPIRABRFirst.runGenericPoker();
             } else if (args[1].equals("GS")) {
                 setGS(args);
-                FPIRA.runIIGoofspiel();
+                FPIRABRFirst.runIIGoofspiel();
             }
         } else if (args[0].equals("FreqFPIRA")) {
             if (args[1].equals("GP")) {
