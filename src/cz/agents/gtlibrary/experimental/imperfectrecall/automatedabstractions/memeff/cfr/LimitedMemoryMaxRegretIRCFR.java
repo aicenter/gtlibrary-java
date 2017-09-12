@@ -20,7 +20,8 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     private boolean bellowLimit;
 
     public static void main(String[] args) {
-        runGenericPoker();
+//        runGenericPoker();
+        runIIGoofspiel();
     }
 
     public static void runGenericPoker() {

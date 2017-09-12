@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class IRCFR extends AutomatedAbstractionAlgorithm {
-    public static boolean DIRECT_REGRET_UPDATE = false;
+    public static boolean DIRECT_REGRET_UPDATE = true;
     public static boolean REGRET_MATCHING_PLUS = true;
     public static int delay = 100;
     protected final MCTSConfig perfectRecallConfig;
@@ -377,8 +377,6 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             return 0;
         if (node.isGameEnd())
             return node.getUtilities()[expPlayer.getId()];
-        IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
-        OOSAlgorithmData data = informationSet.getData();
         List<Action> actions = perfectRecallExpander.getActions(node);
 
         if (node.isPlayerToMoveNature()) {
@@ -394,7 +392,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             }
             return expectedValue;
         }
-
+        IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
+        OOSAlgorithmData data = informationSet.getData();
         double[] currentStrategy = getStrategy(data);
         double[] expectedValuesForActions = new double[currentStrategy.length];
         double expectedValue = 0;

@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
 
 public class MaxRegretIRCFR extends IRCFR {
 
-    public static boolean SIMULTANEOUS_PR_IR = false;
+    public static boolean SIMULTANEOUS_PR_IR = true;
     public static boolean CLEAR_DATA = true;
     public static boolean DELETE_REGRETS = true;
     //    public static boolean USE_AVG_STRAT = false;
@@ -121,8 +121,6 @@ public class MaxRegretIRCFR extends IRCFR {
             return 0;
         if (node.isGameEnd())
             return node.getUtilities()[expPlayer.getId()];
-        IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
-        OOSAlgorithmData data = informationSet.getData();
         List<Action> actions = perfectRecallExpander.getActions(node);
 
         if (node.isPlayerToMoveNature()) {
@@ -138,6 +136,8 @@ public class MaxRegretIRCFR extends IRCFR {
             }
             return expectedValue;
         }
+        IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
+        OOSAlgorithmData data = informationSet.getData();
 
         double[] currentStrategy = getStrategy(data);
         double[] expectedValuesForActions = new double[currentStrategy.length];
@@ -287,8 +287,6 @@ public class MaxRegretIRCFR extends IRCFR {
             return 0;
         if (node.isGameEnd())
             return node.getUtilities()[expPlayer.getId()];
-        IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
-        OOSAlgorithmData data = informationSet.getData();
         List<Action> actions = perfectRecallExpander.getActions(node);
 
         if (node.isPlayerToMoveNature()) {
@@ -304,7 +302,8 @@ public class MaxRegretIRCFR extends IRCFR {
             }
             return expectedValue;
         }
-
+        IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
+        OOSAlgorithmData data = informationSet.getData();
         double[] currentStrategy = getStrategy(data);
         double[] expectedValuesForActions = new double[currentStrategy.length];
         double expectedValue = 0;

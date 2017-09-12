@@ -61,10 +61,12 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected void buildInformationSets(GameState state) {
         if (state.isGameEnd())
             return;
-        ImperfectRecallISKey key = getAbstractionISKey(state);
-        IRCFRInformationSet set = currentAbstractionInformationSets.computeIfAbsent(key, k -> new IRCFRInformationSet(state, key));
+        if(!state.isPlayerToMoveNature()) {
+            ImperfectRecallISKey key = getAbstractionISKey(state);
+            IRCFRInformationSet set = currentAbstractionInformationSets.computeIfAbsent(key, k -> new IRCFRInformationSet(state, key));
 
-        set.addStateToIS(state);
+            set.addStateToIS(state);
+        }
         perfectRecallExpander.getActions(state).stream().map(a -> state.performAction(a)).forEach(s -> buildInformationSets(s));
     }
 
