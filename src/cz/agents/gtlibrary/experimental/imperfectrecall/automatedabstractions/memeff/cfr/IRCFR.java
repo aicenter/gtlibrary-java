@@ -20,6 +20,7 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.io.BasicGameBuilder;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AbstractedStrategyUtils;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionAlgorithm;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.MemEffAbstractedInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FPIRABestResponse;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
@@ -106,7 +107,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         BasicGameBuilder builder = new BasicGameBuilder();
 
         builder.buildWithoutTerminalIS(root, config, expander);
-        config.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).forEach(i -> i.setAlgorithmData(new IRCFRData(expander.getActions(i.getAllStates().stream().findAny().get()))));
+        config.getAllInformationSets().values().stream().forEach(i -> i.setAlgorithmData(new IRCFRData(expander.getActions(i.getAllStates().stream().findAny().get()))));
     }
 
     public IRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig) {
@@ -238,7 +239,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
     private void updateAbstraction(Map<ImperfectRecallISKey, Map<PerfectRecallISKey, OOSAlgorithmData>> regretDifferences) {
         regretDifferences.forEach((irISKey, splitMap) -> {
-            IRCFRInformationSet setToSplit = currentAbstractionInformationSets.get(irISKey);
+            MemEffAbstractedInformationSet setToSplit = currentAbstractionInformationSets.get(irISKey);
             Set<GameState> isStates = setToSplit.getAllStates();
 
             splitMap.forEach((prISKey, data) -> {
@@ -248,6 +249,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
                     if (toRemove.size() < isStates.size()) {
                         isStates.removeAll(toRemove);
                         createNewIS(toRemove, data);
+                        setToSplit.getAbstractedKeys().remove(prISKey);
                     } else {
                         setToSplit.setData(new IRCFRData(data));
                     }
@@ -259,7 +261,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     protected IRCFRInformationSet createNewIS(Set<GameState> states, OOSAlgorithmData data) {
         GameState state = states.stream().findAny().get();
         ImperfectRecallISKey newISKey = createCounterISKey(state.getPlayerToMove());
-        IRCFRInformationSet is = new IRCFRInformationSet(state, newISKey);
+        MemEffAbstractedInformationSet is = createInformationSet(state, newISKey);
 
         is.addAllStatesToIS(states);
         is.setData(new IRCFRData(data));
@@ -273,8 +275,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
         currentAbstractionInformationSets.values().stream().filter(i -> i.getPlayer().getId() != 2).forEach(i -> {
             double[] abstractionRegrets = i.getData().getRegrets();
-            Set<ISKey> isKeys = i.getAllStates().stream().filter(s -> !s.isPlayerToMoveNature())
-                    .map(s -> s.getISKeyForPlayerToMove()).collect(Collectors.toSet());
+            Set<PerfectRecallISKey> isKeys = ((MemEffAbstractedInformationSet) i).getAbstractedKeys();
 
             isKeys.forEach(k -> {
                 IRCFRData algorithmData = (IRCFRData) perfectRecallConfig.getAllInformationSets().get(k).getAlgorithmData();
@@ -283,7 +284,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
                         IntStream.range(0, abstractionRegrets.length).anyMatch(j -> Math.abs(abstractionRegrets[j] - algorithmData.getRegrets()[j]) >= 1e-6)) {
                     Map<PerfectRecallISKey, OOSAlgorithmData> dataMap = toSplit.computeIfAbsent((ImperfectRecallISKey) i.getISKey(), key -> new HashMap<>());
 
-                    dataMap.put((PerfectRecallISKey) k, algorithmData);
+                    dataMap.put(k, algorithmData);
                 }
             });
         });
@@ -391,7 +392,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
             }
             return expectedValue;
         }
-        IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
+        MemEffAbstractedInformationSet informationSet = getAbstractedInformationSet(node);
         OOSAlgorithmData data = informationSet.getData();
         double[] currentStrategy = getStrategy(data);
         double[] expectedValuesForActions = new double[currentStrategy.length];
@@ -414,7 +415,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         return expectedValue;
     }
 
-    protected IRCFRInformationSet getAbstractedInformationSet(GameState node) {
+    protected MemEffAbstractedInformationSet getAbstractedInformationSet(GameState node) {
         return currentAbstractionInformationSets.get(currentAbstractionISKeys.get((PerfectRecallISKey) node.getISKeyForPlayerToMove(), perfectRecallExpander.getActions(node)));
     }
 
@@ -434,7 +435,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         return prData;
     }
 
-    protected void addData(Collection<IRCFRInformationSet> informationSets) {
+    protected void addData(Collection<MemEffAbstractedInformationSet> informationSets) {
         informationSets.forEach(i -> i.setData(new IRCFRData(this.perfectRecallExpander.getActions(i.getAllStates().stream().findAny().get()).size())));
     }
 

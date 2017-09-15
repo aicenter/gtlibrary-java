@@ -15,12 +15,12 @@ import java.util.Map;
 
 public abstract class AutomatedAbstractionAlgorithm {
 
-    public static boolean USE_ABSTRACTION = true;
+    public static boolean USE_ABSTRACTION = false;
 
     protected final GameState rootState;
     protected final Expander<? extends InformationSet> perfectRecallExpander;
     protected final GameInfo gameInfo;
-    protected final Map<ISKey, IRCFRInformationSet> currentAbstractionInformationSets;
+    protected final Map<ISKey, MemEffAbstractedInformationSet> currentAbstractionInformationSets;
     protected final InformationSetKeyMap currentAbstractionISKeys;
     protected int iteration = 0;
     protected int isKeyCounter = 0;
@@ -61,20 +61,24 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected void buildInformationSets(GameState state) {
         if (state.isGameEnd())
             return;
-        if(!state.isPlayerToMoveNature()) {
+        if (!state.isPlayerToMoveNature()) {
             ImperfectRecallISKey key = getAbstractionISKey(state);
-            IRCFRInformationSet set = currentAbstractionInformationSets.computeIfAbsent(key, k -> new IRCFRInformationSet(state, key));
+            IRCFRInformationSet set = currentAbstractionInformationSets.computeIfAbsent(key, k -> createInformationSet(state, key));
 
             set.addStateToIS(state);
         }
         perfectRecallExpander.getActions(state).stream().map(a -> state.performAction(a)).forEach(s -> buildInformationSets(s));
     }
 
+    protected MemEffAbstractedInformationSet createInformationSet(GameState state, ImperfectRecallISKey key) {
+        return new MemEffAbstractedInformationSet(state, key);
+    }
+
     protected void buildCompleteGameInformationSets(GameState state) {
         if (state.isGameEnd())
             return;
         ImperfectRecallISKey key = getPerfectKey(state);
-        IRCFRInformationSet set = currentAbstractionInformationSets.computeIfAbsent(key, k -> new IRCFRInformationSet(state, key));
+        IRCFRInformationSet set = currentAbstractionInformationSets.computeIfAbsent(key, k -> createInformationSet(state, key));
 
         set.addStateToIS(state);
         perfectRecallExpander.getActions(state).stream().map(a -> state.performAction(a)).forEach(s -> buildCompleteGameInformationSets(s));
@@ -91,9 +95,9 @@ public abstract class AutomatedAbstractionAlgorithm {
     }
 
 
-    protected void addData(Collection<IRCFRInformationSet> informationSets) {
+    protected void addData(Collection<MemEffAbstractedInformationSet> informationSets) {
         informationSets.stream()
-                .filter(i-> i.getPlayer().getId() != 2)
+                .filter(i -> i.getPlayer().getId() != 2)
                 .forEach(i -> i.setData(new CFRBRData(this.perfectRecallExpander.getActions(i.getAllStates().stream().findAny().get()).size())));
     }
 

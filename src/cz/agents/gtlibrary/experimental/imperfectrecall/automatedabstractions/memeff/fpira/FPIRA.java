@@ -19,6 +19,7 @@ import cz.agents.gtlibrary.domain.wichardtne.WichardtExpander;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.CFRBRData;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionAlgorithm;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.MemEffAbstractedInformationSet;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
@@ -300,7 +301,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                 for (int i = 0; i < meanStratDiffForAction.length; i++) {
                     meanStratDiffForAction[i] /= meanStratDiffForActionNormalizer;
                 }
-                actionMapEntry.getKey().getAllStates().stream().map(s -> (PerfectRecallISKey) s.getISKeyForPlayerToMove()).forEach(key ->
+                ((MemEffAbstractedInformationSet) actionMapEntry.getKey()).getAbstractedKeys().forEach(key ->
                         strategyDiffs.irStrategyDiff.put(key, meanStratDiffForAction)
                 );
             }
@@ -336,6 +337,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                         newIS = (IRCFRInformationSet) actionMapEntry.getKey();
                     else {
                         isStates.removeAll(toRemove);
+                        ((MemEffAbstractedInformationSet)actionMapEntry.getKey()).getAbstractedKeys().removeAll(entry.getValue().keySet());
                         newIS = createNewIS(toRemove, player, (CFRBRData) ((IRCFRInformationSet) actionMapEntry.getKey()).getData());
                     }
                     double[] meanStrategy = newIS.getData().getMp();
@@ -368,6 +370,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                         newIS = (IRCFRInformationSet) informationSetMapEntry.getKey();
                     else {
                         isStates.removeAll(toRemove);
+                        ((MemEffAbstractedInformationSet)informationSetMapEntry.getKey()).getAbstractedKeys().removeAll(entry.getValue().keySet());
                         newIS = createNewIS(toRemove, player, (CFRBRData) ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData());
                     }
                     double[] meanStrategy = newIS.getData().getMp();
@@ -401,7 +404,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
     protected IRCFRInformationSet createNewIS(Set<GameState> states, Player player, CFRBRData data) {
         ImperfectRecallISKey newISKey = createCounterISKey(player);
         GameState state = states.stream().findAny().get();
-        IRCFRInformationSet is = new IRCFRInformationSet(state, newISKey);
+        MemEffAbstractedInformationSet is = createInformationSet(state, newISKey);
 
         is.addAllStatesToIS(states);
         is.setData(new CFRBRData(data));

@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.MemEffAbstractedInformationSet;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 
@@ -76,9 +77,9 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     protected void findISsToUpdate(Player player) {
         if(bellowLimit)
             return;
-        List<InformationSet> imperfectRecallSetsForPlayer = currentAbstractionInformationSets.values().stream()
+        List<MemEffAbstractedInformationSet> imperfectRecallSetsForPlayer = currentAbstractionInformationSets.values().stream()
                 .filter(i -> i.getPlayer().getId() == player.getId())
-                .filter(i -> i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().count() > 1)
+                .filter(i -> i.getAbstractedKeys().size() > 1)
                 .collect(Collectors.toList());
         int abstractedISCount = getAbstractedISCount(imperfectRecallSetsForPlayer);
 
@@ -86,8 +87,8 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
             bellowLimit = true;
         } else {
             Collections.shuffle(imperfectRecallSetsForPlayer, random);
-            for (InformationSet informationSet : imperfectRecallSetsForPlayer) {
-                List<ISKey> collect = informationSet.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().collect(Collectors.toList());
+            for (MemEffAbstractedInformationSet informationSet : imperfectRecallSetsForPlayer) {
+                List<ISKey> collect = new ArrayList<>(informationSet.getAbstractedKeys());
 
                 if (collect.size() + toUpdate.size() > sizeLimit) {
                     Collections.shuffle(collect, random);
@@ -98,9 +99,9 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         }
     }
 
-    private int getAbstractedISCount(List<InformationSet> abstractedInformationSets) {
+    private int getAbstractedISCount(List<MemEffAbstractedInformationSet> abstractedInformationSets) {
         return (int) abstractedInformationSets.stream()
-                .flatMap(i -> i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct())
+                .flatMap(i -> i.getAbstractedKeys().stream())
                 .count();
     }
 
