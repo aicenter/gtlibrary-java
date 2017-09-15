@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.MemEffAbstractedInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.PureOOSData;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
@@ -87,6 +88,7 @@ public class FrequencyFPIRA extends FPIRA {
                     newIS = (IRCFRInformationSet) informationSetMapEntry.getKey();
                 else {
                     isStates.removeAll(toRemove);
+                    ((MemEffAbstractedInformationSet) informationSetMapEntry.getKey()).getAbstractedKeys().removeAll(entry.getValue());
                     newIS = createNewIS(toRemove, player, ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData());
                 }
                 toSplitAdd.computeIfAbsent(newIS, key ->  new HashMap<>()).put(entry.getKey(), entry.getValue());
@@ -120,6 +122,7 @@ public class FrequencyFPIRA extends FPIRA {
                         ((IRCFRInformationSet) actionMapEntry.getKey()).getData().addToRegretAtIndex(actionIndex, 1);
                     } else {
                         isStates.removeAll(toRemove);
+                        ((MemEffAbstractedInformationSet) actionMapEntry.getKey()).getAbstractedKeys().remove(isKey);
                         IRCFRInformationSet newIS = createNewIS(toRemove, player, ((IRCFRInformationSet) actionMapEntry.getKey()).getData());
 
                         newIS.getData().addToRegretAtIndex(actionIndex, 1);
@@ -189,7 +192,7 @@ public class FrequencyFPIRA extends FPIRA {
                     meanStratDiff[i] = (regrets[i]) / (regretSum + 1) - regrets[i] / regretSum;
                 }
                 entry.getValue().forEach(key -> strategyDiffs.prStrategyDiff.put(key, meanStratDiff));
-                actionMapEntry.getKey().getAllStates().stream().map(s -> (PerfectRecallISKey) s.getISKeyForPlayerToMove()).filter(key -> entry.getValue().contains(key)).forEach(key ->
+                ((MemEffAbstractedInformationSet) actionMapEntry.getKey()).getAbstractedKeys().stream().filter(key -> entry.getValue().contains(key)).forEach(key ->
                         strategyDiffs.irStrategyDiff.put(key, meanStratDiff)
                 );
             }
@@ -198,7 +201,7 @@ public class FrequencyFPIRA extends FPIRA {
     }
 
     @Override
-    protected void addData(Collection<IRCFRInformationSet> informationSets) {
+    protected void addData(Collection<MemEffAbstractedInformationSet> informationSets) {
         informationSets.stream()
                 .filter(i -> i.getPlayer().getId() != 2)
                 .forEach(i -> i.setData(new PureOOSData(this.perfectRecallExpander.getActions(i.getAllStates().stream().findAny().get()).size())));
@@ -216,7 +219,7 @@ public class FrequencyFPIRA extends FPIRA {
     protected IRCFRInformationSet createNewIS(Set<GameState> states, Player player, OOSAlgorithmData data) {
         ImperfectRecallISKey newISKey = createCounterISKey(player);
         GameState state = states.stream().findAny().get();
-        IRCFRInformationSet is = new IRCFRInformationSet(state, newISKey);
+        MemEffAbstractedInformationSet is = createInformationSet(state, newISKey);
 
         is.addAllStatesToIS(states);
         is.setData(new PureOOSData(data));

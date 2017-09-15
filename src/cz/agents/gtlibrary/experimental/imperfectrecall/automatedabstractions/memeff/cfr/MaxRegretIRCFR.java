@@ -16,6 +16,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.MemEffAbstractedInformationSet;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
@@ -182,7 +183,7 @@ public class MaxRegretIRCFR extends IRCFR {
             Map<Set<Integer>, Set<ISKey>> compatibleISs = new HashMap<>();
             Set<ISKey> notVisitedISs = new HashSet<>();
 
-            i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().forEach(key -> {
+            i.getAbstractedKeys().forEach(key -> {
                 double[] regrets = prRegrets.get(key);
 
                 if (regrets != null) {
@@ -214,26 +215,28 @@ public class MaxRegretIRCFR extends IRCFR {
         });
     }
 
-    private void updateWithReusedData(IRCFRInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
+    private void updateWithReusedData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
         compatibleISs.forEach((maxRegretActionIndices, isKeys) -> {
             Set<GameState> toRemove = isStates.stream().filter(isState -> isKeys.contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
 
             if (!toRemove.isEmpty()) {
                 if (toRemove.size() < isStates.size()) {
                     isStates.removeAll(toRemove);
+                    i.getAbstractedKeys().removeAll(isKeys);
                     createNewIS(toRemove, i.getData());
                 }
             }
         });
     }
 
-    private void updateWithClearData(IRCFRInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
+    private void updateWithClearData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
         compatibleISs.forEach((maxRegretActionIndices, isKeys) -> {
             Set<GameState> toRemove = isStates.stream().filter(isState -> isKeys.contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
 
             if (!toRemove.isEmpty()) {
                 if (toRemove.size() < isStates.size()) {
                     isStates.removeAll(toRemove);
+                    i.getAbstractedKeys().removeAll(isKeys);
                     createNewISNoDataCopy(toRemove, new IRCFRData(i.getData().getActionCount()));
                 }
             }
@@ -244,7 +247,7 @@ public class MaxRegretIRCFR extends IRCFR {
     protected IRCFRInformationSet createNewISNoDataCopy(Set<GameState> states, OOSAlgorithmData data) {
         GameState state = states.stream().findAny().get();
         ImperfectRecallISKey newISKey = createCounterISKey(state.getPlayerToMove());
-        IRCFRInformationSet is = new IRCFRInformationSet(state, newISKey);
+        MemEffAbstractedInformationSet is = createInformationSet(state, newISKey);
 
         is.addAllStatesToIS(states);
         is.setData(data);

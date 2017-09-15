@@ -591,6 +591,7 @@ public class GeneralDoubleOracle {
 
             debugOutput.println("Last difference: " + (algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]) - oldSize[currentPlayerIndex]));
             debugOutput.println("Current Size: " + algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]));
+            debugOutput.println("Current time: " + (threadBean.getCurrentThreadCpuTime() - start) / 1e6);
             oldSize[currentPlayerIndex] = algConfig.getSizeForPlayer(actingPlayers[currentPlayerIndex]);
             maxTemporaryLeafCount = Math.max(maxTemporaryLeafCount, algConfig.getTemporaryLeafs().size());
 
@@ -648,6 +649,7 @@ public class GeneralDoubleOracle {
             debugOutput.println("number of ISs: " + algConfig.getAllInformationSets().values().stream()
                     .filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd()))
                     .filter(i -> i.getPlayer().getId() != 2).count());
+            debugOutput.println("Current memory: " + memoryBean.getHeapMemoryUsage().getUsed());
 
             if (DEBUG) debugOutput.println(algConfig.getNewSequences());
 
