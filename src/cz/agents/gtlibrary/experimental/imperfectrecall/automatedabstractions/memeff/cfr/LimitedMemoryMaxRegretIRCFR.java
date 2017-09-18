@@ -13,6 +13,10 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.me
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,6 +37,27 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         alg.runIterations(10000000);
     }
 
+    public static void runGenericPoker(String backupFileName) {
+        GameState root = new GenericPokerGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(config);
+        GameInfo info = new GPGameInfo();
+        try {
+            FileInputStream fin = new FileInputStream(backupFileName);
+            ObjectInputStream oos = new ObjectInputStream(fin);
+            AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
+            MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config, data);
+
+            alg.runIterations(10000000);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void runIIGoofspiel() {
         GameState root = new IIGoofSpielGameState();
         MCTSConfig config = new MCTSConfig();
@@ -41,6 +66,28 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config);
 
         alg.runIterations(10000000);
+    }
+
+    public static void runIIGoofspiel(String backupFileName) {
+        GameState root = new IIGoofSpielGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(config);
+        GameInfo info = new GSGameInfo();
+
+        try {
+            FileInputStream fin = new FileInputStream(backupFileName);
+            ObjectInputStream oos = new ObjectInputStream(fin);
+            AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
+            MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config, data);
+
+            alg.runIterations(10000000);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static int sizeLimit = 100;
