@@ -18,12 +18,17 @@ import cz.agents.gtlibrary.domain.wichardtne.PerfectInformationWichardtState;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtExpander;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.CFRBRData;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionData;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.MemEffAbstractedInformationSet;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -47,12 +52,51 @@ public class FPIRABRFirst extends FPIRA {
         fpira.runIterations(1000000);
     }
 
+    public static void runIIGoofspiel(String backupFileName) {
+        GameState root = new IIGoofSpielGameState();
+        Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(new FPIRAConfig());
+
+        try {
+            FileInputStream fin = new FileInputStream(backupFileName);
+            ObjectInputStream oos = new ObjectInputStream(fin);
+            AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
+            FPIRA fpira = new FPIRABRFirst(root, expander, new GSGameInfo(), data);
+
+            fpira.runIterations(1000000);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void runGenericPoker() {
         GameState root = new GenericPokerGameState();
         Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new FPIRAConfig());
         FPIRA fpira = new FPIRABRFirst(root, expander, new GPGameInfo());
 
         fpira.runIterations(1000000);
+    }
+
+    public static void runGenericPoker(String backupFileName) {
+        GameState root = new GenericPokerGameState();
+        Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new FPIRAConfig());
+        try {
+            FileInputStream fin = new FileInputStream(backupFileName);
+            ObjectInputStream oos = new ObjectInputStream(fin);
+            AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
+            FPIRA fpira = new FPIRABRFirst(root, expander, new GPGameInfo(), data);
+
+            fpira.runIterations(1000000);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void runKuhnPoker() {
@@ -84,6 +128,10 @@ public class FPIRABRFirst extends FPIRA {
 
     public FPIRABRFirst(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info) {
         super(rootState, expander, info);
+    }
+
+    public FPIRABRFirst(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info, AutomatedAbstractionData data) {
+        super(rootState, expander, info, data);
     }
 
     protected void updateAbstractionInformationSets(GameState state, Map<Action, Double> bestResponse, Map<ISKey, double[]> opponentStrategy, Player opponent) {

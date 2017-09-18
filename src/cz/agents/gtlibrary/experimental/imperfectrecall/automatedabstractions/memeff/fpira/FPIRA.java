@@ -27,6 +27,10 @@ import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -34,11 +38,12 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
 
 
     public static void main(String[] args) {
-        runGenericPoker();
+//        runGenericPoker();
+//        runGenericPoker("backup.ser");
 //        runKuhnPoker();
 //        runRandomGame();
 //        runWichardtCounterexample();
-//        runIIGoofspiel();
+        runIIGoofspiel();
     }
 
     public static void runIIGoofspiel() {
@@ -49,12 +54,54 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         fpira.runIterations(1000000);
     }
 
+    public static void runIIGoofspiel(String backupFileName) {
+        GameState root = new IIGoofSpielGameState();
+        Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(new FPIRAConfig());
+
+        try {
+            FileInputStream fin = new FileInputStream(backupFileName);
+            ObjectInputStream oos = new ObjectInputStream(fin);
+            AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
+            FPIRA fpira = new FPIRA(root, expander, new GSGameInfo(), data);
+
+            fpira.runIterations(1000000);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void runGenericPoker() {
         GameState root = new GenericPokerGameState();
         Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new FPIRAConfig());
         FPIRA fpira = new FPIRA(root, expander, new GPGameInfo());
 
         fpira.runIterations(1000000);
+    }
+
+    public static void runGenericPoker(String backupFileName) {
+        GameState root = new GenericPokerGameState();
+        Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new FPIRAConfig());
+
+        try {
+            FileInputStream fin = new FileInputStream(backupFileName);
+            ObjectInputStream oos = new ObjectInputStream(fin);
+            AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
+
+            FPIRA fpira = new FPIRA(root, expander, new GPGameInfo(), data);
+
+            fpira.runIterations(1000000);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public static void runKuhnPoker() {
@@ -344,7 +391,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                         newIS = (IRCFRInformationSet) actionMapEntry.getKey();
                     else {
                         isStates.removeAll(toRemove);
-                        ((MemEffAbstractedInformationSet)actionMapEntry.getKey()).getAbstractedKeys().removeAll(entry.getValue().keySet());
+                        ((MemEffAbstractedInformationSet) actionMapEntry.getKey()).getAbstractedKeys().removeAll(entry.getValue().keySet());
                         newIS = createNewIS(toRemove, player, (CFRBRData) ((IRCFRInformationSet) actionMapEntry.getKey()).getData());
                     }
                     double[] meanStrategy = newIS.getData().getMp();
@@ -377,7 +424,7 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
                         newIS = (IRCFRInformationSet) informationSetMapEntry.getKey();
                     else {
                         isStates.removeAll(toRemove);
-                        ((MemEffAbstractedInformationSet)informationSetMapEntry.getKey()).getAbstractedKeys().removeAll(entry.getValue().keySet());
+                        ((MemEffAbstractedInformationSet) informationSetMapEntry.getKey()).getAbstractedKeys().removeAll(entry.getValue().keySet());
                         newIS = createNewIS(toRemove, player, (CFRBRData) ((IRCFRInformationSet) informationSetMapEntry.getKey()).getData());
                     }
                     double[] meanStrategy = newIS.getData().getMp();

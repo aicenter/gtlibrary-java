@@ -147,7 +147,7 @@ public abstract class AutomatedAbstractionAlgorithm {
         return new ImperfectRecallISKey(observations, null, null);
     }
 
-    protected abstract boolean isConverged(double v);
+    protected abstract boolean isConverged(double epsilon);
 
     protected void printStatistics() {
         System.out.println("*************************************************");
@@ -170,7 +170,6 @@ public abstract class AutomatedAbstractionAlgorithm {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             System.out.println("saved");
         }
     }

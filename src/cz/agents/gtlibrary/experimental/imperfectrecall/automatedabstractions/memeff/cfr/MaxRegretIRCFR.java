@@ -45,10 +45,10 @@ public class MaxRegretIRCFR extends IRCFR {
     public static void main(String[] args) {
 //        runRandomGame();
 //        runKuhnPoker();
-//        runGenericPoker();
+        runGenericPoker();
 //        runGenericPoker("backup.ser");
 //        runIIGoofspiel();
-        runIIGoofspiel("backup.ser");
+//        runIIGoofspiel("backup.ser");
     }
 
     public static void runIIGoofspiel() {
@@ -68,7 +68,6 @@ public class MaxRegretIRCFR extends IRCFR {
         GameInfo info = new GSGameInfo();
         try {
             FileInputStream fin = new FileInputStream(backupFileName);
-
             ObjectInputStream oos = new ObjectInputStream(fin);
             AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
             MaxRegretIRCFR alg = new MaxRegretIRCFR(root, expander, info, config, data);
@@ -114,7 +113,6 @@ public class MaxRegretIRCFR extends IRCFR {
         GameInfo info = new GPGameInfo();
         try {
             FileInputStream fin = new FileInputStream(backupFileName);
-
             ObjectInputStream oos = new ObjectInputStream(fin);
             AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
             MaxRegretIRCFR alg = new MaxRegretIRCFR(root, expander, info, config, data);

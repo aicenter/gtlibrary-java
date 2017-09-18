@@ -40,6 +40,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     protected final MCTSConfig perfectRecallConfig;
     private final FPIRABestResponse p0BR;
     private final FPIRABestResponse p1BR;
+    private double p0Exploitability = Double.POSITIVE_INFINITY;
+    private double p1Exploitability = Double.POSITIVE_INFINITY;
 
 
     public enum SPLIT_HEURISTIC {
@@ -126,8 +128,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     }
 
     @Override
-    protected boolean isConverged(double v) {
-        return false;
+    protected boolean isConverged(double epsilon) {
+        return p1Exploitability + p0Exploitability < epsilon;
     }
 
     @Override
@@ -143,9 +145,11 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
 
 //        p0Strategy.forEach((k, v) -> System.out.print(k+ ": " + Arrays.toString(v)));
         if (iteration > 1) {
-            System.out.println("p0BR: " + p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy));
+            p1Exploitability = p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy);
+            System.out.println("p0BR: " + p1Exploitability);
             p0BR.clearData();
-            System.out.println("p1BR: " + -p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy));
+            p0Exploitability = p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy);
+            System.out.println("p1BR: " + -p0Exploitability);
             p1BR.clearData();
         }
         System.out.println("ISs in perfect recall config: " + perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).count());
