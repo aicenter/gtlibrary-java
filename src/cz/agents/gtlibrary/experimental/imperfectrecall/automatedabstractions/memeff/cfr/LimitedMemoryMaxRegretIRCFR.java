@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr;
 
-import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
@@ -9,6 +8,7 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionData;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.MemEffAbstractedInformationSet;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
     public static void main(String[] args) {
-        runGenericPoker();
-//        runIIGoofspiel();
+//        runGenericPoker();
+        runIIGoofspiel();
     }
 
     public static void runGenericPoker() {
@@ -50,6 +50,13 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
     public LimitedMemoryMaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig) {
         super(rootState, perfectRecallExpander, info, perfectRecallConfig);
+        random = new Random(1);
+        toUpdate = new HashSet<>(sizeLimit);
+        bellowLimit = false;
+    }
+
+    public LimitedMemoryMaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig, AutomatedAbstractionData data) {
+        super(rootState, perfectRecallExpander, info, perfectRecallConfig, data);
         random = new Random(1);
         toUpdate = new HashSet<>(sizeLimit);
         bellowLimit = false;

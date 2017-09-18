@@ -10,10 +10,11 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 
-public class InformationSetKeyMap extends HashMap<PerfectRecallISKey, ImperfectRecallISKey> {
+public class InformationSetKeyMap extends HashMap<PerfectRecallISKey, ImperfectRecallISKey> implements Serializable {
 
     @Override
     public ImperfectRecallISKey get(Object key) {

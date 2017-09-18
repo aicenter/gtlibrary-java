@@ -4,9 +4,10 @@ import cz.agents.gtlibrary.interfaces.Observation;
 import cz.agents.gtlibrary.interfaces.Player;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class Observations implements List<Observation> {
+public class Observations implements List<Observation>, Serializable {
 
     private List<Observation> observationList;
     private Player observingPlayer;

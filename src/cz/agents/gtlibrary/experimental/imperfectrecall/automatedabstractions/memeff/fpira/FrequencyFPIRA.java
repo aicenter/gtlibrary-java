@@ -16,6 +16,7 @@ import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 
+import java.io.Serializable;
 import java.util.*;
 
 public class FrequencyFPIRA extends FPIRA {

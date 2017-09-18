@@ -27,6 +27,8 @@ import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
 import cz.agents.gtlibrary.interfaces.Action;
+
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,7 +36,7 @@ import java.util.List;
  *
  * @author vilo
  */
-public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider {
+public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider, Serializable{
     public static boolean useEpsilonRM = false;
     public static double epsilon = 0.001;
     protected List<Action> actions;

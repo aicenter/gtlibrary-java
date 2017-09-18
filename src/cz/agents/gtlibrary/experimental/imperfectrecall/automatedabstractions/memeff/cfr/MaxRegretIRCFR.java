@@ -16,6 +16,7 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionData;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.MemEffAbstractedInformationSet;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
@@ -23,12 +24,16 @@ import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class MaxRegretIRCFR extends IRCFR {
-    public static boolean SIMULTANEOUS_PR_IR = false;
+    public static boolean SIMULTANEOUS_PR_IR = true;
     public static boolean CLEAR_DATA = true;
     public static boolean DELETE_REGRETS = true;
     //    public static boolean USE_AVG_STRAT = false;
@@ -40,8 +45,10 @@ public class MaxRegretIRCFR extends IRCFR {
     public static void main(String[] args) {
 //        runRandomGame();
 //        runKuhnPoker();
-        runGenericPoker();
+//        runGenericPoker();
+//        runGenericPoker("backup.ser");
 //        runIIGoofspiel();
+        runIIGoofspiel("backup.ser");
     }
 
     public static void runIIGoofspiel() {
@@ -54,6 +61,27 @@ public class MaxRegretIRCFR extends IRCFR {
         alg.runIterations(10000000);
     }
 
+    public static void runIIGoofspiel(String backupFileName) {
+        GameState root = new IIGoofSpielGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(config);
+        GameInfo info = new GSGameInfo();
+        try {
+            FileInputStream fin = new FileInputStream(backupFileName);
+
+            ObjectInputStream oos = new ObjectInputStream(fin);
+            AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
+            MaxRegretIRCFR alg = new MaxRegretIRCFR(root, expander, info, config, data);
+
+            alg.runIterations(10000000);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void runRandomGame() {
         GameState root = new RandomGameState();
@@ -79,6 +107,28 @@ public class MaxRegretIRCFR extends IRCFR {
         alg.runIterations(10000000);
     }
 
+    public static void runGenericPoker(String backupFileName) {
+        GameState root = new GenericPokerGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(config);
+        GameInfo info = new GPGameInfo();
+        try {
+            FileInputStream fin = new FileInputStream(backupFileName);
+
+            ObjectInputStream oos = new ObjectInputStream(fin);
+            AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
+            MaxRegretIRCFR alg = new MaxRegretIRCFR(root, expander, info, config, data);
+
+            alg.runIterations(10000000);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void runKuhnPoker() {
         GameState root = new KuhnPokerGameState();
         MCTSConfig config = new MCTSConfig();
@@ -93,6 +143,12 @@ public class MaxRegretIRCFR extends IRCFR {
         super(rootState, perfectRecallExpander, info, perfectRecallConfig);
         prRegrets = new HashMap<>();
     }
+
+    public MaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig, AutomatedAbstractionData data) {
+        super(rootState, perfectRecallExpander, info, perfectRecallConfig, data);
+        prRegrets = new HashMap<>();
+    }
+
 
     @Override
     protected void iteration(Player player) {

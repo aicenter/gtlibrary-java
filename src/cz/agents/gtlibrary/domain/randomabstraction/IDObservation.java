@@ -2,7 +2,9 @@ package cz.agents.gtlibrary.domain.randomabstraction;
 
 import cz.agents.gtlibrary.interfaces.Observation;
 
-public class IDObservation implements Observation {
+import java.io.Serializable;
+
+public class IDObservation implements Observation, Serializable {
     private int id;
 
     public IDObservation(int id) {
