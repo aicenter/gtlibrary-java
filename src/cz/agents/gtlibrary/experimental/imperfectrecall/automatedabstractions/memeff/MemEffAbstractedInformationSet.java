@@ -5,11 +5,12 @@ import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.GameState;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MemEffAbstractedInformationSet extends IRCFRInformationSet {
+public class MemEffAbstractedInformationSet extends IRCFRInformationSet implements Serializable {
     protected Set<PerfectRecallISKey> abstractedKeys;
 
     public MemEffAbstractedInformationSet(GameState state) {

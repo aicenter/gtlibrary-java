@@ -23,12 +23,13 @@ import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-public class GPGameInfo implements GameInfo {
+public class GPGameInfo implements GameInfo, Serializable {
 
     public static final Player FIRST_PLAYER = new PlayerImpl(0);
     public static final Player SECOND_PLAYER = new PlayerImpl(1);

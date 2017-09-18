@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class IRCFRData extends OOSAlgorithmData {
+public class IRCFRData extends OOSAlgorithmData implements Serializable {
 
     double[] regretUpdate;
     protected boolean updated;

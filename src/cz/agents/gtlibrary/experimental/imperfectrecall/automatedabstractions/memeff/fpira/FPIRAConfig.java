@@ -4,6 +4,8 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 
+import java.io.Serializable;
+
 public class FPIRAConfig extends ConfigImpl<MCTSInformationSet> {
     @Override
     public MCTSInformationSet createInformationSetFor(GameState gameState) {

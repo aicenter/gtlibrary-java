@@ -5,7 +5,9 @@ import cz.agents.gtlibrary.iinodes.IRInformationSetImpl;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.GameState;
 
-public class IRCFRInformationSet extends IRInformationSetImpl {
+import java.io.Serializable;
+
+public class IRCFRInformationSet extends IRInformationSetImpl implements Serializable {
 
     private OOSAlgorithmData data;
 

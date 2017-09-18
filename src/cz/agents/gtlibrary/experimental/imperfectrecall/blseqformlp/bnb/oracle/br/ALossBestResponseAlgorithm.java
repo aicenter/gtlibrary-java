@@ -27,6 +27,7 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.ValueComparator;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 

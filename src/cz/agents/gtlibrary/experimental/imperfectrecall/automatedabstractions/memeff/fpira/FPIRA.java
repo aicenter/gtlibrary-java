@@ -19,6 +19,7 @@ import cz.agents.gtlibrary.domain.wichardtne.WichardtExpander;
 import cz.agents.gtlibrary.domain.wichardtne.WichardtGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.CFRBRData;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionAlgorithm;
+import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionData;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.MemEffAbstractedInformationSet;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
@@ -101,6 +102,14 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         p1BR = new FPIRABestResponse(this.rootState, this.perfectRecallExpander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
     }
 
+    public FPIRA(GameState rootState, Expander<? extends InformationSet> expander, GameInfo info, AutomatedAbstractionData data) {
+        super(rootState, expander, info, data);
+        p0Delta = new FPIRADeltaCalculator(this.rootState, this.perfectRecallExpander, 0, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
+        p1Delta = new FPIRADeltaCalculator(this.rootState, this.perfectRecallExpander, 1, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
+        p0BR = new FPIRABestResponse(this.rootState, this.perfectRecallExpander, 0, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
+        p1BR = new FPIRABestResponse(this.rootState, this.perfectRecallExpander, 1, new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, expander.getAlgorithmConfig(), info, false, currentAbstractionISKeys);
+    }
+
     @Override
     protected boolean isConverged(double epsilon) {
         return Math.abs(p0Exploitability - p1Exploitability) < epsilon;
@@ -119,8 +128,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         System.out.println("BR probability cache: " + p0BR.maxProbCacheSize + ", " + p1BR.maxProbCacheSize);
         System.out.println("State cache from deltaCalc sizes: " + p0Delta.maxStateValueCache + ", " + p1Delta.maxStateValueCache);
         System.out.println("deltaCalc probability cache: " + p0Delta.maxProbCacheSize + ", " + p1Delta.maxProbCacheSize);
-        System.out.println("Reachable IS count: " + getReachableISCountFromOriginalGame(p0Strategy, p1Strategy));
-        System.out.println("Reachable abstracted IS count: " + getReachableAbstractedISCountFromOriginalGame(p0Strategy, p1Strategy));
     }
 
     @Override

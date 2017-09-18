@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.CF
 import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.ThreadMXBean;
@@ -14,8 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AutomatedAbstractionAlgorithm {
-
-    public static boolean USE_ABSTRACTION = false;
+    private static final boolean SERIALIZE = false;
+    public static boolean USE_ABSTRACTION = true;
 
     protected final GameState rootState;
     protected final Expander<? extends InformationSet> perfectRecallExpander;
@@ -41,6 +42,18 @@ public abstract class AutomatedAbstractionAlgorithm {
             buildInitialAbstraction();
         else
             buildCompleteGame();
+    }
+
+    public AutomatedAbstractionAlgorithm(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, AutomatedAbstractionData data) {
+        this.rootState = rootState;
+        this.perfectRecallExpander = perfectRecallExpander;
+        this.gameInfo = info;
+        memoryBean = ManagementFactory.getMemoryMXBean();
+        threadBean = ManagementFactory.getThreadMXBean();
+        currentAbstractionISKeys = data.currentAbstractionISKeys;
+        currentAbstractionInformationSets = data.currentAbstractionInformationSets;
+        iteration = data.iteration;
+        isKeyCounter = data.isKeyCounter;
     }
 
     protected void buildInitialAbstraction() {
@@ -145,6 +158,21 @@ public abstract class AutomatedAbstractionAlgorithm {
         System.out.println("Current memory: " + memoryBean.getHeapMemoryUsage().getUsed());
         System.out.println("Max memory: " + memoryBean.getHeapMemoryUsage().getMax());
         System.out.println(memoryBean.getHeapMemoryUsage().toString());
+        if(SERIALIZE && iteration % 100 == 0) {
+            System.out.println("saving");
+            try {
+                FileOutputStream fout = new FileOutputStream("backup.ser");
+
+                ObjectOutputStream oos = new ObjectOutputStream(fout);
+                oos.writeObject(new AutomatedAbstractionData(currentAbstractionInformationSets, currentAbstractionISKeys, iteration, isKeyCounter));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("saved");
+        }
     }
 
     protected long getReachableAbstractedISCountFromOriginalGame(Map<ISKey, double[]> p0Strategy, Map<ISKey, double[]> p1Strategy) {
