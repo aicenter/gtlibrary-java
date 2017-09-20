@@ -426,7 +426,11 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     }
 
     protected MemEffAbstractedInformationSet getAbstractedInformationSet(GameState node) {
-        return currentAbstractionInformationSets.get(currentAbstractionISKeys.get((PerfectRecallISKey) node.getISKeyForPlayerToMove(), perfectRecallExpander.getActions(node)));
+        return getAbstractedInformationSet(node.getISKeyForPlayerToMove(), perfectRecallExpander.getActions(node).size());
+    }
+
+    protected MemEffAbstractedInformationSet getAbstractedInformationSet(ISKey key, int actionCount) {
+        return currentAbstractionInformationSets.get(currentAbstractionISKeys.get((PerfectRecallISKey) key, actionCount));
     }
 
     protected void updateData(GameState state, double pi1, double pi2, Player expPlayer, OOSAlgorithmData data,
