@@ -92,6 +92,8 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.SIMULTANEOUS_PR_IR = Boolean.parseBoolean(args[10]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[11]);
                 MaxRegretIRCFR.DIRECT_REGRET_UPDATE = Boolean.parseBoolean(args[12]);
+                LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[13]);
+                LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[14]);
                 LimitedMemoryMaxRegretIRCFR.runGenericPoker();
             } else if (args[1].equals("GS")) {
                 setGS(args);
@@ -103,6 +105,8 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.SIMULTANEOUS_PR_IR = Boolean.parseBoolean(args[8]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[9]);
                 MaxRegretIRCFR.DIRECT_REGRET_UPDATE = Boolean.parseBoolean(args[10]);
+                LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[11]);
+                LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[12]);
                 LimitedMemoryMaxRegretIRCFR.runIIGoofspiel();
             }
         }
