@@ -192,7 +192,7 @@ public class MaxRegretIRCFR extends IRCFR {
             }
             return expectedValue;
         }
-        IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
+        MemEffAbstractedInformationSet informationSet = getAbstractedInformationSet(node);
         OOSAlgorithmData data = informationSet.getData();
 
         double[] currentStrategy = getStrategy(data);
@@ -219,7 +219,8 @@ public class MaxRegretIRCFR extends IRCFR {
         }
         if (informationSet.getPlayer().equals(expPlayer)) {
             updateData(node, pi1, pi2, expPlayer, data, expectedValuesForActions, expectedValue);
-            updateCurrentRegrets(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
+            if (informationSet.getAbstractedKeys().size() > 1)
+                updateCurrentRegrets(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
         }
         return expectedValue;
     }
@@ -269,7 +270,7 @@ public class MaxRegretIRCFR extends IRCFR {
         });
     }
 
-    private void updateWithReusedData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
+    protected void updateWithReusedData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
         compatibleISs.forEach((maxRegretActionIndices, isKeys) -> {
             Set<GameState> toRemove = isStates.stream().filter(isState -> isKeys.contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
 
@@ -283,7 +284,7 @@ public class MaxRegretIRCFR extends IRCFR {
         });
     }
 
-    private void updateWithClearData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
+    protected void updateWithClearData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
         compatibleISs.forEach((maxRegretActionIndices, isKeys) -> {
             Set<GameState> toRemove = isStates.stream().filter(isState -> isKeys.contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
 
@@ -311,7 +312,7 @@ public class MaxRegretIRCFR extends IRCFR {
     }
 
 
-    private void distributeUnvisited(Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<ISKey> notVisitedISs) {
+    protected void distributeUnvisited(Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<ISKey> notVisitedISs) {
         if (compatibleISs.isEmpty())
             return;
         Set<Integer> maxSizeKey = null;
@@ -395,7 +396,7 @@ public class MaxRegretIRCFR extends IRCFR {
             }
             return expectedValue;
         }
-        IRCFRInformationSet informationSet = getAbstractedInformationSet(node);
+        MemEffAbstractedInformationSet informationSet = getAbstractedInformationSet(node);
         OOSAlgorithmData data = informationSet.getData();
         double[] currentStrategy = getStrategy(data);
         double[] expectedValuesForActions = new double[currentStrategy.length];
@@ -413,7 +414,7 @@ public class MaxRegretIRCFR extends IRCFR {
             }
             expectedValue += currentStrategy[i] * expectedValuesForActions[i];
         }
-        if (informationSet.getPlayer().equals(expPlayer))
+        if (informationSet.getPlayer().equals(expPlayer) && informationSet.getAbstractedKeys().size() > 1)
             updateCurrentRegrets(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
         return expectedValue;
     }
