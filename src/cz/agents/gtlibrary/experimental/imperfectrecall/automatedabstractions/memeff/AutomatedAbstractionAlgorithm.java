@@ -192,4 +192,7 @@ public abstract class AutomatedAbstractionAlgorithm {
 
     protected abstract void iteration(Player player);
 
+    public int getIteration() {
+        return iteration;
+    }
 }
