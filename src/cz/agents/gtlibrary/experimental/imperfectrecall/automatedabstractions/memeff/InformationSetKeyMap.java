@@ -1,7 +1,6 @@
 package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff;
 
 import cz.agents.gtlibrary.domain.randomabstraction.IDObservation;
-import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.Observations;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
@@ -23,28 +22,22 @@ public class InformationSetKeyMap extends HashMap<PerfectRecallISKey, ImperfectR
     }
 
     public ImperfectRecallISKey get(GameState state, Expander<? extends InformationSet> expander) {
-        ISKey isKey= state.getISKeyForPlayerToMove();
-        ImperfectRecallISKey value = super.get(isKey);
-
-        if(value != null)
-            return value;
-        PerfectRecallISKey prKey = (PerfectRecallISKey) isKey;
-        Observations observations = new Observations(prKey.getSequence().getPlayer(), prKey.getSequence().getPlayer());
-
-        observations.add(new IDObservation(prKey.getSequence().size()));
-        observations.add(new IDObservation(expander.getActions(state).size()));
-        return new ImperfectRecallISKey(observations, null, null);
+        return get((PerfectRecallISKey) state.getISKeyForPlayerToMove(), expander.getActions(state).size());
     }
 
     public ImperfectRecallISKey get(PerfectRecallISKey isKey, List<Action> actions) {
+        return get(isKey, actions.size());
+    }
+
+    public ImperfectRecallISKey get(PerfectRecallISKey isKey, int actionCount) {
         ImperfectRecallISKey value = super.get(isKey);
 
-        if(value != null)
+        if (value != null)
             return value;
         Observations observations = new Observations(isKey.getSequence().getPlayer(), isKey.getSequence().getPlayer());
 
         observations.add(new IDObservation(isKey.getSequence().size()));
-        observations.add(new IDObservation(actions.size()));
+        observations.add(new IDObservation(actionCount));
         return new ImperfectRecallISKey(observations, null, null);
     }
 }

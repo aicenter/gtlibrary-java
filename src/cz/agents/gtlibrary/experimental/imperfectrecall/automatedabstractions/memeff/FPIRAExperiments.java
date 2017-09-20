@@ -6,7 +6,6 @@ import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.IRCFR;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.LimitedMemoryMaxRegretIRCFR;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.MaxRegretIRCFR;
-import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FPIRA;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FPIRABRFirst;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.fpira.FrequencyFPIRA;
 
@@ -91,7 +90,7 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.USE_SPLIT_TOLERANCE = Boolean.parseBoolean(args[8]);
                 MaxRegretIRCFR.CLEAR_DATA = Boolean.parseBoolean(args[9]);
                 MaxRegretIRCFR.SIMULTANEOUS_PR_IR = Boolean.parseBoolean(args[10]);
-                LimitedMemoryMaxRegretIRCFR.sizeLimit = Integer.parseInt(args[11]);
+                LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[11]);
                 MaxRegretIRCFR.DIRECT_REGRET_UPDATE = Boolean.parseBoolean(args[12]);
                 LimitedMemoryMaxRegretIRCFR.runGenericPoker();
             } else if (args[1].equals("GS")) {
@@ -102,7 +101,7 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.USE_SPLIT_TOLERANCE = Boolean.parseBoolean(args[6]);
                 MaxRegretIRCFR.CLEAR_DATA = Boolean.parseBoolean(args[7]);
                 MaxRegretIRCFR.SIMULTANEOUS_PR_IR = Boolean.parseBoolean(args[8]);
-                LimitedMemoryMaxRegretIRCFR.sizeLimit = Integer.parseInt(args[9]);
+                LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[9]);
                 MaxRegretIRCFR.DIRECT_REGRET_UPDATE = Boolean.parseBoolean(args[10]);
                 LimitedMemoryMaxRegretIRCFR.runIIGoofspiel();
             }

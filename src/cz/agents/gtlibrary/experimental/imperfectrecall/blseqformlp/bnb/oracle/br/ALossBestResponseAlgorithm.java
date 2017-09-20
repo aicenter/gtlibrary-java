@@ -747,7 +747,6 @@ public class ALossBestResponseAlgorithm {
             List<GameState> nonZeroChildren = actions.stream().filter(a -> getProbabilityForAction(a) > 1e-8)
                     .map(a -> currentState.performAction(a)).collect(Collectors.toList());
 
-            assert opponentProbability > 1e-8;
             if (nonZeroChildren.isEmpty()) { //default strategy case
                 getAlternativeNodesOutsideRGFix(currentState.performAction(actions.get(0)), stateForAlternatives,
                         alternativeNodes, 1);
