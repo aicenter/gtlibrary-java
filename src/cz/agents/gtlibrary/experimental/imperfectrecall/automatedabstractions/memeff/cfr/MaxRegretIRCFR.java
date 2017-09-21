@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class MaxRegretIRCFR extends IRCFR {
+    public static boolean LOG_REGRETS = false;
     public static boolean SIMULTANEOUS_PR_IR = true;
     public static boolean CLEAR_DATA = true;
     public static boolean DELETE_REGRETS = true;
@@ -41,6 +42,7 @@ public class MaxRegretIRCFR extends IRCFR {
     public static double ITERATION_MULTIPLIER = 100;
 
     protected Map<ISKey, double[]> prRegrets;
+    protected Map<ISKey, double[]> regretLog;
 
     public static void main(String[] args) {
 //        runRandomGame();
@@ -140,11 +142,15 @@ public class MaxRegretIRCFR extends IRCFR {
     public MaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig) {
         super(rootState, perfectRecallExpander, info, perfectRecallConfig);
         prRegrets = new HashMap<>();
+        if(LOG_REGRETS)
+            regretLog = new HashMap<>();
     }
 
     public MaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig, AutomatedAbstractionData data) {
         super(rootState, perfectRecallExpander, info, perfectRecallConfig, data);
         prRegrets = new HashMap<>();
+        if(LOG_REGRETS)
+            regretLog = new HashMap<>();
     }
 
 
@@ -155,21 +161,27 @@ public class MaxRegretIRCFR extends IRCFR {
         else
             imperfectRecallIteration(rootState, 1, 1, player);
         updateImperfectRecallData();
-//        if (iteration % 1 == 0) {
-
-//        if (iteration % 4 == 0) {
         if (!SIMULTANEOUS_PR_IR)
             computeCurrentRegrets(rootState, 1, 1, player);
-//        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[0]);
-//        computeCurrentRegrets(rootState, 1, 1, rootState.getAllPlayers()[1]);
         if (REGRET_MATCHING_PLUS)
             removeNegativePRRegrets();
         updateAbstraction();
-//        }
         if (DELETE_REGRETS)
             prRegrets.clear();
         System.gc();
-//        }
+    }
+
+    @Override
+    protected void printStatistics() {
+        super.printStatistics();
+        if(LOG_REGRETS)
+            printRegretStat();
+    }
+
+    protected void printRegretStat() {
+        System.out.println("Max immediate regret: " + regretLog.values().stream()
+                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble()/iteration).max().getAsDouble());
+        System.out.println("Regret bound without constant and actions: " + 1./Math.sqrt(iteration));
     }
 
     protected double perfectAndImperfectRecallIteration(GameState node, double pi1, double pi2, Player expPlayer) {
@@ -221,8 +233,20 @@ public class MaxRegretIRCFR extends IRCFR {
             updateData(node, pi1, pi2, expPlayer, data, expectedValuesForActions, expectedValue);
             if (informationSet.getAbstractedKeys().size() > 1)
                 updateCurrentRegrets(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
+            if(LOG_REGRETS)
+                updateRegretLog(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
         }
         return expectedValue;
+    }
+
+    private void updateRegretLog(GameState node, double pi1, double pi2, Player expPlayer, double[] expectedValuesForActions, double expectedValue) {
+        double[] regret = regretLog.computeIfAbsent(node.getISKeyForPlayerToMove(),
+                k -> new double[expectedValuesForActions.length]);
+        double currentProb = (expPlayer.getId() == 0 ? pi2 : pi1);
+
+        for (int i = 0; i < regret.length; i++) {
+            regret[i] += currentProb * (expectedValuesForActions[i] - expectedValue);
+        }
     }
 
     protected void removeNegativePRRegrets() {
@@ -327,46 +351,6 @@ public class MaxRegretIRCFR extends IRCFR {
         compatibleISs.get(maxSizeKey).addAll(notVisitedISs);
     }
 
-
-//    private void updateAbstraction() {
-//        new HashMap<>(currentAbstractionInformationSets).values().stream().filter(i -> i.getPlayer().getId() != 2).forEach(i -> {
-//            Set<ISKey>[] nonCompatibleISs = createNonCompatibleISs(i);
-//
-//            i.getAllStates().stream().map(s -> s.getISKeyForPlayerToMove()).distinct().forEach(key -> {
-//                double[] regrets = prRegrets.get(key);
-//
-//                if (regrets != null) {
-//                    double max = Double.NEGATIVE_INFINITY;
-//
-//                    for (int j = 0; j < regrets.length; j++) {
-//                        if (regrets[j] > max)
-//                            max = regrets[j];
-//                    }
-//                    for (int j = 0; j < regrets.length; j++) {
-//                        if (regrets[j] < max - 1e-8)
-//                            nonCompatibleISs[j].add(key);
-//                    }
-//                }
-//            });
-//            Arrays.sort(nonCompatibleISs, (o1, o2) -> o1.size() - o2.size());
-//            Set<GameState> isStates = i.getAllStates();
-//
-//            for (int j = 0; j < nonCompatibleISs.length; j++) {
-//                int actionIndex = j;
-//                Set<GameState> toRemove = isStates.stream().filter(isState -> !nonCompatibleISs[actionIndex].contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
-//
-//                if (!toRemove.isEmpty()) {
-//                    if (toRemove.size() < isStates.size()) {
-//                        isStates.removeAll(toRemove);
-//                        createNewIS(toRemove, i.getData());
-//                    } else {
-//                        break;
-//                    }
-//                }
-//            }
-//        });
-//    }
-
     private Set<ISKey>[] createNonCompatibleISs(IRCFRInformationSet i) {
         Set<ISKey>[] nonCompatibleISs = new Set[i.getData().getActionCount()];
 
@@ -414,8 +398,11 @@ public class MaxRegretIRCFR extends IRCFR {
             }
             expectedValue += currentStrategy[i] * expectedValuesForActions[i];
         }
-        if (informationSet.getPlayer().equals(expPlayer) && informationSet.getAbstractedKeys().size() > 1)
+        if (informationSet.getPlayer().equals(expPlayer) && informationSet.getAbstractedKeys().size() > 1) {
             updateCurrentRegrets(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
+            if(LOG_REGRETS)
+                updateRegretLog(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
+        }
         return expectedValue;
     }
 

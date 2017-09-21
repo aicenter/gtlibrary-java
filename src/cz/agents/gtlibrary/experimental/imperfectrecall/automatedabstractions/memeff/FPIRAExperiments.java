@@ -11,6 +11,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.me
 
 public class FPIRAExperiments {
     public static void main(String[] args) {
+        MaxRegretIRCFR.LOG_REGRETS = false;
         if (args[0].equals("DO")) {
             if (args[1].equals("GP")) {
                 setGP(args);

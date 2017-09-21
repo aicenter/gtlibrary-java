@@ -94,7 +94,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
     public static double INIT_REGRET_WEIGHT = 0.99;
     public static int sizeLimitHeuristic = 0;
-    public static int sizeLimitBound = 500;
+    public static int sizeLimitBound = 10000000;
     private Random random;
     private Set<ISKey> toUpdate;
     private Map<ISKey, double[]> regretsForRegretCheck;
@@ -162,6 +162,18 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         }
     }
 
+    @Override
+    protected void printRegretStat() {
+        System.out.println("Max immediate regret in checked sets: " + regretLog.entrySet().stream().filter(entry -> regretsForRegretCheck.containsKey(entry.getKey())).map(entry -> entry.getValue())
+                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble()/iteration).max().orElse(20));
+        System.out.println("Max immediate regret: " + regretLog.values().stream()
+                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble() / iteration).max().orElse(20));
+        System.out.println("Max immediate regret in abstracted sets: " + regretLog.entrySet().stream().filter(entry -> getAbstractedInformationSet(entry.getKey(), entry.getValue().length).getAbstractedKeys().size() > 1).map(entry -> entry.getValue())
+                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble()/iteration).max().orElse(20));
+        System.out.println("Regret bound without constant and actions: " + 1./Math.sqrt(iteration));
+        System.out.println("Regret check size: " + regretsForRegretCheck.size());
+    }
+
     protected void updateWithReusedData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
         compatibleISs.forEach((maxRegretActionIndices, isKeys) -> {
             Set<GameState> toRemove = isStates.stream().filter(isState -> isKeys.contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
@@ -199,7 +211,6 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
         regretsForRegretCheck.forEach((key, regrets) -> {
             if (regretCheck.isAboveBound(regrets, this)) {
-                System.err.println("updating");
                 removeAndCreate(key, regrets.length);
                 toRemove.add(key);
             }
@@ -215,7 +226,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         if (toRemove.size() < informationSet.getAllStates().size()) {
             informationSet.getAllStates().removeAll(toRemove);
             informationSet.getAbstractedKeys().remove(key);
-            createNewIS(toRemove, informationSet.getData());
+            createNewISNoDataCopy(toRemove, new IRCFRData(actionCount));
         }
     }
 
@@ -256,8 +267,22 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 //        }
 //        assert Math.abs(Arrays.stream(regrets).max().getAsDouble() - currentRegretBound * iteration) < 1e-8;
 
-        double currentRegretBound = Math.sqrt(informationSet.getData().getActionCount()) / Math.sqrt(iteration);
-        double[] initRegrets = new double[informationSet.getData().getActionCount()];
+          return initializeRegrets(informationSet.getData().getActionCount());
+    }
+
+    private double[] initializeRegrets(int actionCount) {
+//        double[] currentStrategy = informationSet.getData().getRMStrategy();
+//        double maxProbability = Arrays.stream(currentStrategy).max().getAsDouble();
+//        double currentRegretBound = Math.sqrt(informationSet.getData().getActionCount()) / Math.sqrt(iteration);
+//        double[] regrets = new double[currentStrategy.length];
+//
+//        for (int i = 0; i < regrets.length; i++) {
+//            regrets[i] = currentStrategy[i] / maxProbability * currentRegretBound * iteration;
+//        }
+//        assert Math.abs(Arrays.stream(regrets).max().getAsDouble() - currentRegretBound * iteration) < 1e-8;
+
+        double currentRegretBound = Math.sqrt(actionCount) / Math.sqrt(iteration);
+        double[] initRegrets = new double[actionCount];
 
         Arrays.fill(initRegrets, INIT_REGRET_WEIGHT * currentRegretBound * iteration);
         return initRegrets;
@@ -304,8 +329,9 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     }
 
     private void updateRegretsForRegretCheck(GameState node, double pi1, double pi2, Player expPlayer, double[] expectedValuesForActions, double expectedValue) {
+//        double[] loggedRegret = regretLog.get(node.getISKeyForPlayerToMove());
         double[] regret = regretsForRegretCheck.computeIfAbsent(node.getISKeyForPlayerToMove(),
-                k -> new double[expectedValuesForActions.length]);
+                k -> initializeRegrets(expectedValuesForActions.length));
         double currentProb = (expPlayer.getId() == 0 ? pi2 : pi1);
 
         for (int i = 0; i < regret.length; i++) {
