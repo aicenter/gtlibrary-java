@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AutomatedAbstractionAlgorithm {
-    private static final boolean SERIALIZE = false;
+    private static final boolean SERIALIZE = true;
     public static boolean USE_ABSTRACTION = true;
 
     protected final GameState rootState;
@@ -120,7 +120,7 @@ public abstract class AutomatedAbstractionAlgorithm {
             this.iteration++;
             iteration(rootState.getAllPlayers()[1]);
             iteration(rootState.getAllPlayers()[0]);
-            if (isConverged(gameInfo.getMaxUtility() * 1e-3))
+            if (isConverged(gameInfo.getMaxUtility() * 1e-4))
                 return;
             if (this.iteration % 20 == 0 || iteration == 1)
                 printStatistics();
@@ -152,13 +152,14 @@ public abstract class AutomatedAbstractionAlgorithm {
     protected void printStatistics() {
         System.out.println("*************************************************");
         System.out.println("Iteration: " + iteration);
+        System.out.println("ISKey map size: " + currentAbstractionISKeys.size());
         System.out.println("Current IS count: " + currentAbstractionInformationSets.values().stream()
                 .filter(i -> i.getPlayer().getId() != 2).count());
         System.out.println("Current time: " + (threadBean.getCurrentThreadCpuTime() - startTime) / 1e6);
         System.out.println("Current memory: " + memoryBean.getHeapMemoryUsage().getUsed());
         System.out.println("Max memory: " + memoryBean.getHeapMemoryUsage().getMax());
         System.out.println(memoryBean.getHeapMemoryUsage().toString());
-        if(SERIALIZE && iteration % 100 == 0) {
+        if(SERIALIZE && iteration % 200 == 0) {
             System.out.println("saving");
             try {
                 FileOutputStream fout = new FileOutputStream("backup.ser");

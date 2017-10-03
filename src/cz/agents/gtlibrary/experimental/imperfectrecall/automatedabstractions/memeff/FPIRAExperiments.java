@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.IRCFR;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.LimitedMemoryMaxRegretIRCFR;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.MaxRegretIRCFR;
@@ -109,15 +110,36 @@ public class FPIRAExperiments {
                 LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[11]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[12]);
                 LimitedMemoryMaxRegretIRCFR.runIIGoofspiel();
+            } else if (args[1].equals("RG"))      {
+                setRG(args);
+                MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[5]);
+                MaxRegretIRCFR.ITERATION_MULTIPLIER = Double.parseDouble(args[6]);
+                IRCFR.REGRET_MATCHING_PLUS = Boolean.parseBoolean(args[7]);
+                MaxRegretIRCFR.USE_SPLIT_TOLERANCE = Boolean.parseBoolean(args[8]);
+                MaxRegretIRCFR.CLEAR_DATA = Boolean.parseBoolean(args[9]);
+                MaxRegretIRCFR.SIMULTANEOUS_PR_IR = Boolean.parseBoolean(args[10]);
+                LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[11]);
+                MaxRegretIRCFR.DIRECT_REGRET_UPDATE = Boolean.parseBoolean(args[12]);
+                LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[13]);
+                LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[14]);
+                LimitedMemoryMaxRegretIRCFR.runRandomGame();
             }
         }
     }
 
     private static void setGS(String[] args) {
         GSGameInfo.CARDS_FOR_PLAYER = new int[Integer.parseInt(args[2])];
+        GSGameInfo.depth = GSGameInfo.CARDS_FOR_PLAYER.length;
         for (int i = 0; i < Integer.parseInt(args[2]); i++) {
             GSGameInfo.CARDS_FOR_PLAYER[i] = i + 1;
         }
+    }
+
+    private static void setRG(String[] args) {
+        RandomGameInfo.MIN_BF = Integer.parseInt(args[2]);
+        RandomGameInfo.MAX_BF = Integer.parseInt(args[2]);
+        RandomGameInfo.MAX_DEPTH = Integer.parseInt(args[3]);
+        RandomGameInfo.seed = Integer.parseInt(args[4]);
     }
 
     private static void setGP(String[] args) {
