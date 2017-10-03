@@ -8,6 +8,9 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.AutomatedAbstractionData;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.MemEffAbstractedInformationSet;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.regretcheck.RegretCheck;
@@ -25,8 +28,9 @@ import java.util.stream.Collectors;
 public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
     public static void main(String[] args) {
-        runGenericPoker();
+//        runGenericPoker();
 //        runIIGoofspiel();
+        runRandomGame();
     }
 
     public static void runGenericPoker() {
@@ -92,9 +96,19 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         }
     }
 
+    public static void runRandomGame() {
+        GameState root = new RandomGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new RandomGameExpander<>(config);
+        GameInfo info = new RandomGameInfo();
+        MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config);
+
+        alg.runIterations(10000000);
+    }
+
     public static double INIT_REGRET_WEIGHT = 0.99;
-    public static int sizeLimitHeuristic = 0;
-    public static int sizeLimitBound = 10000000;
+    public static int sizeLimitHeuristic = 500;
+    public static int sizeLimitBound = 500;
     private Random random;
     private Set<ISKey> toUpdate;
     private Map<ISKey, double[]> regretsForRegretCheck;
@@ -154,7 +168,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         iterationsBeforeBoundResample--;
         if (iterationsBeforeBoundResample == 0) {
             resampleInformationSetsForRegretCheck();
-            iterationsBeforeBoundResample = (int) Math.round(Math.sqrt(iteration * 2));
+            iterationsBeforeBoundResample = 2*currentSampleIterations;
             System.err.println("setting sequence length " + iterationsBeforeBoundResample);
             currentSampleIterations = 1;
         } else {
@@ -329,7 +343,6 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     }
 
     private void updateRegretsForRegretCheck(GameState node, double pi1, double pi2, Player expPlayer, double[] expectedValuesForActions, double expectedValue) {
-//        double[] loggedRegret = regretLog.get(node.getISKeyForPlayerToMove());
         double[] regret = regretsForRegretCheck.computeIfAbsent(node.getISKeyForPlayerToMove(),
                 k -> initializeRegrets(expectedValuesForActions.length));
         double currentProb = (expPlayer.getId() == 0 ? pi2 : pi1);
