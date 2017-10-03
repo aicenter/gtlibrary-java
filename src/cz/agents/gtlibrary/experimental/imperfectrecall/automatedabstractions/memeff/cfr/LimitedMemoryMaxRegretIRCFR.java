@@ -30,7 +30,8 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     public static void main(String[] args) {
 //        runGenericPoker();
 //        runIIGoofspiel();
-        runRandomGame();
+//        runRandomGame();
+        runRandomGame("backup.ser");
     }
 
     public static void runGenericPoker() {
@@ -48,20 +49,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         MCTSConfig config = new MCTSConfig();
         Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(config);
         GameInfo info = new GPGameInfo();
-        try {
-            FileInputStream fin = new FileInputStream(backupFileName);
-            ObjectInputStream oos = new ObjectInputStream(fin);
-            AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
-            MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config, data);
-
-            alg.runIterations(10000000);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        loadFromBackupAndRun(backupFileName, root, config, expander, info);
     }
 
     public static void runIIGoofspiel() {
@@ -80,6 +68,29 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(config);
         GameInfo info = new GSGameInfo();
 
+        loadFromBackupAndRun(backupFileName, root, config, expander, info);
+    }
+
+    public static void runRandomGame() {
+        GameState root = new RandomGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new RandomGameExpander<>(config);
+        GameInfo info = new RandomGameInfo();
+        MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config);
+
+        alg.runIterations(10000000);
+    }
+
+    public static void runRandomGame(String backupFileName) {
+        GameState root = new RandomGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new RandomGameExpander<>(config);
+        GameInfo info = new RandomGameInfo();
+
+        loadFromBackupAndRun(backupFileName, root, config, expander, info);
+    }
+
+    private static void loadFromBackupAndRun(String backupFileName, GameState root, MCTSConfig config, Expander<MCTSInformationSet> expander, GameInfo info) {
         try {
             FileInputStream fin = new FileInputStream(backupFileName);
             ObjectInputStream oos = new ObjectInputStream(fin);
@@ -96,15 +107,6 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         }
     }
 
-    public static void runRandomGame() {
-        GameState root = new RandomGameState();
-        MCTSConfig config = new MCTSConfig();
-        Expander<MCTSInformationSet> expander = new RandomGameExpander<>(config);
-        GameInfo info = new RandomGameInfo();
-        MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config);
-
-        alg.runIterations(10000000);
-    }
 
     public static double INIT_REGRET_WEIGHT = 0.99;
     public static int sizeLimitHeuristic = 500;
@@ -136,7 +138,8 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         regretsForRegretCheck = new HashMap<>(sizeLimitBound);
         bellowLimitHeuristic = false;
         bellowLimitBound = false;
-        iterationsBeforeBoundResample = 1;
+        iterationsBeforeBoundResample = (int) Math.floor((Math.pow(2, Math.log(2*(data.iteration - delay + 1)) / Math.log(2))));
+        System.err.println("Initializing sequence length " + iterationsBeforeBoundResample);
         currentSampleIterations = 0;
     }
 
