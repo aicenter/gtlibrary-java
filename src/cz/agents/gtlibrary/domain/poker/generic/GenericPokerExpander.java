@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.domain.poker.generic;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;

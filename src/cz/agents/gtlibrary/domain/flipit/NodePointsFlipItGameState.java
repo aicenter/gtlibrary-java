@@ -472,6 +472,10 @@ public class NodePointsFlipItGameState extends SimultaneousGameState {
         }
     }
 
+    public boolean[] getDefenderControlledNodes(){
+        return  defenderControlledNodes;
+    }
+
     protected Player getLastOwnerOf(Node node){
         if (defenderControlledNodes[node.getIntID()])
             return FlipItGameInfo.DEFENDER;

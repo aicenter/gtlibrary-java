@@ -27,6 +27,7 @@ import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.BFSEnforcingSt
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.CompleteBFSEnforcingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenceFormMultipleLPs;
+import cz.agents.gtlibrary.algorithms.stackelberg.oracle.LeaderOracle2pSumForbiddingLP;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
@@ -34,6 +35,9 @@ import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSExpander;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameInfo;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenSumGPGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.*;
 import cz.agents.gtlibrary.domain.pursuit.GenSumPursuitGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
@@ -67,27 +71,31 @@ import java.util.Map;
  */
 public class StackelbergRunner {
 
-    final static int LEADER = 1;
-    final static int depth = 2;
+    protected static int LEADER = 1;
+    protected final static int depth = 3;
 
     public static void main(String[] args) {
 //        runKuhn();
+//        runPoker();
 //        runGenSumRandom();
-        runGenSumRandomImproved();
+//        runGenSumRandomImproved();
 //        runIAoS();
 //        runBPG(args[0], Integer.parseInt(args[1]));
 //        runSGSG();
 //        runPEG();
 //        runStackTest();
 //        runBPG("", depth);
-//        runFlipIt();
+        runFlipIt(args);
     }
 
-    public static void runFlipIt() {
+    public static void runFlipIt(String[] args) {
 
         System.out.println("Running FLIPIT domain");
 
-        FlipItGameInfo gameInfo = new FlipItGameInfo();
+        FlipItGameInfo gameInfo;
+        if (args.length > 0) gameInfo = initializeFlipIt(args);
+        else gameInfo = new FlipItGameInfo();
+
         gameInfo.ZERO_SUM_APPROX = false;
 //        GameState rootState = new NodePointsFlipItGameState();
         GameState rootState = null;
@@ -102,13 +110,45 @@ public class StackelbergRunner {
         StackelbergConfig algConfig = new StackelbergConfig(rootState);
         Expander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+
+
+        LEADER = 0;
+        if (args.length > 0) {
+            switch (args[4]) {
+                case "B":
+                    runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
+                    break;
+                case "CGN":
+                    runner.generate(rootState.getAllPlayers()[LEADER], new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, false));
+                    break;
+                case "CGY":
+                    runner.generate(rootState.getAllPlayers()[LEADER], new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, true));
+                    break;
+            }
+        }
 //        Double MLP = runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander)).getLeft();
-        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+//        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 //        Double LP = runner.generate(rootState.getAllPlayers()[0], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo)).getLeft();
 //        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 //        Double MILP = runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander)).getLeft();
 //        System.out.println("MLP : " + MLP + " ; LP : " + LP + " ; MILP : " + MILP);
-        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+    }
+
+    protected static FlipItGameInfo initializeFlipIt(String[] args){
+        int depth = Integer.parseInt(args[1]);
+        int graphSize = Integer.parseInt(args[2]);
+        String graphFile = "flipit_empty" + graphSize + ".txt";
+//            String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
+        FlipItGameInfo gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
+        switch (args[3]){
+            case "N" : gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.NO; break;
+            case "NP" : gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_NODE_POINTS; break;
+            case "AP" : gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_ALL_POINTS; break;
+            case "F" : gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.FULL; break;
+        }
+        return gameInfo;
+
     }
 
     public static void runGenSumRandomImproved() {
@@ -118,9 +158,11 @@ public class StackelbergRunner {
         Expander<SequenceInformationSet> expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
+        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[LEADER], rootState.getAllPlayers()[1], gameInfo, expander));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
-        runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new ExpValEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new ExpValEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
@@ -171,10 +213,32 @@ public class StackelbergRunner {
         Expander<SequenceInformationSet> expander = new KuhnPokerExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
+        runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
+
 //        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
 //        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
 //        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
-        runner.generate(rootState.getAllPlayers()[0], new CompleteBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CompleteBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CompleteAllCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+        new GambitEFG().write("kp.gbt", rootState, expander);
+
+    }
+
+    private static void runPoker() {
+        GameInfo gameInfo = new GPGameInfo();
+        GameState rootState = new GenSumGPGameState();
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        Expander<SequenceInformationSet> expander = new GenericPokerExpander<>(algConfig);
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+
+//        runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo));
+
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[0], new CompleteBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new CompleteAllCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new BFSEnforcingStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
         new GambitEFG().write("kp.gbt", rootState, expander);
@@ -214,6 +278,8 @@ public class StackelbergRunner {
         Expander<SequenceInformationSet> expander = new BPGExpander<>(algConfig);
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 
+//        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//
 //        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
         runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexStackelbergLP(rootState.getAllPlayers()[0], gameInfo));
@@ -262,7 +328,7 @@ public class StackelbergRunner {
     private StackelbergConfig algConfig;
 
     private PrintStream debugOutput = System.out;
-    final private static boolean DEBUG = true;
+    final private static boolean DEBUG = false;
     private ThreadMXBean threadBean;
 
     private double gameValue = Double.NaN;
@@ -347,6 +413,12 @@ public class StackelbergRunner {
 
         if (solver instanceof SumForbiddingStackelbergLP) {
             System.out.println("LP invocations: " + ((SumForbiddingStackelbergLP)solver).getLPInvocationCount());
+        }
+
+//        if (solver. instanceof FlipItGameInfo)
+//            System.out.println();
+        if (solver instanceof LeaderOracle2pSumForbiddingLP){
+            System.out.println("RG size: " + ((LeaderOracle2pSumForbiddingLP)solver).getRestrictedGameRatio());
         }
 
         if (DEBUG) {

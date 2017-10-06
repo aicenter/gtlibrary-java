@@ -95,7 +95,7 @@ public class BayesianStackelbergSequenceFormMILP extends StackelbergSequenceForm
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
 //            cplex.exportModel(info.getLpExportName() + ".lp"); // uncomment for model export
-            cplex.exportModel("BSSE_MILP.lp");
+//            cplex.exportModel("BSSE_MILP.lp");
 
             startTime = threadBean.getCurrentThreadCpuTime();
             debugOutput.println("Solving");
@@ -291,7 +291,6 @@ public class BayesianStackelbergSequenceFormMILP extends StackelbergSequenceForm
 
         if (informationSet == null) {
             if (firstPlayer.equals(follower)) return;
-            System.out.println("Velky spatny");;
             VI = objectiveForPlayers.get(firstPlayer);
             for (SequenceInformationSet reachableSet : algConfig.getReachableSets(firstPlayerSequence)) {
                 IloNumVar tmp = variables.get(reachableSet);

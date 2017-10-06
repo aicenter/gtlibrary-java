@@ -32,7 +32,7 @@ public class GPGameInfo implements GameInfo {
 
     public static final Player FIRST_PLAYER = new PlayerImpl(0);
     public static final Player SECOND_PLAYER = new PlayerImpl(1);
-    public static final Player NATURE = new PlayerImpl(2);
+    public static final Player NATURE = new PlayerImpl(2, "Nature");
     public static final Player[] ALL_PLAYERS = new Player[]{FIRST_PLAYER, SECOND_PLAYER, NATURE};
 
     public static Map<String, Integer> p1cardBounties = new HashMap<>();
@@ -42,7 +42,7 @@ public class GPGameInfo implements GameInfo {
      * reward of ante for one player
      */
     public static final int ANTE = 1;
-    public static int MAX_RAISES_IN_ROW = 1;
+    public static int MAX_RAISES_IN_ROW = 3;
 
     public static int MAX_DIFFERENT_BETS = 2;
     public static int MAX_DIFFERENT_RAISES = 2;//MAX_DIFFERENT_BETS;

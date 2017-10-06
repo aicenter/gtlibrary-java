@@ -136,8 +136,9 @@ public class NoInfoFlipItGameState extends NodePointsFlipItGameState {
     }
 
     public double[] evaluate() {
-        double[] utilities = new double[2+FlipItGameInfo.numTypes];
-        return utilities;
+//        double[] utilities = new double[2+FlipItGameInfo.numTypes];
+//        return utilities;
+        return getEndGameUtilities();
     }
 
 //    @Override
@@ -281,6 +282,7 @@ public class NoInfoFlipItGameState extends NodePointsFlipItGameState {
 
     @Override
     protected boolean attackerHasEnoughPointsToControl(){
+        if (FlipItGameInfo.ATTACKER_CAN_ALWAYS_ATTACK) return true;
         return attackerPoints >= FlipItGameInfo.graph.getControlCost(attackerControlNode);
     }
 

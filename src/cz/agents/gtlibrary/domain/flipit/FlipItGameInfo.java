@@ -22,7 +22,7 @@ import java.util.Random;
 public class FlipItGameInfo implements GameInfo {
 
     // GRAPH FILE : topology, rewards and control costs
-    public static String graphFile = "flipit_empty5.txt";
+    public static String graphFile = "flipit_empty3.txt";
     public static FlipItGraph graph = new FlipItGraph(graphFile);
 
     // PLAYERS
@@ -32,17 +32,19 @@ public class FlipItGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[] {DEFENDER, ATTACKER};//, NATURE};
 
     public static long seed = 11;
-    public static int depth = 3;
+    public static int depth = 2;
     public static final boolean RANDOM_TIE = false;
     public static final boolean PREDETERMINED_RANDOM_TIE_WINNER = false;
     public static final Player RANDOM_TIE_WINNER = FlipItGameInfo.DEFENDER;
     public static final boolean INFORMED_ATTACKERS = true;
 
     public static final boolean DEFENDER_CAN_ALWAYS_ATTACK = true;
+    public static final boolean ATTACKER_CAN_ALWAYS_ATTACK = true;
 //    public static final boolean CALCULATE_REWARDS = false;
 
     private static final boolean FULLY_RATIONAL_ATTACKER = true;
     public static boolean ZERO_SUM_APPROX = true;
+    protected static final boolean ENABLE_PASS = true;
 
     public static final double INITIAL_POINTS = 50.0;
 
@@ -50,9 +52,9 @@ public class FlipItGameInfo implements GameInfo {
         NO, FULL, REVEALED_ALL_POINTS, REVEALED_NODE_POINTS
     }
 
-    public static FlipItInfo gameVersion = FlipItInfo.FULL;
+    public static FlipItInfo gameVersion = FlipItInfo.FULL;//REVEALED_NODE_POINTS;//FULL;//REVEALED_ALL_POINTS;//FULL;
 
-    public static final boolean PERFECT_RECALL = true;
+    public static boolean PERFECT_RECALL = true;
 
     public static final boolean CALCULATE_UTILITY_BOUNDS = false;
     public static final boolean ENABLE_ITERATIVE_SOLVING = false;
@@ -126,32 +128,6 @@ public class FlipItGameInfo implements GameInfo {
     }
 
     public FlipItGameInfo(int depth, int numTypes, String graphFile){
-        this.depth = depth;
-        this.numTypes = numTypes;
-        this.graphFile = graphFile;
-
-        graph = new FlipItGraph(graphFile);
-
-        Random rnd = new HighQualityRandom(seed);
-
-        typesPrior = new double[numTypes];
-        typesDiscounts = new double[numTypes];
-        double priors = 0.0;
-        for (int i = 0; i < numTypes-1; i++){
-            typesDiscounts[i] = rnd.nextDouble();
-            typesPrior[i] = rnd.nextDouble()*(1.0-priors);
-            priors += typesPrior[i];
-        }
-        typesDiscounts[numTypes-1] = rnd.nextDouble();
-        typesPrior[numTypes-1] = (1.0-priors);
-
-        types = new FollowerType[numTypes];
-        for(int i = 0; i < numTypes; i++) {
-            types[i] = new ExponentialGreedyType(typesPrior[i], typesDiscounts[i],i);
-        }
-    }
-
-    public void setInfo(int depth, int numTypes, String graphFile){
         this.depth = depth;
         this.numTypes = numTypes;
         this.graphFile = graphFile;
