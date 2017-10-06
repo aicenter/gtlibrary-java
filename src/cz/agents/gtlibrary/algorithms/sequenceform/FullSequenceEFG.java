@@ -63,6 +63,7 @@ import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.domain.upordown.UDExpander;
 import cz.agents.gtlibrary.domain.upordown.UDGameInfo;
 import cz.agents.gtlibrary.domain.upordown.UDGameState;
+import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
@@ -75,6 +76,7 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -127,19 +129,58 @@ public class FullSequenceEFG {
 	}
 
 	private static void runFlipIt(){
-		boolean PRINT_STRATEGY = false;
+		boolean PRINT_STRATEGY = true;
+		boolean shiftedRootstate = true;
+		String[] defenderActions = new String[]{"ID1","ID4", "ID1", "ID4"};
+		String[] attackerActions = new String[]{"ID1", "ID1", "ID4", "ID1"};
 		FlipItGameInfo gameInfo = new FlipItGameInfo();
 		gameInfo.ZERO_SUM_APPROX = true;
-		GameState rootState = null;
+		NodePointsFlipItGameState rootState = null;
 
 		switch (FlipItGameInfo.gameVersion){
 			case NO:                    rootState = new NoInfoFlipItGameState(); break;
 			case FULL:                  rootState = new FullInfoFlipItGameState(); break;
 			case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
 			case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
-
 		}
+
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<SequenceInformationSet>();
+		FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
+
+		if (shiftedRootstate){
+			Action performingAction = null;
+			for (int i = 0; i < defenderActions.length; i++){
+				for (Action a : expander.getActions(rootState)){
+					if (!((FlipItAction)a).isNoop() && ((FlipItAction)a).getControlNode().getId().equals(defenderActions[i])){
+						performingAction = a;
+//						System.out.println("found");
+						break;
+					}
+				}
+//				algConfig.addStateToSequenceForm(rootState);
+				performingAction.perform(rootState);
+//				rootState = rootState.performAction(performingAction);
+//				rootState.performActionModifyingThisState(performingAction);
+				for (Action a : expander.getActions(rootState)){
+					if (!((FlipItAction)a).isNoop() && ((FlipItAction)a).getControlNode().getId().equals(attackerActions[i])){
+						performingAction = a;
+//						System.out.println("found");
+						break;
+					}
+				}
+//				algConfig.addStateToSequenceForm(rootState);
+//				rootState.performActionModifyingThisState(performingAction);
+//				rootState = rootState.performAction(performingAction);
+				performingAction.perform(rootState);
+			}
+			System.out.println("New rootstate : ");
+			System.out.println(rootState.getSequenceFor(gameInfo.getAllPlayers()[0]));
+			System.out.println(rootState.getSequenceFor(gameInfo.getAllPlayers()[1]));
+			System.out.println("Utility = " + Arrays.toString(rootState.evaluate()));
+			System.out.println("Ownership = " + Arrays.toString(rootState.getDefenderControlledNodes()));
+		}
+
+
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new FlipItExpander<>(algConfig), gameInfo, algConfig);
 		Map<Player, Map<Sequence, Double>> rps = efg.generate();
 

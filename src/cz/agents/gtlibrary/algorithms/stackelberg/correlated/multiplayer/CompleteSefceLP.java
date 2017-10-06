@@ -18,7 +18,7 @@ import java.util.*;
 /**
  * Created by Jakub Cerny on 24/07/2017.
  */
-public class CompleteSefceLP {
+public class CompleteSefceLP implements Solver {
 
     protected long overallConstraintGenerationTime = 0;
     protected double eps;
@@ -43,6 +43,7 @@ public class CompleteSefceLP {
     protected final boolean OUTPUT_LP = false;
 
 
+
     // vars : z(s), u(c), v(I,c)
 
     // cons :   pro vsechny c mame u(c) a u(c)/v(I(c),c)
@@ -65,7 +66,7 @@ public class CompleteSefceLP {
     }
 
     public String getInfo(){
-        return "Complete SEFCE LP";
+        return "Complete multiplayer SEFCE LP";
     }
 
     protected void generatePureStrategy(Stack<SequenceInformationSet> stack, PureStrategyImpl strategy, int idx, int ISsize){
@@ -503,11 +504,11 @@ public class CompleteSefceLP {
 
 
 
-    public void calculateLeaderStrategies(StackelbergConfig algConfig,
-                                          Expander<SequenceInformationSet> expander) {
+    public double calculateLeaderStrategies(AlgorithmConfig algConfig,
+                                          Expander expander) {
 
-        this.algConfig = algConfig;
-        this.expander = expander;
+        this.algConfig = (StackelbergConfig)algConfig;
+        this.expander = (Expander<SequenceInformationSet>)expander;
         long startTime = threadBean.getCurrentThreadCpuTime();
 
         // create structures
@@ -543,10 +544,10 @@ public class CompleteSefceLP {
         lpTable.watchAllPrimalVariables();
         overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
         solve();
-
+        return gameValue;
     }
 
-    protected void solve() {
+    protected double solve() {
         try {
             long startTime = threadBean.getCurrentThreadCpuTime();
 
@@ -570,11 +571,12 @@ public class CompleteSefceLP {
         catch(Exception e){
             e.printStackTrace();
         }
+        return  gameValue;
     }
 
 
 
-    public double getResultForPlayer(Player leader) {
+    public Double getResultForPlayer(Player leader) {
         return gameValue;
     }
 

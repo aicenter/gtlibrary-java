@@ -19,10 +19,9 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
-import ilog.concert.IloException;
-import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloNumVar;
-import ilog.concert.IloRange;
+import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
+import ilog.concert.*;
+import ilog.cplex.CpxLPMatrix;
 import ilog.cplex.IloCplex;
 
 import java.util.*;
@@ -32,7 +31,7 @@ public class LPTable {
 
     public enum ConstraintType {LE, EQ, GE}
 
-    public static boolean USE_CUSTOM_NAMES = true;
+    public static boolean USE_CUSTOM_NAMES = false;
     public static int CPLEXALG = IloCplex.Algorithm.Auto;
     public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
 
@@ -71,6 +70,11 @@ public class LPTable {
         } catch (IloException e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean existsEqKey(Object eqKey){
+        if (equationIndices.get(eqKey) != null) return true;
+        return false;
     }
 
     public LPTable(int m, int n) {
@@ -206,8 +210,12 @@ public class LPTable {
 //        cplex.setParam(IloCplex.BooleanParam.NumericalEmphasis, true);
         cplex.setOut(null);
 
+        System.out.println("Getting variables.");
         IloNumVar[] variables = getVariables();
-        IloRange[] constraints = addConstraints(cplex, variables);
+//        IloRange[] constraints = addConstraints(cplex, variables);
+        IloRange[] constraints = addConstraintsViaMatrix(cplex, variables);
+//        System.out.println("Var len:" + variables.length);
+//        System.out.println("Con len:" + constraints.length);
 
         addObjective(variables);
         return new LPData(cplex, variables, constraints, getRelaxableConstraints(constraints), getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
@@ -280,6 +288,47 @@ public class LPTable {
             watchedPrimalVars.put(entry.getKey(), variables[entry.getValue()]);
         }
         return watchedPrimalVars;
+    }
+
+    protected IloRange[] addConstraintsViaMatrix(IloCplex cplex, IloNumVar[] x) throws IloException {
+        IloLPMatrix matrix = cplex.addLPMatrix();
+        matrix.addCols(x);
+        System.out.println("Adding constraints.");
+        int[][] idxs = new int[constraints.keySet().size()][];
+        double[][] vals = new double[idxs.length][];
+        double[] lbs = new double[idxs.length];
+        double[] ubs = new double[idxs.length];
+        int j = 0;
+        for(Object con : constraints.keySet()){
+            int[] idx = new int[constraints.get(con).keySet().size()];
+            double[] val = new double[idx.length];
+            int i = 0;
+            for(Object var : constraints.get(con).keySet()){
+                idx[i] = variableIndices.get(var);
+                val[i] = constraints.get(con).get(var);
+                i++;
+            }
+            idxs[j] = idx;
+            vals[j] = val;
+            switch (constraintTypes.get(con)){
+//                case 0 : matrix.addRow(Double.NEGATIVE_INFINITY, getConstant(con), idx, val); break;
+//                case 1 : matrix.addRow(getConstant(con), getConstant(con), idx, val); break;
+//                case 2 : matrix.addRow(getConstant(con), Double.POSITIVE_INFINITY, idx, val); break;
+                case 0 : lbs[j] = Double.NEGATIVE_INFINITY; ubs[j] = getConstant(con); break;
+                case 1 : lbs[j] = getConstant(con); ubs[j] =  getConstant(con); break;
+                case 2 : lbs[j] = getConstant(con); ubs[j] =  Double.POSITIVE_INFINITY; break;
+            }
+            j++;
+//            matrix.addRow(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, idx, vals);
+        }
+        matrix.addRows(lbs, ubs, idxs, vals);
+//        System.out.println("LPTABLE : adding cons.");
+//        System.out.println(matrix.toString());
+//        System.out.println("Vars: " + variableIndices.size() + "; cons: " + constraints.size());
+//        System.out.println("Generating ranges.");
+//        matrix.
+//        matrix.addRow(); CpxLPMatrix
+        return matrix.getRanges();
     }
 
     protected IloRange[] addConstraints(IloCplex cplex, IloNumVar[] x) throws IloException {
@@ -427,6 +476,136 @@ public class LPTable {
         for (Object varKey : variableIndices.keySet()) {
             watchPrimalVariable(varKey, varKey);
         }
+    }
+
+    public void watchAllDualVariables() {
+        for (Object varKey : equationIndices.keySet()) {
+            watchDualVariable(varKey, varKey);
+        }
+    }
+
+    public boolean compareConstraintsSize(LPTable table){
+        boolean OUTPUT = false;
+        int[] typesThis = new int[3];
+        int[] typesThat = new int[3];
+        for (Object eqKey : constraintTypes.keySet()) typesThis[constraintTypes.get(eqKey)]++;
+        for (Object eqKey : table.constraintTypes.keySet()) typesThat[table.constraintTypes.get(eqKey)]++;
+        if (constraints.keySet().size() > table.constraints.keySet().size()) {
+            System.out.println("Greater number of constraints: ");// + constraints.keySet().size() + "/" + table.constraints.keySet().size());
+            System.out.println("Leqs = " + typesThis[0] + "/" + typesThat[0]);
+            System.out.println("Eqs = " + typesThis[1] + "/" + typesThat[1]);
+            System.out.println("Geqs = " + typesThis[2] + "/" + typesThat[2]);
+
+            // approximate comparison : eqkey2 might have more variables than eqkey !
+            for (Object eqkey : constraints.keySet()) {
+                boolean hasEquivalent = false;
+                for (Object eqkey2 : table.constraints.keySet()) {
+                    boolean same = true;
+                    for (Object varKey : constraints.get(eqkey).keySet()) {
+//                        System.out.println("Controlling var "+varKey);
+                        if (!table.constraints.get(eqkey2).containsKey(varKey) || !((Double)Math.abs(table.constraints.get(eqkey2).get(varKey))).equals(Math.abs(constraints.get(eqkey).get(varKey)))) {
+                            same = false;
+                            break;
+                        }
+                    }
+                    if (same) {
+//                        System.out.println("Found same equation of type " + constraintTypes.get(eqkey2));
+                        hasEquivalent = true;
+                        break;
+                    }
+                }
+                if (!hasEquivalent) {
+                    if (OUTPUT) {
+
+                    System.out.println("Found non-equivalent equation: " + eqkey);
+                    System.out.println("Vars :");
+                    for (Object varKey : table.constraints.get(eqkey).keySet()) {
+                        System.out.println(varKey + " : " + table.constraints.get(eqkey).get(varKey));
+                    }
+                }
+                }
+            }
+        }
+        if (constraints.keySet().size() < table.constraints.keySet().size()) {
+            System.out.println("Lesser number of constraints:");// + constraints.keySet().size() + "/" + table.constraints.keySet().size());
+            System.out.println("Leqs = " + typesThis[0] + "/" + typesThat[0]);
+            System.out.println("Eqs = " + typesThis[1] + "/" + typesThat[1]);
+            System.out.println("Geqs = " + typesThis[2] + "/" + typesThat[2]);
+
+            HashSet notHavingEquivalent = new HashSet(constraints.keySet());
+            notHavingEquivalent.addAll(constraints.keySet());
+            for (Object eqkey : table.constraints.keySet()) {
+                boolean hasEquivalent = false;
+                for (Object eqkey2 : constraints.keySet()) {
+                    if (table.constraints.get(eqkey).size() != constraints.get(eqkey2).size()) continue;
+                    boolean same = true;
+                    for (Object varKey : table.constraints.get(eqkey).keySet()) {
+//                        System.out.println("Controlling var "+varKey);
+                        if (!constraints.get(eqkey2).containsKey(varKey) || !((Double)Math.abs(constraints.get(eqkey2).get(varKey))).equals(Math.abs(table.constraints.get(eqkey).get(varKey)))) {
+                            same = false;
+                            break;
+                        }
+                    }
+                    if (same) {
+//                        System.out.println("Found equivalent !");
+//                        System.out.println("Original: "+eqkey);
+//                        for (Object varKey : table.constraints.get(eqkey).keySet()) {
+//                            System.out.println(varKey + " : " + table.constraints.get(eqkey).get(varKey));
+//                        }
+//                        System.out.println("Equivalent: "+eqkey2);
+//                        for (Object varKey : constraints.get(eqkey2).keySet()) {
+//                            System.out.println(varKey + " : " + constraints.get(eqkey2).get(varKey));
+//                        }
+//                        System.out.println("Number of not equivalent = " + notHavingEquivalent.size());
+                        notHavingEquivalent.remove(eqkey2);
+//                        System.out.println("Found same equation of type " + constraintTypes.get(eqkey2));
+                        hasEquivalent = true;
+                        break;
+                    }
+                }
+                if (!hasEquivalent){
+                    if (OUTPUT) {
+                        System.out.println("Found non-equivalent equation: " + eqkey + " of type " + table.constraintTypes.get(eqkey));
+                        System.out.println("Vars :");
+                        for (Object varKey : table.constraints.get(eqkey).keySet()) {
+                            System.out.println(varKey + " : " + table.constraints.get(eqkey).get(varKey));
+                        }
+                    }
+                }
+            }
+            System.out.println("Number of not equivalent = " + notHavingEquivalent.size());
+            if(OUTPUT) {
+                for (Object eqkey : notHavingEquivalent) {
+                    System.out.println("Not equivalent: " + eqkey);
+                    for (Object varKey : constraints.get(eqkey).keySet()) {
+                        System.out.println(varKey + " : " + constraints.get(eqkey).get(varKey));
+                    }
+                }
+            }
+        }
+        return constraints.keySet().size() == table.constraints.keySet().size();
+    }
+
+    public void compareConstraints(LPTable table){
+        for (Object obj : objective.keySet())
+            if (!objective.get(obj).equals(table.objective.get(obj)))
+                System.out.println("Different objective for " + obj);
+        for (Object constraint : constraints.keySet())
+            if (!table.constraints.containsKey(constraint))
+                System.out.println("Constraint not present : " + constraint);
+            else{
+                for (Object var : constraints.get(constraint).keySet()) {
+                    if (!table.constraints.get(constraint).containsKey(var)){
+                        System.out.println("In constraint " + constraint + "; var " + var + " not present.");
+                        continue;
+                    }
+                    if (!constraints.get(constraint).get(var).equals(table.constraints.get(constraint).get(var))){
+                        System.out.println("In constraint " + constraint + "; var " + var + " has different value:");
+                        System.out.println("Original : " + constraints.get(constraint).get(var));
+                        System.out.println("In table : " + table.constraints.get(constraint).get(var));
+                    }
+                }
+            }
     }
 
     public boolean exists(Object varKey) {

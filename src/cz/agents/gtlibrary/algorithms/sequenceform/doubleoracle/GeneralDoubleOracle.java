@@ -261,18 +261,20 @@ public class GeneralDoubleOracle {
 
         if (FlipItGameInfo.OUTPUT_STRATEGY) {
             for (InformationSet set : sets) {
-                GameState state = set.getAllStates().iterator().next();
-                System.out.println(state.getSequenceFor(FlipItGameInfo.DEFENDER));
-                if (set.getISKey() instanceof FlipItPerfectRecallISKey)
-                    System.out.println(((FlipItPerfectRecallISKey)set.getISKey()).getObservation());
-                System.out.println(state.getSequenceFor(FlipItGameInfo.ATTACKER));
-                if (!state.getSequenceFor(FlipItGameInfo.ATTACKER).isEmpty() && state.getSequenceFor(FlipItGameInfo.ATTACKER).getLastInformationSet().getISKey()
-                        instanceof FlipItPerfectRecallISKey)
-                    System.out.println(((FlipItPerfectRecallISKey)state.getSequenceFor(FlipItGameInfo.ATTACKER)
-                            .getLastInformationSet().getISKey()).getObservation());
-                for (Action a : behavioral.get(set).keySet())
-                    if (behavioral.get(set).get(a) > 0.00001)
-                        System.out.printf("\t %s : %f\n", a, behavioral.get(set).get(a));
+                for (GameState state : set.getAllStates()) {
+//                GameState state = set.getAllStates().iterator().next();
+                    System.out.println(state.getSequenceFor(FlipItGameInfo.DEFENDER));
+                    if (set.getISKey() instanceof FlipItPerfectRecallISKey)
+                        System.out.println(((FlipItPerfectRecallISKey) set.getISKey()).getObservation());
+                    System.out.println(state.getSequenceFor(FlipItGameInfo.ATTACKER));
+                    if (!state.getSequenceFor(FlipItGameInfo.ATTACKER).isEmpty() && state.getSequenceFor(FlipItGameInfo.ATTACKER).getLastInformationSet().getISKey()
+                            instanceof FlipItPerfectRecallISKey)
+                        System.out.println(((FlipItPerfectRecallISKey) state.getSequenceFor(FlipItGameInfo.ATTACKER)
+                                .getLastInformationSet().getISKey()).getObservation());
+                    for (Action a : behavioral.get(set).keySet())
+                        if (behavioral.get(set).get(a) > 0.00001)
+                            System.out.printf("\t %s : %f\n", a, behavioral.get(set).get(a));
+                }
             }
         }
 

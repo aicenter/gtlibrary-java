@@ -23,10 +23,18 @@ import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.CompleteSefceLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.iterative.LeaderGenerationSefceLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.lpTable.ConstraintGeneratingLPTable;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.CompleteTwoPlayerSefceLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGenerationTwoPlayerSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.experiments.StackelbergExperiments;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenSumGPGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
@@ -40,13 +48,64 @@ import java.util.LinkedList;
 
 public class SefceRunner {
 
-    final static int LEADER = 1;
+    final static int LEADER = 0;
+    final static boolean EXPORT_LP = true;
     final static int depth = 3;
 
+    private double restrictedGameRatio;
+
     public static void main(String[] args) {
+//        runPoker();
 //        runGenSumRandom();
-        runGenSumRandomImproved();
-//        runBPG(depth);
+//        runGenSumRandomImproved();
+        runBPG(depth);
+//        runFlipIt(args);
+    }
+
+    public static void runPoker(){
+
+    GameInfo gameInfo = new GPGameInfo();
+    GameState rootState = new GenSumGPGameState();
+    StackelbergConfig algConfig = new StackelbergConfig(rootState);
+    Expander<SequenceInformationSet> expander = new GenericPokerExpander<>(algConfig);
+    SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+
+    runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+}
+    public static void runFlipIt(String[] args){
+        FlipItGameInfo gameInfo;
+        if (args.length == 0)
+            gameInfo = new FlipItGameInfo();
+        else{
+            int depth = Integer.parseInt(args[0]);
+            int numTypes = Integer.parseInt(args[1]);
+            String graphFile = args[2];
+            long seed  = Integer.parseInt(args[3]);
+            gameInfo = new FlipItGameInfo(depth,numTypes,graphFile, seed);
+//            gameInfo.setInfo(depth,numTypes,graphFile);
+        }
+        gameInfo.ZERO_SUM_APPROX = false;
+        GameState rootState = null;
+
+        switch (FlipItGameInfo.gameVersion){
+            case NO:                    rootState = new NoInfoFlipItGameState(); break;
+            case FULL:                  rootState = new FullInfoFlipItGameState(); break;
+            case REVEALED_ALL_POINTS:   rootState = new AllPointsFlipItGameState(); break;
+            case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
+
+        }
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
+
+        SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+
+
     }
 
     public static void runBPG(int depth) {
@@ -67,9 +126,12 @@ public class SefceRunner {
         Expander<SequenceInformationSet> expander = new RandomGameExpander<>(algConfig);
         SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 //        runner.generate(rootState.getAllPlayers()[0], new MultiplayerSefceLP(rootState.getAllPlayers()[0], gameInfo));
-        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new CompleteDualGeneratingSEFCE(rootState.getAllPlayers()[0], gameInfo));
-        new GambitEFG().write("randomGame.gbt", rootState, expander);
+//        new GambitEFG().write("randomGame.gbt", rootState, expander);
 //        new DotEFG().writeII("", rootState,expander);
     }
     
@@ -81,9 +143,12 @@ public class SefceRunner {
 //        new GambitEFG().write("randomGameImproved.gbt", rootState, expander);
         SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 //        runner.generate(rootState.getAllPlayers()[0], new MultiplayerSefceLP(rootState.getAllPlayers()[0], gameInfo));
-        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //      runner.generate(rootState.getAllPlayers()[0], new CompleteDualGeneratingSEFCE(rootState.getAllPlayers()[0], gameInfo));
-        new GambitEFG().write("newSefce_randomGameImproved.gbt", rootState, expander);
+//        new GambitEFG().write("newSefce_randomGameImproved.gbt", rootState, expander);
     }
 
  
@@ -106,7 +171,8 @@ public class SefceRunner {
         this.algConfig = algConfig;
     }
 
-    public void generate(Player leader, CompleteSefceLP solver) {
+
+    public void generate(Player leader, Solver solver) {
         debugOutput.println(solver.getInfo());
         debugOutput.println(gameConfig.getInfo());
         threadBean = ManagementFactory.getThreadMXBean();
@@ -142,7 +208,7 @@ public class SefceRunner {
 //            realizationPlans.put(player, solver.getResultStrategiesForPlayer(player));
 //        }
 
-        System.out.println("done.");
+//        System.out.println("done.");
         finalTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
 
         //int[] support_size = new int[]{0, 0};
@@ -167,6 +233,16 @@ public class SefceRunner {
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
         System.out.println("final IS count: " + algConfig.getAllInformationSets().size());
 
+        if (solver instanceof LeaderGenerationSefceLP)
+            restrictedGameRatio = ((LeaderGenerationSefceLP)solver).getRestrictedGameRatio();
+        else {
+            if (solver instanceof LeaderGenerationTwoPlayerSefceLP)
+                restrictedGameRatio = ((LeaderGenerationTwoPlayerSefceLP)solver).getRestrictedGameRatio();
+            else
+                restrictedGameRatio = 1.0;
+        }
+        System.out.println("final RG ratio: "+restrictedGameRatio);
+
 //        if (DEBUG) {
 //            // sanity check -> calculation of Full BR on the solution of SQF LP
 //            SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
@@ -178,6 +254,10 @@ public class SefceRunner {
 //            algConfig.validateGameStructure(rootState, expander);
 //        }
         //return realizationPlans;
+    }
+
+    public double getRestrictedGameRatio(){
+        return restrictedGameRatio;
     }
 
 

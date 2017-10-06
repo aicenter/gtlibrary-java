@@ -57,7 +57,7 @@ public class SequenceFormLP implements FullSequenceFormLP {
     protected Map<Player, Set<Sequence>> sequences = new FixedSizeMap<Player, Set<Sequence>>(2);
     protected Map<Player, Set<SequenceInformationSet>> informationSets = new FixedSizeMap<Player, Set<SequenceInformationSet>>(2);
 
-    protected PrintStream debugOutput = DummyPrintStream.getDummyPS();
+    protected PrintStream debugOutput = System.out;//DummyPrintStream.getDummyPS();
 
     public SequenceFormLP(Player[] players) {
         for (Player player : players) {

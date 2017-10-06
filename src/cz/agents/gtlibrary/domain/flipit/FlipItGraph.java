@@ -29,6 +29,8 @@ public class FlipItGraph extends Graph {
 
     private double[] init_costs = new double[]  {8.0, 2.0, 2.0, 8.0, 5.0};//{8.0, 3.0, 2.0, 7.0, 6.0};//
     private double[] init_rewards = new double[]{10.0, 10.0, 4.0, 4.0, 10.0};//{11.0, 10.0, 4.0, 5.0, 8.0};//
+//    private double[] init_costs = new double[]  {6.0, 7.0, 2.0, 8.0, 5.0};//{8.0, 3.0, 2.0, 7.0, 6.0};//
+//    private double[] init_rewards = new double[]{4.0, 5.0, 4.0, 4.0, 10.0};//{11.0, 10.0, 4.0, 5.0, 8.0};//
 
     private double MAX_REWARD;
     private double MIN_CONTROLCOST;
@@ -38,6 +40,26 @@ public class FlipItGraph extends Graph {
         rewards = new HashMap<>();
         controlCosts = new HashMap<>();
         publicNodes = new HashSet<>();
+        initFlipItGraph();
+
+        MAX_REWARD = Double.MIN_VALUE;
+        for (Double reward : rewards.values())
+            if (reward > MAX_REWARD) MAX_REWARD = reward;
+
+        MIN_CONTROLCOST = Double.MAX_VALUE;
+        for (Double controlCost : controlCosts.values())
+            if (controlCost < MIN_CONTROLCOST) MIN_CONTROLCOST = controlCost;
+
+//        System.out.println("GRAPH INIT");
+    }
+
+    public FlipItGraph(String graphFile, double[] init_costs, double[] init_rewards) {
+        super(graphFile);
+        rewards = new HashMap<>();
+        controlCosts = new HashMap<>();
+        publicNodes = new HashSet<>();
+        this.init_costs = init_costs;
+        this.init_rewards = init_rewards;
         initFlipItGraph();
 
         MAX_REWARD = Double.MIN_VALUE;

@@ -41,10 +41,15 @@ public class FlipItExpander<I extends InformationSet> extends ExpanderImpl<I> {
     protected List<Action> getDefenderActions(GameState gameState){
         // get all possible nodes
         List<Action> actions = new ArrayList<Action>();
+//        boolean first = true;
         for (Node node : FlipItGameInfo.graph.getAllNodes().values()){
+//            if (first){
+//                System.out.println(node);
+//                first=false;
+//            }
             actions.add(new FlipItAction(node, getAlgorithmConfig().getInformationSetFor(gameState)));
         }
-        actions.add(new FlipItAction(getAlgorithmConfig().getInformationSetFor(gameState)));
+        if (FlipItGameInfo.ENABLE_PASS) actions.add(new FlipItAction(getAlgorithmConfig().getInformationSetFor(gameState)));
         return actions;
     }
 
@@ -81,7 +86,7 @@ public class FlipItExpander<I extends InformationSet> extends ExpanderImpl<I> {
             actions.add(new FlipItAction(entry.getKey(), getAlgorithmConfig().getInformationSetFor(gameState)));
         }
         // NOOP action
-        actions.add(new FlipItAction(getAlgorithmConfig().getInformationSetFor(gameState)));
+        if (FlipItGameInfo.ENABLE_PASS) actions.add(new FlipItAction(getAlgorithmConfig().getInformationSetFor(gameState)));
 
         sorted = null;
         nodesToAttack = null;

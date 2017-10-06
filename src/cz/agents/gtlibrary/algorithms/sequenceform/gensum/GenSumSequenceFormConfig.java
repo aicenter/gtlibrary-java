@@ -54,7 +54,7 @@ public class GenSumSequenceFormConfig extends SequenceFormConfig<SequenceInforma
 
     private boolean isZeroForAllPlayers(Double[] utilities) {
         for (Double utility : utilities) {
-            if (utility != 0)
+            if (utility != null && utility != 0)
                 return false;
         }
         return true;
