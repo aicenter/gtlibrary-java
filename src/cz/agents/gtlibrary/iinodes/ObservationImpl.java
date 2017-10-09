@@ -2,7 +2,9 @@ package cz.agents.gtlibrary.iinodes;
 
 import cz.agents.gtlibrary.interfaces.Observation;
 
-public class ObservationImpl implements Observation {
+import java.io.Serializable;
+
+public class ObservationImpl implements Observation, Serializable {
 
     public static final ObservationImpl EMPTY_OBSERVATION = new ObservationImpl(-1);
 

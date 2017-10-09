@@ -101,7 +101,6 @@ public class FPIRA extends AutomatedAbstractionAlgorithm {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public static void runKuhnPoker() {
