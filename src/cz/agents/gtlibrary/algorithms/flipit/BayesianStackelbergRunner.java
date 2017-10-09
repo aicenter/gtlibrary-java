@@ -59,8 +59,8 @@ public class BayesianStackelbergRunner {
     static String outputFile;
     static String output;
 
-//    static String alg = "AI-LP";
-    static String alg = "AI-CG";
+    static String alg = "AI-LP";
+//    static String alg = "AI-CG";
 //    static String alg = "MILP";
 
     public static void main(String[] args) {
