@@ -56,10 +56,10 @@ import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
-import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
+import cz.agents.gtlibrary.domain.pursuit.VisibilityPursuitGameState;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
@@ -95,7 +95,7 @@ public class GeneralDoubleOracle {
     public static PlayerSelection playerSelection = PlayerSelection.BOTH;
 
     public static void main(String[] args) {
-        runIIGoofspiel();
+//        runIIGoofspiel();
 //		runAC();
 //        runBP();
 //        runGenericPoker();
@@ -103,6 +103,7 @@ public class GeneralDoubleOracle {
 //        runGoofSpiel();
 //        runIIOshiZumo();
 //        runRandomGame();
+        runVisibilityPursuit();
 //		runSimRandomGame();
 //                runLiarsDice();
 //		runPursuit();
@@ -430,16 +431,17 @@ public class GeneralDoubleOracle {
 //        GambitEFG.write("randomgame.gbt", rootState, (Expander) expander);
     }
 
-    public static void runSimRandomGame() {
-        GameState rootState = new SimRandomGameState();
-        GameInfo gameInfo = new RandomGameInfo();
+    public static void runVisibilityPursuit() {
+        GameState rootState = new VisibilityPursuitGameState();
+        GameInfo gameInfo = new PursuitGameInfo();
         DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
-        Expander<DoubleOracleInformationSet> expander = new RandomGameExpander<DoubleOracleInformationSet>(algConfig);
+        Expander<DoubleOracleInformationSet> expander = new PursuitExpander<>(algConfig);
+//        Expander<DoubleOracleInformationSet> expander = new RandomGameExpanderWithMoveOrdering<DoubleOracleInformationSet>(algConfig, new int[] {1, 2, 0});
         GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
         doefg.generate(null);
-//        GambitEFG ggg = new GambitEFG();
-//        ggg.write("randomgame.gbt", rootState, (Expander) expander);
+//        GambitEFG.write("randomgame.gbt", rootState, (Expander) expander);
     }
+
 
     public static void runGenericPoker() {
         GameState rootState = new GenericPokerGameState();

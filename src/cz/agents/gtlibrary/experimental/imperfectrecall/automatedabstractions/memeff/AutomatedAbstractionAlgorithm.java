@@ -120,7 +120,7 @@ public abstract class AutomatedAbstractionAlgorithm {
             this.iteration++;
             iteration(rootState.getAllPlayers()[1]);
             iteration(rootState.getAllPlayers()[0]);
-            if (isConverged(gameInfo.getMaxUtility() * 1e-4))
+            if (isConverged(gameInfo.getMaxUtility() * 1e-5))
                 return;
             if (this.iteration % 20 == 0 || iteration == 1)
                 printStatistics();

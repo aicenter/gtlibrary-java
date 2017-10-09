@@ -36,6 +36,7 @@ public class PursuitGraph extends Graph {
     private Node evaderStart;
     private Node p1Start;
     private Node p2Start;
+    private Node evaderGoal;
     private double[][] distanceMatrix;
 
     public PursuitGraph(String graphFile) {
@@ -64,7 +65,7 @@ public class PursuitGraph extends Graph {
                             break;
                         }
                 }
-                if(p1Start == null || p2Start == null) {
+                if (p1Start == null || p2Start == null) {
                     p1Start = null;
                     p2Start = null;
                     System.out.println("Impossible to place patrolers, moving evader");
@@ -95,6 +96,8 @@ public class PursuitGraph extends Graph {
             evaderStart = allNodes.get("ID" + PursuitGameInfo.evaderStart);
             p1Start = allNodes.get("ID" + PursuitGameInfo.p1Start);
             p2Start = allNodes.get("ID" + PursuitGameInfo.p2Start);
+            if (PursuitGameInfo.evaderGoal != -1)
+                evaderGoal = allNodes.get("ID" + PursuitGameInfo.evaderGoal);
         }
     }
 
@@ -134,6 +137,10 @@ public class PursuitGraph extends Graph {
 
     public Node getP2Start() {
         return p2Start;
+    }
+
+    public Node getEvaderGoal() {
+        return evaderGoal;
     }
 
     public double getDistance(Node start, Node goal) {
