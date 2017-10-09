@@ -29,6 +29,7 @@ public class MetroGraph extends Graph{
     }
 
     public int getDistance(Node origin, Node destination){
+        // shortest path
         return 0;
     }
 
