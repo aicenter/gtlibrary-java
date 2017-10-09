@@ -11,6 +11,9 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
+import cz.agents.gtlibrary.domain.pursuit.VisibilityPursuitGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -37,9 +40,9 @@ import java.util.Set;
 public class FPIRABRFirst extends FPIRA {
 
     public static void main(String[] args) {
-        runGenericPoker();
+//        runGenericPoker();
 //        runKuhnPoker();
-//        runRandomGame();
+        runRandomGame();
 //        runWichardtCounterexample();
 //        runIIGoofspiel();
     }
@@ -70,6 +73,14 @@ public class FPIRABRFirst extends FPIRA {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void runVisibilityPursuit() {
+        GameState root = new VisibilityPursuitGameState();
+        Expander<MCTSInformationSet> expander = new PursuitExpander<>(new FPIRAConfig());
+        FPIRA fpira = new FPIRABRFirst(root, expander, new PursuitGameInfo());
+
+        fpira.runIterations(1000000);
     }
 
     public static void runGenericPoker() {

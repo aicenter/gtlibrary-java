@@ -19,11 +19,12 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.utils.graph;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import org.jgrapht.graph.DefaultDirectedGraph;
 
-public class Node {
+public class Node implements Serializable {
 
 	public static final Node EMPTY_NODE = new Node("ID-1");
 	

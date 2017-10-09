@@ -322,7 +322,7 @@ public class RandomGameState extends GameStateImpl {
                         playerObservationsMap.get(players[players.length - 1]));
             } else {
                 informationSetKey = new PerfectRecallISKey(
-                        uniqueHash(observations.get(getPlayerToMove()).get(getPlayerToMove()), Math.max(RandomGameInfo.MAX_OBSERVATION, RandomGameInfo.MAX_BF)),
+                        observations.get(getPlayerToMove()).get(getPlayerToMove()).hashCode(),
                         getHistory().getSequenceOf(getPlayerToMove()));
             }
         }

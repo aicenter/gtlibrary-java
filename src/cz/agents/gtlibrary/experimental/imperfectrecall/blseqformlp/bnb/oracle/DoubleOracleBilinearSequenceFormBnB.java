@@ -88,7 +88,7 @@ public class DoubleOracleBilinearSequenceFormBnB extends OracleBilinearSequenceF
 //        runRandomGame();
 //        runAbstractedRandomGame();
 //        runTTT();
-//        runBPG();
+        runBPG();
 //        runAttackerBPG();
 //        runBothIRBPG();
 //        runGoofSpiel();

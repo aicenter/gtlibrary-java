@@ -10,14 +10,16 @@ public class PursuitGameInfo implements GameInfo {
 	public static Player EVADER = new PlayerImpl(0);
 	public static Player PATROLLER = new PlayerImpl(1);
 	public static Player[] ALL_PLAYERS = { EVADER, PATROLLER };
-	public static long seed = 11;
+	public static long seed = 7;
 	public static int evaderStart = 0;
 	public static int p1Start = 7;
-	public static int p2Start = 11;
-	public static int depth = 2;
-    public static double patrollerMoveCost = 0.5/depth;//0 for zero sum game
+	public static int p2Start = 13;
+	public static int evaderGoal = 10;//-1 for no goal
+	public static int depth = 5;
+    public static double patrollerMoveCost = 0;//0.5/depth;//0 for zero sum game
 	public static boolean forceMoves = true;
-    public static boolean randomizeStartPositions = true;
+    public static boolean randomizeStartPositions = false;
+
 
     @Override
 	public double getMaxUtility() {
