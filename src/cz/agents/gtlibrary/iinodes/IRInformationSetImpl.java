@@ -8,11 +8,12 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class IRInformationSetImpl implements InformationSet {
+public class IRInformationSetImpl implements InformationSet, Serializable {
     protected Player player;
     protected LinkedHashSet<GameState> statesInformationSet = new LinkedHashSet<>();
     private final int hashCode;

@@ -27,6 +27,7 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.ValueComparator;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,8 +58,10 @@ public class ALossBestResponseAlgorithm {
     final protected double EPS_CONSTANT = 0.000000001; // zero for numerical-stability reasons
     protected ORComparator comparator;
     protected GameState gameTreeRoot = null;
-    protected Set<Action> resultActions = new HashSet<>();
     protected Map<ISKey, Sequence> firstLevelActions = new HashMap<>();
+
+    public int maxStateValueCache = 0;
+    public int maxBRResultSize = 0;
 
     public ALossBestResponseAlgorithm(GameState root, Expander<? extends InformationSet> expander, int searchingPlayerIndex, Player[] actingPlayers, AlgorithmConfig<? extends InformationSet> algConfig, GameInfo gameInfo, boolean stateCacheUse) {
         this.searchingPlayerIndex = searchingPlayerIndex;
@@ -92,7 +95,11 @@ public class ALossBestResponseAlgorithm {
 
         comparator = new ORComparator();
 
-        return bestResponse(root, -MAX_UTILITY_VALUE, getOpponentProbability(root.getSequenceFor(players[opponentPlayerIndex])));
+        Double value = bestResponse(root, -MAX_UTILITY_VALUE, getOpponentProbability(root.getSequenceFor(players[opponentPlayerIndex])));
+
+        maxBRResultSize = (int) Math.max(maxBRResultSize, BRresult.values().stream().flatMap(s -> s.values().stream()).count());
+        maxStateValueCache = Math.max(maxStateValueCache, cachedValuesForNodes.size());
+        return value;
     }
 
     protected Double calculateEvaluation(GameState gameState, double currentStateProbability) {
@@ -161,7 +168,7 @@ public class ALossBestResponseAlgorithm {
                 double currentNodeProb = currentNode.getNatureProbability();
 
                 if (nonZeroOppRP) {
-                    double altProb = getOpponentProbability(currentNode.getSequenceFor(players[opponentPlayerIndex]));
+                    double altProb = currentNode.equals(gameState) ? currentStateProb : getOpponentProbability(currentNode.getSequenceFor(players[opponentPlayerIndex]));
 
                     currentNodeProb *= altProb;
                     if (altProb > 0)
@@ -236,8 +243,6 @@ public class ALossBestResponseAlgorithm {
 //                System.out.println();
 //            }
             assert (returnValue != null);
-
-            resultActions.add(resultAction);
             Sequence sequence = gameState.getSequenceFor(players[searchingPlayerIndex]);
             Sequence sequenceCopy = new ArrayListSequenceImpl(sequence);
 
@@ -324,7 +329,7 @@ public class ALossBestResponseAlgorithm {
         Map<Action, GameState> successors = stateCache.computeIfAbsent(state, s -> USE_STATE_CACHE ? new HashMap<>(10000) : dummyInstance);
         GameState newState = successors.computeIfAbsent(action, a -> state.performAction(a));
         double natureProb = newState.getNatureProbability(); // TODO extract these probabilities from selection Map
-        double oppRP = ((state.getPlayerToMove().getId() == opponentPlayerIndex)?parentProb * getProbabilityForAction(action): parentProb);
+        double oppRP = ((state.getPlayerToMove().getId() == opponentPlayerIndex) ? parentProb * getProbabilityForAction(action) : parentProb);
         double newLowerBound = selection.calculateNewBoundForAction(action, natureProb, oppRP);
 
         assert Math.abs(oppRP - getOpponentProbability(newState.getSequenceFor(players[opponentPlayerIndex]))) < 1e-8;
@@ -742,7 +747,6 @@ public class ALossBestResponseAlgorithm {
             List<GameState> nonZeroChildren = actions.stream().filter(a -> getProbabilityForAction(a) > 1e-8)
                     .map(a -> currentState.performAction(a)).collect(Collectors.toList());
 
-            assert opponentProbability > 1e-8;
             if (nonZeroChildren.isEmpty()) { //default strategy case
                 getAlternativeNodesOutsideRGFix(currentState.performAction(actions.get(0)), stateForAlternatives,
                         alternativeNodes, 1);

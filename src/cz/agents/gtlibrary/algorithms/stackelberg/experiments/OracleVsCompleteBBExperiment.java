@@ -38,7 +38,7 @@ public class OracleVsCompleteBBExperiment {
 //        runGenSumRandomImproved();
 //        runBPG(depth);
 //        runFlipIt(args);
-        runFlipIt(new String[]{"F", "5", "4", "F", "20"});
+//        runFlipIt(new String[]{"F", "5", "4", "F", "20"});
         }
         else {
             switch (args[0]) {

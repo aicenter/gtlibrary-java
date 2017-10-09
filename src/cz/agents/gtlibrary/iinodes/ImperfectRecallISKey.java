@@ -1,6 +1,8 @@
 package cz.agents.gtlibrary.iinodes;
 
-public class ImperfectRecallISKey extends ISKey {
+import java.io.Serializable;
+
+public class ImperfectRecallISKey extends ISKey implements Serializable {
     /**
      * Requires the list of observations of the current player to move and the list of observations of the rest of the players.
      * In order to make sure that the resulting game wont have absent mindedness all the length of the observations of the current

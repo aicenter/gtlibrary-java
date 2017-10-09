@@ -2,7 +2,9 @@ package cz.agents.gtlibrary.iinodes;
 
 import cz.agents.gtlibrary.interfaces.Observation;
 
-public class PerfectRecallObservation implements Observation {
+import java.io.Serializable;
+
+public class PerfectRecallObservation implements Observation, Serializable {
     private PerfectRecallISKey prKey;
 
     public PerfectRecallObservation(PerfectRecallISKey prKey) {

@@ -2,7 +2,9 @@ package cz.agents.gtlibrary.iinodes;
 
 import cz.agents.gtlibrary.interfaces.Sequence;
 
-public class PerfectRecallISKey extends ISKey {
+import java.io.Serializable;
+
+public class PerfectRecallISKey extends ISKey implements Serializable {
 
     public PerfectRecallISKey(int hash, Sequence sequence) {
         super(hash, sequence);

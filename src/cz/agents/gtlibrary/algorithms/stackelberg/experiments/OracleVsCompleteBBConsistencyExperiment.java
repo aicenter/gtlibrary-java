@@ -33,12 +33,12 @@ public class OracleVsCompleteBBConsistencyExperiment {
     public static void main(String[] args) {
         if (args.length == 0) {
 //            runGenSumRandom(new String[]{"R", "3", "3", "30"});
-//            runGenSumRandomImproved(new String[]{"I", "5", "4", "40", "1"});
+//            runGenSumRandomImproved(new String[]{"I", "5", "8", "5", "1"});
 //            runGenSumRandomOneSeed(new String[]{"R", "3", "3"}, 21);
 //        runGenSumRandomImproved();
 //        runBPG(depth);
 //        runFlipIt(args);
-            runFlipIt(new String[]{"F", "2", "5", "AP"});
+//            runFlipIt(new String[]{"F", "2", "5", "AP"});
         } else {
             switch (args[0]) {
                 case "F":
@@ -112,7 +112,7 @@ public class OracleVsCompleteBBConsistencyExperiment {
             expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<>(algConfig);
             runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
             startGeneration = threadBean.getCurrentThreadCpuTime();
-            LeaderOracle2pSumForbiddingLP oracle = new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo);
+            LeaderOracle2pSumForbiddingLP oracle = new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, false, true);
             runner.generate(rootState.getAllPlayers()[LEADER], oracle);
             restrictedGameRatio += oracle.getRestrictedGameRatio();
             oracleGameGV = runner.getGameValue();

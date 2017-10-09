@@ -463,4 +463,8 @@ public class DoubleOracleConfig<I extends DoubleOracleInformationSet> extends Se
 	public Map<Player, Set<Sequence>> getFullBRSequences() {
 		return fullBRSequences;
 	}
+
+	public Set<GameState> getTemporaryLeafs() {
+		return temporaryLeafs;
+	}
 }
