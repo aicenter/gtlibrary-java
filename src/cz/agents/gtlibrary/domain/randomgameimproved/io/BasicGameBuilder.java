@@ -8,6 +8,10 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
+import cz.agents.gtlibrary.domain.pursuit.VisibilityPursuitGameState;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.ArrayDeque;
@@ -15,8 +19,18 @@ import java.util.stream.Collectors;
 
 public class BasicGameBuilder {
     public static void main(String[] args) {
-        buildGP();
+        buildVisibilityPursuit();
+//        buildGP();
 //        buildGS();
+    }
+
+    private static void buildVisibilityPursuit() {
+        GameState root = new VisibilityPursuitGameState();
+        Expander<MCTSInformationSet> expander = new PursuitExpander<>(new MCTSConfig());
+        new PursuitGameInfo();
+
+        buildWithoutTerminalIS(root, expander.getAlgorithmConfig(), expander);
+        System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
     }
 
     private static void buildGP() {

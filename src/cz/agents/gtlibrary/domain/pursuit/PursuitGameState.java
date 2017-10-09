@@ -161,9 +161,15 @@ public class PursuitGameState extends SimultaneousGameState {
 
     @Override
     protected double[] getEndGameUtilities() {
+        if (onGoal())
+            return new double[]{2, -2};
         if (isCaughtInNode() || isCaughtOnEdge())
             return new double[]{-1, 1};
         return new double[]{1, -1};
+    }
+
+    private boolean onGoal() {
+        return evaderPosition.equals(graph.getEvaderGoal());
     }
 
     @Override

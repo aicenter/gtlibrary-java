@@ -3,7 +3,9 @@ package cz.agents.gtlibrary.domain.randomgameimproved.centers;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
-public class UniformModificationGenerator implements ModificationGenerator {
+import java.io.Serializable;
+
+public class UniformModificationGenerator implements ModificationGenerator, Serializable {
     private int maxModification;
 
     public UniformModificationGenerator(int maxModification) {

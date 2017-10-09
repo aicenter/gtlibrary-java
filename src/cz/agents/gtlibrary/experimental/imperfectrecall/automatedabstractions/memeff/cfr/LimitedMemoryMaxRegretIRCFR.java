@@ -8,6 +8,10 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
+import cz.agents.gtlibrary.domain.pursuit.VisibilityPursuitGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -31,7 +35,8 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 //        runGenericPoker();
 //        runIIGoofspiel();
 //        runRandomGame();
-        runRandomGame("backup.ser");
+//        runRandomGame("backup.ser");
+        runVisibilityPursuit();
     }
 
     public static void runGenericPoker() {
@@ -41,7 +46,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         GameInfo info = new GPGameInfo();
         MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config);
 
-        alg.runIterations(10000000);
+        alg.runIterations(1000000000);
     }
 
     public static void runGenericPoker(String backupFileName) {
@@ -59,7 +64,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         GameInfo info = new GSGameInfo();
         MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config);
 
-        alg.runIterations(10000000);
+        alg.runIterations(1000000000);
     }
 
     public static void runIIGoofspiel(String backupFileName) {
@@ -78,7 +83,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         GameInfo info = new RandomGameInfo();
         MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config);
 
-        alg.runIterations(10000000);
+        alg.runIterations(1000000000);
     }
 
     public static void runRandomGame(String backupFileName) {
@@ -90,6 +95,35 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         loadFromBackupAndRun(backupFileName, root, config, expander, info);
     }
 
+    public static void runVisibilityPursuit() {
+        GameState root = new VisibilityPursuitGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new PursuitExpander<>(config);
+        GameInfo info = new PursuitGameInfo();
+        MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config);
+
+        alg.runIterations(1000000000);
+    }
+
+    public static void runVisibilityPursuit(String backupFileName) {
+        GameState root = new VisibilityPursuitGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new PursuitExpander<>(config);
+        GameInfo info = new PursuitGameInfo();
+
+        loadFromBackupAndRun(backupFileName, root, config, expander, info);
+    }
+
+    public static void runPursuit() {
+        GameState root = new PursuitGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new PursuitExpander<>(config);
+        GameInfo info = new PursuitGameInfo();
+        MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config);
+
+        alg.runIterations(1000000000);
+    }
+
     private static void loadFromBackupAndRun(String backupFileName, GameState root, MCTSConfig config, Expander<MCTSInformationSet> expander, GameInfo info) {
         try {
             FileInputStream fin = new FileInputStream(backupFileName);
@@ -97,7 +131,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
             AutomatedAbstractionData data = (AutomatedAbstractionData) oos.readObject();
             MaxRegretIRCFR alg = new LimitedMemoryMaxRegretIRCFR(root, expander, info, config, data);
 
-            alg.runIterations(10000000);
+            alg.runIterations(1000000000);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -109,8 +143,8 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
 
     public static double INIT_REGRET_WEIGHT = 0.99;
-    public static int sizeLimitHeuristic = 500;
-    public static int sizeLimitBound = 500;
+    public static int sizeLimitHeuristic = 900;
+    public static int sizeLimitBound = 0;
     private Random random;
     private Set<ISKey> toUpdate;
     private Map<ISKey, double[]> regretsForRegretCheck;
