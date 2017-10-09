@@ -14,12 +14,14 @@ public class MetroTransportAction extends ActionImpl {
     protected Player actingPlayer;
     protected Node origin;
     protected Node destination;
+    protected int departureTime;
 
-    public MetroTransportAction(InformationSet informationSet, Node origin, Node destination) {
+    public MetroTransportAction(InformationSet informationSet, Node origin, Node destination, int departureTime) {
         super(informationSet);
         this.actingPlayer = informationSet.getPlayer();
         this.origin = origin;
         this.destination = destination;
+        this.departureTime = departureTime;
     }
 
     @Override
