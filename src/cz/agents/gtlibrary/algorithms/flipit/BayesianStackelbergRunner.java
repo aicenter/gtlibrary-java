@@ -64,7 +64,7 @@ public class BayesianStackelbergRunner {
 //    static String alg = "MILP";
 
     public static void main(String[] args) {
-        runFlipIt(new String[]{"2", "2", "flipit_simple2.txt", "0", "test_bsgsse.txt", "AI-CG", "AP"});
+        runFlipIt(new String[]{"3", "2", "flipit_simple2.txt", "0", "test_bsgsse.txt", "AI-CG", "AP"});
     }
 
     public static void runFlipIt(String[] args){
@@ -195,11 +195,11 @@ public class BayesianStackelbergRunner {
 //            }
 //        }
 
-        for (Sequence sequence : realizationPlans.get(FlipItGameInfo.DEFENDER).keySet()) {
-            if (realizationPlans.get(FlipItGameInfo.DEFENDER).get(sequence) > 0) {
-                System.out.println(sequence + " : " + realizationPlans.get(FlipItGameInfo.DEFENDER).get(sequence));
-            }
-        }
+//        for (Sequence sequence : realizationPlans.get(FlipItGameInfo.DEFENDER).keySet()) {
+//            if (realizationPlans.get(FlipItGameInfo.DEFENDER).get(sequence) > 0) {
+//                System.out.println(sequence + " : " + realizationPlans.get(FlipItGameInfo.DEFENDER).get(sequence));
+//            }
+//        }
 
         try {
             Runtime.getRuntime().gc();

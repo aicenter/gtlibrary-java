@@ -2,9 +2,10 @@ package cz.agents.gtlibrary.iinodes;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public abstract class ISKey {
+public abstract class ISKey implements Serializable {
     protected Object[] objects;
     private int hashCode = -1;
 

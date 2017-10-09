@@ -41,13 +41,13 @@ public class FixedForIterationData extends OOSAlgorithmData {
     }
 
     public boolean applyUpdate() {
-        boolean oldUpdated = updated;
-
+        if(!updated)
+            return false;
         for (int i = 0; i < regretUpdate.length; i++) {
             r[i] += regretUpdate[i];
         }
         regretUpdate = new double[r.length];
         updated = false;
-        return oldUpdated;
+        return true;
     }
 }

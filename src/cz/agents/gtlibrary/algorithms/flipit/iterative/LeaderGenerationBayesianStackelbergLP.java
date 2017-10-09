@@ -215,9 +215,9 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
 //        }
         for (SequenceInformationSet reachableSet : algConfig.getReachableSets(followerSequence)) {
             for (Sequence sequence : reachableSet.getOutgoingSequences()) {
-                Object contVarKey = new Pair<>("v", sequence);
+                Object contVarKey = new Triplet<>(type, "v", sequence);
                 if (CONVERT_TO_CANONIC){
-                    Object contVKey = new Pair<>("w", sequence);
+                    Object contVKey = new Triplet<>(type, "w", sequence);
                     lpTable.setConstraint(eqKey, contVKey, 1);
                 }
                 else {
@@ -352,7 +352,7 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
 //                    if (followerValue != 0) {
                         // 6:
                     for (FollowerType type : FlipItGameInfo.types)
-                        setNewConstraint(followerSequence, createSeqTripletVarKey(type, leaderSequence, followerSequence), -seqCombValue[type.getID()+1]);
+                        setNewConstraint(new Pair(type, followerSequence), createSeqTripletVarKey(type, leaderSequence, followerSequence), -seqCombValue[type.getID()+1]);
 
                         // 7:
                         if(followerSequence.getLastInformationSet() == null) continue;
@@ -597,7 +597,7 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
 
 
 
-                if (brokenStrategyCauses == null) {
+                if (causes.isEmpty()) {
                     lpData = null;
 //                    System.out.println("Found solution candidate with reward: " + reward);
 //                    Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
@@ -1097,7 +1097,7 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
         return behavioralStrat;
     }
 
-    protected Map<InformationSet, Map<Sequence, Double>> getLeaderBehavzioralStrategy(LPData lpData, Player player) {
+    protected Map<InformationSet, Map<Sequence, Double>> getLeaderBehavioralStrategy(LPData lpData, Player player) {
         Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
 //        Map<Pair<Sequence, Sequence>, Double> normalProcessedPairs = new HashMap<>();
 //        Map<Pair<Sequence, Sequence>, Double> additionalProcessedPairs = new HashMap<>();
@@ -1166,5 +1166,10 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
 
     public long getRestrictedGameGenerationTime() {
         return restrictedGameGenerationTime;
+    }
+
+    @Override
+    public Double getResultForPlayer(Player p) {
+        return gameValue;
     }
 }

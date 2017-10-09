@@ -36,7 +36,7 @@ public class SimAlphaBetaTest {
         Expander<SimABInformationSet> expander = new GoofSpielExpander<>(config);
 
         SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
-        double value = simAlphaBeta.runSimAlpabeta(rootState, expander, true, true, false, false, new GSGameInfo());
+        double value = simAlphaBeta.runSimAlphabeta(rootState, expander, true, true, false, false, new GSGameInfo());
 
         assertEquals(0, value, 1e-3);
     }
@@ -54,7 +54,7 @@ public class SimAlphaBetaTest {
         Expander<SimABInformationSet> expander = new OshiZumoExpander<>(config);
 
         SimAlphaBeta simAlphaBeta = new SimAlphaBeta();
-        double value = simAlphaBeta.runSimAlpabeta(rootState, expander, true, true, false, false, new GSGameInfo());
+        double value = simAlphaBeta.runSimAlphabeta(rootState, expander, true, true, false, false, new GSGameInfo());
 
         assertEquals(0, value, 1e-3);
     }
