@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.flipit;
 
+import cz.agents.gtlibrary.algorithms.flipit.iterative.LeaderGenerationBayesianStackelbergLP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
@@ -26,6 +27,7 @@ import cz.agents.gtlibrary.algorithms.flipit.iterative.ShallowestBrokenCplexBaye
 import cz.agents.gtlibrary.algorithms.flipit.iterative.SumForbiddingBayesianStackelbergLP;
 import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -58,10 +60,14 @@ public class BayesianStackelbergRunner {
     static String output;
 
     static String alg = "AI-LP";
+//    static String alg = "AI-CG";
 //    static String alg = "MILP";
 
     public static void main(String[] args) {
+        runFlipIt(new String[]{"3", "2", "flipit_simple2.txt", "0", "test_bsgsse.txt", "AI-CG", "AP"});
+    }
 
+    public static void runFlipIt(String[] args){
         FlipItGameInfo gameInfo;
         if (args.length == 0)
             gameInfo = new FlipItGameInfo();
@@ -77,7 +83,16 @@ public class BayesianStackelbergRunner {
 
             alg = args[5];
 
-            OUTPUT = true;
+            OUTPUT = false;
+
+            String version = args[6];
+            switch(version){
+                case "N" : FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.NO; break;
+                case "AP" : FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_ALL_POINTS; break;
+                case "NP" : FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_NODE_POINTS; break;
+                case "F" : FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.FULL; break;
+            }
+
         }
         gameInfo.ZERO_SUM_APPROX = false;
         GameState rootState = null;
@@ -99,6 +114,8 @@ public class BayesianStackelbergRunner {
             case "AI-MILP" : runner.generate(rootState.getAllPlayers()[0], new ShallowestBrokenCplexBayesianStackelbergLP( gameInfo, expander));
                 break;
             case "MILP" : runner.generate(rootState.getAllPlayers()[0], new BayesianStackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+                break;
+            case "AI-CG" : runner.generate(rootState.getAllPlayers()[0], new LeaderGenerationBayesianStackelbergLP(FlipItGameInfo.DEFENDER, gameInfo, false, true));
                 break;
         }
 
@@ -178,11 +195,11 @@ public class BayesianStackelbergRunner {
 //            }
 //        }
 
-        for (Sequence sequence : realizationPlans.get(FlipItGameInfo.DEFENDER).keySet()) {
-            if (realizationPlans.get(FlipItGameInfo.DEFENDER).get(sequence) > 0) {
-                System.out.println(sequence + " : " + realizationPlans.get(FlipItGameInfo.DEFENDER).get(sequence));
-            }
-        }
+//        for (Sequence sequence : realizationPlans.get(FlipItGameInfo.DEFENDER).keySet()) {
+//            if (realizationPlans.get(FlipItGameInfo.DEFENDER).get(sequence) > 0) {
+//                System.out.println(sequence + " : " + realizationPlans.get(FlipItGameInfo.DEFENDER).get(sequence));
+//            }
+//        }
 
         try {
             Runtime.getRuntime().gc();

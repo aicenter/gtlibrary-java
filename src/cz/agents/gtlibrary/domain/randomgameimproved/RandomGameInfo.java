@@ -58,6 +58,20 @@ public class RandomGameInfo implements GameInfo {
         }
     }
 
+    public RandomGameInfo(int depth, int bf, int seed) {
+        this.MAX_BF = bf;
+        this.MAX_DEPTH = depth;
+        this.seed = seed;
+        rnd = new HighQualityRandom(seed);
+        if (UTILITY_CORRELATION) {
+            MAX_UTILITY = 2 * MAX_CENTER_MODIFICATION * MAX_DEPTH;
+        }
+        ACTIONS = new int[MAX_BF - 1];
+        for (int i = 0; i < MAX_BF - 1; i++) {
+            ACTIONS[i] = i;
+        }
+    }
+
     @Override
     public double getMaxUtility() {
         return MAX_UTILITY;

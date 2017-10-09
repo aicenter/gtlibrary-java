@@ -27,7 +27,7 @@ import java.util.*;
 public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormLP {
 
     public static boolean USE_BR_CUT = false;
-    private static final boolean CHECK_HASH_COLLISIONS = true;
+    private static final boolean CHECK_HASH_COLLISIONS = false;
 
     protected double eps;
     protected RecyclingMILPTable lpTable;
