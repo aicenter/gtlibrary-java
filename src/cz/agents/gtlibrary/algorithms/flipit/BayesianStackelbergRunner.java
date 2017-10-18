@@ -59,12 +59,12 @@ public class BayesianStackelbergRunner {
     static String outputFile;
     static String output;
 
-    static String alg = "AI-LP";
-//    static String alg = "AI-CG";
+//    static String alg = "AI-LP";
+    static String alg = "AI-CG";
 //    static String alg = "MILP";
 
     public static void main(String[] args) {
-        runFlipIt(new String[]{"3", "2", "flipit_simple2.txt", "0", "test_bsgsse.txt", "AI-CG", "AP"});
+        runFlipIt(new String[]{"4", "5", "flipit_simple3.txt", "0", "test_bsgsse.txt", alg , "AP"});
     }
 
     public static void runFlipIt(String[] args){

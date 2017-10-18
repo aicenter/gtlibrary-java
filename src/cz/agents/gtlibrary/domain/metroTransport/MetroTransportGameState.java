@@ -17,6 +17,10 @@ public class MetroTransportGameState extends GameStateImpl {
     int attackerReward;
     int attackerCaughtCount;
 
+    MetroTransportAction defenderAction;
+    MetroTransportAction attackerAction;
+    Player playerToMove;
+
 
     public MetroTransportGameState(Player[] players) {
         super(players);
@@ -28,11 +32,11 @@ public class MetroTransportGameState extends GameStateImpl {
     }
 
     protected void performDefenderAction(MetroTransportAction action){
-
+        defenderAction = action;
     }
 
     protected void performAttackerAction(MetroTransportAction action){
-
+        attackerAction = action;
     }
 
     @Override
@@ -47,7 +51,8 @@ public class MetroTransportGameState extends GameStateImpl {
 
     @Override
     public Player getPlayerToMove() {
-        return (timeStep > 0) ? MetroTransportGameInfo.ATTACKER : MetroTransportGameInfo.DEFENDER;
+        // check which player can move (i.e. not traveling between stations)
+        return playerToMove;
     }
 
     @Override
