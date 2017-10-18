@@ -26,6 +26,8 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
     protected long deviationIdentificationTime = 0;
     protected long restrictedGameGenerationTime = 0;
 
+    protected final boolean PRINT_STATS = true;
+
     public LeaderGeneration2pLessMemSefceLP(Player leader, GameInfo info) {
         super(leader, info);
     }
@@ -273,6 +275,16 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
         }
 //        System.out.println(deviations.toString());
         System.gc();
+
+
+        if  (PRINT_STATS){
+            System.out.println("BlackList size: " + blackList.size());
+            System.out.println("Deviations set size: " + deviations.size());
+            System.out.println("Duals map size: " + duals.size());
+            System.out.println("Costs map size:" + seqCosts.size());
+        }
+
+
         return  deviations;
 
 //        return new HashSet<>();
@@ -307,6 +319,9 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
                 }
             }
         System.gc();
+        if (PRINT_STATS){
+            System.out.println("Size of set of reachable Is for seq " + followerSequence.hashCode() + " : " + reachable.size());
+        }
         return reachable;
     }
 
@@ -393,6 +408,10 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
             }
         }
 
+        if (PRINT_STATS){
+            System.out.println("Size of blacklist in follower NF con: " + blackList.size());
+        }
+
         System.gc();
 //        for (SequenceInformationSet set : reachable){
 //            Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
@@ -457,6 +476,9 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
                     queue.add(currentState.performAction(action));
                 }
             }
+        }
+        if (PRINT_STATS){
+            System.out.println("Size of set of relevant seq for " + leaderSequence.hashCode() + " : " + relevant.size());
         }
         System.gc();
         return relevant;
@@ -769,6 +791,12 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
                 lpTable.setConstant(eqKey, 0.0);
                 lpTable.setConstraintType(eqKey, 1);
             }
+
+        if (PRINT_STATS){
+            System.out.println("Size of set of relevant seqs for " + leaderSequence.hashCode() + " in leader NF con: " + relevant.size());
+            System.out.println("Size of set of reachable IS for " + leaderSequence.hashCode() + " in leader NF con: " + reachable.size());
+        }
+
         System.gc();
     }
 

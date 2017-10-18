@@ -61,8 +61,8 @@ public class SefceRunner {
 //        runGenSumRandom();
 //        runGenSumRandomImproved();
 //        runBPG(depth);
-        runFlipIt(args);
-//        runFlipIt(new String[]{"F", "3", "3", "AP", "O"});
+//        runFlipIt(args);
+        runFlipIt(new String[]{"F", "3", "3", "AP", "LM"});
     }
 
     public static void runPoker(){
