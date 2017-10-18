@@ -1,7 +1,8 @@
-package cz.agents.gtlibrary.algorithms.flipit.iterative;
+package cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.RecyclingMILPTable;
@@ -30,7 +31,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
     private static final boolean CHECK_HASH_COLLISIONS = false;
 
     protected double eps;
-    protected RecyclingMILPTable lpTable;
+    protected LPTable lpTable;
     protected Player leader;
     protected Player follower;
     protected FlipItGameInfo info;
@@ -40,6 +41,8 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
     protected Expander<SequenceInformationSet> expander;
     protected FollowerBestResponse followerBestResponse;
 
+    protected boolean OUTPUT_STRATEGY = false;
+
 
     protected int lpInvocationCount;
     protected boolean solved = false;
@@ -48,7 +51,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 
     public SumForbiddingBayesianStackelbergLP(FlipItGameInfo info, Expander expander) {
         super(new Player[]{info.getAllPlayers()[0], info.getAllPlayers()[1]}, FlipItGameInfo.DEFENDER, FlipItGameInfo.ATTACKER);
-        lpTable = new RecyclingMILPTable();
+        lpTable = new LPTable();//RecyclingMILPTable();
         this.leader = FlipItGameInfo.DEFENDER;
         this.follower = FlipItGameInfo.ATTACKER;
         this.info = info;
@@ -57,6 +60,10 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
         this.eps = 1e-7;
         this.restrictingTypeIndex = 0;
 
+    }
+
+    public void setOUTPUT_STRATEGY(boolean output_strategy){
+        this.OUTPUT_STRATEGY = output_strategy;
     }
 
     private boolean checkHashCollisions(Collection<?> objects){
@@ -117,6 +124,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 //        addIndifferentLeaderRestrictions();
 
         addIndifferentLeaderRestrictionsDueToChance();
+//        addIndifferentLeaderRestrictionsThroughRelevant();
 
 //        forceOptimumFollowerStrategy();
 
@@ -213,6 +221,31 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
         return false;
     }
 
+    protected void addIndifferentLeaderRestrictionsThroughRelevant(){
+        for (Sequence seq : algConfig.getSequencesFor(leader)){
+            if (seq.isEmpty()) continue;
+            Object seqVarKey = seq;
+            lpTable.setLowerBound(seqVarKey, 0.0);
+            lpTable.setUpperBound(seqVarKey, 1.0);
+            for (FollowerType type : FlipItGameInfo.types){
+                Object eqKey = new Pair(type, seq);
+                lpTable.setConstraint(eqKey, seqVarKey, 1.0);
+                lpTable.setConstraintType(eqKey, 1);
+            }
+            for (SequenceInformationSet set : algConfig.getAllInformationSets().values())
+                if (seq.getPlayer().equals(leader) && set.getPlayersHistory().equals(seq)) {
+                    for (GameState gameState : set.getAllStates()) {
+                        for (Sequence followerSequence : getAllRelevantSequencesFor(gameState)) {
+                            for (FollowerType type : FlipItGameInfo.types) {
+                                Object eqKey = new Pair(type, seq);
+                                lpTable.setConstraint(eqKey, new Triplet<>(seq, followerSequence, type), -1.0);
+                            }
+                        }
+                    }
+                }
+        }
+    }
+
     protected void addIndifferentLeaderRestrictionsDueToChance(){
         for (SequenceInformationSet leaderSet : algConfig.getAllInformationSets().values()) {
             if (leaderSet.getPlayer().equals(FlipItGameInfo.DEFENDER)) {
@@ -268,6 +301,26 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
             isLastIS = false;
             followerSequence.removeLast();
         }
+//        relevantSequences.add(followerSequence);
+        return relevantSequences;
+    }
+
+    private HashSet<Sequence> getAllRelevantSequencesFor(GameState gameState) {
+        HashSet<Sequence> relevantSequences = new HashSet<Sequence>();
+//        relevantSequences.add(new ArrayListSequenceImpl(FlipItGameInfo.ATTACKER));
+        Sequence followerSequence = new ArrayListSequenceImpl(gameState.getSequenceFor(FlipItGameInfo.ATTACKER));
+        boolean isLastIS = true;
+        while(followerSequence.size() > 0){
+            SequenceInformationSet lastIS = (SequenceInformationSet) followerSequence.getLastInformationSet();
+            for (Sequence outgoing : lastIS.getOutgoingSequences()){
+//                if (isLastIS || !outgoing.isPrefixOf(gameState.getSequenceFor(FlipItGameInfo.ATTACKER))) {
+                    relevantSequences.add(outgoing);
+//                }
+            }
+            isLastIS = false;
+            followerSequence.removeLast();
+        }
+        relevantSequences.add(followerSequence);
         return relevantSequences;
     }
 
@@ -336,7 +389,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
                                         lpTable.setConstraint(eqKey5, new Triplet<>(otherLeaderSequence, followerSequence, type), 1.0);
 //                                        lpTable.setConstraint(eqKey5, new Pair<>("pp",otherLeaderSequence), 1.0);
                                     }
-                                    lpTable.markAsBinary(binaryVarKey);
+//                                    lpTable.markAsBinary(binaryVarKey);
 
 
                                 }
@@ -401,28 +454,50 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
 
 //                Map<FollowerType,Iterable<Sequence>> followerBrokenStrategyCauses = new HashMap<FollowerType,Iterable<Sequence>>();
                 Map<Pair<FollowerType,Sequence>,Double> causes = new HashMap<>();
-//                Map<FollowerType,Map<InformationSet, Map<Sequence, Double>>> leaderStrategies = new HashMap<>();
+                Map<FollowerType,Map<InformationSet, Map<Sequence, Double>>> leaderStrategies = new HashMap<>();
                 Map<FollowerType,Map<InformationSet, Map<Sequence, Double>>> followersStrategies = new HashMap<>();
 //                int causeDepth = Integer.MAX_VALUE;
                 for (FollowerType type : FlipItGameInfo.types) {
                     Map<InformationSet, Map<Sequence, Double>> followerBehavStrat = getFollowerBehavioralStrategy(lpData, type);
+
+                    if (OUTPUT_STRATEGY) {
+                        System.out.println(type);
+                        for (InformationSet set : followerBehavStrat.keySet())
+                            for (Sequence seq : followerBehavStrat.get(set).keySet())
+                                if (followerBehavStrat.get(set).get(seq) > eps)
+                                    System.out.println(seq + " : " + followerBehavStrat.get(set).get(seq));
+                    }
+
+
+
                     followersStrategies.put(type,followerBehavStrat);
                     Map<Sequence, Double> cause = getBrokenStrategyCausesWithTypes(followerBehavStrat, lpData, type);
-                    if (cause != null && !causes.isEmpty() && cause.keySet().iterator().next().size() < causes.keySet().iterator().next().getRight().size())
-                        causes.clear();
-                    if (cause != null && causes.isEmpty()){
+
+
+//                    if (cause != null && !causes.isEmpty() && cause.keySet().iterator().next().size() < causes.keySet().iterator().next().getRight().size())
+//                        causes.clear();
+//                    if (cause != null && causes.isEmpty()){
+//                        for (Sequence sequence : cause.keySet()) {
+//                            causes.put(new Pair(type, sequence), cause.get(sequence));
+//                        }
+//                    }
+
+                    if (cause != null){
                         for (Sequence sequence : cause.keySet()) {
                             causes.put(new Pair(type, sequence), cause.get(sequence));
                         }
                     }
 
 
-//                   leaderStrategies.put(type, getLeaderBehavioralStrategy(lpData, type));
+
+                    if (OUTPUT_STRATEGY) {
+                        leaderStrategies.put(type, getLeaderBehavioralStrategy(lpData, type));
 //                    System.out.println("/////// START ////////");
-//                    for (InformationSet set : leaderStrategies.get(type).keySet())
-//                        for (Sequence sequence : leaderStrategies.get(type).get(set).keySet())
-//                            System.out.println(sequence + " : " + leaderStrategies.get(type).get(set).get(sequence));
+                        for (InformationSet set : leaderStrategies.get(type).keySet())
+                            for (Sequence sequence : leaderStrategies.get(type).get(set).keySet())
+                                System.out.println(sequence + " : " + leaderStrategies.get(type).get(set).get(sequence));
 //                    System.out.println("//////// END ///////");
+                    }
 
 //                    followerBrokenStrategyCauses.put(type,brokenStrategyCauses);
 //                    if (brokenStrategyCauses != null) noBrokenStrategies = false;
@@ -529,6 +604,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
                 }
             } else {
                 System.err.println(lpData.getSolver().getStatus());
+                return dummyResult;
             }
         } catch (IloException e) {
             e.printStackTrace();
@@ -549,11 +625,11 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
         }
     }
 
-    private void checkLeaderStrategiesConsistent(Map<FollowerType, Map<InformationSet, Map<Sequence, Double>>> leaderStrategies){
-        for (InformationSet set : algConfig.getAllInformationSets().values()){
-            if (set.getPlayer().equals(FlipItGameInfo.DEFENDER)) continue;
-        }
-    }
+//    private void checkLeaderStrategiesConsistent(Map<FollowerType, Map<InformationSet, Map<Sequence, Double>>> leaderStrategies){
+//        for (InformationSet set : algConfig.getAllInformationSets().values()){
+//            if (set.getPlayer().equals(FlipItGameInfo.DEFENDER)) continue;
+//        }
+//    }
 
     private Strategy getP1Strategy(Map<Sequence, Double> leaderRealPlan, Map<Sequence, Double> followerRealPlan) {
         return new NoMissingSeqStrategy(leader.getId() == 0 ? leaderRealPlan : followerRealPlan);
@@ -709,7 +785,7 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
                         Pair<String, Triplet<Sequence, Sequence, FollowerType>> eqKey = new Pair<>("restr", p);
 
                         lpTable.removeFromConstraint(eqKey, p);
-                        lpTable.removeConstant(eqKey);
+                        lpTable.setConstant(eqKey, 0.0);
                     }
                 }
             }
@@ -1241,7 +1317,10 @@ public class SumForbiddingBayesianStackelbergLP extends StackelbergSequenceFormL
             Double[] seqCombValue = algConfig.getGenSumSequenceCombinationUtility(leaderSequence, followerSequence);
 
             if (seqCombValue != null) {
-                double followerValue = seqCombValue[type.getID() + 1] * algConfig.getNatureProbabilityFor(leaderSequence,followerSequence); // + leader
+                double natureProb = (algConfig.getNatureProbabilityFor(leaderSequence,followerSequence) != null) ?
+                    algConfig.getNatureProbabilityFor(leaderSequence,followerSequence) : 1.0;
+//                System.out.println(FlipItGameInfo.numTypes + " / " + type.getID() + " : " + seqCombValue[type.getID() + 1] + " " + Arrays.toString(seqCombValue));
+                double followerValue = seqCombValue[type.getID() + 1] * natureProb; // + leader
 
                 if (followerValue != 0)
                     lpTable.setConstraint(eqKey, createSeqPairVarKey(leaderSequence, followerSequence,type), -followerValue);

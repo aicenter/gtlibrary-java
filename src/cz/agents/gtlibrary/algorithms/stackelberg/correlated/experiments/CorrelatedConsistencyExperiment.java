@@ -1,21 +1,25 @@
-package cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.experiments;
+package cz.agents.gtlibrary.algorithms.stackelberg.correlated.experiments;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.GenSumSequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.LeaderGenerationConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.SefceRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.CompleteSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.iterative.LeaderGenerationSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.CompleteTwoPlayerSefceLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGeneration2pDualComparingSefceLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGeneration2pLessMemSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGenerationTwoPlayerSefceLP;
 import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
-import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Solver;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 import java.lang.management.ManagementFactory;
@@ -26,7 +30,7 @@ import java.util.Collections;
 /**
  * Created by Jakub Cerny on 30/08/2017.
  */
-public class ConsistencyExperiment {
+public class CorrelatedConsistencyExperiment {
 
     final static int LEADER = 0;
     final static int depth = 3;
@@ -35,13 +39,13 @@ public class ConsistencyExperiment {
     public static void main(String[] args) {
         if (args.length == 0){
 //            runGenSumRandom(new String[]{"R", "3", "3", "30"});
-//            runGenSumRandomImproved(new String[]{"I", "8", "4", "10"});
-//            runGenSumRandomOneSeed(new String[]{"I", "2", "2"}, 0);
+//            runGenSumRandomImproved(new String[]{"I", "8", "3", "20"});
+//            runGenSumRandomOneSeed(new String[]{"I", "7", "3"}, 6);
 //        runGenSumRandomImproved();
 //        runBPG(depth);
 //        runFlipIt(args);
-//        runFlipIt(new String[]{"F", "3", "4", "AP", "3"});
-         runFlipIt(new String[]{"F", "3", "2", "AP", "20"});
+//        runFlipIt(new String[]{"F", "3", "3", "F", "10"});
+         runFlipIt(new String[]{"F", "4", "3", "AP", "1"});
         }
         else {
             switch (args[0]) {
@@ -62,8 +66,8 @@ public class ConsistencyExperiment {
     public static void runGenSumRandomOneSeed(String[] args, int seed){
         int depth = Integer.parseInt(args[1]);
         int bf = Integer.parseInt(args[2]);
-        GameState rootState = new GeneralSumRandomGameState();
-        GameInfo gameInfo = new RandomGameInfo();
+        GameInfo gameInfo = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo();
+        GameState rootState = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState();
 
         ArrayList<Integer> notConvergedSeeds = new ArrayList<>();
         double restrictedGameRatio = 0.0;
@@ -79,49 +83,52 @@ public class ConsistencyExperiment {
             System.out.println("Running seed " + (seed));
 
 //            rootState = initGame(gameInfo, seed);
-            gameInfo = new RandomGameInfo(seed, depth, bf);
-            rootState = new GeneralSumRandomGameState();
+        gameInfo = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo(depth, bf, seed);
+        rootState = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState();
 
 
 
-            StackelbergConfig algConfig = new StackelbergConfig(rootState);
-            Expander<SequenceInformationSet> expander = new RandomGameExpander<>(algConfig);
-
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        Expander<SequenceInformationSet> expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<>(algConfig);
             double fullGameGV;
             double oracleGameGV;
 
             SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 
             LPTable table = null;
-        CompleteTwoPlayerSefceLP solver;
+        CompleteTwoPlayerSefceLP solverA = null;
+        CompleteTwoPlayerSefceLP solverB = null;
             long startGeneration = threadBean.getCurrentThreadCpuTime();
             if (pureStrategies)
                 runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
             else {
-                solver = new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
-                runner.generate(rootState.getAllPlayers()[LEADER], solver);
-                table = solver.getLpTable();
+                solverA = new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], solverA);
+                table = solverA.getLpTable();
             }
             fullGameGV = runner.getGameValue();
             fullTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
             fullTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
 
-            algConfig = new StackelbergConfig(rootState);
-            runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+        algConfig = new StackelbergConfig(rootState);
+        expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<>(algConfig);
             startGeneration = threadBean.getCurrentThreadCpuTime();
             if (pureStrategies) {
                 runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
                 oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
             }
             else {
-                solver = new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
-                runner.generate(rootState.getAllPlayers()[LEADER], solver);
+                algConfig = new LeaderGenerationConfig(rootState);
+                expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<>(algConfig);
+                solverB = new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                runner.generate(rootState.getAllPlayers()[LEADER], solverB);
                 oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
 //                System.out.println("------------ FIRST TEST ------------");
 //                solver.getLpTable().compareConstraints(table);
 //                System.out.println("------------ SECOND TEST ------------");
 //                table.compareConstraints(solver.getLpTable());
-                boolean sameConstraints = table.compareConstraintsSize(solver.getLpTable());
+                boolean sameConstraints = table.compareConstraintsSize(solverB.getLpTable());
 //                boolean sameConstraints = solver.getLpTable().compareConstraintsSize(table);
                 System.out.println("Same number of constrains = " + sameConstraints);
             }
@@ -133,7 +140,7 @@ public class ConsistencyExperiment {
                 notConvergedSeeds.add(seed);
 
 //            System.out.println("Average restricted game ratio = " + restrictedGameRatio/(seed+1));
-            System.out.println("Full game time = " + fullTime + "; oracle time = " + oracleTime);
+            System.out.println(solverA.getClass().getSimpleName() + " = " + fullTime + ";" + solverB.getClass().getSimpleName() + " = " + oracleTime);
             System.out.println("Number of not converged = " + notConvergedSeeds.size());
         System.out.println("Not converged seeds = " + notConvergedSeeds.toString());
     }
@@ -174,10 +181,18 @@ public class ConsistencyExperiment {
             SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 
             long startGeneration = threadBean.getCurrentThreadCpuTime();
-            if (pureStrategies)
-                runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-            else
-                runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+            Solver s1;
+            if (pureStrategies) {
+                s1 = new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s1);
+            }
+            else {
+                algConfig = new LeaderGenerationConfig(rootState);
+                expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<>(algConfig);
+                runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                s1 = new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s1);
+            }
             fullGameGV = runner.getGameValue();
             fullTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
             fullTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
@@ -186,10 +201,15 @@ public class ConsistencyExperiment {
             algConfig = new StackelbergConfig(rootState);
             runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
             startGeneration = threadBean.getCurrentThreadCpuTime();
-            if (pureStrategies)
-                runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-            else
-                runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+            Solver s2;
+            if (pureStrategies) {
+                s2 = new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s2);
+            }
+            else {
+                s2 = new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s2);
+            }
             oracleGameGV = runner.getGameValue();
             oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
             oracleTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
@@ -199,7 +219,7 @@ public class ConsistencyExperiment {
                 notConvergedSeeds.add(seed);
 
             System.out.println("Average restricted game ratio = " + restrictedGameRatio/(seed+1));
-            System.out.println("Full game time = " + fullTime + "; oracle time = " + oracleTime);
+            System.out.println(s1.getClass().getSimpleName() + " time = " + fullTime + "; "+ s2.getClass().getSimpleName() + " time = " + oracleTime);
             System.out.println("Number of not converged = " + notConvergedSeeds.size());
         }
         System.out.println("Not converged seeds = " + notConvergedSeeds.toString());
@@ -377,7 +397,7 @@ public class ConsistencyExperiment {
                 rootState = initGame(gameInfo, seed);
 
 
-                StackelbergConfig algConfig = new StackelbergConfig(rootState);
+                GenSumSequenceFormConfig algConfig = new StackelbergConfig(rootState);
                 FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
 
                 double fullGameGV;
@@ -386,10 +406,18 @@ public class ConsistencyExperiment {
                 SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 
                 long startGeneration = threadBean.getCurrentThreadCpuTime();
-            if (pureStrategies)
-                runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-            else
-                runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+            Solver s1;
+            if (pureStrategies) {
+                s1 = new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s1);
+            }
+            else {
+                algConfig = new LeaderGenerationConfig(rootState);
+                expander = new FlipItExpander<>(algConfig);
+                runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                s1 = new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s1);
+            }
                 fullGameGV = runner.getGameValue();
                 fullTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
                 fullTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
@@ -397,10 +425,15 @@ public class ConsistencyExperiment {
                 algConfig = new StackelbergConfig(rootState);
                 runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
                 startGeneration = threadBean.getCurrentThreadCpuTime();
-            if (pureStrategies)
-                runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-            else
-                runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+            Solver s2;
+            if (pureStrategies) {
+                s2 = new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s2);
+            }
+            else {
+                s2 = new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s2);
+            }
                 oracleGameGV = runner.getGameValue();
                 oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
                 oracleTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
@@ -410,7 +443,7 @@ public class ConsistencyExperiment {
                     notConvergedSeeds.add(seed);
 
             System.out.println("Average restricted game ratio = " + restrictedGameRatio/(seed+1));
-            System.out.println("Full game time = " + fullTime + "; oracle time = " + oracleTime);
+            System.out.println(s1.getClass().getSimpleName() + " time = " + fullTime + "; "+ s2.getClass().getSimpleName() + " time = " + oracleTime);
             System.out.println("Number of not converged = " + notConvergedSeeds.size());
         }
         ArrayList<Long> times = new ArrayList<>();

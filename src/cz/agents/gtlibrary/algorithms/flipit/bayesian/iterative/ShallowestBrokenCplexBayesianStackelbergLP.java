@@ -1,7 +1,8 @@
-package cz.agents.gtlibrary.algorithms.flipit.iterative;
+package cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.RecyclingMILPTable;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
 import cz.agents.gtlibrary.interfaces.*;
@@ -15,6 +16,7 @@ public class ShallowestBrokenCplexBayesianStackelbergLP extends SumForbiddingBay
     public ShallowestBrokenCplexBayesianStackelbergLP(FlipItGameInfo info, Expander expander) {
         super(info, expander);
         this.eps = 1e-5;
+        this.lpTable = new RecyclingMILPTable();
     }
 
     @Override
@@ -81,7 +83,7 @@ public class ShallowestBrokenCplexBayesianStackelbergLP extends SumForbiddingBay
 
                         lpTable.setConstraint(eqKey, p, 1);
                         lpTable.setConstraint(eqKey, binaryVarKey, -1);
-                        lpTable.markAsBinary(binaryVarKey);
+                        ((RecyclingMILPTable)lpTable).markAsBinary(binaryVarKey);
                         lpTable.watchPrimalVariable(binaryVarKey, binaryVarKey);
                         lpTable.setConstraintType(eqKey, 0);
                     }

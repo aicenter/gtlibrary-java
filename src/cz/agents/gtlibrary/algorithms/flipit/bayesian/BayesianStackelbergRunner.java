@@ -17,17 +17,17 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.flipit;
+package cz.agents.gtlibrary.algorithms.flipit.bayesian;
 
-import cz.agents.gtlibrary.algorithms.flipit.iterative.LeaderGenerationBayesianStackelbergLP;
+import cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative.LeaderGenerationBayesianStackelbergLP;
+import cz.agents.gtlibrary.algorithms.flipit.bayesian.milp.BayesianStackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
-import cz.agents.gtlibrary.algorithms.flipit.iterative.ShallowestBrokenCplexBayesianStackelbergLP;
-import cz.agents.gtlibrary.algorithms.flipit.iterative.SumForbiddingBayesianStackelbergLP;
+import cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative.ShallowestBrokenCplexBayesianStackelbergLP;
+import cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative.SumForbiddingBayesianStackelbergLP;
 import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -60,11 +60,11 @@ public class BayesianStackelbergRunner {
     static String output;
 
 //    static String alg = "AI-LP";
-    static String alg = "AI-CG";
-//    static String alg = "MILP";
+//    static String alg = "AI-CG";
+    static String alg = "MILP";
 
     public static void main(String[] args) {
-        runFlipIt(new String[]{"4", "5", "flipit_simple3.txt", "0", "test_bsgsse.txt", alg , "AP"});
+        runFlipIt(new String[]{"3", "5", "flipit_simple3.txt", "10", "test_bsgsse.txt", alg , "F"});
     }
 
     public static void runFlipIt(String[] args){

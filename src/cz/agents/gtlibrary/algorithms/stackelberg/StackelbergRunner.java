@@ -86,6 +86,7 @@ public class StackelbergRunner {
 //        runStackTest();
 //        runBPG("", depth);
         runFlipIt(args);
+//        runFlipIt(new String[]{});
     }
 
     public static void runFlipIt(String[] args) {
@@ -119,10 +120,10 @@ public class StackelbergRunner {
                     runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
                     break;
                 case "CGN":
-                    runner.generate(rootState.getAllPlayers()[LEADER], new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, false));
+                    runner.generate(rootState.getAllPlayers()[LEADER], new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, false, true));
                     break;
                 case "CGY":
-                    runner.generate(rootState.getAllPlayers()[LEADER], new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, true));
+                    runner.generate(rootState.getAllPlayers()[LEADER], new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, true, true));
                     break;
             }
         }

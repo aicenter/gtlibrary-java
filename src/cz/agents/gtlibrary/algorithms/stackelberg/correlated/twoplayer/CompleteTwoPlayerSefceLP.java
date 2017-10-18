@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.GenSumSequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
@@ -95,7 +96,7 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
             LPData lpData = lpTable.toCplex();
 
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
-//            lpData.getSolver().exportModel("Complete2pSEFCE.lp");
+            lpData.getSolver().exportModel("Complete2pSEFCE.lp");
             startTime = threadBean.getCurrentThreadCpuTime();
             lpData.getSolver().solve();
             overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
@@ -195,7 +196,7 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
             Sequence sequenceCopy = new ArrayListSequenceImpl(playerSequence);
 
             sequenceCopy.removeLast();
-            double previousValue = getValueFromCplex(lpData, playerSequence.getPlayer().equals(leader) ? new Pair<>(sequenceCopy, varKey.getRight()) : new Pair<>(varKey.getLeft(), sequenceCopy));
+            double previousValue = getValueFromCplex(lpData, playerSequence.getPlayer().equals(leader) ? new Pair(sequenceCopy, varKey.getRight()) : new Pair<>(varKey.getLeft(), sequenceCopy));
 
             if (previousValue == 0) {
                 Sequence opponentSequence = new ArrayListSequenceImpl((Sequence) (playerSequence.getPlayer().equals(leader) ? varKey.getRight() : varKey.getLeft()));
@@ -320,8 +321,11 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
                 if (seqCombUtilities != null) {
                     double utility = seqCombUtilities[follower.getId()];
 
-                    if (utility != 0)
+
+                    if (utility != 0) {
+                        System.out.println(leaderSequence + " : " + followerSequence);
                         lpTable.setConstraint(eqKey, createSeqPairVarKeyCheckExistence(leaderSequence, followerSequence), -utility);
+                    }
                 }
             }
             if (algConfig.getReachableSets(sequence) != null)

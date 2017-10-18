@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.flipit.iterative;
+package cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.ColumnGenerationLPTable;
@@ -6,7 +6,6 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGenerationTwoPlayerSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.oracle.LeaderOracle2pSumForbiddingLP;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
@@ -476,7 +475,7 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
 
     protected boolean isPrefixOfRelevant(Collection<Triplet> ps, Sequence followerSequence){
         for (Triplet key : ps)
-            if (followerSequence.isPrefixOf((Sequence)key.getSecond()))
+            if (followerSequence.isPrefixOf((Sequence)key.getThird()))
                 return true;
         return false;
     }
@@ -583,6 +582,8 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
                     Map<InformationSet, Map<Sequence, Double>> followerBehavStrat = getFollowerBehavioralStrategy(lpData, type);
                     followersStrategies.put(type,followerBehavStrat);
                     Map<Sequence, Double> cause = getBrokenStrategyCauses(followerBehavStrat, lpData);
+
+
                     if (cause != null && !causes.isEmpty() && cause.keySet().iterator().next().size() < causes.keySet().iterator().next().getRight().size())
                         causes.clear();
                     if (cause != null && causes.isEmpty()){
@@ -590,6 +591,13 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
                             causes.put(new Pair(type, sequence), cause.get(sequence));
                         }
                     }
+//                    if (cause != null){
+//                        for (Sequence sequence : cause.keySet()) {
+//                            causes.put(new Pair(type, sequence), cause.get(sequence));
+//                        }
+//                    }
+
+
                 }
 //                checkLeaderStrategiesConsistent(leaderStrategies);
                 Iterable<Pair<FollowerType,Sequence>> brokenStrategyCauses = sortWithTypes(causes,causes.keySet());
@@ -802,7 +810,7 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
                     double max = Collections.max(costs.values());
                     if (max > maxCost) maxCost = max;
 //                if ( max >  0.0 * -eps) {
-                    if (min < 0.0 * -eps) { // !algConfig.getCompatibleSequencesFor(leaderSequence).isEmpty() &&
+                    if (min < 0.0 * eps) { // !algConfig.getCompatibleSequencesFor(leaderSequence).isEmpty() &&
                         if (!MAX) {
                             breakTypeIteration = true;
                             for (Sequence prefix : leaderSequence.getAllPrefixes())
@@ -900,7 +908,7 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
         System.out.println(brokenStrategyCause + " of type " + type.getID() +  " fixed to zero");
         for (Object varKey : lpData.getWatchedPrimalVariables().keySet()) {
             if (varKey instanceof Triplet) {
-                if (((Triplet) varKey).getThird() instanceof Sequence && ((Triplet) varKey).getSecond() instanceof Sequence && ((Triplet) varKey).getThird() instanceof FollowerType && ((Triplet) varKey).getThird().equals(type)) {
+                if (((Triplet) varKey).getThird() instanceof Sequence && ((Triplet) varKey).getSecond() instanceof Sequence && ((Triplet) varKey).getFirst() instanceof FollowerType && ((Triplet) varKey).getFirst().equals(type)) {
                     Triplet<FollowerType, Sequence, Sequence> p = (Triplet<FollowerType, Sequence, Sequence>) varKey;
 
                     if (p.getThird().equals(brokenStrategyCause)) {
@@ -918,7 +926,7 @@ public class LeaderGenerationBayesianStackelbergLP extends LeaderGenerationTwoPl
         System.out.println(brokenStrategyCause + " of type " + type.getID() +   " released");
         for (Object varKey : lpData.getWatchedPrimalVariables().keySet()) {
             if (varKey instanceof Triplet) {
-                if (((Triplet) varKey).getThird() instanceof Sequence && ((Triplet) varKey).getSecond() instanceof Sequence && ((Triplet) varKey).getThird() instanceof FollowerType && ((Triplet) varKey).getThird().equals(type)) {
+                if (((Triplet) varKey).getThird() instanceof Sequence && ((Triplet) varKey).getSecond() instanceof Sequence && ((Triplet) varKey).getFirst() instanceof FollowerType && ((Triplet) varKey).getFirst().equals(type)) {
                     Triplet<FollowerType, Sequence, Sequence> p = (Triplet<FollowerType, Sequence, Sequence>) varKey;
 
                     if (p.getThird().equals(brokenStrategyCause)) {

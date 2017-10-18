@@ -52,7 +52,7 @@ public class GenSumSequenceFormConfig extends SequenceFormConfig<SequenceInforma
         utilityForSequenceCombination.put(activePlayerMap, existingUtility);
     }
 
-    private boolean isZeroForAllPlayers(Double[] utilities) {
+    protected boolean isZeroForAllPlayers(Double[] utilities) {
         for (Double utility : utilities) {
             if (utility != null && utility != 0)
                 return false;
