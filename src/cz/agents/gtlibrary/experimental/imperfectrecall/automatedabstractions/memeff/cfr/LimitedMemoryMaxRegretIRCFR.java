@@ -34,9 +34,9 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     public static void main(String[] args) {
 //        runGenericPoker();
 //        runIIGoofspiel();
-//        runRandomGame();
+        runRandomGame();
 //        runRandomGame("backup.ser");
-        runVisibilityPursuit();
+//        runVisibilityPursuit();
     }
 
     public static void runGenericPoker() {
@@ -144,7 +144,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
     public static double INIT_REGRET_WEIGHT = 0.99;
     public static int sizeLimitHeuristic = 900;
-    public static int sizeLimitBound = 0;
+    public static int sizeLimitBound = 100;
     private Random random;
     private Set<ISKey> toUpdate;
     private Map<ISKey, double[]> regretsForRegretCheck;
@@ -225,11 +225,11 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         System.out.println("Regret check size: " + regretsForRegretCheck.size());
     }
 
-    protected void updateWithReusedData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
+    protected void updateWithReusedData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates, Set<Integer> maxSizeKey) {
         compatibleISs.forEach((maxRegretActionIndices, isKeys) -> {
             Set<GameState> toRemove = isStates.stream().filter(isState -> isKeys.contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
 
-            if (!toRemove.isEmpty()) {
+            if (!maxRegretActionIndices.equals(maxSizeKey)) {
                 if (isKeys.size() == 1)
                     regretsForRegretCheck.remove(isKeys.stream().findAny().get());
                 if (toRemove.size() < isStates.size()) {
@@ -241,11 +241,11 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         });
     }
 
-    protected void updateWithClearData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates) {
+    protected void updateWithClearData(MemEffAbstractedInformationSet i, Map<Set<Integer>, Set<ISKey>> compatibleISs, Set<GameState> isStates, Set<Integer> maxSizeKey) {
         compatibleISs.forEach((maxRegretActionIndices, isKeys) -> {
             Set<GameState> toRemove = isStates.stream().filter(isState -> isKeys.contains(isState.getISKeyForPlayerToMove())).collect(Collectors.toSet());
 
-            if (!toRemove.isEmpty()) {
+            if (!maxRegretActionIndices.equals(maxSizeKey)) {
                 if (isKeys.size() == 1)
                     regretsForRegretCheck.remove(isKeys.stream().findAny().get());
                 if (toRemove.size() < isStates.size()) {

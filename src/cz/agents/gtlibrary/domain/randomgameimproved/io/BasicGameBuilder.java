@@ -12,6 +12,9 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.pursuit.VisibilityPursuitGameState;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
+import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.ArrayDeque;
@@ -19,15 +22,25 @@ import java.util.stream.Collectors;
 
 public class BasicGameBuilder {
     public static void main(String[] args) {
-        buildVisibilityPursuit();
+//        buildVisibilityPursuit();
 //        buildGP();
 //        buildGS();
+        buildRandomGame();
     }
 
     private static void buildVisibilityPursuit() {
         GameState root = new VisibilityPursuitGameState();
         Expander<MCTSInformationSet> expander = new PursuitExpander<>(new MCTSConfig());
         new PursuitGameInfo();
+
+        buildWithoutTerminalIS(root, expander.getAlgorithmConfig(), expander);
+        System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
+    }
+
+    private static void buildRandomGame() {
+        GameState root = new RandomGameState();
+        Expander<MCTSInformationSet> expander = new RandomGameExpander<>(new MCTSConfig());
+        new RandomGameInfo();
 
         buildWithoutTerminalIS(root, expander.getAlgorithmConfig(), expander);
         System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());

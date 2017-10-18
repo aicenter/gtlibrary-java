@@ -19,7 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
-import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
 import ilog.concert.*;
 import ilog.cplex.CpxLPMatrix;
 import ilog.cplex.IloCplex;
