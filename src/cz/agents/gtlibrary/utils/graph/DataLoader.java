@@ -22,10 +22,11 @@ package cz.agents.gtlibrary.utils.graph;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Serializable;
 
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 
-public class DataLoader {
+public class DataLoader implements Serializable {
 
 	private double[][] originalGraphIncMatrix;
 	private int nodesInOriginalGraph;

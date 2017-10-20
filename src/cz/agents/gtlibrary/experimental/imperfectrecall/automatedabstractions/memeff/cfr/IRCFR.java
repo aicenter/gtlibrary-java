@@ -144,13 +144,19 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
         removeSmallValues(p1Strategy);
 
 //        p0Strategy.forEach((k, v) -> System.out.print(k+ ": " + Arrays.toString(v)));
-        if (iteration > 1) {
-            p1Exploitability = p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy);
-            System.out.println("p0BR: " + p1Exploitability);
-            p0BR.clearData();
-            p0Exploitability = p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy);
-            System.out.println("p1BR: " + -p0Exploitability);
-            p1BR.clearData();
+        if (iteration > delay) {
+            try {
+                p1Exploitability = p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy);
+                System.out.println("p0BR: " + p1Exploitability);
+                p0BR.clearData();
+                p0Exploitability = p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy);
+                System.out.println("p1BR: " + -p0Exploitability);
+                p1BR.clearData();
+            } catch (Exception e) {
+                System.err.println("Exception " + e.getMessage());
+                p0BR.clearData();
+                p1BR.clearData();
+            }
         }
         System.out.println("ISs in perfect recall config: " + perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).count());
         System.gc();
@@ -163,7 +169,7 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     private void removeSmallValues(Map<ISKey, double[]> strategy) {
         strategy.values().forEach(array -> {
             IntStream.range(0, array.length).forEach(i -> {
-                if (array[i] < 1e-4)
+                if (array[i] < 1e-5)
                     array[i] = 0;
             });
             normalize(array);

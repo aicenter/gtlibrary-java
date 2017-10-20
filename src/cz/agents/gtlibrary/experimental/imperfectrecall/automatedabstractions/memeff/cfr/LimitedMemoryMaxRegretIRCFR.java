@@ -34,9 +34,9 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     public static void main(String[] args) {
 //        runGenericPoker();
 //        runIIGoofspiel();
-        runRandomGame();
+//        runRandomGame();
 //        runRandomGame("backup.ser");
-//        runVisibilityPursuit();
+        runVisibilityPursuit();
     }
 
     public static void runGenericPoker() {
@@ -143,8 +143,8 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
 
     public static double INIT_REGRET_WEIGHT = 0.99;
-    public static int sizeLimitHeuristic = 900;
-    public static int sizeLimitBound = 100;
+    public static int sizeLimitHeuristic = 4500;
+    public static int sizeLimitBound = 500;
     private Random random;
     private Set<ISKey> toUpdate;
     private Map<ISKey, double[]> regretsForRegretCheck;

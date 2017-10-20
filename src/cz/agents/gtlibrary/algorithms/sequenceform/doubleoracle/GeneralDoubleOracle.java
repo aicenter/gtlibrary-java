@@ -107,8 +107,9 @@ public class GeneralDoubleOracle {
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
-        runFlipIt(args);
+//        runFlipIt(args);
 //        runHoneyPot(args);
+        runVisibilityPursuit();
     }
 
     private static void runHoneyPot(String[] args) {

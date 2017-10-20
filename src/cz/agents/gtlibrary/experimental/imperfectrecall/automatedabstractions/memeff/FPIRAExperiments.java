@@ -166,6 +166,6 @@ public class FPIRAExperiments {
     }
 
     public static void setVP(String[] args) {
-        PursuitGameInfo.depth = Integer.parseInt(args[2]);
+//        PursuitGameInfo.depth = Integer.parseInt(args[2]);
     }
 }

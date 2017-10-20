@@ -22,10 +22,10 @@ import java.util.stream.Collectors;
 
 public class BasicGameBuilder {
     public static void main(String[] args) {
-//        buildVisibilityPursuit();
+        buildVisibilityPursuit();
 //        buildGP();
 //        buildGS();
-        buildRandomGame();
+//        buildRandomGame();
     }
 
     private static void buildVisibilityPursuit() {
@@ -95,7 +95,7 @@ public class BasicGameBuilder {
             algConfig.addInformationSetFor(currentState);
             queue.addAll(expander.getActions(currentState).stream().map(currentState::performAction).collect(Collectors.toList()));
 
-            if(algConfig.getAllInformationSets().size() % 100000 == 0)
+            if(algConfig.getAllInformationSets().size() % 1000 == 0)
                 System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
         }
     }
