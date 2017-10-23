@@ -86,6 +86,6 @@ public class Triplet<T, U, V> {
 
     @Override
     public String toString() {
-        return "[" + first + ", " + second + ", " + third + "]";
+        return "T:[" + first + ", " + second + ", " + third + "]";
     }
 }

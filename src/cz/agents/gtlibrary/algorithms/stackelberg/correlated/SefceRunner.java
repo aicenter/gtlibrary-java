@@ -22,14 +22,11 @@ package cz.agents.gtlibrary.algorithms.stackelberg.correlated;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.GenSumSequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
-import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.CompleteSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.iterative.LeaderGenerationSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.lpTable.ConstraintGeneratingLPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.CompleteTwoPlayerSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGeneration2pLessMemSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGenerationTwoPlayerSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.experiments.StackelbergExperiments;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
@@ -40,6 +37,9 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
+import cz.agents.gtlibrary.domain.testGame.TestGameExpander;
+import cz.agents.gtlibrary.domain.testGame.TestGameState;
+import cz.agents.gtlibrary.domain.testGame.TestGameInfo;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
@@ -61,8 +61,26 @@ public class SefceRunner {
 //        runGenSumRandom();
 //        runGenSumRandomImproved();
 //        runBPG(depth);
-//        runFlipIt(args);
-        runFlipIt(new String[]{"F", "3", "3", "AP", "LM"});
+        runFlipIt(args);
+//        runFlipIt(new String[]{"F", "4", "3", "AP", "LM"});
+//        runTestGame();
+    }
+
+    public static void runTestGame(){
+
+        GameInfo gameInfo = new TestGameInfo();
+        GameState rootState = new TestGameState();
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        Expander<SequenceInformationSet> expander = new TestGameExpander(algConfig);
+        SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+
+        runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+
+        new GambitEFG().write("testGame.gbt", rootState, expander);
     }
 
     public static void runPoker(){
@@ -73,8 +91,10 @@ public class SefceRunner {
     Expander<SequenceInformationSet> expander = new GenericPokerExpander<>(algConfig);
     SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 
-    runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
+//    runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 }
 
     protected static FlipItGameInfo initializeFlipIt(String[] args){
@@ -320,6 +340,7 @@ public class SefceRunner {
 
         while (queue.size() > 0) {
             GameState currentState = queue.removeFirst();
+//            System.out.println(currentState.toString());
 
             algConfig.addStateToSequenceForm(currentState);
             if (currentState.isGameEnd()) {

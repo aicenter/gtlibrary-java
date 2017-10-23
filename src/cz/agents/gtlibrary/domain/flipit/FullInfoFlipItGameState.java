@@ -32,6 +32,12 @@ public class FullInfoFlipItGameState extends NoInfoFlipItGameState {
     }
 
     @Override
+    public void transformInto(GameState state){
+        super.transformInto(state);
+        sequenceForBothPlayers = new ArrayList<>(((FullInfoFlipItGameState)state).sequenceForBothPlayers);
+    }
+
+    @Override
     public double[] evaluate(){
         double[] utilities = new double[2+FlipItGameInfo.numTypes];
         utilities[0] += defenderReward;

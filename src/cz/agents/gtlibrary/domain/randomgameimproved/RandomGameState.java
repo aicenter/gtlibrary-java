@@ -92,6 +92,31 @@ public class RandomGameState extends GameStateImpl {
         }
     }
 
+    @Override
+    public void transformInto(GameState state) {
+        super.transformInto(state);
+        RandomGameState gameState = (RandomGameState)state;
+        this.ID = gameState.ID;
+        this.playerToMove = gameState.playerToMove;
+
+        initializeObservationsMaps();
+        copyObservationLists(gameState.observations);
+
+        lastPlayerIndex = gameState.lastPlayerIndex; //Does not matter
+        currentPlayerSeries = gameState.currentPlayerSeries;
+
+        modificationGenerator = gameState.modificationGenerator.copy();
+        centers = Arrays.copyOf(gameState.centers, gameState.centers.length);
+        depth = gameState.depth;
+        actionsCount = gameState.getActionsCount();
+        if (gameState.isPlayerToMoveNature()) {
+            actionProbabilities = new ArrayList<>(gameState.actionProbabilities);
+            probabilitySum = gameState.probabilitySum;
+        }
+
+        this.informationSetKey = null;
+    }
+
     private void copyObservationLists(Map<Player, Map<Player, Observations>> originalObservations) {
         for (Map.Entry<Player, Map<Player, Observations>> observationsEntry : originalObservations.entrySet()) {
             for (Map.Entry<Player, Observations> playerObservationsEntry : observationsEntry.getValue().entrySet()) {

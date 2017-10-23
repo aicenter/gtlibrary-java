@@ -39,13 +39,13 @@ public class CorrelatedConsistencyExperiment {
     public static void main(String[] args) {
         if (args.length == 0){
 //            runGenSumRandom(new String[]{"R", "3", "3", "30"});
-//            runGenSumRandomImproved(new String[]{"I", "8", "3", "20"});
+//            runGenSumRandomImproved(new String[]{"I", "6", "6", "10"});
 //            runGenSumRandomOneSeed(new String[]{"I", "7", "3"}, 6);
 //        runGenSumRandomImproved();
 //        runBPG(depth);
 //        runFlipIt(args);
-//        runFlipIt(new String[]{"F", "3", "3", "F", "10"});
-         runFlipIt(new String[]{"F", "4", "3", "AP", "1"});
+//        runFlipIt(new String[]{"F", "3", "3", "AP", "10"});
+         runFlipIt(new String[]{"F", "4", "2", "AP", "10"});
         }
         else {
             switch (args[0]) {
