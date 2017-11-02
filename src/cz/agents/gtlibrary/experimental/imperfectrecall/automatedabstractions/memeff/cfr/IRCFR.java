@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class IRCFR extends AutomatedAbstractionAlgorithm {
+    public static boolean PRINT_EXPLOITABILITY = false;
     public static boolean DIRECT_REGRET_UPDATE = true;
     public static boolean REGRET_MATCHING_PLUS = true;
     public static int delay = 100;
@@ -135,27 +136,29 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
     @Override
     protected void printStatistics() {
         super.printStatistics();
-        Map<ISKey, double[]> p0Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[0]);
-        Map<ISKey, double[]> p1Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[1]);
+        if(PRINT_EXPLOITABILITY) {
+            Map<ISKey, double[]> p0Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[0]);
+            Map<ISKey, double[]> p1Strategy = getBehavioralStrategyFor(rootState.getAllPlayers()[1]);
 
-        assert validStrategy(p0Strategy);
-        assert validStrategy(p1Strategy);
-        removeSmallValues(p0Strategy);
-        removeSmallValues(p1Strategy);
+            assert validStrategy(p0Strategy);
+            assert validStrategy(p1Strategy);
+            removeSmallValues(p0Strategy);
+            removeSmallValues(p1Strategy);
 
 //        p0Strategy.forEach((k, v) -> System.out.print(k+ ": " + Arrays.toString(v)));
-        if (iteration > delay) {
-            try {
-                p1Exploitability = p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy);
-                System.out.println("p0BR: " + p1Exploitability);
-                p0BR.clearData();
-                p0Exploitability = p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy);
-                System.out.println("p1BR: " + -p0Exploitability);
-                p1BR.clearData();
-            } catch (Exception e) {
-                System.err.println("Exception " + e.getMessage());
-                p0BR.clearData();
-                p1BR.clearData();
+            if (iteration > delay) {
+                try {
+                    p1Exploitability = p0BR.calculateBRForAbstractedStrategy(rootState, p1Strategy);
+                    System.out.println("p0BR: " + p1Exploitability);
+                    p0BR.clearData();
+                    p0Exploitability = p1BR.calculateBRForAbstractedStrategy(rootState, p0Strategy);
+                    System.out.println("p1BR: " + -p0Exploitability);
+                    p1BR.clearData();
+                } catch (Exception e) {
+                    System.err.println("Exception " + e.getMessage());
+                    p0BR.clearData();
+                    p1BR.clearData();
+                }
             }
         }
         System.out.println("ISs in perfect recall config: " + perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).count());

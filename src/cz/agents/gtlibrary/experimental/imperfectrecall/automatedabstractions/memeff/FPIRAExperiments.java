@@ -102,6 +102,7 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.DIRECT_REGRET_UPDATE = Boolean.parseBoolean(args[12]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[13]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[14]);
+                IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[15]);
                 LimitedMemoryMaxRegretIRCFR.runGenericPoker();
             } else if (args[1].equals("GS")) {
                 MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[3]);
@@ -114,6 +115,7 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.DIRECT_REGRET_UPDATE = Boolean.parseBoolean(args[10]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[11]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[12]);
+                IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[13]);
                 LimitedMemoryMaxRegretIRCFR.runIIGoofspiel();
             } else if (args[1].equals("RG")) {
                 MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[5]);
@@ -126,6 +128,7 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.DIRECT_REGRET_UPDATE = Boolean.parseBoolean(args[12]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[13]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[14]);
+                IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[15]);
                 LimitedMemoryMaxRegretIRCFR.runRandomGame();
             } else if (args[1].equals("VP")) {
                 MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[3]);
@@ -138,6 +141,7 @@ public class FPIRAExperiments {
                 MaxRegretIRCFR.DIRECT_REGRET_UPDATE = Boolean.parseBoolean(args[10]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[11]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[12]);
+                IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[13]);
                 LimitedMemoryMaxRegretIRCFR.runVisibilityPursuit();
             }
         } else if (args[0].equals("CFR+")) {
@@ -145,12 +149,16 @@ public class FPIRAExperiments {
             MaxRegretIRCFR.DIRECT_REGRET_UPDATE = true;
             AutomatedAbstractionAlgorithm.USE_ABSTRACTION = false;
             if (args[1].equals("GP")) {
+                IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[5]);
                 MaxRegretIRCFR.runGenericPoker();
             } else if (args[1].equals("GS")) {
+                IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[3]);
                 MaxRegretIRCFR.runIIGoofspiel();
             } else if (args[1].equals("RG")) {
+                IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[5]);
                 MaxRegretIRCFR.runRandomGame();
             } else if (args[1].equals("VP")) {
+                IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[3]);
                 MaxRegretIRCFR.runVisibilityPursuit();
             }
         }

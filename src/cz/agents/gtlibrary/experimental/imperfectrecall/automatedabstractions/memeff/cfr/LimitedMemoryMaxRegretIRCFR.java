@@ -143,8 +143,8 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
 
     public static double INIT_REGRET_WEIGHT = 0.99;
-    public static int sizeLimitHeuristic = 4500;
-    public static int sizeLimitBound = 500;
+    public static int sizeLimitHeuristic = 900;
+    public static int sizeLimitBound = 100;
     private Random random;
     private Set<ISKey> toUpdate;
     private Map<ISKey, double[]> regretsForRegretCheck;
