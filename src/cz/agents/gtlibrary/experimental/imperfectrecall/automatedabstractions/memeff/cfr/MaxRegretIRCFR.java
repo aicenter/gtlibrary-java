@@ -13,6 +13,9 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
+import cz.agents.gtlibrary.domain.pursuit.VisibilityPursuitGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -129,6 +132,16 @@ public class MaxRegretIRCFR extends IRCFR {
         }
     }
 
+    public static void runVisibilityPursuit() {
+        GameState root = new VisibilityPursuitGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new PursuitExpander<>(config);
+        GameInfo info = new PursuitGameInfo();
+        MaxRegretIRCFR alg = new MaxRegretIRCFR(root, expander, info, config);
+
+        alg.runIterations(10000000);
+    }
+
     private static void runKuhnPoker() {
         GameState root = new KuhnPokerGameState();
         MCTSConfig config = new MCTSConfig();
@@ -165,7 +178,8 @@ public class MaxRegretIRCFR extends IRCFR {
             computeCurrentRegrets(rootState, 1, 1, player);
         if (REGRET_MATCHING_PLUS)
             removeNegativePRRegrets();
-        updateAbstraction();
+        if (USE_ABSTRACTION)
+            updateAbstraction();
         if (DELETE_REGRETS)
             prRegrets.clear();
         System.gc();

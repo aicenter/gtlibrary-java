@@ -32,11 +32,11 @@ import java.util.stream.Collectors;
 public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
     public static void main(String[] args) {
-//        runGenericPoker();
+        runGenericPoker();
 //        runIIGoofspiel();
 //        runRandomGame();
 //        runRandomGame("backup.ser");
-        runVisibilityPursuit();
+//        runVisibilityPursuit();
     }
 
     public static void runGenericPoker() {
@@ -172,7 +172,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         regretsForRegretCheck = new HashMap<>(sizeLimitBound);
         bellowLimitHeuristic = false;
         bellowLimitBound = false;
-        iterationsBeforeBoundResample = (int) Math.floor((Math.pow(2, Math.log(2*(data.iteration - delay + 1)) / Math.log(2))));
+        iterationsBeforeBoundResample = (int) Math.floor((Math.pow(2, Math.log(2 * (data.iteration - delay + 1)) / Math.log(2))));
         System.err.println("Initializing sequence length " + iterationsBeforeBoundResample);
         currentSampleIterations = 0;
     }
@@ -191,7 +191,8 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
             computeCurrentRegrets(rootState, 1, 1, player);
         if (REGRET_MATCHING_PLUS)
             removeNegativePRRegrets();
-        updateAbstraction();
+        if (USE_ABSTRACTION)
+            updateAbstraction();
         if (DELETE_REGRETS)
             prRegrets.clear();
         toUpdate.clear();
@@ -199,13 +200,13 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     }
 
     private void boundCheck() {
-        if(iteration < delay)
+        if (iteration < delay)
             return;
         currentSampleIterations++;
         iterationsBeforeBoundResample--;
         if (iterationsBeforeBoundResample == 0) {
             resampleInformationSetsForRegretCheck();
-            iterationsBeforeBoundResample = 2*currentSampleIterations;
+            iterationsBeforeBoundResample = 2 * currentSampleIterations;
             System.err.println("setting sequence length " + iterationsBeforeBoundResample);
             currentSampleIterations = 1;
         } else {
@@ -216,12 +217,12 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     @Override
     protected void printRegretStat() {
         System.out.println("Max immediate regret in checked sets: " + regretLog.entrySet().stream().filter(entry -> regretsForRegretCheck.containsKey(entry.getKey())).map(entry -> entry.getValue())
-                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble()/iteration).max().orElse(20));
+                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble() / iteration).max().orElse(20));
         System.out.println("Max immediate regret: " + regretLog.values().stream()
                 .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble() / iteration).max().orElse(20));
         System.out.println("Max immediate regret in abstracted sets: " + regretLog.entrySet().stream().filter(entry -> getAbstractedInformationSet(entry.getKey(), entry.getValue().length).getAbstractedKeys().size() > 1).map(entry -> entry.getValue())
-                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble()/iteration).max().orElse(20));
-        System.out.println("Regret bound without constant and actions: " + 1./Math.sqrt(iteration));
+                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble() / iteration).max().orElse(20));
+        System.out.println("Regret bound without constant and actions: " + 1. / Math.sqrt(iteration));
         System.out.println("Regret check size: " + regretsForRegretCheck.size());
     }
 
@@ -318,7 +319,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 //        }
 //        assert Math.abs(Arrays.stream(regrets).max().getAsDouble() - currentRegretBound * iteration) < 1e-8;
 
-          return initializeRegrets(informationSet.getData().getActionCount());
+        return initializeRegrets(informationSet.getData().getActionCount());
     }
 
     private double[] initializeRegrets(int actionCount) {

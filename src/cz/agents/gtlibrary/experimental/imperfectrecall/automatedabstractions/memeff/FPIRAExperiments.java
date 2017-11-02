@@ -3,7 +3,6 @@ package cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.m
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
-import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.IRCFR;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.LimitedMemoryMaxRegretIRCFR;
@@ -140,6 +139,19 @@ public class FPIRAExperiments {
                 LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[11]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[12]);
                 LimitedMemoryMaxRegretIRCFR.runVisibilityPursuit();
+            }
+        } else if (args[0].equals("CFR+")) {
+            IRCFR.REGRET_MATCHING_PLUS = true;
+            MaxRegretIRCFR.DIRECT_REGRET_UPDATE = true;
+            AutomatedAbstractionAlgorithm.USE_ABSTRACTION = false;
+            if (args[1].equals("GP")) {
+                MaxRegretIRCFR.runGenericPoker();
+            } else if (args[1].equals("GS")) {
+                MaxRegretIRCFR.runIIGoofspiel();
+            } else if (args[1].equals("RG")) {
+                MaxRegretIRCFR.runRandomGame();
+            } else if (args[1].equals("VP")) {
+                MaxRegretIRCFR.runVisibilityPursuit();
             }
         }
     }
