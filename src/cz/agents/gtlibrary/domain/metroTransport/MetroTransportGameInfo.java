@@ -31,7 +31,7 @@ public class MetroTransportGameInfo implements GameInfo {
 
     @Override
     public double getMaxUtility() {
-        return 0;
+        return Math.max(graph.getRewardSum(), NUMBER_OF_STEPS);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class MetroTransportGameInfo implements GameInfo {
 
     @Override
     public int getMaxDepth() {
-        return NUMBER_OF_STEPS + 1;
+        return 2 * NUMBER_OF_STEPS;
     }
 
     @Override

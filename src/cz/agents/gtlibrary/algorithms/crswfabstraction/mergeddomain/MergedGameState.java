@@ -21,6 +21,12 @@ public class MergedGameState implements GameState {
     }
 
     @Override
+    public void transformInto(GameState gameState) {
+        this.state = ((MergedGameState)gameState).state;
+        this.info = ((MergedGameState)gameState).info;
+    }
+
+    @Override
     public Player getPlayerToMove() {
         return state.getPlayerToMove();
     }

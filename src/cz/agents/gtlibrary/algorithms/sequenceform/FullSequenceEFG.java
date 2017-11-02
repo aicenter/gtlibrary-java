@@ -91,7 +91,7 @@ public class FullSequenceEFG {
     private long finishTime;
 
 	private PrintStream debugOutput = System.out;
-	final private static boolean DEBUG = false;
+	final private static boolean DEBUG = true;
 	private ThreadMXBean threadBean;
 
 	private double gameValue = Double.NaN;
@@ -113,8 +113,8 @@ public class FullSequenceEFG {
 //		runUpOrDown();
 //        runOshiZumo();
 //        testExploitGame();
-		runFlipIt();
-//		runHoneyPot();
+//		runFlipIt();
+		runHoneyPot();
 	}
 
 	private static void runHoneyPot(){
@@ -129,8 +129,8 @@ public class FullSequenceEFG {
 	}
 
 	private static void runFlipIt(){
-		boolean PRINT_STRATEGY = true;
-		boolean shiftedRootstate = true;
+		boolean PRINT_STRATEGY = false;
+		boolean shiftedRootstate = false;
 		String[] defenderActions = new String[]{"ID1","ID4", "ID1", "ID4"};
 		String[] attackerActions = new String[]{"ID1", "ID1", "ID4", "ID1"};
 		FlipItGameInfo gameInfo = new FlipItGameInfo();
@@ -204,7 +204,7 @@ public class FullSequenceEFG {
 		System.out.println("GI maxUtility : "+gameInfo.getMaxUtility() + "; GT maxUtility : " + maxUtility);
 
 		GambitEFG gambit = new GambitEFG();
-		gambit.buildAndWrite("flipit.gbt", rootState, new FlipItExpander<>(algConfig));
+//		gambit.buildAndWrite("flipit.gbt", rootState, new FlipItExpander<>(algConfig));
 
 		int larger = 0;
 		for (InformationSet set : algConfig.getAllInformationSets().values()) {

@@ -13,6 +13,7 @@ import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.br.FollowerBestRes
 import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
@@ -36,6 +37,7 @@ public class LeaderGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP {
     protected HashSet<Sequence> leaderRG;
 
     protected final boolean DEBUG = false;
+    protected final boolean DEBUG_COSTS = false;
     protected final boolean USE_ORIG_PCONT = false;
 
     protected final boolean DO = false;
@@ -43,7 +45,7 @@ public class LeaderGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP {
     protected boolean MAX = false; // Max / All
 
     protected final int seed = 0;
-    protected final boolean HEURISTIC = true;
+    protected final boolean HEURISTIC = false;
 
     protected final boolean CONVERT_TO_CANONIC = false;
     protected final boolean CHECK_EXISTENCE = false;
@@ -51,6 +53,8 @@ public class LeaderGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP {
 
 
     protected int initialSize;
+
+    protected HashMap<Object, Double> lastDuals;
 
     public LeaderGenerationTwoPlayerSefceLP(Player leader, GameInfo info) {
         super(leader, info);
@@ -157,8 +161,13 @@ public class LeaderGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP {
                 }
 
             }
+
+
         initialSize = initialSequences.size();
         System.out.println("Initial RG size = " + initialSequences.size() + "/" + algConfig.getSequencesFor(leader).size());
+        System.out.println("Initial sequences : ");
+//        for (Sequence seq : initialSequences)
+//            System.out.println(seq);
         return initialSequences;
     }
 
@@ -436,8 +445,15 @@ public class LeaderGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP {
         double minCost = Double.POSITIVE_INFINITY;
         double maxCost = Double.NEGATIVE_INFINITY;
         try {
-            for (Object con : lpData.getWatchedDualVariables().keySet())
+            if (DEBUG_COSTS) {
+                System.out.println();
+                System.out.println("Duals: ");
+            }
+            for (Object con : lpData.getWatchedDualVariables().keySet()) {
                 duals.put(con, lpData.getSolver().getDual(lpData.getWatchedDualVariables().get(con)));
+                if (DEBUG_COSTS && Math.abs(duals.get(con)) > 0.001) System.out.println(con + " : " + duals.get(con));
+            }
+            if (DEBUG_COSTS) System.out.println();
         }
         catch (Exception e){e.printStackTrace();}
         for (Sequence leaderSequence : algConfig.getSequencesFor(leader)){
@@ -602,6 +618,13 @@ public class LeaderGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP {
                 if (costs.isEmpty()) continue;
                 double min = Collections.min(costs.values());
                 double max = Collections.max(costs.values());
+                if (DEBUG_COSTS && (Math.abs(min) > 0 || Math.abs(max) > 0)) {
+                    System.out.println();
+                    System.out.println("Leader sequence: " + leaderSequence);
+                    System.out.println("Corresponding follower sequences and RCs: ");
+                    for (Sequence seq : costs.keySet())
+                        if (Math.abs(costs.get(seq)) > 0) System.out.println(seq + " : " + costs.get(seq));
+                }
                 if (max > maxCost) maxCost = max;
 //                if ( max >  0.0 * -eps) {
                 if ( min <  0.0 * -eps) { // !algConfig.getCompatibleSequencesFor(leaderSequence).isEmpty() &&
@@ -634,6 +657,7 @@ public class LeaderGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP {
                 if (!leaderRG.contains(prefix)) deviations.add(prefix);
         }
 
+        System.out.println("Deviations: " + deviations.toString());
         return  deviations;
 
 //        return new HashSet<>();
@@ -646,10 +670,11 @@ public class LeaderGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP {
 //        followerBestResponse = new FollowerBestResponse(this.algConfig.getRootState(), expander, this.algConfig, leader, follower);
         long startTime = threadBean.getCurrentThreadCpuTime();
 
-        generateRelevantSequences();
-
         // construct initial LP
         generateFollowerConstraints();
+
+        // find relevant sequences
+        generateRelevantSequences();
 
 //        System.out.println("////////////////////////////////////");
 //        System.out.println("          RELEVANT SEQUENCES");
@@ -679,6 +704,7 @@ public class LeaderGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP {
                 iteration++;
                 System.out.println("-----------------------");
                 System.out.println("Iteration "+iteration);
+                System.out.println("RG: " + leaderRG.toString());
                 System.out.printf("Watching...");
                 lpTable.watchAllDualVariables();
                 System.out.println("done.");

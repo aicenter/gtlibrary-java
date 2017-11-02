@@ -80,7 +80,7 @@ public class Pair<L,R> implements Serializable {
 	
 	@Override
 	public String toString() {
-		return "<"+left.toString()+","+right.toString()+">";
+		return "P:<"+left.toString()+","+right.toString()+">";
 	}
 	
 }

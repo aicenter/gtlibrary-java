@@ -20,7 +20,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
 import ilog.concert.*;
-import ilog.cplex.CpxLPMatrix;
 import ilog.cplex.IloCplex;
 
 import java.util.*;
@@ -30,7 +29,7 @@ public class LPTable {
 
     public enum ConstraintType {LE, EQ, GE}
 
-    public static boolean USE_CUSTOM_NAMES = false;
+    public static boolean USE_CUSTOM_NAMES = true;
     public static int CPLEXALG = IloCplex.Algorithm.Auto;
     public static int CPLEXTHREADS = 1; // change to 0 to have no restrictions
 
@@ -245,6 +244,11 @@ public class LPTable {
         String[] variableNames = new String[columnCount()];
 
         for (Object variable : variableIndices.keySet()) {
+//            if (variable instanceof Pair) {
+////                if (((Pair)variable).getLeft() == null) variable = new Pair("null", ((Pair)variable).getRight());
+//                System.out.println(((Pair)variable).getLeft());
+//                System.out.println(((Pair)variable).getRight());
+//            }
             variableNames[getVariableIndex(variable)] = variable.toString();
         }
         return variableNames;
@@ -309,6 +313,7 @@ public class LPTable {
             }
             idxs[j] = idx;
             vals[j] = val;
+            if (!constraintTypes.containsKey(con)) System.out.println(con);
             switch (constraintTypes.get(con)){
 //                case 0 : matrix.addRow(Double.NEGATIVE_INFINITY, getConstant(con), idx, val); break;
 //                case 1 : matrix.addRow(getConstant(con), getConstant(con), idx, val); break;
@@ -497,6 +502,7 @@ public class LPTable {
 
             // approximate comparison : eqkey2 might have more variables than eqkey !
             for (Object eqkey : constraints.keySet()) {
+                if (!table.constraints.containsKey(eqkey)) System.out.println(eqkey);
                 boolean hasEquivalent = false;
                 for (Object eqkey2 : table.constraints.keySet()) {
                     boolean same = true;

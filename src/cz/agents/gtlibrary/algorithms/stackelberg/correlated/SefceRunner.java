@@ -20,14 +20,13 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.stackelberg.correlated;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.GenSumSequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
-import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.CompleteSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.iterative.LeaderGenerationSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.lpTable.ConstraintGeneratingLPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.CompleteTwoPlayerSefceLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGeneration2pLessMemSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGenerationTwoPlayerSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.experiments.StackelbergExperiments;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
@@ -58,9 +57,28 @@ public class SefceRunner {
 //        runPoker();
 //        runGenSumRandom();
 //        runGenSumRandomImproved();
-        runBPG(depth);
-//        runFlipIt(args);
+//        runBPG(depth);
+        runFlipIt(args);
+//        runFlipIt(new String[]{"F", "4", "3", "AP", "LM"});
+//        runTestGame();
     }
+
+//    public static void runTestGame(){
+//
+//        GameInfo gameInfo = new TestGameInfo();
+//        GameState rootState = new TestGameState();
+//        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+//        Expander<SequenceInformationSet> expander = new TestGameExpander(algConfig);
+//        SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+//
+//        runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
+////        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+////        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+////        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+////        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//
+//        new GambitEFG().write("testGame.gbt", rootState, expander);
+//    }
 
     public static void runPoker(){
 
@@ -70,21 +88,36 @@ public class SefceRunner {
     Expander<SequenceInformationSet> expander = new GenericPokerExpander<>(algConfig);
     SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 
-    runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
+//    runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 }
+
+    protected static FlipItGameInfo initializeFlipIt(String[] args){
+        int depth = Integer.parseInt(args[1]);
+        int graphSize = Integer.parseInt(args[2]);
+        String graphFile = "flipit_empty" + graphSize + ".txt";
+//            String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
+        FlipItGameInfo gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
+        switch (args[3]){
+            case "N" : gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.NO; break;
+            case "NP" : gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_NODE_POINTS; break;
+            case "AP" : gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_ALL_POINTS; break;
+            case "F" : gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.FULL; break;
+        }
+        return gameInfo;
+
+    }
+
     public static void runFlipIt(String[] args){
         FlipItGameInfo gameInfo;
-        if (args.length == 0)
-            gameInfo = new FlipItGameInfo();
-        else{
-            int depth = Integer.parseInt(args[0]);
-            int numTypes = Integer.parseInt(args[1]);
-            String graphFile = args[2];
-            long seed  = Integer.parseInt(args[3]);
-            gameInfo = new FlipItGameInfo(depth,numTypes,graphFile, seed);
-//            gameInfo.setInfo(depth,numTypes,graphFile);
+        String alg = "";
+        if (args.length > 0) {
+            gameInfo = initializeFlipIt(args);
+            alg = args[4];
         }
+        else gameInfo = new FlipItGameInfo();
         gameInfo.ZERO_SUM_APPROX = false;
         GameState rootState = null;
 
@@ -95,17 +128,45 @@ public class SefceRunner {
             case REVEALED_NODE_POINTS:  rootState = new NodePointsFlipItGameState(); break;
 
         }
-        StackelbergConfig algConfig = new StackelbergConfig(rootState);
-        FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
+        if (!alg.isEmpty()){
+            StackelbergConfig algConfig;
+            FlipItExpander<SequenceInformationSet> expander;
+            SefceRunner runner;
+            switch(alg){
+                case "C" :
+                    algConfig = new StackelbergConfig(rootState);
+                    expander = new FlipItExpander<>(algConfig);
+                    runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                    runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+                    break;
+                case "O" :
+                    algConfig = new StackelbergConfig(rootState);
+                    expander = new FlipItExpander<>(algConfig);
+                    runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                    runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+                    break;
+                case "LM" :
+                    algConfig = new LeaderGenerationConfig(rootState);
+                    expander = new FlipItExpander<>(algConfig);
+                    runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                    Solver s1 = new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                    runner.generate(rootState.getAllPlayers()[LEADER], s1);
+            }
+        }
+        else {
+            StackelbergConfig algConfig = new StackelbergConfig(rootState);
+            FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
 
-        SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+            SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+            runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        }
 
-
+//        new GambitEFG().write("flipit_simple22.gbt", rootState, expander);
     }
 
     public static void runBPG(int depth) {
@@ -128,8 +189,8 @@ public class SefceRunner {
 //        runner.generate(rootState.getAllPlayers()[0], new MultiplayerSefceLP(rootState.getAllPlayers()[0], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[0], new CompleteDualGeneratingSEFCE(rootState.getAllPlayers()[0], gameInfo));
 //        new GambitEFG().write("randomGame.gbt", rootState, expander);
 //        new DotEFG().writeII("", rootState,expander);
@@ -155,7 +216,7 @@ public class SefceRunner {
     private GameState rootState;
     private Expander<SequenceInformationSet> expander;
     private GameInfo gameConfig;
-    private StackelbergConfig algConfig;
+    private GenSumSequenceFormConfig algConfig;
 
     private PrintStream debugOutput = System.out;
     //final private static boolean DEBUG = false;
@@ -164,7 +225,7 @@ public class SefceRunner {
     private double gameValue = Double.NaN;
     private long finalTime;
 
-    public SefceRunner(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo gameInfo, StackelbergConfig algConfig) {
+    public SefceRunner(GameState rootState, Expander<SequenceInformationSet> expander, GameInfo gameInfo, GenSumSequenceFormConfig algConfig) {
         this.rootState = rootState;
         this.expander = expander;
         this.gameConfig = gameInfo;
@@ -183,18 +244,22 @@ public class SefceRunner {
         //Map<Player, Map<Sequence, Double>> realizationPlans = new HashMap<>();
         long startGeneration = threadBean.getCurrentThreadCpuTime();
 
-        generateCompleteGame();
-        System.out.println("Game tree built...");
-        System.out.println("Information set count: " + algConfig.getAllInformationSets().size());
-        overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
 
-        //Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
-        //System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
-        System.out.println("final size [sequences] : ");
-        for (Player p : rootState.getAllPlayers()){
-            if (p.getName() == "Nature") continue;
-            System.out.printf("\t%d.player sequences: %d \n",p.getId()+1,algConfig.getSequencesFor(p).size());
+        if (!(solver instanceof LeaderGeneration2pLessMemSefceLP)) {
+            generateCompleteGame();
+            System.out.println("Game tree built...");
+            System.out.println("Information set count: " + algConfig.getAllInformationSets().size());
+            overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
+
+            //Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
+            //System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
+            System.out.println("final size [sequences] : ");
+            for (Player p : rootState.getAllPlayers()) {
+                if (p.getName() == "Nature") continue;
+                System.out.printf("\t%d.player sequences: %d \n", p.getId() + 1, algConfig.getSequencesFor(p).size());
+            }
         }
+//        else algConfig.addStateToSequenceForm(rootState);
 
         long startCPLEX = threadBean.getCurrentThreadCpuTime();
 
@@ -232,6 +297,10 @@ public class SefceRunner {
 //        System.out.println("final RGB time: " + 0);
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
         System.out.println("final IS count: " + algConfig.getAllInformationSets().size());
+        if (solver instanceof LeaderGeneration2pLessMemSefceLP){
+            System.out.println("final deviation finding time: " + ((LeaderGeneration2pLessMemSefceLP)solver).getDeviationIdentificationTime()/ 1000000l);
+            System.out.println("final RG generation time: " + ((LeaderGeneration2pLessMemSefceLP)solver).getRestrictedGameGenerationTime()/ 1000000l);
+        }
 
         if (solver instanceof LeaderGenerationSefceLP)
             restrictedGameRatio = ((LeaderGenerationSefceLP)solver).getRestrictedGameRatio();
@@ -268,6 +337,7 @@ public class SefceRunner {
 
         while (queue.size() > 0) {
             GameState currentState = queue.removeFirst();
+//            System.out.println(currentState.toString());
 
             algConfig.addStateToSequenceForm(currentState);
             if (currentState.isGameEnd()) {
@@ -286,6 +356,7 @@ public class SefceRunner {
             }
         }
     }
+
 
     public double getGameValue() {
         return gameValue;

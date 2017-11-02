@@ -22,11 +22,14 @@ package cz.agents.gtlibrary.interfaces;
 import java.io.Serializable;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.utils.Pair;
 
 public interface GameState extends Serializable {
 	public Player[] getAllPlayers();
+
+	public void transformInto(GameState gameState);
 
 	public Player getPlayerToMove();
 

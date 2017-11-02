@@ -75,6 +75,7 @@ public class FlipItGameInfo implements GameInfo {
     public static FollowerType[] types;
     private static double[] typesPrior = new double[] {1.0, 0.7, 0.5};
     private static double[] typesDiscounts = new double[] {1.0, 0.8, 0.6};
+    private static final double MIN_DISCOUNT = 0.8;
 
 
     // Forced optima for debugging
@@ -108,13 +109,14 @@ public class FlipItGameInfo implements GameInfo {
         typesPrior = new double[numTypes];
         typesDiscounts = new double[numTypes];
         double priors = 0.0;
+        int rounding = 2;
         for (int i = 0; i < numTypes-1; i++){
-            typesDiscounts[i] = rnd.nextDouble();
-            typesPrior[i] = rnd.nextDouble()*(1.0-priors);
+            typesDiscounts[i] = MIN_DISCOUNT + Math.round(((int) Math.pow(10, rounding)) * (1.0 - MIN_DISCOUNT) * rnd.nextDouble()) / Math.pow(10, rounding);
+            typesPrior[i] = Math.round(((int) Math.pow(10, rounding)) * 0.2 * rnd.nextDouble() * (1.0-priors)) / Math.pow(10, rounding);
             priors += typesPrior[i];
         }
-        typesDiscounts[numTypes-1] = rnd.nextDouble();
-        typesPrior[numTypes-1] = (1.0-priors);
+        typesDiscounts[numTypes-1] = MIN_DISCOUNT + Math.round(((int) Math.pow(10, rounding)) * (1.0 - MIN_DISCOUNT) *rnd.nextDouble()) / Math.pow(10, rounding);
+        typesPrior[numTypes-1] = Math.round(((int) Math.pow(10, rounding)) * (1.0-priors)) / Math.pow(10, rounding);
 
         if (numTypes == 1 && FULLY_RATIONAL_ATTACKER) typesDiscounts[0] = 1.0;
 

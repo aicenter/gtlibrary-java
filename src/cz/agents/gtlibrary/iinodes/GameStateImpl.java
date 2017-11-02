@@ -46,6 +46,15 @@ public abstract class GameStateImpl implements GameState {
     }
 
     @Override
+    public void transformInto(GameState gameState) {
+        this.history = gameState.getHistory().copy();
+        this.natureProbability = gameState.getNatureProbability();
+        this.exactNatureProbability = (gameState instanceof GameStateImpl) ?
+            new Rational(1,1) : ((GameStateImpl)gameState).exactNatureProbability;
+        this.players = gameState.getAllPlayers();
+    }
+
+    @Override
     public abstract Player getPlayerToMove();
 
     @Override

@@ -295,6 +295,164 @@ public class OracleVsCompleteBBConsistencyExperiment {
 
     }
 
+    public static void runFlipItLessMemory(String[] args) {
+        boolean runComplete = true;
+        FlipItGameInfo gameInfo;
+        int maxseed = 10;
+        if (args.length == 0)
+            gameInfo = new FlipItGameInfo();
+        else {
+            int depth = Integer.parseInt(args[1]);
+            int graphSize = Integer.parseInt(args[2]);
+            String graphFile = "flipit_empty" + graphSize + ".txt";
+//            String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
+            gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
+            FlipItGameInfo.OUTPUT_STRATEGY = false;
+            if (args.length > 3) {
+                String version = args[3];
+                switch (version) {
+                    case "F":
+                        FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.FULL;
+                        break;
+                    case "N":
+                        FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.NO;
+                        break;
+                    case "NP":
+                        FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_NODE_POINTS;
+                        break;
+                    case "AP":
+                        FlipItGameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_ALL_POINTS;
+                        break;//
+                }
+//                maxseed = Integer.parseInt(args[4]);
+
+            }
+        }
+        gameInfo.ZERO_SUM_APPROX = false;
+        GameState rootState = null;
+
+        ArrayList<Integer> notConvergedSeeds = new ArrayList<>();
+        double restrictedGameRatio = 0.0;
+
+        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+
+        long fullTime = 0;
+        long oracleTime = 0;
+        long matrixOracleTime = 0;
+
+        long lpGenerationTime = 0;
+        long lpSolvingTime = 0;
+        long brokenStrategyFindingTime = 0;
+        long deviationsFindingTime = 0;
+
+
+        ArrayList<Long> fullTimes = new ArrayList<>();
+        ArrayList<Long> oracleTimes = new ArrayList<>();
+        ArrayList<Long> matrixOracleTimes = new ArrayList<>();
+
+//        for (int seed = 0; seed < maxseed; seed++) {
+        System.out.println();
+//            System.out.println("Running seed " + (seed) + " of " + (maxseed-1));
+
+        switch (FlipItGameInfo.gameVersion) {
+            case NO:
+                rootState = new NoInfoFlipItGameState();
+                break;
+            case FULL:
+                rootState = new FullInfoFlipItGameState();
+                break;
+            case REVEALED_ALL_POINTS:
+                rootState = new AllPointsFlipItGameState();
+                break;
+            case REVEALED_NODE_POINTS:
+                rootState = new NodePointsFlipItGameState();
+                break;
+
+        }
+//            gameInfo = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo(depth, bf, seed);
+//            rootState = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState();
+
+
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        FlipItExpander<SequenceInformationSet> expander = new FlipItExpander<>(algConfig);
+
+        double fullGameGV = 0.0;
+        double oracleGameGV = 0.0;
+        double matrixOracleGameGV = 0.0;
+
+        StackelbergRunner runner;// = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+
+        long startGeneration = threadBean.getCurrentThreadCpuTime();
+        SumForbiddingStackelbergLP bnb = null;
+        if (runComplete) {
+            runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+            bnb = new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo);
+            runner.generate(rootState.getAllPlayers()[LEADER], bnb);
+//            runner.ge
+            fullGameGV = runner.getGameValue();
+        }
+        fullTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
+        fullTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
+
+        System.out.println("Full time: " + fullTime);
+
+        algConfig = new StackelbergConfig(rootState);
+        expander = new FlipItExpander<>(algConfig);
+        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        startGeneration = threadBean.getCurrentThreadCpuTime();
+        LeaderOracle2pSumForbiddingLP matrixOracle = new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, false, true);
+        runner.generate(rootState.getAllPlayers()[LEADER], matrixOracle);
+//        restrictedGameRatio += oracle.getRestrictedGameRatio();
+        matrixOracleGameGV = runner.getGameValue();
+        matrixOracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
+        matrixOracleTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
+
+        System.out.println("Full time: " + fullTime + "; sequential oracle time: " + matrixOracleTime);
+
+
+        algConfig = new StackelbergConfig(rootState);
+        expander = new FlipItExpander<>(algConfig);
+        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        startGeneration = threadBean.getCurrentThreadCpuTime();
+        LeaderOracle2pSumForbiddingLP oracle = new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, false, true);
+        runner.generate(rootState.getAllPlayers()[LEADER], oracle);
+        restrictedGameRatio += oracle.getRestrictedGameRatio();
+        oracleGameGV = runner.getGameValue();
+        oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
+        oracleTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
+//            restrictedGameRatio += runner.getRestrictedGameRatio();
+
+        if (Math.abs(oracleGameGV - fullGameGV) > 0.001 || Math.abs(matrixOracleGameGV - fullGameGV) > 0.001)
+            notConvergedSeeds.add(0);
+
+
+//            System.out.println("Average restricted game ratio = " + restrictedGameRatio/(seed+1));
+        System.out.println("Full game time = " + fullTime + " ; sequential oracle time = " + oracleTime + " ; sequential matrix oracle time = " + matrixOracleTime);
+        System.out.println("Not converged = " + (notConvergedSeeds.size() > 0));
+        System.out.println("Full GV: " + fullGameGV + "; sim. matrix GV: " + oracleGameGV + "; seq. matrix GV: " + matrixOracleGameGV);
+//        }
+//        System.out.println("Not converged seeds = " + notConvergedSeeds.toString());
+
+//        ArrayList<Long> times = new ArrayList<>();
+//        for (int i = 0; i < fullTimes.size(); i++)
+//            times.add(fullTimes.get(i) - oracleTimes.get(i));
+//        System.out.println("Min = " + Collections.min(times));
+//        System.out.println("Max = " + Collections.max(times));
+//        Collections.sort(times);
+//        System.out.println("Median = " + times.get(Math.round(times.size() / 2)));
+
+        System.out.println("Cplex building time (BnB / SO / SMO): " + ((bnb!=null) ? bnb.getOverallConstraintGenerationTime()/1000000l : 0) + " / " + oracle.getOverallConstraintGenerationTime()/1000000l + " / " + matrixOracle.getOverallConstraintGenerationTime()/1000000l);
+        System.out.println("Cplex solving time (BnB / SO / SMO): " + ((bnb!=null) ? bnb.getOverallConstraintLPSolvingTime()/1000000l : 0) + " / " + oracle.getOverallConstraintLPSolvingTime()/1000000l + " / " + matrixOracle.getOverallConstraintLPSolvingTime()/1000000l);
+        System.out.println("Branching count (SO / SMO): " + oracle.getBnbBranchingCount() + " / " + matrixOracle.getBnbBranchingCount());
+        System.out.println("RG resizing count (SO / SMO): " + oracle.getGenerationCount() + " / " + matrixOracle.getGenerationCount());
+        System.out.println("RG size: " + oracle.getRestrictedGameRatio());
+        System.out.println("RG generation time (SO / SMO): " + oracle.getRestrictedGameGenerationTime()/ 1000000l + " / " + matrixOracle.getRestrictedGameGenerationTime()/ 1000000l);
+        System.out.println("Deviation identification time (SO / SMO): " + oracle.getDeviationIdentificationTime()/ 1000000l + " / " + matrixOracle.getDeviationIdentificationTime()/ 1000000l);
+        System.out.println("Broken strategy identification time (SO / SMO): " + oracle.getBrokenStrategyIdentificationTime()/ 1000000l + " / " + matrixOracle.getBrokenStrategyIdentificationTime()/ 1000000l);
+        System.out.println("Number of ISs: " + algConfig.getAllInformationSets().size());
+
+    }
+
     public static GameState initGame(FlipItGameInfo gameInfo, int seed) {
         gameInfo.ZERO_SUM_APPROX = false;
 

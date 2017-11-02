@@ -50,6 +50,34 @@ public class NoInfoFlipItGameState extends NodePointsFlipItGameState {
     }
 
     @Override
+    public void transformInto(GameState state) {
+        NoInfoFlipItGameState gameState = (NoInfoFlipItGameState)state;
+        this.selectedNodeOwner = gameState.selectedNodeOwner;
+        this.attackerControlNode = gameState.attackerControlNode;
+        this.defenderControlNode = gameState.defenderControlNode;
+        this.round = gameState.round;
+        this.currentPlayerIndex = gameState.currentPlayerIndex;
+        this.attackerPoints = gameState.attackerPoints;
+
+//        this.defenderOwnedNodes = copyNodes(gameState.defenderOwnedNodes);
+//        this.attackerPossiblyOwnedNodes = copyNodes(gameState.attackerPossiblyOwnedNodes);
+
+        this.defenderControlledNodes = Arrays.copyOf(gameState.defenderControlledNodes, gameState.defenderControlledNodes.length);
+        this.attackerPossiblyControlledNodes = Arrays.copyOf(gameState.attackerPossiblyControlledNodes, gameState.attackerPossiblyControlledNodes.length);
+
+        this.history = gameState.getHistory().copy();
+        this.natureProbability = gameState.getNatureProbability();
+        this.exactNatureProbability = gameState.exactNatureProbability;
+        this.players = gameState.getAllPlayers();
+
+        this.defenderReward = gameState.defenderReward;
+        this.attackerReward = Arrays.copyOf(gameState.attackerReward, gameState.attackerReward.length);//new HashMap<>(gameState.attackerReward);
+//        this.hashCode = -1;
+//        this.key = null;
+
+    }
+
+    @Override
     protected void init(){}
 
     public NoInfoFlipItGameState() {

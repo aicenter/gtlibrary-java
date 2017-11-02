@@ -17,7 +17,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.flipit;
+package cz.agents.gtlibrary.algorithms.flipit.bayesian.milp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
@@ -52,6 +52,8 @@ public class BayesianStackelbergSequenceFormMILP extends StackelbergSequenceForm
 
     protected double EPS = 0.00000001;
 
+    protected boolean OUTPUT_STRATEGY = false;
+
 
     public BayesianStackelbergSequenceFormMILP(Player[] players, Player leader, Player follower, FlipItGameInfo info, FlipItExpander<SequenceInformationSet> expander) {
         super(players, leader, follower);
@@ -62,6 +64,10 @@ public class BayesianStackelbergSequenceFormMILP extends StackelbergSequenceForm
         M = info.getMaxUtility()*info.getUtilityStabilizer()*2 + 1;
 
 //        System.out.println("MILP representation");
+    }
+
+    public void setOUTPUT_STRATEGY(boolean output_strategy){
+        this.OUTPUT_STRATEGY = output_strategy;
     }
 
 
@@ -112,13 +118,13 @@ public class BayesianStackelbergSequenceFormMILP extends StackelbergSequenceForm
 
                 maxValue = v;
 
-                for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
-                    try {
-                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-                    } catch (IloCplex.UnknownObjectException e) {
-                        continue;
-                    }
-                }
+//                for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
+//                    try {
+//                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
+//                    } catch (IloCplex.UnknownObjectException e) {
+//                        continue;
+//                    }
+//                }
 //                debugOutput.println("-------");
 //                for (Map.Entry<Object, IloNumVar> ee : slackVariables.entrySet()) {
 //                    try {
@@ -127,17 +133,19 @@ public class BayesianStackelbergSequenceFormMILP extends StackelbergSequenceForm
 //                        continue;
 //                    }
 //                }
-                leaderResult = createSolution(algConfig, leader, cplex);
-                debugOutput.println("leader rp: ");
-                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
-                    if (entry.getValue() > 0)
-                        debugOutput.println(entry);
-                }
-                for (FollowerType type : FlipItGameInfo.types) {
-                    debugOutput.println("follower type = " + type.toString() + " rp: ");
-                    for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, type, cplex).entrySet()) {
+                if (OUTPUT_STRATEGY) {
+                    leaderResult = createSolution(algConfig, leader, cplex);
+                    debugOutput.println("leader rp: ");
+                    for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
                         if (entry.getValue() > 0)
                             debugOutput.println(entry);
+                    }
+                    for (FollowerType type : FlipItGameInfo.types) {
+                        debugOutput.println("follower type = " + type.toString() + " rp: ");
+                        for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, type, cplex).entrySet()) {
+                            if (entry.getValue() > 0)
+                                debugOutput.println(entry);
+                        }
                     }
                 }
 //                debugOutput.println("Leaf probs");
