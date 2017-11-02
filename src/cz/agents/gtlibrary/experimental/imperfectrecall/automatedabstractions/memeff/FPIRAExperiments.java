@@ -103,6 +103,7 @@ public class FPIRAExperiments {
                 LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[13]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[14]);
                 IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[15]);
+                LimitedMemoryMaxRegretIRCFR.IS_SAMPLING_SEED = Long.parseLong(args[16]);
                 LimitedMemoryMaxRegretIRCFR.runGenericPoker();
             } else if (args[1].equals("GS")) {
                 MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[3]);
@@ -116,6 +117,7 @@ public class FPIRAExperiments {
                 LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[11]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[12]);
                 IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[13]);
+                LimitedMemoryMaxRegretIRCFR.IS_SAMPLING_SEED = Long.parseLong(args[14]);
                 LimitedMemoryMaxRegretIRCFR.runIIGoofspiel();
             } else if (args[1].equals("RG")) {
                 MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[5]);
@@ -129,6 +131,7 @@ public class FPIRAExperiments {
                 LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[13]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[14]);
                 IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[15]);
+                LimitedMemoryMaxRegretIRCFR.IS_SAMPLING_SEED = Long.parseLong(args[16]);
                 LimitedMemoryMaxRegretIRCFR.runRandomGame();
             } else if (args[1].equals("VP")) {
                 MaxRegretIRCFR.DELETE_REGRETS = Boolean.parseBoolean(args[3]);
@@ -142,6 +145,7 @@ public class FPIRAExperiments {
                 LimitedMemoryMaxRegretIRCFR.sizeLimitBound = Integer.parseInt(args[11]);
                 LimitedMemoryMaxRegretIRCFR.sizeLimitHeuristic = Integer.parseInt(args[12]);
                 IRCFR.PRINT_EXPLOITABILITY = Boolean.parseBoolean(args[13]);
+                LimitedMemoryMaxRegretIRCFR.IS_SAMPLING_SEED = Long.parseLong(args[14]);
                 LimitedMemoryMaxRegretIRCFR.runVisibilityPursuit();
             }
         } else if (args[0].equals("CFR+")) {

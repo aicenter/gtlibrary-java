@@ -145,6 +145,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     public static double INIT_REGRET_WEIGHT = 0.99;
     public static int sizeLimitHeuristic = 900;
     public static int sizeLimitBound = 100;
+    public static long IS_SAMPLING_SEED = 1;
     private Random random;
     private Set<ISKey> toUpdate;
     private Map<ISKey, double[]> regretsForRegretCheck;
@@ -156,7 +157,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
     public LimitedMemoryMaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig) {
         super(rootState, perfectRecallExpander, info, perfectRecallConfig);
-        random = new Random(1);
+        random = new Random(IS_SAMPLING_SEED);
         toUpdate = new HashSet<>(sizeLimitHeuristic);
         regretsForRegretCheck = new HashMap<>(sizeLimitBound);
         bellowLimitHeuristic = false;
@@ -167,7 +168,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
     public LimitedMemoryMaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig, AutomatedAbstractionData data) {
         super(rootState, perfectRecallExpander, info, perfectRecallConfig, data);
-        random = new Random(1);
+        random = new Random(IS_SAMPLING_SEED);
         toUpdate = new HashSet<>(sizeLimitHeuristic);
         regretsForRegretCheck = new HashMap<>(sizeLimitBound);
         bellowLimitHeuristic = false;
