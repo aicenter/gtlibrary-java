@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AutomatedAbstractionAlgorithm {
-    private static final boolean SERIALIZE = true;
+    private static final boolean SERIALIZE = false;
     public static boolean USE_ABSTRACTION = true;
 
     protected final GameState rootState;
@@ -122,7 +122,7 @@ public abstract class AutomatedAbstractionAlgorithm {
             iteration(rootState.getAllPlayers()[0]);
             if (isConverged(gameInfo.getMaxUtility() * 1e-5))
                 return;
-            if (this.iteration % 20 == 0 || iteration == 1)
+            if (this.iteration % 40 == 0 || iteration == 1)
                 printStatistics();
         }
     }

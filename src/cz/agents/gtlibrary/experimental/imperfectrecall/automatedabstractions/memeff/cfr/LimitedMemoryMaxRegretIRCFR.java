@@ -154,6 +154,10 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     private boolean bellowLimitBound;
     private int iterationsBeforeBoundResample;
     private int currentSampleIterations;
+    public long statisticsTime;
+    public long abstractionUpdateTime;
+    public long regretUpdateTime;
+    public long samplingTime;
 
     public LimitedMemoryMaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig) {
         super(rootState, perfectRecallExpander, info, perfectRecallConfig);
@@ -182,7 +186,11 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
     protected void iteration(Player player) {
         if (sizeLimitBound > 0)
             boundCheck();
+        long samplingUpdateStart = threadBean.getCurrentThreadCpuTime();
         findISsToUpdate(player);
+        samplingTime += threadBean.getCurrentThreadCpuTime() - samplingUpdateStart;
+        long regretUpdateStart = threadBean.getCurrentThreadCpuTime();
+
         if (SIMULTANEOUS_PR_IR)
             perfectAndImperfectRecallIteration(rootState, 1, 1, player);
         else
@@ -192,8 +200,12 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
             computeCurrentRegrets(rootState, 1, 1, player);
         if (REGRET_MATCHING_PLUS)
             removeNegativePRRegrets();
-        if (USE_ABSTRACTION)
+        regretUpdateTime += threadBean.getCurrentThreadCpuTime() - regretUpdateStart;
+        if (USE_ABSTRACTION) {
+            long abstractionUpdateStart = threadBean.getCurrentThreadCpuTime();
             updateAbstraction();
+            abstractionUpdateTime += threadBean.getCurrentThreadCpuTime() - abstractionUpdateStart;
+        }
         if (DELETE_REGRETS)
             prRegrets.clear();
         toUpdate.clear();
@@ -206,13 +218,29 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         currentSampleIterations++;
         iterationsBeforeBoundResample--;
         if (iterationsBeforeBoundResample == 0) {
+            long start = threadBean.getCurrentThreadCpuTime();
             resampleInformationSetsForRegretCheck();
+            samplingTime += threadBean.getCurrentThreadCpuTime() - start;
             iterationsBeforeBoundResample = 2 * currentSampleIterations;
             System.err.println("setting sequence length " + iterationsBeforeBoundResample);
             currentSampleIterations = 1;
         } else {
+            long start = threadBean.getCurrentThreadCpuTime();
             checkRegretBoundsAndUpdate();
+            abstractionUpdateTime += threadBean.getCurrentThreadCpuTime() - start;
         }
+    }
+
+    @Override
+    protected void printStatistics() {
+        long statStart = threadBean.getCurrentThreadCpuTime();
+
+        super.printStatistics();
+        statisticsTime += threadBean.getCurrentThreadCpuTime() - statStart;
+        System.out.println("Abstraction update time: " + abstractionUpdateTime/1e6);
+        System.out.println("Regret update time: " + regretUpdateTime/1e6);
+        System.out.println("Sampling time: " + samplingTime/1e6);
+        System.out.println("Statistics time: " + statisticsTime/1e6);
     }
 
     @Override

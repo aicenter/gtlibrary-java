@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class IRCFR extends AutomatedAbstractionAlgorithm {
-    public static boolean PRINT_EXPLOITABILITY = false;
+    public static boolean PRINT_EXPLOITABILITY = true;
     public static boolean DIRECT_REGRET_UPDATE = true;
     public static boolean REGRET_MATCHING_PLUS = true;
     public static int delay = 100;
@@ -160,9 +160,8 @@ public class IRCFR extends AutomatedAbstractionAlgorithm {
                     p1BR.clearData();
                 }
             }
+            System.gc();
         }
-        System.out.println("ISs in perfect recall config: " + perfectRecallConfig.getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).count());
-        System.gc();
     }
 
     private boolean validStrategy(Map<ISKey, double[]> strategy) {

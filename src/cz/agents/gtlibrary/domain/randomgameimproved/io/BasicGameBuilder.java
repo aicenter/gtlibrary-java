@@ -22,9 +22,9 @@ import java.util.stream.Collectors;
 
 public class BasicGameBuilder {
     public static void main(String[] args) {
-        buildVisibilityPursuit();
+//        buildVisibilityPursuit();
 //        buildGP();
-//        buildGS();
+        buildGS();
 //        buildRandomGame();
     }
 
@@ -60,7 +60,7 @@ public class BasicGameBuilder {
         Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(new MCTSConfig());
         new GSGameInfo();
 
-        build(root, expander.getAlgorithmConfig(), expander);
+        buildWithoutTerminalIS(root, expander.getAlgorithmConfig(), expander);
         System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
     }
 
