@@ -226,6 +226,7 @@ public class MaxRegretIRCFR extends IRCFR {
         double expectedValue = 0;
         int i = -1;
 
+        storeProbabilityForReachingIS(node, pi1, pi2);
         if (informationSet.getPlayer().getId() == 0) {
             for (Action ai : actions) {
                 i++;
@@ -251,6 +252,9 @@ public class MaxRegretIRCFR extends IRCFR {
                 updateRegretLog(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
         }
         return expectedValue;
+    }
+
+    protected void storeProbabilityForReachingIS(GameState node, double pi1, double pi2) {
     }
 
     private void updateRegretLog(GameState node, double pi1, double pi2, Player expPlayer, double[] expectedValuesForActions, double expectedValue) {
