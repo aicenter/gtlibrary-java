@@ -41,6 +41,9 @@ import cz.agents.gtlibrary.domain.honeypotGame.HoneypotGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
+import cz.agents.gtlibrary.domain.observationGame.ObsGameExpander;
+import cz.agents.gtlibrary.domain.observationGame.ObsGameInfo;
+import cz.agents.gtlibrary.domain.observationGame.ObsGameState;
 import cz.agents.gtlibrary.domain.oshizumo.IIOshiZumoGameState;
 import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
@@ -62,6 +65,7 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -108,7 +112,21 @@ public class GeneralDoubleOracle {
 //        runPhantomTTT();
 //		runAoS();
 //        runFlipIt(args);
-        runHoneyPot(args);
+//        runHoneyPot(args);
+        runObservationGame();
+    }
+
+    public static void runObservationGame() {
+        GameState rootState = new ObsGameState();
+        GameInfo gameInfo = new ObsGameInfo();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new ObsGameExpander<>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        doefg.generate(null);
+//        GambitEFG ggg = new GambitEFG();
+//        ggg.write("obsgame.gbt", rootState, expander);
+//        traverseCompleteGameTree(rootState,expander);
+
     }
 
     private static void runHoneyPot(String[] args) {

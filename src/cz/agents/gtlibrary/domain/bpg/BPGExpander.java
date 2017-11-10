@@ -107,7 +107,7 @@ public class BPGExpander<I extends InformationSet> extends ExpanderImpl<I> {
 		for (Edge edge : graph.getGraph().outgoingEdgesOf(position)) {
 			if (edge.getTarget().equals(graph.getDestination()))
 				continue;
-			if (edge.getTarget().getIntID() > 10)
+			if (edge.getTarget().getIntID() >= 10)
 				nodes.add(edge.getTarget());
 		}
 		return nodes;

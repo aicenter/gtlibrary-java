@@ -31,6 +31,7 @@ public class RPCounter {
         System.out.println(config.getSequencesFor(root.getAllPlayers()[1]).size());
         System.out.println("computing");
         System.out.println(count(config, expander, config.getInformationSetFor(root), root.getAllPlayers()[0]));
+        new GambitEFG().write("BPG_GS_D4.gbt", root, expander);
     }
 
     public static long count(SequenceFormConfig<SequenceInformationSet> config, Expander<SequenceInformationSet> expander, SequenceInformationSet set, Player player) {

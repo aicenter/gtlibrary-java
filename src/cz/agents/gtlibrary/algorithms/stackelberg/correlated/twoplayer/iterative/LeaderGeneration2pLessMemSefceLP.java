@@ -452,7 +452,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
         stack = null;
         if (USE_GC)  System.gc();
         if (PRINT_STATS){
-            System.out.println("Size of set of reachable Is for seq " + followerSequence.hashCode() + " : " + reachable.size());
+//            System.out.println("Size of set of reachable Is for seq " + followerSequence.hashCode() + " : " + reachable.size());
         }
         return reachable;
     }
@@ -758,7 +758,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
             pool.push(currentState);
         }
         if (PRINT_STATS){
-            System.out.println("Size of set of relevant seq for " + leaderSequence.hashCode() + " : " + relevant.size());
+//            System.out.println("Size of set of relevant seq for " + leaderSequence.hashCode() + " : " + relevant.size());
         }
         stack = null;
         if (USE_GC) System.gc();
