@@ -22,12 +22,17 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 import cz.agents.gtlibrary.algorithms.flipit.bestresponse.FlipItBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.flipit.iskeys.FlipItPerfectRecallISKey;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.artificialchance.ACExpander;
 import cz.agents.gtlibrary.domain.artificialchance.ACGameInfo;
 import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameExpander;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameInfo;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -85,7 +90,7 @@ public class GeneralDoubleOracle {
     private int iterations;
 
     final private double EPS = 0.00000001;
-    final public static boolean DEBUG = false;
+    final public static boolean DEBUG = true;
     final private static boolean MY_RP_BR_ORDERING = false;
     private ThreadMXBean threadBean;
     private MemoryMXBean memoryBean;
@@ -113,8 +118,24 @@ public class GeneralDoubleOracle {
 //		runAoS();
 //        runFlipIt(args);
 //        runHoneyPot(args);
-        runObservationGame();
+//        runObservationGame();
+        runBandit();
     }
+
+
+    private static void runBandit(){
+        BanditGameInfo gameInfo = new BanditGameInfo("MAS/graph6.txt");
+        BanditGameState rootState = new BanditGameState();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new BanditGameExpander<>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        doefg.generate(null);
+
+//        GambitEFG gambit = new GambitEFG();
+//        gambit.buildAndWrite("bandit.gbt", rootState, new BanditGameExpander<>(algConfig));
+//        traverseCompleteGameTree(rootState,expander);
+    }
+
 
     public static void runObservationGame() {
         GameState rootState = new ObsGameState();

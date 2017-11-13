@@ -25,6 +25,9 @@ import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.artificialchance.ACExpander;
 import cz.agents.gtlibrary.domain.artificialchance.ACGameInfo;
 import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameExpander;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameInfo;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -114,7 +117,19 @@ public class FullSequenceEFG {
 //        runOshiZumo();
 //        testExploitGame();
 //		runFlipIt();
-		runHoneyPot();
+//		runHoneyPot();
+		runBandit();
+	}
+
+	private static void runBandit(){
+		BanditGameInfo gameInfo = new BanditGameInfo("MAS/graph6.txt");
+		BanditGameState rootState = new BanditGameState();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new BanditGameExpander<>(algConfig), gameInfo, algConfig);
+		efg.generate();
+
+		GambitEFG gambit = new GambitEFG();
+		gambit.write("bandit.gbt", rootState, new BanditGameExpander<>(algConfig));
 	}
 
 	private static void runHoneyPot(){
