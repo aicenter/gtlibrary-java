@@ -72,6 +72,10 @@ public abstract class GameStateImpl implements GameState {
             addActionToHistory(action, getPlayerToMove());
             action.perform(this);
         } else {
+            System.out.println(this.toString());
+            System.out.println(this.getISKeyForPlayerToMove());
+            System.out.println(action.getInformationSet());
+            System.out.println(action.getInformationSet().getISKey());
             throw new IllegalStateException("Inconsistent move.");
         }
     }
@@ -114,6 +118,9 @@ public abstract class GameStateImpl implements GameState {
     public History getHistory() {
         return history;
     }
+
+    @Override
+    public void setHistory(History history){ this.history = history; }
 
     @Override
     public Player[] getAllPlayers() {

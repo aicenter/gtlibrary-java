@@ -9,7 +9,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * Created by Jakub Cerny on 13/10/2017.
@@ -49,6 +49,44 @@ public class LeaderGenerationConfig extends StackelbergConfig {
             }
         }
         utilityForSequenceCombination.put(activePlayerMap, existingUtility);
+    }
+
+    public Double getActualNonzeroUtilityValues(GameState leaf, Player player) {
+        FixedSizeMap<Player, Sequence> activePlayerMap = createActivePlayerMap(leaf);
+        return utilityForSequenceCombination.get(activePlayerMap)[player.getId()];
+    }
+
+    public void removeSequence(Sequence seq) {
+        System.out.println("removing seq: " + seq);
+        compatibleSequences.remove(seq);
+//        playerSequences.get(seq.getPlayer()).remove(seq);
+        if (!playerSequences.get(seq.getPlayer()).remove(seq)) System.out.println("MISSING");
+        if (playerSequences.get(seq.getPlayer()).contains(seq)) System.out.println("ERROR!");
+//        ((SequenceInformationSet)seq.getLastInformationSet()).getOutgoingSequences().clear();
+    }
+
+    public void removeSequencesFrom(GameState state) {
+        HashSet<Map> outcomesToDelete = new HashSet<>();
+        for (Sequence seq : getInformationSetFor(state).getOutgoingSequences()) {
+//            System.out.println("removing seq: " + seq + " #= " + seq.hashCode());
+            for (Sequence sseq : compatibleSequences.keySet())
+                compatibleSequences.get(sseq).remove(seq);
+            compatibleSequences.remove(seq);
+            if (!playerSequences.get(seq.getPlayer()).remove(seq)) System.out.println("MISSING");
+            if (playerSequences.get(seq.getPlayer()).contains(seq)) System.out.println("ERROR!");
+//            if (playerSequences.size() == )
+            for (Map<Player, Sequence> map : utilityForSequenceCombination.keySet())
+                if (map.get(seq.getPlayer()).equals(seq))
+                    outcomesToDelete.add(map);
+            reachableSetsBySequence.remove(seq);
+        }
+        for(Map map : outcomesToDelete)
+            utilityForSequenceCombination.remove(map);
+        getInformationSetFor(state).getOutgoingSequences().clear();
+    }
+
+    public Collection<Sequence> getSequencesFor(Player player) {
+        return playerSequences.get(player);
     }
 
 }

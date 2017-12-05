@@ -37,6 +37,8 @@ public interface GameState extends Serializable {
 
 	public History getHistory();
 
+	public void setHistory(History history);
+
 	public Sequence getSequenceFor(Player player);
 
 	public Sequence getSequenceForPlayerToMove();

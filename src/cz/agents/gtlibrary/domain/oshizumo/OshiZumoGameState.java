@@ -172,14 +172,20 @@ public class OshiZumoGameState extends SimultaneousGameState {
 
     @Override
     protected double[] getEndGameUtilities() {
+        double p1CoinsUti = (double)p1Coins / OZGameInfo.startingCoins;
+        double p2CoinsUti = (double)p2Coins / OZGameInfo.startingCoins;
+        if (!OZGameInfo.GENERAL_SUM){
+            p1CoinsUti = 0.0;
+            p2CoinsUti = 0.0;
+        }
         if (OZGameInfo.BINARY_UTILITIES) {
             if (wrestlerLoc < OZGameInfo.locK)
-                return new double[]{-1, 1, 0};
+                return new double[]{-1 + p1CoinsUti, 1 + p2CoinsUti, 0};
             else if (wrestlerLoc > OZGameInfo.locK)
-                return new double[]{1, -1, 0};
-            return new double[]{0, 0, 0};
+                return new double[]{1 + p1CoinsUti, -1 + p2CoinsUti, 0};
+            return new double[]{0 + p1CoinsUti, 0 + p2CoinsUti, 0};
         } else {
-            return new double[] {wrestlerLoc - OZGameInfo.locK, OZGameInfo.locK - wrestlerLoc, 0};
+            return new double[] {wrestlerLoc - OZGameInfo.locK + p1CoinsUti, OZGameInfo.locK - wrestlerLoc + p2CoinsUti, 0};
         }
     }
 

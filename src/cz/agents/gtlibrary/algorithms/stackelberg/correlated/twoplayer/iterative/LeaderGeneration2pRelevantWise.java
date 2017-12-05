@@ -7,10 +7,13 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOra
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.ColumnGenerationLPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.lpTable.ConstraintGeneratingLPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.CompleteTwoPlayerSefceLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.br.FollowerBestResponse;
 import cz.agents.gtlibrary.domain.flipit.FlipItExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.Pair;
@@ -18,22 +21,21 @@ import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
 import ilog.cplex.IloCplex;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
  * Created by Jakub Cerny on 01/09/2017.
  */
-public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP {
+public class LeaderGeneration2pRelevantWise extends CompleteTwoPlayerSefceLP {
 
     //    protected HashMap<Sequence,HashSet<Sequence>> relevantForFollower;
     protected HashMap<SequenceInformationSet,HashSet<Sequence>> relevantForLeaderInP;
     protected HashMap<SequenceInformationSet,HashSet<Sequence>> relevantForFollowerInP;
     protected HashMap<Sequence,HashSet<Sequence>> relevantForLeaderInDeviation;
-
-//    protected HashMap<Sequence, HashSet<Sequence>> leaderRG;
-    protected HashSet<Sequence> leaderRG;
-    protected HashSet<Sequence> followerExpUtilityRG;
-    protected HashSet<Pair<SequenceInformationSet,Sequence>> followerDeviationRG;
+    protected HashMap<Sequence,HashSet<Sequence>> leaderRG;
 
     protected final boolean DEBUG = false;
     protected final boolean DEBUG_COSTS = false;
@@ -49,42 +51,31 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
     protected final boolean CONVERT_TO_CANONIC = false;
     protected final boolean CHECK_EXISTENCE = false;
     protected final boolean USE_GENERATING_TABLE = false;
-    protected boolean ADD_ALL_PREFIXES = false;
+    protected boolean ADD_ALL_PREFIXES = true;
     protected final boolean EXPORT_LP = false;
 
-    protected final boolean EXPAND_AFTER_INITIAL = true;
-
-    protected int iteration = 0;
-
-    protected final double EPS = -eps;
 
     protected int initialSize;
 
     protected HashMap<Integer, HashMap<Object, Double>> dualsHistory;
 
-    public CompleteGenerationTwoPlayerSefceLP(Player leader, GameInfo info) {
+    public LeaderGeneration2pRelevantWise(Player leader, GameInfo info) {
         super(leader, info);
         if (USE_GENERATING_TABLE) lpTable = new ColumnGenerationLPTable();
 //        relevantForFollower = new HashMap<>();
         relevantForLeaderInP = new HashMap<>();
         relevantForFollowerInP =  new HashMap<>();
         relevantForLeaderInDeviation = new HashMap<>();
-//        leaderRG = new HashMap<>();
-        leaderRG = new HashSet<>();
-        followerDeviationRG = new HashSet<>();
-        followerExpUtilityRG = new HashSet<>();
+        leaderRG = new HashMap<>();
     }
 
-    public CompleteGenerationTwoPlayerSefceLP(Player leader, GameInfo info, boolean greedy, boolean max) {
+    public LeaderGeneration2pRelevantWise(Player leader, GameInfo info, boolean greedy, boolean max) {
         super(leader, info);
 //        lpTable = new ConstraintGeneratingLPTable();
 //        relevantForFollower = new HashMap<>();
         relevantForLeaderInP = new HashMap<>();
         relevantForLeaderInDeviation = new HashMap<>();
-//        leaderRG = new HashMap<>();
-        leaderRG = new HashSet<>();
-        followerDeviationRG = new HashSet<>();
-        followerExpUtilityRG = new HashSet<>();
+        leaderRG = new HashMap<>();
         this.GREEDY = greedy;
         this.MAX = max;
     }
@@ -98,9 +89,9 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
 //        return ((double)leaderRG.size()) / algConfig.getSequencesFor(leader).size();
 //    }
 
-    protected HashSet<Sequence> findLeaderInitialRG(){
+    protected HashMap<Sequence, HashSet<Sequence>> findLeaderInitialRG(){
 
-        if (DEBUG) return new HashSet<>(algConfig.getSequencesFor(leader));
+//        if (DEBUG) return new HashSet<>(algConfig.getSequencesFor(leader));
 
         HashSet<Sequence> initialSequences = new HashSet<>();
 
@@ -183,7 +174,18 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
         System.out.println("Initial sequences : ");
 //        for (Sequence seq : initialSequences)
 //            System.out.println(seq);
-        return initialSequences;
+        HashMap<Sequence, HashSet<Sequence>> initialRG = new HashMap<>();
+        HashSet<Sequence> followerInitialRG = new HashSet<>();
+        for (Sequence seq : initialSequences)
+            followerInitialRG.addAll(algConfig.getCompatibleSequencesFor(seq));
+        Sequence emptySeq = new ArrayListSequenceImpl(follower);
+
+        for (Sequence seq : initialSequences)
+            initialRG.put(seq, new HashSet<Sequence>(){{addAll(algConfig.getSequencesFor(follower)); add(emptySeq);}});
+
+//        for (Sequence seq : initialSequences)
+//            initialRG.put(seq, new HashSet<Sequence>(followerInitialRG));//{{addAll(algConfig.getReachableSets(seq).iterator().next().getAllStates().iterator().next().getSequenceFor(follower).getAllPrefixes());}});
+        return initialRG;
     }
 
     protected void setNewConstraint(Object eqKey, Object varKey, double value){
@@ -204,26 +206,16 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
         }
     }
 
-    protected HashSet<Sequence> getCompatibleLeafSequences(HashSet<Sequence> leaderSequences){
-        HashSet<Sequence> compatible = new HashSet<>();
-        for (Sequence leaderSequence : leaderSequences)
-            for (Sequence followerSequence : algConfig.getCompatibleSequencesFor(leaderSequence)) {
-//                if (algConfig.getGenSumSequenceCombinationUtility(leaderSequence,followerSequence) != null)
-//                    compatible.add(followerSequence);
-                compatible.addAll(followerSequence.getAllPrefixes());
-            }
-        return compatible;
-    }
-
-    protected void addLeaderSequencesToLP(HashSet<Sequence> leaderSequences){
+    protected void addLeaderSequencesToLP(HashMap<Sequence,HashSet<Sequence>> leaderSequences){
         int numberOfNonExistant = 0;
         System.out.println("# of cons - before adding seqs: "  + lpTable.columnCount());
         boolean originalPContinuation = DEBUG && USE_ORIG_PCONT;
-        for (Sequence leaderSequence : leaderSequences){
-            leaderRG.add(leaderSequence);
+        for (Sequence leaderSequence : leaderSequences.keySet()){
+//            if (!leaderRG.containsKey(leaderSequence)) leaderRG.put(leaderSequence, new HashSet<>());
+//            leaderRG.get(leaderSequence);
             // update objective, 6, 7 pouze pro sekvence mirici do listu
             for (Sequence followerSequence : algConfig.getCompatibleSequencesFor(leaderSequence)){
-
+//                leaderRG.get(leaderSequence).add(followerSequence);
 
                 Double[] seqCombValue = algConfig.getGenSumSequenceCombinationUtility(leaderSequence, followerSequence);
                 if (seqCombValue != null) {
@@ -232,15 +224,13 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
 
                     // objective
                     if (leaderValue != 0)
-                        setNewObjective(createSeqPairVarKey(leaderSequence, followerSequence), leaderValue);
+                        if (leaderSequences.get(leaderSequence).contains(followerSequence))
+                            setNewObjective(createSeqPairVarKey(leaderSequence, followerSequence), leaderValue);
 
                     if (followerValue != 0) {
                         // 6:
-                        setNewConstraint(followerSequence, createSeqPairVarKey(leaderSequence, followerSequence), -followerValue);
-                        lpTable.setConstant(followerSequence, 0.0);
-                        lpTable.setConstraintType(followerSequence, 1);
-                        if ((EXPAND_AFTER_INITIAL || iteration == 0) && !followerExpUtilityRG.contains(followerSequence))
-                            addFollowerExpUtilityDeviationToLP(followerSequence);
+                        if (leaderSequences.get(leaderSequence).contains(followerSequence))
+                            setNewConstraint(followerSequence, createSeqPairVarKey(leaderSequence, followerSequence), -followerValue);
 
                         // 7:
                         if(followerSequence.getLastInformationSet() == null) continue;
@@ -256,12 +246,8 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
                                     Object eqKey = new Triplet<>(followerSequence.getLastInformationSet(), followerSequence, stateFollowerSeq);
                                     if (CHECK_EXISTENCE && !lpTable.existsEqKey(eqKey)){ numberOfNonExistant ++; continue;}
                                     Object varKey = createSeqPairVarKey(leaderSequence, stateFollowerSeq);
-                                    setNewConstraint(eqKey, varKey, -followerValue);
-                                    lpTable.setConstant(eqKey, 0.0);
-                                    lpTable.setConstraintType(eqKey, 2);
-                                    Pair dev = new Pair(followerSequence.getLastInformationSet(), stateFollowerSeq);
-                                    if ((EXPAND_AFTER_INITIAL || iteration == 0) && !followerDeviationRG.contains(dev))
-                                        addFollowerISDeviationToLP(dev);
+                                    if (leaderSequences.get(leaderSequence).contains(stateFollowerSeq))
+                                        setNewConstraint(eqKey, varKey, -followerValue);
                                 }
                             }
                         }
@@ -277,9 +263,11 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
                     if (relevantForLeaderInP.containsKey(leaderSequence.getLastInformationSet()))//leaderSubSeq))
                         for (Sequence followerSequence : relevantForLeaderInP.get(leaderSequence.getLastInformationSet())){//leaderSubSeq)) {
                             Object eqKey = new Pair<SequenceInformationSet, Sequence>((SequenceInformationSet) leaderSequence.getLastInformationSet(), followerSequence);
-                            setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, followerSequence), -1.0);
-                            lpTable.setConstant(eqKey, 0.0);
-                            lpTable.setConstraintType(eqKey, 1);
+                            if ((leaderSequences.get(leaderSequence).contains(followerSequence))){
+                                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, followerSequence), -1.0);
+                                lpTable.setConstant(eqKey, 0.0);
+                                lpTable.setConstraintType(eqKey, 1);
+                            }
                         }
                 }
             }
@@ -289,13 +277,15 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
         else {
             for (SequenceInformationSet set : algConfig.getAllInformationSets().values()) {
                 // 4 -> prvni cast
-                if (set.getPlayer().equals(leader) && !set.getOutgoingSequences().isEmpty() && leaderSequences.contains(set.getPlayersHistory())) {
+                if (set.getPlayer().equals(leader) && !set.getOutgoingSequences().isEmpty() && leaderSequences.containsKey(set.getPlayersHistory())) {
                     if (relevantForLeaderInP.containsKey(set)){//set.getPlayersHistory())) {
                         for (Sequence followerSequence : relevantForLeaderInP.get(set)){//set.getPlayersHistory())) {
-                            Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, followerSequence);
-                            setNewConstraint(eqKey, createSeqPairVarKey(set.getPlayersHistory(), followerSequence), 1.0);
-                            lpTable.setConstant(eqKey, 0.0);
-                            lpTable.setConstraintType(eqKey, 1);
+                            if (leaderSequences.get(set.getPlayersHistory()).contains(followerSequence)) {
+                                Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, followerSequence);
+                                setNewConstraint(eqKey, createSeqPairVarKey(set.getPlayersHistory(), followerSequence), 1.0);
+                                lpTable.setConstant(eqKey, 0.0);
+                                lpTable.setConstraintType(eqKey, 1);
+                            }
                         }
                     }
                 }
@@ -303,13 +293,15 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
                 if (set.getPlayer().equals(follower) && !set.getOutgoingSequences().isEmpty()) {
                     if(relevantForFollowerInP.containsKey(set)){
                         for (Sequence leaderSequence : relevantForFollowerInP.get(set)){
-                            if (!leaderSequences.contains(leaderSequence)) continue;
+                            if (!leaderSequences.containsKey(leaderSequence)) continue;
 //                    for (Sequence leaderSequence : leaderSequences) {
 //                        if (relevantForFollowerInP.containsKey(leaderSequence) && relevantForFollowerInP.get(leaderSequence).contains(set.getPlayersHistory())) {
                             Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
-                            setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
+                            if (leaderSequences.get(leaderSequence).contains(set.getPlayersHistory()))
+                                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
                             for (Sequence outgoing : set.getOutgoingSequences())
-                                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoing), -1.0);
+                                if (leaderSequences.get(leaderSequence).contains(outgoing))
+                                    setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoing), -1.0);
                             lpTable.setConstant(eqKey, 0.0);
                             lpTable.setConstraintType(eqKey, 1);
                         }
@@ -319,36 +311,7 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
         }
         System.out.println("# of cons - after adding seqs: "  + lpTable.columnCount());
         System.out.println("# of non-existent: " + numberOfNonExistant);
-    }
-
-    protected void generateInitialFollowerConstraint(){
-        // 3 :
-        lpTable.setConstraint("initP", createSeqPairVarKey(new ArrayListSequenceImpl(leader), new ArrayListSequenceImpl(follower)), 1);
-        lpTable.setConstant("initP", 1);
-        lpTable.setConstraintType("initP", 1);
-
-        for (SequenceInformationSet informationSet : algConfig.getAllInformationSets().values()) {
-            if (informationSet.getPlayer().equals(follower)) {
-                if (!informationSet.getOutgoingSequences().isEmpty()) {
-                    Sequence outgoingSequence = informationSet.getOutgoingSequences().iterator().next();
-
-                    for (Action action : outgoingSequence) {
-                        for (Sequence relevantSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
-                            for (Sequence sequence : informationSet.getOutgoingSequences()) {
-                                for (Sequence leaderSeq : algConfig.getCompatibleSequencesFor(sequence)) {
-                                    if (!relevantForLeaderInDeviation.containsKey(leaderSeq))
-                                        relevantForLeaderInDeviation.put(leaderSeq, new HashSet<>());
-//                                    Double[] seqCombUtilities = algConfig.getGenSumSequenceCombinationUtility(leaderSeq, sequence);
-//                                    if (seqCombUtilities!= null && seqCombUtilities[follower.getId()] != 0)
-                                    relevantForLeaderInDeviation.get(leaderSeq).add(relevantSequence);
-                                    relevantForLeaderInDeviation.get(leaderSeq).add(new ArrayListSequenceImpl(follower));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        leaderRG.putAll(leaderSequences);
     }
 
     protected void generateFollowerConstraints(){
@@ -423,6 +386,9 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
             Object eqKey = new Triplet<>(informationSet, sequence, followerSequence);
             Object varKey = new Pair<>(informationSet, followerSequence);
             Object vKey;
+
+
+//            System.out.println(eqKey);
 
             lpTable.setConstraint(eqKey, varKey, 1);
             if (CONVERT_TO_CANONIC) {
@@ -503,170 +469,16 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
     }
 
 
-    // Supposes empty sequence is always in the LP
-    protected HashSet<Sequence> findFollowerExpUtilityDeviation(HashMap<Object, Double> duals) {
-        HashSet<Sequence> deviations = new HashSet<>();
-        double cost;
-        for (Sequence followerSequence : algConfig.getSequencesFor(follower)) {
-            if (followerExpUtilityRG.contains(followerSequence)) continue;
-            cost = 0.0;
-            if (duals.containsKey(followerSequence)) cost = duals.get(followerSequence);
-            if (followerSequence.size() > 0 && duals.containsKey(followerSequence.getSubSequence(followerSequence.size() - 1)))
-                cost -= duals.get(followerSequence.getSubSequence(followerSequence.size() - 1));
-            Object eqKey = new Triplet<>(followerSequence.getLastInformationSet(), followerSequence, "eq");
-            if (duals.containsKey(eqKey))
-                cost -= duals.get(eqKey);
 
-            if (cost < EPS)
-                deviations.add(followerSequence);
-        }
-        Sequence followerSequence = new ArrayListSequenceImpl(follower);
-        if (!followerExpUtilityRG.contains(followerSequence)) {
-            cost = 0.0;
-            if (duals.containsKey(followerSequence)) cost = duals.get(followerSequence);
-            if (followerSequence.size() > 0 && duals.containsKey(followerSequence.getSubSequence(followerSequence.size() - 1)))
-                cost -= duals.get(followerSequence.getSubSequence(followerSequence.size() - 1));
-            Object eqKey = new Triplet<>(followerSequence.getLastInformationSet(), followerSequence, "eq");
-            if (duals.containsKey(eqKey))
-                cost -= duals.get(eqKey);
 
-            if (cost < EPS)
-                deviations.add(followerSequence);
-        }
-        return  deviations;
-    }
-
-    protected void addFollowerExpUtilityDeviationToLP(Sequence followerSequence){
-        if (followerExpUtilityRG.contains(followerSequence)) return;
-        followerExpUtilityRG.add(followerSequence);
-        Object varKey = new Pair<>("v", followerSequence);
-        lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
-        setNewConstraint(followerSequence, varKey, 1.0);
-        lpTable.setConstant(followerSequence, 0.0);
-        lpTable.setConstraintType(followerSequence, 1);
-
-        if (!followerSequence.isEmpty()) {
-            Sequence followerSubSeq = followerSequence.getSubSequence(followerSequence.size() - 1);
-            setNewConstraint(followerSubSeq, varKey, -1.0);
-            lpTable.setConstant(followerSubSeq, 0.0);
-            lpTable.setConstraintType(followerSubSeq, 1);
-            if (!followerExpUtilityRG.contains(followerSubSeq)) addFollowerExpUtilityDeviationToLP(followerSubSeq);
-        }
-
-        Object eqKey = new Triplet<>(followerSequence.getLastInformationSet(), followerSequence, "eq");
-        if (followerSequence.getLastInformationSet() == null) return;
-        setNewConstraint(eqKey, varKey, -1.0);
-        lpTable.setConstant(eqKey, 0.0);
-        lpTable.setConstraintType(eqKey, 1);
-        Pair dev = new Pair(followerSequence.getLastInformationSet(), followerSequence);
-        if (!followerDeviationRG.contains(dev)) addFollowerISDeviationToLP(dev);
-    }
-
-    protected void addFollowerExpUtilityDeviationsToLP(HashSet<Sequence> deviations){
-        for (Sequence followerSequence : deviations){
-            addFollowerExpUtilityDeviationToLP(followerSequence);
-        }
-    }
-
-    // Pozor na to, ze mozna musime projit i listove ISs (tak NE)
-    protected HashSet<Pair<SequenceInformationSet,Sequence>> findFollowerISDeviation(HashMap<Object, Double> duals){
-        HashSet<Pair<SequenceInformationSet,Sequence>> deviations = new HashSet<>();
-        for (SequenceInformationSet informationSet : algConfig.getAllInformationSets().values()) {
-            if (informationSet.getPlayer().equals(follower)) {
-                if (!informationSet.getOutgoingSequences().isEmpty()) {
-                    Sequence outgoingSequence = informationSet.getOutgoingSequences().iterator().next();
-
-                    // for empty sequence
-                    Sequence emptySequence = new ArrayListSequenceImpl(follower);
-                    Pair varKey = new Pair<>(informationSet,emptySequence);
-                    if (followerDeviationRG.contains(varKey)) continue;
-                    double cost = 0.0;
-                    Object eqKey;
-                    for(Sequence extending : informationSet.getOutgoingSequences()){
-                        eqKey = new Triplet<>(informationSet, extending, emptySequence);
-                        if (duals.containsKey(eqKey)) cost += duals.get(eqKey);
-                    }
-                    eqKey = new Triplet<>(informationSet.getPlayersHistory().getLastInformationSet(), informationSet.getPlayersHistory(), emptySequence);
-                    if (duals.containsKey(eqKey)) cost -= duals.get(eqKey);
-//                    if (emptySequence.getLastInformationSet().equals(informationSet)){
-//                        eqKey = new Triplet<>(informationSet, emptySequence, "eq");
-//                        if (duals.containsKey(eqKey)) cost += duals.get(eqKey);
-//                    }
-                    if (cost < EPS)
-                        deviations.add(varKey);
-
-                    for (Action action : outgoingSequence) {
-                        for (Sequence relevantSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
-                            // var = <IS, relevant>
-                            varKey = new Pair<>(informationSet,relevantSequence);
-                            if (followerDeviationRG.contains(varKey)) continue;
-                            cost = 0.0;
-                            for(Sequence extending : informationSet.getOutgoingSequences()){
-                                eqKey = new Triplet<>(informationSet, extending, relevantSequence);
-                                if (duals.containsKey(eqKey)) cost += duals.get(eqKey);
-                            }
-                            eqKey = new Triplet<>(informationSet.getPlayersHistory().getLastInformationSet(), informationSet.getPlayersHistory(), relevantSequence);
-                            if (duals.containsKey(eqKey)) cost -= duals.get(eqKey);
-                            if (relevantSequence.getLastInformationSet().equals(informationSet)){
-                                eqKey = new Triplet<>(informationSet, relevantSequence, "eq");
-                                if (duals.containsKey(eqKey)) cost += duals.get(eqKey);
-                            }
-                            if (cost < EPS)
-                                deviations.add(varKey);
-                        }
-                    }
-                }
-            }
-        }
-        return deviations;
-    }
-
-    protected void addFollowerISDeviationToLP(Pair<SequenceInformationSet, Sequence> deviation) {
-        if (deviation.getLeft() == null) return;
-        if (followerDeviationRG.contains(deviation)) return;
-        followerDeviationRG.add(deviation);
-        // var = <IS, relevant>
-        lpTable.setLowerBound(deviation, Double.NEGATIVE_INFINITY);
-//        double cost = 0.0;
-        Object eqKey;
-//            System.out.println(deviation);
-        if (deviation.getLeft().getOutgoingSequences() != null) {
-            for (Sequence extending : deviation.getLeft().getOutgoingSequences()) {
-                eqKey = new Triplet<>(deviation.getLeft(), extending, deviation.getRight());
-                setNewConstraint(eqKey, deviation, 1.0);
-                lpTable.setConstant(eqKey, 0.0);
-                lpTable.setConstraintType(eqKey, 2);
-            }
-        }
-//        if (deviation.getRight().isEmpty()) return;
-        if (!deviation.getLeft().getPlayersHistory().isEmpty() && !deviation.getLeft().getOutgoingSequences().contains(deviation)) {
-            eqKey = new Triplet<>(deviation.getLeft().getPlayersHistory().getLastInformationSet(), deviation.getLeft().getPlayersHistory(), deviation.getRight());
-//                            if (duals.containsKey(eqKey)) cost -= duals.get(eqKey);
-            setNewConstraint(eqKey, deviation, -1.0);
-            lpTable.setConstant(eqKey, 0.0);
-            lpTable.setConstraintType(eqKey, 2);
-            Pair dev = new Pair(deviation.getLeft().getPlayersHistory().getLastInformationSet(), deviation.getRight());
-            if (!followerDeviationRG.contains(dev)) addFollowerISDeviationToLP(dev);
-        }
-
-        if (deviation.getLeft().getOutgoingSequences().contains(deviation.getRight())) {
-            eqKey = new Triplet<>(deviation.getLeft(), deviation.getRight(), "eq");
-            setNewConstraint(eqKey, deviation, 1.0);
-            lpTable.setConstant(eqKey, 0.0);
-            lpTable.setConstraintType(eqKey, 1);
-            if (!followerExpUtilityRG.contains(deviation.getRight())) addFollowerExpUtilityDeviationToLP(deviation.getRight());
-//                                if (duals.containsKey(eqKey)) cost += duals.get(eqKey);
-        }
-    }
-
-    protected void addFollowerISDeviationsToLP(HashSet<Pair<SequenceInformationSet, Sequence>> deviations) {
-        for (Pair<SequenceInformationSet, Sequence> deviation : deviations) {
-            addFollowerISDeviationToLP(deviation);
-        }
-    }
-
-    protected HashMap<Object, Double> getDuals(LPData lpData){
+    protected HashMap<Sequence,HashSet<Sequence>> findLeaderDeviation(LPData lpData){
+//        HashSet<Object> constraints = newlpData.getWatchedDualVariables().keySet();
+        HashMap<Sequence, HashSet<Sequence>> deviations = new HashMap<>();
         HashMap<Object, Double> duals = new HashMap<>();
+        Sequence minSequence = null;
+        double minCost = Double.POSITIVE_INFINITY;
+        double maxCost = Double.NEGATIVE_INFINITY;
+
         // NFl, NFf, Eu, dev, Eq, init
         Double[] maxDuals = new Double[6];
         Double[] minDuals = new Double[6];
@@ -708,22 +520,8 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
             }
         }
         catch (Exception e){e.printStackTrace();}
-        return  duals;
-    }
-
-
-
-    protected HashSet<Sequence> findLeaderDeviation(HashMap<Object, Double> duals){
-//        HashSet<Object> constraints = newlpData.getWatchedDualVariables().keySet();
-        HashSet<Sequence> deviations = new HashSet<>();
-//        HashMap<Object, Double> duals = getDuals(lpData);
-        Sequence minSequence = null;
-        double minCost = Double.POSITIVE_INFINITY;
-        double maxCost = Double.NEGATIVE_INFINITY;
-
         HashMap<Sequence, HashMap<Sequence, ArrayList<Pair<Object,Double>>>> rcs = new HashMap<>();
         for (Sequence leaderSequence : algConfig.getSequencesFor(leader)){
-            if (leaderRG.contains(leaderSequence)) continue;
 //            if(leaderSequence.isEmpty()) continue;
 //            if(true){
             if(true){
@@ -731,7 +529,6 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
                 HashMap<Sequence, Double> costs = new HashMap<>();
                 if (DEBUG_COSTS) rcs.put(leaderSequence, new HashMap<>());
                 for (Sequence followerSequence : algConfig.getCompatibleSequencesFor(leaderSequence)){
-//                    if (leaderRG.containsKey(leaderSequence) && leaderRG.get(leaderSequence).contains(followerSequence)) continue;
 //                    if (DEBUG_COSTS) System.out.println("Against seq: " + followerSequence);
 //                    if (lpTable.exists(createSeqPairVarKey(leaderSequence, followerSequence)) || lpData.getWatchedPrimalVariables().containsKey(createSeqPairVarKey(leaderSequence, followerSequence)))
 //                        System.out.println("ERROR!");
@@ -741,30 +538,37 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
                         double followerValue = seqCombValue[follower.getId()];
                         double leaderValue = seqCombValue[leader.getId()];
 
-                        // objective
-                        if (leaderValue != 0) {
-                            if (!costs.containsKey(followerSequence))
-                                costs.put(followerSequence, 0.0);
-                            costs.put(followerSequence, costs.get(followerSequence) - leaderValue);
-                            if (DEBUG_COSTS) {
-                                if (!rcs.get(leaderSequence).containsKey(followerSequence)) rcs.get(leaderSequence).put(followerSequence, new ArrayList<>());
-                                rcs.get(leaderSequence).get(followerSequence).add(new Pair<>("crit", -leaderValue));
+                        if (!leaderRG.containsKey(leaderSequence) || !leaderRG.get(leaderSequence).contains(followerSequence)) {
+                            // objective
+                            if (leaderValue != 0) {
+                                if (!costs.containsKey(followerSequence))
+                                    costs.put(followerSequence, 0.0);
+                                costs.put(followerSequence, costs.get(followerSequence) - leaderValue);
+                                if (DEBUG_COSTS) {
+                                    if (!rcs.get(leaderSequence).containsKey(followerSequence))
+                                        rcs.get(leaderSequence).put(followerSequence, new ArrayList<>());
+                                    rcs.get(leaderSequence).get(followerSequence).add(new Pair<>("crit", -leaderValue));
 //                                System.out.println("Against: " + followerSequence + ", crit: -lutil");
+                                }
+                            }
+
+                            if (followerValue != 0) {
+                                // 6:
+                                if (!costs.containsKey(followerSequence))
+                                    costs.put(followerSequence, 0.0);
+                                costs.put(followerSequence, costs.get(followerSequence) - followerValue * duals.get(followerSequence));
+                                if (DEBUG_COSTS) {
+                                    if (!rcs.get(leaderSequence).containsKey(followerSequence))
+                                        rcs.get(leaderSequence).put(followerSequence, new ArrayList<>());
+                                    rcs.get(leaderSequence).get(followerSequence).add(new Pair<>(followerSequence, -followerValue));
+//                                System.out.println("Against: " + followerSequence + ", dual: " + followerSequence + ", -futil");
+                                }
+//                            reducedCost += -followerValue * duals.get(followerSequence);
+//                            lpTable.setConstraint(followerSequence, createSeqPairVarKey(leaderSequence, followerSequence), -followerValue);
                             }
                         }
 
                         if (followerValue != 0) {
-                            // 6:
-                            if (!costs.containsKey(followerSequence))
-                                costs.put(followerSequence, 0.0);
-                            if (duals.containsKey(followerSequence)) costs.put(followerSequence, costs.get(followerSequence) - followerValue * duals.get(followerSequence));
-                            if (DEBUG_COSTS) {
-                                if (!rcs.get(leaderSequence).containsKey(followerSequence)) rcs.get(leaderSequence).put(followerSequence, new ArrayList<>());
-                                rcs.get(leaderSequence).get(followerSequence).add(new Pair<>(followerSequence, -followerValue));
-//                                System.out.println("Against: " + followerSequence + ", dual: " + followerSequence + ", -futil");
-                            }
-//                            reducedCost += -followerValue * duals.get(followerSequence);
-//                            lpTable.setConstraint(followerSequence, createSeqPairVarKey(leaderSequence, followerSequence), -followerValue);
 
                             // 7:
                             if (followerSequence.getLastInformationSet() == null) continue;
@@ -777,9 +581,11 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
                                             continue;
                                         Object eqKey = new Triplet<>(followerSequence.getLastInformationSet(), followerSequence, stateFollowerSeq);
                                         if(CHECK_EXISTENCE && !lpTable.existsEqKey(eqKey)) continue;
-                                        if (!costs.containsKey(stateFollowerSeq))
-                                            costs.put(stateFollowerSeq, 0.0);
-                                        if (duals.containsKey(eqKey))  costs.put(stateFollowerSeq, costs.get(stateFollowerSeq) - followerValue * duals.get(eqKey));
+                                        if (!leaderRG.containsKey(leaderSequence) || !leaderRG.get(leaderSequence).contains(stateFollowerSeq)) {
+                                            if (!costs.containsKey(stateFollowerSeq))
+                                                costs.put(stateFollowerSeq, 0.0);
+                                            costs.put(stateFollowerSeq, costs.get(stateFollowerSeq) - followerValue * duals.get(eqKey));
+                                        }
                                         if (DEBUG_COSTS) {
                                             if (!rcs.get(leaderSequence).containsKey(stateFollowerSeq)) rcs.get(leaderSequence).put(stateFollowerSeq, new ArrayList<>());
                                             rcs.get(leaderSequence).get(stateFollowerSeq).add(new Pair<>(eqKey, -followerValue));
@@ -810,9 +616,11 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
                             }
                             if (!duals.containsKey(eqKey)) continue;
 //                            System.out.println("eqkey found");
-                            if (!costs.containsKey(followerSequence))
-                                costs.put(followerSequence, 0.0);
-                            costs.put(followerSequence, costs.get(followerSequence) - 1 * duals.get(eqKey));
+                            if (!leaderRG.containsKey(leaderSequence) || !leaderRG.get(leaderSequence).contains(followerSequence)) {
+                                if (!costs.containsKey(followerSequence))
+                                    costs.put(followerSequence, 0.0);
+                                costs.put(followerSequence, costs.get(followerSequence) - 1 * duals.get(eqKey));
+                            }
 
                         }
                 }
@@ -824,17 +632,19 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
                                 Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, followerSequence);
                                 if (!duals.containsKey(eqKey)) continue;
 //                                if(!leaderRG.contains(leaderSequence)) System.exit(0);
-                                if (!costs.containsKey(followerSequence))
-                                    costs.put(followerSequence, 0.0);
-                                costs.put(followerSequence, costs.get(followerSequence) + 1 * duals.get(eqKey));
+                                if (!leaderRG.containsKey(leaderSequence) || !leaderRG.get(leaderSequence).contains(followerSequence)) {
+                                    if (!costs.containsKey(followerSequence))
+                                        costs.put(followerSequence, 0.0);
+                                    costs.put(followerSequence, costs.get(followerSequence) + 1 * duals.get(eqKey));
+                                }
                             }
                         }
                 }
 
 
-                // In use only for tests on existing variables
-//                for (SequenceInformationSet set : algConfig.getAllInformationSets().values()) {
-//                    // 4 -> prvni cast
+                 //In use only for tests on existing variables
+                for (SequenceInformationSet set : algConfig.getAllInformationSets().values()) {
+                    // 4 -> prvni cast
 //                    if (set.getPlayer().equals(leader) && !set.getOutgoingSequences().isEmpty() && leaderSequence.equals(set.getPlayersHistory())) {
 //                        if (relevantForLeaderInP.containsKey(set)){//set.getPlayersHistory())) {
 //                            for (Sequence followerSequence : relevantForLeaderInP.get(set)){//set.getPlayersHistory())) {
@@ -850,32 +660,32 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
 //                            }
 //                        }
 //                    }
-//                    // 5
-//                    if (set.getPlayer().equals(follower) && !set.getOutgoingSequences().isEmpty()) {
-//                        if(relevantForFollowerInP.containsKey(set)){
-//                            if (relevantForFollowerInP.get(set).contains(leaderSequence)){
-////                                if (!leaderSequences.contains(leaderSequence)) continue;
-////                    for (Sequence leaderSequence : leaderSequences) {
-////                        if (relevantForFollowerInP.containsKey(leaderSequence) && relevantForFollowerInP.get(leaderSequence).contains(set.getPlayersHistory())) {
-//                                Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
-//                                if (!duals.containsKey(eqKey)) continue;
+                    // 5
+                    if (set.getPlayer().equals(follower) && !set.getOutgoingSequences().isEmpty()) {
+                        if(relevantForFollowerInP.containsKey(set)){
+                            if (relevantForFollowerInP.get(set).contains(leaderSequence)){
+//                                if (!leaderSequences.contains(leaderSequence)) continue;
+//                    for (Sequence leaderSequence : leaderSequences) {
+//                        if (relevantForFollowerInP.containsKey(leaderSequence) && relevantForFollowerInP.get(leaderSequence).contains(set.getPlayersHistory())) {
+                                Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
+                                if (!duals.containsKey(eqKey)) continue;
 //                                if(!leaderRG.contains(leaderSequence)) System.exit(0);
-//                                if (!costs.containsKey(set.getPlayersHistory()))
-//                                    costs.put(set.getPlayersHistory(), 0.0);
-//                                costs.put(set.getPlayersHistory(), costs.get(set.getPlayersHistory()) + 1 * duals.get(eqKey));
-////                                lpTable.setConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
-//                                for (Sequence outgoing : set.getOutgoingSequences()) {
-////                                    lpTable.setConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoing), -1.0);
-//                                    if (!costs.containsKey(outgoing))
-//                                        costs.put(outgoing, 0.0);
-//                                    costs.put(outgoing, costs.get(outgoing) - 1 * duals.get(eqKey));
-//                                }
-////                                lpTable.setConstant(eqKey, 0.0);
-////                                lpTable.setConstraintType(eqKey, 1);
-//                            }
-//                        }
-//                    }
-//                }
+                                if (!costs.containsKey(set.getPlayersHistory()))
+                                    costs.put(set.getPlayersHistory(), 0.0);
+                                costs.put(set.getPlayersHistory(), costs.get(set.getPlayersHistory()) + 1 * duals.get(eqKey));
+//                                lpTable.setConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
+                                for (Sequence outgoing : set.getOutgoingSequences()) {
+//                                    lpTable.setConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoing), -1.0);
+                                    if (!costs.containsKey(outgoing))
+                                        costs.put(outgoing, 0.0);
+                                    costs.put(outgoing, costs.get(outgoing) - 1 * duals.get(eqKey));
+                                }
+//                                lpTable.setConstant(eqKey, 0.0);
+//                                lpTable.setConstraintType(eqKey, 1);
+                            }
+                        }
+                    }
+                }
 
 
 //                }
@@ -920,64 +730,72 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
 //                    }
 //                }
                 if (costs.isEmpty()) continue;
-                double min = Collections.min(costs.values());
-                double max = Collections.max(costs.values());
-                if (DEBUG_COSTS && (Math.abs(min) > 0 || Math.abs(max) > 0)) {
-                    System.out.println();
-                    System.out.println("Leader sequence: " + leaderSequence);
-                    System.out.println("Corresponding follower sequences and RCs: ");
-                    for (Sequence seq : costs.keySet()) {
-                        System.out.println(seq);
-                        for (Pair p : rcs.get(leaderSequence).get(seq))
-                            System.out.println("\t"+p);
-                        if (Math.abs(costs.get(seq)) > 0) System.out.println(seq + " : " + costs.get(seq));
+                for(Sequence fseq : costs.keySet())
+                    if (costs.get(fseq) < 0.0){
+                        if (!deviations.containsKey(leaderSequence))
+                            deviations.put(leaderSequence, new HashSet<>());
+                        if (ADD_ALL_PREFIXES)
+                            deviations.get(leaderSequence).addAll(fseq.getAllPrefixes());
+                        else
+                            deviations.get(leaderSequence).add(fseq);
                     }
-                }
-                if (max > maxCost) maxCost = max;
-//                if ( max >  0.0 * -eps) {
-                if ( min <  EPS) { // !algConfig.getCompatibleSequencesFor(leaderSequence).isEmpty() &&
-                    if (!MAX) {
-                        if (ADD_ALL_PREFIXES) {
-                            for (Sequence prefix : leaderSequence.getAllPrefixes())
-                                if (!leaderRG.contains(prefix)) deviations.add(prefix);
-                        }
-                        else{
-                            deviations.add(leaderSequence);
-                        }
-                    }
-                    else{
-                        if (min < minCost){
-                            minCost = min;
-                            minSequence = leaderSequence;
-                        }
-                    }
-                    if (GREEDY) {
-                        System.out.println("Deviation: "+ min );
-                        break;
-                    }
-                }
+//                double min = Collections.min(costs.values());
+//                double max = Collections.max(costs.values());
+//                if (DEBUG_COSTS && (Math.abs(min) > 0 || Math.abs(max) > 0)) {
+//                    System.out.println();
+//                    System.out.println("Leader sequence: " + leaderSequence);
+//                    System.out.println("Corresponding follower sequences and RCs: ");
+//                    for (Sequence seq : costs.keySet()) {
+//                        System.out.println(seq);
+//                        for (Pair p : rcs.get(leaderSequence).get(seq))
+//                            System.out.println("\t"+p);
+//                        if (Math.abs(costs.get(seq)) > 0) System.out.println(seq + " : " + costs.get(seq));
+//                    }
+//                }
+//                if (max > maxCost) maxCost = max;
+////                if ( max >  0.0 * -eps) {
+//                if ( min <   0.0 * -eps) { // !algConfig.getCompatibleSequencesFor(leaderSequence).isEmpty() &&
+//                    if (!MAX) {
+//                        if (ADD_ALL_PREFIXES) {
+//                            for (Sequence prefix : leaderSequence.getAllPrefixes())
+//                                if (!leaderRG.contains(prefix)) deviations.add(prefix);
+//                        }
+//                        else{
+//                            deviations.add(leaderSequence);
+//                        }
+//                    }
+//                    else{
+//                        if (min < minCost){
+//                            minCost = min;
+//                            minSequence = leaderSequence;
+//                        }
+//                    }
+//                    if (GREEDY) {
+//                        System.out.println("Deviation: "+ min );
+//                        break;
+//                    }
+//                }
 
             }
         }
 
-        if (MAX && minSequence != null) {
+//        if (MAX && minSequence != null) {
 //            if (leaderRG.contains(minSequence)) System.out.println("ERROR: " + minSequence);
-            System.out.println("Minimum deviation: " + maxCost);
-            System.out.println("Maximum deviation: " + minCost);
-            System.out.println("Deviation sequence: " + minSequence + "; #: " + minSequence.getLastInformationSet().hashCode());
-            deviations.add(minSequence);
-            if (ADD_ALL_PREFIXES) {
-                for (Sequence prefix : minSequence.getAllPrefixes())
-                    if (!leaderRG.contains(prefix)) deviations.add(prefix);
-            }
-        }
+//            System.out.println("Minimum deviation: " + maxCost);
+//            System.out.println("Maximum deviation: " + minCost);
+//            System.out.println("Deviation sequence: " + minSequence + "; #: " + minSequence.getLastInformationSet().hashCode());
+//            deviations.add(minSequence);
+//            if (ADD_ALL_PREFIXES) {
+//                for (Sequence prefix : minSequence.getAllPrefixes())
+//                    if (!leaderRG.contains(prefix)) deviations.add(prefix);
+//            }
+//        }
 
-        System.out.println("Deviations: " + deviations.toString());
+        if (DEBUG_COSTS) System.out.println("Deviations: " + deviations.toString());
+        System.out.println(deviations);
         return  deviations;
-
 //        return new HashSet<>();
     }
-
 
     @Override
     public double calculateLeaderStrategies(AlgorithmConfig algConfig, Expander expander) {
@@ -987,8 +805,7 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
         long startTime = threadBean.getCurrentThreadCpuTime();
 
         // construct initial LP
-//        generateFollowerConstraints();
-        generateInitialFollowerConstraint();
+        generateFollowerConstraints();
 
         // find relevant sequences
         generateRelevantSequences();
@@ -1004,55 +821,8 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
 //        System.out.println("////////////////////////////////////");
 
 
-        HashSet<Sequence> leaderSequences = findLeaderInitialRG();
-        HashSet<Sequence> followerSequences = new HashSet<>(((StackelbergConfig) algConfig).getSequencesFor(follower));//getCompatibleLeafSequences(leaderSequences);
-        HashSet<Pair<SequenceInformationSet,Sequence>> followerDeviations = new HashSet<>();
-        addFollowerExpUtilityDeviationToLP(new ArrayListSequenceImpl(follower));
+        HashMap<Sequence,HashSet<Sequence>> leaderSequences = findLeaderInitialRG();
         addLeaderSequencesToLP(leaderSequences);
-        followerSequences.add(new ArrayListSequenceImpl(follower));
-//        for (Sequence followerSequence : followerSequences){
-//            if (!followerSequence.isEmpty())
-//                followerDeviations.add(new Pair(followerSequence.getLastInformationSet(), followerSequence));
-//            else
-//                followerDeviations.add(new Pair(algConfig.getInformationSetFor(((StackelbergConfig) algConfig).getRootState()), followerSequence));
-//        }
-
-
-        if (DEBUG) {
-            for (SequenceInformationSet informationSet : ((StackelbergConfig) algConfig).getAllInformationSets().values()) {
-                if (informationSet.getPlayer().equals(follower)) {
-                    if (!informationSet.getOutgoingSequences().isEmpty()) {
-                        Sequence outgoingSequence = informationSet.getOutgoingSequences().iterator().next();
-
-                        // for empty sequence
-                        Sequence emptySequence = new ArrayListSequenceImpl(follower);
-                        Pair varKey = new Pair<>(informationSet, emptySequence);
-                        followerDeviations.add(varKey);
-
-                        for (Action action : outgoingSequence) {
-                            for (Sequence relevantSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
-                                // var = <IS, relevant>
-                                varKey = new Pair<>(informationSet, relevantSequence);
-                                followerDeviations.add(varKey);
-                            }
-                        }
-                    }
-                }
-            }
-
-//        System.out.println(followerDeviations.toString());
-
-            for (Pair p : followerDeviations)
-                if (!followerDeviationRG.contains(p)) addFollowerISDeviationToLP(p);
-
-            for (Sequence fs : followerSequences)
-                if (!followerExpUtilityRG.contains(fs)) addFollowerExpUtilityDeviationToLP(fs);
-        }
-
-
-
-//        addFollowerExpUtilityDeviationsToLP(followerSequences);
-//        addFollowerISDeviationsToLP(followerDeviations);
 
 //        System.exit(0);
 
@@ -1061,6 +831,7 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
         boolean updated = true;
         LPData lpData = null;
 //        double value = 0.0;
+        int iteration = 0;
         while(updated){
             // solve LP
             try {
@@ -1076,7 +847,7 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
                 lpData = lpTable.toCplex();
                 System.out.println("done.");
                 overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
-                if (EXPORT_LP) lpData.getSolver().exportModel("CIter2pSEFCE_" +iteration + ".lp");
+                if (EXPORT_LP) lpData.getSolver().exportModel("Iter2pSEFCE_" +iteration + ".lp");
                 startTime = threadBean.getCurrentThreadCpuTime();
                 System.out.printf("Solving...");
                 lpData.getSolver().solve();
@@ -1087,7 +858,6 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
                     System.out.println("LP reward: " + gameValue );
                 } else {
 //                    lpData.getSolver().getConflict();
-//                    System.out.println(lpData.getSolver().getCplexSubStatus());
                     System.err.println(lpData.getSolver().getStatus());
                 }
             } catch (IloException e) {
@@ -1098,31 +868,16 @@ public class CompleteGenerationTwoPlayerSefceLP extends CompleteTwoPlayerSefceLP
 
 
             // calculate reduced costs -> find deviation
-            HashMap<Object, Double> duals = getDuals(lpData);
             System.out.printf("Finding deviations...");
-            leaderSequences = findLeaderDeviation(duals);
-            followerSequences = findFollowerExpUtilityDeviation(duals);
-            followerDeviations = findFollowerISDeviation(duals);
+            leaderSequences = findLeaderDeviation(lpData);
             System.out.println("done.");
             // update LP
-            if (leaderSequences.isEmpty() && followerSequences.isEmpty() && followerDeviations.isEmpty())
+            if (leaderSequences.isEmpty())
                 updated = false;
             else {
-                if (!leaderSequences.isEmpty()) {
-                    System.out.printf("Adding new leader sequences...");
-                    addLeaderSequencesToLP(leaderSequences);
-                    System.out.println("done.");
-                }
-                if(!followerSequences.isEmpty()){
-                    System.out.printf("Adding new follower sequences...");
-                    addFollowerExpUtilityDeviationsToLP(followerSequences);
-                    System.out.println("done.");
-                }
-                if(!followerDeviations.isEmpty()){
-                    System.out.printf("Adding new ISs...");
-                    addFollowerISDeviationsToLP(followerDeviations);
-                    System.out.println("done.");
-                }
+                System.out.printf("Adding new sequences...");
+                addLeaderSequencesToLP(leaderSequences);
+                System.out.println("done.");
             }
             System.out.println("RG size: " +leaderRG.size()+ "/"+((StackelbergConfig) algConfig).getSequencesFor(leader).size());
         }

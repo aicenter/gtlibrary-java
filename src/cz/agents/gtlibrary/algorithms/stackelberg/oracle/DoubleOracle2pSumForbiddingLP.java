@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.ColumnGenerationL
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGeneration2pRelevantWiseSefceLp;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGenerationTwoPlayerSefceLP;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -18,7 +19,7 @@ import java.util.*;
 /**
  * Created by Jakub Cerny on 20/09/2017.
  */
-public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefceLP {
+public class DoubleOracle2pSumForbiddingLP extends LeaderGeneration2pRelevantWiseSefceLp {
 
     protected int bnbBranchingCount = 0;
     protected int generationCount = 0;
@@ -34,7 +35,7 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
     protected double eps_;
 //    private long
 
-    public LeaderOracle2pSumForbiddingLP(Player leader, GameInfo info) {
+    public DoubleOracle2pSumForbiddingLP(Player leader, GameInfo info) {
         super(leader, info);
         restrictions =  new HashMap<>();
 //        lpTable = new RecyclingLPTable();
@@ -42,7 +43,7 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
 //        System.exit(0);
     }
 
-    public LeaderOracle2pSumForbiddingLP(Player leader, GameInfo info, boolean useColumnGenTable) {
+    public DoubleOracle2pSumForbiddingLP(Player leader, GameInfo info, boolean useColumnGenTable) {
         super(leader, info);
         restrictions =  new HashMap<>();
         if (useColumnGenTable) lpTable = new ColumnGenerationLPTable();
@@ -53,7 +54,7 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
 //        System.exit(0);
     }
 
-    public LeaderOracle2pSumForbiddingLP(Player leader, GameInfo info, boolean useColumnGenTable, boolean sequentialGeneration) {
+    public DoubleOracle2pSumForbiddingLP(Player leader, GameInfo info, boolean useColumnGenTable, boolean sequentialGeneration) {
         super(leader, info);
         restrictions =  new HashMap<>();
         if (useColumnGenTable) lpTable = new ColumnGenerationLPTable();
@@ -66,7 +67,7 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
 //        System.exit(0);
     }
 
-    public LeaderOracle2pSumForbiddingLP(Player leader, GameInfo info, boolean useColumnGenTable, boolean sequentialGeneration, boolean addAllPrefixes) {
+    public DoubleOracle2pSumForbiddingLP(Player leader, GameInfo info, boolean useColumnGenTable, boolean sequentialGeneration, boolean addAllPrefixes) {
         super(leader, info);
         restrictions =  new HashMap<>();
         if (useColumnGenTable) lpTable = new ColumnGenerationLPTable();
@@ -104,8 +105,9 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
 //        System.out.println("////////////////////////////////////");
 
 
-        HashSet<Sequence> leaderSequences = findLeaderInitialRG();
-        addLeaderSequencesToLP(leaderSequences);
+//        Pair<HashSet<Sequence>, HashSet<Sequence>> newSequences;
+        findInitialRGs();
+        addLeaderSequencesToLP(leaderRG, followerRG);
 
 //        System.out.println("LP build...");
 //        lpTable.watchAllPrimalVariables();
@@ -119,8 +121,8 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
         return result.getRight();
     }
 
-    protected LPData solveForSefce(HashSet<Sequence> leaderSequences){
-        addLeaderSequencesToLP(leaderSequences);
+    protected LPData solveForSefce(Pair<HashSet<Sequence>, HashSet<Sequence>> newSequences){
+        addLeaderSequencesToLP(newSequences.getLeft(), newSequences.getRight());
 
         boolean updated = true;
         long startTime;
@@ -162,16 +164,16 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
             // calculate reduced costs -> find deviation
             startTime = threadBean.getCurrentThreadCpuTime();
             System.out.printf("Finding deviations...");
-            leaderSequences = findLeaderDeviation(lpData);
+            newSequences = findLeaderDeviation(lpData);
             System.out.println("done.");
             deviationIdentificationTime += threadBean.getCurrentThreadCpuTime() - startTime;
             // update LP
-            if (leaderSequences.isEmpty())
+            if (newSequences.getLeft().isEmpty() && newSequences.getRight().isEmpty())
                 updated = false;
             else {
                 startTime = threadBean.getCurrentThreadCpuTime();
                 System.out.printf("Adding new sequences...");
-                addLeaderSequencesToLP(leaderSequences);
+                addLeaderSequencesToLP(newSequences.getLeft(), newSequences.getRight());
                 System.out.println("done.");
                 restrictedGameGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
             }
@@ -180,7 +182,7 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
         return  lpData;
     }
 
-//    @Override
+    //    @Override
     protected Pair<Map<Sequence, Double>, Double> solve(double lowerBound, double upperBound) {
         try {
             long startTime = threadBean.getCurrentThreadCpuTime();
@@ -226,14 +228,15 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
 
                 startTime = threadBean.getCurrentThreadCpuTime();
                 System.out.printf("Finding deviations....");
-                HashSet<Sequence> leaderSequences = findLeaderDeviation(lpData);
+                Pair<HashSet<Sequence>, HashSet<Sequence>> newSequences = findLeaderDeviation(lpData);
                 System.out.println("done.");
                 deviationIdentificationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
-                if (GENERATION_BEFORE_FIXING && !leaderSequences.isEmpty()) {
-                    lpData = solveForSefce(leaderSequences);
+                if (GENERATION_BEFORE_FIXING && (!newSequences.getLeft().isEmpty() || newSequences.getRight().isEmpty())) {
+                    lpData = solveForSefce(newSequences);
                     value = lpData.getSolver().getObjValue();
-                    leaderSequences.clear();
+                    newSequences.getLeft().clear();
+                    newSequences.getRight().clear();
                 }
 
                 startTime = threadBean.getCurrentThreadCpuTime();
@@ -270,19 +273,19 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
 //                    for (Map.Entry<Sequence, Double> entry : followerRealPlan.entrySet()) {
 //                        System.out.println(entry);
 //                    }
-                    if (leaderSequences.isEmpty()) {
+                    if (newSequences.getLeft().isEmpty() && newSequences.getRight().isEmpty()) {
 //                        Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getLeaderBehavioralStrategy(lpData, leader));
                         return new Pair<Map<Sequence, Double>, Double>(new HashMap<>(), value);
                     }
                     else{
                         startTime = threadBean.getCurrentThreadCpuTime();
-                        addLeaderSequencesToLP(leaderSequences);
+                        addLeaderSequencesToLP(newSequences.getLeft(), newSequences.getRight());
                         restrictedGameGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
-                        leaderSequences = null;
+                        newSequences = null;
                         return solve(lowerBound, upperBound);
                     }
                 } else {
-                    if (value <= lowerBound + eps && leaderSequences.isEmpty()) {
+                    if (value <= lowerBound + eps && newSequences.getLeft().isEmpty() && newSequences.getRight().isEmpty()) {
                         System.out.println("***********lower bound " + lowerBound + " not exceeded, cutting***********");
                         return dummyResult;
                     }

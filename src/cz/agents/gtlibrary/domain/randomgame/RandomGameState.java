@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.domain.randomgame;
 
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.iinodes.TLAction;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
@@ -61,6 +62,17 @@ public class RandomGameState extends SimultaneousGameState {
 
     public RandomGameState(RandomGameState gameState) {
         super(gameState);
+        this.ID = gameState.ID;
+        this.playerToMove = gameState.playerToMove;
+        observations.put(players[0], new ArrayList<Integer>(gameState.observations.get(players[0])));
+        observations.put(players[1], new ArrayList<Integer>(gameState.observations.get(players[1])));
+        center = gameState.center;
+    }
+
+    @Override
+    public void transformInto(GameState state) {
+        super.transformInto(state);
+        RandomGameState gameState = (RandomGameState)state;
         this.ID = gameState.ID;
         this.playerToMove = gameState.playerToMove;
         observations.put(players[0], new ArrayList<Integer>(gameState.observations.get(players[0])));
@@ -207,9 +219,13 @@ public class RandomGameState extends SimultaneousGameState {
         }
         Iterator i = getHistory().getSequenceOf(getPlayerToMove()).iterator();
         while (i.hasNext()) {
-            RandomGameAction a = (RandomGameAction) i.next();
             out *= base;
-            out += a.getOrder();
+            Action a = (Action) i.next();
+            if (a instanceof RandomGameAction) {
+                out += ((RandomGameAction)a).getOrder();
+            }
+            if (a instanceof TLAction)
+                out += ((TLAction)a).getIndex() + 1;
         }
         return out;
     }

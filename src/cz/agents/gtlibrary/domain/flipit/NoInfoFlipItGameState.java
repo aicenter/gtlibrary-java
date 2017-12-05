@@ -5,6 +5,7 @@ import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.graph.Edge;
 import cz.agents.gtlibrary.utils.graph.Node;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -62,8 +63,12 @@ public class NoInfoFlipItGameState extends NodePointsFlipItGameState {
 //        this.defenderOwnedNodes = copyNodes(gameState.defenderOwnedNodes);
 //        this.attackerPossiblyOwnedNodes = copyNodes(gameState.attackerPossiblyOwnedNodes);
 
-        this.defenderControlledNodes = Arrays.copyOf(gameState.defenderControlledNodes, gameState.defenderControlledNodes.length);
-        this.attackerPossiblyControlledNodes = Arrays.copyOf(gameState.attackerPossiblyControlledNodes, gameState.attackerPossiblyControlledNodes.length);
+//        this.defenderControlledNodes = Arrays.copyOf(gameState.defenderControlledNodes, gameState.defenderControlledNodes.length);
+        for (int i = 0; i < defenderControlledNodes.length; i++)
+            this.defenderControlledNodes[i] = gameState.defenderControlledNodes[i];
+//        this.attackerPossiblyControlledNodes = Arrays.copyOf(gameState.attackerPossiblyControlledNodes, gameState.attackerPossiblyControlledNodes.length);
+        for (int i = 0; i < attackerPossiblyControlledNodes.length; i++)
+            this.attackerPossiblyControlledNodes[i] = gameState.attackerPossiblyControlledNodes[i];
 
         this.history = gameState.getHistory().copy();
         this.natureProbability = gameState.getNatureProbability();
@@ -71,7 +76,9 @@ public class NoInfoFlipItGameState extends NodePointsFlipItGameState {
         this.players = gameState.getAllPlayers();
 
         this.defenderReward = gameState.defenderReward;
-        this.attackerReward = Arrays.copyOf(gameState.attackerReward, gameState.attackerReward.length);//new HashMap<>(gameState.attackerReward);
+        for (int i = 0; i < attackerReward.length; i++)
+            this.attackerReward[i] = gameState.attackerReward[i];
+//        this.attackerReward = Arrays.copyOf(gameState.attackerReward, gameState.attackerReward.length);//new HashMap<>(gameState.attackerReward);
 //        this.hashCode = -1;
 //        this.key = null;
 
@@ -160,6 +167,9 @@ public class NoInfoFlipItGameState extends NodePointsFlipItGameState {
                 utilities[i+1] = -utilities[0];
             }
         }
+        // Random utilities test
+//        HighQualityRandom random = new HighQualityRandom(FlipItGameInfo.seed);
+//        for (int i = 0; i < utilities.length; i++) utilities[i] = random.nextDouble();
         return utilities;
     }
 

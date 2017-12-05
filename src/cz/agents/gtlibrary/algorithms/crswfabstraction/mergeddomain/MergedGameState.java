@@ -42,6 +42,9 @@ public class MergedGameState implements GameState {
     }
 
     @Override
+    public void setHistory(History history) {}
+
+    @Override
     public Sequence getSequenceFor(Player player) {
         return state.getSequenceFor(player);
     }

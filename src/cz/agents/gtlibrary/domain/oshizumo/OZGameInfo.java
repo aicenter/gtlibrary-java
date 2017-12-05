@@ -31,14 +31,15 @@ public class OZGameInfo implements GameInfo {
     public static final Player SECOND_PLAYER = new PlayerImpl(1);
 
     public static final Player[] ALL_PLAYERS = {FIRST_PLAYER, SECOND_PLAYER};
-    public static long seed = 1;
+    public static long seed = 10;
 
     // parameters taken from http://skatgame.net/mburo/ps/sumo.pdf
-    public static int startingCoins = 9;        // N from paper
+    public static int startingCoins = 7;        // N from paper
     public static int locK = 3;                 // locations (2K+1)
-    public static int minBid = 1;               // B from paper
+    public static int minBid = 2;               // B from paper
 
-    public static boolean BINARY_UTILITIES = false;
+    public static boolean BINARY_UTILITIES = true;
+    public static boolean GENERAL_SUM = true;
 
     public OZGameInfo() {
     }

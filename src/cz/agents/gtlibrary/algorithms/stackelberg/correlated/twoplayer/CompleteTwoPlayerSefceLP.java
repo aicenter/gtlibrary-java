@@ -42,6 +42,11 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
 //    protected FollowerBestResponse followerBestResponse;
 
     protected double gameValue;
+    protected int finalLpSize;
+
+    // NOT BEHAVIORAL STRATEGY: if non-null .. can be used as a threat
+    protected final boolean GET_STRATEGY = true;
+    protected final boolean EXPORT_LP = false;
 
     public CompleteTwoPlayerSefceLP(Player leader, GameInfo info) {
         super(new Player[]{info.getAllPlayers()[0], info.getAllPlayers()[1]}, leader, info.getOpponent(leader));
@@ -51,6 +56,7 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
         this.info = info;
         this.threadBean = ManagementFactory.getThreadMXBean();
         this.eps = 1e-8;
+        this.finalLpSize = 0;
     }
 
     public LPTable getLpTable(){
@@ -64,7 +70,15 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
 
     @Override
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander){
-        return calculateLeaderStrategies(algConfig, expander);
+        return calculateLeaderStrategies((AlgorithmConfig) algConfig, expander);
+    }
+
+    public int getFinalLpSize(){
+        return finalLpSize;
+    }
+
+    public double getRestrictedGameRatio(){
+        return 1.0;
     }
 
     @Override
@@ -80,7 +94,7 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
         createISActionConstraints();
 
         System.out.println("LP build...");
-        lpTable.watchAllPrimalVariables();
+        if (GET_STRATEGY) lpTable.watchAllPrimalVariables();
         overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
         Pair<Map<Sequence, Double>, Double> result = solve();
 
@@ -93,10 +107,12 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
         try {
             long startTime = threadBean.getCurrentThreadCpuTime();
 
+//            if (GET_STRATEGY) lpTable.watchAllPrimalVariables();
             LPData lpData = lpTable.toCplex();
+            finalLpSize = lpData.getSolver().getNrows();
 
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
-            lpData.getSolver().exportModel("Complete2pSEFCE.lp");
+            if (EXPORT_LP) lpData.getSolver().exportModel("Complete2pSEFCE.lp");
             startTime = threadBean.getCurrentThreadCpuTime();
             lpData.getSolver().solve();
             overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
@@ -122,10 +138,12 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
 
 
                 // compute RPs
-//                Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
+                Map<Sequence, Double> leaderRealPlan = null;
+                if (GET_STRATEGY) leaderRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, leader));
 //                Map<Sequence, Double> followerRealPlan = behavioralToRealizationPlan(getBehavioralStrategy(lpData, follower));
 
-
+                if (leaderRealPlan != null)
+                    return new Pair<Map<Sequence, Double>, Double>(leaderRealPlan, gameValue);
                 return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), gameValue);
             } else {
                 System.err.println(lpData.getSolver().getStatus());
@@ -165,6 +183,10 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
                     Map<Sequence, Double> isStrategy = strategy.get(playerSequence.getLastInformationSet());
                     Double currentValue = getValueFromCplex(lpData, entry);
 
+//                    if (currentValue > eps)
+//                        System.out.println(varKey + " : " + currentValue);
+
+//                    eps = -0.1;
                     if (currentValue > eps)
                         if (isSequenceFrom(player.equals(leader) ? (Sequence) varKey.getRight() : (Sequence) varKey.getLeft(), playerSequence.getLastInformationSet()))
                             if (isStrategy == null) {
@@ -172,11 +194,14 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
                                     isStrategy = new HashMap<>();
                                     double behavioralStrat = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
 
+//                                    System.out.println(playerSequence + " : " + currentValue + " / " + behavioralStrat);
                                     isStrategy.put(playerSequence, behavioralStrat);
                                     strategy.put(playerSequence.getLastInformationSet(), isStrategy);
                                 }
                             } else {
                                 double behavioralStrategy = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
+
+//                                System.out.println(playerSequence + " : " + currentValue + " / " + behavioralStrategy);
 
                                 if (behavioralStrategy > eps) {
                                     isStrategy.put(playerSequence, behavioralStrategy);
@@ -185,6 +210,22 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
                 }
             }
         }
+
+        for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
+            if (entry.getKey() instanceof Pair) {
+                Pair varKey = (Pair) entry.getKey();
+
+                if (varKey.getLeft() instanceof Sequence && varKey.getRight() instanceof Sequence) {
+                    Sequence playerSequence = player.equals(leader) ? (Sequence) varKey.getLeft() : (Sequence) varKey.getRight();
+                    Map<Sequence, Double> isStrategy = strategy.get(playerSequence.getLastInformationSet());
+                    Double currentValue = getValueFromCplex(lpData, entry);
+                    if (currentValue > 0){
+                    if (isStrategy == null) {
+                        isStrategy = new HashMap<>();
+                        strategy.put(playerSequence.getLastInformationSet(), isStrategy);
+                    }
+                    if (!isStrategy.containsKey(playerSequence)) isStrategy.put(playerSequence, currentValue);
+                }}}}
         return strategy;
     }
 
@@ -203,7 +244,7 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
 
                 if (!opponentSequence.isEmpty()) {
                     opponentSequence.removeLast();
-                    previousValue = getValueFromCplex(lpData, playerSequence.getPlayer().equals(leader) ? new Pair<>(sequenceCopy, opponentSequence) : new Pair<>(opponentSequence, sequenceCopy));
+                    previousValue = getValueFromCplex(lpData, playerSequence.getPlayer().equals(leader) ? new Pair(sequenceCopy, opponentSequence) : new Pair<>(opponentSequence, sequenceCopy));
                 }
             }
             behavioralStrat /= previousValue;
@@ -234,7 +275,8 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
                     double probability = 1;
 
                     for (Sequence prefix : entry.getKey().getAllPrefixes()) {
-                        probability *= behavioral.get(prefix.getLastInformationSet()).get(prefix);
+                        if (behavioral.containsKey(prefix.getLastInformationSet()) && behavioral.get(prefix.getLastInformationSet()).containsKey(prefix))
+                            probability *= behavioral.get(prefix.getLastInformationSet()).get(prefix);
                     }
                     realizationPlan.put(entry.getKey(), probability);
                 }
@@ -268,8 +310,11 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
         Double currentValue = null;
 
         try {
+//            System.out.println(varKey + " #:" + varKey.hashCode());
+//            System.out.println(lpData.getWatchedPrimalVariables().containsKey(varKey));
             currentValue = lpData.getSolver().getValue(lpData.getWatchedPrimalVariables().get(varKey));
         } catch (IloException e) {
+            System.out.println(varKey);
             e.printStackTrace();
         }
         return currentValue;
@@ -312,6 +357,9 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
             Object eqKey = new Triplet<>(informationSet, sequence, followerSequence);
             Object varKey = new Pair<>(informationSet, followerSequence);
 
+
+//            System.out.println(eqKey);
+
             lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
             lpTable.setConstraint(eqKey, varKey, 1);
             lpTable.setConstraintType(eqKey, 2);
@@ -323,7 +371,7 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
 
 
                     if (utility != 0) {
-                        System.out.println(leaderSequence + " : " + followerSequence);
+//                        System.out.println(leaderSequence + " : " + followerSequence);
                         lpTable.setConstraint(eqKey, createSeqPairVarKeyCheckExistence(leaderSequence, followerSequence), -utility);
                     }
                 }
@@ -337,8 +385,11 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
     }
 
     protected void addObjective() {
-        for (Map.Entry<GameState, Double[]> entry : algConfig.getActualNonZeroUtilityValuesInLeafsGenSum().entrySet()) {
-            lpTable.setObjective(createSeqPairVarKey(entry.getKey()), entry.getValue()[leader.getId()]);
+//        for (Map.Entry<GameState, Double[]> entry : algConfig.getActualNonZeroUtilityValuesInLeafsGenSum().entrySet()) {
+//            lpTable.setObjective(createSeqPairVarKey(entry.getKey()), entry.getValue()[leader.getId()]);
+//        }
+        for( Map.Entry<Map<Player, Sequence>, Double[]> entry : algConfig.getUtilityForSequenceCombinationGenSum().entrySet()){
+            lpTable.setObjective(createSeqPairVarKey(entry.getKey().get(leader), entry.getKey().get(follower)), entry.getValue()[leader.getId()]);
         }
     }
 
@@ -391,7 +442,10 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
             }
         }
 
+//        System.out.println(algConfig.getSequencesFor(leader));
+
         for (Sequence leaderSequence : algConfig.getSequencesFor(leader)) {
+//            System.out.println(leaderSequence + " #: " + leaderSequence.hashCode());
             for (Sequence compatibleFollowerSequence : algConfig.getCompatibleSequencesFor(leaderSequence)) {
                 for (Action action : compatibleFollowerSequence) {
                     Sequence actionHistory = ((PerfectRecallInformationSet)action.getInformationSet()).getPlayersHistory();

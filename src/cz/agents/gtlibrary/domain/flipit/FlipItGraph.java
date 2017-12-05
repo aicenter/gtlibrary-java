@@ -29,6 +29,8 @@ public class FlipItGraph extends Graph {
 
     private double[] init_costs = new double[]  {8.0, 2.0, 2.0, 8.0, 5.0};//{8.0, 3.0, 2.0, 7.0, 6.0};//
     private double[] init_rewards = new double[]{10.0, 10.0, 4.0, 4.0, 10.0};//{11.0, 10.0, 4.0, 5.0, 8.0};//
+    private double[] init_costs_def = new double[]  {8.0, 2.0, 2.0, 8.0, 5.0};//{8.0, 3.0, 2.0, 7.0, 6.0};//
+    private double[] init_rewards_def = new double[]{10.0, 10.0, 4.0, 4.0, 10.0};//{11.0, 10.0, 4.0, 5.0, 8.0};//
 //    private double[] init_costs = new double[]  {6.0, 7.0, 2.0, 8.0, 5.0};//{8.0, 3.0, 2.0, 7.0, 6.0};//
 //    private double[] init_rewards = new double[]{4.0, 5.0, 4.0, 4.0, 10.0};//{11.0, 10.0, 4.0, 5.0, 8.0};//
 
