@@ -15,6 +15,9 @@ public class GadgetSefceLP implements Solver {
 
 
 
+    /*
+        Making roots of gadgets from a given IS.
+     */
     protected void makeTL(SequenceInformationSet set){
 
     }
