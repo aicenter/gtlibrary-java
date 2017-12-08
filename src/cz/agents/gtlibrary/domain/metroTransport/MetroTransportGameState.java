@@ -7,10 +7,15 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 
+import java.util.List;
+
 /**
  * Created by Jakub Cerny on 05/10/2017.
  */
 public class MetroTransportGameState extends GameStateImpl {
+
+    protected List<Action> history;
+
 
     int timeStep;
 
@@ -21,6 +26,8 @@ public class MetroTransportGameState extends GameStateImpl {
     MetroTransportAction attackerAction;
     Player playerToMove;
 
+    protected int hashCode = -1;
+    protected boolean gameEnd = false;
 
     public MetroTransportGameState(Player[] players) {
         super(players);

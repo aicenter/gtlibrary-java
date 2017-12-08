@@ -104,7 +104,7 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
@@ -118,18 +118,18 @@ public class FullSequenceEFG {
 //        testExploitGame();
 //		runFlipIt();
 //		runHoneyPot();
-		runBandit();
+//		runBandit();
 	}
 
 	private static void runBandit(){
-		BanditGameInfo gameInfo = new BanditGameInfo("MAS/graph6.txt");
+		BanditGameInfo gameInfo = new BanditGameInfo("MAS/new_graph_6.txt");
 		BanditGameState rootState = new BanditGameState();
 		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
 		FullSequenceEFG efg = new FullSequenceEFG(rootState, new BanditGameExpander<>(algConfig), gameInfo, algConfig);
 		efg.generate();
 
-		GambitEFG gambit = new GambitEFG();
-		gambit.write("bandit.gbt", rootState, new BanditGameExpander<>(algConfig));
+//		GambitEFG gambit = new GambitEFG();
+//		gambit.buildAndWrite("bandit.gbt", rootState, new BanditGameExpander<>(algConfig));
 	}
 
 	private static void runHoneyPot(){

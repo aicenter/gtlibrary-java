@@ -10,7 +10,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  */
 public class BanditGameBanditAction extends ActionImpl {
 
-    public enum BanditActionType {INIT, RELOCATE};
+    public enum BanditActionType {INIT, RELOCATE, NOA};
     private BanditActionType type;
     private int toRow = -1;
     private int toCol = -1;
@@ -18,6 +18,11 @@ public class BanditGameBanditAction extends ActionImpl {
     private int fromCol = -1;
 
     private int hashCode = -1;
+
+    public BanditGameBanditAction(InformationSet informationSet) {
+        super(informationSet);
+        this.type = BanditActionType.NOA;
+    }
 
     public BanditGameBanditAction(InformationSet informationSet, int fromRow, int fromCol, int toRow, int toCol) {
         super(informationSet);
@@ -70,7 +75,13 @@ public class BanditGameBanditAction extends ActionImpl {
 
     @Override
     public String toString() {
-        return "BA[" + toRow + ',' + toCol + "]";
+        if (type == BanditActionType.INIT) {
+            return "BA[" + toRow + ',' + toCol + "]";
+        } else if (type == BanditActionType.RELOCATE) {
+            return "BA[" + fromRow + "," + fromCol + " -> " + toRow + ',' + toCol + "]";
+        } else if (type == BanditActionType.NOA) {
+            return "BA[]";
+        } else return "";
 
     }
 }

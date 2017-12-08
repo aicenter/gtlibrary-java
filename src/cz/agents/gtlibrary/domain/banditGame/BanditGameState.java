@@ -35,6 +35,9 @@ public class BanditGameState extends GameStateImpl{
     protected int hashCode = -1;
     protected boolean gameEnd = false;
 
+    protected Pair<Integer,Integer> observed = new Pair<>(-1,-1);
+    protected int[][] banditMove = null;
+
     public BanditGameState() {
         super(ObsGameInfo.ALL_PLAYERS);
         history = new ArrayList<>();
@@ -58,6 +61,14 @@ public class BanditGameState extends GameStateImpl{
         END_REACHED = obs.END_REACHED;
         agentRow = obs.agentRow;
         agentCol = obs.agentCol;
+        observed = new Pair<>(obs.observed.getLeft(),obs.observed.getRight());
+        if (obs.banditMove != null) {
+            banditMove = new int[2][2];
+            banditMove[0][0] = obs.banditMove[0][0];
+            banditMove[0][1] = obs.banditMove[0][1];
+            banditMove[1][0] = obs.banditMove[1][0];
+            banditMove[1][1] = obs.banditMove[1][1];
+        }
     }
 
     protected void executeBanditAction(BanditGameBanditAction action) {
@@ -68,8 +79,25 @@ public class BanditGameState extends GameStateImpl{
             if (bandits.size() == BanditGameInfo.BANDIT_NUM) {
                 switchPlayers();
             }
-        } else
-            assert false; // TODO not implemented yet
+        } else if (action.getType().equals(BanditGameBanditAction.BanditActionType.RELOCATE)) {
+            assert (observed.getLeft() != -1 && observed.getRight() != -1);
+            Pair<Integer, Integer> from = new Pair<>(action.getFromRow(),action.getFromCol());
+            Pair<Integer, Integer> to = new Pair<>(action.getToRow(),action.getToCol());
+            int i = bandits.indexOf(from);
+            bandits.remove(from);
+            bandits.add(i,to);
+//            emptyDGR.remove(to);
+//            emptyDGR.add(from);
+            banditMove = new int[2][2];
+            banditMove[0][0] = from.getLeft();
+            banditMove[0][1] = from.getRight();
+            banditMove[1][0] = to.getLeft();
+            banditMove[1][1] = to.getRight();
+            switchPlayers();
+        }  else if (action.getType().equals(BanditGameBanditAction.BanditActionType.NOA)) {
+            switchPlayers();
+        } else assert false;
+
         clearCache();
     }
 
@@ -82,12 +110,19 @@ public class BanditGameState extends GameStateImpl{
         Pair<Integer,Integer> p = new Pair<>(agentRow,agentCol);
         history.add(p);
         if (bandits.contains(p)) {
+            observed = new Pair<>(-2, -2);
             attacks.add(p);
         } else {
             for (int i=0; i<BanditGameInfo.DGRS.size(); i++) {
-                if (BanditGameInfo.DGRS.contains(p))
+                if (BanditGameInfo.DGRS.get(i).equals(p)) {
                     emptyDGR.add(p);
+                    if (observed.getLeft() == -1 && observed.getRight() == -1) {
+                        switchPlayers();
+                        observed = new Pair<>(p.getLeft(), p.getRight());
+                    }
+                }
             }
+
         }
         if (BanditGameInfo.GOLD.contains(p)) {
             GOLD_PICKED++;
@@ -155,16 +190,16 @@ public class BanditGameState extends GameStateImpl{
     @Override
     public ISKey getISKeyForPlayerToMove() {
         if (getPlayerToMove().equals(BanditGameInfo.AGENT)) {
-            return new PerfectRecallISKey(new HashCodeBuilder(17, 31).append(timeStep).append(history).append(emptyDGR).append(attacks).append(GOLD_PICKED).append(END_REACHED).toHashCode(), getSequenceForPlayerToMove());
+            return new PerfectRecallISKey(new HashCodeBuilder(17, 31).append(timeStep).append(history).append(emptyDGR).append(attacks).append(observed).append(GOLD_PICKED).append(END_REACHED).toHashCode(), getSequenceForPlayerToMove());
         } else if (getPlayerToMove().equals(BanditGameInfo.BANDIT)) {
-            return new PerfectRecallISKey(new HashCodeBuilder(17, 31).append(timeStep).append(bandits).toHashCode(), getSequenceForPlayerToMove());
+            return new PerfectRecallISKey(new HashCodeBuilder(17, 31).append(timeStep).append(attacks).append(bandits).append(observed).append(banditMove).toHashCode(), getSequenceForPlayerToMove());
         } else throw new IllegalStateException("something is wrong");
     }
 
     @Override
     public int hashCode() {
         if (hashCode == -1) {
-            hashCode = new HashCodeBuilder(17, 31).append(history).append(timeStep).append(bandits).append(attacks).append(emptyDGR).append(GOLD_PICKED).append(END_REACHED).toHashCode();
+            hashCode = new HashCodeBuilder(17, 31).append(history).append(timeStep).append(bandits).append(attacks).append(emptyDGR).append(GOLD_PICKED).append(END_REACHED).append(observed).append(banditMove).toHashCode();
         }
         return hashCode;
     }
@@ -180,7 +215,7 @@ public class BanditGameState extends GameStateImpl{
         BanditGameState other = (BanditGameState) obj;
         if (this.hashCode() != obj.hashCode())
             return false;
-        if (this.timeStep != other.timeStep || this.GOLD_PICKED != other.GOLD_PICKED || this.END_REACHED != other.END_REACHED)
+        if (this.timeStep != other.timeStep || this.GOLD_PICKED != other.GOLD_PICKED || this.END_REACHED != other.END_REACHED || !this.observed.equals(other.observed))
             return false;
         if (!history.equals(other.history))
             return false;
@@ -190,6 +225,12 @@ public class BanditGameState extends GameStateImpl{
             return false;
         if (!emptyDGR.equals(other.emptyDGR))
             return false;
+        if ((banditMove == null && other.banditMove != null) || (banditMove != null && other.banditMove == null))
+            return false;
+        if (banditMove != null) {
+            if (banditMove[0][0] != other.banditMove[0][0] || banditMove[0][1] != other.banditMove[0][1] || banditMove[1][0] != other.banditMove[1][0] || banditMove[1][1] != other.banditMove[1][1])
+                return false;
+        }
         return true;
     }
 

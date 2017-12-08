@@ -12,6 +12,7 @@ import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by kail on 11/11/17.
@@ -57,8 +58,19 @@ public class BanditGameExpander<I extends InformationSet> extends ExpanderImpl<I
                 if (!state.bandits.contains(a))
                     actions.add(new BanditGameBanditAction(getAlgorithmConfig().getInformationSetFor(state), a.getLeft(), a.getRight()));
             }
+        } else {
+            List<Pair<Integer,Integer>> freeSpots = BanditGameInfo.DGRS.stream().filter(p -> !state.bandits.contains(p)).collect(Collectors.toList());
+            for (Pair<Integer,Integer> p : state.bandits) {
+                actions.add(new BanditGameBanditAction(getAlgorithmConfig().getInformationSetFor(state), p.getLeft(), p.getRight(), p.getLeft(), p.getRight()));
+                for (Pair<Integer,Integer> s : freeSpots) {
+                    if (s.getLeft() == state.agentRow && s.getRight() == state.agentCol) continue;
+                    actions.add(new BanditGameBanditAction(getAlgorithmConfig().getInformationSetFor(state), p.getLeft(), p.getRight(), s.getLeft(), s.getRight()));
+                }
+            }
         }
 
+        if (actions.size() == 0)
+           actions.add(new BanditGameBanditAction(getAlgorithmConfig().getInformationSetFor(state)));
         return actions;
     }
 }
