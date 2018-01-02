@@ -24,7 +24,7 @@ This library contains a domain-independent framework for modeling normal-form an
 and offers a unique collection of algorithms for solving these games.
 
 GT Library is developed at:
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Agent Technology Center (ATG)
 Department of Computer Science and Engineering
@@ -44,7 +44,7 @@ Integration with other projects:
 package cz/agents/gtlibrary/algorithms/sequenceform/refinements/quasiperfect contains several files from GTF framework by Troels Bjerre Sorensen (http://www.itu.dk/people/trbj/gtf.html) 
 
 Main authors:
-~~~~~~~~
+~~~~~~~~~~~~~
 
   Branislav Bosansky <branislav.bosansky@agents.fel.cvut.cz> (contact person)
   Jiri Cermak <jiri.cermak@agents.fel.cvut.cz>
@@ -53,6 +53,7 @@ Main authors:
 
 Other Contributors:
 ~~~~~~~~~~~~~~~~~~~
+
 Games of Oshi-Zumo and Tron were implemented by Marc Lanctot.
 
 More information:
