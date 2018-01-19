@@ -13,6 +13,9 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
+import cz.agents.gtlibrary.domain.pursuit.VisibilityPursuitGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -129,6 +132,16 @@ public class MaxRegretIRCFR extends IRCFR {
         }
     }
 
+    public static void runVisibilityPursuit() {
+        GameState root = new VisibilityPursuitGameState();
+        MCTSConfig config = new MCTSConfig();
+        Expander<MCTSInformationSet> expander = new PursuitExpander<>(config);
+        GameInfo info = new PursuitGameInfo();
+        MaxRegretIRCFR alg = new MaxRegretIRCFR(root, expander, info, config);
+
+        alg.runIterations(10000000);
+    }
+
     private static void runKuhnPoker() {
         GameState root = new KuhnPokerGameState();
         MCTSConfig config = new MCTSConfig();
@@ -165,7 +178,8 @@ public class MaxRegretIRCFR extends IRCFR {
             computeCurrentRegrets(rootState, 1, 1, player);
         if (REGRET_MATCHING_PLUS)
             removeNegativePRRegrets();
-        updateAbstraction();
+        if (USE_ABSTRACTION)
+            updateAbstraction();
         if (DELETE_REGRETS)
             prRegrets.clear();
         System.gc();
@@ -212,6 +226,7 @@ public class MaxRegretIRCFR extends IRCFR {
         double expectedValue = 0;
         int i = -1;
 
+        storeProbabilityForReachingIS(node, pi1, pi2);
         if (informationSet.getPlayer().getId() == 0) {
             for (Action ai : actions) {
                 i++;
@@ -237,6 +252,9 @@ public class MaxRegretIRCFR extends IRCFR {
                 updateRegretLog(node, pi1, pi2, expPlayer, expectedValuesForActions, expectedValue);
         }
         return expectedValue;
+    }
+
+    protected void storeProbabilityForReachingIS(GameState node, double pi1, double pi2) {
     }
 
     private void updateRegretLog(GameState node, double pi1, double pi2, Player expPlayer, double[] expectedValuesForActions, double expectedValue) {

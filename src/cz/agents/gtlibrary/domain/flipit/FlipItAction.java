@@ -92,8 +92,8 @@ public class FlipItAction extends ActionImpl {
 
     @Override
     public String toString() {
-        if(isNoop) return "PASS";
-        else return controlNode.toString();
+        if(isNoop) return "(PASS:"+informationSet.hashCode()+")";
+        else return "("+controlNode.toString()+":"+informationSet.hashCode()+")";
 //        return "{" + (controlNode == null ? "_" : controlNode) +
 //                ", " + (isNoop ? "NOOP" : "_") +
 //                ", " + (controller == null ? "_" : ((controller.equals(FlipItGameInfo.DEFENDER)) ? "D" : "A")) + ", " + getInformationSet().hashCode() +

@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.utils.io;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.iinodes.TLAction;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -30,6 +31,7 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +77,7 @@ public class GambitEFG {
 
             out.print("EFG 2 R \"" + root.getClass() + expander.getClass() + "\" {");
             Player[] players = root.getAllPlayers();
-            for (int i = 0; i < 2; i++) {//assumes 2 playter games (possibly with nature) nature is the last player and always present!!!
+            for (int i = 0; i < 2; i++) {//assumes 2-player games (possibly with nature) nature is the last player and always present!!!
                 if (i != 0) out.print(" ");
                 out.print("\"" + players[i] + "\"");
             }
@@ -121,6 +123,88 @@ public class GambitEFG {
                 writeRec(out, next, expander, cut_off_depth - 1);
             }
         }
+    }
+
+    public void writeToReachIS(String filename, GameState root, Expander<? extends InformationSet> expander, SequenceInformationSet set) {
+//        HashCodeEvaluator evaluator = new HashCodeEvaluator();
+//
+//        evaluator.build(root, expander);
+//        assert evaluator.getCollisionCount() == 0;
+        try {
+            PrintStream out = new PrintStream(filename);
+
+            out.print("EFG 2 R \"" + root.getClass() + expander.getClass() + "\" {");
+            Player[] players = root.getAllPlayers();
+            for (int i = 0; i < 2; i++) {//assumes 2-player games (possibly with nature) nature is the last player and always present!!!
+                if (i != 0) out.print(" ");
+                out.print("\"" + players[i] + "\"");
+            }
+            out.println("}");
+            nextOutcome = 1;
+            nextChance = 1;
+            writeRecToReachIs(out, root, expander, set);
+            out.flush();
+            out.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void writeRecToReachIs(PrintStream out, GameState node, Expander<? extends InformationSet> expander, SequenceInformationSet set) {
+        if (node.isGameEnd()) {
+            out.print("t \"" + node.toString() + "\" " + nextOutcome++ + " \"\" { ");
+            double[] u = node.getUtilities();
+            for (int i = 0; i < 2; i++) {
+                out.print((i == 0 ? "" : ", ") + u[i]);
+            }
+            out.println("}");
+        } else {
+            List<Action> actions = pruneActions(node, set, expander.getActions(node));
+            if (node.isPlayerToMoveNature()) {
+                out.print("c \"" + node.toString() + "\" " + nextChance++ + " \"\" { ");
+                for (Action a : actions) {
+                    out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + node.getProbabilityOfNatureFor(a) + " ");
+                }
+            } else {
+                out.print("p \"" + node.toString() + "\" " + (node.getPlayerToMove().getId() + 1) + " " + getUniqueHash(node.getISKeyForPlayerToMove()) + " \"\" { ");
+                for (Action a : actions) {
+                    out.print("\"" + (wActionLabels ? a.toString() : "") + "\" ");
+                }
+            }
+            out.println("} 0");
+            for (Action a : actions) {
+                GameState next = node.performAction(a);
+                expander.getAlgorithmConfig().addInformationSetFor(next);
+                writeRecToReachIs(out, next, expander, set);
+            }
+        }
+    }
+
+    private List<Action> pruneActions(GameState state, SequenceInformationSet set, List<Action> actions){
+        if (set.getAllStates().contains(state) || actions.get(0) instanceof TLAction) return actions;
+        boolean pruneActions = false;
+        for (GameState setState : set.getAllStates()){
+            boolean isPrefix = true;
+            for (Player p : state.getHistory().getSequencesOfPlayers().keySet())
+                if (!state.getHistory().getSequenceOf(p).isPrefixOf(setState.getHistory().getSequenceOf(p)))
+                    isPrefix = false;
+            if (isPrefix) pruneActions = true;
+        }
+        if (!pruneActions) return actions;
+        if (state.getPlayerToMove().equals(set.getPlayer())){
+            for (Action a : actions)
+                if (set.getPlayersHistory().getAsList().contains(a))
+                    return new ArrayList<Action>(){{ add(a); }};
+        }
+        List<Action> newActions = new ArrayList<>();
+        for(Action a : actions){
+            for (GameState setState : set.getAllStates()){
+                for (Player p : state.getHistory().getSequencesOfPlayers().keySet())
+                    if (setState.getHistory().getSequenceOf(p).getAsList().contains(a) && !newActions.contains(a))
+                        newActions.add(a);
+            }
+        }
+        return newActions;
     }
 
     private Integer getUniqueHash(ISKey key) {

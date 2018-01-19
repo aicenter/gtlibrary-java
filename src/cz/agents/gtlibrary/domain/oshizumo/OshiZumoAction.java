@@ -26,7 +26,6 @@ import cz.agents.gtlibrary.interfaces.Player;
 
 public class OshiZumoAction extends ActionImpl implements Comparable<OshiZumoAction> {
 
-    // lanctot: Note: maybe need to change this
     private static final long serialVersionUID = -3504137065821329745L;
 
     private final int value;

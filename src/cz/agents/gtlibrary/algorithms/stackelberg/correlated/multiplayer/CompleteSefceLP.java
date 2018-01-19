@@ -580,6 +580,10 @@ public class CompleteSefceLP implements Solver {
         return gameValue;
     }
 
+    @Override
+    public Map<Sequence, Double> getResultStrategiesForPlayer(Player player) {
+        return null;
+    }
 
 
     public long getOverallConstraintGenerationTime() {

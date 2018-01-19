@@ -20,6 +20,7 @@ import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.me
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.regretcheck.RegretCheck;
 import cz.agents.gtlibrary.experimental.imperfectrecall.automatedabstractions.memeff.cfr.regretcheck.SquareRootCheck;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.ImperfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.io.FileInputStream;
@@ -32,9 +33,9 @@ import java.util.stream.Collectors;
 public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
     public static void main(String[] args) {
-//        runGenericPoker();
+        runGenericPoker();
 //        runIIGoofspiel();
-        runRandomGame();
+//        runRandomGame();
 //        runRandomGame("backup.ser");
 //        runVisibilityPursuit();
     }
@@ -141,47 +142,59 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         }
     }
 
-
+    public static boolean SAMPLE_USING_STRATEGY = true;
     public static double INIT_REGRET_WEIGHT = 0.99;
     public static int sizeLimitHeuristic = 900;
     public static int sizeLimitBound = 100;
+    public static long IS_SAMPLING_SEED = 1;
     private Random random;
     private Set<ISKey> toUpdate;
     private Map<ISKey, double[]> regretsForRegretCheck;
+    private Map<ISKey, Double> reachProbability;
     private RegretCheck regretCheck = new SquareRootCheck();
     private boolean bellowLimitHeuristic;
     private boolean bellowLimitBound;
     private int iterationsBeforeBoundResample;
     private int currentSampleIterations;
+    public long statisticsTime;
+    public long abstractionUpdateTime;
+    public long regretUpdateTime;
+    public long samplingTime;
 
     public LimitedMemoryMaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig) {
         super(rootState, perfectRecallExpander, info, perfectRecallConfig);
-        random = new Random(1);
+        random = new Random(IS_SAMPLING_SEED);
         toUpdate = new HashSet<>(sizeLimitHeuristic);
         regretsForRegretCheck = new HashMap<>(sizeLimitBound);
         bellowLimitHeuristic = false;
         bellowLimitBound = false;
         iterationsBeforeBoundResample = 1;
         currentSampleIterations = 0;
+        reachProbability = new HashMap<>();
     }
 
     public LimitedMemoryMaxRegretIRCFR(GameState rootState, Expander<? extends InformationSet> perfectRecallExpander, GameInfo info, MCTSConfig perfectRecallConfig, AutomatedAbstractionData data) {
         super(rootState, perfectRecallExpander, info, perfectRecallConfig, data);
-        random = new Random(1);
+        random = new Random(IS_SAMPLING_SEED);
         toUpdate = new HashSet<>(sizeLimitHeuristic);
         regretsForRegretCheck = new HashMap<>(sizeLimitBound);
         bellowLimitHeuristic = false;
         bellowLimitBound = false;
-        iterationsBeforeBoundResample = (int) Math.floor((Math.pow(2, Math.log(2*(data.iteration - delay + 1)) / Math.log(2))));
+        iterationsBeforeBoundResample = (int) Math.floor((Math.pow(2, Math.log(2 * (data.iteration - delay + 1)) / Math.log(2))));
         System.err.println("Initializing sequence length " + iterationsBeforeBoundResample);
         currentSampleIterations = 0;
+        reachProbability = new HashMap<>();
     }
 
     @Override
     protected void iteration(Player player) {
         if (sizeLimitBound > 0)
             boundCheck();
+        long samplingUpdateStart = threadBean.getCurrentThreadCpuTime();
         findISsToUpdate(player);
+        samplingTime += threadBean.getCurrentThreadCpuTime() - samplingUpdateStart;
+        long regretUpdateStart = threadBean.getCurrentThreadCpuTime();
+
         if (SIMULTANEOUS_PR_IR)
             perfectAndImperfectRecallIteration(rootState, 1, 1, player);
         else
@@ -191,37 +204,59 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
             computeCurrentRegrets(rootState, 1, 1, player);
         if (REGRET_MATCHING_PLUS)
             removeNegativePRRegrets();
-        updateAbstraction();
+        regretUpdateTime += threadBean.getCurrentThreadCpuTime() - regretUpdateStart;
+        if (USE_ABSTRACTION) {
+            long abstractionUpdateStart = threadBean.getCurrentThreadCpuTime();
+            updateAbstraction();
+            abstractionUpdateTime += threadBean.getCurrentThreadCpuTime() - abstractionUpdateStart;
+        }
         if (DELETE_REGRETS)
             prRegrets.clear();
         toUpdate.clear();
+        reachProbability.clear();
         System.gc();
     }
 
     private void boundCheck() {
-        if(iteration < delay)
+        if (iteration < delay)
             return;
         currentSampleIterations++;
         iterationsBeforeBoundResample--;
         if (iterationsBeforeBoundResample == 0) {
+            long start = threadBean.getCurrentThreadCpuTime();
             resampleInformationSetsForRegretCheck();
-            iterationsBeforeBoundResample = 2*currentSampleIterations;
+            samplingTime += threadBean.getCurrentThreadCpuTime() - start;
+            iterationsBeforeBoundResample = 2 * currentSampleIterations;
             System.err.println("setting sequence length " + iterationsBeforeBoundResample);
             currentSampleIterations = 1;
         } else {
+            long start = threadBean.getCurrentThreadCpuTime();
             checkRegretBoundsAndUpdate();
+            abstractionUpdateTime += threadBean.getCurrentThreadCpuTime() - start;
         }
+    }
+
+    @Override
+    protected void printStatistics() {
+        long statStart = threadBean.getCurrentThreadCpuTime();
+
+        super.printStatistics();
+        statisticsTime += threadBean.getCurrentThreadCpuTime() - statStart;
+        System.out.println("Abstraction update time: " + abstractionUpdateTime / 1e6);
+        System.out.println("Regret update time: " + regretUpdateTime / 1e6);
+        System.out.println("Sampling time: " + samplingTime / 1e6);
+        System.out.println("Statistics time: " + statisticsTime / 1e6);
     }
 
     @Override
     protected void printRegretStat() {
         System.out.println("Max immediate regret in checked sets: " + regretLog.entrySet().stream().filter(entry -> regretsForRegretCheck.containsKey(entry.getKey())).map(entry -> entry.getValue())
-                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble()/iteration).max().orElse(20));
+                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble() / iteration).max().orElse(20));
         System.out.println("Max immediate regret: " + regretLog.values().stream()
                 .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble() / iteration).max().orElse(20));
         System.out.println("Max immediate regret in abstracted sets: " + regretLog.entrySet().stream().filter(entry -> getAbstractedInformationSet(entry.getKey(), entry.getValue().length).getAbstractedKeys().size() > 1).map(entry -> entry.getValue())
-                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble()/iteration).max().orElse(20));
-        System.out.println("Regret bound without constant and actions: " + 1./Math.sqrt(iteration));
+                .mapToDouble(regrets -> Arrays.stream(regrets).max().getAsDouble() / iteration).max().orElse(20));
+        System.out.println("Regret bound without constant and actions: " + 1. / Math.sqrt(iteration));
         System.out.println("Regret check size: " + regretsForRegretCheck.size());
     }
 
@@ -293,16 +328,53 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         if (abstractedISCount <= sizeLimitBound) {
             bellowLimitBound = true;
         } else {
-            Collections.shuffle(imperfectRecallSetsForPlayer, random);
-            for (MemEffAbstractedInformationSet informationSet : imperfectRecallSetsForPlayer) {
-                List<ISKey> collect = informationSet.getAbstractedKeys().stream()
-                        .collect(Collectors.toList());
+            if (SAMPLE_USING_STRATEGY) {
+                sampleAccordingToStrategyForBound(imperfectRecallSetsForPlayer);
+            } else {
+                Collections.shuffle(imperfectRecallSetsForPlayer, random);
+                for (MemEffAbstractedInformationSet informationSet : imperfectRecallSetsForPlayer) {
+                    List<ISKey> collect = informationSet.getAbstractedKeys().stream()
+                            .collect(Collectors.toList());
 
-                if (collect.size() + regretsForRegretCheck.size() > sizeLimitBound) {
-                    Collections.shuffle(collect, random);
-                    collect.subList(Math.min(sizeLimitBound - regretsForRegretCheck.size(), collect.size()), collect.size()).clear();
+                    if (collect.size() + regretsForRegretCheck.size() > sizeLimitBound) {
+                        Collections.shuffle(collect, random);
+                        collect.subList(Math.min(sizeLimitBound - regretsForRegretCheck.size(), collect.size()), collect.size()).clear();
+                    }
+                    collect.forEach(key -> regretsForRegretCheck.put(key, initializeRegrets(informationSet)));
                 }
-                collect.forEach(key -> regretsForRegretCheck.put(key, initializeRegrets(informationSet)));
+            }
+        }
+    }
+
+    private void sampleAccordingToStrategyForBound(List<MemEffAbstractedInformationSet> imperfectRecallSetsForPlayer) {
+        Set<Integer> blackList = new HashSet<>();
+        double reachEps = 1. / imperfectRecallSetsForPlayer.size();
+        double sum = imperfectRecallSetsForPlayer.stream().mapToDouble(i -> reachProbability.getOrDefault(i.getISKey(), 0d) + reachEps).sum();
+
+        while (regretsForRegretCheck.size() < sizeLimitBound) {
+            double randVal = random.nextDouble() * sum;
+
+            for (int i = 0; i < imperfectRecallSetsForPlayer.size(); i++) {
+                if (blackList.contains(i))
+                    continue;
+                double prob = reachProbability.getOrDefault(imperfectRecallSetsForPlayer.get(i).getISKey(), 0d) + reachEps;
+
+                randVal -= prob;
+                if (randVal <= 0) {
+                    blackList.add(i);
+                    sum -= prob;
+                    List<ISKey> collect = imperfectRecallSetsForPlayer.get(i).getAbstractedKeys().stream()
+                            .collect(Collectors.toList());
+
+                    if (collect.size() + regretsForRegretCheck.size() > sizeLimitBound) {
+                        Collections.shuffle(collect, random);
+                        collect.subList(Math.min(sizeLimitBound - regretsForRegretCheck.size(), collect.size()), collect.size()).clear();
+                    }
+                    final int index = i;
+
+                    collect.forEach(key -> regretsForRegretCheck.put(key, initializeRegrets(imperfectRecallSetsForPlayer.get(index))));
+                    break;
+                }
             }
         }
     }
@@ -318,7 +390,7 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 //        }
 //        assert Math.abs(Arrays.stream(regrets).max().getAsDouble() - currentRegretBound * iteration) < 1e-8;
 
-          return initializeRegrets(informationSet.getData().getActionCount());
+        return initializeRegrets(informationSet.getData().getActionCount());
     }
 
     private double[] initializeRegrets(int actionCount) {
@@ -339,6 +411,31 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         return initRegrets;
     }
 
+//    protected void findISsToUpdate(Player player) {
+//        if (bellowLimitHeuristic)
+//            return;
+//        List<MemEffAbstractedInformationSet> imperfectRecallSetsForPlayer = currentAbstractionInformationSets.values().stream()
+//                .filter(i -> i.getPlayer().getId() == player.getId())
+//                .filter(i -> i.getAbstractedKeys().size() > 1)
+//                .collect(Collectors.toList());
+//        int abstractedISCount = getAbstractedISCount(imperfectRecallSetsForPlayer);
+//
+//        if (abstractedISCount <= sizeLimitHeuristic) {
+//            bellowLimitHeuristic = true;
+//        } else {
+//            Collections.shuffle(imperfectRecallSetsForPlayer, random);
+//            for (MemEffAbstractedInformationSet informationSet : imperfectRecallSetsForPlayer) {
+//                List<ISKey> collect = new ArrayList<>(informationSet.getAbstractedKeys());
+//
+//                if (collect.size() + toUpdate.size() > sizeLimitHeuristic) {
+//                    Collections.shuffle(collect, random);
+//                    collect.subList(Math.min(sizeLimitHeuristic - toUpdate.size(), collect.size()), collect.size()).clear();
+//                }
+//                toUpdate.addAll(collect);
+//            }
+//        }
+//    }
+
     protected void findISsToUpdate(Player player) {
         if (bellowLimitHeuristic)
             return;
@@ -351,15 +448,49 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
         if (abstractedISCount <= sizeLimitHeuristic) {
             bellowLimitHeuristic = true;
         } else {
-            Collections.shuffle(imperfectRecallSetsForPlayer, random);
-            for (MemEffAbstractedInformationSet informationSet : imperfectRecallSetsForPlayer) {
-                List<ISKey> collect = new ArrayList<>(informationSet.getAbstractedKeys());
+            if (SAMPLE_USING_STRATEGY) {
+                sampleAccordingToStrategy(imperfectRecallSetsForPlayer);
+            } else {
+                Collections.shuffle(imperfectRecallSetsForPlayer, random);
+                for (MemEffAbstractedInformationSet informationSet : imperfectRecallSetsForPlayer) {
+                    List<ISKey> collect = new ArrayList<>(informationSet.getAbstractedKeys());
 
-                if (collect.size() + toUpdate.size() > sizeLimitHeuristic) {
-                    Collections.shuffle(collect, random);
-                    collect.subList(Math.min(sizeLimitHeuristic - toUpdate.size(), collect.size()), collect.size()).clear();
+                    if (collect.size() + toUpdate.size() > sizeLimitHeuristic) {
+                        Collections.shuffle(collect, random);
+                        collect.subList(Math.min(sizeLimitHeuristic - toUpdate.size(), collect.size()), collect.size()).clear();
+                    }
+                    toUpdate.addAll(collect);
                 }
-                toUpdate.addAll(collect);
+            }
+        }
+    }
+
+    private void sampleAccordingToStrategy(List<MemEffAbstractedInformationSet> imperfectRecallSetsForPlayer) {
+        Set<Integer> blackList = new HashSet<>();
+        double reachEps = 1. / imperfectRecallSetsForPlayer.size();
+        double sum = imperfectRecallSetsForPlayer.stream().mapToDouble(i -> reachProbability.getOrDefault(i.getISKey(), 0d) + reachEps).sum();
+
+        while (toUpdate.size() < sizeLimitHeuristic) {
+            double randVal = random.nextDouble() * sum;
+
+            for (int i = 0; i < imperfectRecallSetsForPlayer.size(); i++) {
+                if (blackList.contains(i))
+                    continue;
+                double prob = reachProbability.getOrDefault(imperfectRecallSetsForPlayer.get(i).getISKey(), 0d) + reachEps;
+
+                randVal -= prob;
+                if (randVal <= 0) {
+                    blackList.add(i);
+                    sum -= prob;
+                    List<ISKey> collect = new ArrayList<>(imperfectRecallSetsForPlayer.get(i).getAbstractedKeys());
+
+                    if (collect.size() + toUpdate.size() > sizeLimitHeuristic) {
+                        Collections.shuffle(collect, random);
+                        collect.subList(Math.min(sizeLimitHeuristic - toUpdate.size(), collect.size()), collect.size()).clear();
+                    }
+                    toUpdate.addAll(collect);
+                    break;
+                }
             }
         }
     }
@@ -386,6 +517,18 @@ public class LimitedMemoryMaxRegretIRCFR extends MaxRegretIRCFR {
 
         for (int i = 0; i < regret.length; i++) {
             regret[i] += currentProb * (expectedValuesForActions[i] - expectedValue);
+        }
+    }
+
+    @Override
+    protected void storeProbabilityForReachingIS(GameState node, double pi1, double pi2) {
+        if (SAMPLE_USING_STRATEGY) {
+            ImperfectRecallISKey key = getAbstractionISKey(node);
+
+            if (node.getPlayerToMove().getId() == 0)
+                reachProbability.compute(key, (k, v) -> v == null ? pi1 * node.getNatureProbability() : v + pi1 * node.getNatureProbability());
+            else
+                reachProbability.compute(key, (k, v) -> v == null ? pi2 * node.getNatureProbability() : v + pi2 * node.getNatureProbability());
         }
     }
 

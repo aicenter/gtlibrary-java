@@ -64,7 +64,7 @@ public class BayesianStackelbergRunner {
     static String alg = "MILP";
 
     public static void main(String[] args) {
-        runFlipIt(new String[]{"3", "5", "flipit_simple3.txt", "10", "test_bsgsse.txt", alg , "F"});
+//        runFlipIt(new String[]{"3", "5", "flipit_simple3.txt", "10", "test_bsgsse.txt", alg , "F"});
     }
 
     public static void runFlipIt(String[] args){

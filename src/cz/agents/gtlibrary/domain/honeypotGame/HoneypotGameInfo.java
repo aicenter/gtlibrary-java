@@ -31,24 +31,25 @@ public class HoneypotGameInfo implements GameInfo {
 
     public static final boolean USE_UNIFORM_COSTS = false;
     public static final boolean CAN_ATTACK_WITH_NEGATIVE_POINTS = true;
-    public static final int NUMBER_OF_PASSES_TO_END_GAME = 1;
+    public static int NUMBER_OF_PASSES_TO_END_GAME = 1;
 
     private static boolean readInputFile = false;
-    private static String inputFile  = "honeypot_complex1.txt";
+    private static String inputFile  = "honeypot_deployed1.txt";
 
     public static final boolean ENABLE_ITERATIVE_SOLVING = true;
 
     public static long seed = 11;
 
     public HoneypotGameInfo() {
-        if (readInputFile) readGraph();
+        if (readInputFile) readFile();
         else initNodes();
     }
 
     public HoneypotGameInfo(String inputFile){
         this.inputFile = inputFile;
         this.readInputFile = true;
-        readGraph();
+//        readGraph();
+        readFile();
     }
 
     private void initNodes() {
@@ -61,9 +62,57 @@ public class HoneypotGameInfo implements GameInfo {
                 minValue = NODE_REWARDS[i];
             }
         }
-
         Arrays.sort(allNodes, (a,b) -> -1 * Double.compare(a.reward, b.reward));
+    }
 
+    private void readFile(){
+        File file = new File(inputFile);
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            String[] line = reader.readLine().split("\\s+");
+            initialDefenderBudget = Integer.parseInt(line[0]);
+            initialAttackerBudget = Integer.parseInt(line[1]);
+            attacksAllowed = Integer.parseInt(line[2]);
+//            uniformAttackCost = initialAttackerBudget / attacksAllowed;
+            if (line.length > 3)
+                NUMBER_OF_PASSES_TO_END_GAME = Integer.parseInt(line[3]);
+
+            line = reader.readLine().split("\\s+");
+            int nodesCount = Integer.parseInt(line[0]);
+
+            line = reader.readLine().split("\\s+");
+            double[] NODE_REWARDS = new double[nodesCount];
+            for (int i = 0; i < nodesCount; i++) {
+                NODE_REWARDS[i] = Double.parseDouble(line[i]);
+            }
+
+            line = reader.readLine().split("\\s+");
+            double[] NODE_ATTACKERCOSTS = new double[nodesCount];
+            for (int i = 0; i < nodesCount; i++) {
+                NODE_ATTACKERCOSTS[i] = Double.parseDouble(line[i]);
+            }
+
+            line = reader.readLine().split("\\s+");
+            double[] NODE_DEFENDERCOSTS = new double[nodesCount];
+            for (int i = 0; i < nodesCount; i++) {
+                NODE_DEFENDERCOSTS[i] = Double.parseDouble(line[i]);
+            }
+
+            allNodes = new HoneypotGameNode[NODE_REWARDS.length];
+
+            for (int i = 0; i < NODE_REWARDS.length; i++) {
+                if (USE_UNIFORM_COSTS) allNodes[i] = new HoneypotGameNode(i + 1, NODE_REWARDS[i], uniformAttackCost, uniformAttackCost);
+                else allNodes[i] = new HoneypotGameNode(i + 1, NODE_REWARDS[i], NODE_ATTACKERCOSTS[i], NODE_DEFENDERCOSTS[i]);
+                if (NODE_REWARDS[i] < minValue) {
+                    minValue = NODE_REWARDS[i];
+                }
+            }
+            Arrays.sort(allNodes, (a,b) -> -1 * Double.compare(a.reward, b.reward));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void readGraph(){
@@ -76,6 +125,8 @@ public class HoneypotGameInfo implements GameInfo {
             initialAttackerBudget = Integer.parseInt(line[1]);
             attacksAllowed = Integer.parseInt(line[2]);
             uniformAttackCost = initialAttackerBudget / attacksAllowed;
+            if (line.length > 3)
+                NUMBER_OF_PASSES_TO_END_GAME = Integer.parseInt(line[3]);
 
             line = reader.readLine().split("\\s+");
             int nodesCount = Integer.parseInt(line[0]);
@@ -133,7 +184,8 @@ public class HoneypotGameInfo implements GameInfo {
         String info = "Honeypot Game : defender budget = " + initialDefenderBudget + "; attacker budget = " + initialAttackerBudget +
                 "; attacks allowed = " + attacksAllowed;
         if (readInputFile) info += "; input file = " + inputFile;
-        else info += "; node rewards = "  + Arrays.toString(NODE_REWARDS);
+//        else info += "; node rewards = "  + Arrays.toString(NODE_REWARDS);
+        info += "\nNodes = " + Arrays.toString(allNodes);
         return info;
     }
 

@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.iinodes;
 
+import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 
 public abstract class SimultaneousGameState extends GameStateImpl {
@@ -33,6 +34,12 @@ public abstract class SimultaneousGameState extends GameStateImpl {
     public SimultaneousGameState(SimultaneousGameState gameState) {
         super(gameState);
         this.depth = gameState.depth;
+    }
+
+    @Override
+    public void transformInto(GameState gameState) {
+        super.transformInto(gameState);
+        this.depth = ((SimultaneousGameState)gameState).depth;
     }
 
     public int getDepth() {

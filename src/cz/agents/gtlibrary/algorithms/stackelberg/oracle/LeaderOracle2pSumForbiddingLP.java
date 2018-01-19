@@ -66,6 +66,20 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
 //        System.exit(0);
     }
 
+    public LeaderOracle2pSumForbiddingLP(Player leader, GameInfo info, boolean useColumnGenTable, boolean sequentialGeneration, boolean addAllPrefixes) {
+        super(leader, info);
+        restrictions =  new HashMap<>();
+        if (useColumnGenTable) lpTable = new ColumnGenerationLPTable();
+        else
+            lpTable = new LPTable();
+        GENERATION_BEFORE_FIXING = sequentialGeneration;
+        ADD_ALL_PREFIXES = addAllPrefixes;
+//        eps = 1e-8;
+//        lpTable = new RecyclingLPTable();
+//        System.out.println(lpTable.getClass().getCanonicalName());
+//        System.exit(0);
+    }
+
 
     @Override
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
@@ -227,7 +241,7 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
                 Map<InformationSet, Map<Sequence, Double>> followerBehavStrat = getBehavioralStrategy(lpData, follower);
                 Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(followerBehavStrat, lpData);
                 System.out.println("done.");
-                System.out.println("BSC: " + brokenStrategyCauses);
+//                System.out.println("BSC: " + brokenStrategyCauses);
                 brokenStrategyIdentificationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 //                Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getLeaderBehavioralStrategy(lpData, leader));
 

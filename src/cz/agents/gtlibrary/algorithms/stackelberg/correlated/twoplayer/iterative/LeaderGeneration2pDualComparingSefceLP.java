@@ -18,6 +18,9 @@ import java.util.HashSet;
  * Created by Jakub Cerny on 11/10/2017.
  */
 public class LeaderGeneration2pDualComparingSefceLP extends LeaderGenerationTwoPlayerSefceLP {
+
+    HashMap<Object, Double> lastDuals = null;
+
     public LeaderGeneration2pDualComparingSefceLP(Player leader, GameInfo info) {
         super(leader, info);
         MAX = false;

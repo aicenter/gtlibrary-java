@@ -21,7 +21,9 @@ package cz.agents.gtlibrary.utils.graph;
 
 import org.jgrapht.graph.DefaultDirectedGraph;
 
-public class Edge {
+import java.io.Serializable;
+
+public class Edge implements Serializable {
 	
 	private Node source;
 	private Node target;

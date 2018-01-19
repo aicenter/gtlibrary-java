@@ -24,8 +24,8 @@ public class BasicGameBuilder {
     public static void main(String[] args) {
 //        buildVisibilityPursuit();
 //        buildGP();
-//        buildGS();
-        buildRandomGame();
+        buildGS();
+//        buildRandomGame();
     }
 
     private static void buildVisibilityPursuit() {
@@ -60,7 +60,7 @@ public class BasicGameBuilder {
         Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(new MCTSConfig());
         new GSGameInfo();
 
-        build(root, expander.getAlgorithmConfig(), expander);
+        buildWithoutTerminalIS(root, expander.getAlgorithmConfig(), expander);
         System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
     }
 
@@ -95,7 +95,7 @@ public class BasicGameBuilder {
             algConfig.addInformationSetFor(currentState);
             queue.addAll(expander.getActions(currentState).stream().map(currentState::performAction).collect(Collectors.toList()));
 
-            if(algConfig.getAllInformationSets().size() % 100000 == 0)
+            if(algConfig.getAllInformationSets().size() % 1000 == 0)
                 System.out.println(expander.getAlgorithmConfig().getAllInformationSets().values().stream().filter(i -> i.getPlayer().getId() != 2).filter(i -> i.getAllStates().stream().allMatch(s -> !s.isGameEnd())).count());
         }
     }

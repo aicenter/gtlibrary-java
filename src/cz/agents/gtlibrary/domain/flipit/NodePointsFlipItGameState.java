@@ -9,6 +9,7 @@ import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.graph.Edge;
 import cz.agents.gtlibrary.utils.graph.Node;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -333,6 +334,11 @@ public class NodePointsFlipItGameState extends SimultaneousGameState {
 
     @Override
     public boolean isActualGameEnd() {
+        if (currentPlayerIndex == 0 && FlipItGameInfo.RANDOM_TERMINATION){
+            HighQualityRandom random = new HighQualityRandom(FlipItGameInfo.seed);
+            if (random.nextDouble() < FlipItGameInfo.RANDOM_TERMINATION_PROBABILITY)
+                return true;
+        }
         return round == FlipItGameInfo.depth;
     }
 

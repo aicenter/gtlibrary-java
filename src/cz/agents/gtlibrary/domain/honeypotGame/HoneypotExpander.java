@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.domain.honeypotGame;
 
-import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
@@ -21,9 +20,9 @@ public class HoneypotExpander<I extends InformationSet> extends ExpanderImpl<I> 
 
     @Override
     public List<Action> getActions(GameState gameState) {
-        if (gameState.getPlayerToMove().equals(FlipItGameInfo.DEFENDER))
+        if (gameState.getPlayerToMove().equals(HoneypotGameInfo.DEFENDER))
             return getDefenderActions((HoneypotGameState) gameState);
-        if (gameState.getPlayerToMove().equals(FlipItGameInfo.ATTACKER))
+        if (gameState.getPlayerToMove().equals(HoneypotGameInfo.ATTACKER))
             return getAttackerActions((HoneypotGameState) gameState);
         return null;
     }

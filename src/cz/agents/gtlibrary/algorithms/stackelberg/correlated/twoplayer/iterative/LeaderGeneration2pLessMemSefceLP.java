@@ -23,26 +23,34 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
     protected long restrictedGameGenerationTime = 0;
 
     protected final boolean PRINT_STATS = false;
-    protected final boolean USE_GC = false;
+    protected final boolean USE_GC = true;
+    protected final boolean BUILT_LP = true;
+    protected final boolean ADD_ALL_LEADER_SEQUENCES = false;
+    protected final boolean USE_BLACKLISTS = true;
 
+    protected final boolean USE_TEMP_LEAVES = false;
     protected HashSet<GameState> temporaryLeaves;
+    protected final double tempLeafProbability = 0.3;
 
     protected ObjectPool<GameState> pool;
-
-//    protected LinkedList<GameState> queue;
-//    protected HashMap<Object, Double> duals;
-//    protected HashSet<Sequence> deviations;
-
-//    protected HashSet<Integer> leaderRGHashes;
+    protected boolean ADD_TO_LP = true;
 
     public LeaderGeneration2pLessMemSefceLP(Player leader, GameInfo info) {
         super(leader, info);
         temporaryLeaves = new HashSet<>();
         if (info instanceof FlipItGameInfo)
-            pool = new ObjectPool<>(2*FlipItGameInfo.depth*FlipItGameInfo.graph.getAllNodes().size() + 1);
+            pool = new ObjectPool<>(2*FlipItGameInfo.depth*(FlipItGameInfo.graph.getAllNodes().size()+1) + 1);
         else
             pool = new ObjectPool<>(100);
 //        leaderRGHashes =  new HashSet<>();
+        ADD_TO_LP = true;
+
+//        ADD_ALL_PREFIXES = false;
+
+        if (!ADD_ALL_PREFIXES){
+            System.err.println("Not supported. Exiting."); System.exit(0);
+        }
+
     }
 
     public LeaderGeneration2pLessMemSefceLP(Player leader, GameInfo info, boolean greedy, boolean max) {
@@ -51,7 +59,8 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
 
     @Override
     public String getInfo() {
-        return "Iterative two-player SEFCE LP without config.";
+        return "Iterative two-player SEFCE LP without config.\nSettings: STATS="+PRINT_STATS+
+                ", GC="+USE_GC+", LP="+BUILT_LP+", TL="+USE_TEMP_LEAVES+", BL="+USE_BLACKLISTS;
     }
 
     @Override
@@ -64,8 +73,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
     @Override
     protected HashSet<Sequence> findLeaderInitialRG(){
 
-        boolean addAllLeaderSequences = false;
-        System.out.printf("all seqs = " + addAllLeaderSequences+ "...");
+        System.out.printf("all seqs = " + ADD_ALL_LEADER_SEQUENCES + "...");
 //        if (DEBUG) return new HashSet<>(algConfig.getSequencesFor(leader));
 
         HashSet<Sequence> initialSequences = new HashSet<>();
@@ -84,7 +92,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
             }
             {
                 if (currentState.getPlayerToMove().equals(leader)) {
-                    if (addAllLeaderSequences){
+                    if (ADD_ALL_LEADER_SEQUENCES){
                         for (Action action : expander.getActions(currentState)) {
                             Sequence seq = new ArrayListSequenceImpl(currentState.getSequenceForPlayerToMove());
                             seq.addLast(action);
@@ -249,7 +257,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
             }
         }
 
-        HashSet<Integer> blackList = new HashSet<>();
+        HashSet<InformationSet> blackList = new HashSet<>();
         ArrayList<GameState> stack = new ArrayList<>();
         stack.add(algConfig.getRootState().copy());
         while (stack.size() > 0) {
@@ -275,7 +283,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
 //                    stack.add(currentState.performAction(action));
                 }
                 else{
-                    if (!blackList.contains(action.getInformationSet().hashCode())) {
+                    if (!blackList.contains(action.getInformationSet())) {
                         Sequence seq = new ArrayListSequenceImpl(stateSeq);
                         seq.addLast(action);
                         if (!leaderRG.contains(seq)){
@@ -307,7 +315,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
                 }
             }
             pool.push(currentState);
-            blackList.add(expander.getActions(currentState).get(0).getInformationSet().hashCode());
+            blackList.add(expander.getActions(currentState).get(0).getInformationSet());
         }
 
 
@@ -316,8 +324,11 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
             double min = Collections.min(seqCosts.get(leaderSeq).values());
             if ( min <  eps) { // !algConfig.getCompatibleSequencesFor(leaderSequence).isEmpty() &&
                     if (!MAX) {
-                        for (Sequence prefix : leaderSeq.getAllPrefixes())
-                            if (!leaderRG.contains(prefix)) deviations.add(prefix);
+                        if (ADD_ALL_PREFIXES) {
+                            for (Sequence prefix : leaderSeq.getAllPrefixes())
+                                if (!leaderRG.contains(prefix)) deviations.add(prefix);
+                        }
+                        else deviations.add(leaderSeq);
                     }
                     else{
                         if (min < minCost){
@@ -338,8 +349,10 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
             System.out.println("Maximum deviation: " + minCost);
             System.out.println("Deviation sequence: " + minSequence + "; #: " + minSequence.getLastInformationSet().hashCode());
             deviations.add(minSequence);
-            for (Sequence prefix : minSequence.getAllPrefixes())
-                if (!leaderRG.contains(prefix)) deviations.add(prefix);
+            if (ADD_ALL_PREFIXES) {
+                for (Sequence prefix : minSequence.getAllPrefixes())
+                    if (!leaderRG.contains(prefix)) deviations.add(prefix);
+            }
         }
 //        System.out.println(deviations.toString());
 
@@ -452,112 +465,112 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
         stack = null;
         if (USE_GC)  System.gc();
         if (PRINT_STATS){
-//            System.out.println("Size of set of reachable Is for seq " + followerSequence.hashCode() + " : " + reachable.size());
+            System.out.println("Size of set of reachable Is for seq " + followerSequence.hashCode() + " : " + reachable.size());
         }
         return reachable;
     }
 
-    protected void addFollowerContinuationConstraintII(Sequence leaderSequence){
-        // leader : for all reachable sets, for all relevant sequences
-//        Sequence sequence = new ArrayListSequenceImpl(leaderSequence);
-
-        HashSet<Integer> blackList = new HashSet<>();
-
-        Sequence emptyFollowerSequence = new ArrayListSequenceImpl(follower);
-        blackList.add(emptyFollowerSequence.hashCode());
-        for (SequenceInformationSet set : getReachableFollowerISs(emptyFollowerSequence)) {
-//            if (blackList.contains(emptyFollowerSequence.hashCode())) continue;
-            Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
-            setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
-            lpTable.setConstant(eqKey, 0.0);
-            lpTable.setConstraintType(eqKey, 1);
-            for (Action outgoing : expander.getActions(set)) {
-                Sequence outgoingSeq = new ArrayListSequenceImpl(set.getPlayersHistory());
-                outgoingSeq.addLast(outgoing);
-                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoingSeq), -1.0);
-            }
-        }
-
-
-        LinkedList<GameState> queue = new LinkedList<>();
-//        HashSet<Sequence> relevant = new HashSet<>();
-//        HashSet<SequenceInformationSet> reachable = new HashSet<>();
-        queue.add(algConfig.getRootState());
-        while (queue.size() > 0) {
-            GameState currentState = queue.removeFirst();
-            Sequence stateSeq = currentState.getSequenceForPlayerToMove();
-            if (currentState.getPlayerToMove().equals(leader) && stateSeq.equals(leaderSequence)) {
-                Sequence followerSequence = currentState.getSequenceFor(follower);
-                for (Action action : followerSequence) {
-                    for (Action relevantAction : expander.getActions((SequenceInformationSet) action.getInformationSet())) {
-                        Sequence seq = new ArrayListSequenceImpl(((SequenceInformationSet) action.getInformationSet()).getPlayersHistory());
-                        seq.addLast(relevantAction);
-                        if (blackList.contains(seq.hashCode())) continue;
-                        blackList.add(seq.hashCode());
-                        for (SequenceInformationSet set : getReachableFollowerISs(seq)) {
-                            Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
-                            setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
-                            lpTable.setConstant(eqKey, 0.0);
-                            lpTable.setConstraintType(eqKey, 1);
-                            for (Action outgoing : expander.getActions(set)) {
-                                Sequence outgoingSeq = new ArrayListSequenceImpl(set.getPlayersHistory());
-                                outgoingSeq.addLast(outgoing);
-                                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoingSeq), -1.0);
-                            }
-                        }
-                    }
-                }
-//                if (!currentState.isGameEnd()){
-//                    reachable.add((SequenceInformationSet) expander.getActions(currentState).get(0).getInformationSet());
-//                }
-                continue;
-            }
-
-            if (currentState.isGameEnd()) {
-                continue;
-            }
-//            Object eqKey = null;
-//            if (currentState.getPlayerToMove().equals(follower)){
-//                SequenceInformationSet set = (SequenceInformationSet) expander.getActions(currentState).get(0).getInformationSet();
-//                eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
-//                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
-//                lpTable.setConstant(eqKey, 0.0);
-//                lpTable.setConstraintType(eqKey, 1);
-//            }
-            for (Action action : expander.getActions(currentState)) {
-                if (currentState.getPlayerToMove().equals(leader)){
-                    if (action.equals(leaderSequence.get(stateSeq.size()))){
-                        queue.add(currentState.performAction(action));
-//                        sequence.removeFirst();
-                        break;
-                    }
-                }
-                else{
-//                    Sequence seq = new ArrayListSequenceImpl(stateSeq);
-//                    seq.addLast(action);
-//                    setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, seq), -1.0);
-                    queue.add(currentState.performAction(action));
-                }
-            }
-        }
-
-        if (PRINT_STATS){
-            System.out.println("Size of blacklist in follower NF con: " + blackList.size());
-        }
-
-        blackList = null;
-        queue = null;
-        if (USE_GC) System.gc();
-//        for (SequenceInformationSet set : reachable){
+//    protected void addFollowerContinuationConstraintII(Sequence leaderSequence){
+//        // leader : for all reachable sets, for all relevant sequences
+////        Sequence sequence = new ArrayListSequenceImpl(leaderSequence);
+//
+//        HashSet<Integer> blackList = new HashSet<>();
+//
+//        Sequence emptyFollowerSequence = new ArrayListSequenceImpl(follower);
+//        blackList.add(emptyFollowerSequence.hashCode());
+//        for (SequenceInformationSet set : getReachableFollowerISs(emptyFollowerSequence)) {
+////            if (blackList.contains(emptyFollowerSequence.hashCode())) continue;
 //            Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
 //            setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
+//            if (ADD_TO_LP) lpTable.setConstant(eqKey, 0.0);
+//            if (ADD_TO_LP) lpTable.setConstraintType(eqKey, 1);
 //            for (Action outgoing : expander.getActions(set)) {
-//                Sequence seq = new ArrayListSequenceImpl(set.getPlayersHistory());
-//                seq.addLast(outgoing);
-//                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, seq), -1.0);
+//                Sequence outgoingSeq = new ArrayListSequenceImpl(set.getPlayersHistory());
+//                outgoingSeq.addLast(outgoing);
+//                if (ADD_TO_LP) setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoingSeq), -1.0);
 //            }
 //        }
-    }
+//
+//
+//        LinkedList<GameState> queue = new LinkedList<>();
+////        HashSet<Sequence> relevant = new HashSet<>();
+////        HashSet<SequenceInformationSet> reachable = new HashSet<>();
+//        queue.add(algConfig.getRootState());
+//        while (queue.size() > 0) {
+//            GameState currentState = queue.removeFirst();
+//            Sequence stateSeq = currentState.getSequenceForPlayerToMove();
+//            if (currentState.getPlayerToMove().equals(leader) && stateSeq.equals(leaderSequence)) {
+//                Sequence followerSequence = currentState.getSequenceFor(follower);
+//                for (Action action : followerSequence) {
+//                    for (Action relevantAction : expander.getActions((SequenceInformationSet) action.getInformationSet())) {
+//                        Sequence seq = new ArrayListSequenceImpl(((SequenceInformationSet) action.getInformationSet()).getPlayersHistory());
+//                        seq.addLast(relevantAction);
+//                        if (blackList.contains(seq.hashCode())) continue;
+//                        blackList.add(seq.hashCode());
+//                        for (SequenceInformationSet set : getReachableFollowerISs(seq)) {
+//                            Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
+//                            setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
+//                            lpTable.setConstant(eqKey, 0.0);
+//                            lpTable.setConstraintType(eqKey, 1);
+//                            for (Action outgoing : expander.getActions(set)) {
+//                                Sequence outgoingSeq = new ArrayListSequenceImpl(set.getPlayersHistory());
+//                                outgoingSeq.addLast(outgoing);
+//                                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoingSeq), -1.0);
+//                            }
+//                        }
+//                    }
+//                }
+////                if (!currentState.isGameEnd()){
+////                    reachable.add((SequenceInformationSet) expander.getActions(currentState).get(0).getInformationSet());
+////                }
+//                continue;
+//            }
+//
+//            if (currentState.isGameEnd()) {
+//                continue;
+//            }
+////            Object eqKey = null;
+////            if (currentState.getPlayerToMove().equals(follower)){
+////                SequenceInformationSet set = (SequenceInformationSet) expander.getActions(currentState).get(0).getInformationSet();
+////                eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
+////                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
+////                lpTable.setConstant(eqKey, 0.0);
+////                lpTable.setConstraintType(eqKey, 1);
+////            }
+//            for (Action action : expander.getActions(currentState)) {
+//                if (currentState.getPlayerToMove().equals(leader)){
+//                    if (action.equals(leaderSequence.get(stateSeq.size()))){
+//                        queue.add(currentState.performAction(action));
+////                        sequence.removeFirst();
+//                        break;
+//                    }
+//                }
+//                else{
+////                    Sequence seq = new ArrayListSequenceImpl(stateSeq);
+////                    seq.addLast(action);
+////                    setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, seq), -1.0);
+//                    queue.add(currentState.performAction(action));
+//                }
+//            }
+//        }
+//
+//        if (PRINT_STATS){
+//            System.out.println("Size of blacklist in follower NF con: " + blackList.size());
+//        }
+//
+//        blackList = null;
+//        queue = null;
+//        if (USE_GC) System.gc();
+////        for (SequenceInformationSet set : reachable){
+////            Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
+////            setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
+////            for (Action outgoing : expander.getActions(set)) {
+////                Sequence seq = new ArrayListSequenceImpl(set.getPlayersHistory());
+////                seq.addLast(outgoing);
+////                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, seq), -1.0);
+////            }
+////        }
+//    }
 
     protected void addFollowerContinuationConstraint(Sequence leaderSequence){
         // leader : for all reachable sets, for all relevant sequences
@@ -567,17 +580,19 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
 //        ObjectPool<GameState> pool = new ObjectPool<>(100);
 
         Sequence emptyFollowerSequence = new ArrayListSequenceImpl(follower);
-        blackList.add(emptyFollowerSequence.hashCode());
+        if (USE_BLACKLISTS) blackList.add(emptyFollowerSequence.hashCode());
         for (SequenceInformationSet set : getReachableFollowerISs(emptyFollowerSequence)) {
 //            if (blackList.contains(emptyFollowerSequence.hashCode())) continue;
             Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
-            setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
-            lpTable.setConstant(eqKey, 0.0);
-            lpTable.setConstraintType(eqKey, 1);
+            if (ADD_TO_LP) setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
+            if (ADD_TO_LP) lpTable.setConstant(eqKey, 0.0);
+            if (ADD_TO_LP) lpTable.setConstraintType(eqKey, 1);
             for (Action outgoing : expander.getActions(set)) {
-                Sequence outgoingSeq = new ArrayListSequenceImpl(set.getPlayersHistory());
-                outgoingSeq.addLast(outgoing);
-                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoingSeq), -1.0);
+                if (ADD_TO_LP) {
+                    Sequence outgoingSeq = new ArrayListSequenceImpl(set.getPlayersHistory());
+                    outgoingSeq.addLast(outgoing);
+                    setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoingSeq), -1.0);
+                }
             }
         }
 
@@ -597,16 +612,18 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
                         Sequence seq = new ArrayListSequenceImpl(((SequenceInformationSet) action.getInformationSet()).getPlayersHistory());
                         seq.addLast(relevantAction);
                         if (blackList.contains(seq.hashCode())) continue;
-                        blackList.add(seq.hashCode());
+                        if (USE_BLACKLISTS) blackList.add(seq.hashCode());
                         for (SequenceInformationSet set : getReachableFollowerISs(seq)) {
                             Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, leaderSequence);
-                            setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
-                            lpTable.setConstant(eqKey, 0.0);
-                            lpTable.setConstraintType(eqKey, 1);
+                            if (ADD_TO_LP) setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, set.getPlayersHistory()), 1.0);
+                            if (ADD_TO_LP) lpTable.setConstant(eqKey, 0.0);
+                            if (ADD_TO_LP) lpTable.setConstraintType(eqKey, 1);
                             for (Action outgoing : expander.getActions(set)) {
-                                Sequence outgoingSeq = new ArrayListSequenceImpl(set.getPlayersHistory());
-                                outgoingSeq.addLast(outgoing);
-                                setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoingSeq), -1.0);
+                                if (ADD_TO_LP) {
+                                    Sequence outgoingSeq = new ArrayListSequenceImpl(set.getPlayersHistory());
+                                    outgoingSeq.addLast(outgoing);
+                                    setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, outgoingSeq), -1.0);
+                                }
                             }
                         }
                     }
@@ -758,7 +775,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
             pool.push(currentState);
         }
         if (PRINT_STATS){
-//            System.out.println("Size of set of relevant seq for " + leaderSequence.hashCode() + " : " + relevant.size());
+            System.out.println("Size of set of relevant seq for " + leaderSequence.hashCode() + " : " + relevant.size());
         }
         stack = null;
         if (USE_GC) System.gc();
@@ -845,6 +862,8 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
             }
 
 
+            if (!BUILT_LP)
+                ADD_TO_LP = false;
 
 
             // calculate reduced costs -> find deviation
@@ -908,11 +927,11 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
 
                     // objective
                     if (leaderValue != 0)
-                        setNewObjective(createSeqPairVarKey(leaderSequence, followerSequence), leaderValue);
+                        if (ADD_TO_LP) setNewObjective(createSeqPairVarKey(leaderSequence, followerSequence), leaderValue);
 
                     if (followerValue != 0) {
                         // 6:
-                        setNewConstraint(followerSequence, createSeqPairVarKey(leaderSequence, followerSequence), -followerValue);
+                        if (ADD_TO_LP) setNewConstraint(followerSequence, createSeqPairVarKey(leaderSequence, followerSequence), -followerValue);
 
                         // 7:
 //                        Sequence outgoingSequence = currentState.getSequenceFor(follower);
@@ -922,7 +941,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
                                 seq.addLast(relevantAction);
                                 Object eqKey = new Triplet<>(followerSequence.getLastInformationSet(), followerSequence, seq);
                                 Object varKey = createSeqPairVarKey(leaderSequence, seq);
-                                setNewConstraint(eqKey, varKey, -followerValue);
+                                if (ADD_TO_LP) setNewConstraint(eqKey, varKey, -followerValue);
                             }
                         }
 //                        if(followerSequence.getLastInformationSet() == null) continue;
@@ -961,7 +980,12 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
 //                }
             }
         }
+        int leaderSeqCounter = 0;
         for (Sequence leaderSequence : leaderSequences) {
+            leaderSeqCounter ++;
+
+            if (leaderSeqCounter % 10 == 0) System.out.println(leaderSeqCounter);
+
             leaderRG.add(leaderSequence);
             // 4 -> druha cast
             if (!leaderSequence.isEmpty()) {
@@ -969,9 +993,9 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
 //                if (relevantForLeaderInP.containsKey(leaderSequence.getLastInformationSet()))//leaderSubSeq))
                 for (Sequence followerSeq : getRelevantSequencesForLeader(leaderSequence.getSubSequence(leaderSequence.size() - 1))) {//leaderSubSeq)) {
                     Object eqKey = new Pair<SequenceInformationSet, Sequence>((SequenceInformationSet) leaderSequence.getLast().getInformationSet(), followerSeq);
-                    setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, followerSeq), -1.0);
-                    lpTable.setConstant(eqKey, 0.0);
-                    lpTable.setConstraintType(eqKey, 1);
+                    if (ADD_TO_LP) setNewConstraint(eqKey, createSeqPairVarKey(leaderSequence, followerSeq), -1.0);
+                    if (ADD_TO_LP) lpTable.setConstant(eqKey, 0.0);
+                    if (ADD_TO_LP) lpTable.setConstraintType(eqKey, 1);
                 }
             }
 
@@ -1092,9 +1116,9 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
         Sequence seq = new ArrayListSequenceImpl(follower);
         for (SequenceInformationSet set : reachable){
             Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, seq);
-            setNewConstraint(eqKey, createSeqPairVarKey(set.getPlayersHistory(), seq), 1.0);
-            lpTable.setConstant(eqKey, 0.0);
-            lpTable.setConstraintType(eqKey, 1);
+            if (ADD_TO_LP) setNewConstraint(eqKey, createSeqPairVarKey(set.getPlayersHistory(), seq), 1.0);
+            if (ADD_TO_LP) lpTable.setConstant(eqKey, 0.0);
+            if (ADD_TO_LP) lpTable.setConstraintType(eqKey, 1);
         }
 
         stack.clear();
@@ -1107,15 +1131,15 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
                 Sequence followerSequence = currentState.getSequenceFor(follower);
                 for (Action action : followerSequence) {
                     if(blackList.contains(action.hashCode())) continue;
-                    blackList.add(action.hashCode());
+                    if (USE_BLACKLISTS) blackList.add(action.hashCode());
                     for (Action relevantAction : expander.getActions((SequenceInformationSet) action.getInformationSet())) {
-                        seq = new ArrayListSequenceImpl(((SequenceInformationSet) action.getInformationSet()).getPlayersHistory());
-                        seq.addLast(relevantAction);
+                        if (ADD_TO_LP) seq = new ArrayListSequenceImpl(((SequenceInformationSet) action.getInformationSet()).getPlayersHistory());
+                        if (ADD_TO_LP) seq.addLast(relevantAction);
                         for (SequenceInformationSet set : reachable){
                             Object eqKey = new Pair<SequenceInformationSet, Sequence>(set, seq);
-                            setNewConstraint(eqKey, createSeqPairVarKey(set.getPlayersHistory(), seq), 1.0);
-                            lpTable.setConstant(eqKey, 0.0);
-                            lpTable.setConstraintType(eqKey, 1);
+                            if (ADD_TO_LP) setNewConstraint(eqKey, createSeqPairVarKey(set.getPlayersHistory(), seq), 1.0);
+                            if (ADD_TO_LP) lpTable.setConstant(eqKey, 0.0);
+                            if (ADD_TO_LP) lpTable.setConstraintType(eqKey, 1);
                         }
                     }
                 }
@@ -1381,13 +1405,15 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
 
         createSequenceConstraint(algConfig, new ArrayListSequenceImpl(follower));
 
-        LinkedList<GameState> queue = new LinkedList<>();
-        queue.add(algConfig.getRootState());
-        while (queue.size() > 0) {
-            GameState currentState = queue.removeFirst();
+        ArrayList<GameState> stack = new ArrayList<>();
+        stack.add(algConfig.getRootState().copy());
+        while (stack.size() > 0) {
+            GameState currentState = stack.remove(stack.size()-1);
 
 //            algConfig.addStateToSequenceForm(currentState);
             List<Action> actions = expander.getActions(currentState);
+
+
             if (currentState.isGameEnd()) {
 
 //                Sequence leaderSeq = currentState.getSequenceFor(leader);
@@ -1413,6 +1439,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
                         u[p.getId()] = utilities[p.getId()] * currentState.getNatureProbability()*info.getUtilityStabilizer();
                 }
                 algConfig.setUtility(currentState, u);
+                pool.push(currentState);
                 continue;
             }
             else {
@@ -1421,7 +1448,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
             for (Action action : actions) {
 //                System.out.println(expander.getActions((SequenceInformationSet)action.getInformationSet()).size());
 //                System.out.println(((SequenceInformationSet)action.getInformationSet()).getPlayersHistory());
-                queue.add(currentState.performAction(action));
+                stack.add(currentState.performAction(action));
                 if(currentState.getPlayerToMove().equals(follower)) {
                     Sequence followerSequence = new ArrayListSequenceImpl(currentState.getSequenceForPlayerToMove());
                     followerSequence.addLast(action);
@@ -1651,6 +1678,14 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
 
 
 
+    }
+
+    protected int getISIndex(InformationSet set){
+        return set.hashCode();
+    }
+
+    protected int getSequenceIndex(Sequence sequence){
+        return  sequence.hashCode();
     }
 
     public long getDeviationIdentificationTime() {

@@ -15,6 +15,7 @@ import java.util.ArrayList;
  */
 public class AllPointsFlipItGameState extends NoInfoFlipItGameState {
 
+    int hash = 0;
 
     public AllPointsFlipItGameState(){
         super();
@@ -22,7 +23,10 @@ public class AllPointsFlipItGameState extends NoInfoFlipItGameState {
 
     public AllPointsFlipItGameState(AllPointsFlipItGameState state){
         super(state);
+        this.hash = state.hash;
     }
+
+    public void setHash(int hs){ hash = hs;}
 
     @Override
     public GameState copy() {
@@ -64,7 +68,7 @@ public class AllPointsFlipItGameState extends NoInfoFlipItGameState {
                 switch (currentPlayerIndex) {
                     case 0:
                         long temp = Double.doubleToLongBits(defenderReward);
-                        return new PerfectRecallISKey(new HashCodeBuilder().append(temp).append(getSequenceForPlayerToMove()).toHashCode(), getSequenceForPlayerToMove());
+                        return new PerfectRecallISKey(new HashCodeBuilder().append(hash).append(temp).append(getSequenceForPlayerToMove()).toHashCode(), getSequenceForPlayerToMove());
                     case 1:
                         temp = Double.doubleToLongBits(attackerPoints);
                         return new PerfectRecallISKey(new HashCodeBuilder().append(temp).append(getSequenceForPlayerToMove()).toHashCode(), getSequenceForPlayerToMove());

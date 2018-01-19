@@ -44,9 +44,13 @@ public class FlipItGameInfo implements GameInfo {
 
     private static final boolean FULLY_RATIONAL_ATTACKER = true;
     public static boolean ZERO_SUM_APPROX = true;
-    protected static final boolean ENABLE_PASS = true;
+    protected static final boolean ENABLE_PASS = false;
 
     public static final double INITIAL_POINTS = 50.0;
+
+    public static final boolean RANDOM_TERMINATION = false;
+    public static final double RANDOM_TERMINATION_PROBABILITY = 0.3;
+
 
     public enum FlipItInfo {
         NO, FULL, REVEALED_ALL_POINTS, REVEALED_NODE_POINTS

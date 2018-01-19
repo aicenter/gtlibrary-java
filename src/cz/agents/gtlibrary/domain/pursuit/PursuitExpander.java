@@ -70,9 +70,9 @@ public class PursuitExpander<I extends InformationSet> extends ExpanderImpl<I> {
 				}
 			}
 		}
-		if (!PursuitGameInfo.forceMoves) {
-			actions.add(new PatrollerPursuitAction(state.getP1Position(), state.getP1Position(), state.getP2Position(), state.getP2Position(), getAlgorithmConfig().getInformationSetFor(state)));
-		}
+//		if (!PursuitGameInfo.forceMoves) {
+//			actions.add(new PatrollerPursuitAction(state.getP1Position(), state.getP1Position(), state.getP2Position(), state.getP2Position(), getAlgorithmConfig().getInformationSetFor(state)));
+//		}
 		return actions;
 	}
 
