@@ -65,7 +65,7 @@ public class OracleVsCompleteBBExperiment {
 //            runGenSumRandomOneSeed(new String[]{"RO", "3", "3", "5","-0.4", "4", "F", "3", "AMILP", "3"});
 //        runGenSumRandomImproved();
 //            runBPG(new String[]{"B", "4", "1"});
-//            runBPGOneSeed(new String[]{"B", "5", "1", "F", ""+IloCplex.Algorithm.Auto, "LP", "0"});
+//            runBPGOneSeed(new String[]{"B", "3", "1", "F", ""+IloCplex.Algorithm.Auto, "LP", "0"});
 //        runFlipIt(args);
 //        runFlipIt(new String[]{"F", "3", "5", "AP", "10"});
 //            for (int seed = 50; seed < 80; seed++)

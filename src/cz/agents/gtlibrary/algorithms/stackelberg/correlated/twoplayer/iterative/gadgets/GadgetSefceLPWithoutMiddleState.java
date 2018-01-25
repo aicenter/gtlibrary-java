@@ -85,19 +85,19 @@ public class GadgetSefceLPWithoutMiddleState extends GadgetSefceLP {
                 for (Action action : followerSequence) {
                     for (Sequence relevantSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
                         Object eqKey = new Triplet<>(followerSequence.getLastInformationSet().getISKey(), followerSequence, relevantSequence);
-                        lpTable.setConstraint(eqKey, createSeqPairVarKeyCheckExistence(leaderSequence, relevantSequence), -u[follower.getId()]);
+                        lpTable.setConstraint(eqKey, createSeqPairVarKey(leaderSequence, relevantSequence), -u[follower.getId()]);
 
                         if (!varsToDeleteForState.containsKey(eqKey))
                             varsToDeleteForState.put(eqKey, new HashSet<>());
-                        varsToDeleteForState.get(eqKey).add(createSeqPairVarKeyCheckExistence(leaderSequence, relevantSequence));
+                        varsToDeleteForState.get(eqKey).add(createSeqPairVarKey(leaderSequence, relevantSequence));
                     }
                 }
 
                 Object eqKey = new Triplet<>(followerSequence.getLastInformationSet().getISKey(), followerSequence, new ArrayListSequenceImpl(follower));
-                lpTable.setConstraint(eqKey, createSeqPairVarKeyCheckExistence(leaderSequence, new ArrayListSequenceImpl(follower)), -u[follower.getId()]);
+                lpTable.setConstraint(eqKey, createSeqPairVarKey(leaderSequence, new ArrayListSequenceImpl(follower)), -u[follower.getId()]);
                 if (!varsToDeleteForState.containsKey(eqKey))
                     varsToDeleteForState.put(eqKey, new HashSet<>());
-                varsToDeleteForState.get(eqKey).add(createSeqPairVarKeyCheckExistence(leaderSequence, new ArrayListSequenceImpl(follower)));
+                varsToDeleteForState.get(eqKey).add(createSeqPairVarKey(leaderSequence, new ArrayListSequenceImpl(follower)));
 
             }
         }
