@@ -65,14 +65,14 @@ public class OracleVsCompleteBBExperiment {
 //            runGenSumRandomOneSeed(new String[]{"RO", "3", "3", "5","-0.4", "4", "F", "3", "AMILP", "3"});
 //        runGenSumRandomImproved();
 //            runBPG(new String[]{"B", "4", "1"});
-            runBPGOneSeed(new String[]{"B", "5", "1", "F", ""+IloCplex.Algorithm.Auto, "LP", "0"});
+//            runBPGOneSeed(new String[]{"B", "5", "1", "F", ""+IloCplex.Algorithm.Auto, "LP", "0"});
 //        runFlipIt(args);
 //        runFlipIt(new String[]{"F", "3", "5", "AP", "10"});
 //            for (int seed = 50; seed < 80; seed++)
 //                runFlipItOneSeed(new String[]{"F", "3", "3", "AP", Integer.toString(seed), "F"});
 //            runFlipItOneSeed(new String[]{"F", "4", "3", "F", "11", "O", "LP", "2"});
 //            runPursuit(new String[]{"P", "3", "4", "10"});
-//            runPursuitOneSeed(new String[]{"PO", "3", "3", "2", "O", "LP", "2"});
+            runPursuitOneSeed(new String[]{"PO", "3", "3", "2", "O", "LP", "2"});
         } else {
             switch (args[0]) {
                 case "F":

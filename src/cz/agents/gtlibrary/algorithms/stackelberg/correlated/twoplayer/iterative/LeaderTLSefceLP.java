@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative;
 
-import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.GenSumSequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
