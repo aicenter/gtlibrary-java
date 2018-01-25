@@ -74,7 +74,7 @@ public class CompleteTwoPlayerSefceLP extends StackelbergSequenceFormLP implemen
     }
 
     public int getFinalLpSize(){
-        return finalLpSize;
+        return lpTable.getLPSize();//finalLpSize;
     }
 
     public double getRestrictedGameRatio(){

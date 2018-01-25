@@ -31,8 +31,6 @@ public class LeaderOracle2pSumForbiddingLP extends LeaderGenerationTwoPlayerSefc
     protected long brokenStrategyIdentificationTime = 0;
     protected long restrictedGameGenerationTime = 0;
 
-    protected double eps_;
-//    private long
 
     public LeaderOracle2pSumForbiddingLP(Player leader, GameInfo info) {
         super(leader, info);

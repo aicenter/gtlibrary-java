@@ -44,7 +44,7 @@ public class OracleVsCompleteBBConsistencyExperiment {
 //        runGenSumRandomImproved();
 //        runBPG(depth);
 //        runFlipIt(args);
-//            runFlipIt(new String[]{"F", "2", "5", "AP"});
+            runFlipIt(new String[]{"F", "2", "5", "AP"});
         } else {
             switch (args[0]) {
                 case "F":

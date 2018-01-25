@@ -115,11 +115,11 @@ public class FlipItGameInfo implements GameInfo {
         double priors = 0.0;
         int rounding = 2;
         for (int i = 0; i < numTypes-1; i++){
-            typesDiscounts[i] = MIN_DISCOUNT + Math.round(((int) Math.pow(10, rounding)) * (1.0 - MIN_DISCOUNT) * rnd.nextDouble()) / Math.pow(10, rounding);
+            typesDiscounts[i] = Math.round( ((int) Math.pow(10, rounding)) * MIN_DISCOUNT +  ((int) Math.pow(10, rounding)) * (1.0 - MIN_DISCOUNT) * rnd.nextDouble()) / Math.pow(10, rounding);
             typesPrior[i] = Math.round(((int) Math.pow(10, rounding)) * 0.2 * rnd.nextDouble() * (1.0-priors)) / Math.pow(10, rounding);
             priors += typesPrior[i];
         }
-        typesDiscounts[numTypes-1] = MIN_DISCOUNT + Math.round(((int) Math.pow(10, rounding)) * (1.0 - MIN_DISCOUNT) *rnd.nextDouble()) / Math.pow(10, rounding);
+        typesDiscounts[numTypes-1] = Math.round(((int) Math.pow(10, rounding)) * MIN_DISCOUNT +  ((int) Math.pow(10, rounding)) * (1.0 - MIN_DISCOUNT) *rnd.nextDouble()) / Math.pow(10, rounding);
         typesPrior[numTypes-1] = Math.round(((int) Math.pow(10, rounding)) * (1.0-priors)) / Math.pow(10, rounding);
 
         if (numTypes == 1 && FULLY_RATIONAL_ATTACKER) typesDiscounts[0] = 1.0;
@@ -159,6 +159,33 @@ public class FlipItGameInfo implements GameInfo {
         }
     }
 
+
+    public void setFollowerTypes(int seed){
+        this.seed = seed;
+
+        Random rnd = new HighQualityRandom(seed);
+
+        typesPrior = new double[numTypes];
+        typesDiscounts = new double[numTypes];
+        double priors = 0.0;
+        int rounding = 2;
+        for (int i = 0; i < numTypes-1; i++){
+            typesDiscounts[i] = Math.round( ((int) Math.pow(10, rounding)) * MIN_DISCOUNT +  ((int) Math.pow(10, rounding)) * (1.0 - MIN_DISCOUNT) * rnd.nextDouble()) / Math.pow(10, rounding);
+            typesPrior[i] = Math.round(((int) Math.pow(10, rounding)) * 0.2 * rnd.nextDouble() * (1.0-priors)) / Math.pow(10, rounding);
+            priors += typesPrior[i];
+        }
+        typesDiscounts[numTypes-1] = Math.round(((int) Math.pow(10, rounding)) * MIN_DISCOUNT +  ((int) Math.pow(10, rounding)) * (1.0 - MIN_DISCOUNT) *rnd.nextDouble()) / Math.pow(10, rounding);
+        typesPrior[numTypes-1] = Math.round(((int) Math.pow(10, rounding)) * (1.0-priors)) / Math.pow(10, rounding);
+
+        if (numTypes == 1 && FULLY_RATIONAL_ATTACKER) typesDiscounts[0] = 1.0;
+
+        types = new FollowerType[numTypes];
+        for(int i = 0; i < numTypes; i++) {
+            types[i] = new ExponentialGreedyType(typesPrior[i], typesDiscounts[i],i);
+        }
+        MAX_UTILITY = getMaxUtility();
+    }
+
     @Override
     public double getMaxUtility() {
         double max = 0.0;
@@ -195,7 +222,9 @@ public class FlipItGameInfo implements GameInfo {
     @Override
     public String getInfo() {
         String info = "";
-        info+= "Flip It Game : depth = " + depth + "; attacker types = "+getAttackerInfo() + "; graph = " +graphFile + "; initial points = " + INITIAL_POINTS + "; info = "+gameVersion + "; zero-sum = "+ZERO_SUM_APPROX;
+        info+= "Flip It Game : depth = " + depth + "; attacker types = "+getAttackerInfo() + "; graph = " +graphFile;
+        info+= "; initial points = " + INITIAL_POINTS + "; info = "+gameVersion + "; zero-sum = "+ZERO_SUM_APPROX;
+        info+= "; pass = "+ENABLE_PASS;
         info+= "\n" + graph.getInfo();
         return info;
     }

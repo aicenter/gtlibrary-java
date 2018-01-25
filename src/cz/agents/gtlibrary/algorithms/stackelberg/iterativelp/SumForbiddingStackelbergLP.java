@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.br.FollowerBestResponse;
@@ -46,14 +47,31 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         this.info = info;
         this.threadBean = ManagementFactory.getThreadMXBean();
         this.lpInvocationCount = 0;
+        this.eps = 1e-7;
+    }
+
+    public SumForbiddingStackelbergLP(Player leader, GameInfo info, Map<Object, Integer> variableIndices, Map<Object, Map<Object, Double>> constraints) {
+        super(new Player[]{info.getAllPlayers()[0], info.getAllPlayers()[1]}, leader, info.getOpponent(leader));
+        lpTable = new RecyclingMILPTable();
+        lpTable.setVariableIndices(variableIndices);
+        lpTable.setConstraints(constraints);
+        this.leader = leader;
+        this.follower = info.getOpponent(leader);
+        this.info = info;
+        this.threadBean = ManagementFactory.getThreadMXBean();
+        this.lpInvocationCount = 0;
         this.eps = 1e-8;
+    }
+
+    public void setLPSolvingMethod(int alg){
+        LPTable.CPLEXALG = alg;
     }
 
     @Override
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
-        this.algConfig = algConfig;
+        this.algConfig = (StackelbergConfig) algConfig;
         this.expander = expander;
-        followerBestResponse = new FollowerBestResponse(algConfig.getRootState(), expander, algConfig, leader, follower);
+        followerBestResponse = new FollowerBestResponse(this.algConfig.getRootState(), expander, this.algConfig, leader, follower);
         long startTime = threadBean.getCurrentThreadCpuTime();
 
         addObjective();
@@ -76,8 +94,13 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         try {
             long startTime = threadBean.getCurrentThreadCpuTime();
 
+            System.out.println("LP size: " + lpTable.getLPSize());
+            System.out.println("LP dim: " + lpTable.columnCount() + "; " + lpTable.rowCount());
+
 //            updateLowerBound(lowerBound);
             LPData lpData = lpTable.toCplex();
+
+//            System.out.println("LP Solving method: " + LPTable.CPLEXALG);
 
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 //            lpData.getSolver().exportModel("SSEIter.lp");
@@ -103,7 +126,17 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //                }
                 Map<InformationSet, Map<Sequence, Double>> followerBehavStrat = getBehavioralStrategy(lpData, follower);
                 Iterable<Sequence> brokenStrategyCauses = getBrokenStrategyCauses(followerBehavStrat, lpData);
-                Map<Sequence, Double> leaderRealPlan = behavioralToRealizationPlan(getLeaderBehavioralStrategy(lpData, leader));
+                Map<Sequence, Double> leaderRealPlan = null;//behavioralToRealizationPlan(getLeaderBehavioralStrategy(lpData, leader));
+
+                final boolean OUTPUT_STRATEGY = false;
+                if (OUTPUT_STRATEGY) {
+                    for (InformationSet set : followerBehavStrat.keySet()) {
+                        System.out.println(set == null || set.getISKey() == null ? "Null set" : set.getISKey());
+                        for (Sequence seq : followerBehavStrat.get(set).keySet()) {
+                            System.out.println("\t" + seq + " : \t" + followerBehavStrat.get(set).get(seq));
+                        }
+                    }
+                }
 
 //                GenSumUtilityCalculator calculator = new GenSumUtilityCalculator(algConfig.getRootState(), expander);
 //
@@ -126,7 +159,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 //                        System.out.println(entry);
 //                    }
 //                    return new Pair<Map<Sequence, Double>, Double>(new HashMap<Sequence, Double>(), value);
-                    return new Pair<Map<Sequence, Double>, Double>(leaderRealPlan, value);
+                    return new Pair<Map<Sequence, Double>, Double>(dummyResult.getLeft(), value);
                 } else {
                     if (USE_BR_CUT) {
                         Pair<Map<Sequence, Double>, Double> result = followerBestResponse.computeBestResponseTo(leaderRealPlan);
@@ -196,6 +229,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                 return Double.compare(shallowestBrokenStrategyCause.get(o1), shallowestBrokenStrategyCause.get(o2));
             }
         });
+//        System.out.println(list.get(0) + " : " + shallowestBrokenStrategyCause.get(list.get(0)));
         return list;
     }
 
@@ -352,6 +386,8 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     protected Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
         Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
 
+//        double eps = 100*this.eps;
+
         for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
             if (entry.getKey() instanceof Pair) {
                 Pair varKey = (Pair) entry.getKey();
@@ -368,8 +404,10 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                                     isStrategy = new HashMap<>();
                                     double behavioralStrat = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
 
-                                    isStrategy.put(playerSequence, behavioralStrat);
-                                    strategy.put(playerSequence.getLastInformationSet(), isStrategy);
+//                                    if (behavioralStrat > eps) {
+                                        isStrategy.put(playerSequence, behavioralStrat);
+                                        strategy.put(playerSequence.getLastInformationSet(), isStrategy);
+//                                    }
                                 }
                             } else {
                                 double behavioralStrategy = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
@@ -777,4 +815,9 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     public int getLPInvocationCount() {
         return lpInvocationCount;
     }
+
+    public int getFinalLpSize(){
+        return lpTable.getLPSize();//finalLpSize;
+    }
+
 }

@@ -1,22 +1,48 @@
-package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
+package cz.agents.gtlibrary.algorithms.stackelberg.oracle;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetAction;
+import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
-public class ShallowestBrokenCplexStackelbergLP extends SumForbiddingStackelbergLP {
+/**
+ * Created by Jakub Cerny on 17/01/2018.
+ */
+public class GadgetOracle2pShallowestBrokenCplexLP extends GadgetOracle2pSumForbiddingLP {
 
-    public ShallowestBrokenCplexStackelbergLP(Player leader, GameInfo info) {
+    protected HashMap<GameState, HashSet<Object>> eqsToDeleteWithoutDeletingVars;
+
+    protected final boolean CLEAR_LP = false;
+
+    public GadgetOracle2pShallowestBrokenCplexLP(Player leader, GameInfo info) {
         super(leader, info);
-        this.eps = 1e-5;
+        eqsToDeleteWithoutDeletingVars = new HashMap<>();
+    }
+
+    @Override
+    public void deleteOldGadgetRootConstraintsAndVariables(GameState state){
+        if (state.equals(algConfig.getRootState())) return;
+        super.deleteOldGadgetRootConstraintsAndVariables(state);
+        if(eqsToDeleteWithoutDeletingVars.containsKey(state))
+            for (Object eqKey : eqsToDeleteWithoutDeletingVars.get(state))
+                lpTable.deleteConstraintWithoutVars(eqKey);
+    }
+
+    @Override
+    public String getInfo(){
+        return "Gadget Oracle 2p Shallowest Broken Cplex BnB";
     }
 
     @Override
     protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Iterable<Sequence> brokenStrategyCauses) {
-        SequenceInformationSet lastSet = (SequenceInformationSet) brokenStrategyCauses.iterator().next().getLastInformationSet();
+//        SequenceInformationSet lastSet = (SequenceInformationSet) brokenStrategyCauses.iterator().next().getLastInformationSet();
+//        bnbBranchingCount++;
 
         for (Sequence outgoingSequence : brokenStrategyCauses) {
             addEqualityToBinaryVariableFor(outgoingSequence, lpData);
@@ -24,7 +50,7 @@ public class ShallowestBrokenCplexStackelbergLP extends SumForbiddingStackelberg
         controlBinaryVariables(brokenStrategyCauses);
         Pair<Map<Sequence, Double>, Double> currentBest = solve(lowerBound, upperBound);
 
-        removeBinaryConstraints(brokenStrategyCauses, lpData);
+        if (CLEAR_LP) removeBinaryConstraints(brokenStrategyCauses, lpData);
         return currentBest;
     }
 
@@ -80,9 +106,16 @@ public class ShallowestBrokenCplexStackelbergLP extends SumForbiddingStackelberg
                         lpTable.watchPrimalVariable(binaryVarKey, binaryVarKey);
                         lpTable.setConstraintType(eqKey, 0);
 
+                        if (!p.getLeft().isEmpty() && p.getLeft().getLast() instanceof GadgetAction) {
+                            if (!eqsToDeleteWithoutDeletingVars.containsKey(((GadgetAction) p.getLeft().getLast()).getState()))
+                                eqsToDeleteWithoutDeletingVars.put(((GadgetAction) p.getLeft().getLast()).getState(), new HashSet<>());
+                            eqsToDeleteWithoutDeletingVars.get(((GadgetAction) p.getLeft().getLast()).getState()).add(eqKey);
+                        }
+
                     }
                 }
             }
         }
     }
+
 }

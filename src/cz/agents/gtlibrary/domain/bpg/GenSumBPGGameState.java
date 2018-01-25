@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.domain.bpg;
 
 import cz.agents.gtlibrary.domain.bpg.data.GenSumBorderPatrollingGraph;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.utils.graph.Node;
 
@@ -40,18 +41,24 @@ public class GenSumBPGGameState extends BPGGameState {
             AttackerAction attackerAction = (AttackerAction) history.getSequenceOf(BPGGameInfo.ATTACKER).getLast();
 
             if (isCaughtByP1(patrollerAction, attackerAction))
-                return new double[]{-ATTACKER_WINS - evaderPenalty, ATTACKER_WINS - defenderPenalty + 0.2};
+                return new double[]{scaleUtility(-ATTACKER_WINS - evaderPenalty), scaleUtility(ATTACKER_WINS - defenderPenalty + 0.2)};
             if (isCaughtByP2(patrollerAction, attackerAction))
-                return new double[]{-ATTACKER_WINS - evaderPenalty, ATTACKER_WINS - defenderPenalty - 0.1};
+                return new double[]{scaleUtility(-ATTACKER_WINS - evaderPenalty), scaleUtility(ATTACKER_WINS - defenderPenalty - 0.1)};
 //            if (isCaught(patrollerAction, attackerAction))
 //                return new double[]{-ATTACKER_WINS - evaderPenalty, ATTACKER_WINS - defenderPenalty};
         }
         if (attackerPosition.equals(graph.getDestination())) {
             double utilityChange = ((GenSumBorderPatrollingGraph) graph).getEvaderUtilityChange(getPreviousAttackerNode());
 
-            return new double[]{ATTACKER_WINS + utilityChange - evaderPenalty, -ATTACKER_WINS - defenderPenalty};
+            return new double[]{scaleUtility(ATTACKER_WINS + utilityChange - evaderPenalty), scaleUtility(-ATTACKER_WINS - defenderPenalty)};
         }
-        return new double[]{OPEN_POSITION - evaderPenalty, OPEN_POSITION - defenderPenalty};
+        return new double[]{scaleUtility(OPEN_POSITION - evaderPenalty), scaleUtility(OPEN_POSITION - defenderPenalty)};
+    }
+
+    protected double scaleUtility(double utility){
+        if(!BPGGameInfo.SCALE_UTILITIES) return utility;
+        return Math.round(((int) Math.pow(10, BPGGameInfo.ROUNDING)) * utility * BPGGameInfo.SCALING_FACTOR)
+                / Math.pow(10, BPGGameInfo.ROUNDING);
     }
 
     private boolean isCaughtByP2(PatrollerAction patrollerAction, AttackerAction attackerAction) {

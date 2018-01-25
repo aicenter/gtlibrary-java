@@ -3,10 +3,8 @@ package cz.agents.gtlibrary.algorithms.stackelberg.correlated;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.GenSumSequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
-import cz.agents.gtlibrary.interfaces.GameInfo;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 import java.util.*;
@@ -30,8 +28,37 @@ public class LeaderGenerationConfig extends StackelbergConfig {
         return infoSet;
     }
 
+    public boolean isStateInConfig(GameState gameState) {
+        SequenceInformationSet infoSet = super.getInformationSetFor(gameState);
+        return infoSet != null && infoSet.getAllStates().contains(gameState);
+    }
+
+    public void setOutgoingSequencesImmediately(GameState state, Expander<SequenceInformationSet> expander){
+        SequenceInformationSet set = getInformationSetFor(state);
+//        if(isStateInConfig(state)) return;
+        if (!set.getOutgoingSequences().isEmpty()) return;
+        for(Action a : expander.getActions(state)){
+            Sequence seq = new ArrayListSequenceImpl(state.getSequenceForPlayerToMove());
+            seq.addLast(a);
+            set.addOutgoingSequences(seq);
+        }
+    }
+
+    @Override
+    public void addStateToSequenceForm(GameState state) {
+        if (state.isPlayerToMoveNature() || isStateInConfig(state))
+            return;
+        fixTheInformationSetInSequences(state);
+        setOutgoingSequences(state);
+        createInformationSet(state);
+        setReachableSetBySequence(state);
+        addCompatibleSequence(state);
+        addPlayerSequences(state);
+    }
+
     @Override
     public void setUtility(GameState leaf, Double[] utility) {
+//        if (isStateInConfig(leaf)) return;
 //        if (actualNonZeroUtilityValuesInLeafs.containsKey(leaf)) {
 //            assert (Arrays.equals(actualNonZeroUtilityValuesInLeafs.get(leaf), utility));
 //            return; // we have already stored this leaf
@@ -41,7 +68,7 @@ public class LeaderGenerationConfig extends StackelbergConfig {
         FixedSizeMap<Player, Sequence> activePlayerMap = createActivePlayerMap(leaf);
         Double[] existingUtility = utility;
 
-        if (utilityForSequenceCombination.containsKey(activePlayerMap)) {
+        if (false && utilityForSequenceCombination.containsKey(activePlayerMap)) {
             Double[] storedUV = utilityForSequenceCombination.get(activePlayerMap);
 
             for (int i = 0; i < existingUtility.length; i++) {
