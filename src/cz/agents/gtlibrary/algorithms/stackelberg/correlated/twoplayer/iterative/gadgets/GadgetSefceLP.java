@@ -630,7 +630,7 @@ public class GadgetSefceLP implements Solver {
     protected Pair<Sequence, Sequence> createSeqPairVarKeyCheckExistence(Sequence sequence1, Sequence sequence2) {
         Pair<Sequence, Sequence> varKey = sequence1.getPlayer().equals(leader) ? new Pair<>(sequence1, sequence2) : new Pair<>(sequence2, sequence1);
 
-        assert lpTable.exists(varKey);
+//        assert lpTable.exists(varKey);
         lpTable.watchPrimalVariable(varKey, varKey);
         lpTable.setLowerBound(varKey, 0);
         lpTable.setUpperBound(varKey, 1);

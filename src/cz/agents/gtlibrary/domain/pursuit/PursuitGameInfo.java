@@ -21,7 +21,7 @@ public class PursuitGameInfo implements GameInfo {
 //	public static int evaderGoal = 40;//10;//-1 for no goal
 	public static int evaderGoal = 10;//-1 for no goal
 	public static int depth = 3;
-    public static double patrollerMoveCost = 1.0;//0.5/depth;//0 for zero sum game
+    public static double patrollerMoveCost = 0.5/depth;//0 for zero sum game
 	public static boolean forceMoves = true;
     public static boolean randomizeStartPositions = false;
 
@@ -35,6 +35,7 @@ public class PursuitGameInfo implements GameInfo {
 		PursuitGameInfo.randomizeStartPositions = randomizeStartPositions;
 		PursuitGameInfo.seed = seed;
 		PursuitGameInfo.depth = depth;
+		patrollerMoveCost = 0.5/depth;
 	}
 
 	public static void initValue(boolean randomizeStartPositions, long seed, int depth, int gridSize){
@@ -42,6 +43,7 @@ public class PursuitGameInfo implements GameInfo {
 		PursuitGameInfo.seed = seed;
 		PursuitGameInfo.depth = depth;
 		PursuitGameInfo.graphFile = "grid_"+gridSize+".txt";
+		patrollerMoveCost = 0.5/depth;
 	}
 
 
