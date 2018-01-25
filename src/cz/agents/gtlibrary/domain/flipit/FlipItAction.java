@@ -14,6 +14,7 @@ public class FlipItAction extends ActionImpl {
     private Node controlNode;
     private boolean isNoop;
     private Player controller;
+    private int hash;
 
     // CONTROL action
     public FlipItAction(Node controlNode, InformationSet informationSet) {
@@ -21,6 +22,7 @@ public class FlipItAction extends ActionImpl {
         this.controlNode = controlNode;
         this.isNoop = false;
         this.controller = null;
+        this.hash = computeHash();
     }
 
     // NOOP action
@@ -29,6 +31,7 @@ public class FlipItAction extends ActionImpl {
         this.controlNode = null;
         this.isNoop = true;
         this.controller = null;
+        this.hash = computeHash();
     }
 
     // RANDOM action
@@ -37,6 +40,7 @@ public class FlipItAction extends ActionImpl {
         this.controlNode = null;
         this.isNoop = false;
         this.controller = controller;
+        this.hash = computeHash();
     }
 
     public boolean isNoop(){
@@ -80,13 +84,20 @@ public class FlipItAction extends ActionImpl {
 
     }
 
-    @Override
-    public int hashCode() {
+    private int computeHash(){
         int result = controlNode != null ? controlNode.getIntID()+1/*hashCode()*/ : 0;
         result = 31 * result + (isNoop ? 1 : 2);
         result = 31 * result + (controller != null ? (controller.equals(FlipItGameInfo.DEFENDER) ? 3 : 7) : 5);
         result = 31 * result + (getInformationSet()!=null ? getInformationSet().hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+//        if(this.hash != computeHash()){
+//            System.out.println("different action hash"); System.exit(0);
+//        }
+        return hash;
     }
 
 

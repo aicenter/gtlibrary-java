@@ -33,13 +33,13 @@ public class RandomGameInfo implements GameInfo {
 
     public static final Player[] ALL_PLAYERS = new Player[] {FIRST_PLAYER, SECOND_PLAYER};
 
-    public static double CORRELATION = -1.0;//-0.9;// -1 for zero sum, 1 for identical utilities
+    public static double CORRELATION = -0.9;// -1 for zero sum, 1 for identical utilities
     public static int MAX_DEPTH = 3;
     public static int MAX_BF = 2;
     public static int MAX_OBSERVATION = 2;
     public static int MAX_UTILITY = 100;
     public static boolean BINARY_UTILITY = false;
-    public static boolean UTILITY_CORRELATION = false;
+    public static boolean UTILITY_CORRELATION = true;
     public static int MAX_CENTER_MODIFICATION = 1;
     public static boolean FIXED_SIZE_BF = false;
     //    public static double KEEP_OBS_PROB = 0.9;
@@ -67,6 +67,25 @@ public class RandomGameInfo implements GameInfo {
         this.seed = seed;
         this.MAX_BF = bf;
         this.MAX_DEPTH = depth;
+        rnd = new HighQualityRandom(seed);
+        if (UTILITY_CORRELATION) {
+            if (BINARY_UTILITY)
+                MAX_UTILITY = 1;
+            else
+                MAX_UTILITY = 2*MAX_CENTER_MODIFICATION*MAX_DEPTH;
+        }
+        ACTIONS = new int[MAX_BF-1];
+        for (int i=0; i<MAX_BF-1; i++) {
+            ACTIONS[i]=i;
+        }
+    }
+
+    public RandomGameInfo(int seed, int depth, int bf, double correlation, int observations) {
+        this.seed = seed;
+        this.MAX_BF = bf;
+        this.MAX_DEPTH = depth;
+        this.CORRELATION = correlation;
+        this.MAX_OBSERVATION = observations;
         rnd = new HighQualityRandom(seed);
         if (UTILITY_CORRELATION) {
             if (BINARY_UTILITY)

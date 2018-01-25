@@ -1,34 +1,56 @@
-package cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative;
+package cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative.gadget;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
-import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.RecyclingMILPTable;
-import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetAction;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
 import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.interfaces.GameInfo;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
-public class ShallowestBrokenCplexBayesianStackelbergLP extends SumForbiddingBayesianStackelbergLP {
+/**
+ * Created by Jakub Cerny on 16/01/2018.
+ */
+public class ShallowestBrokenCplexGadgetBayesianStackelbergLP extends SFGadgetBayesianStackelbergLP{
 
-    public ShallowestBrokenCplexBayesianStackelbergLP(FlipItGameInfo info, Expander expander) {
-        super(info, expander);
-        this.eps = 1e-5;
-        this.lpTable = new RecyclingMILPTable();
+    protected final boolean CLEAN_MILP = false;
+
+    protected HashMap<FollowerType,HashMap<GameState, HashSet<Object>>> eqsToDeleteWithoutDeletingVars;
+
+    @Override
+    public String getInfo(){
+        return "Bayesian SSE Gadget MILP Solver";
+    }
+
+    public ShallowestBrokenCplexGadgetBayesianStackelbergLP(Player leader, GameInfo info) {
+        super(leader, info);
+        eqsToDeleteWithoutDeletingVars = new HashMap<>();
+    }
+
+    @Override
+    protected void deleteOldGadgetRootConstraintsAndVariables(GameState state, FollowerType type) {
+        super.deleteOldGadgetRootConstraintsAndVariables(state, type);
+        for(Object eqKey : eqsToDeleteWithoutDeletingVars.get(type).get(state))
+            lpTable.deleteConstraintWithoutVars(eqKey);
     }
 
     @Override
     protected Pair<Map<Sequence, Double>, Double> handleBrokenStrategyCause(double lowerBound, double upperBound, LPData lpData, double value, Iterable<Pair<FollowerType,Sequence>> brokenStrategyCauses) {
+        bnbBranchingCount++;
         for (Pair<FollowerType,Sequence> outgoingSequence : brokenStrategyCauses) {
             addEqualityToBinaryVariableFor(outgoingSequence, lpData);
         }
         controlBinaryVariables(brokenStrategyCauses);
         Pair<Map<Sequence, Double>, Double> currentBest = solve(lowerBound, upperBound);
 
-        removeBinaryConstraints(brokenStrategyCauses, lpData);
+        if (CLEAN_MILP) removeBinaryConstraints(brokenStrategyCauses, lpData);
         return currentBest;
     }
 
@@ -82,9 +104,21 @@ public class ShallowestBrokenCplexBayesianStackelbergLP extends SumForbiddingBay
 
                         lpTable.setConstraint(eqKey, p, 1);
                         lpTable.setConstraint(eqKey, binaryVarKey, -1);
-                        ((RecyclingMILPTable)lpTable).markAsBinary(binaryVarKey);
+                        lpTable.markAsBinary(binaryVarKey);
                         lpTable.watchPrimalVariable(binaryVarKey, binaryVarKey);
                         lpTable.setConstraintType(eqKey, 0);
+
+                        if (!p.getFirst().isEmpty() && p.getFirst().getLast() instanceof GadgetAction) {
+                            if (!eqsToDeleteWithoutDeletingVars.containsKey(p.getThird())) eqsToDeleteWithoutDeletingVars.put(p.getThird(), new HashMap<>());
+                            if(!eqsToDeleteWithoutDeletingVars.get(p.getThird()).containsKey(((GadgetAction) p.getFirst().getLast()).getState()))
+                                eqsToDeleteWithoutDeletingVars.get(p.getThird()).put(((GadgetAction) p.getFirst().getLast()).getState(), new HashSet<>());
+                            eqsToDeleteWithoutDeletingVars.get(p.getThird()).get(((GadgetAction) p.getFirst().getLast()).getState()).add(eqKey);
+                            if(!varsToDelete.get(p.getThird()).get(((GadgetAction) p.getFirst().getLast()).getState()).containsKey(eqKey))
+                                varsToDelete.get(p.getThird()).get(((GadgetAction) p.getFirst().getLast()).getState()).put(eqKey, new HashSet<>());
+                            varsToDelete.get(p.getThird()).get(((GadgetAction) p.getFirst().getLast()).getState()).get(eqKey).add(p);
+                        }
+
+
                     }
                 }
             }

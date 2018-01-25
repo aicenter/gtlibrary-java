@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 
@@ -111,8 +112,12 @@ public class LPTable {
     }
 
     public void setObjective(Object varKey, double value) {
-        objective.put(varKey, value);
-        updateVariableIndices(varKey);
+        if (value != 0) {
+            objective.put(varKey, value);
+            updateVariableIndices(varKey);
+        }
+        else
+            objective.remove(varKey);
     }
 
     public void addToObjective(Object varKey, double value) {
@@ -138,7 +143,7 @@ public class LPTable {
     public double getConstant(Object eqKey) {
         Double value = constants.get(eqKey);
 
-        return value == null ? 0 : value.doubleValue();
+        return value == null ? 0.0 : value.doubleValue();
     }
 
     public void setConstraint(Object eqKey, Object varKey, double value) {
@@ -148,9 +153,15 @@ public class LPTable {
             row = new LinkedHashMap<>();
             constraints.put(eqKey, row);
         }
-        row.put(varKey, value);
-        updateEquationIndices(eqKey);
-        updateVariableIndices(varKey);
+        if (value != 0) {
+//            if (row.containsKey(varKey) && row.get(varKey) != value) System.out.println(eqKey + " : " +  varKey);
+            row.put(varKey, value);
+            updateEquationIndices(eqKey);
+            updateVariableIndices(varKey);
+        }
+        else{
+            row.remove(varKey);
+        }
     }
 
     public void addToConstraint(Object eqKey, Object varKey, double value) {
@@ -186,7 +197,7 @@ public class LPTable {
             result = map.size();
             map.put(key, result);
         }
-        return result;
+        return result.intValue();
     }
 
     public void watchPrimalVariable(Object varKey, Object watchKey) {
@@ -288,12 +299,13 @@ public class LPTable {
         Map<Object, IloNumVar> watchedPrimalVars = new LinkedHashMap<Object, IloNumVar>();
 
         for (Entry<Object, Integer> entry : primalWatch.entrySet()) {
-            watchedPrimalVars.put(entry.getKey(), variables[entry.getValue()]);
+            watchedPrimalVars.put(entry.getKey(), variables[entry.getValue().intValue()]);
         }
         return watchedPrimalVars;
     }
 
     protected IloRange[] addConstraintsViaMatrix(IloCplex cplex, IloNumVar[] x) throws IloException {
+        System.out.println("# of vars: " + columnCount() + "; # of cons: " + constraints.keySet().size());
         IloLPMatrix matrix = cplex.addLPMatrix();
         matrix.addCols(x);
         System.out.println("Adding constraints.");
@@ -303,10 +315,13 @@ public class LPTable {
         double[] ubs = new double[idxs.length];
         int j = 0;
         for(Object con : constraints.keySet()){
+//            if (constraints.get(con).size() == 1) System.out.println(con);
             int[] idx = new int[constraints.get(con).keySet().size()];
             double[] val = new double[idx.length];
             int i = 0;
+//            if (constraintTypes.get(con) == 2) System.out.println(con);
             for(Object var : constraints.get(con).keySet()){
+//                if (constraintTypes.get(con) == 2) System.out.println("\t"+var);
                 idx[i] = variableIndices.get(var);
                 val[i] = constraints.get(con).get(var);
                 i++;
@@ -616,4 +631,216 @@ public class LPTable {
     public boolean exists(Object varKey) {
         return variableIndices.containsKey(varKey);
     }
+
+    public int getLPSize(){
+        final boolean COMPUTE_CONSTRAINT_SIZES = false;
+        if (COMPUTE_CONSTRAINT_SIZES) {
+            int maxsize = 0;
+            for (Object con : constraints.keySet())
+                if (constraints.get(con).size() > maxsize) maxsize = constraints.get(con).size();
+            int[] sizes = new int[maxsize + 1];
+            for (Object con : constraints.keySet()) sizes[constraints.get(con).size()]++;
+            for (int i = 0; i < sizes.length; i++)
+                if (sizes[i] != 0) System.out.println("size " + i + " = " + sizes[i]);
+        }
+        int size = 0;
+        for (Entry<Object, Map<Object, Double>> entry : constraints.entrySet()){
+            size += entry.getValue().size();
+        }
+        return size;
+    }
+
+    public void compareExistingConstraints(LPTable table){
+        int missing = 0;
+        HashSet<Integer> idx = new HashSet<Integer>();
+        for (Object o : primalWatch.keySet()){
+            if (!primalWatch.get(o).equals(table.primalWatch.get(o))){
+                System.out.println("diff idx " + o);
+                System.exit(0);
+            }
+        }
+        try {
+            LPData data = this.toCplex();
+            LPData tableData = table.toCplex();
+//            for(IloRange r : data.getConstraints()){
+//                r.
+//            }
+            HashSet<IloNumVar> vars = new HashSet<>();
+            for(IloNumVar v : data.getWatchedPrimalVariables().values()){
+                if(vars.contains(v)){
+                    System.out.println("double " + v);
+                    System.exit(0);
+                }
+                vars.add(v);
+            }
+            for (Object o : data.getWatchedPrimalVariables().keySet()) {
+                if (!tableData.getWatchedPrimalVariables().containsKey(o)) {// || !tableData.getWatchedPrimalVariables().get(o).equals(data.getWatchedPrimalVariables().get(o))){
+                    System.out.println(o);
+                    System.exit(0);
+                }
+                if(!data.getWatchedPrimalVariables().get(o).getName().equals(tableData.getWatchedPrimalVariables().get(o).getName())){
+                    System.out.println("diff name " + o);
+                    System.exit(0);
+                }
+                if(data.getWatchedPrimalVariables().get(o).getLB() != (tableData.getWatchedPrimalVariables().get(o).getLB())){
+                    System.out.println("diff lb " + o);
+                    System.exit(0);
+                }
+                if(data.getWatchedPrimalVariables().get(o).getUB() != (tableData.getWatchedPrimalVariables().get(o).getUB())){
+                    System.out.println("diff ub " + o);
+                    System.exit(0);
+                }
+                if(!data.getWatchedPrimalVariables().get(o).getType().equals(tableData.getWatchedPrimalVariables().get(o).getType())){
+                    System.out.println("diff type " + o);
+                    System.exit(0);
+                }
+            }
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            System.exit(0);
+        }
+
+//            System.out.println(o + " : " + primalWatch.get(o));
+        for(Object vat :variableIndices.keySet()) {
+            if (!variableIndices.get(vat).equals(table.variableIndices.get(vat))){
+                System.out.println("diff idx " + vat);
+                System.exit(0);
+            }
+//            if (primalWatch.containsKey(vat)) System.out.println(vat + " : " + variableIndices.get(vat));
+            if (primalWatch.containsKey(vat) && !primalWatch.get(vat).equals(variableIndices.get(vat))){
+                System.out.println(this.getClass().getSimpleName() + " / rozdilnej idx : " + vat + " : " + primalWatch.get(vat) + " / " + variableIndices.get(vat));
+                System.exit(0);
+            }
+            if(idx.contains(variableIndices.get(vat))){
+                System.out.println("Dvojitej var idx: " + vat);
+                System.exit(0);
+            }
+            idx.add(variableIndices.get(vat));
+        }
+        idx.clear();
+        for(Object vat : equationIndices.keySet()){
+            if(idx.contains(equationIndices.get(vat))){
+                System.out.println("Dvojitej eq idx: " + vat);
+                System.exit(0);
+            }
+            idx.add(equationIndices.get(vat));
+        }
+        for(Object var : variableIndices.keySet()) {
+            if (!table.variableIndices.containsKey(var)) {
+                System.out.println("Missing var " + var);
+                System.exit(0);
+            }
+        }
+        for(Object var : ub.keySet()) {
+            if (!table.ub.containsKey(var)) {
+                System.out.println("Missing ubound " + var);
+                System.exit(0);
+            }
+        }
+        for(Object var : lb.keySet()) {
+            if (!table.lb.containsKey(var)) {
+                System.out.println("Missing lbound " + var);
+                System.exit(0);
+            }
+        }
+        for(Object var : lb.keySet()) {
+            if (table.lb.containsKey(var) && lb.containsKey(var) && Math.abs(lb.get(var)-table.lb.get(var))>0.00001) {
+                System.out.println("Different lb " + var);
+                System.exit(0);
+            }
+        }
+        for(Object var : ub.keySet()) {
+            if (table.ub.containsKey(var) && ub.containsKey(var) && Math.abs(ub.get(var)-table.ub.get(var))>0.000001) {
+                System.out.println("Different ub " + var);
+                System.exit(0);
+            }
+        }
+        for(Object var : objective.keySet()){
+            if (!table.objective.containsKey(var) || Math.abs(objective.get(var)-table.objective.get(var))>0.000001){
+                System.out.println("Different obj " + var); System.exit(0);
+            }
+        }
+        for (Object con : constraints.keySet()) {
+            if (table.constraints.containsKey(con)) {
+//                if(!table.constants.containsKey(con)){
+//                    continue;
+//                    System.out.println("chybejici konstanta: " + con);continue;// System.exit(0);
+//                }
+                if (constants.containsKey(con) && !table.constants.containsKey(con)) {
+                    System.out.println("chybi table konstanta"); System.exit(0);
+                }
+                if (!constants.containsKey(con) && table.constants.containsKey(con)) {
+                    System.out.println("chybi orig konstanta"); System.exit(0);
+                }
+                if (constants.containsKey(con) && table.constants.containsKey(con) && Math.abs(constants.get(con) - table.constants.get(con)) > 0.000000001) {
+                    System.out.println("jina konstanta"); System.exit(0);
+                }
+                if (Math.abs(constraintTypes.get(con) - table.constraintTypes.get(con)) > 0.0000001) {
+                    System.out.println("jinej typ"); System.exit(0);
+                }
+//                System.out.println(con);
+                for (Object var : constraints.get(con).keySet()) {
+                    if (constraints.get(con).size() != table.constraints.get(con).size()) {
+                        System.out.println("jina velikost");
+                        System.exit(0);
+                    }
+                    {
+                        if (table.constraints.get(con).containsKey(var) && Math.abs(table.constraints.get(con).get(var) - constraints.get(con).get(var))<0.00000001) {
+
+                        }
+//                        System.out.println("\t" + var);
+                        else {
+                            System.out.println(con);
+                            System.out.println(var);
+                            System.out.println(table.constraints.get(con).get(var) + " / " + constraints.get(con).get(var));
+                            System.out.println("chybi");
+                            System.exit(0);
+                        }
+                    }
+                }
+            }
+            else {
+                System.out.println("Missing: " + con);
+                missing++;
+            }
+        }
+        System.out.println(missing);
+    }
+
+    public void clearPrimalWatch(){
+        primalWatch.clear();
+//        primalWatch.clear();
+//        ub.clear();
+//        lb.clear();
+//        constraintTypes.clear();
+
+//        constraints.clear();
+//        constants.clear();
+//        variableIndices.clear();
+//        equationIndices.clear();
+//        objective.clear();
+    }
+
+    public void updatePrimalWatch(Map<Object, Integer> primalWatch){
+        this.primalWatch = primalWatch;
+    }
+
+    public Map<Object, Integer> getPrimalWatch(){
+        return primalWatch;
+    }
+
+    public void setVariableIndices(Map<Object,Integer> variableIndices) {
+        this.variableIndices = variableIndices;
+    }
+
+    public Map<Object,Integer> getVariableIndices(){
+        return variableIndices;
+    }
+
+    public Map<Object,Map<Object, Double>> getConstraints(){
+        return constraints;
+    }
+
+    public void setConstraints(Map<Object,Map<Object, Double>> constraints){this.constraints = constraints; }
 }

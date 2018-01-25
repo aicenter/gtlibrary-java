@@ -21,17 +21,24 @@ package cz.agents.gtlibrary.algorithms.stackelberg;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.LeaderGenerationConfig;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.experiments.StackelbergExperiments;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.*;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.BFSEnforcingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.bfs.CompleteBFSEnforcingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.milp.StackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.StackelbergSequenceFormMultipleLPs;
+import cz.agents.gtlibrary.algorithms.stackelberg.oracle.GadgetOracle2pSumForbiddingLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.oracle.LeaderOracle2pSumForbiddingLP;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
 import cz.agents.gtlibrary.domain.flipit.*;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GenSumGoofSpielGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSExpander;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameInfo;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
@@ -85,8 +92,10 @@ public class StackelbergRunner {
 //        runPEG();
 //        runStackTest();
 //        runBPG("", depth);
-        runFlipIt(args);
-//        runFlipIt(new String[]{});
+//        runFlipIt(args);
+        runFlipIt(new String[]{"F", "4", "3", "N", "G"});
+//        runPEGGadget();
+//        runGoofSpiel();
     }
 
     public static void runFlipIt(String[] args) {
@@ -124,6 +133,12 @@ public class StackelbergRunner {
                     break;
                 case "CGY":
                     runner.generate(rootState.getAllPlayers()[LEADER], new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, true, true));
+                    break;
+                case "G":
+                    algConfig = new LeaderGenerationConfig(rootState);
+                    expander = new FlipItExpander<>(algConfig);
+                    runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+                    runner.generate(rootState.getAllPlayers()[LEADER], new GadgetOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo));
                     break;
             }
         }
@@ -307,8 +322,33 @@ public class StackelbergRunner {
         Expander<SequenceInformationSet> expander = new PursuitExpander(algConfig);
 
         StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+//        runner.generate(rootState.getAllPlayers()[1], new StackelbergSequenceFormMILP(rootState.getAllPlayers(), rootState.getAllPlayers()[1], rootState.getAllPlayers()[0], gameInfo, expander));
+//        runner.generate(rootState.getAllPlayers()[1],
+//                new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+        runner.generate(rootState.getAllPlayers()[1], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[1], gameInfo));
+//        new GambitEFG().write("peg.gbt", rootState, expander);
+    }
+
+    public static void runPEGGadget() {
+        GameInfo gameInfo = new PursuitGameInfo();
+        GameState rootState = new GenSumPursuitGameState();
+        StackelbergConfig algConfig = new LeaderGenerationConfig(rootState);
+        Expander<SequenceInformationSet> expander = new PursuitExpander(algConfig);
+
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
         runner.generate(rootState.getAllPlayers()[1],
-                new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+                new GadgetOracle2pSumForbiddingLP(rootState.getAllPlayers()[1], gameInfo));
+    }
+
+    public static void runGoofSpiel() {
+        GameInfo gameInfo = new GSGameInfo();
+        GameState rootState = new GenSumGoofSpielGameState();
+        StackelbergConfig algConfig = new LeaderGenerationConfig(rootState);
+        Expander<SequenceInformationSet> expander = new GoofSpielExpander<>(algConfig);
+
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+        runner.generate(rootState.getAllPlayers()[1],
+                new GadgetOracle2pSumForbiddingLP(rootState.getAllPlayers()[1], gameInfo));
     }
 
     public static void runStackTest() {
@@ -342,10 +382,92 @@ public class StackelbergRunner {
         this.algConfig = algConfig;
     }
 
+    public Pair<Double, Map<Player, Map<Sequence, Double>>> generate(Player leader, GadgetSefceLP solver) {
+//        debugOutput.println("Full Sequence Multiple LP Stackelberg");
+        debugOutput.println(solver.getClass().getSimpleName().replaceAll("([A-Z])", " $1").replaceFirst(" ",""));
+        debugOutput.println(solver.getInfo());
+        debugOutput.println(gameConfig.getInfo());
+        debugOutput.println("LP Solving method: " + LPTable.CPLEXALG);
+        threadBean = ManagementFactory.getThreadMXBean();
+
+        long start = threadBean.getCurrentThreadCpuTime();
+        long overallSequenceGeneration = 0;
+        long overallCPLEX = 0;
+        Map<Player, Map<Sequence, Double>> realizationPlans = new HashMap<>();
+        long startGeneration = threadBean.getCurrentThreadCpuTime();
+
+//        generateCompleteGame();
+//        System.out.println("Game tree built...");
+//        System.out.println("Information set count: " + algConfig.getAllInformationSets().size());
+//        overallSequenceGeneration = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
+//
+        Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
+//        System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
+
+        long startCPLEX = threadBean.getCurrentThreadCpuTime();
+
+        solver.calculateLeaderStrategies(algConfig, expander);
+
+        long thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX) / 1000000l;
+
+        overallCPLEX += thisCPLEX;
+
+        for (Player player : rootState.getAllPlayers()) {
+            realizationPlans.put(player, solver.getResultStrategiesForPlayer(player));
+        }
+
+        System.out.println("done.");
+        finalTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
+
+        int[] support_size = new int[]{0, 0};
+//        for (Player player : actingPlayers) {
+//            for (Sequence sequence : realizationPlans.get(player).keySet()) {
+//                if (realizationPlans.get(player).get(sequence) > 0) {
+//                    support_size[player.getId()]++;
+//                    if (DEBUG)
+//                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+//                }
+//            }
+//        }
+
+        try {
+            Runtime.getRuntime().gc();
+            Thread.sleep(500l);
+        } catch (InterruptedException e) {
+        }
+
+        gameValue = solver.getResultForPlayer(leader);
+        System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
+        System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
+        System.out.println("final result:" + gameValue);
+        System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
+        System.out.println("final time: " + finalTime);
+        System.out.println("final CPLEX time: " + overallCPLEX);
+        System.out.println("final CPLEX building time: " + solver.getOverallConstraintGenerationTime() / 1000000l);
+        System.out.println("final CPLEX solving time: " + solver.getOverallConstraintLPSolvingTime() / 1000000l);
+        System.out.println("final BR time: " + 0);
+        System.out.println("final RGB time: " + 0);
+        System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
+        System.out.println("final IS count: " + algConfig.getAllInformationSets().size());
+
+        if (DEBUG) {
+            // sanity check -> calculation of Full BR on the solution of SQF LP
+            SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+            System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+
+            SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+            System.out.println("BR: " + brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[0])));
+
+            algConfig.validateGameStructure(rootState, expander);
+        }
+        return new Pair<>(gameValue,realizationPlans);
+    }
+
     public Pair<Double, Map<Player, Map<Sequence, Double>>> generate(Player leader, StackelbergSequenceFormLP solver) {
 //        debugOutput.println("Full Sequence Multiple LP Stackelberg");
         debugOutput.println(solver.getClass().getSimpleName().replaceAll("([A-Z])", " $1").replaceFirst(" ",""));
         debugOutput.println(gameConfig.getInfo());
+        debugOutput.println("LP Solving method: " + LPTable.CPLEXALG);
         threadBean = ManagementFactory.getThreadMXBean();
 
         long start = threadBean.getCurrentThreadCpuTime();
@@ -378,15 +500,15 @@ public class StackelbergRunner {
         finalTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
 
         int[] support_size = new int[]{0, 0};
-        for (Player player : actingPlayers) {
-            for (Sequence sequence : realizationPlans.get(player).keySet()) {
-                if (realizationPlans.get(player).get(sequence) > 0) {
-                    support_size[player.getId()]++;
-                    if (DEBUG)
-                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
-                }
-            }
-        }
+//        for (Player player : actingPlayers) {
+//            for (Sequence sequence : realizationPlans.get(player).keySet()) {
+//                if (realizationPlans.get(player).get(sequence) > 0) {
+//                    support_size[player.getId()]++;
+//                    if (DEBUG)
+//                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+//                }
+//            }
+//        }
 
         try {
             Runtime.getRuntime().gc();

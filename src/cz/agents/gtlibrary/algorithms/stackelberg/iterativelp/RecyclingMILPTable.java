@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
+import ilog.cplex.IloCplex;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,6 +15,7 @@ public class RecyclingMILPTable extends RecyclingLPTable {
     public RecyclingMILPTable() {
         super();
         binaryVariables = new HashSet<>();
+//        CPLEXALG = IloCplex.Algorithm.Barrier;
     }
 
     public void markAsBinary(Object varKey) {

@@ -20,12 +20,15 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.flipit.bayesian;
 
 import cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative.LeaderGenerationBayesianStackelbergLP;
+import cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative.gadget.BayesianGadgetSefceLP;
+import cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative.gadget.SFGadgetBayesianStackelbergLP;
 import cz.agents.gtlibrary.algorithms.flipit.bayesian.milp.BayesianStackelbergSequenceFormMILP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative.ShallowestBrokenCplexBayesianStackelbergLP;
 import cz.agents.gtlibrary.algorithms.flipit.bayesian.iterative.SumForbiddingBayesianStackelbergLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.LeaderGenerationConfig;
 import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.interfaces.*;
 
@@ -61,10 +64,12 @@ public class BayesianStackelbergRunner {
 
 //    static String alg = "AI-LP";
 //    static String alg = "AI-CG";
-    static String alg = "MILP";
+//    static String alg = "MILP";
+    static String alg = "G";
+//    static String alg = "AI-LP";
 
     public static void main(String[] args) {
-//        runFlipIt(new String[]{"3", "5", "flipit_simple3.txt", "10", "test_bsgsse.txt", alg , "F"});
+        runFlipIt(new String[]{"3", "3", "flipit_simple3.txt", "10", "test_bsgsse.txt", alg , "F"});
     }
 
     public static void runFlipIt(String[] args){
@@ -117,6 +122,11 @@ public class BayesianStackelbergRunner {
                 break;
             case "AI-CG" : runner.generate(rootState.getAllPlayers()[0], new LeaderGenerationBayesianStackelbergLP(FlipItGameInfo.DEFENDER, gameInfo, false, true));
                 break;
+            case "G" :
+                algConfig = new LeaderGenerationConfig(rootState);
+                expander = new FlipItExpander<>(algConfig);
+                runner = new BayesianStackelbergRunner(rootState, expander, gameInfo, algConfig);
+                runner.generate(rootState.getAllPlayers()[0], new SFGadgetBayesianStackelbergLP(FlipItGameInfo.DEFENDER, gameInfo));
         }
 
 //        double LP = runner.generate(rootState.getAllPlayers()[0], new SumForbiddingBayesianStackelbergLP( gameInfo, expander));
@@ -180,6 +190,97 @@ public class BayesianStackelbergRunner {
         for (Player player : rootState.getAllPlayers()) {
             realizationPlans.put(player, solver.getResultStrategiesForPlayer(player));
         }
+
+        System.out.println("done.");
+        finalTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
+
+        int[] support_size = new int[]{0, 0};
+//        for (Player player : actingPlayers) {
+//            for (Sequence sequence : realizationPlans.get(player).keySet()) {
+//                if (realizationPlans.get(player).get(sequence) > 0) {
+//                    support_size[player.getId()]++;
+//                    if (DEBUG)
+//                        System.out.println(sequence + "\t:\t" + realizationPlans.get(player).get(sequence));
+//                }
+//            }
+//        }
+
+//        for (Sequence sequence : realizationPlans.get(FlipItGameInfo.DEFENDER).keySet()) {
+//            if (realizationPlans.get(FlipItGameInfo.DEFENDER).get(sequence) > 0) {
+//                System.out.println(sequence + " : " + realizationPlans.get(FlipItGameInfo.DEFENDER).get(sequence));
+//            }
+//        }
+
+        try {
+            Runtime.getRuntime().gc();
+            Thread.sleep(500l);
+        } catch (InterruptedException e) {
+        }
+
+        gameValue = solver.getResultForPlayer(leader);
+        System.out.println("final size: FirstPlayer Sequences: " + algConfig.getSequencesFor(actingPlayers[0]).size() + " \t SecondPlayer Sequences : " + algConfig.getSequencesFor(actingPlayers[1]).size());
+        System.out.println("final support_size: FirstPlayer: " + support_size[0] + " \t SecondPlayer: " + support_size[1]);
+        System.out.println("final result:" + gameValue);
+        System.out.println("final memory:" + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024));
+        System.out.println("final time: " + finalTime);
+        System.out.println("final CPLEX time: " + overallCPLEX);
+        System.out.println("final CPLEX building time: " + solver.getOverallConstraintGenerationTime() / 1000000l);
+        System.out.println("final CPLEX solving time: " + solver.getOverallConstraintLPSolvingTime() / 1000000l);
+        System.out.println("final BR time: " + 0);
+        System.out.println("final RGB time: " + 0);
+        System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
+        System.out.println("final IS count: " + algConfig.getAllInformationSets().size());
+
+        if (OUTPUT){
+            output += alg + " ";
+            output += gameValue + " ";
+            output += (algConfig.getSequencesFor(actingPlayers[0]).size() + " ");
+            output += (algConfig.getSequencesFor(actingPlayers[1]).size() + " ");
+            output += (algConfig.getSequencesFor(actingPlayers[0]).size() + FlipItGameInfo.numTypes*algConfig.getSequencesFor(actingPlayers[1]).size() + " ");
+            output += (algConfig.getAllInformationSets().size() + " ");
+            output += (overallSequenceGeneration + " ");
+            output += (((Runtime.getRuntime().totalMemory() - Runtime.getRuntime()
+                    .freeMemory()) / 1024 / 1024) + " ");
+            output += (finalTime + " ");
+            output += (overallCPLEX + " ");
+            output += (solver.getOverallConstraintGenerationTime() / 1000000l + " ");
+            output += (solver.getOverallConstraintLPSolvingTime() / 1000000l + " ");
+
+            try {
+                Files.write(Paths.get(outputFile), (output+"\n").getBytes(),
+                        StandardOpenOption.APPEND);
+            } catch (IOException e) {
+                System.err.println("Appending failed");
+            }
+        }
+
+        return gameValue;//realizationPlans;
+    }
+
+    public double generate(Player leader, BayesianGadgetSefceLP solver) {
+        debugOutput.println(solver.getInfo());
+        debugOutput.println(gameConfig.getInfo());
+        threadBean = ManagementFactory.getThreadMXBean();
+
+        long start = threadBean.getCurrentThreadCpuTime();
+        long overallSequenceGeneration = 0;
+        long overallCPLEX = 0;
+        Map<Player, Map<Sequence, Double>> realizationPlans = new HashMap<>();
+        long startGeneration = threadBean.getCurrentThreadCpuTime();
+
+        Player[] actingPlayers = new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]};
+
+        long startCPLEX = threadBean.getCurrentThreadCpuTime();
+
+        solver.calculateLeaderStrategies(algConfig, expander);
+
+        long thisCPLEX = (threadBean.getCurrentThreadCpuTime() - startCPLEX) / 1000000l;
+
+        overallCPLEX += thisCPLEX;
+
+//        for (Player player : rootState.getAllPlayers()) {
+//            realizationPlans.put(player, solver.getResultStrategiesForPlayer(player));
+//        }
 
         System.out.println("done.");
         finalTime = (threadBean.getCurrentThreadCpuTime() - start) / 1000000l;

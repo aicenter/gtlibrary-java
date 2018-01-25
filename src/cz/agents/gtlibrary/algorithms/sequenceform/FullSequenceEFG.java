@@ -103,7 +103,7 @@ public class FullSequenceEFG {
 //		runAoS();
 //		runKuhnPoker();
 //		runGenericPoker();
-//		runBPG();
+		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
 //      runSimRandomGame();
@@ -114,7 +114,7 @@ public class FullSequenceEFG {
 //        runOshiZumo();
 //        testExploitGame();
 //		runFlipIt();
-		runHoneyPot();
+//		runHoneyPot();
 	}
 
 	private static void runHoneyPot(){

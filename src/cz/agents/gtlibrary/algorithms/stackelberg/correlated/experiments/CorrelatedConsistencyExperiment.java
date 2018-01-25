@@ -10,11 +10,16 @@ import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.Complet
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.iterative.LeaderGenerationSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.CompleteTwoPlayerSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.*;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetSefceLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetSefceLPWithoutMiddleState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
 import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.oshizumo.*;
+import cz.agents.gtlibrary.domain.pursuit.GenSumPursuitGameState;
+import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
+import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.GenSumSimRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
@@ -38,19 +43,22 @@ public class CorrelatedConsistencyExperiment {
     final static int depth = 3;
     static boolean pureStrategies = false;
 
+    static final boolean CHECK_UTILS_FOR_CONFLICT = false;
+
     public static void main(String[] args) {
         if (args.length == 0) {
 //            runGenSumRandom(new String[]{"R", "3", "3", "30"});
-//            runGenSumSimRandom(new String[]{"R", "3", "3", "3"});
-//            runGenSumRandomImproved(new String[]{"I", "7", "5", "-0.2", "1"});
+//            runGenSumSimRandom(new String[]{"R", "3", "7", "20"});
+//            runGenSumRandomImproved(new String[]{"I", "4", "5", "-0.2", "1"});
 //            runGenSumRandomOneSeed(new String[]{"I", "2", "2"}, 1);
 //        runGenSumRandomImproved();
-//        runBPG(new String[]{"B", "4", "0"});
+//        runBPG(new String[]{"B", "4", "1"});
 //        runFlipIt(args);
-//        runFlipIt(new String[]{"F", "4", "3", "AP", "1"});
-            runFlipIt(new String[]{"F", "3", "3", "AP", "1"});
+//        runFlipIt(new String[]{"F", "6", "2", "F", "5"});
+//            runFlipIt(new String[]{"F", "3", "3", "F", "20"});
 //            runFlipItGeneration(new String[]{"F", "2", "2", "AP", "10"});
 //            runOshiZumo(args);
+            runPursuit(new String[]{"P", "4", "20"});
         } else {
             switch (args[0]) {
                 case "F":
@@ -67,6 +75,9 @@ public class CorrelatedConsistencyExperiment {
                     break;
                 case "I":
                     runGenSumRandomImproved(args);
+                    break;
+                case "P":
+                    runPursuit(args);
                     break;
 
             }
@@ -200,17 +211,21 @@ public class CorrelatedConsistencyExperiment {
             s1 = new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
             runner.generate(rootState.getAllPlayers()[LEADER], s1);
         } else {
-//                algConfig = new LeaderGenerationConfig(rootState);
-//                expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<>(algConfig);
-//                runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                algConfig = new LeaderGenerationConfig(rootState);
+                expander = new BPGExpander<>(algConfig);
+                runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+            s1 = new GadgetSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
 //                s1 = new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
 //                s1 = new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
-            s1 = new CompleteGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//            s1 = new CompleteGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
 //                s1 = new LeaderGeneration2pRelevantWise(rootState.getAllPlayers()[LEADER], gameInfo);
 //            s1 = new LeaderGeneration2pRelevantWiseSefceLp(rootState.getAllPlayers()[LEADER], gameInfo);
             runner.generate(rootState.getAllPlayers()[LEADER], s1);
         }
-        restrictedGameRatioI += runner.getRestrictedGameRatio();
+        double rgsize = runner.getRestrictedGameRatio();
+        if (s1 instanceof GadgetSefceLP)
+            rgsize = algConfig.getAllInformationSets().size();
+//        restrictedGameRatioI += runner.getRestrictedGameRatio();
         fullGameGV = runner.getGameValue();
         fullTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
         fullTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
@@ -227,13 +242,17 @@ public class CorrelatedConsistencyExperiment {
             runner.generate(rootState.getAllPlayers()[LEADER], s2);
         } else {
 //            s2 = new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
-            s2 = new LeaderGeneration2pRelevantWiseSefceLp(rootState.getAllPlayers()[LEADER], gameInfo);
+//            s2 = new LeaderGeneration2pRelevantWiseSefceLp(rootState.getAllPlayers()[LEADER], gameInfo);
+            s2 = new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
             runner.generate(rootState.getAllPlayers()[LEADER], s2);
         }
         oracleGameGV = runner.getGameValue();
         oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
         oracleTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
         restrictedGameRatioII += runner.getRestrictedGameRatio();
+        if (s1 instanceof GadgetSefceLP)
+            restrictedGameRatioI += (rgsize/(double)algConfig.getAllInformationSets().size());
+        else restrictedGameRatioI += rgsize;
 
         if (Math.abs(oracleGameGV - fullGameGV) > 0.001)
             notConvergedSeeds.add(0);
@@ -400,7 +419,15 @@ public class CorrelatedConsistencyExperiment {
 //                s1 = new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
 //                s1 = new CompleteGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
 //                s1 = new LeaderGeneration2pRelevantWise(rootState.getAllPlayers()[LEADER], gameInfo);
-                s1 = new LeaderGeneration2pRelevantWiseSefceLp(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new LeaderGeneration2pRelevantWiseSefceLp(rootState.getAllPlayers()[LEADER], gameInfo);
+                s1 = new GadgetSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new CompleteGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new LeaderGeneration2pRelevantWiseSefceLp(rootState.getAllPlayers()[LEADER], gameInfo);
+                if (s1 instanceof GadgetSefceLP || s1 instanceof LeaderGeneration2pLessMemSefceLP){
+                    algConfig = new LeaderGenerationConfig(rootState);
+                    expander = new cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander<>(algConfig);
+                    runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                }
                 runner.generate(rootState.getAllPlayers()[LEADER], s1);
             }
             restrictedGameRatioI += runner.getRestrictedGameRatio();
@@ -417,7 +444,8 @@ public class CorrelatedConsistencyExperiment {
                 s2 = new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
                 runner.generate(rootState.getAllPlayers()[LEADER], s2);
             } else {
-                s2 = new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s2 = new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                s2 = new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
                 runner.generate(rootState.getAllPlayers()[LEADER], s2);
             }
             oracleGameGV = runner.getGameValue();
@@ -487,17 +515,23 @@ public class CorrelatedConsistencyExperiment {
             fullTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
             fullTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
 
+            int issize = algConfig.getAllInformationSets().size();
+
             algConfig = new StackelbergConfig(rootState);
             runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
             startGeneration = threadBean.getCurrentThreadCpuTime();
             if (pureStrategies)
                 runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-            else
-                runner.generate(rootState.getAllPlayers()[LEADER], new LeaderTLSimulataneousSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+            else {
+                algConfig = new LeaderGenerationConfig(rootState);
+                expander = new RandomGameExpander<>(algConfig);
+                runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                runner.generate(rootState.getAllPlayers()[LEADER], new GadgetSefceLPWithoutMiddleState(rootState.getAllPlayers()[LEADER], gameInfo));
+            }
             oracleGameGV = runner.getGameValue();
             oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
             oracleTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
-            restrictedGameRatio += runner.getRestrictedGameRatio();
+            restrictedGameRatio += algConfig.getAllInformationSets().size() / (double)issize;//runner.getRestrictedGameRatio();
 
             if (Math.abs(oracleGameGV - fullGameGV) > 0.001)
                 notConvergedSeeds.add(seed);
@@ -792,7 +826,218 @@ public class CorrelatedConsistencyExperiment {
 
     }
 
+    public static void runPursuit(String[] args) {
+        LEADER = 1;
+        final boolean COUNT_LEAVES = true;
+        int startingSeed = 0; // 113, 117, 135, 157, 168
+        PursuitGameInfo gameInfo = new PursuitGameInfo();
+        int depth = PursuitGameInfo.depth;
+        int maxseed = 10;
+        if (args.length != 0){
+            depth = Integer.parseInt(args[1]);
+            maxseed = Integer.parseInt(args[2]);
+        }
+        GameState rootState;
+
+        ArrayList<Integer> notConvergedSeeds = new ArrayList<>();
+        double restrictedGameRatioII = 0.0;
+        double restrictedGameRatioI = 0.0;
+        double averageRawISSize = 0.0;
+        double averageISSizeWithoutLeaves = 0.0;
+        double averageISSizeWithSingletonLeaves = 0.0;
+        double averageSequencesSize = 0.0;
+        double averageGadgetDepth = 0.0;
+        double averageLPSize = 0.0;
+
+        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+
+        long fullTime = 0;
+        long oracleTime = 0;
+        ArrayList<Long> fullTimes = new ArrayList<>();
+        ArrayList<Long> oracleTimes = new ArrayList<>();
+
+        double minRGSize = Double.POSITIVE_INFINITY;
+
+        for (int seed = startingSeed; seed < startingSeed + maxseed; seed++) {
+
+            System.out.println();
+            System.out.println("Running seed " + (seed) + " of " + (maxseed - 1));
+
+            gameInfo.initValue(true, seed, depth);
+
+            rootState = new GenSumPursuitGameState();
+
+
+            GenSumSequenceFormConfig algConfig = new StackelbergConfig(rootState);
+            PursuitExpander<SequenceInformationSet> expander = new PursuitExpander<>(algConfig);
+
+            double fullGameGV;
+            double oracleGameGV;
+
+            SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+
+            long startGeneration = threadBean.getCurrentThreadCpuTime();
+            Solver s1;
+            if (pureStrategies) {
+                s1 = new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s1);
+            } else {
+//                s1 = new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new LeaderTLSimulataneousSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new LeaderTLSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new BayesianGadgetSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                s1 = new GadgetSefceLPWithoutMiddleState(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new CompleteGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new LeaderGeneration2pRelevantWiseSefceLp(rootState.getAllPlayers()[LEADER], gameInfo);
+                if (s1 instanceof GadgetSefceLP || s1 instanceof LeaderGeneration2pLessMemSefceLP){
+                    algConfig = new LeaderGenerationConfig(rootState);
+                    expander = new PursuitExpander<>(algConfig);
+                    runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                }
+                runner.generate(rootState.getAllPlayers()[LEADER], s1);
+            }
+            double rgSize = runner.getRestrictedGameRatio();
+            restrictedGameRatioI += rgSize;
+            if (rgSize < minRGSize) minRGSize = rgSize;
+            fullGameGV = runner.getGameValue();
+            fullTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
+            fullTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
+//                s1 = null;
+
+//            HashMap<ISKey, SequenceInformationSet> iss = algConfig.getAllInformationSets();
+
+            int oracleRawISSize = algConfig.getAllInformationSets().size();
+            int oracleISSizeWithoutLeaves = algConfig.getAllInformationSets().size();
+            int oracleISSizeWithSingletonLeaves = algConfig.getAllInformationSets().size();
+            if (s1 instanceof GadgetSefceLP){
+                oracleISSizeWithoutLeaves = algConfig.getNumberOfISsWithoutLeaves();
+                oracleISSizeWithSingletonLeaves = ((GadgetSefceLP) s1).getRestrictedGameSizeWithSingletonLeaves();
+            }
+            int sequencesSize = (s1 instanceof GadgetSefceLP) ? ((GadgetSefceLP) s1).getNumberOfSequences() : algConfig.getAllSequences().size();
+            averageGadgetDepth += (s1 instanceof GadgetSefceLP) ? ((GadgetSefceLP) s1).getExpectedGadgetDepth() : 0.0;
+
+            int oracleFinalLPSize = 0;
+            if (s1 instanceof GadgetSefceLP){
+                oracleFinalLPSize = ((GadgetSefceLP) s1).getFinalLPSize();
+            }
+            if (s1 instanceof CompleteTwoPlayerSefceLP){
+                oracleFinalLPSize = ((CompleteTwoPlayerSefceLP)s1).getFinalLpSize();
+            }
+
+            algConfig = new StackelbergConfig(rootState);
+            runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+            startGeneration = threadBean.getCurrentThreadCpuTime();
+//            new GambitEFG().write("flipItConsistency.gbt", rootState, expander);
+            Solver s2;
+            if (pureStrategies) {
+                s2 = new LeaderGenerationSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s2);
+            } else {
+//                s2 = new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                s2 = new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                runner.generate(rootState.getAllPlayers()[LEADER], s2);
+//                mergeISsOutsideSGStats(issOutside, runner.getIssOutsideSubGame(LEADER));
+            }
+            if (CHECK_UTILS_FOR_CONFLICT && checkUtilitiesInIss((StackelbergConfig) algConfig, rootState.getAllPlayers()[1-LEADER], rootState.getAllPlayers()[LEADER])) {
+                System.out.println("Seed with conflicting utility: " + seed);
+//                new GambitEFG().write("flipit.gbt", rootState, expander);
+            }
+            if (CHECK_UTILS_FOR_CONFLICT && checkUtilitiesInIssII((StackelbergConfig) algConfig, rootState.getAllPlayers()[1-LEADER], rootState.getAllPlayers()[LEADER], expander,((LeaderTLSefceLP)s1).getISSizes(), ((LeaderTLSefceLP)s1).getExpanders())) {
+                System.out.println("Seed with reversed utility order: " + seed);
+//                System.exit(0);
+//                new GambitEFG().write("flipit_inversed.gbt", rootState, expander);
+            }
+            oracleGameGV = runner.getGameValue();
+            oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
+            oracleTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
+            restrictedGameRatioII += runner.getRestrictedGameRatio();
+
+            int fullFinalLPSize = 0;
+            if (s2 instanceof GadgetSefceLP){
+                fullFinalLPSize = ((GadgetSefceLP) s2).getFinalLPSize();
+            }
+            if (s2 instanceof CompleteTwoPlayerSefceLP){
+                fullFinalLPSize = ((CompleteTwoPlayerSefceLP)s2).getFinalLpSize();
+            }
+
+//            System.out.println(oracleISSize + " / " + algConfig.getAllInformationSets().size());
+
+            int fullISSizeWithSingletonLeaves = algConfig.getNumberOfISsWithSingletonLeaves();
+            int fullISSizeWithoutLeaves = algConfig.getNumberOfISsWithoutLeaves();
+
+            averageRawISSize += (double)oracleRawISSize/algConfig.getAllInformationSets().size();
+            averageISSizeWithoutLeaves += (double)oracleISSizeWithoutLeaves/fullISSizeWithoutLeaves;
+            averageISSizeWithSingletonLeaves += (double)oracleISSizeWithSingletonLeaves/fullISSizeWithSingletonLeaves;
+            averageSequencesSize += (double)sequencesSize/algConfig.getAllSequences().size();
+            averageLPSize += (double) oracleFinalLPSize/fullFinalLPSize;
+
+//            System.out.println(iss.size() + " / " + algConfig.getAllInformationSets().size());
+//            for (ISKey key : iss.keySet())
+//                if (!algConfig.getAllInformationSets().containsKey(key)) {
+//                    System.out.println(key);
+//                }
+//            System.out.println("///");
+//            for (ISKey key : algConfig.getAllInformationSets().keySet())
+//                if (!iss.containsKey(key) || iss.get(key).getAllStates().size() != algConfig.getAllInformationSets().get(key).getAllStates().size() || iss.get(key).getOutgoingSequences().size() != algConfig.getAllInformationSets().get(key).getOutgoingSequences().size()) {
+//                    System.out.println(key);
+//                    System.out.println(iss.get(key).getAllStates().size() + " / " + algConfig.getAllInformationSets().get(key).getAllStates().size());
+//                    System.out.println(iss.get(key).getOutgoingSequences().size() + " / " + algConfig.getAllInformationSets().get(key).getOutgoingSequences().size());
+//                }
+//            System.out.println("/////");
+//
+//            int size = 0;
+//            for (SequenceInformationSet set : iss.values())
+//                if (set.getOutgoingSequences().isEmpty()) {
+////                System.out.println(set.getAllStates().size());
+//                    size += Math.max(0, set.getAllStates().size() - 1);
+//                }
+//            System.out.println((iss.size()+size));
+//
+//            size = 0;
+//            for (SequenceInformationSet set : algConfig.getAllInformationSets().values()) {
+//                if (set.getOutgoingSequences().isEmpty())
+//                    size += set.getAllStates().size();
+//                else size++;
+//            }
+//            System.out.println(size);
+
+
+            if (Math.abs(oracleGameGV - fullGameGV) > 0.001)
+                notConvergedSeeds.add(seed);
+
+            System.out.println("Average restricted game ratios = " + restrictedGameRatioI / (seed - startingSeed + 1) + " ; " + restrictedGameRatioII / (seed - startingSeed + 1));
+            System.out.println("Average IS size w/ leaves = " + (averageISSizeWithoutLeaves / (seed - startingSeed + 1)));
+            System.out.println("Average IS size w 1-leaves = " + (averageISSizeWithSingletonLeaves / (seed - startingSeed + 1)));
+            System.out.println("Average raw IS size = " + (averageRawISSize / (seed - startingSeed + 1)));
+            System.out.println("Average # of seqs = " + (averageSequencesSize / (seed - startingSeed + 1)));
+            System.out.println("Average gadget depth = " + (averageGadgetDepth / (seed - startingSeed + 1)));
+            System.out.println("Average LPSize = " + (averageLPSize / (seed - startingSeed + 1)));
+            System.out.println("Final number of cons = " + s1.getClass().getSimpleName() + " : " + oracleFinalLPSize +
+                    " ; " + s2.getClass().getSimpleName() + " : " + fullFinalLPSize);
+            System.out.println(s1.getClass().getSimpleName() + " time = " + fullTime + " ; " + s2.getClass().getSimpleName() + " time = " + oracleTime);
+            if (s1 instanceof GadgetSefceLP)
+                System.out.println("Gadget making time = " + ((GadgetSefceLP) s1).getOverallGadgetMakingTime()/ 1000000l);
+            System.out.println("Number of not converged = " + notConvergedSeeds.size());
+        }
+        ArrayList<Long> times = new ArrayList<>();
+        for (int i = 0; i < fullTimes.size(); i++)
+            times.add(fullTimes.get(i) - oracleTimes.get(i));
+        System.out.println("Min = " + Collections.min(times));
+        System.out.println("Max = " + Collections.max(times));
+        Collections.sort(times);
+        System.out.println("Median = " + times.get(Math.round(times.size() / 2)));
+        System.out.println("# of seed: " + (maxseed));
+//        for (Integer depth : issOutside.keySet())
+//            System.out.println("Depth = " + depth + ", [#IS outside = #roots]: " + issOutside.get(depth).toString());
+        System.out.println("Not converged seeds = " + notConvergedSeeds.toString());
+        System.out.println("Average restricted game ratios = " + restrictedGameRatioI / (maxseed) + " ; " + restrictedGameRatioII / (maxseed));
+        System.out.println("Min RG size = " + minRGSize);
+
+    }
+
     public static void runFlipIt(String[] args) {
+        final boolean COUNT_LEAVES = true;
         int startingSeed = 0; // 113, 117, 135, 157, 168
         HashMap<Integer, HashMap<Integer, Integer>> issOutside = new HashMap<>();
         FlipItGameInfo gameInfo;
@@ -836,6 +1081,13 @@ public class CorrelatedConsistencyExperiment {
         ArrayList<Integer> notConvergedSeeds = new ArrayList<>();
         double restrictedGameRatioII = 0.0;
         double restrictedGameRatioI = 0.0;
+        double averageRawISSize = 0.0;
+        double averageISSizeWithoutLeaves = 0.0;
+        double averageISSizeWithSingletonLeaves = 0.0;
+        double averageSequencesSize = 0.0;
+        double averageGadgetDepth = 0.0;
+        double averageGadgetSize = 0.0;
+        double averageLPSize = 0.0;
 
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
 
@@ -868,15 +1120,19 @@ public class CorrelatedConsistencyExperiment {
                 s1 = new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
                 runner.generate(rootState.getAllPlayers()[LEADER], s1);
             } else {
-//                algConfig = new LeaderGenerationConfig(rootState);
-//                expander = new FlipItExpander<>(algConfig);
-//                runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 //                s1 = new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
 //                s1 = new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
 //                s1 = new LeaderTLSimulataneousSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
-                s1 = new LeaderTLSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new LeaderTLSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+//                s1 = new BayesianGadgetSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                s1 = new GadgetSefceLPWithoutMiddleState(rootState.getAllPlayers()[LEADER], gameInfo);
 //                s1 = new CompleteGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
 //                s1 = new LeaderGeneration2pRelevantWiseSefceLp(rootState.getAllPlayers()[LEADER], gameInfo);
+                if (s1 instanceof GadgetSefceLP || s1 instanceof LeaderGeneration2pLessMemSefceLP){
+                    algConfig = new LeaderGenerationConfig(rootState);
+                    expander = new FlipItExpander<>(algConfig);
+                    runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
+                }
                 runner.generate(rootState.getAllPlayers()[LEADER], s1);
             }
             double rgSize = runner.getRestrictedGameRatio();
@@ -886,6 +1142,27 @@ public class CorrelatedConsistencyExperiment {
             fullTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
             fullTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
 //                s1 = null;
+
+//            HashMap<ISKey, SequenceInformationSet> iss = algConfig.getAllInformationSets();
+
+            int oracleRawISSize = algConfig.getAllInformationSets().size();
+            int oracleISSizeWithoutLeaves = algConfig.getAllInformationSets().size();
+            int oracleISSizeWithSingletonLeaves = algConfig.getAllInformationSets().size();
+            if (s1 instanceof GadgetSefceLP){
+                oracleISSizeWithoutLeaves = algConfig.getNumberOfISsWithoutLeaves();
+                oracleISSizeWithSingletonLeaves = ((GadgetSefceLP) s1).getRestrictedGameSizeWithSingletonLeaves();
+            }
+            int sequencesSize = (s1 instanceof GadgetSefceLP) ? ((GadgetSefceLP) s1).getNumberOfSequences() : algConfig.getAllSequences().size();
+            averageGadgetDepth += (s1 instanceof GadgetSefceLP) ? ((GadgetSefceLP) s1).getExpectedGadgetDepth() : 0.0;
+            averageGadgetSize += (s1 instanceof GadgetSefceLP) ? ((GadgetSefceLP) s1).getExpectedGadgetSize() : 0.0;
+
+            int oracleFinalLPSize = 0;
+            if (s1 instanceof GadgetSefceLP){
+                oracleFinalLPSize = ((GadgetSefceLP) s1).getFinalLPSize();
+            }
+            if (s1 instanceof CompleteTwoPlayerSefceLP){
+                oracleFinalLPSize = ((CompleteTwoPlayerSefceLP)s1).getFinalLpSize();
+            }
 
             algConfig = new StackelbergConfig(rootState);
             runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
@@ -901,11 +1178,11 @@ public class CorrelatedConsistencyExperiment {
                 runner.generate(rootState.getAllPlayers()[LEADER], s2);
 //                mergeISsOutsideSGStats(issOutside, runner.getIssOutsideSubGame(LEADER));
             }
-            if (checkUtilitiesInIss((StackelbergConfig) algConfig, rootState.getAllPlayers()[1-LEADER], rootState.getAllPlayers()[LEADER])) {
+            if (CHECK_UTILS_FOR_CONFLICT && checkUtilitiesInIss((StackelbergConfig) algConfig, rootState.getAllPlayers()[1-LEADER], rootState.getAllPlayers()[LEADER])) {
                 System.out.println("Seed with conflicting utility: " + seed);
 //                new GambitEFG().write("flipit.gbt", rootState, expander);
             }
-            if (checkUtilitiesInIssII((StackelbergConfig) algConfig, rootState.getAllPlayers()[1-LEADER], rootState.getAllPlayers()[LEADER], expander,((LeaderTLSefceLP)s1).getISSizes(), ((LeaderTLSefceLP)s1).getExpanders())) {
+            if (CHECK_UTILS_FOR_CONFLICT && checkUtilitiesInIssII((StackelbergConfig) algConfig, rootState.getAllPlayers()[1-LEADER], rootState.getAllPlayers()[LEADER], expander,((LeaderTLSefceLP)s1).getISSizes(), ((LeaderTLSefceLP)s1).getExpanders())) {
                 System.out.println("Seed with reversed utility order: " + seed);
 //                System.exit(0);
 //                new GambitEFG().write("flipit_inversed.gbt", rootState, expander);
@@ -915,13 +1192,72 @@ public class CorrelatedConsistencyExperiment {
             oracleTimes.add((threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l);
             restrictedGameRatioII += runner.getRestrictedGameRatio();
 
+            int fullFinalLPSize = 0;
+            if (s2 instanceof GadgetSefceLP){
+                fullFinalLPSize = ((GadgetSefceLP) s2).getFinalLPSize();
+            }
+            if (s2 instanceof CompleteTwoPlayerSefceLP){
+                fullFinalLPSize = ((CompleteTwoPlayerSefceLP)s2).getFinalLpSize();
+            }
+
+//            System.out.println(oracleISSize + " / " + algConfig.getAllInformationSets().size());
+
+            int fullISSizeWithSingletonLeaves = algConfig.getNumberOfISsWithSingletonLeaves();
+            int fullISSizeWithoutLeaves = algConfig.getNumberOfISsWithoutLeaves();
+
+            averageRawISSize += (double)oracleRawISSize/algConfig.getAllInformationSets().size();
+            averageISSizeWithoutLeaves += (double)oracleISSizeWithoutLeaves/fullISSizeWithoutLeaves;
+            averageISSizeWithSingletonLeaves += (double)oracleISSizeWithSingletonLeaves/fullISSizeWithSingletonLeaves;
+            averageSequencesSize += (double)sequencesSize/algConfig.getAllSequences().size();
+            averageLPSize += (double) oracleFinalLPSize/fullFinalLPSize;
+
+//            System.out.println(iss.size() + " / " + algConfig.getAllInformationSets().size());
+//            for (ISKey key : iss.keySet())
+//                if (!algConfig.getAllInformationSets().containsKey(key)) {
+//                    System.out.println(key);
+//                }
+//            System.out.println("///");
+//            for (ISKey key : algConfig.getAllInformationSets().keySet())
+//                if (!iss.containsKey(key) || iss.get(key).getAllStates().size() != algConfig.getAllInformationSets().get(key).getAllStates().size() || iss.get(key).getOutgoingSequences().size() != algConfig.getAllInformationSets().get(key).getOutgoingSequences().size()) {
+//                    System.out.println(key);
+//                    System.out.println(iss.get(key).getAllStates().size() + " / " + algConfig.getAllInformationSets().get(key).getAllStates().size());
+//                    System.out.println(iss.get(key).getOutgoingSequences().size() + " / " + algConfig.getAllInformationSets().get(key).getOutgoingSequences().size());
+//                }
+//            System.out.println("/////");
+//
+//            int size = 0;
+//            for (SequenceInformationSet set : iss.values())
+//                if (set.getOutgoingSequences().isEmpty()) {
+////                System.out.println(set.getAllStates().size());
+//                    size += Math.max(0, set.getAllStates().size() - 1);
+//                }
+//            System.out.println((iss.size()+size));
+//
+//            size = 0;
+//            for (SequenceInformationSet set : algConfig.getAllInformationSets().values()) {
+//                if (set.getOutgoingSequences().isEmpty())
+//                    size += set.getAllStates().size();
+//                else size++;
+//            }
+//            System.out.println(size);
+
+
             if (Math.abs(oracleGameGV - fullGameGV) > 0.001)
                 notConvergedSeeds.add(seed);
 
             System.out.println("Average restricted game ratios = " + restrictedGameRatioI / (seed - startingSeed + 1) + " ; " + restrictedGameRatioII / (seed - startingSeed + 1));
-            System.out.println("Final number of cons = " + s1.getClass().getSimpleName() + " : " + ((s1 instanceof CompleteTwoPlayerSefceLP) ? ((CompleteTwoPlayerSefceLP) s1).getFinalLpSize() : 0) +
-                    " ; " + s2.getClass().getSimpleName() + " : " + ((s2 instanceof CompleteTwoPlayerSefceLP) ? ((CompleteTwoPlayerSefceLP) s2).getFinalLpSize() : 0));
+            System.out.println("Average IS size w/ leaves = " + (averageISSizeWithoutLeaves / (seed - startingSeed + 1)));
+            System.out.println("Average IS size w 1-leaves = " + (averageISSizeWithSingletonLeaves / (seed - startingSeed + 1)));
+            System.out.println("Average raw IS size = " + (averageRawISSize / (seed - startingSeed + 1)));
+            System.out.println("Average # of seqs = " + (averageSequencesSize / (seed - startingSeed + 1)));
+            System.out.println("Average gadget depth = " + (averageGadgetDepth / (seed - startingSeed + 1)));
+            System.out.println("Average gadget size = " + (averageGadgetSize / (seed - startingSeed + 1)));
+            System.out.println("Average LPSize = " + (averageLPSize / (seed - startingSeed + 1)));
+            System.out.println("Final number of cons = " + s1.getClass().getSimpleName() + " : " + oracleFinalLPSize +
+                    " ; " + s2.getClass().getSimpleName() + " : " + fullFinalLPSize);
             System.out.println(s1.getClass().getSimpleName() + " time = " + fullTime + " ; " + s2.getClass().getSimpleName() + " time = " + oracleTime);
+            if (s1 instanceof GadgetSefceLP)
+                System.out.println("Gadget making time = " + ((GadgetSefceLP) s1).getOverallGadgetMakingTime()/ 1000000l);
             System.out.println("Number of not converged = " + notConvergedSeeds.size());
         }
         ArrayList<Long> times = new ArrayList<>();

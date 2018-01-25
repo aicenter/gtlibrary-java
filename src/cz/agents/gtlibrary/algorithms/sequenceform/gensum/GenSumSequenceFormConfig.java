@@ -102,4 +102,23 @@ public class GenSumSequenceFormConfig extends SequenceFormConfig<SequenceInforma
     public Double getUtilityFor(Map<Player, Sequence> sequenceCombination) {
         return getUtilityFor(sequenceCombination, new PlayerImpl(0));
     }
+
+    public int getNumberOfISsWithSingletonLeaves(){
+        int size = 0;
+        for (SequenceInformationSet set : getAllInformationSets().values()) {
+            if (set.getOutgoingSequences().isEmpty())
+                size += set.getAllStates().size();
+            else size++;
+        }
+        return size;
+    }
+    public int getNumberOfISsWithoutLeaves(){
+        int size = 0;
+        for (SequenceInformationSet set : getAllInformationSets().values()) {
+            if (!set.getOutgoingSequences().isEmpty())
+                size++;
+        }
+        return size;
+    }
+
 }

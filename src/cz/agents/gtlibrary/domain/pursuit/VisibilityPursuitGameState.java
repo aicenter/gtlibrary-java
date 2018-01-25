@@ -23,12 +23,12 @@ public class VisibilityPursuitGameState extends PursuitGameState {
         Node evaderLastPosition = sequence.size() < 2 ? graph.getEvaderStart() : ((EvaderPursuitAction) sequence.get(sequence.size() - 2)).getDestination();
 
         if (getPlayerToMove().equals(PursuitGameInfo.EVADER)) {
-            if (graph.getDistance(evaderPosition, p1Position) <= 2)
+            if (graph.getDistance(evaderPosition, p1Position) <= PursuitGameInfo.visibility)
                 observedNodes.add(p1Position);
-            if (graph.getDistance(evaderPosition, p2Position) <= 2)
+            if (graph.getDistance(evaderPosition, p2Position) <= PursuitGameInfo.visibility)
                 observedNodes.add(p2Position);
         } else {
-            if (graph.getDistance(evaderLastPosition, p1Position) <= 2 || graph.getDistance(evaderLastPosition, p2Position) <= 2)
+            if (graph.getDistance(evaderLastPosition, p1Position) <= PursuitGameInfo.visibility || graph.getDistance(evaderLastPosition, p2Position) <= PursuitGameInfo.visibility)
                 observedNodes.add(evaderLastPosition);
         }
         return new PerfectRecallISKey(observedNodes.hashCode(), getSequenceForPlayerToMove());
