@@ -69,8 +69,8 @@ public class SefceRunner {
 //        runGenSumRandomImproved();
 //        runBPG(depth);
 //        runFlipIt(args);
-        runFlipIt(new String[]{"F", "7", "2", "AP", "G"});
-//        runTestGame();
+//        runFlipIt(new String[]{"F", "7", "2", "AP", "G"});
+        runTestGame();
     }
 
     public static void runTestGame(){
@@ -85,8 +85,8 @@ public class SefceRunner {
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderTLSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderTLSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderTLSimulataneousSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 
         new GambitEFG().write("testGame.gbt", rootState, expander);

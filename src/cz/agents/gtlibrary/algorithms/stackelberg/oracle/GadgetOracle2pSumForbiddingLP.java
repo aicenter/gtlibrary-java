@@ -93,10 +93,11 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
                 brokenStrategyIdentificationTime += threadBean.getCurrentThreadCpuTime() - startTime;
                 final boolean OUTPUT_STRATEGY = false;
                 if (OUTPUT_STRATEGY) {
-                    for (InformationSet set : followerBehavStrat.keySet()) {
+                    Map<InformationSet, Map<Sequence, Double>> behavStrat = getBehavioralStrategy(lpData, leader);
+                    for (InformationSet set : behavStrat.keySet()) {
                         System.out.println(set == null || set.getISKey() == null ? "Null set" : set.getISKey());
-                        for (Sequence seq : followerBehavStrat.get(set).keySet()) {
-                            System.out.println("\t" + seq + " : \t" + followerBehavStrat.get(set).get(seq));
+                        for (Sequence seq : behavStrat.get(set).keySet()) {
+                            System.out.println("\t" + seq + " : \t" + behavStrat.get(set).get(seq));
                         }
                     }
                 }

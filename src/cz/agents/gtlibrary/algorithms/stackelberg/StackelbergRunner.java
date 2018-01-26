@@ -466,6 +466,7 @@ public class StackelbergRunner {
     public Pair<Double, Map<Player, Map<Sequence, Double>>> generate(Player leader, StackelbergSequenceFormLP solver) {
 //        debugOutput.println("Full Sequence Multiple LP Stackelberg");
         debugOutput.println(solver.getClass().getSimpleName().replaceAll("([A-Z])", " $1").replaceFirst(" ",""));
+        debugOutput.println(solver.getInfo());
         debugOutput.println(gameConfig.getInfo());
         debugOutput.println("LP Solving method: " + LPTable.CPLEXALG);
         threadBean = ManagementFactory.getThreadMXBean();

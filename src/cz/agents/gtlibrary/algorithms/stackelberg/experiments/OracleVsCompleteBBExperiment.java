@@ -30,12 +30,14 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Solver;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.graph.Graph;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.cplex.IloCplex;
 import org.jacop.constraints.In;
 
@@ -67,12 +69,12 @@ public class OracleVsCompleteBBExperiment {
 //            runBPG(new String[]{"B", "4", "1"});
 //            runBPGOneSeed(new String[]{"B", "3", "1", "F", ""+IloCplex.Algorithm.Auto, "LP", "0"});
 //        runFlipIt(args);
-//        runFlipIt(new String[]{"F", "3", "5", "AP", "10"});
+        runFlipIt(new String[]{"F", "4", "3", "AP", "100"});
 //            for (int seed = 50; seed < 80; seed++)
 //                runFlipItOneSeed(new String[]{"F", "3", "3", "AP", Integer.toString(seed), "F"});
-//            runFlipItOneSeed(new String[]{"F", "4", "3", "F", "11", "O", "LP", "2"});
+//            runFlipItOneSeed(new String[]{"F", "3", "5", "AP", "128", "O" ,"LP", "4", "0", Double.toString(1e-12)});
 //            runPursuit(new String[]{"P", "3", "4", "10"});
-            runPursuitOneSeed(new String[]{"PO", "3", "3", "2", "O", "LP", "2"});
+//            runPursuitOneSeed(new String[]{"PO", "3", "3", "2", "O", "LP", "2"});
         } else {
             switch (args[0]) {
                 case "F":
@@ -1134,7 +1136,10 @@ public class OracleVsCompleteBBExperiment {
         if (runComplete) {
             int lpSolvingAlg = 1;
             if(args.length > 6) lpSolvingAlg = Integer.parseInt(args[6]);
+            double eps = 1e-7;
+            if(args.length > 8) eps = Double.valueOf(args[8]);
             fullLP.setLPSolvingMethod(lpSolvingAlg);
+            fullLP.setEps(eps);
             runner.generate(rootState.getAllPlayers()[LEADER], fullLP);
         }
 
@@ -1164,6 +1169,8 @@ public class OracleVsCompleteBBExperiment {
             if(args.length > 7) lpSolvingAlg = Integer.parseInt(args[7]);
             int use_discounts = 1;
             if(args.length > 8) use_discounts = Integer.parseInt(args[8]);
+            double eps = 1e-7;
+            if(args.length > 9) eps = Double.valueOf(args[9]);
             String gadgetType = "LP";
             if (args.length > 6) gadgetType = args[6];
             switch (gadgetType) {
@@ -1179,7 +1186,10 @@ public class OracleVsCompleteBBExperiment {
             }
             oracle.setLPSolvingMethod(lpSolvingAlg);
             oracle.setEpsilonDiscounts(use_discounts == 1);
+            oracle.setEps(eps);
             runner.generate(rootState.getAllPlayers()[LEADER], oracle);
+//            for (ISKey key : algConfig.getAllInformationSets().keySet()) System.out.println(key);
+//            new GambitEFG().write("small_flipit_example.gbt", rootState, expander);
         }
         oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
 //            restrictedGameRatio += (double) oracle.getRestrictedGameSizeWithSingletonLeaves() / fullISSize;//oracle.getRestrictedGameRatio();
@@ -1290,13 +1300,16 @@ public class OracleVsCompleteBBExperiment {
         double averageGadgetDepth = 0.0;
         double averageLPSize = 0.0;
 
+        double minRGSize = Double.POSITIVE_INFINITY;
+        int minRGSizeSeed = -1;
+
 
         ArrayList<Long> fullTimes = new ArrayList<>();
         ArrayList<Long> oracleTimes = new ArrayList<>();
 
-        int startingSeed = 0;
+        int startingSeed = 70;
 
-        for (int seed = startingSeed; seed < maxseed; seed++) {
+        for (int seed = startingSeed; seed < startingSeed+maxseed; seed++) {
             System.out.println();
             System.out.println("Running seed " + (seed) + " of " + (maxseed - 1));
 
@@ -1366,6 +1379,12 @@ public class OracleVsCompleteBBExperiment {
             averageSequencesSize += (double) algConfig.getAllSequences().size() / fullSequencesSize;
             averageLPSize += (double) oracleFinalLPSize / fullFinalLPSize;
 
+            double lpSizeRatio = (double) oracleFinalLPSize / fullFinalLPSize;
+            if (lpSizeRatio < minRGSize){
+                minRGSize = lpSizeRatio;
+                minRGSizeSeed = seed;
+            }
+
             expectedGadgetDepth += oracle.getExpectedGadgetDepth();
             expectedGadgetSize += oracle.getExpectedGadgetSize();
 
@@ -1387,6 +1406,7 @@ public class OracleVsCompleteBBExperiment {
             if (oracle instanceof GadgetSefceLP)
                 System.out.println("Gadget making time = " + ((GadgetSefceLP) oracle).getOverallGadgetMakingTime() / 1000000l);
             System.out.println("Number of not converged = " + notConvergedSeeds.size());
+            System.out.println(minRGSize + " / " + minRGSizeSeed);
             oracle = null;
             runner = null;
             System.gc();
