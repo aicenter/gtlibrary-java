@@ -71,7 +71,7 @@ public class GadgetSefceLP implements Solver {
     protected final double INITIAL_GADGET_DEPTH;
 
     protected final boolean APPROX_HULL = true;
-    protected final double HULL_DELTA = 1e-2;
+    protected double HULL_DELTA = 1e-2;
 
     public GadgetSefceLP(Player leader, GameInfo info){
         this.info = info;
@@ -90,6 +90,7 @@ public class GadgetSefceLP implements Solver {
         if (MAKE_GADGET_STATS)
             this.gadgetStats = new ArrayList<>();
         this.INITIAL_GADGET_DEPTH = INITIAL_GADGET_DEPTH_RATIO*info.getMaxDepth()/2.0;
+        this.HULL_DELTA = info.getMaxUtility() * 0.05;
     }
 
     public void setLPSolvingMethod(int alg){
@@ -868,6 +869,7 @@ public class GadgetSefceLP implements Solver {
         });
 
         Stack<double[]> upperHull = new Stack<>();
+        int deletedPointsNumber = 0;
 
         for (int i = reachableLeaves.size() - 1; i >= 0; i--) {
             while (upperHull.size() >= 2 && cross(upperHull.get(upperHull.size() - 2), upperHull.get(upperHull.size() - 1), reachableLeaves.get(i)) <= 0) {
@@ -881,12 +883,15 @@ public class GadgetSefceLP implements Solver {
                         - previous[1]*(current[0]-preprevious[0]) + current[0]*preprevious[1] - current[1]*preprevious[0])
                         / Math.sqrt(Math.pow(current[1]-preprevious[1],2) + Math.pow(current[0]-preprevious[0],2));
                 if (distance < HULL_DELTA){
+                    deletedPointsNumber++;
                     upperHull.pop();
                 }
             }
 
             upperHull.push(reachableLeaves.get(i));
         }
+
+//        System.out.println("Number of deleted points = "+deletedPointsNumber + " / " + upperHull.size());
 
 //        for (int i = 0; i < upperHull.size(); i++)
 //            System.out.printf("["+upperHull.get(i)[0] + ", " + upperHull.get(i)[1]+"], ");
@@ -977,7 +982,7 @@ public class GadgetSefceLP implements Solver {
                 "Create gadgets = "+CREATE_GADGETS+", pareto leaves = " + USE_PARETO_LEAVES +
                 ", initial gadget depth = " + INITIAL_GADGET_DEPTH_RATIO +
                 ", discount leader utilities = " +DISCOUNT_GADGETS +
-                ", eps = " + eps;
+                ", eps = " + eps + ", approximate hull = " + APPROX_HULL;
     }
 
     public double getRestrictedGameRatio(){
