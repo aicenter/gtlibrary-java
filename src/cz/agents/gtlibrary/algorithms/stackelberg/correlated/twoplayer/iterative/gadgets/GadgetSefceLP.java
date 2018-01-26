@@ -72,6 +72,9 @@ public class GadgetSefceLP implements Solver {
 
     protected final boolean APPROX_HULL = true;
     protected double HULL_DELTA = 1e-2;
+    protected final double DELTA_BY_UTILITY_COEF = 0.1;
+    protected final boolean USE_CURRENT_LEAF_LEADER_UTILITY = true;
+    protected final boolean DISTANCE_TO_PROJECTION = false;
 
     public GadgetSefceLP(Player leader, GameInfo info){
         this.info = info;
@@ -90,7 +93,7 @@ public class GadgetSefceLP implements Solver {
         if (MAKE_GADGET_STATS)
             this.gadgetStats = new ArrayList<>();
         this.INITIAL_GADGET_DEPTH = INITIAL_GADGET_DEPTH_RATIO*info.getMaxDepth()/2.0;
-        this.HULL_DELTA = info.getMaxUtility() * 0.05;
+        this.HULL_DELTA = info.getMaxUtility() * DELTA_BY_UTILITY_COEF;
     }
 
     public void setLPSolvingMethod(int alg){
@@ -854,9 +857,15 @@ public class GadgetSefceLP implements Solver {
         return getUpperConvexHullOfLeaves(leaves);
     }
 
-    protected ArrayList<double[]> getUpperConvexHullOfLeaves(ArrayList<double[]> reachableLeaves){
-        if (!USE_PARETO_LEAVES || reachableLeaves.size() == 1) return reachableLeaves;
-        int n = reachableLeaves.size(), k = 0;
+    protected ArrayList<double[]> getUpperConvexHullOfLeaves(ArrayList<double[]> reachableLeavesUnsorted){
+        if (!USE_PARETO_LEAVES || reachableLeavesUnsorted.size() == 1) return reachableLeavesUnsorted;
+        ArrayList<double[]> reachableLeaves;
+        if (leader.getId() == 0) reachableLeaves = reachableLeavesUnsorted;
+        else{
+            reachableLeaves = new ArrayList<>();
+            for(double[] u : reachableLeavesUnsorted)
+                reachableLeaves.add(new double[]{u[1], u[0]});
+        }
 
         Collections.sort(reachableLeaves, new Comparator<double[]>() {
             @Override
@@ -879,9 +888,19 @@ public class GadgetSefceLP implements Solver {
                 double[] preprevious = upperHull.elementAt(upperHull.size()-2);
                 double[] previous = upperHull.peek();
                 double[] current = reachableLeaves.get(i);
-                double distance = Math.abs(previous[0]*(current[1]-preprevious[1])
+                double distance = 0.0;
+                if (DISTANCE_TO_PROJECTION)
+                    // difference in both player's utility
+                    distance = Math.abs(previous[0]*(current[1]-preprevious[1])
                         - previous[1]*(current[0]-preprevious[0]) + current[0]*preprevious[1] - current[1]*preprevious[0])
                         / Math.sqrt(Math.pow(current[1]-preprevious[1],2) + Math.pow(current[0]-preprevious[0],2));
+                else {
+                    // difference in leader's utility
+                    double slope = (preprevious[1] - current[1])/(preprevious[0] - current[0]);
+                    distance = Math.abs(previous[0] - (previous[1]-current[1])/slope - current[0]);
+                }
+                //
+                if (USE_CURRENT_LEAF_LEADER_UTILITY) HULL_DELTA = DELTA_BY_UTILITY_COEF * current[0];
                 if (distance < HULL_DELTA){
                     deletedPointsNumber++;
                     upperHull.pop();
@@ -916,8 +935,13 @@ public class GadgetSefceLP implements Solver {
             gadgetStats.set(gadgetStats.size()-1, stat);
         }
 
-        if (true) return new ArrayList<>(upperHull);
-        return null;//(ArrayList<GameState>) H;
+        if (leader.getId() == 0) return new ArrayList<>(upperHull);
+        else{
+            reachableLeaves = new ArrayList<>();
+            for(double[] u : upperHull)
+                reachableLeaves.add(new double[]{u[1], u[0]});
+            return reachableLeaves;
+        }
     }
 
     public double cross(double[] oUtilities, double[] aUtilities, double[] bUtilities) {
@@ -982,7 +1006,8 @@ public class GadgetSefceLP implements Solver {
                 "Create gadgets = "+CREATE_GADGETS+", pareto leaves = " + USE_PARETO_LEAVES +
                 ", initial gadget depth = " + INITIAL_GADGET_DEPTH_RATIO +
                 ", discount leader utilities = " +DISCOUNT_GADGETS +
-                ", eps = " + eps + ", approximate hull = " + APPROX_HULL;
+                ", eps = " + eps + ", approximate hull = " + APPROX_HULL + ", approx coef = " + DELTA_BY_UTILITY_COEF +
+                ", use local point utility = " + USE_CURRENT_LEAF_LEADER_UTILITY + ", distance to projection = " + DISTANCE_TO_PROJECTION;
     }
 
     public double getRestrictedGameRatio(){
