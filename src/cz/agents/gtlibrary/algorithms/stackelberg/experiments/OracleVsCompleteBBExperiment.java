@@ -57,8 +57,8 @@ public class OracleVsCompleteBBExperiment {
 
     // algorithm (O (LP / BMILP / AMILP) / F)
     // FLIP IT: FO, depth, size, version (F / AP / NP/ N), seed, algorithm, solving method
-    // Pursuit: PO, gridsize, depth, seed, algorithm, solving method
-    // Random: RO, depth, bf, seed, correlation, observations, algorithm, solving method
+    // Pursuit: PO, gridsize, depth, seed, algorithm, solving method, discount gadgets, delta, projection, local utility
+    // Random: RO, depth, bf, seed, correlation, observations, algorithm, solving method, discount, eps, delta, projection, localuti
     // BPG: BO, depth, leader (int), algorithm, solving method
     public static void main(String[] args) {
         if (args.length == 0) {
@@ -700,6 +700,18 @@ public class OracleVsCompleteBBExperiment {
         if (algVersion.equals("O")) {
             int lpSolvingAlg = GadgetLPTable.CPLEXALG;
             if(args.length > 8) lpSolvingAlg = Integer.parseInt(args[8]);
+            int use_discounts = 1;
+            if(args.length > 9) use_discounts = Integer.parseInt(args[9]);
+            double eps = 1e-7;
+            if(args.length > 10) eps = Double.valueOf(args[10]);
+            double delta = 0.05;
+            boolean useProjection = true;
+            boolean useLocalUtility = false;
+            if(args.length > 11){
+                delta = Double.valueOf(args[11]);
+                useProjection = args[12].equals("1");
+                useLocalUtility = args[13].equals("1");
+            }
             String gadgetType = args[7];
             GadgetOracle2pSumForbiddingLP s1 = null;
 //                s1 = new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
@@ -725,6 +737,10 @@ public class OracleVsCompleteBBExperiment {
                 expander = new RandomGameExpander<>(algConfig);
                 runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
                 s1.setLPSolvingMethod(lpSolvingAlg);
+                s1.setEps(eps);
+                s1.setEpsilonDiscounts(use_discounts == 1);
+                s1.setHullApproximation(delta, useLocalUtility, useProjection);
+
             }
             runner.generate(rootState.getAllPlayers()[LEADER], s1);
             fullTime = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
@@ -734,6 +750,8 @@ public class OracleVsCompleteBBExperiment {
         if (algVersion.equals("F")) {
             int lpSolvingAlg = GadgetLPTable.CPLEXALG;
             if(args.length > 7) lpSolvingAlg = Integer.parseInt(args[7]);
+            double eps = 1e-7;
+            if(args.length > 8) eps = Double.valueOf(args[8]);
             startGeneration = threadBean.getCurrentThreadCpuTime();
             algConfig = new StackelbergConfig(rootState);
             expander = new RandomGameExpander<>(algConfig);
@@ -742,6 +760,7 @@ public class OracleVsCompleteBBExperiment {
 //                s2 = new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
             s2 = new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo);
             s2.setLPSolvingMethod(lpSolvingAlg);
+            s2.setEps(eps);
             runner.generate(rootState.getAllPlayers()[LEADER], s2);
             oracleTime = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
             System.out.println("Full LP size = " + s2.getFinalLpSize());
@@ -977,6 +996,14 @@ public class OracleVsCompleteBBExperiment {
         long startGeneration = threadBean.getCurrentThreadCpuTime();
         if (algVersion.equals("O")) {
             String gadgetType = "LP";
+            double delta = 0.05;
+            boolean useProjection = true;
+            boolean useLocalUtility = false;
+            if(args.length > 8){
+                delta = Double.valueOf(args[8]);
+                useProjection = args[9].equals("1");
+                useLocalUtility = args[10].equals("1");
+            }
             int use_discounts = 1;
             if(args.length > 7) use_discounts = Integer.parseInt(args[7]);
             int lpSolvingAlg = 1;
@@ -1007,6 +1034,7 @@ public class OracleVsCompleteBBExperiment {
                 runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
                 s1.setLPSolvingMethod(lpSolvingAlg);
                 s1.setEpsilonDiscounts(use_discounts==1);
+                s1.setHullApproximation(delta, useLocalUtility, useProjection);
             }
             runner.generate(rootState.getAllPlayers()[LEADER], s1);
             fullTime = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
@@ -1171,6 +1199,14 @@ public class OracleVsCompleteBBExperiment {
             if(args.length > 8) use_discounts = Integer.parseInt(args[8]);
             double eps = 1e-7;
             if(args.length > 9) eps = Double.valueOf(args[9]);
+            double delta = 0.05;
+            boolean useProjection = true;
+            boolean useLocalUtility = false;
+            if(args.length > 10){
+                delta = Double.valueOf(args[10]);
+                useProjection = args[11].equals("1");
+                useLocalUtility = args[12].equals("1");
+            }
             String gadgetType = "LP";
             if (args.length > 6) gadgetType = args[6];
             switch (gadgetType) {
@@ -1187,6 +1223,7 @@ public class OracleVsCompleteBBExperiment {
             oracle.setLPSolvingMethod(lpSolvingAlg);
             oracle.setEpsilonDiscounts(use_discounts == 1);
             oracle.setEps(eps);
+            oracle.setHullApproximation(delta, useLocalUtility, useProjection);
             runner.generate(rootState.getAllPlayers()[LEADER], oracle);
 //            for (ISKey key : algConfig.getAllInformationSets().keySet()) System.out.println(key);
 //            new GambitEFG().write("small_flipit_example.gbt", rootState, expander);

@@ -72,9 +72,9 @@ public class GadgetSefceLP implements Solver {
 
     protected final boolean APPROX_HULL = true;
     protected double HULL_DELTA = 1e-2;
-    protected final double DELTA_BY_UTILITY_COEF = 0.1;
-    protected final boolean USE_CURRENT_LEAF_LEADER_UTILITY = true;
-    protected final boolean DISTANCE_TO_PROJECTION = false;
+    protected double DELTA_BY_UTILITY_COEF = 0.1;
+    protected boolean USE_CURRENT_LEAF_LEADER_UTILITY = true;
+    protected boolean DISTANCE_TO_PROJECTION = false;
 
     public GadgetSefceLP(Player leader, GameInfo info){
         this.info = info;
@@ -106,6 +106,12 @@ public class GadgetSefceLP implements Solver {
 
     public void setEps(double eps){
         this.eps = eps;
+    }
+
+    public void setHullApproximation(double delta, boolean localUtility, boolean projection){
+        DELTA_BY_UTILITY_COEF = delta;
+        USE_CURRENT_LEAF_LEADER_UTILITY = localUtility;
+        DISTANCE_TO_PROJECTION = projection;
     }
 
     public double getExpectedGadgetDepth(){

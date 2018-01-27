@@ -340,8 +340,11 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
                         lpTable.setConstraint(eqKey, p, 1);
                         lpTable.setConstraintType(eqKey, 1);
 
-                        if (!p.getLeft().isEmpty() && p.getLeft().getLast() instanceof GadgetAction)
-                            eqsToDelete.get(((GadgetAction)p.getLeft().getLast()).getState()).add(eqKey);
+                        if (!p.getLeft().isEmpty() && p.getLeft().getLast() instanceof GadgetAction) {
+                            if (!eqsToDelete.containsKey(((GadgetAction) p.getLeft().getLast()).getState()))
+                                eqsToDelete.put(((GadgetAction) p.getLeft().getLast()).getState(), new HashSet<>());
+                            eqsToDelete.get(((GadgetAction) p.getLeft().getLast()).getState()).add(eqKey);
+                        }
                     }
                 }
             }
