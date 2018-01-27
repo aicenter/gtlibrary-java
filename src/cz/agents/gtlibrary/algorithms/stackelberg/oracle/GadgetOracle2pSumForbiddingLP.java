@@ -93,10 +93,11 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
                 brokenStrategyIdentificationTime += threadBean.getCurrentThreadCpuTime() - startTime;
                 final boolean OUTPUT_STRATEGY = false;
                 if (OUTPUT_STRATEGY) {
-                    for (InformationSet set : followerBehavStrat.keySet()) {
+                    Map<InformationSet, Map<Sequence, Double>> behavStrat = getBehavioralStrategy(lpData, leader);
+                    for (InformationSet set : behavStrat.keySet()) {
                         System.out.println(set == null || set.getISKey() == null ? "Null set" : set.getISKey());
-                        for (Sequence seq : followerBehavStrat.get(set).keySet()) {
-                            System.out.println("\t" + seq + " : \t" + followerBehavStrat.get(set).get(seq));
+                        for (Sequence seq : behavStrat.get(set).keySet()) {
+                            System.out.println("\t" + seq + " : \t" + behavStrat.get(set).get(seq));
                         }
                     }
                 }
@@ -339,8 +340,11 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
                         lpTable.setConstraint(eqKey, p, 1);
                         lpTable.setConstraintType(eqKey, 1);
 
-                        if (!p.getLeft().isEmpty() && p.getLeft().getLast() instanceof GadgetAction)
-                            eqsToDelete.get(((GadgetAction)p.getLeft().getLast()).getState()).add(eqKey);
+                        if (!p.getLeft().isEmpty() && p.getLeft().getLast() instanceof GadgetAction) {
+                            if (!eqsToDelete.containsKey(((GadgetAction) p.getLeft().getLast()).getState()))
+                                eqsToDelete.put(((GadgetAction) p.getLeft().getLast()).getState(), new HashSet<>());
+                            eqsToDelete.get(((GadgetAction) p.getLeft().getLast()).getState()).add(eqKey);
+                        }
                     }
                 }
             }

@@ -70,6 +70,12 @@ public class GadgetSefceLP implements Solver {
     protected final double INITIAL_GADGET_DEPTH_RATIO = 0.3;
     protected final double INITIAL_GADGET_DEPTH;
 
+    protected final boolean APPROX_HULL = true;
+    protected double HULL_DELTA = 1e-2;
+    protected double DELTA_BY_UTILITY_COEF = 0.1;
+    protected boolean USE_CURRENT_LEAF_LEADER_UTILITY = true;
+    protected boolean DISTANCE_TO_PROJECTION = false;
+
     public GadgetSefceLP(Player leader, GameInfo info){
         this.info = info;
         this.leader = leader;
@@ -87,6 +93,7 @@ public class GadgetSefceLP implements Solver {
         if (MAKE_GADGET_STATS)
             this.gadgetStats = new ArrayList<>();
         this.INITIAL_GADGET_DEPTH = INITIAL_GADGET_DEPTH_RATIO*info.getMaxDepth()/2.0;
+        this.HULL_DELTA = info.getMaxUtility() * DELTA_BY_UTILITY_COEF;
     }
 
     public void setLPSolvingMethod(int alg){
@@ -95,6 +102,16 @@ public class GadgetSefceLP implements Solver {
 
     public void setEpsilonDiscounts(boolean useDiscounts){
         DISCOUNT_GADGETS = useDiscounts;
+    }
+
+    public void setEps(double eps){
+        this.eps = eps;
+    }
+
+    public void setHullApproximation(double delta, boolean localUtility, boolean projection){
+        DELTA_BY_UTILITY_COEF = delta;
+        USE_CURRENT_LEAF_LEADER_UTILITY = localUtility;
+        DISTANCE_TO_PROJECTION = projection;
     }
 
     public double getExpectedGadgetDepth(){
@@ -846,10 +863,15 @@ public class GadgetSefceLP implements Solver {
         return getUpperConvexHullOfLeaves(leaves);
     }
 
-    protected ArrayList<double[]> getUpperConvexHullOfLeaves(ArrayList<double[]> reachableLeaves){
-        if (!USE_PARETO_LEAVES || reachableLeaves.size() == 1) return reachableLeaves;
-        int n = reachableLeaves.size(), k = 0;
-        double[][] H = new double[2*n][];
+    protected ArrayList<double[]> getUpperConvexHullOfLeaves(ArrayList<double[]> reachableLeavesUnsorted){
+        if (!USE_PARETO_LEAVES || reachableLeavesUnsorted.size() == 1) return reachableLeavesUnsorted;
+        ArrayList<double[]> reachableLeaves;
+        if (leader.getId() == 0) reachableLeaves = reachableLeavesUnsorted;
+        else{
+            reachableLeaves = new ArrayList<>();
+            for(double[] u : reachableLeavesUnsorted)
+                reachableLeaves.add(new double[]{u[1], u[0]});
+        }
 
         Collections.sort(reachableLeaves, new Comparator<double[]>() {
             @Override
@@ -861,24 +883,44 @@ public class GadgetSefceLP implements Solver {
             }
         });
 
-        // Build lower hull
-        for (int i = 0; i < n; ++i) {
-            while (k >= 2 && cross(H[k - 2], H[k - 1], reachableLeaves.get(i)) <= 0)
-                k--;
-            H[k++] = reachableLeaves.get(i);
+        Stack<double[]> upperHull = new Stack<>();
+        int deletedPointsNumber = 0;
+
+        for (int i = reachableLeaves.size() - 1; i >= 0; i--) {
+            while (upperHull.size() >= 2 && cross(upperHull.get(upperHull.size() - 2), upperHull.get(upperHull.size() - 1), reachableLeaves.get(i)) <= 0) {
+                upperHull.pop();
+            }
+            if(APPROX_HULL && upperHull.size() > 1){
+                double[] preprevious = upperHull.elementAt(upperHull.size()-2);
+                double[] previous = upperHull.peek();
+                double[] current = reachableLeaves.get(i);
+                double distance = 0.0;
+                if (DISTANCE_TO_PROJECTION)
+                    // difference in both player's utility
+                    distance = Math.abs(previous[0]*(current[1]-preprevious[1])
+                        - previous[1]*(current[0]-preprevious[0]) + current[0]*preprevious[1] - current[1]*preprevious[0])
+                        / Math.sqrt(Math.pow(current[1]-preprevious[1],2) + Math.pow(current[0]-preprevious[0],2));
+                else {
+                    // difference in leader's utility
+                    double slope = (preprevious[1] - current[1])/(preprevious[0] - current[0]);
+                    distance = Math.abs(previous[0] - (previous[1]-current[1])/slope - current[0]);
+                }
+                //
+                if (USE_CURRENT_LEAF_LEADER_UTILITY) HULL_DELTA = DELTA_BY_UTILITY_COEF * current[0];
+                if (distance < HULL_DELTA){
+                    deletedPointsNumber++;
+                    upperHull.pop();
+                }
+            }
+
+            upperHull.push(reachableLeaves.get(i));
         }
 
-        int upperHullStart = 1;//Math.max(1, k-1);
+//        System.out.println("Number of deleted points = "+deletedPointsNumber + " / " + upperHull.size());
 
-        // Build upper hull
-        for (int i = n - 2, t = k + 1; i >= 0; i--) {
-            while (k >= t && cross(H[k - 2], H[k - 1], reachableLeaves.get(i)) <= 0)
-                k--;
-            H[k++] = reachableLeaves.get(i);
-        }
-
-//        System.out.println(k);
-//        System.exit(0);
+//        for (int i = 0; i < upperHull.size(); i++)
+//            System.out.printf("["+upperHull.get(i)[0] + ", " + upperHull.get(i)[1]+"], ");
+//        System.out.println();
 
         if (MAKE_GADGET_STATS){
             String stat = gadgetStats.get(gadgetStats.size()-1);
@@ -893,17 +935,19 @@ public class GadgetSefceLP implements Solver {
                 if(!contains) uniqueUtility.add(utility);
             }
             stat += uniqueUtility.size() + " ";
-            stat += k - 1 - (upperHullStart-1) + " ";
-            for (int i = upperHullStart-1; i < k - 1; i++)
-                stat += H[i][0] + " " + H[i][1] + " ";
+            stat += upperHull.size() + " ";
+            for (int i = 0; i < upperHull.size(); i++)
+                stat += upperHull.get(i)[0] + " " + upperHull.get(i)[1] + " ";
             gadgetStats.set(gadgetStats.size()-1, stat);
         }
 
-        if (k > 1) {
-            return new ArrayList<>(Arrays.asList(Arrays.copyOfRange(H, upperHullStart-1, k - 1)));
-//            H = H.subList(0, k-1);//Arrays.copyOfRange(H, 0, k - 1); // remove non-hull vertices after k; remove k - 1 which is a duplicate
+        if (leader.getId() == 0) return new ArrayList<>(upperHull);
+        else{
+            reachableLeaves = new ArrayList<>();
+            for(double[] u : upperHull)
+                reachableLeaves.add(new double[]{u[1], u[0]});
+            return reachableLeaves;
         }
-        return null;//(ArrayList<GameState>) H;
     }
 
     public double cross(double[] oUtilities, double[] aUtilities, double[] bUtilities) {
@@ -967,7 +1011,9 @@ public class GadgetSefceLP implements Solver {
         return "Complete Sefce solver with gadgets.\n"+
                 "Create gadgets = "+CREATE_GADGETS+", pareto leaves = " + USE_PARETO_LEAVES +
                 ", initial gadget depth = " + INITIAL_GADGET_DEPTH_RATIO +
-                ", discount leader utilities = " +DISCOUNT_GADGETS;
+                ", discount leader utilities = " +DISCOUNT_GADGETS +
+                ", eps = " + eps + ", approximate hull = " + APPROX_HULL + ", approx coef = " + DELTA_BY_UTILITY_COEF +
+                ", use local point utility = " + USE_CURRENT_LEAF_LEADER_UTILITY + ", distance to projection = " + DISTANCE_TO_PROJECTION;
     }
 
     public double getRestrictedGameRatio(){

@@ -30,7 +30,7 @@ public class GenSumVisibilityPursuitGameState extends VisibilityPursuitGameState
         if(!PursuitGameInfo.SCALE_UTILITIES) return utility;
         double scaledUtility = Math.round(((int) Math.pow(10, PursuitGameInfo.ROUNDING)) * utility * PursuitGameInfo.SCALING_FACTOR)
                 / Math.pow(10, PursuitGameInfo.ROUNDING);
-//        if (scaledUtility > 160 || utility > 1.6) System.out.println(utility + " / " + scaledUtility);
+//        if (scaledUtility > 11 || utility > 1.6) System.out.println(utility + " / " + scaledUtility);
         return scaledUtility;
     }
 

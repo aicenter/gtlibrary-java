@@ -67,6 +67,14 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
         LPTable.CPLEXALG = alg;
     }
 
+    public void setEps(double eps){
+        this.eps = eps;
+    }
+
+    public String getInfo(){
+        return "SumForbiddingStackelbergLP : eps = " + eps;
+    }
+
     @Override
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         this.algConfig = (StackelbergConfig) algConfig;
@@ -386,7 +394,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     protected Map<InformationSet, Map<Sequence, Double>> getBehavioralStrategy(LPData lpData, Player player) {
         Map<InformationSet, Map<Sequence, Double>> strategy = new HashMap<>();
 
-//        double eps = 100*this.eps;
+        double eps = 10*this.eps;
 
         for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
             if (entry.getKey() instanceof Pair) {
@@ -404,10 +412,10 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                                     isStrategy = new HashMap<>();
                                     double behavioralStrat = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
 
-//                                    if (behavioralStrat > eps) {
+                                    if (behavioralStrat > eps) {
                                         isStrategy.put(playerSequence, behavioralStrat);
                                         strategy.put(playerSequence.getLastInformationSet(), isStrategy);
-//                                    }
+                                    }
                                 }
                             } else {
                                 double behavioralStrategy = getBehavioralStrategy(lpData, varKey, playerSequence, currentValue);
