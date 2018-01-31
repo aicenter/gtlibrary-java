@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg.oracle;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetAction;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetLPTable;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
@@ -31,7 +32,8 @@ public class GadgetOracle2pShallowestBrokenCplexLP extends GadgetOracle2pSumForb
         super.deleteOldGadgetRootConstraintsAndVariables(state);
         if(eqsToDeleteWithoutDeletingVars.containsKey(state))
             for (Object eqKey : eqsToDeleteWithoutDeletingVars.get(state))
-                lpTable.deleteConstraintWithoutVars(eqKey);
+                if (lpTable instanceof GadgetLPTable)
+                    ((GadgetLPTable)lpTable).deleteConstraintWithoutVars(eqKey);
     }
 
     @Override
@@ -102,7 +104,8 @@ public class GadgetOracle2pShallowestBrokenCplexLP extends GadgetOracle2pSumForb
 
                         lpTable.setConstraint(eqKey, p, 1);
                         lpTable.setConstraint(eqKey, binaryVarKey, -1);
-                        lpTable.markAsBinary(binaryVarKey);
+                        if (lpTable instanceof GadgetLPTable)
+                            ((GadgetLPTable)lpTable).markAsBinary(binaryVarKey);
                         lpTable.watchPrimalVariable(binaryVarKey, binaryVarKey);
                         lpTable.setConstraintType(eqKey, 0);
 

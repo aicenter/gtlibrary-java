@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterativ
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.LeaderGenerationConfig;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
@@ -34,7 +35,7 @@ public class GadgetSefceLP implements Solver {
     // sets for gadget vars and gadget cons
 
     protected double eps;
-    protected GadgetLPTable lpTable;
+    protected LPTable lpTable;
     protected Player leader;
     protected Player follower;
     protected GameInfo info;
@@ -44,7 +45,8 @@ public class GadgetSefceLP implements Solver {
     protected int iteration;
 
     protected double gameValue;
-    protected int gadgetsDismissed;
+    protected Integer gadgetsDismissed;
+    protected Integer gadgetsCreated;
 
     protected long overallConstraintGenerationTime;
     protected long overallConstraintLPSolvingTime;
@@ -59,7 +61,7 @@ public class GadgetSefceLP implements Solver {
     protected final boolean CREATE_GADGETS = true;
     protected final boolean GENERATE_ALL_GADGETS = false;
     protected boolean DISCOUNT_GADGETS = true;
-    protected final double GADGET_DISCOUNT = 1e-3;
+    protected final double GADGET_DISCOUNT = 1;
 
     protected final boolean PRINT_PROGRESS = false;
     protected final boolean PRINT_SOLVING = false;
@@ -76,13 +78,24 @@ public class GadgetSefceLP implements Solver {
     protected boolean USE_CURRENT_LEAF_LEADER_UTILITY = true;
     protected boolean DISTANCE_TO_PROJECTION = false;
 
+    protected HashSet<GameState> deletedGadgets = new HashSet<>();
+    protected HashSet<GameState> createdGadgets = new HashSet<>();
+
+    protected HashSet<Object> deletedConstraints = new HashSet<>();
+    protected HashSet<Object> createdConstraints = new HashSet<>();
+
+    protected HashMap<Object, HashSet<Object>> updatedConstraints = new HashMap<>();
+
+    protected HashSet<Object> createdUtility = new HashSet<>();
+
+
     public GadgetSefceLP(Player leader, GameInfo info){
         this.info = info;
         this.leader = leader;
         this.follower = info.getOpponent(leader);
         this.eps = 1e-8;
         this.iteration = 0;
-        this.lpTable = new GadgetLPTable();
+//        this.lpTable = new GadgetLPTable();
         this.threadBean = ManagementFactory.getThreadMXBean();
         this.gadgetRootsSequences = new HashSet<>();
         this.gadgetRoots = new HashMap<>();
@@ -90,10 +103,15 @@ public class GadgetSefceLP implements Solver {
         this.eqsToDelete = new HashMap<>();
         this.utilityToDelete = new HashMap<>();
         this.gadgetsDismissed = 0;
+        this.gadgetsCreated = 0;
         if (MAKE_GADGET_STATS)
             this.gadgetStats = new ArrayList<>();
         this.INITIAL_GADGET_DEPTH = INITIAL_GADGET_DEPTH_RATIO*info.getMaxDepth()/2.0;
         this.HULL_DELTA = info.getMaxUtility() * DELTA_BY_UTILITY_COEF;
+
+        this.lpTable = new RecyclingGadgetLPTableWithMatrix(deletedGadgets, createdGadgets, deletedConstraints, createdConstraints,
+                gadgetsCreated, gadgetsDismissed, varsToDelete, eqsToDelete, utilityToDelete, createdUtility,
+                updatedConstraints);
     }
 
     public void setLPSolvingMethod(int alg){
@@ -127,6 +145,8 @@ public class GadgetSefceLP implements Solver {
         Making roots of gadgets from a given IS.
      */
     protected void makeGadget(GameState state){
+        createdGadgets.add(state);
+        gadgetsCreated++;
 //        if (gadgetRoots.contains(set)) return;
         HashMap<Object, HashSet<Object>> varsToDeleteForState = new HashMap<>();
         varsToDelete.put(state, varsToDeleteForState);
@@ -228,29 +248,61 @@ public class GadgetSefceLP implements Solver {
         expandAfter(algConfig.getRootState());
     }
 
+
+    protected void clearGadgetStructuresBeforeSolve(){
+        for(GameState state : deletedGadgets){
+            eqsToDelete.remove(state);
+            utilityToDelete.remove(state);
+            varsToDelete.remove(state);
+            gadgetRootsSequences.remove(state.getSequenceFor(leader));
+            gadgetRoots.remove(state.getSequenceFor(leader));
+        }
+        deletedGadgets.clear();
+        createdGadgets.clear();
+        deletedConstraints.clear();
+        createdConstraints.clear();
+        createdUtility.clear();
+        updatedConstraints.clear();
+    }
+
     protected void deleteOldGadgetRootConstraintsAndVariables(GameState state){
         if (state.equals(algConfig.getRootState())) return;
+        deletedGadgets.add(state);
 //        System.out.println("Deleting: " + state.hashCode() + " / " + eqsToDelete.get(state).size());
         for (Object eqKey: varsToDelete.get(state).keySet())
             for (Object varKey: varsToDelete.get(state).get(eqKey)) {
                 lpTable.setConstraint(eqKey, varKey, 0);
-                lpTable.deleteVar(varKey);
+                if (lpTable instanceof GadgetLPTable)
+                    ((GadgetLPTable)lpTable).deleteVar(varKey);
             }
         for (Object var : utilityToDelete.get(state)) {
             lpTable.setObjective(var, 0);
-            lpTable.deleteVar(var);
+            if (lpTable instanceof GadgetLPTable)
+                ((GadgetLPTable)lpTable).deleteVar(var);
         }
         for (Object eqKey : eqsToDelete.get(state)){
-            lpTable.deleteConstraint(eqKey);
+            if (lpTable instanceof GadgetLPTable)
+                ((GadgetLPTable)lpTable).deleteConstraint(eqKey);
+            if (lpTable instanceof RecyclingLPTable)
+                ((RecyclingLPTable) lpTable).deleteConstraint(eqKey);
         }
-        eqsToDelete.remove(state);
-        utilityToDelete.remove(state);
-        varsToDelete.remove(state);
+//        eqsToDelete.remove(state);
+//        utilityToDelete.remove(state);
+//        varsToDelete.remove(state);
         gadgetsDismissed++;
     }
 
     // Expand and generate constraints
     protected void expandAfter(GameState state){
+
+        boolean OUTPUT_GADGET = false;
+        if (OUTPUT_GADGET && utilityToDelete.containsKey(state)) {
+            System.out.println("Expanding gadget : " + state);
+            for (double[] d : getLeavesUnder(state))
+                System.out.println(d[0] + " / " + d[1]);
+//            for (Object o : utilityToDelete.get(state))
+//                System.out.println(o + ": " + lpTable.getObjective(o));
+        }
 
         deleteOldGadgetRootConstraintsAndVariables(state);
 
@@ -297,6 +349,7 @@ public class GadgetSefceLP implements Solver {
                         u[p.getId()] = utilities[p.getId()] * currentState.getNatureProbability()*info.getUtilityStabilizer();
                 }
                 lpTable.setObjective(createSeqPairVarKey(currentState.getSequenceFor(leader), currentState.getSequenceFor(follower)), u[leader.getId()]);
+                createdUtility.add(createSeqPairVarKey(currentState.getSequenceFor(leader), currentState.getSequenceFor(follower)));
                 algConfig.setUtility(currentState, u);
 
                 if (PRINT_PROGRESS) System.out.printf("Generating seq constrain...");
@@ -309,16 +362,23 @@ public class GadgetSefceLP implements Solver {
                 if (utility != 0) {
                     // 6 :
                     lpTable.setConstraint(currentState.getSequenceFor(follower), createSeqPairVarKey(currentState.getSequenceFor(leader), currentState.getSequenceFor(follower)), -utility);
+                    if(!updatedConstraints.containsKey(currentState.getSequenceFor(follower))) updatedConstraints.put(currentState.getSequenceFor(follower), new HashSet<>());
+                    updatedConstraints.get(currentState.getSequenceFor(follower)).add(createSeqPairVarKey(currentState.getSequenceFor(leader), currentState.getSequenceFor(follower)));
                     // 7 :
                     for (Action action : currentState.getSequenceFor(follower)) {
                         for (Sequence relevantSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
                             Object eqKey = new Triplet<>(currentState.getSequenceFor(follower).getLastInformationSet().getISKey(), currentState.getSequenceFor(follower), relevantSequence);
                             lpTable.setConstraint(eqKey, createSeqPairVarKeyCheckExistence(currentState.getSequenceFor(leader), relevantSequence), -utility);
+                            if(!updatedConstraints.containsKey(eqKey)) updatedConstraints.put(eqKey, new HashSet<>());
+                            updatedConstraints.get(eqKey).add(createSeqPairVarKeyCheckExistence(currentState.getSequenceFor(leader), relevantSequence));
+
                         }
                     }
                     Object eqKey = new Triplet<>(currentState.getSequenceFor(follower).getLastInformationSet().getISKey(), currentState.getSequenceFor(follower), new ArrayListSequenceImpl(follower));
 //                    Object eqKey = new Triplet<>(algConfig.getInformationSetFor(currentState).getISKey(), currentState.getSequenceFor(follower), new ArrayListSequenceImpl(follower));
                     lpTable.setConstraint(eqKey, createSeqPairVarKeyCheckExistence(currentState.getSequenceFor(leader), new ArrayListSequenceImpl(follower)), -utility);
+                    if(!updatedConstraints.containsKey(eqKey)) updatedConstraints.put(eqKey, new HashSet<>());
+                    updatedConstraints.get(eqKey).add(createSeqPairVarKeyCheckExistence(currentState.getSequenceFor(leader), new ArrayListSequenceImpl(follower)));
                 }
                 continue;
             }
@@ -351,10 +411,36 @@ public class GadgetSefceLP implements Solver {
                 for (GameState setState : currentGadgetRoots.get(sequence)) {
 //                    deleteOldGadgetRootConstraintsAndVariables(setState);
                     expandAfter(setState);
+
+//                    ArrayList<double[]> leavesUnder = getLeavesUnder(setState);
+//                    Sequence followerSequence = setState.getSequenceFor(follower);
+//                    for (Sequence seq : currentGadgetRootSequences)
+//                        for (GameState anotherState : currentGadgetRoots.get(seq))
+//                            if (!setState.equals(anotherState) && anotherState.getSequenceFor(follower).equals(followerSequence)) {
+//                                boolean isbetter, isbetterouter = true;
+//                                for (double[] d : getLeavesUnder(anotherState)) {
+//                                    isbetter = false;
+//                                    for (double[] u : leavesUnder){
+//                                        if(Math.abs(u[1]-d[1])<eps && d[0] >= u[0]){
+//                                            isbetter = true; break;
+//                                        }
+//                                    }
+//                                    if (!isbetter){
+//                                        isbetterouter = false; break;
+//                                    }
+//                                }
+//                                if (isbetterouter) {
+//                                    System.out.println("Also expanding: " + anotherState);
+//                                    expandingGadgets.add(anotherState);
+//                                    for (double[] d : getLeavesUnder(anotherState))
+//                                        System.out.println(d[0] + " / " + d[1]);
+//                                }
+//
+//                            }
 //                    gadgetRoots.get(sequence).remove(setState);
                 }
-                gadgetRootsSequences.remove(sequence);
-                gadgetRoots.remove(sequence);
+//                gadgetRootsSequences.remove(sequence);
+//                gadgetRoots.remove(sequence);
             }
         }
         return reachableGadget;
@@ -422,8 +508,9 @@ public class GadgetSefceLP implements Solver {
             if (TUNE_LP) tuneSolver(lpData);
 
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
-            if (EXPORT_LP) lpData.getSolver().exportModel("Gadget2pSEFCE.lp");
+            if (EXPORT_LP) lpData.getSolver().exportModel("Gadget2pSEFCE_"+iteration+"_.lp");
             startTime = threadBean.getCurrentThreadCpuTime();
+            clearGadgetStructuresBeforeSolve();
             if (PRINT_PROGRESS || PRINT_SOLVING) System.out.printf("Solving...");
             lpData.getSolver().solve();
             if (PRINT_PROGRESS || PRINT_SOLVING) System.out.println("done");
@@ -503,9 +590,14 @@ public class GadgetSefceLP implements Solver {
             for (Sequence relevantSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
                 Object eqKey = new Triplet<>(informationSet.getPlayersHistory().getLastInformationSet().getISKey(), informationSet.getPlayersHistory(), relevantSequence);
                 lpTable.setConstraint(eqKey, new Pair<>(informationSet.getISKey(), relevantSequence), -1);
+                if(!updatedConstraints.containsKey(eqKey)) updatedConstraints.put(eqKey, new HashSet<>());
+                updatedConstraints.get(eqKey).add(new Pair<>(informationSet.getISKey(), relevantSequence));
+
             }
             Object eqKey = new Triplet<>(informationSet.getPlayersHistory().getLastInformationSet().getISKey(), informationSet.getPlayersHistory(), new ArrayListSequenceImpl(follower));
             lpTable.setConstraint(eqKey, new Pair<>(informationSet.getISKey(), new ArrayListSequenceImpl(follower)), -1);
+            if(!updatedConstraints.containsKey(eqKey)) updatedConstraints.put(eqKey, new HashSet<>());
+            updatedConstraints.get(eqKey).add(new Pair<>(informationSet.getISKey(), new ArrayListSequenceImpl(follower)));
         }
 
 //        if (informationSet.getPlayer().equals(follower)) {
@@ -534,6 +626,10 @@ public class GadgetSefceLP implements Solver {
                 lpTable.setConstraint(eqKey, varKey, 1);
                 lpTable.setConstraint(eqKey, contVarKey, -1);
                 lpTable.setConstraintType(eqKey, 1);
+
+                if(!updatedConstraints.containsKey(eqKey)) updatedConstraints.put(eqKey, new HashSet<>());
+                updatedConstraints.get(eqKey).add(varKey);
+                updatedConstraints.get(eqKey).add(contVarKey);
             }
 //        }
     }
@@ -546,6 +642,8 @@ public class GadgetSefceLP implements Solver {
             lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
             lpTable.setConstraint(eqKey, varKey, 1);
             lpTable.setConstraintType(eqKey, 2);
+            if(!updatedConstraints.containsKey(eqKey)) updatedConstraints.put(eqKey, new HashSet<>());
+            updatedConstraints.get(eqKey).add(varKey);
 
 
             // take care of it in utilities
@@ -586,6 +684,9 @@ public class GadgetSefceLP implements Solver {
         lpTable.setConstraintType(followerSequence, 1);
         lpTable.setConstraint(followerSequence, varKey, 1);
 
+        if(!updatedConstraints.containsKey(followerSequence)) updatedConstraints.put(followerSequence, new HashSet<>());
+        updatedConstraints.get(followerSequence).add(varKey);
+
         // handled in leafs
 //        for (Sequence leaderSequence : algConfig.getCompatibleSequencesFor(followerSequence)) {
 //            Double[] seqCombValue = algConfig.getGenSumSequenceCombinationUtility(leaderSequence, followerSequence);
@@ -603,6 +704,9 @@ public class GadgetSefceLP implements Solver {
 
                 lpTable.setLowerBound(contVarKey, Double.NEGATIVE_INFINITY);
                 lpTable.setConstraint(followerSequence, contVarKey, -1);
+
+                if(!updatedConstraints.containsKey(followerSequence)) updatedConstraints.put(followerSequence, new HashSet<>());
+                updatedConstraints.get(followerSequence).add(contVarKey);
             }
     }
 
@@ -614,6 +718,9 @@ public class GadgetSefceLP implements Solver {
         lpTable.setLowerBound(varKey, Double.NEGATIVE_INFINITY);
         lpTable.setConstraintType(followerSequence, 1);
         lpTable.setConstraint(followerSequence, varKey, 1);
+
+        if(!updatedConstraints.containsKey(followerSequence)) updatedConstraints.put(followerSequence, new HashSet<>());
+        updatedConstraints.get(followerSequence).add(varKey);
     }
 
 //    protected void createSequenceConstraint(StackelbergConfig algConfig, Sequence followerSequence) {
@@ -713,10 +820,14 @@ public class GadgetSefceLP implements Solver {
 
                 lpTable.setConstraintType(eqKeyFollower, 1);
                 lpTable.setConstraint(eqKeyFollower, varKey, -1);
+                if(!updatedConstraints.containsKey(eqKeyFollower)) updatedConstraints.put(eqKeyFollower, new HashSet<>());
+                updatedConstraints.get(eqKeyFollower).add(varKey);
 //                if (((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences().isEmpty())
 //                    System.out.println(action + " : EMPTY");
                 for (Sequence followerSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
                     lpTable.setConstraint(eqKeyFollower, createSeqPairVarKey(leaderSequence, followerSequence), 1);
+                    if(!updatedConstraints.containsKey(eqKeyFollower)) updatedConstraints.put(eqKeyFollower, new HashSet<>());
+                    updatedConstraints.get(eqKeyFollower).add(createSeqPairVarKey(leaderSequence, followerSequence));
                 }
             }
 
@@ -735,8 +846,12 @@ public class GadgetSefceLP implements Solver {
 
                     lpTable.setConstraintType(eqKeyLeader, 1);
                     lpTable.setConstraint(eqKeyLeader, varKey, -1);
+                    if(!updatedConstraints.containsKey(eqKeyLeader)) updatedConstraints.put(eqKeyLeader, new HashSet<>());
+                    updatedConstraints.get(eqKeyLeader).add(varKey);
                     for (Sequence leaderContinuation : outgoingSequences){//((SequenceInformationSet) leaderAction.getInformationSet()).getOutgoingSequences()) {
                         lpTable.setConstraint(eqKeyLeader, createSeqPairVarKey(leaderContinuation, actionHistory), 1);
+                        if(!updatedConstraints.containsKey(eqKeyLeader)) updatedConstraints.put(eqKeyLeader, new HashSet<>());
+                        updatedConstraints.get(eqKeyLeader).add(createSeqPairVarKey(leaderContinuation, actionHistory));
                     }
                 }
 
@@ -750,8 +865,81 @@ public class GadgetSefceLP implements Solver {
 
                         lpTable.setConstraintType(eqKeyLeaderCont, 1);
                         lpTable.setConstraint(eqKeyLeaderCont, varKeyCont, -1);
+                        if(!updatedConstraints.containsKey(eqKeyLeaderCont)) updatedConstraints.put(eqKeyLeaderCont, new HashSet<>());
+                        updatedConstraints.get(eqKeyLeaderCont).add(varKeyCont);
                         for (Sequence leaderContinuation : outgoingSequences){//((SequenceInformationSet) leaderAction.getInformationSet()).getOutgoingSequences()) {
                             lpTable.setConstraint(eqKeyLeaderCont, createSeqPairVarKey(leaderContinuation, followerSequence), 1);
+                            if(!updatedConstraints.containsKey(eqKeyLeaderCont)) updatedConstraints.put(eqKeyLeaderCont, new HashSet<>());
+                            updatedConstraints.get(eqKeyLeaderCont).add(createSeqPairVarKey(leaderContinuation, followerSequence));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected void createPContinuationConstraintInGadget(Set<Object> blackList, Sequence leaderSequence, Sequence compatibleFollowerSequence, LinkedHashSet<Sequence> gadgetSeqs) {
+        for (Action action : compatibleFollowerSequence) {
+            Sequence actionHistory = ((PerfectRecallInformationSet)action.getInformationSet()).getPlayersHistory();
+            Object eqKeyFollower = new Triplet<>(leaderSequence, actionHistory, action.getInformationSet().getISKey());
+
+            if (!blackList.contains(eqKeyFollower) && !((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences().isEmpty()) {
+                blackList.add(eqKeyFollower);
+                Pair<Sequence, Sequence> varKey = createSeqPairVarKey(leaderSequence, actionHistory);
+
+                lpTable.setConstraintType(eqKeyFollower, 1);
+                lpTable.setConstraint(eqKeyFollower, varKey, -1);
+//                if(!updatedConstraints.containsKey(eqKeyFollower)) updatedConstraints.put(eqKeyFollower, new HashSet<>());
+//                updatedConstraints.get(eqKeyFollower).add(varKey);
+//                if (((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences().isEmpty())
+//                    System.out.println(action + " : EMPTY");
+                for (Sequence followerSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
+                    lpTable.setConstraint(eqKeyFollower, createSeqPairVarKey(leaderSequence, followerSequence), 1);
+//                    if(!updatedConstraints.containsKey(eqKeyFollower)) updatedConstraints.put(eqKeyFollower, new HashSet<>());
+//                    updatedConstraints.get(eqKeyFollower).add(createSeqPairVarKey(leaderSequence, followerSequence));
+                }
+            }
+
+            ListIterator<Action> leaderSeqIterator = leaderSequence.listIterator(leaderSequence.size());
+            Action leaderAction;
+
+            while (leaderSeqIterator.hasPrevious()) {
+                leaderAction = leaderSeqIterator.previous();
+                Sequence leaderHistory = getLeaderHistory(leaderSequence, leaderAction);//(PerfectRecallInformationSet)leaderAction.getInformationSet()).getPlayersHistory();
+                Object eqKeyLeader = new Triplet<>(leaderHistory, actionHistory, leaderAction);
+
+                LinkedHashSet<Sequence> outgoingSequences = getOutgoingSequences(leaderSequence, leaderAction, gadgetSeqs);
+                if (!blackList.contains(eqKeyLeader) && !outgoingSequences.isEmpty()) {
+                    blackList.add(eqKeyLeader);
+                    Pair<Sequence, Sequence> varKey = createSeqPairVarKey(leaderHistory, actionHistory);
+
+                    lpTable.setConstraintType(eqKeyLeader, 1);
+                    lpTable.setConstraint(eqKeyLeader, varKey, -1);
+//                    if(!updatedConstraints.containsKey(eqKeyLeader)) updatedConstraints.put(eqKeyLeader, new HashSet<>());
+//                    updatedConstraints.get(eqKeyLeader).add(varKey);
+                    for (Sequence leaderContinuation : outgoingSequences){//((SequenceInformationSet) leaderAction.getInformationSet()).getOutgoingSequences()) {
+                        lpTable.setConstraint(eqKeyLeader, createSeqPairVarKey(leaderContinuation, actionHistory), 1);
+//                        if(!updatedConstraints.containsKey(eqKeyLeader)) updatedConstraints.put(eqKeyLeader, new HashSet<>());
+//                        updatedConstraints.get(eqKeyLeader).add(createSeqPairVarKey(leaderContinuation, actionHistory));
+                    }
+                }
+
+                for (Sequence followerSequence : ((SequenceInformationSet) action.getInformationSet()).getOutgoingSequences()) {
+                    Object eqKeyLeaderCont = new Triplet<>(leaderHistory, followerSequence, leaderAction.getInformationSet().getISKey());
+
+                    outgoingSequences = getOutgoingSequences(leaderSequence, leaderAction, gadgetSeqs);
+                    if (!blackList.contains(eqKeyLeaderCont) && !outgoingSequences.isEmpty()) {
+                        blackList.add(eqKeyLeaderCont);
+                        Pair<Sequence, Sequence> varKeyCont = createSeqPairVarKey(leaderHistory, followerSequence);
+
+                        lpTable.setConstraintType(eqKeyLeaderCont, 1);
+                        lpTable.setConstraint(eqKeyLeaderCont, varKeyCont, -1);
+//                        if(!updatedConstraints.containsKey(eqKeyLeaderCont)) updatedConstraints.put(eqKeyLeaderCont, new HashSet<>());
+//                        updatedConstraints.get(eqKeyLeaderCont).add(varKeyCont);
+                        for (Sequence leaderContinuation : outgoingSequences){//((SequenceInformationSet) leaderAction.getInformationSet()).getOutgoingSequences()) {
+                            lpTable.setConstraint(eqKeyLeaderCont, createSeqPairVarKey(leaderContinuation, followerSequence), 1);
+//                            if(!updatedConstraints.containsKey(eqKeyLeaderCont)) updatedConstraints.put(eqKeyLeaderCont, new HashSet<>());
+//                            updatedConstraints.get(eqKeyLeaderCont).add(createSeqPairVarKey(leaderContinuation, followerSequence));
                         }
                     }
                 }
@@ -808,6 +996,10 @@ public class GadgetSefceLP implements Solver {
         pStops.add(varKey);
         lpTable.setConstraint(eqKey, varKey, -1);
         lpTable.setConstraintType(eqKey, 1);
+
+        if(!updatedConstraints.containsKey(eqKey)) updatedConstraints.put(eqKey, new HashSet<>());
+        updatedConstraints.get(eqKey).add(varKey);
+
         for (Action action : actions) {
             Sequence sequenceCopy = new ArrayListSequenceImpl(gameState.getSequenceForPlayerToMove());
 
@@ -816,6 +1008,8 @@ public class GadgetSefceLP implements Solver {
 
             pStops.add(contVarKey);
             lpTable.setConstraint(eqKey, contVarKey, 1);
+            if(!updatedConstraints.containsKey(eqKey)) updatedConstraints.put(eqKey, new HashSet<>());
+            updatedConstraints.get(eqKey).add(contVarKey);
         }
     }
 
@@ -1013,7 +1207,8 @@ public class GadgetSefceLP implements Solver {
                 ", initial gadget depth = " + INITIAL_GADGET_DEPTH_RATIO +
                 ", discount leader utilities = " +DISCOUNT_GADGETS +
                 ", eps = " + eps + ", approximate hull = " + APPROX_HULL + ", approx coef = " + DELTA_BY_UTILITY_COEF +
-                ", use local point utility = " + USE_CURRENT_LEAF_LEADER_UTILITY + ", distance to projection = " + DISTANCE_TO_PROJECTION;
+                ", use local point utility = " + USE_CURRENT_LEAF_LEADER_UTILITY + ", distance to projection = " + DISTANCE_TO_PROJECTION
+                + "\n" +(lpTable instanceof GadgetLPTable ? ((GadgetLPTable) lpTable).getInfo() : "LP Table = "+ lpTable.getClass().getSimpleName());
     }
 
     public double getRestrictedGameRatio(){

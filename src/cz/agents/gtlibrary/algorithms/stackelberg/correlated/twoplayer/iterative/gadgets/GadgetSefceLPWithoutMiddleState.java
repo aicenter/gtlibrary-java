@@ -22,6 +22,8 @@ public class GadgetSefceLPWithoutMiddleState extends GadgetSefceLP {
 
     @Override
     protected void makeGadget(GameState state){
+        createdGadgets.add(state);
+        gadgetsCreated++;
 //        if (gadgetRoots.contains(set)) return;
         HashMap<Object, HashSet<Object>> varsToDeleteForState = new HashMap<>();
         varsToDelete.put(state, varsToDeleteForState);
@@ -106,7 +108,7 @@ public class GadgetSefceLPWithoutMiddleState extends GadgetSefceLP {
         createPContinuationConstraintInState(blackList, actions, leaderSequence, followerSequence, state.getISKeyForPlayerToMove());
 //        System.out.println(outgoingSeqs.size() + " " + actions.size());
         for(Sequence outgoing : outgoingSeqs){
-            createPContinuationConstraint(blackList, outgoing, followerSequence, outgoingSeqs);
+            createPContinuationConstraintInGadget(blackList, outgoing, followerSequence, outgoingSeqs);
         }
 
         eqsToDelete.put(state, blackList);

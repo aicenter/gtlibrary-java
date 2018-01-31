@@ -2,6 +2,8 @@ package cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterativ
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
+import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 import ilog.concert.*;
@@ -19,10 +21,36 @@ public class GadgetLPTable extends LPTable {
     protected HashSet<Object> binaryVariables;
 
     protected boolean isFirstSolution;
-    protected IloNumVar[] variables;
+    protected IloNumVar[] cplexVariables;
+    protected IloRange[] cplexConstraints;
 
     protected final boolean USE_PREVIOUS_SOLUTION = false;
     protected final boolean DELETE_SINGLE_VAR_CONSTRAINTS = false;
+
+    protected HashSet<GameState> deletedGadgets;
+    protected HashSet<GameState> createdGadgets;
+    protected HashSet<Object> deletedConstraints;
+    protected HashSet<Object> createdConstraints;
+    protected HashMap<Object, HashSet<Object>> updatedConstraints;
+    protected HashSet<Object> createdUtility;
+
+    protected HashMap<GameState,HashMap<Object, HashSet<Object>>> varsToDelete;
+    protected HashMap<GameState, HashSet<Object>> eqsToDelete;
+    protected HashMap<GameState, HashSet<Object>> utilityToDelete;
+
+    protected Integer gadgetsCreated, gadgetsDismissed;
+
+    protected int lastLPSize = Integer.MAX_VALUE;
+
+    protected final double UPDATE_LP_TABLE_DIFFERENCE = 0.8;
+    protected final boolean RESOLVE;
+
+    protected HashMap<Object, Integer> eqToCplexEq = new HashMap<>();
+    protected HashMap<Object, Integer> varToCplexVar = new HashMap<>();
+
+    public String getInfo(){
+        return this.getClass().getSimpleName() + ": resolve = " + RESOLVE + ", update when diff = " + UPDATE_LP_TABLE_DIFFERENCE;
+    }
 
     public GadgetLPTable(){
         super();
@@ -30,6 +58,34 @@ public class GadgetLPTable extends LPTable {
         CPLEXALG = IloCplex.Algorithm.Auto;//Primal;//Barrier;
         isFirstSolution = true;
         binaryVariables = new HashSet<>();
+        RESOLVE = false;
+    }
+
+    public GadgetLPTable(HashSet<GameState> deletedGadgets, HashSet<GameState> createdGadgets,
+                         HashSet<Object> deletedConstraints, HashSet<Object> createdConstraints,
+                         Integer gadgetsCreated, Integer gadgetsDismissed,
+                         HashMap<GameState,HashMap<Object, HashSet<Object>>> varsToDelete,
+                         HashMap<GameState, HashSet<Object>> eqsToDelete,
+                         HashMap<GameState, HashSet<Object>> utilityToDelete,
+                         HashSet<Object> createdUtility,
+                         HashMap<Object, HashSet<Object>> updatedConstraints){
+        super();
+//        removedVars = new HashSet<>();
+        CPLEXALG = IloCplex.Algorithm.Auto;//Primal;//Barrier;
+        isFirstSolution = true;
+        binaryVariables = new HashSet<>();
+        this.deletedGadgets = deletedGadgets;
+        this.createdGadgets = createdGadgets;
+        this.deletedConstraints = deletedConstraints;
+        this.createdConstraints = createdConstraints;
+        this.gadgetsCreated = gadgetsCreated;
+        this.gadgetsDismissed = gadgetsDismissed;
+        this.varsToDelete = varsToDelete;
+        this.eqsToDelete = eqsToDelete;
+        this.utilityToDelete = utilityToDelete;
+        this.createdUtility = createdUtility;
+        this.updatedConstraints = updatedConstraints;
+        RESOLVE = true;
     }
 
 
@@ -37,83 +93,303 @@ public class GadgetLPTable extends LPTable {
 
 //        if(true) return;
 
-        double[] costs = cplex.getReducedCosts(variables);
-        double[] values = cplex.getValues(variables);
+        double[] costs = cplex.getReducedCosts(cplexVariables);
+        double[] values = cplex.getValues(cplexVariables);
 
         cplex.clearModel();
 //        cplex.setVectors(values, costs, variables, null, null, null);
 
     }
 
+    protected void deleteOldGadgets(){
+        for (GameState state : deletedGadgets) {
+            for (Object eqKey : varsToDelete.get(state).keySet())
+                for (Object varKey : varsToDelete.get(state).get(eqKey)) {
+                    setConstraint(eqKey, varKey, 0);
+                    deleteVar(varKey);
+                }
+            for (Object var : utilityToDelete.get(state)) {
+                setObjective(var, 0);
+                deleteVar(var);
+            }
+            for (Object eqKey : eqsToDelete.get(state)) {
+                deleteConstraint(eqKey);
+            }
+        }
+        for (Object eqKey : deletedConstraints)
+            deleteConstraintWithoutVars(eqKey);
+    }
+
     @Override
     public LPData toCplex() throws IloException {
-
-        double[] costs = null;
-        double[] values = null;
-        IloNumVar[] oldVars = null;
-
-        if (USE_PREVIOUS_SOLUTION && !isFirstSolution){
-            costs = cplex.getReducedCosts(variables);
-            values = cplex.getValues(variables);
-            oldVars = Arrays.copyOf(variables, variables.length);
-
+        System.out.println(Math.abs(lastLPSize - getLPSize()) + " / " + UPDATE_LP_TABLE_DIFFERENCE * getLPSize());
+        if (!RESOLVE || Math.abs(lastLPSize - getLPSize()) > UPDATE_LP_TABLE_DIFFERENCE * getLPSize()){//createdGadgets.size() > UPDATE_LP_TABLE_DIFFERENCE * (gadgetsCreated - gadgetsDismissed)) {
+            System.out.println("Creating new cplex model.");
+//            deleteOldGadgets();
+            lastLPSize = getLPSize();
             cplex.clearModel();
+
+            cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
+            cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+            cplex.setParam(IloCplex.IntParam.MIPEmphasis, IloCplex.MIPEmphasis.Balanced);
+            cplex.setOut(null);
+
+            System.out.println("Getting variables.");
+            cplexVariables = getVariables();
+            varToCplexVar.clear();
+            for (Object var : variableIndices.keySet())
+                varToCplexVar.put(var, variableIndices.get(var));
+
+            cplexConstraints = addConstraintsViaMatrix(cplex, cplexVariables);
+
+            addObjective(cplexVariables);
+            return new LPData(cplex, cplexVariables, cplexConstraints, getRelaxableConstraints(cplexConstraints), getWatchedPrimalVars(cplexVariables), getWatchedDualVars(cplexConstraints));
         }
-        else cplex.clearModel();
+        else{
+            System.out.println("Updating existing cplex model.");
+            lastLPSize = getLPSize();
+//            updateVariableIndices();
+//            updateEquationsIndices();
+            // delete old
+            ArrayList<IloNumVar> objectiveVars = new ArrayList<>();
+            ArrayList<Double> objectiveCoefs = new ArrayList<>();
 
-//        cplex.clearModel();
-        cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
-        cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
-        cplex.setParam(IloCplex.IntParam.MIPEmphasis, IloCplex.MIPEmphasis.Balanced);
-//        cplex.setParam(IloCplex.DoubleParam.EpMrk, 0.99999);
-//		cplex.setParam(IloCplex.DoubleParam.BarEpComp, 1e-4);
-//		System.out.println("BarEpComp: " + cplex.getParam(IloCplex.DoubleParam.BarEpComp));
-//        cplex.setParam(IloCplex.BooleanParam.NumericalEmphasis, true);
-        cplex.setOut(null);
+            ArrayList<IloRange> cplexEqsToDelete = new ArrayList<>();
 
-        System.out.println("Getting variables.");
-        variables = getVariables();
-//        for (IloNumVar v : variables) System.out.println(v);
-//        IloRange[] constraints = addConstraints(cplex, variables);
-        IloRange[] constraints = addConstraintsViaMatrix(cplex, variables);
-//        System.out.println("Var len:" + variables.length);
-//        System.out.println("Con len:" + constraints.length);
-
-        if (USE_PREVIOUS_SOLUTION && costs != null){
-            ArrayList<Double> newCosts = new ArrayList<Double>();
-            ArrayList<Double> newValues = new ArrayList<>();
-            ArrayList<IloNumVar> newVars = new ArrayList<>();
-            ArrayList<String> currentVars = new ArrayList<>();
-            for (IloNumVar v : variables) currentVars.add(v.getName());
-            int idx;
-            for (int i = 0; i < oldVars.length; i++) {
-                idx = currentVars.indexOf(oldVars[i].getName());
-                if (idx != -1) {
-                    newCosts.add(costs[i]);
-                    newValues.add(values[i]);
-                    newVars.add(variables[idx]);
+            IloNumVar[] eqVars;// = new ArrayList<>();
+            double[] eqCoefs;// = new ArrayList<>();
+            for(GameState state: deletedGadgets){
+                for (Object eqKey: varsToDelete.get(state).keySet()) {
+                    eqVars = new IloNumVar[varsToDelete.get(state).get(eqKey).size()];
+//                    eqCoefs = new double[varsToDelete.get(state).get(eqKey).size()];
+                    int i = 0;
+                    for (Object varKey : varsToDelete.get(state).get(eqKey)) {
+                        eqVars[i] = cplexVariables[varToCplexVar.get(varKey)];
+                        i++;
+//                        cplex.setLinearCoef(cplexConstraints[eqToCplexEq.get(eqKey)], cplexVariables[varToCplexVar.get(varKey)], 0.0);
+                    }
+                    cplex.setLinearCoefs(cplexConstraints[eqToCplexEq.get(eqKey)], eqVars, new double[eqVars.length]);
+                }
+                for (Object var : utilityToDelete.get(state)) {
+                    objectiveVars.add(cplexVariables[varToCplexVar.get(var)]);
+                    objectiveCoefs.add(0.0);
+//                    cplex.setLinearCoef(cplex.getObjective(),cplexVariables[varToCplexVar.get(var)], 0.0);
+                }
+                for (Object eqKey : eqsToDelete.get(state)){
+//                    cplexEqsToDelete.add(cplexConstraints[eqToCplexEq.get(eqKey)]);
+                    if (!eqToCplexEq.containsKey(eqKey)) continue;
+                    cplex.delete(cplexConstraints[eqToCplexEq.get(eqKey)]);
+                    eqToCplexEq.remove(eqKey);
+//                    cplex.remove(cplexConstraints[eqToCplexEq.get(eqKey)]);
+//                    cplexConstraints[eqToCplexEq.get(eqKey)] = null;
                 }
             }
-            double[] nC = new double[newCosts.size()];
-            double[] nVl = new double[newValues.size()];
-            IloNumVar[] nVr = new IloNumVar[newVars.size()];
-            for (int i = 0; i < nC.length; i++){
-                nC[i] = newCosts.get(i);
-                nVl[i] = newValues.get(i);
-                nVr[i] = newVars.get(i);
+//            cplex.delete(cplexEqsToDelete.toArray(new IloRange[0]));
+//            cplexEqsToDelete.clear();
+            for(Object eqKey : deletedConstraints){
+                cplexEqsToDelete.add(cplexConstraints[eqToCplexEq.get(eqKey)]);
+//                cplex.delete(cplexConstraints[eqToCplexEq.get(eqKey)]);
+//                cplex.remove(cplexConstraints[eqToCplexEq.get(eqKey)]);
+//                cplexConstraints[eqToCplexEq.get(eqKey)] = null;
             }
-            System.out.printf("Setting initial(" + nC.length+")...");
-//            cplex.setVectors(nVl, nC, nVr, null, null, null);
-        }
+            System.out.println("Deleted obsolete cons and vars.");
+            // add new
+            HashSet<Object> newVars = new HashSet<>();
+            HashSet<Object> newEqs = new HashSet<>();
+            HashSet<Object> missingEqs = new HashSet<>();
+            for(GameState state: createdGadgets){
+                for (Object eqKey: varsToDelete.get(state).keySet()) {
+                    if (!eqToCplexEq.containsKey(eqKey)) {
+                        newEqs.add(eqKey);
+                        missingEqs.add(eqKey);
+                    }
+                    for (Object varKey : varsToDelete.get(state).get(eqKey)) {
+                        if (!varToCplexVar.containsKey(varKey))
+                            newVars.add(varKey);
+                    }
+                }
+                for (Object var : utilityToDelete.get(state)) {
+                    if (!varToCplexVar.containsKey(var))
+                        newVars.add(var);
+                }
+                for (Object eqKey : eqsToDelete.get(state)){
+                    if (!eqToCplexEq.containsKey(eqKey))
+                        newEqs.add(eqKey);
+                    for (Object varKey : constraints.get(eqKey).keySet()) {
+                        if (!varToCplexVar.containsKey(varKey))
+                            newVars.add(varKey);
+                    }
+                }
+            }
+            for(Object eqKey : createdConstraints){
+                if (!eqToCplexEq.containsKey(eqKey)) {
+                    newEqs.add(eqKey);
+                }
+                for (Object varKey : constraints.get(eqKey).keySet()) {
+                    if (!varToCplexVar.containsKey(varKey))
+                        newVars.add(varKey);
+                }
+            }
+            for(Object eqKey : updatedConstraints.keySet()){
+                if (!eqToCplexEq.containsKey(eqKey)) {
+                    newEqs.add(eqKey);
+                    missingEqs.add(eqKey);
+                }
+                for (Object varKey : updatedConstraints.get(eqKey)) {
+                    if (!varToCplexVar.containsKey(varKey))
+                        newVars.add(varKey);
+                }
+            }
+            for(Object var : createdUtility)
+                if (!varToCplexVar.containsKey(var))
+                    newVars.add(var);
 
-        addObjective(variables);
-        isFirstSolution = false;
-        return new LPData(cplex, variables, constraints, getRelaxableConstraints(constraints), getWatchedPrimalVars(variables), getWatchedDualVars(constraints));
+            // create new vars and cons
+            int j = cplexConstraints.length;
+            IloRange[] newCplexConstraints = new IloRange[cplexConstraints.length + newEqs.size()];
+            for(int i = 0; i < cplexConstraints.length; i++)
+                newCplexConstraints[i] = cplexConstraints[i];
+//            System.arraycopy(cplexConstraints, 0, newCplexConstraints, 0, cplexConstraints.length);
+            cplexConstraints = newCplexConstraints;
+            for (Object eqKey : newEqs){
+                eqToCplexEq.put(eqKey, j); j++;
+            }
+
+            int i = cplexVariables.length;
+            IloNumVar[] newCplexVariables = new IloNumVar[cplexVariables.length + newVars.size()];
+//            System.arraycopy(cplexVariables, 0, newCplexVariables, 0, cplexVariables.length);
+            for(int k = 0; k < cplexVariables.length; k++)
+                newCplexVariables[k] = cplexVariables[k];
+            cplexVariables = newCplexVariables;
+            for (Object var : newVars){
+//                i = variableIndices.get(var);
+                variableIndices.put(var,i);
+                varToCplexVar.put(var, i);
+                cplexVariables[i] = cplex.numVar(getLB(var), getUB(var), var.toString());
+                i++;
+            }
+
+            System.out.println("Identified new cons and vars.");
+
+            for(GameState state: createdGadgets){
+                for (Object eqKey: varsToDelete.get(state).keySet()) {
+                    if (missingEqs.contains(eqKey))
+                        cplexConstraints[eqToCplexEq.get(eqKey)] = createConstraint(eqKey);
+                    else {
+                        eqVars = new IloNumVar[varsToDelete.get(state).get(eqKey).size()];
+                        eqCoefs = new double[varsToDelete.get(state).get(eqKey).size()];
+                        int l = 0;
+                        for (Object varKey : varsToDelete.get(state).get(eqKey)) {
+                            eqVars[l] = cplexVariables[varToCplexVar.get(varKey)];
+                            eqCoefs[l] = constraints.get(eqKey).get(varKey);
+                            l++;
+//                            cplex.setLinearCoef(cplexConstraints[eqToCplexEq.get(eqKey)], cplexVariables[varToCplexVar.get(varKey)], constraints.get(eqKey).get(varKey));
+                        }
+                        cplex.setLinearCoefs(cplexConstraints[eqToCplexEq.get(eqKey)], eqVars, eqCoefs);
+                    }
+                }
+                for (Object var : utilityToDelete.get(state)) {
+                    if (objective.containsKey(var)) {
+                        objectiveVars.add(cplexVariables[varToCplexVar.get(var)]);
+                        objectiveCoefs.add(objective.get(var));
+//                        cplex.setLinearCoef(cplex.getObjective(), cplexVariables[varToCplexVar.get(var)], objective.get(var));
+                    }
+                }
+                for (Object eqKey : eqsToDelete.get(state)){
+                    cplexConstraints[eqToCplexEq.get(eqKey)] = createConstraint(eqKey);
+                }
+            }
+            for(Object eqKey : createdConstraints){
+                cplexConstraints[eqToCplexEq.get(eqKey)] = createConstraint(eqKey);
+            }
+            for(Object eqKey : updatedConstraints.keySet()){
+                if(missingEqs.contains(eqKey))
+                    cplexConstraints[eqToCplexEq.get(eqKey)] = createConstraint(eqKey);
+                else{
+                    int l = 0;
+                    eqVars = new IloNumVar[updatedConstraints.get(eqKey).size()];
+                    eqCoefs = new double[updatedConstraints.get(eqKey).size()];
+                    for(Object varKey : updatedConstraints.get(eqKey)) {
+                        eqVars[l] = cplexVariables[varToCplexVar.get(varKey)];
+                        eqCoefs[l] = constraints.get(eqKey).get(varKey);
+                        l++;
+//                        cplex.setLinearCoef(cplexConstraints[eqToCplexEq.get(eqKey)], cplexVariables[varToCplexVar.get(varKey)], constraints.get(eqKey).get(varKey));
+                    }
+//                    System.out.println(eqKey + " / " + eqToCplexEq.get(eqKey) + " / " + cplexConstraints[eqToCplexEq.get(eqKey)] + " \n " + Arrays.toString(eqVars) + "\n"+Arrays.toString(eqCoefs));
+                    cplex.setLinearCoefs(cplexConstraints[eqToCplexEq.get(eqKey)], eqVars, eqCoefs);
+                }
+            }
+            for(Object var : createdUtility)
+                if (objective.containsKey(var)) {
+                    objectiveVars.add(cplexVariables[varToCplexVar.get(var)]);
+                    objectiveCoefs.add(objective.get(var));
+//                    cplex.setLinearCoef(cplex.getObjective(), cplexVariables[varToCplexVar.get(var)], objective.get(var));
+                }
+//            deleteOldGadgets();
+            System.out.println("Added new cons and vars.");
+
+            double[] objectiveCoefsArray = new double[objectiveCoefs.size()];
+            for (i = 0; i < objectiveCoefs.size(); i++) objectiveCoefsArray[i] = objectiveCoefs.get(i);
+            cplex.setLinearCoefs(cplex.getObjective(), objectiveVars.toArray(new IloNumVar[0]), objectiveCoefsArray);
+            cplex.delete(cplexEqsToDelete.toArray(new IloRange[0]));
+            System.out.println("Update done. Solving...");
+            return new LPData(cplex, cplexVariables, cplexConstraints, getRelaxableConstraints(cplexConstraints), getWatchedPrimalVarsForResolve(cplexVariables), getWatchedDualVars(cplexConstraints));
+        }
+    }
+
+    protected Map<Object, IloNumVar> getWatchedPrimalVarsForResolve(IloNumVar[] variables) {
+        Map<Object, IloNumVar> watchedPrimalVars = new LinkedHashMap<Object, IloNumVar>();
+
+        for (Map.Entry<Object, Integer> entry : primalWatch.entrySet()) {
+            if (!varToCplexVar.containsKey(entry.getKey())) {
+                System.out.println(entry.getKey()); continue;
+            }
+            watchedPrimalVars.put(entry.getKey(), variables[varToCplexVar.get(entry.getKey())]);
+        }
+        return watchedPrimalVars;
+    }
+
+    protected IloRange createConstraint(Object eqKey) throws IloException {
+        IloLinearNumExpr rowExpr = createRowExpresion(cplex, cplexVariables, eqKey);
+        Integer constraintType = constraintTypes.get(eqKey);
+
+        switch (constraintType) {
+            case 0:
+                if (USE_CUSTOM_NAMES)
+                    return cplex.addLe(rowExpr, getConstant(eqKey), eqKey.toString());
+                else
+                    return cplex.addLe(rowExpr, getConstant(eqKey));
+            case 1:
+                if (USE_CUSTOM_NAMES)
+                    return cplex.addEq(rowExpr, getConstant(eqKey), eqKey.toString());
+                else
+                    return cplex.addEq(rowExpr, getConstant(eqKey));
+            case 2:
+                if (USE_CUSTOM_NAMES)
+                    return cplex.addGe(rowExpr, getConstant(eqKey), eqKey.toString());
+                else
+                    return cplex.addGe(rowExpr, getConstant(eqKey));
+            default:
+                break;
+        }
+        return null;
+    }
+
+    protected IloLinearNumExpr createRowExpresion(IloCplex cplex, IloNumVar[] x, Object eqKey) throws IloException {
+        IloLinearNumExpr rowExpr = cplex.linearNumExpr();
+
+        for (Map.Entry<Object, Double> memberEntry : constraints.get(eqKey).entrySet()) {
+            if (Math.abs(memberEntry.getValue()) > 0.01)
+                rowExpr.addTerm(memberEntry.getValue(), x[varToCplexVar.get(memberEntry.getKey())]);
+        }
+        return rowExpr;
     }
 
     @Override
     protected IloRange[] addConstraintsViaMatrix(IloCplex cplex, IloNumVar[] x) throws IloException {
         System.out.println("# of vars: " + columnCount() + "; # of cons: " + constraints.keySet().size());
+        eqToCplexEq.clear();
+//        varToCplexVar.clear();
 
 //        ArrayList<String> names = new ArrayList<>();
 //        for (IloNumVar v : x) {
@@ -146,6 +422,8 @@ public class GadgetLPTable extends LPTable {
         double[] ubs = new double[idxs.length];
         int j = 0;
         for(Object con : constraints.keySet()){
+            eqToCplexEq.put(con, j);
+//            iloRangeIdx.put(getEquationIndex(con),j);
 //            if (constraints.get(con).size() == 1) System.out.println(con + " : " + constraints.get(con).keySet().iterator().next());
             int[] idx = new int[constraints.get(con).keySet().size()];
             double[] val = new double[idx.length];
@@ -187,6 +465,12 @@ public class GadgetLPTable extends LPTable {
 //        removedVars.clear();
         return matrix.getRanges();
     }
+
+//
+
+
+
+
 
     public void deleteConstraint(Object eqKey){
         if (constraints.get(eqKey) != null){
@@ -304,8 +588,24 @@ public class GadgetLPTable extends LPTable {
         }
     }
 
+    protected void updateEquationsIndices(){
+
+        ArrayList list = new ArrayList(equationIndices.keySet());
+        Collections.sort(list, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                return equationIndices.get(o1).compareTo(equationIndices.get(o2));
+            }
+        });
+        equationIndices.clear();
+        for(int i = 0; i < list.size(); i++) {
+            equationIndices.put(list.get(i), i);
+//            if (primalWatch.containsKey(list.get(i)))
+//                primalWatch.put(list.get(i), i);
+        }
+    }
+
     public IloNumVar[] getVars(){
-        return variables;
+        return cplexVariables;
     }
 
     public void markAsBinary(Object var){

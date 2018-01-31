@@ -69,12 +69,13 @@ public class OracleVsCompleteBBExperiment {
 //            runBPG(new String[]{"B", "4", "1"});
 //            runBPGOneSeed(new String[]{"B", "3", "1", "F", ""+IloCplex.Algorithm.Auto, "LP", "0"});
 //        runFlipIt(args);
-        runFlipIt(new String[]{"F", "4", "3", "AP", "100"});
+        runFlipIt(new String[]{"F", "3", "2", "AP", "20"});
 //            for (int seed = 50; seed < 80; seed++)
 //                runFlipItOneSeed(new String[]{"F", "3", "3", "AP", Integer.toString(seed), "F"});
 //            runFlipItOneSeed(new String[]{"F", "3", "5", "AP", "128", "O" ,"LP", "4", "0", Double.toString(1e-12)});
 //            runPursuit(new String[]{"P", "3", "4", "10"});
-//            runPursuitOneSeed(new String[]{"PO", "3", "3", "2", "O", "LP", "2"});
+//            runPursuitOneSeed(new String[]{"PO", "4", "3", "2", "O", "LP", "2"});
+//            runFlipItOneSeed(new String[]{"F0", "4", "4b", "AP", "0", "O" ,"LP", "4", "0", Double.toString(1e-6), "0.2", "1", "0"});
         } else {
             switch (args[0]) {
                 case "F":
@@ -1286,7 +1287,7 @@ public class OracleVsCompleteBBExperiment {
             gameInfo = new FlipItGameInfo();
         else {
             int depth = Integer.parseInt(args[1]);
-            int graphSize = Integer.parseInt(args[2]);
+            String graphSize = args[2];
             String graphFile = "flipit_simple" + graphSize + ".txt";
 //            String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
             gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
@@ -1344,7 +1345,7 @@ public class OracleVsCompleteBBExperiment {
         ArrayList<Long> fullTimes = new ArrayList<>();
         ArrayList<Long> oracleTimes = new ArrayList<>();
 
-        int startingSeed = 70;
+        int startingSeed = 18;
 
         for (int seed = startingSeed; seed < startingSeed+maxseed; seed++) {
             System.out.println();
@@ -1368,6 +1369,7 @@ public class OracleVsCompleteBBExperiment {
             if (runComplete) {
                 runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
                 fullLP = new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                fullLP.setLPSolvingMethod(4);
                 runner.generate(rootState.getAllPlayers()[LEADER], fullLP);
 
                 fullGameGV = runner.getGameValue();
@@ -1390,6 +1392,7 @@ public class OracleVsCompleteBBExperiment {
             runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
             startGeneration = threadBean.getCurrentThreadCpuTime();
             GadgetOracle2pSumForbiddingLP oracle = new GadgetOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo);
+            oracle.setLPSolvingMethod(4);
 //            LeaderOracle2pSumForbiddingLP oracle = new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, false, true);
             runner.generate(rootState.getAllPlayers()[LEADER], oracle);
             oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
@@ -1449,13 +1452,15 @@ public class OracleVsCompleteBBExperiment {
             System.gc();
         }
         System.out.println("Not converged seeds = " + notConvergedSeeds.toString());
-        ArrayList<Long> times = new ArrayList<>();
+        ArrayList<Double> times = new ArrayList<>();
         for (int i = 0; i < fullTimes.size(); i++)
-            times.add(fullTimes.get(i) - oracleTimes.get(i));
+            times.add(fullTimes.get(i) / (double)oracleTimes.get(i));
         System.out.println("Min = " + Collections.min(times));
         System.out.println("Max = " + Collections.max(times));
         Collections.sort(times);
         System.out.println("Median = " + times.get(Math.round(times.size() / 2)));
+        double sum = 0.0; for (double d : times) sum += d;
+        System.out.println("Average = " + (sum/times.size()));
     }
 
     public static GameState initGame(FlipItGameInfo gameInfo, int seed) {
