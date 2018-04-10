@@ -1,4 +1,10 @@
-/*
+# GAME THEORETIC LIBRARY
+
+This library contains a domain-independent framework for modeling normal-form and extensive-form games,
+and offers a unique collection of algorithms for solving these games.
+
+## License
+
 Copyright 2014 Faculty of Electrical Engineering at CTU in Prague
 
 This file is part of Game Theoretic Library.
@@ -14,17 +20,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
-along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
+along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.
 
----------------------------------------
------- GAME THEORETIC LIBRARY ---------
----------------------------------------
-
-This library contains a domain-independent framework for modeling normal-form and extensive-form games, 
-and offers a unique collection of algorithms for solving these games.
-
-GT Library is developed at:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## GT Library is developed at:
 
 Agent Technology Center (ATG)
 Department of Computer Science and Engineering
@@ -32,32 +30,43 @@ Czech Technical University in Prague
 Czech Republic
 
 
-Prerequisites:
-~~~~~~~~~~~~~~
+## Prerequisites:
 
 Java 7.0+
 CPLEX 12.4+
 other free libraries available at https://dl.dropboxusercontent.com/u/102512308/libraries.zip
 
-Integration with other projects:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-package cz/agents/gtlibrary/algorithms/sequenceform/refinements/quasiperfect contains several files from GTF framework by Troels Bjerre Sorensen (http://www.itu.dk/people/trbj/gtf.html) 
+## Dependencies
 
-Main authors:
-~~~~~~~~~~~~~
+    commons-lang3-3.1.jar
+    commons-math3-3.2.jar
+    cplex.jar
+    jacop-4.0.0.jar
+    Jama-1.0.3.jar
+    jgraph.jar
+    jgrapht-jdk1.6.jar
+    jgraphx.jar
+    junit-4.10.jar
+    libosm-2.5.2-RC1.jar
+    wicket-util-6.3.0.jar
+
+You will also need CPLEX static libraries accessible in java library path.
+
+## Integration with other projects:
+package cz/agents/gtlibrary/algorithms/sequenceform/refinements/quasiperfect contains several files from GTF framework by Troels Bjerre Sorensen (http://www.itu.dk/people/trbj/gtf.html)
+
+## Main authors:
 
   Branislav Bosansky <branislav.bosansky@agents.fel.cvut.cz> (contact person)
   Jiri Cermak <jiri.cermak@agents.fel.cvut.cz>
   Viliam Lisy <viliam.lisy@agents.fel.cvut.cz>
   Ondrej Vanek <ondrej.vanek@agents.fel.cvut.cz>
 
-Other Contributors:
-~~~~~~~~~~~~~~~~~~~
+## Other Contributors:
 
 Games of Oshi-Zumo and Tron were implemented by Marc Lanctot.
 
-More information:
-~~~~~~~~~~~~~~~~~
+## More information:
 
 http://agents.felk.cvut.cz/topics/Computational_game_theory
 
