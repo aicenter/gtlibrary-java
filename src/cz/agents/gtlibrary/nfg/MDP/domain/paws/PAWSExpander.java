@@ -29,7 +29,7 @@ import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPState;
 
 import java.util.*;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import cz.agents.gtlibrary.NotImplementedException;
 
 /**
  *

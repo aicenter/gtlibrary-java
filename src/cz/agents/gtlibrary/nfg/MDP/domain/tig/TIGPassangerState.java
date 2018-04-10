@@ -25,7 +25,7 @@ import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPAction;
 import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPState;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import cz.agents.gtlibrary.NotImplementedException;
 
 /**
  * Ticket inspection game patrol state.

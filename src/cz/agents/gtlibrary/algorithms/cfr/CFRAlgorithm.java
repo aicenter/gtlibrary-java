@@ -41,7 +41,7 @@ import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMExpander;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameState;
 import cz.agents.gtlibrary.interfaces.*;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import cz.agents.gtlibrary.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;

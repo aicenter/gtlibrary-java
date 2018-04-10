@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.nfg.MDP.implementations.oracle;
 
+import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.nfg.MDP.implementations.MDPConfigImpl;
 import cz.agents.gtlibrary.nfg.MDP.implementations.MDPStateActionMarginal;
@@ -28,7 +29,6 @@ import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPConfig;
 import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPExpander;
 import cz.agents.gtlibrary.nfg.MDP.interfaces.MDPState;
 import cz.agents.gtlibrary.utils.Pair;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 

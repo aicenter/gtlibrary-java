@@ -62,7 +62,7 @@ import cz.agents.gtlibrary.iinodes.Observations;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import cz.agents.gtlibrary.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
