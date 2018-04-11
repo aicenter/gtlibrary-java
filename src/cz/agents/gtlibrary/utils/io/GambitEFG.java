@@ -31,15 +31,21 @@ import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 
+//my GoofSpiel exporter
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+// my PhantomTTT exporter
+import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
+import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
+
+
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//my:
-import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
-import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
-import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 
 /**
  * Assumes a two player game.
@@ -52,7 +58,8 @@ public class GambitEFG {
 
     public static void main(String[] args) {
         //exportRandomGame();
-        exportGoofSpiel();
+        //exportGoofSpiel();
+        exportPhantomTTT();
     }
 
     public static void exportRandomGame() {
@@ -62,6 +69,12 @@ public class GambitEFG {
             exporter.buildAndWrite("RGGambit1.gbt", new RandomGameState(), new RandomGameExpander<>(new ImperfectRecallAlgorithmConfig()));
         else
             exporter.buildAndWrite("RGGambit2.gbt", new RandomGameState(), new RandomGameExpander<>(new SequenceFormConfig<>()));
+    }
+
+    public static void exportPhantomTTT () {
+        GambitEFG exporter = new GambitEFG();
+
+        exporter.buildAndWrite("MyPhantomTTT.gbt", new TTTState(), new TTTExpander<>(new SequenceFormConfig<>()));
     }
 
     public static void exportGoofSpiel() {
