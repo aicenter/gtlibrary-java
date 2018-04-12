@@ -30,29 +30,8 @@ Czech Technical University in Prague
 Czech Republic
 
 
-## Prerequisites:
-
-Java 7.0+
-CPLEX 12.4+
-other free libraries available at https://dl.dropboxusercontent.com/u/102512308/libraries.zip
-
-## Dependencies
-
-    commons-lang3-3.1.jar
-    commons-math3-3.2.jar
-    cplex.jar
-    jacop-4.0.0.jar
-    Jama-1.0.3.jar
-    jgraph.jar
-    jgrapht-jdk1.6.jar
-    jgraphx.jar
-    junit-4.10.jar
-    libosm-2.5.2-RC1.jar
-    wicket-util-6.3.0.jar
-
-You will also need CPLEX static libraries accessible in java library path.
-
 ## Integration with other projects:
+
 package cz/agents/gtlibrary/algorithms/sequenceform/refinements/quasiperfect contains several files from GTF framework by Troels Bjerre Sorensen (http://www.itu.dk/people/trbj/gtf.html)
 
 ## Main authors:

@@ -32,3 +32,6 @@ hs_err_pid*
 .idea/
 gtlibrary.iml
 bin/
+target/
+out/
+libs/
