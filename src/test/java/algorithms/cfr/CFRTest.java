@@ -122,13 +122,11 @@ public class CFRTest {
         Expander<MCTSInformationSet> expander = new GoofSpielExpander<>(config);
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
 
-        GamePlayingAlgorithm alg = new CFRAlgorithm(rootState.getAllPlayers()[0], rootState, expander);
+        CFRAlgorithm alg = new CFRAlgorithm(rootState.getAllPlayers()[0], rootState, expander);
         SMJournalExperiments.buildCompleteTree(alg.getRootNode());
-        alg.runMiliseconds(100);
         Distribution dist = new MeanStratDist();
 
-        alg.runMiliseconds(2000);
-
+        alg.runIterations(3000);
         Strategy strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
         Strategy strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
         UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
@@ -147,11 +145,11 @@ public class CFRTest {
         GameState rootState = new OshiZumoGameState();
         MCTSConfig config = new MCTSConfig();
         Expander<MCTSInformationSet> expander = new OshiZumoExpander<>(config);
-        GamePlayingAlgorithm alg = new CFRAlgorithm(rootState.getAllPlayers()[0], rootState, expander);
+        CFRAlgorithm alg = new CFRAlgorithm(rootState.getAllPlayers()[0], rootState, expander);
         SMJournalExperiments.buildCompleteTree(alg.getRootNode());
         Distribution dist = new MeanStratDist();
 
-        alg.runMiliseconds(5000);
+        alg.runIterations(10000);
 
         Strategy strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
         Strategy strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
