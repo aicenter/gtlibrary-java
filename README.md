@@ -29,6 +29,21 @@ Department of Computer Science and Engineering
 Czech Technical University in Prague
 Czech Republic
 
+## Compile / package / run
+
+Add cplex static libraries to java library path (for example in .bashrc).
+Update path appropriately:
+
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:`pwd`/gtlibrary/libs/cplex"
+
+Then run in root of the project (this launches tests as well):
+
+    mvn package
+
+You can launch some class with
+
+    cd target
+    java -cp gtlibrary.jar cz.agents.gtlibrary.algorithms.runner.SMJournalExperiments
 
 ## Integration with other projects:
 
