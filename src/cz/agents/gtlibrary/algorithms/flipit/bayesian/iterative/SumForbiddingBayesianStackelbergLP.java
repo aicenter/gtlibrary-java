@@ -5,8 +5,6 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetLPTable;
-import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.RecyclingMILPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.br.FollowerBestResponse;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.NodePointsFlipItGameState;
@@ -22,7 +20,6 @@ import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
-import org.hsqldb.lib.*;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;

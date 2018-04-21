@@ -81,11 +81,11 @@ public class SefceRunner {
         Expander<SequenceInformationSet> expander = new TestGameExpander(algConfig);
         SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 
-//        runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
-        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderTLSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderTLSimulataneousSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 

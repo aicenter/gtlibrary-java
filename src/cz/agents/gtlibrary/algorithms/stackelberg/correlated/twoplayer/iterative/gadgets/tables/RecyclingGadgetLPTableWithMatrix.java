@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets;
+package cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.tables;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -8,6 +8,8 @@ import ilog.concert.IloNumVar;
 import ilog.concert.IloRange;
 import ilog.cplex.IloCplex;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 /**
@@ -16,13 +18,23 @@ import java.util.*;
 public class RecyclingGadgetLPTableWithMatrix extends GadgetLPTable {
 
     protected IloLPMatrix matrix;
+    protected ThreadMXBean threadBean;
+    protected long constraintsRemovingTime;
+    protected long cplexConstraintsRemovingTime;
+    protected long constraintsCreatingTime;
+    protected long newConsAndVarsFindingTime;
+    protected long constraintsUpdatingTime;
+    protected long objectiveUpdatingTime;
+
+    protected int constructFullLPCount;
+    protected int updateLPCount;
 
     public RecyclingGadgetLPTableWithMatrix(){
         super();
     }
 
     public RecyclingGadgetLPTableWithMatrix(HashSet<GameState> deletedGadgets, HashSet<GameState> createdGadgets,
-                         HashSet<Object> deletedConstraints, HashSet<Object> createdConstraints,
+                         HashMap<Object, Set<Object>> deletedConstraints, HashSet<Object> createdConstraints,
                          Integer gadgetsCreated, Integer gadgetsDismissed,
                          HashMap<GameState,HashMap<Object, HashSet<Object>>> varsToDelete,
                          HashMap<GameState, HashSet<Object>> eqsToDelete,
@@ -31,6 +43,12 @@ public class RecyclingGadgetLPTableWithMatrix extends GadgetLPTable {
                          HashMap<Object, HashSet<Object>> updatedConstraints){
         super(deletedGadgets,createdGadgets,deletedConstraints,createdConstraints,gadgetsCreated,gadgetsDismissed,
                 varsToDelete,eqsToDelete,utilityToDelete,createdUtility,updatedConstraints);
+        threadBean = ManagementFactory.getThreadMXBean();
+        constraintsCreatingTime = newConsAndVarsFindingTime = 0;
+        constraintsUpdatingTime = objectiveUpdatingTime = 0;
+        cplexConstraintsRemovingTime = 0;
+        updateLPCount = 0;
+        constructFullLPCount = 0;
     }
 
     @Override
@@ -38,28 +56,15 @@ public class RecyclingGadgetLPTableWithMatrix extends GadgetLPTable {
         System.out.println(Math.abs(lastLPSize - getLPSize()) + " / " + UPDATE_LP_TABLE_DIFFERENCE * getLPSize());
         if (!RESOLVE || Math.abs(lastLPSize - getLPSize()) > UPDATE_LP_TABLE_DIFFERENCE * getLPSize()){//createdGadgets.size() > UPDATE_LP_TABLE_DIFFERENCE * (gadgetsCreated - gadgetsDismissed)) {
             System.out.println("Creating new cplex model.");
+            constructFullLPCount ++ ;
 //            deleteOldGadgets();
             lastLPSize = getLPSize();
-            cplex.clearModel();
-
-            cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
-            cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
-            cplex.setParam(IloCplex.IntParam.MIPEmphasis, IloCplex.MIPEmphasis.Balanced);
-            cplex.setOut(null);
-
-            System.out.println("Getting variables.");
-            cplexVariables = getVariables();
-            varToCplexVar.clear();
-            for (Object var : variableIndices.keySet())
-                varToCplexVar.put(var, variableIndices.get(var));
-
-            cplexConstraints = addConstraintsViaMatrix(cplex, cplexVariables);
-
-            addObjective(cplexVariables);
+            constructClearModel();
             return new LPData(cplex, cplexVariables, cplexConstraints, getRelaxableConstraints(cplexConstraints), getWatchedPrimalVars(cplexVariables), getWatchedDualVars(cplexConstraints));
         }
         else{
             System.out.println("Updating existing cplex model.");
+            updateLPCount ++;
             lastLPSize = getLPSize();
 
             // removed
@@ -71,25 +76,54 @@ public class RecyclingGadgetLPTableWithMatrix extends GadgetLPTable {
             // find new eqs -> add into matrix
             // find updated -> add into matrix
 
+            long startTime = threadBean.getCurrentThreadCpuTime();
             removeOldConstraints();
+            constraintsRemovingTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
+            startTime = threadBean.getCurrentThreadCpuTime();
             HashSet<Object> newEqs = new HashSet<>();
             HashSet<Object> missingEqs = new HashSet<>();
             findNewConsAndVars(newEqs, missingEqs);
+            newConsAndVarsFindingTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
 //            System.out.println(newEqs.size() + " : " + missingEqs.size());
 
+            startTime = threadBean.getCurrentThreadCpuTime();
             contructNewConstraints(newEqs, missingEqs);
+            constraintsCreatingTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
             // udelat updaty
-            updateOldConstraints(missingEqs);
+            startTime = threadBean.getCurrentThreadCpuTime();
+            updateOldConstraints(newEqs, missingEqs);
+            constraintsUpdatingTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
             // UTILITY update
+            startTime = threadBean.getCurrentThreadCpuTime();
             updateUtility();
+            objectiveUpdatingTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
             System.out.println("Update done. Solving...");
             return new LPData(cplex, cplexVariables, cplexConstraints, getRelaxableConstraints(cplexConstraints), getWatchedPrimalVarsForResolve(cplexVariables), getWatchedDualVars(cplexConstraints));
         }
+    }
+
+    protected void constructClearModel() throws IloException {
+        cplex.clearModel();
+
+        cplex.setParam(IloCplex.IntParam.RootAlg, CPLEXALG);
+        cplex.setParam(IloCplex.IntParam.Threads, CPLEXTHREADS);
+        cplex.setParam(IloCplex.IntParam.MIPEmphasis, IloCplex.MIPEmphasis.Balanced);
+        cplex.setOut(null);
+
+        System.out.println("Getting variables.");
+        cplexVariables = getVariables();
+        varToCplexVar.clear();
+        for (Object var : variableIndices.keySet())
+            varToCplexVar.put(var, variableIndices.get(var));
+
+        cplexConstraints = addConstraintsViaMatrix(cplex, cplexVariables);
+
+        addObjective(cplexVariables);
     }
 
     protected void updateUtility() throws IloException {
@@ -120,7 +154,7 @@ public class RecyclingGadgetLPTableWithMatrix extends GadgetLPTable {
         cplex.setLinearCoefs(cplex.getObjective(), objectiveVars.toArray(new IloNumVar[0]), objectiveCoefsArray);
     }
 
-    protected void updateOldConstraints(HashSet<Object> missingEqs) throws IloException {
+    protected void updateOldConstraints(HashSet<Object> newEqs, HashSet<Object> missingEqs) throws IloException {
         ArrayList<Integer> updatedRows = new ArrayList<>();
         ArrayList<Integer> updatedCols = new ArrayList<>();
         ArrayList<Double> updatedValues = new ArrayList<>();
@@ -144,6 +178,16 @@ public class RecyclingGadgetLPTableWithMatrix extends GadgetLPTable {
                         updatedCols.add(varToCplexVar.get(varKey));
                         updatedValues.add(constraints.get(eqKey).get(varKey));
                     }
+                }
+            }
+        }
+        for(Object eqKey : createdConstraints){
+            if(!newEqs.contains(eqKey)){
+                int idx = eqToCplexEq.get(eqKey);
+                for (Object varKey : constraints.get(eqKey).keySet()) {
+                    updatedRows.add(idx);
+                    updatedCols.add(varToCplexVar.get(varKey));
+                    updatedValues.add(constraints.get(eqKey).get(varKey));
                 }
             }
         }
@@ -192,13 +236,15 @@ public class RecyclingGadgetLPTableWithMatrix extends GadgetLPTable {
                 cplexEqsToDelete.add(eqKey);
             }
         }
-        for(Object eqKey : deletedConstraints){
+        for(Object eqKey : deletedConstraints.keySet()){
             cplexEqsToDelete.add(eqKey);
         }
         int[] rowsToRemove = new int[cplexEqsToDelete.size()];
         int i = 0;
         for(Object key : cplexEqsToDelete){ rowsToRemove[i] = eqToCplexEq.get(key); eqToCplexEq.remove(key); i++; }
+        long startTime = threadBean.getCurrentThreadCpuTime();
         matrix.removeRows(rowsToRemove);
+        cplexConstraintsRemovingTime += threadBean.getCurrentThreadCpuTime() - startTime;
         ArrayList list = new ArrayList(eqToCplexEq.keySet());
         Collections.sort(list, new Comparator() {
             public int compare(Object o1, Object o2) {
@@ -227,7 +273,8 @@ public class RecyclingGadgetLPTableWithMatrix extends GadgetLPTable {
             }
         }
         for(Object con : createdConstraints){
-            j = constructNZ(idxs, vals, lbs, ubs, j, con);
+            if (newEqs.contains(con))
+                j = constructNZ(idxs, vals, lbs, ubs, j, con);
         }
         for(Object con : updatedConstraints.keySet()) {
             if (missingEqs.contains(con)) {
@@ -289,6 +336,7 @@ public class RecyclingGadgetLPTableWithMatrix extends GadgetLPTable {
             if (!eqToCplexEq.containsKey(eqKey)) {
                 newEqs.add(eqKey);
             }
+//            System.out.println(eqKey);
             for (Object varKey : constraints.get(eqKey).keySet()) {
                 if (!varToCplexVar.containsKey(varKey))
                     newVars.add(varKey);
@@ -345,6 +393,20 @@ public class RecyclingGadgetLPTableWithMatrix extends GadgetLPTable {
         matrix.addRows(lbs, ubs, idxs, vals);
 
         return matrix.getRanges();
+    }
+
+    public int getConstructFullLPCount(){return constructFullLPCount;}
+    public int getUpdateLPCount(){return updateLPCount;}
+
+    public String getTimeStats(){
+        return "constraints creating time = " + constraintsCreatingTime / 1000000l + "\n" +
+                "constraints removing time = " + constraintsRemovingTime / 1000000l + "\n" +
+                "cplex constraints removing time = " + cplexConstraintsRemovingTime / 1000000l + "\n" +
+                "constraints updating time = " + constraintsUpdatingTime / 1000000l + "\n" +
+                "finding new cons and vars time = " + newConsAndVarsFindingTime / 1000000l + "\n" +
+                "objective updating time = " + objectiveUpdatingTime / 1000000l + "\n" +
+                "lp update count = " + updateLPCount + "\n" +
+                "lp construct count = " + constructFullLPCount;
     }
 
 }

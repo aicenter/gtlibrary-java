@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.gensum.experiments;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
+import cz.agents.gtlibrary.algorithms.cfr.br.CFRBRAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
@@ -657,6 +658,30 @@ public class StrategyStrengthLargeExperiments {
                 if (is.getAlgorithmData() == null) {
                     infosets++;
                     is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+                }
+            for (Action a : n.getActions()) {
+                Node ch = n.getChildFor(a);
+                if (ch instanceof InnerNode) {
+                    q.add((InnerNode) ch);
+                }
+            }
+        }
+        System.out.println("Created nodes: " + nodes + "; infosets: " + infosets);
+    }
+
+    public static void buildCFRBRCompleteTree(InnerNode r, int brPlayer) {
+        System.out.println("Building complete tree.");
+        int nodes = 0, infosets = 0;
+        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
+        q.add(r);
+        while (!q.isEmpty()) {
+            nodes++;
+            InnerNode n = q.removeFirst();
+            MCTSInformationSet is = n.getInformationSet();
+            if (!(n instanceof ChanceNode))
+                if (is.getAlgorithmData() == null) {
+                    infosets++;
+                    is.setAlgorithmData(new CFRBRAlgorithmData(n.getActions(), is.getPlayer().getId() == brPlayer));
                 }
             for (Action a : n.getActions()) {
                 Node ch = n.getChildFor(a);

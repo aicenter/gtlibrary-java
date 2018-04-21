@@ -4,7 +4,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.LeaderGenerationConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetAction;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetLPTable;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.tables.GadgetLPTable;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
@@ -15,7 +15,6 @@ import cz.agents.gtlibrary.utils.Triplet;
 import ilog.concert.IloException;
 import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
-import org.jacop.constraints.In;
 
 import java.util.*;
 

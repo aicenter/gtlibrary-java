@@ -6,6 +6,9 @@ import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.LeaderGenerationConfig;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.tables.GadgetLPTable;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.tables.RecyclingGadgetLPTableWithMatrix;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.tables.RecyclingGadgetLPTableWithoutDelete;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
@@ -61,7 +64,7 @@ public class GadgetSefceLP implements Solver {
     protected final boolean CREATE_GADGETS = true;
     protected final boolean GENERATE_ALL_GADGETS = false;
     protected boolean DISCOUNT_GADGETS = true;
-    protected final double GADGET_DISCOUNT = 1;
+    protected double GADGET_DISCOUNT = 10;
 
     protected final boolean PRINT_PROGRESS = false;
     protected final boolean PRINT_SOLVING = false;
@@ -69,24 +72,26 @@ public class GadgetSefceLP implements Solver {
     protected final boolean MAKE_GADGET_STATS = false;
     protected ArrayList<String> gadgetStats;
 
-    protected final double INITIAL_GADGET_DEPTH_RATIO = 0.3;
+    protected final double INITIAL_GADGET_DEPTH_RATIO = 0.0;
     protected final double INITIAL_GADGET_DEPTH;
 
     protected final boolean APPROX_HULL = true;
     protected double HULL_DELTA = 1e-2;
-    protected double DELTA_BY_UTILITY_COEF = 0.1;
+    protected double DELTA_BY_UTILITY_COEF = 0.55;
     protected boolean USE_CURRENT_LEAF_LEADER_UTILITY = true;
     protected boolean DISTANCE_TO_PROJECTION = false;
 
     protected HashSet<GameState> deletedGadgets = new HashSet<>();
     protected HashSet<GameState> createdGadgets = new HashSet<>();
 
-    protected HashSet<Object> deletedConstraints = new HashSet<>();
+    protected HashMap<Object, Set<Object>> deletedConstraints = new HashMap<>();
     protected HashSet<Object> createdConstraints = new HashSet<>();
 
     protected HashMap<Object, HashSet<Object>> updatedConstraints = new HashMap<>();
 
     protected HashSet<Object> createdUtility = new HashSet<>();
+
+    protected int gadgetNumber;
 
 
     public GadgetSefceLP(Player leader, GameInfo info){
@@ -109,10 +114,25 @@ public class GadgetSefceLP implements Solver {
         this.INITIAL_GADGET_DEPTH = INITIAL_GADGET_DEPTH_RATIO*info.getMaxDepth()/2.0;
         this.HULL_DELTA = info.getMaxUtility() * DELTA_BY_UTILITY_COEF;
 
-        this.lpTable = new RecyclingGadgetLPTableWithMatrix(deletedGadgets, createdGadgets, deletedConstraints, createdConstraints,
+        this.lpTable = new RecyclingGadgetLPTableWithoutDelete(deletedGadgets, createdGadgets, deletedConstraints, createdConstraints,
                 gadgetsCreated, gadgetsDismissed, varsToDelete, eqsToDelete, utilityToDelete, createdUtility,
                 updatedConstraints);
+
+//        this.lpTable = new RecyclingGadgetLPTableWithMatrix(deletedGadgets, createdGadgets, deletedConstraints, createdConstraints,
+//                gadgetsCreated, gadgetsDismissed, varsToDelete, eqsToDelete, utilityToDelete, createdUtility,
+//                updatedConstraints);
+
+        this.gadgetNumber = 0;
     }
+
+    public String getLpTableStats(){
+        if (lpTable instanceof RecyclingGadgetLPTableWithMatrix)
+            return ((RecyclingGadgetLPTableWithMatrix) lpTable).getTimeStats();
+        else
+            return "";
+    }
+
+    public void setGadgetDiscount(double discount){this.GADGET_DISCOUNT = discount;}
 
     public void setLPSolvingMethod(int alg){
         LPTable.CPLEXALG = alg;
@@ -251,6 +271,16 @@ public class GadgetSefceLP implements Solver {
 
     protected void clearGadgetStructuresBeforeSolve(){
         for(GameState state : deletedGadgets){
+
+//            if ((lpTable instanceof RecyclingGadgetLPTableWithoutDelete)) {
+//                for (Object eqKey : eqsToDelete.get(state)) {
+//                    if (lpTable instanceof GadgetLPTable)
+//                        ((GadgetLPTable) lpTable).deleteConstraint(eqKey);
+//                    if (lpTable instanceof RecyclingLPTable)
+//                        ((RecyclingLPTable) lpTable).deleteConstraint(eqKey);
+//                }
+//            }
+
             eqsToDelete.remove(state);
             utilityToDelete.remove(state);
             varsToDelete.remove(state);
@@ -280,12 +310,30 @@ public class GadgetSefceLP implements Solver {
             if (lpTable instanceof GadgetLPTable)
                 ((GadgetLPTable)lpTable).deleteVar(var);
         }
-        for (Object eqKey : eqsToDelete.get(state)){
-            if (lpTable instanceof GadgetLPTable)
-                ((GadgetLPTable)lpTable).deleteConstraint(eqKey);
-            if (lpTable instanceof RecyclingLPTable)
-                ((RecyclingLPTable) lpTable).deleteConstraint(eqKey);
+        if (!(lpTable instanceof RecyclingGadgetLPTableWithoutDelete)) {
+            for (Object eqKey : eqsToDelete.get(state)) {
+                if (lpTable instanceof GadgetLPTable)
+                    ((GadgetLPTable) lpTable).deleteConstraint(eqKey);
+                if (lpTable instanceof RecyclingLPTable)
+                    ((RecyclingLPTable) lpTable).deleteConstraint(eqKey);
+            }
         }
+        else{
+            for (Object eqKey : eqsToDelete.get(state)) {
+                deletedConstraints.put(eqKey, new HashSet<Object>(((GadgetLPTable) lpTable).getVarsInEq(eqKey)));
+                if (lpTable instanceof GadgetLPTable)
+                    ((GadgetLPTable) lpTable).deleteConstraint(eqKey);
+                eqsToDelete.remove(state);
+            }
+        }
+//        if (!(lpTable instanceof RecyclingGadgetLPTableWithoutDelete)) {
+//            for (Object eqKey : eqsToDelete.get(state)) {
+//                if (lpTable instanceof GadgetLPTable)
+//                    ((GadgetLPTable) lpTable).deleteConstraint(eqKey);
+//                if (lpTable instanceof RecyclingLPTable)
+//                    ((RecyclingLPTable) lpTable).deleteConstraint(eqKey);
+//            }
+//        }
 //        eqsToDelete.remove(state);
 //        utilityToDelete.remove(state);
 //        varsToDelete.remove(state);
@@ -295,13 +343,48 @@ public class GadgetSefceLP implements Solver {
     // Expand and generate constraints
     protected void expandAfter(GameState state){
 
-        boolean OUTPUT_GADGET = false;
+//        HashSet<String> notexpanding = new HashSet<String>(){{
+//
+//            add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N0:1582728231), (N2:1534162808), (N3:2007602200)] / Attacker: [(N0:1261670893), (N2:1720964166), (N2:108762326), (N4:-1439352906)] ");
+//            add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N2:1585153063), (N1:1623303802)] / Attacker: [(N1:1261670893), (N3:1720675271), (N1:116022677)]");
+//            add("FlipIt : No Info GS of Defender: Defender: [(N0:11754160), (N0:1579379878), (N3:1411434042)] / Attacker: [(N0:1261670893), (N2:1719751750), (N0:57840854)]");
+//                    add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N2:1585153063), (N1:1623303802)] / Attacker: [(N1:1261670893), (N3:1720675271), (N4:116022677)]");
+//                            add("FlipIt : No Info GS of Defender: Defender: [(N0:11754160), (N0:1579379878), (N3:1411434042)] / Attacker: [(N0:1261670893), (N2:1719751750), (N2:57840854)]");
+//                                    add("FlipIt : No Info GS of Defender: Defender: [(N0:11754160), (N0:1579379878), (N3:1411434042)] / Attacker: [(N0:1261670893), (N2:1719751750), (N1:57840854)]");
+//                                            add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N0:1582728231), (N2:1534162808), (N3:2007602200)] / Attacker: [(N0:1261670893), (N2:1720964166), (N2:108762326), (N1:-1439352906)]");
+//                                                    add("FlipIt : No Info GS of Defender: Defender: [(N0:11754160), (N0:1579379878), (N3:1411434042)] / Attacker: [(N0:1261670893), (N0:1719751750), (N2:55993812)]");
+//                                                            add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N2:1585153063), (N1:1623303802)] / Attacker: [(N1:1261670893), (N3:1720675271), (N0:116022677)]");
+//                                                                    add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N0:1582728231), (N2:1534162808), (N3:2007602200)] / Attacker: [(N0:1261670893), (N2:1720964166), (N2:108762326), (N2:-1439352906)]");
+//                                                                            add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N0:1582728231), (N2:1534162808), (N3:2007602200)] / Attacker: [(N0:1261670893), (N2:1720964166), (N2:108762326), (N0:-1439352906)]");
+//                                                                                    add("FlipIt : No Info GS of Defender: Defender: [(N0:11754160), (N0:1579379878), (N3:1411434042)] / Attacker: [(N0:1261670893), (N2:1719751750), (N4:57840854)]");
+//                                                                                            add("FlipIt : No Info GS of Defender: Defender: [(N0:11754160), (N0:1579379878), (N3:1411434042)] / Attacker: [(N0:1261670893), (N0:1719751750), (N0:55993812)]");
+//                                                                                                    add("FlipIt : No Info GS of Defender: Defender: [(N0:11754160), (N0:1579379878), (N3:1411434042)] / Attacker: [(N0:1261670893), (N0:1719751750), (N1:55993812)]");
+//        }};
+//
+        HashSet<String> notexpanding2 = new HashSet<String>();//{{
+//            add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N2:1585153063), (N3:1623303802)] / Attacker: [(N1:1261670893), (N3:1720675271), (N0:116022677)]");
+//                    add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N2:1585153063), (N3:1623303802)] / Attacker: [(N1:1261670893), (N3:1720675271), (N1:116022677)]");
+//                            add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N2:1585153063), (N3:1623303802)] / Attacker: [(N1:1261670893), (N3:1720675271), (N3:116022677)]");
+//                                    add("FlipIt : No Info GS of Defender: Defender: [(N1:11754160), (N2:1585153063), (N3:1623303802)] / Attacker: [(N1:1261670893), (N3:1720675271), (N4:116022677)]");
+//        }};
+
+
+            boolean OUTPUT_GADGET = false;
+        boolean OUTPUT_GADGET_ID_ONLY = false;
         if (OUTPUT_GADGET && utilityToDelete.containsKey(state)) {
-            System.out.println("Expanding gadget : " + state);
-            for (double[] d : getLeavesUnder(state))
-                System.out.println(d[0] + " / " + d[1]);
+            if (OUTPUT_GADGET_ID_ONLY){
+                System.out.println(state);
+            }
+            else {
+                if (notexpanding2.contains(state.toString())) {
+                    System.out.println("Expanding gadget #" + gadgetNumber + ": " + state);
+                    gadgetNumber++;
+                    for (double[] d : getLeavesUnder(state))
+                        System.out.println(d[0] + " / " + d[1]);
 //            for (Object o : utilityToDelete.get(state))
 //                System.out.println(o + ": " + lpTable.getObjective(o));
+                }
+            }
         }
 
         deleteOldGadgetRootConstraintsAndVariables(state);
@@ -1205,7 +1288,7 @@ public class GadgetSefceLP implements Solver {
         return "Complete Sefce solver with gadgets.\n"+
                 "Create gadgets = "+CREATE_GADGETS+", pareto leaves = " + USE_PARETO_LEAVES +
                 ", initial gadget depth = " + INITIAL_GADGET_DEPTH_RATIO +
-                ", discount leader utilities = " +DISCOUNT_GADGETS +
+                ", discount leader utilities = " +DISCOUNT_GADGETS + ", discount value = " + GADGET_DISCOUNT +
                 ", eps = " + eps + ", approximate hull = " + APPROX_HULL + ", approx coef = " + DELTA_BY_UTILITY_COEF +
                 ", use local point utility = " + USE_CURRENT_LEAF_LEADER_UTILITY + ", distance to projection = " + DISTANCE_TO_PROJECTION
                 + "\n" +(lpTable instanceof GadgetLPTable ? ((GadgetLPTable) lpTable).getInfo() : "LP Table = "+ lpTable.getClass().getSimpleName());

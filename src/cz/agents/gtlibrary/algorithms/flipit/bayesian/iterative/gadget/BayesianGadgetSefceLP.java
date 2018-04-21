@@ -6,7 +6,7 @@ import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.LeaderGenerationConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetAction;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetInformationSet;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetLPTable;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.tables.GadgetLPTable;
 import cz.agents.gtlibrary.domain.flipit.FlipItGameInfo;
 import cz.agents.gtlibrary.domain.flipit.types.FollowerType;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;

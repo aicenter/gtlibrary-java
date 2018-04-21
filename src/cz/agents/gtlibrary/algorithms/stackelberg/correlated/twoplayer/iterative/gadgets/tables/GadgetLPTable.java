@@ -1,8 +1,9 @@
-package cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets;
+package cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.tables;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetAction;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
@@ -29,7 +30,7 @@ public class GadgetLPTable extends LPTable {
 
     protected HashSet<GameState> deletedGadgets;
     protected HashSet<GameState> createdGadgets;
-    protected HashSet<Object> deletedConstraints;
+    protected HashMap<Object, Set<Object>> deletedConstraints;
     protected HashSet<Object> createdConstraints;
     protected HashMap<Object, HashSet<Object>> updatedConstraints;
     protected HashSet<Object> createdUtility;
@@ -42,7 +43,7 @@ public class GadgetLPTable extends LPTable {
 
     protected int lastLPSize = Integer.MAX_VALUE;
 
-    protected final double UPDATE_LP_TABLE_DIFFERENCE = 0.8;
+    protected final double UPDATE_LP_TABLE_DIFFERENCE = 0.2;
     protected final boolean RESOLVE;
 
     protected HashMap<Object, Integer> eqToCplexEq = new HashMap<>();
@@ -62,7 +63,7 @@ public class GadgetLPTable extends LPTable {
     }
 
     public GadgetLPTable(HashSet<GameState> deletedGadgets, HashSet<GameState> createdGadgets,
-                         HashSet<Object> deletedConstraints, HashSet<Object> createdConstraints,
+                         HashMap<Object, Set<Object>> deletedConstraints, HashSet<Object> createdConstraints,
                          Integer gadgetsCreated, Integer gadgetsDismissed,
                          HashMap<GameState,HashMap<Object, HashSet<Object>>> varsToDelete,
                          HashMap<GameState, HashSet<Object>> eqsToDelete,
@@ -116,7 +117,7 @@ public class GadgetLPTable extends LPTable {
                 deleteConstraint(eqKey);
             }
         }
-        for (Object eqKey : deletedConstraints)
+        for (Object eqKey : deletedConstraints.keySet())
             deleteConstraintWithoutVars(eqKey);
     }
 
@@ -186,7 +187,7 @@ public class GadgetLPTable extends LPTable {
             }
 //            cplex.delete(cplexEqsToDelete.toArray(new IloRange[0]));
 //            cplexEqsToDelete.clear();
-            for(Object eqKey : deletedConstraints){
+            for(Object eqKey : deletedConstraints.keySet()){
                 cplexEqsToDelete.add(cplexConstraints[eqToCplexEq.get(eqKey)]);
 //                cplex.delete(cplexConstraints[eqToCplexEq.get(eqKey)]);
 //                cplex.remove(cplexConstraints[eqToCplexEq.get(eqKey)]);
@@ -611,5 +612,8 @@ public class GadgetLPTable extends LPTable {
     public void markAsBinary(Object var){
         binaryVariables.add(var);
     }
+
+    public Set<Object> getVarsInEq(Object eqKey){return constraints.containsKey(eqKey) ? constraints.get(eqKey).keySet() : new HashSet<Object>() {
+    };}
 
 }

@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 
@@ -76,7 +77,8 @@ public class ShallowestBrokenCplexStackelbergLP extends SumForbiddingStackelberg
 
                         lpTable.setConstraint(eqKey, p, 1);
                         lpTable.setConstraint(eqKey, binaryVarKey, -1);
-                        lpTable.markAsBinary(binaryVarKey);
+                        if (lpTable instanceof RecyclingMILPTable)
+                            ((RecyclingMILPTable) lpTable).markAsBinary(binaryVarKey);
                         lpTable.watchPrimalVariable(binaryVarKey, binaryVarKey);
                         lpTable.setConstraintType(eqKey, 0);
 

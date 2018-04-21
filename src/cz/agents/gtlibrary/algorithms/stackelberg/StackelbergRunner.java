@@ -82,6 +82,7 @@ public class StackelbergRunner {
     protected final static int depth = 3;
 
     public static void main(String[] args) {
+        runExtendedKuhn();
 //        runKuhn();
 //        runPoker();
 //        runGenSumRandom();
@@ -93,9 +94,32 @@ public class StackelbergRunner {
 //        runStackTest();
 //        runBPG("", depth);
 //        runFlipIt(args);
-        runFlipIt(new String[]{"F", "4", "3", "N", "G"});
+//        runFlipIt(new String[]{"F", "4", "3", "N", "G"});
 //        runPEGGadget();
 //        runGoofSpiel();
+    }
+
+    private static void runExtendedKuhn() {
+
+        LEADER = 0;
+
+        GameState rootState = new ExtendedGenSumKPGameState(0.1);
+        StackelbergConfig config = new StackelbergConfig(rootState);
+        Expander<SequenceInformationSet> expander = new ExtendedKuhnPokerExpander<>(config);
+//        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        KPGameInfo gameInfo = new KPGameInfo();
+
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, config);
+
+//        runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[LEADER], rootState.getAllPlayers()[1-LEADER], gameInfo, expander));
+//
+
+//        runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander));
+//        GeneralSumGameBuilder.build(rootState, config, expander);
+//        StackelbergSequenceFormMILP bfsEnforcingStackelbergLP = new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], new KPGameInfo(), expander);
+//        double value = bfsEnforcingStackelbergLP.calculateLeaderStrategies(config, expander);
+//        assertEquals(0.8894557823129252, value, 1e-6);
     }
 
     public static void runFlipIt(String[] args) {
@@ -449,6 +473,7 @@ public class StackelbergRunner {
         System.out.println("final RGB time: " + 0);
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
         System.out.println("final IS count: " + algConfig.getAllInformationSets().size());
+        System.out.println(solver.getLpTableStats());
 
         if (DEBUG) {
             // sanity check -> calculation of Full BR on the solution of SQF LP

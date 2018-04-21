@@ -16,7 +16,7 @@ public class TestGameInfo implements GameInfo {
     public static Player PL0 = new PlayerImpl(0);
     public static Player PL1 = new PlayerImpl(1);
     public static Player[] ALL_PLAYERS = new Player[]{PL0, PL1};
-    protected static GameDefinition definition = new TestGame1();//GambitGame("flipit_inversed_0.gbt");
+    protected static GameDefinition definition = new CostsCounterExampleGame();//TestGame1();//GambitGame("flipit_inversed_0.gbt");
 
     protected final static boolean USE_TL = false;
 
