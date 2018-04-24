@@ -16,20 +16,163 @@ import java.util.*;
 public class QuantalResponse extends BestResponse {
 
     protected double lambda;
-//    protected int iteration;
+    protected int iteration;
+    protected final double EPS = 1e-12;
+    protected HashMap<Node, Double> EVs;
 
     public QuantalResponse(Player exploringPlayer, Node rootNode, double lambda){
         super(exploringPlayer, rootNode);
         this.lambda = lambda;
-//        this.iteration = 0;
+        this.iteration = 0;
+        this.EVs = new HashMap<>();
     }
 
     @Override
     public void computeBR(Node root) {
-        System.out.println("Computing BR");
-        computeQR(root, 1.0, 1.0, respondingPlayer);
-//        iteration++;
+//        System.out.println("Computing BR");
+//        computeQR(root, 1.0, 1.0, respondingPlayer);
+        computeQRRecursive(root, 1.0, respondingPlayer);
+        iteration++;
+        EVs.clear();
     }
+
+    public double computeQRRecursive(Node node, double pi, Player expPlayer) {
+
+        // node not reachable -> return
+        if(pi <= 0.0){
+            return 0.0;
+        }
+
+        // leaf -> return utility
+        if (node instanceof LeafNode){
+            return ((LeafNode) node).getUtilities()[expPlayer.getId()];
+        }
+
+        // chance -> compute EV weighted by probability
+        if (node instanceof ChanceNode) {
+            // chance
+            ChanceNode cn = (ChanceNode) node;
+            double ev = 0.0;
+            for (Action ai : cn.getActions()) {
+                final double p = cn.getGameState().getProbabilityOfNatureFor(ai);
+                double new_p1 = p * pi;
+                ev += p * computeQRRecursive(cn.getChildFor(ai), new_p1, expPlayer);
+            }
+            return ev;
+        }
+
+        InnerNode in = (InnerNode) node;
+        MCTSInformationSet is = in.getInformationSet();
+        CFRBRAlgorithmData data = (CFRBRAlgorithmData) is.getAlgorithmData();
+
+        if(node.getGameState().getPlayerToMove().getId() != expPlayer.getId()) {
+
+            double[] strategy = data.getStrategyAsList();
+            double ev = 0.0;
+
+            int i = -1;
+            for (Action ai : in.getActions()) {
+                i++;
+                ev += strategy[i] * computeQRRecursive(in.getChildFor(ai), pi * strategy[i], expPlayer);
+            }
+            return ev;
+        }
+        else {
+            // strategy already computed
+            if(data.getIteration() == iteration){
+                double value = EVs.get(node);
+                EVs.remove(node);
+                return value;
+            }
+            else{
+
+                // compute evs of all actions of all nodes in the IS
+
+//                System.out.println(in.getActions().size() + " / " + is.getAllNodes().size());
+
+//                System.out.println("Setting strategy");
+                HashMap<Node, HashMap<Action, Double>> nodeEVs = new HashMap<>();
+                HashMap<Node, Double> beliefs = new HashMap<>();
+                double beliefSum = 0.0;
+                for(Node isnode : is.getAllNodes()){
+                    HashMap<Action, Double> actionEVs = new HashMap<>();
+                    double belief = getNodeBelief(isnode);
+                    beliefSum += belief;
+                    beliefs.put(isnode, belief);
+//                    System.out.println("Node " + isnode.getGameState().toString() + " BELIEF = " + belief);
+                    for (Action ai : in.getActions()) {
+                        actionEVs.put(ai, computeQRRecursive(((InnerNode)isnode).getChildFor(ai), belief , expPlayer));
+//                        System.out.println("\t Action " + ai + " EV = " + actionEVs.get(ai));
+                    }
+                    nodeEVs.put(isnode, actionEVs);
+                }
+
+                double[] strategy = new double[in.getActions().size()];
+                if (beliefSum <= 0) {
+                    // set default
+                    strategy[0] = 1.0;
+                }
+                else {
+                    double strategySum = 0;
+                    int i = 0;
+                    for(Action a : in.getActions()){
+                        double EV = 0.0;
+                        for(Node isnode : is.getAllNodes()){
+                            EV += beliefs.get(isnode) * nodeEVs.get(isnode).get(a);
+                        }
+                        EV /= beliefSum;
+                        strategy[i] = Math.exp(lambda * EV);
+                        strategySum += strategy[i];
+                        i++;
+                    }
+                    for(i = 0; i < strategy.length; i++) {
+                        strategy[i] /= strategySum;
+                    }
+                }
+
+                // store strategy to data
+                data.setIteration(iteration);
+                for(int i = 0; i < strategy.length; i++) {
+                    data.setData(i, strategy[i]);
+                }
+
+                for(Node isnode : is.getAllNodes()) {
+                    double EV = 0.0;
+                    int i = 0;
+                    for (Action ai : in.getActions()) {
+                        EV += strategy[i] * nodeEVs.get(isnode).get(ai);
+                        i++;
+                    }
+                    EVs.put(isnode, EV);
+                }
+
+                double value = EVs.get(node);
+                EVs.remove(node);
+
+                return value;
+            }
+        }
+    }
+
+    protected double getNodeBelief(Node node){
+        Node parent = node.getParent();
+        Action action = node.getLastAction();
+        double belief = 1.0;
+        while(parent != null){
+            if(belief <= 0.0) break;
+            if(parent instanceof ChanceNode){
+                belief *= parent.getGameState().getProbabilityOfNatureFor(action);
+            }
+            else if(parent.getGameState().getPlayerToMove().getId() != respondingPlayer.getId()){
+                belief *= ((CFRBRAlgorithmData)((InnerNode)parent).getInformationSet().getAlgorithmData())
+                        .getProbabilityOfPlaying(action);
+            }
+            action = parent.getLastAction();
+            parent = parent.getParent();
+        }
+        return belief;
+    }
+
 
     public void computeQR(Node node, double pi1, double pi2, Player expPlayer) {
 

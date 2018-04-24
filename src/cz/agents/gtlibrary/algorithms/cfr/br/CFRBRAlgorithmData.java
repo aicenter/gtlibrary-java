@@ -24,7 +24,9 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
     /** Mean strategy. */
     protected double[] mp;
 
-    boolean isBRData;
+    protected boolean isBRData;
+
+    protected int iteration;
 
 
     public CFRBRAlgorithmData(List<Action> actions, boolean BRData) {
@@ -32,6 +34,8 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
         data = new double[actions.size()];
         mp = new double[actions.size()];
         isBRData = BRData;
+        iteration = -1;
+
     }
 
     public HashMap<Action,Double> getStrategy(){
@@ -44,8 +48,15 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
             }
         }
         if (sum <= 0){
-            for(Action action : actions){
-                strategy.put(action, 1.0/data.length);
+            if (isBRData){
+                for (int i = 0; i < actions.size(); i++){
+                    strategy.put(actions.get(i), i == 0 ? 1.0 : 0.0);
+                }
+            }
+            else {
+                for (Action action : actions) {
+                    strategy.put(action, 1.0 / data.length);
+                }
             }
         } else {
             int i = 0;
@@ -67,7 +78,12 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
             }
         }
         if (sum <= 0){
-            Arrays.fill(strategy, 1.0/data.length);
+            if (isBRData){
+                strategy[0] = 1.0;
+            }
+            else {
+                Arrays.fill(strategy, 1.0 / data.length);
+            }
         } else {
             for (int i = 0; i < data.length; i++){
                 strategy[i] = Math.max(0, data[i] / sum);
@@ -112,6 +128,15 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
 //        System.out.println("Data set : " + Arrays.toString(data));
     }
 
+    public void setData(int idx, double value){
+        data[idx] = value;
+    }
+
+    public void setData(Action action, double value){
+        if (action == null) System.out.println("null action");
+        data[actions.indexOf(action)] = value;
+    }
+
     @Override
     public List<Action> getActions() {
         return actions;
@@ -120,11 +145,23 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
     @Override
     public double[] getMp() {
         if (isBRData) return data;
-        return mp;
+        return mp;//getStrategyAsList();
     }
 
     public int getNumActions(){
         return actions.size();
+    }
+
+    public void setIteration(int value){
+        iteration = value;
+    }
+
+    public void increaseIteration(){
+        iteration++;
+    }
+
+    public int getIteration(){
+        return iteration;
     }
 
 

@@ -101,7 +101,7 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-		runKuhnPoker();
+//		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
@@ -113,7 +113,7 @@ public class FullSequenceEFG {
 //		runUpOrDown();
 //        runOshiZumo();
 //        testExploitGame();
-//		runFlipIt();
+		runFlipIt();
 //		runHoneyPot();
 	}
 
@@ -135,6 +135,10 @@ public class FullSequenceEFG {
 		String[] attackerActions = new String[]{"ID1", "ID1", "ID4", "ID1"};
 		FlipItGameInfo gameInfo = new FlipItGameInfo();
 		gameInfo.ZERO_SUM_APPROX = true;
+		gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_ALL_POINTS;
+		gameInfo.depth = 5;
+		gameInfo.ENABLE_PASS = false;
+		gameInfo.graphFile = "flipit_empty2.txt";
 		NodePointsFlipItGameState rootState = null;
 
 		switch (FlipItGameInfo.gameVersion){
