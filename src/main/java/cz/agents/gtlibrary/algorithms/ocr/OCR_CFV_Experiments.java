@@ -60,6 +60,8 @@ import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class OCR_CFV_Experiments {
 
@@ -71,8 +73,8 @@ public class OCR_CFV_Experiments {
 
     private String trackCFVinInformationSet;
     private GamePlayingAlgorithm alg;
-    private Double minExploitability = 0.1;
-    private Integer numItersPerLoop = 10000;
+    private Double minExploitability = 0.01;
+    private Integer numItersPerLoop = 100000;
 
     public static void main(String[] args) {
         if (args.length < 2) {
@@ -92,6 +94,30 @@ public class OCR_CFV_Experiments {
         exp.runAlgorithm(alg);
     }
 
+    public static void buildCompleteTree(InnerNode r) {
+        System.err.println("Building complete tree.");
+        int nodes = 0, infosets = 0;
+        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
+        q.add(r);
+        while (!q.isEmpty()) {
+            nodes++;
+            InnerNode n = q.removeFirst();
+            MCTSInformationSet is = n.getInformationSet();
+            if (!(n instanceof ChanceNode))
+                if (is.getAlgorithmData() == null) {
+                    infosets++;
+                    is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+                }
+            for (Action a : n.getActions()) {
+                Node ch = n.getChildFor(a);
+                if (ch instanceof InnerNode) {
+                    q.add((InnerNode) ch);
+                }
+            }
+        }
+        System.err.println("Created nodes: " + nodes + "; infosets: " + infosets);
+    }
+
     private void handleDomain(String domain, String[] domainParams) {
         switch (domain) {
             case "IIGS": // Goofspiel
@@ -101,8 +127,8 @@ public class OCR_CFV_Experiments {
                 }
                 GSGameInfo.seed = new Integer(domainParams[0]);
                 GSGameInfo.depth = new Integer(domainParams[1]);
-                GSGameInfo.BINARY_UTILITIES = new Boolean(domainParams[2]);;
-                GSGameInfo.useFixedNatureSequence = new Boolean(domainParams[3]);;
+                GSGameInfo.BINARY_UTILITIES = new Boolean(domainParams[2]);
+                GSGameInfo.useFixedNatureSequence = new Boolean(domainParams[3]);
 
                 GSGameInfo.regenerateCards = true;
 
@@ -215,28 +241,26 @@ public class OCR_CFV_Experiments {
     }
 
     private void runAlgorithm(String alg) {
-        System.err.println("Using algorithm "+alg);
+        System.err.println("Using algorithm " + alg);
         OOSAlgorithmData.gatherCFV = true;
         if (alg.equals("OOS")) {
-            runOOS(0.9,0.6);
+            runOOS(0.9, 0.6);
         }
         if (alg.equals("MCCFR")) {
             runMCCFR(0.6);
         }
     }
 
-
     private double calcExploitability() {
         Strategy strategy0 = StrategyCollector.getStrategyFor(
-                alg.getRootNode(), rootState.getAllPlayers()[0],  new MeanStratDist());
+                alg.getRootNode(), rootState.getAllPlayers()[0], new MeanStratDist());
         Strategy strategy1 = StrategyCollector.getStrategyFor(
-                alg.getRootNode(), rootState.getAllPlayers()[1],  new MeanStratDist());
+                alg.getRootNode(), rootState.getAllPlayers()[1], new MeanStratDist());
 
         Double br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
         Double br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
         return br0Val + br1Val;
     }
-
 
     private void printHeader(OOSAlgorithmData data) {
         double[] incrementalCFVs = data.getIncrementalCfv();
@@ -284,7 +308,7 @@ public class OCR_CFV_Experiments {
                 (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
 
         // run algorithm until we find the information set
-        System.err.println("Searching for IS "+trackCFVinInformationSet);
+        System.err.println("Searching for IS " + trackCFVinInformationSet);
         MCTSInformationSet is;
         int searchingLoops = 0;
         do {
@@ -292,7 +316,7 @@ public class OCR_CFV_Experiments {
             is = identifyTargetInfoSet(alg.getRootNode(), trackCFVinInformationSet);
             searchingLoops++;
             if (searchingLoops % 1000 == 0) System.err.println(searchingLoops);
-        } while( is == null );
+        } while (is == null);
 
         OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
 
@@ -304,7 +328,7 @@ public class OCR_CFV_Experiments {
             alg.runIterations(numItersPerLoop);
 
             exploitability = calcExploitability();
-            printIterationStatistics(searchingLoops*2 + loop * numItersPerLoop, data, exploitability);
+            printIterationStatistics(searchingLoops * 2 + loop * numItersPerLoop, data, exploitability);
 
             loop++;
         } while (exploitability > minExploitability);
@@ -318,6 +342,8 @@ public class OCR_CFV_Experiments {
         this.alg = alg;
 
         buildCompleteTree(alg.getRootNode());
+        System.err.println("Several first infosets:");
+        printSeveralFirstInfoSets(alg.getRootNode(), 10, 10, new HashSet<>());
 
         Distribution dist = new MeanStratDist();
 
@@ -328,7 +354,7 @@ public class OCR_CFV_Experiments {
                 new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
                 (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
 
-        System.err.println("Searching for IS "+trackCFVinInformationSet);
+        System.err.println("Searching for IS " + trackCFVinInformationSet);
         MCTSInformationSet is = identifyTargetInfoSet(alg.getRootNode(), trackCFVinInformationSet);
         OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
 
@@ -344,6 +370,23 @@ public class OCR_CFV_Experiments {
 
             loop++;
         } while (exploitability > minExploitability);
+    }
+
+    private void printSeveralFirstInfoSets(InnerNode state, int maxDepth, int maxNames, Set<String> uniqueISNames) {
+        if (maxDepth == 0) return;
+        if (uniqueISNames.size() > maxNames) return;
+
+        MCTSInformationSet is = state.getInformationSet();
+        if (is != null && !uniqueISNames.contains(is.toString())) {
+            System.err.println(is.toString());
+            uniqueISNames.add(is.toString());
+        }
+
+        for (Node node : state.getChildren().values()) {
+            if (node instanceof InnerNode) {
+                printSeveralFirstInfoSets((InnerNode) node, maxDepth-1, maxNames, uniqueISNames);
+            }
+        }
     }
 
     private MCTSInformationSet identifyTargetInfoSet(InnerNode state, String trackCFVinInformationSet) {
@@ -362,30 +405,6 @@ public class OCR_CFV_Experiments {
         }
 
         return null;
-    }
-
-    public static void buildCompleteTree(InnerNode r) {
-        System.err.println("Building complete tree.");
-        int nodes = 0, infosets = 0;
-        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
-        q.add(r);
-        while (!q.isEmpty()) {
-            nodes++;
-            InnerNode n = q.removeFirst();
-            MCTSInformationSet is = n.getInformationSet();
-            if (!(n instanceof ChanceNode))
-                if (is.getAlgorithmData() == null) {
-                    infosets++;
-                    is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
-                }
-            for (Action a : n.getActions()) {
-                Node ch = n.getChildFor(a);
-                if (ch instanceof InnerNode) {
-                    q.add((InnerNode) ch);
-                }
-            }
-        }
-        System.err.println("Created nodes: " + nodes + "; infosets: " + infosets);
     }
 
     public void setTracking(String tracking) {

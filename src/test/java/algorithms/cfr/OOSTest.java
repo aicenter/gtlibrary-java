@@ -124,65 +124,6 @@ public class OOSTest {
 //    }
 
     @Test
-    public void cfvConvergenceLiarsDice() {
-        GameInfo gameInfo = new LDGameInfo();
-        GameState rootState = new LiarsDiceGameState();
-
-        MCTSConfig config = new MCTSConfig();
-        Expander<MCTSInformationSet> expander = new LiarsDiceExpander<>(config);
-        expander.getAlgorithmConfig().createInformationSetFor(rootState);
-
-        OOSAlgorithm alg = new OOSAlgorithm(rootState.getAllPlayers()[0], new OOSSimulator(expander), rootState, expander);
-        SMJournalExperiments.buildCompleteTree(alg.getRootNode());
-        Distribution dist = new MeanStratDist();
-
-        SQFBestResponseAlgorithm brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
-        SQFBestResponseAlgorithm brAlg1 = new SQFBestResponseAlgorithm(expander, 1,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
-
-        System.out.println("iteration,exploitability,cfvs");
-        int nIters = 10000;
-        int i = 0;
-        Double exploitability;
-        do {
-            alg.runIterations(nIters);
-
-            Strategy strategy0 = StrategyCollector.getStrategyFor(
-                    alg.getRootNode(), rootState.getAllPlayers()[0], dist);
-            Strategy strategy1 = StrategyCollector.getStrategyFor(
-                    alg.getRootNode(), rootState.getAllPlayers()[1], dist);
-            UtilityCalculator calculator = new UtilityCalculator(rootState, expander);
-
-
-            Double br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
-            Double br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
-            exploitability = br0Val + br1Val;
-            System.out.print((i + 1) * nIters + "," + exploitability);
-
-            InnerNode n = alg.getRootNode();
-            // Quick and dirty way to bypass the first two chance states to get first infoset
-            Map<Action, Node> children = n.getChildren();
-            Map.Entry<Action, Node> entry = children.entrySet().iterator().next();
-            Map<Action, Node> children2 = ((ChanceNode) entry.getValue()).getChildren();
-            Map.Entry<Action, Node> entry2 = children2.entrySet().iterator().next();
-            MCTSInformationSet is = ((InnerNode) entry2.getValue()).getInformationSet();
-            OOSAlgorithmData data = ((OOSAlgorithmData) is.getAlgorithmData());
-            for (double cfv : data.cfv) {
-                System.out.print("," + cfv);
-            }
-            System.out.println();
-
-            i++;
-        } while(exploitability > 0.01);
-    }
-
-
-
-
-    @Test
     public void goofspielTest() {
         GSGameInfo.depth = 4;
         new GSGameInfo();
