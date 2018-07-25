@@ -47,15 +47,22 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     /** Number of strategy update samples. */
     protected int nbSamples;
     private int actionCount;
-    public double[] cfv;
-    public double n;
+
+    /** enable this flag to gather statistics about the CFV for each action */
+    public static boolean gatherCFV = false;
+    private double[] incrementalCfv;
+    private double n;
+
 
     public OOSAlgorithmData(int actionCount) {
         mp = new double[actionCount];
         r = new double[actionCount];
-        cfv = new double[actionCount];
         this.actionCount = actionCount;
-        this.n = 0;
+
+        if (gatherCFV) {
+            incrementalCfv = new double[actionCount];
+            this.n = 0;
+        }
     }
 
     public OOSAlgorithmData(List<Action> actions) {
@@ -63,8 +70,11 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         this.actionCount = actions.size();
         mp = new double[actions.size()];
         r = new double[actions.size()];
-        cfv = new double[actions.size()];
-        this.n = 0;
+
+        if (gatherCFV) {
+            incrementalCfv = new double[actionCount];
+            this.n = 0;
+        }
     }
 
     public OOSAlgorithmData(OOSAlgorithmData data) {
@@ -74,9 +84,12 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         System.arraycopy(data.mp, 0, mp, 0, data.mp.length);
         r = new double[actionCount];
         System.arraycopy(data.r, 0, r, 0, data.r.length);
-        cfv = new double[actionCount];
-        System.arraycopy(data.r, 0, r, 0, data.cfv.length);
-        this.n = 0;
+
+        if(gatherCFV) {
+            incrementalCfv = new double[actionCount];
+            System.arraycopy(data.r, 0, r, 0, data.incrementalCfv.length);
+            this.n = data.n;
+        }
     }
 
     public void getRMStrategy(double[] output) {
@@ -98,12 +111,16 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     }
     
     public void updateRegret(int ai, double W, double c, double x){
-        n++;
-        cfv[ai] = cfv[ai] + ((W*c) - cfv[ai]) / n;
+        if(gatherCFV) n++;
 
         for (int i=0; i<r.length; i++){
             if (i==ai) r[i] += (c-x)*W;
             else r[i] += -x*W;
+
+            if(gatherCFV) {
+                if (i==ai) incrementalCfv[i] += ((W*c) - incrementalCfv[i]) / n;
+                else incrementalCfv[i] -=  incrementalCfv[i] / n;
+            }
         }
     }
     
@@ -174,6 +191,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
 
     public int getActionCount() {
         return actionCount;
+    }
+
+    public double[] getIncrementalCfv() {
+        return incrementalCfv;
     }
 
     public void setFrom(OOSAlgorithmData other) {
