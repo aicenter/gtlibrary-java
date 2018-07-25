@@ -59,113 +59,115 @@ import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 
 public class OCR_CFV_Experiments {
 
-    static GameInfo gameInfo;
-    static GameState rootState;
-    static SQFBestResponseAlgorithm brAlg0;
-    static SQFBestResponseAlgorithm brAlg1;
-    static Expander expander;
+    private GameInfo gameInfo;
+    private GameState rootState;
+    private SQFBestResponseAlgorithm brAlg0;
+    private SQFBestResponseAlgorithm brAlg1;
+    private Expander expander;
 
-    static String trackCFVinInformationSet = "IS:(Pl0):Pl0: []";
-    static GamePlayingAlgorithm alg;
-    static Double minExploitability = 0.1;
-    static Integer numItersPerLoop = 10000;
+    private String trackCFVinInformationSet;
+    private GamePlayingAlgorithm alg;
+    private Double minExploitability = 0.1;
+    private Integer numItersPerLoop = 10000;
 
     public static void main(String[] args) {
-
         if (args.length < 2) {
             System.err.println("Missing Arguments: OnlineContinualResolvingExperiments " +
-                    "{OOS|MCCFR|OCR} {LD|GS|OZ|PE|RG|RPS|Tron} [domain parameters].");
+                    "[trackingISName] {OOS|MCCFR|OCR} {LD|GS|OZ|PE|RG|RPS|Tron} [domain parameters].");
             System.exit(-1);
         }
 
-        String alg = args[0];
-        String domain = args[1];
+        String trackCFVinInformationSet = args[0];
+        String alg = args[1];
+        String domain = args[2];
 
         OCR_CFV_Experiments exp = new OCR_CFV_Experiments();
-        exp.handleDomain(args);
+        exp.setTracking(trackCFVinInformationSet);
+        exp.handleDomain(domain, Arrays.copyOfRange(args, 3, args.length));
         exp.loadGame(domain);
         exp.runAlgorithm(alg);
     }
 
-    private void handleDomain(String[] args) {
-        switch (args[1]) {
+    private void handleDomain(String domain, String[] domainParams) {
+        switch (domain) {
             case "IIGS": // Goofspiel
-                if (args.length != 6) {
+                if (domainParams.length != 4) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
                             "4 parameters are required {SEED} {DEPTH} {BIN_UTIL} {FIXED_CARDS}");
                 }
-                GSGameInfo.seed = new Integer(args[2]);
-                GSGameInfo.depth = new Integer(args[3]);
-                GSGameInfo.BINARY_UTILITIES = new Boolean(args[4]);;
-                GSGameInfo.useFixedNatureSequence = new Boolean(args[5]);;
+                GSGameInfo.seed = new Integer(domainParams[0]);
+                GSGameInfo.depth = new Integer(domainParams[1]);
+                GSGameInfo.BINARY_UTILITIES = new Boolean(domainParams[2]);;
+                GSGameInfo.useFixedNatureSequence = new Boolean(domainParams[3]);;
 
                 GSGameInfo.regenerateCards = true;
 
                 break;
             case "LD":   // Liar's dice
-                if (args.length != 5) {
+                if (domainParams.length != 3) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
                             "3 parameters are required {P1DICE} {P2DICE} {FACES}");
                 }
-                LDGameInfo.P1DICE = new Integer(args[2]);
-                LDGameInfo.P2DICE = new Integer(args[3]);
-                LDGameInfo.FACES = new Integer(args[4]);
+                LDGameInfo.P1DICE = new Integer(domainParams[0]);
+                LDGameInfo.P2DICE = new Integer(domainParams[1]);
+                LDGameInfo.FACES = new Integer(domainParams[2]);
                 break;
             case "OZ":  // Oshi Zumo
-                if (args.length != 7) {
+                if (domainParams.length != 5) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
                             "5 parameters are required {SEED} {COINS} {LOC_K} {MIN_BID} {BIN_UTIL}");
                 }
-                OZGameInfo.seed = new Integer(args[2]);
-                OZGameInfo.startingCoins = new Integer(args[3]);
-                OZGameInfo.locK = new Integer(args[4]);
-                OZGameInfo.minBid = new Integer(args[5]);
-                OZGameInfo.BINARY_UTILITIES = new Boolean(args[6]);
+                OZGameInfo.seed = new Integer(domainParams[0]);
+                OZGameInfo.startingCoins = new Integer(domainParams[1]);
+                OZGameInfo.locK = new Integer(domainParams[2]);
+                OZGameInfo.minBid = new Integer(domainParams[3]);
+                OZGameInfo.BINARY_UTILITIES = new Boolean(domainParams[4]);
                 break;
             case "PE":  // Pursuit Evasion Game
-                if (args.length != 5) {
+                if (domainParams.length != 3) {
                     throw new IllegalArgumentException("Illegal PEG domain arguments count: " +
                             "3 parameters are required {SEED} {DEPTH} {GRAPH}");
                 }
-                PursuitGameInfo.seed = new Integer(args[2]);
-                PursuitGameInfo.depth = new Integer(args[3]);
-                PursuitGameInfo.graphFile = args[4];
+                PursuitGameInfo.seed = new Integer(domainParams[0]);
+                PursuitGameInfo.depth = new Integer(domainParams[1]);
+                PursuitGameInfo.graphFile = domainParams[2];
                 break;
             case "RG":  // Random Games
-                if (args.length != 8) {
+                if (domainParams.length != 6) {
                     throw new IllegalArgumentException("Illegal random game domain arguments count. " +
-                            "7 are required {SEED} {DEPTH} {BF} {CENTER_MODIFICATION} {BINARY_UTILITY} {FIXED BF}");
+                            "6 are required {SEED} {DEPTH} {BF} {CENTER_MODIFICATION} {BINARY_UTILITY} {FIXED BF}");
                 }
-                RandomGameInfo.seed = new Integer(args[2]);
+                RandomGameInfo.seed = new Integer(domainParams[0]);
                 RandomGameInfo.rnd = new HighQualityRandom(RandomGameInfo.seed);
-                RandomGameInfo.MAX_DEPTH = new Integer(args[3]);
-                RandomGameInfo.MAX_BF = new Integer(args[4]);
-                RandomGameInfo.MAX_CENTER_MODIFICATION = new Integer(args[5]);
-                RandomGameInfo.BINARY_UTILITY = new Boolean(args[6]);
-                RandomGameInfo.FIXED_SIZE_BF = new Boolean(args[7]);
+                RandomGameInfo.MAX_DEPTH = new Integer(domainParams[1]);
+                RandomGameInfo.MAX_BF = new Integer(domainParams[2]);
+                RandomGameInfo.MAX_CENTER_MODIFICATION = new Integer(domainParams[3]);
+                RandomGameInfo.BINARY_UTILITY = new Boolean(domainParams[4]);
+                RandomGameInfo.FIXED_SIZE_BF = new Boolean(domainParams[5]);
                 break;
             case "Tron":  // Tron
-                if (args.length != 6) {
+                if (domainParams.length != 4) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
                             "4 parameters are required {SEED} {BOARDTYPE} {ROWS} {COLUMNS}");
                 }
-                TronGameInfo.seed = new Integer(args[2]);
-                TronGameInfo.BOARDTYPE = args[3].charAt(0);
-                TronGameInfo.ROWS = new Integer(args[4]);
-                TronGameInfo.COLS = new Integer(args[5]);
+                TronGameInfo.seed = new Integer(domainParams[0]);
+                TronGameInfo.BOARDTYPE = domainParams[1].charAt(0);
+                TronGameInfo.ROWS = new Integer(domainParams[2]);
+                TronGameInfo.COLS = new Integer(domainParams[3]);
                 break;
             case "RPS":  // Tron
-                if (args.length != 3) {
+                if (domainParams.length != 1) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
                             "1 parameter is required {SEED}");
                 }
-                RPSGameInfo.seed = new Integer(args[2]);
+                RPSGameInfo.seed = new Integer(domainParams[0]);
                 break;
             default:
-                throw new IllegalArgumentException("Illegal domain: " + args[1]);
+                throw new IllegalArgumentException("Illegal domain: " + domainParams[1]);
         }
     }
 
@@ -384,5 +386,9 @@ public class OCR_CFV_Experiments {
             }
         }
         System.err.println("Created nodes: " + nodes + "; infosets: " + infosets);
+    }
+
+    public void setTracking(String tracking) {
+        this.trackCFVinInformationSet = tracking;
     }
 }
