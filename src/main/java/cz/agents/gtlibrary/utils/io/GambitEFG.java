@@ -21,6 +21,7 @@ package cz.agents.gtlibrary.utils.io;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -53,13 +54,15 @@ import java.util.Map;
  */
 public class GambitEFG {
     private boolean wActionLabels = true;
+    private boolean wNodeLabels = false;
+    private boolean wISKeys = false; // if false, writes PS keys
     private Map<ISKey, Integer> infSetIndices;
     private int maxIndex;
 
     public static void main(String[] args) {
-        //exportRandomGame();
-        //exportGoofSpiel();
-        exportPhantomTTT();
+//        exportRandomGame();
+        exportIIGoofSpiel();
+//        exportPhantomTTT();
     }
 
     public static void exportRandomGame() {
@@ -77,14 +80,13 @@ public class GambitEFG {
         exporter.buildAndWrite("MyPhantomTTT.gbt", new TTTState(), new TTTExpander<>(new SequenceFormConfig<>()));
     }
 
-    public static void exportGoofSpiel() {
+    public static void exportIIGoofSpiel() {
         // setup Game:
-        //GSGameInfo.seed = 2;
-        //GSGameInfo.depth = 2;
-        //Integer depth = 2;
-        //GSGameInfo.BINARY_UTILITIES = true;
-        //GSGameInfo.useFixedNatureSequence = true;
-        //GSGameInfo.regenerateCards = true;
+        GSGameInfo.seed = 2;
+        GSGameInfo.depth = 3;
+        GSGameInfo.BINARY_UTILITIES = true;
+        GSGameInfo.useFixedNatureSequence = true;
+        GSGameInfo.regenerateCards = true;
 
         boolean AB = false; //alphaBetaBounds
         boolean DO = false; //doubleOracle
@@ -98,7 +100,7 @@ public class GambitEFG {
 
         GameInfo gameInfo = new GSGameInfo(); // call to init natureSequence
 
-        GoofSpielGameState root = new GoofSpielGameState();
+        IIGoofSpielGameState root = new IIGoofSpielGameState();
 
         System.out.println(root);
 
@@ -109,7 +111,7 @@ public class GambitEFG {
         System.out.println("buildAndWrite");
 
         //exporter.buildAndWrite("MyGoofSpiel.gbt", root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()));
-        exporter.buildAndWrite("MyGoofSpiel.gbt", root, new GoofSpielExpander<>(new SequenceFormConfig<>()));
+        exporter.buildAndWrite("MyIIGoofSpiel_"+(exporter.wISKeys?"IS":"PT")+".gbt", root, new GoofSpielExpander<>(new SequenceFormConfig<>()));
     }
 
     public GambitEFG() {
@@ -129,7 +131,7 @@ public class GambitEFG {
         try {
             PrintStream out = new PrintStream(filename);
 
-            out.print("EFG 2 R \"" + root.getClass() + expander.getClass() + "\" {");
+            out.print("EFG 2 R \"" + (wISKeys ? "IS" : "PT" ) + " "+ root.getClass().getSimpleName() + " " + expander.getClass().getSimpleName() + "\" {");
             Player[] players = root.getAllPlayers();
             for (int i = 0; i < 2; i++) {//assumes 2 playter games (possibly with nature) nature is the last player and always present!!!
                 if (i != 0) out.print(" ");
@@ -151,7 +153,7 @@ public class GambitEFG {
 
     private void writeRec(PrintStream out, GameState node, Expander<? extends InformationSet> expander, int cut_off_depth) {
         if (node.isGameEnd() || cut_off_depth == 0) {
-            out.print("t \"" + node.toString() + "\" " + nextOutcome++ + " \"\" { ");
+            out.print("t \"" + (wNodeLabels ? node.toString() : "") + "\" " + nextOutcome++ + " \"\" { ");
             double[] u = node.getUtilities();
             for (int i = 0; i < 2; i++) {
                 out.print((i == 0 ? "" : ", ") + u[i]);
@@ -160,12 +162,12 @@ public class GambitEFG {
         } else {
             List<Action> actions = expander.getActions(node);
             if (node.isPlayerToMoveNature()) {
-                out.print("c \"" + node.toString() + "\" " + nextChance++ + " \"\" { ");
+                out.print("c \"" + (wNodeLabels ? node.toString() : "") + "\" "+(wISKeys ? nextChance++ : getUniqueHash(((DomainWithPublicState) node).getPSKeyForPlayerToMove()))+" \"\" { ");
                 for (Action a : actions) {
                     out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + node.getProbabilityOfNatureFor(a) + " ");
                 }
             } else {
-                out.print("p \"" + node.toString() + "\" " + (node.getPlayerToMove().getId() + 1) + " " + getUniqueHash(node.getISKeyForPlayerToMove()) + " \"\" { ");
+                out.print("p \"" + (wNodeLabels ? node.toString() : "") + "\" " + (node.getPlayerToMove().getId() + 1) + " " + getUniqueHash(wISKeys ? node.getISKeyForPlayerToMove() : ((DomainWithPublicState) node).getPSKeyForPlayerToMove()) + " \"\" { ");
                 for (Action a : actions) {
                     out.print("\"" + (wActionLabels ? a.toString() : "") + "\" ");
                 }
