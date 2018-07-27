@@ -17,12 +17,11 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.ocr;
+package cz.agents.gtlibrary.algorithms.mcts.experiments;
 
 import cz.agents.gtlibrary.algorithms.mcts.ISMCTSExploitability;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
@@ -66,11 +65,11 @@ import java.util.Set;
 
 public class OCR_CFV_Experiments {
 
-    protected GameInfo gameInfo;
-    protected GameState rootState;
-    protected SQFBestResponseAlgorithm brAlg0;
-    protected SQFBestResponseAlgorithm brAlg1;
-    protected Expander expander;
+    private GameInfo gameInfo;
+    private GameState rootState;
+    private SQFBestResponseAlgorithm brAlg0;
+    private SQFBestResponseAlgorithm brAlg1;
+    private Expander expander;
 
     private String trackCFVinInformationSet;
     private GamePlayingAlgorithm alg;
@@ -97,24 +96,18 @@ public class OCR_CFV_Experiments {
 
     public static void buildCompleteTree(InnerNode r) {
         System.err.println("Building complete tree.");
-        int nodes = 0, infosets = 0, publicStates = 0;
+        int nodes = 0, infosets = 0;
         ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
         q.add(r);
         while (!q.isEmpty()) {
             nodes++;
             InnerNode n = q.removeFirst();
             MCTSInformationSet is = n.getInformationSet();
-            MCTSPublicState ps = n.getPublicState();
-            if (!(n instanceof ChanceNode)) {
+            if (!(n instanceof ChanceNode))
                 if (is.getAlgorithmData() == null) {
                     infosets++;
                     is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
                 }
-            }
-            if (ps.getAlgorithmData() == null) {
-                publicStates++;
-                ps.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
-            }
             for (Action a : n.getActions()) {
                 Node ch = n.getChildFor(a);
                 if (ch instanceof InnerNode) {
@@ -122,10 +115,10 @@ public class OCR_CFV_Experiments {
                 }
             }
         }
-        System.err.println("Created nodes: " + nodes + "; infosets: " + infosets + "; public states: " + publicStates);
+        System.err.println("Created nodes: " + nodes + "; infosets: " + infosets);
     }
 
-    public void handleDomain(String domain, String[] domainParams) {
+    private void handleDomain(String domain, String[] domainParams) {
         switch (domain) {
             case "IIGS": // Goofspiel
                 if (domainParams.length != 4) {
@@ -192,7 +185,7 @@ public class OCR_CFV_Experiments {
                 TronGameInfo.ROWS = new Integer(domainParams[2]);
                 TronGameInfo.COLS = new Integer(domainParams[3]);
                 break;
-            case "RPS":  // Tron
+            case "RPS":  // Rock Paper Scissors
                 if (domainParams.length != 1) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
                             "1 parameter is required {SEED}");
@@ -204,7 +197,7 @@ public class OCR_CFV_Experiments {
         }
     }
 
-    public void loadGame(String domain) {
+    private void loadGame(String domain) {
         switch (domain) {
             case "IIGS":
                 gameInfo = new GSGameInfo();
@@ -247,7 +240,7 @@ public class OCR_CFV_Experiments {
         System.err.println(gameInfo.getInfo());
     }
 
-    public void runAlgorithm(String alg) {
+    private void runAlgorithm(String alg) {
         System.err.println("Using algorithm " + alg);
         OOSAlgorithmData.gatherCFV = true;
         if (alg.equals("OOS")) {

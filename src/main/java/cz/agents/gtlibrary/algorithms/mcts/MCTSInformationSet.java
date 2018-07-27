@@ -30,6 +30,7 @@ public class MCTSInformationSet extends InformationSetImpl {
 
     private Set<InnerNode> allNodes;
     private AlgorithmData algorithmData;
+    private MCTSPublicState publicState;
 
     public MCTSInformationSet(GameState state) {
         super(state);
@@ -52,4 +53,11 @@ public class MCTSInformationSet extends InformationSetImpl {
         this.algorithmData = algorithmData;
     }
 
+    public MCTSPublicState getPublicState() {
+        return publicState;
+    }
+
+    public void setPublicState(MCTSPublicState publicState) {
+        this.publicState = publicState;
+    }
 }

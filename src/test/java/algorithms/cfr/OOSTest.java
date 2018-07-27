@@ -1,46 +1,27 @@
 package algorithms.cfr;
 
-import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
-import cz.agents.gtlibrary.algorithms.mcts.*;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm;
-import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.runner.SMJournalExperiments;
-import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
-import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
-import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
-import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
-import cz.agents.gtlibrary.domain.mp.MPAction;
-import cz.agents.gtlibrary.domain.mp.MPExpander;
-import cz.agents.gtlibrary.domain.mp.MPGameInfo;
-import cz.agents.gtlibrary.domain.mp.MPGameState;
 import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
-import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
-import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
-import cz.agents.gtlibrary.iinodes.ConfigImpl;
-import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GamePlayingAlgorithm;
+import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.strategy.Strategy;
 import org.junit.Test;
-
-import java.util.ArrayDeque;
-import java.util.HashSet;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -122,6 +103,7 @@ public class OOSTest {
 //
 //        assertEquals(-0.08560642407800045, calculator.computeUtility(strategy0, strategy1), 1e-3);
 //    }
+
 
     @Test
     public void goofspielTest() {

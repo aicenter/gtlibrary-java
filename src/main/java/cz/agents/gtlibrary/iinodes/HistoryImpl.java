@@ -32,6 +32,7 @@ import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.Pair;
 
 
 public class HistoryImpl implements History {
@@ -180,6 +181,18 @@ public class HistoryImpl implements History {
 	@Override
 	public List<Integer> getPlayersSequences(){
 		return playersSequence;
+	}
+
+	@Override
+	public List<Pair<Player, Action>> getHistory() {
+		int[] currentSeqIdx = new int[this.players.length];
+		List<Pair<Player, Action>> history = new ArrayList<>();
+		for (Integer playerIdx : playersSequence) {
+			Player player = this.players[playerIdx];
+			Action action = getSequenceOf(player).get(currentSeqIdx[playerIdx]++);
+			history.add(new Pair<>(player, action));
+		}
+		return history;
 	}
 
 }

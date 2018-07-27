@@ -19,42 +19,15 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.interfaces;
 
-import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PSKey;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-public interface History extends Serializable {
-	public Collection<Sequence> values();
-
-	public Set<Player> keySet();
-
-	public Set<Entry<Player, Sequence>> entrySet();
-
-	public Sequence getSequenceOf(Player player);
-
-	public Map<Player, Sequence> getSequencesOfPlayers();
-
-	public History copy();
-
-	public void addActionOf(Action action, Player player);
-
-    public int getLength();
-
-	public Action getLastAction();
-
-	public void reverse();
-
-	public Player getLastPlayer();
-
-	public int getSequencesLength();
-
-	public List<Integer> getPlayersSequences();
-
-	List<Pair<Player, Action>> getHistory();
-
+public interface PublicState extends Serializable {
+    public Set<GameState> getAllStates();
+    public void addStateToPublicState(GameState state);
+    public void addInfoSetToPublicState(InformationSet state);
+    public PSKey getPSKey();
 }

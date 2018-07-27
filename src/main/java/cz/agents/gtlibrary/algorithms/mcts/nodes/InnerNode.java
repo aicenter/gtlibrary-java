@@ -20,11 +20,13 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Selector;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.PublicState;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 import java.util.List;
@@ -35,10 +37,12 @@ public class InnerNode extends NodeImpl {
     protected Map<Action, Node> children;
     protected List<Action> actions;
     protected MCTSInformationSet informationSet;
+    private MCTSPublicState publicState;
 
     public InnerNode(InnerNode parent, GameState gameState, Action lastAction) {
         super(parent, lastAction, gameState);
         attendInformationSet();
+        attendPublicState();
         if (actions == null)
             actions = getExpander().getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
@@ -47,6 +51,7 @@ public class InnerNode extends NodeImpl {
     public InnerNode(Expander<MCTSInformationSet> expander, GameState gameState) {
         super(expander, gameState);
         attendInformationSet();
+        attendPublicState();
         if (actions == null)
             actions = expander.getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
@@ -67,6 +72,10 @@ public class InnerNode extends NodeImpl {
         }
         informationSet.addNode(this);
         informationSet.addStateToIS(gameState);
+    }
+    private void attendPublicState() {
+        publicState = getAlgConfig().getPublicStateFor(gameState);
+        publicState.addStateToPublicState(gameState);
     }
 
     protected Node getNewChildAfter(Action action) {
@@ -120,6 +129,10 @@ public class InnerNode extends NodeImpl {
 
     public MCTSInformationSet getInformationSet() {
         return informationSet;
+    }
+
+    public MCTSPublicState getPublicState() {
+        return publicState;
     }
 
     public void setInformationSet(MCTSInformationSet informationSet) {

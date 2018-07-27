@@ -23,6 +23,7 @@ import java.io.Serializable;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.utils.Pair;
 
 public interface GameState extends Serializable {
@@ -61,6 +62,8 @@ public interface GameState extends Serializable {
 	public void reverseAction();
 
 	public ISKey getISKeyForPlayerToMove();
+
+	public PSKey getPSKeyForPlayerToMove();
 
 	public boolean checkConsistency(Action action);
 
