@@ -1,45 +1,31 @@
 package cz.agents.gtlibrary.algorithms.stackelberg.experiments;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
-import cz.agents.gtlibrary.algorithms.sequenceform.gensum.GenSumSequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergRunner;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.LeaderGenerationConfig;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.SefceRunner;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.CompleteSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.iterative.LeaderGenerationSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.CompleteTwoPlayerSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderGeneration2pLessMemSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.LeaderTLSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetLPTable;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.tables.GadgetLPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetSefceLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetSefceLPWithoutMiddleState;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.SumForbiddingStackelbergLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.oracle.GadgetOracle2pShallowestAllCplexLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.oracle.GadgetOracle2pShallowestBrokenCplexLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.oracle.GadgetOracle2pSumForbiddingLP;
-import cz.agents.gtlibrary.algorithms.stackelberg.oracle.LeaderOracle2pSumForbiddingLP;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.GenSumBPGGameState;
 import cz.agents.gtlibrary.domain.flipit.*;
-import cz.agents.gtlibrary.domain.pursuit.GenSumPursuitGameState;
 import cz.agents.gtlibrary.domain.pursuit.GenSumVisibilityPursuitGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameState;
-import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Solver;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.graph.Graph;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
 import ilog.cplex.IloCplex;
-import org.jacop.constraints.In;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -62,19 +48,26 @@ public class OracleVsCompleteBBExperiment {
     // BPG: BO, depth, leader (int), algorithm, solving method
     public static void main(String[] args) {
         if (args.length == 0) {
-//            runGenSumRandom(new String[]{"R", "4", "3", "1"});
+//            runGenSumRandom(new String[]{"R", "6", "2", "20"});
 //            runGenSumRandomImproved(new String[]{"I", "5", "4", "1", "1"});
-//            runGenSumRandomOneSeed(new String[]{"RO", "3", "3", "5","-0.4", "4", "F", "3", "AMILP", "3"});
+//            runGenSumRandomOneSeed(new String[]{"RO", "4", "4", "5","-0.7", "4", "O", "LP", "4", "0", "1e-4", "0.4", "0", "1"});
 //        runGenSumRandomImproved();
 //            runBPG(new String[]{"B", "4", "1"});
-//            runBPGOneSeed(new String[]{"B", "3", "1", "O", "LP", "4", "0"});
+//            runBPGOneSeed(new String[]{"B", "3", "1", "O", "LP", ""+ IloCplex.Algorithm.Barrier, "LP", "0"});
 //        runFlipIt(args);
-//        runFlipIt(new String[]{"F", "4", "3", "AP", "100"});
+//        runFlipIt(new String[]{"F", "4", "2", "N", "1"});
 //            for (int seed = 50; seed < 80; seed++)
 //                runFlipItOneSeed(new String[]{"F", "3", "3", "AP", Integer.toString(seed), "F"});
 //            runFlipItOneSeed(new String[]{"F", "3", "5", "AP", "128", "O" ,"LP", "4", "0", Double.toString(1e-12)});
 //            runPursuit(new String[]{"P", "3", "4", "10"});
-            runPursuitOneSeed(new String[]{"PO", "4", "4", "0", "O", "LP", "4", "1", "0.35", "0", "0"}); //   PO 3 4 0 O LP 4 1 0.15 0 1
+//            runPursuitOneSeed(new String[]{"PO", "4", "3", "2", "O", "LP", "4", "1", "0.3", "1", "0", "1e-4", "0.1"});
+//            runFlipItOneSeed(new String[]{"F0", "4", "4b", "AP", "0", "O", "LP", "4", "0", Double.toString(1e-6), "0.2", "1", "0"});
+//            runFlipItOneSeed(new String[]{"F0", "5", "5c", "AP", "13", "O", "LP", "4", "0", Double.toString(1e-3), "0.4", "1", "0"});
+//            runFlipItOneSeed(new String[]{"F0", "5", "5c", "AP", "3", "O", "LP", "4", "0", Double.toString(1e-6), "0.45", "0", "1"});
+//            runFlipItOneSeed(new String[]{"F0", "5", "5c", "AP", "3", "O", "LP", "4", "1", Double.toString(1e-6), "0.45", "0", "1"});
+//            runFlipItOneSeed(new String[]{"F0", "4", "4d", "AP", "1", "O", "LP", "4", "1", Double.toString(1e-5), "0.3", "0", "1", "0.01"});
+            runFlipItOneSeed(new String[]{"F0", "4", "4d", "AP", "1", "F", "4", "1", Double.toString(1e-5), "0.3", "0", "1", "0.01"});
+
         } else {
             switch (args[0]) {
                 case "F":
@@ -543,6 +536,9 @@ public class OracleVsCompleteBBExperiment {
                 algConfig = new LeaderGenerationConfig(rootState);
                 expander = new RandomGameExpander<>(algConfig);
                 runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+                s1.setLPSolvingMethod(4);
+                s1.setGadgetDiscount(0.05*gameInfo.getMaxUtility());
+                s1.setHullApproximation(0.3, true, false);
             }
             runner.generate(rootState.getAllPlayers()[LEADER], s1);
 //            double rgSize = runner.getRestrictedGameRatio();
@@ -581,6 +577,7 @@ public class OracleVsCompleteBBExperiment {
             SumForbiddingStackelbergLP s2;
 //                s2 = new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
             s2 = new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo);//, s1.getVariableIndices(), s1.getConstraints());
+            s2.setLPSolvingMethod(4);
             runner.generate(rootState.getAllPlayers()[LEADER], s2);
 //                mergeISsOutsideSGStats(issOutside, runner.getIssOutsideSubGame(LEADER));
 
@@ -700,7 +697,7 @@ public class OracleVsCompleteBBExperiment {
         if (algVersion.equals("O")) {
             int lpSolvingAlg = GadgetLPTable.CPLEXALG;
             if(args.length > 8) lpSolvingAlg = Integer.parseInt(args[8]);
-            int use_discounts = 1;
+            int use_discounts = 0;
             if(args.length > 9) use_discounts = Integer.parseInt(args[9]);
             double eps = 1e-7;
             if(args.length > 10) eps = Double.valueOf(args[10]);
@@ -711,6 +708,11 @@ public class OracleVsCompleteBBExperiment {
                 delta = Double.valueOf(args[11]);
                 useProjection = args[12].equals("1");
                 useLocalUtility = args[13].equals("1");
+            }
+            int rounding = 2;
+            double discount = Math.round(((int) Math.pow(10, rounding)) * 0.01 * gameInfo.getMaxUtility()) / Math.pow(10, rounding);
+            if(args.length > 14){
+                discount = Math.round(((int) Math.pow(10, rounding)) * Double.valueOf(args[14]) * gameInfo.getMaxUtility()) / Math.pow(10, rounding);
             }
             String gadgetType = args[7];
             GadgetOracle2pSumForbiddingLP s1 = null;
@@ -740,6 +742,7 @@ public class OracleVsCompleteBBExperiment {
                 s1.setEps(eps);
                 s1.setEpsilonDiscounts(use_discounts == 1);
                 s1.setHullApproximation(delta, useLocalUtility, useProjection);
+                s1.setGadgetDiscount(discount);
 
             }
             runner.generate(rootState.getAllPlayers()[LEADER], s1);
@@ -751,7 +754,7 @@ public class OracleVsCompleteBBExperiment {
             int lpSolvingAlg = GadgetLPTable.CPLEXALG;
             if(args.length > 7) lpSolvingAlg = Integer.parseInt(args[7]);
             double eps = 1e-7;
-            if(args.length > 8) eps = Double.valueOf(args[8]);
+            if(args.length > 9) eps = Double.valueOf(args[9]);
             startGeneration = threadBean.getCurrentThreadCpuTime();
             algConfig = new StackelbergConfig(rootState);
             expander = new RandomGameExpander<>(algConfig);
@@ -1009,6 +1012,13 @@ public class OracleVsCompleteBBExperiment {
             int lpSolvingAlg = 1;
             if(args.length > 6) lpSolvingAlg = Integer.parseInt(args[6]);
             if (args.length > 5) gadgetType = args[5];
+            double eps = 1e-7;
+            if(args.length > 11) eps = Double.valueOf(args[11]);
+            int rounding = 2;
+            double discount = Math.round(((int) Math.pow(10, rounding)) * 0.01 * gameInfo.getMaxUtility()) / Math.pow(10, rounding);
+            if(args.length > 12){
+                discount = Math.round(((int) Math.pow(10, rounding)) * Double.valueOf(args[12]) * gameInfo.getMaxUtility()) / Math.pow(10, rounding);
+            }
             GadgetOracle2pSumForbiddingLP s1 = null;
 //                s1 = new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
 //                s1 = new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo);
@@ -1035,6 +1045,8 @@ public class OracleVsCompleteBBExperiment {
                 s1.setLPSolvingMethod(lpSolvingAlg);
                 s1.setEpsilonDiscounts(use_discounts==1);
                 s1.setHullApproximation(delta, useLocalUtility, useProjection);
+                s1.setGadgetDiscount(discount);
+                s1.setEps(eps);
             }
             runner.generate(rootState.getAllPlayers()[LEADER], s1);
             fullTime = (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
@@ -1044,7 +1056,7 @@ public class OracleVsCompleteBBExperiment {
 //
         if (algVersion.equals("F")) {
             int lpSolvingAlg = 1;
-            if(args.length > 6) lpSolvingAlg = Integer.parseInt(args[6]);
+            if(args.length > 5) lpSolvingAlg = Integer.parseInt(args[5]);
             startGeneration = threadBean.getCurrentThreadCpuTime();
             algConfig = new StackelbergConfig(rootState);
             expander = new PursuitExpander<>(algConfig);
@@ -1207,6 +1219,11 @@ public class OracleVsCompleteBBExperiment {
                 useProjection = args[11].equals("1");
                 useLocalUtility = args[12].equals("1");
             }
+            int rounding = 2;
+            double discount = Math.round(((int) Math.pow(10, rounding)) * 0.01 * gameInfo.getMaxUtility()) / Math.pow(10, rounding);
+            if(args.length > 13){
+                discount = Math.round(((int) Math.pow(10, rounding)) * Double.valueOf(args[13]) * gameInfo.getMaxUtility()) / Math.pow(10, rounding);
+            }
             String gadgetType = "LP";
             if (args.length > 6) gadgetType = args[6];
             switch (gadgetType) {
@@ -1220,6 +1237,7 @@ public class OracleVsCompleteBBExperiment {
                     oracle = new GadgetOracle2pShallowestAllCplexLP(rootState.getAllPlayers()[LEADER], gameInfo);
                     break;
             }
+            oracle.setGadgetDiscount(discount);
             oracle.setLPSolvingMethod(lpSolvingAlg);
             oracle.setEpsilonDiscounts(use_discounts == 1);
             oracle.setEps(eps);
@@ -1279,6 +1297,7 @@ public class OracleVsCompleteBBExperiment {
 
     public static void runFlipIt(String[] args) {
         LEADER = 0;
+        int startingSeed = 17;
         boolean runComplete = true;
         FlipItGameInfo gameInfo;
         int maxseed = 10;
@@ -1286,7 +1305,7 @@ public class OracleVsCompleteBBExperiment {
             gameInfo = new FlipItGameInfo();
         else {
             int depth = Integer.parseInt(args[1]);
-            int graphSize = Integer.parseInt(args[2]);
+            String graphSize = args[2];
             String graphFile = "flipit_simple" + graphSize + ".txt";
 //            String graphFile = (graphSize == 3 ) ? "flipit_empty3.txt" : (graphSize == 4 ? "flipit_empty4.txt" : (graphSize == 5 ? "flipit_empty5.txt" : ""));
             gameInfo = new FlipItGameInfo(depth, 1, graphFile, 1);
@@ -1344,7 +1363,6 @@ public class OracleVsCompleteBBExperiment {
         ArrayList<Long> fullTimes = new ArrayList<>();
         ArrayList<Long> oracleTimes = new ArrayList<>();
 
-        int startingSeed = 70;
 
         for (int seed = startingSeed; seed < startingSeed+maxseed; seed++) {
             System.out.println();
@@ -1368,6 +1386,7 @@ public class OracleVsCompleteBBExperiment {
             if (runComplete) {
                 runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
                 fullLP = new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo);
+                fullLP.setLPSolvingMethod(4);
                 runner.generate(rootState.getAllPlayers()[LEADER], fullLP);
 
                 fullGameGV = runner.getGameValue();
@@ -1390,6 +1409,7 @@ public class OracleVsCompleteBBExperiment {
             runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
             startGeneration = threadBean.getCurrentThreadCpuTime();
             GadgetOracle2pSumForbiddingLP oracle = new GadgetOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo);
+            oracle.setLPSolvingMethod(4);
 //            LeaderOracle2pSumForbiddingLP oracle = new LeaderOracle2pSumForbiddingLP(rootState.getAllPlayers()[LEADER], gameInfo, false, true);
             runner.generate(rootState.getAllPlayers()[LEADER], oracle);
             oracleTime += (threadBean.getCurrentThreadCpuTime() - startGeneration) / 1000000l;
@@ -1449,13 +1469,15 @@ public class OracleVsCompleteBBExperiment {
             System.gc();
         }
         System.out.println("Not converged seeds = " + notConvergedSeeds.toString());
-        ArrayList<Long> times = new ArrayList<>();
+        ArrayList<Double> times = new ArrayList<>();
         for (int i = 0; i < fullTimes.size(); i++)
-            times.add(fullTimes.get(i) - oracleTimes.get(i));
+            times.add(fullTimes.get(i) / (double)oracleTimes.get(i));
         System.out.println("Min = " + Collections.min(times));
         System.out.println("Max = " + Collections.max(times));
         Collections.sort(times);
         System.out.println("Median = " + times.get(Math.round(times.size() / 2)));
+        double sum = 0.0; for (double d : times) sum += d;
+        System.out.println("Average = " + (sum/times.size()));
     }
 
     public static GameState initGame(FlipItGameInfo gameInfo, int seed) {

@@ -1,10 +1,10 @@
 package cz.agents.gtlibrary.algorithms.stackelberg.oracle;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.LeaderGenerationConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetAction;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetSefceLPWithoutMiddleState;
+import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.tables.GadgetLPTable;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
@@ -25,7 +25,7 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
 
     public GadgetOracle2pSumForbiddingLP(Player leader, GameInfo info) {
         super(leader, info);
-        eps = 1e-6;
+        eps = 1e-5;
     }
 
     @Override
@@ -38,6 +38,13 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
         Pair<Map<Sequence, Double>, Double> solution = solve(-info.getMaxUtility(), info.getMaxUtility());
         if (MAKE_GADGET_STATS) writeGadgetStats();
         gameValue = solution.getRight();
+
+//        int i = 0;
+//        for(GameState state: expandingGadgets)
+//            if(gadgetRoots.containsKey(state.getSequenceFor(leader)) && gadgetRoots.get(state.getSequenceFor(leader)).contains(state))
+//                i++;
+//        System.out.println("Zbytecne expandovanych gadget = " + i);
+
         System.out.println("final number of gadgets created: " + (gadgetsDismissed+gadgetRootsSequences.size()));
         return gameValue;
     }
@@ -64,11 +71,13 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 //            lpData.getSolver().exportModel("SSEIter.lp");
             startTime = threadBean.getCurrentThreadCpuTime();
+            clearGadgetStructuresBeforeSolve();
             System.out.printf("Solving...");
             lpData.getSolver().solve();
             System.out.println("done.");
             bnbBranchingCount++;
             overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
+            System.out.println("invocation " + bnbBranchingCount + " solving time = " + (threadBean.getCurrentThreadCpuTime() - startTime) / 1000000l);
 //            printBinaryVariableValues(lpData);
             if (lpData.getSolver().getStatus() == IloCplex.Status.Optimal) {
                 double value = lpData.getSolver().getObjValue();
@@ -108,7 +117,7 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
                     return new Pair<Map<Sequence, Double>, Double>(new HashMap<>(), value);
 
                 } else {
-                    if (value <= lowerBound + eps) {
+                    if (value <= lowerBound + eps*info.getMaxUtility()) {
                         System.out.println("***********lower bound " + lowerBound + " not exceeded, cutting***********");
                         return new Pair<Map<Sequence, Double>, Double>(new HashMap<>(), Double.NEGATIVE_INFINITY);
                     }
@@ -147,16 +156,18 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
             if (TUNE_LP) tuneSolver(lpData);
 
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
-            if (EXPORT_LP) lpData.getSolver().exportModel("Gadget2pSEFCE.lp");
+            if (EXPORT_LP) lpData.getSolver().exportModel("Gadget2pSEFCE_"+iteration+"_.lp");
+            clearGadgetStructuresBeforeSolve();
             startTime = threadBean.getCurrentThreadCpuTime();
             if (PRINT_PROGRESS || PRINT_SOLVING) System.out.printf("Solving...");
             lpData.getSolver().solve();
             if (PRINT_PROGRESS || PRINT_SOLVING) System.out.println("done");
             overallConstraintLPSolvingTime += threadBean.getCurrentThreadCpuTime() - startTime;
+            System.out.println("Iteration " + iteration + " solving time = " + ((threadBean.getCurrentThreadCpuTime() - startTime)/ 1000000l));
             if (lpData.getSolver().getStatus() == IloCplex.Status.Optimal) {
                 gameValue = lpData.getSolver().getObjValue();
 //                System.out.println("-----------------------");
-                System.out.println("SEFCE reward: " + gameValue);
+                System.out.println("Iteration " + iteration + " SEFCE reward: " + gameValue);
 
                 // compute RPs
                 Map<Sequence, Double> leaderRealPlan = null;
@@ -312,7 +323,7 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
 
             if (result.getRight() > currentBest.getRight()) {
                 currentBest = result;
-                if (currentBest.getRight() >= value - eps) {
+                if (currentBest.getRight() >= value - eps*info.getMaxUtility()) {
                     System.out.println("----------------currentBest " + currentBest.getRight() + " reached parent reward " + value + "----------------");
                     return currentBest;
                 }
@@ -339,6 +350,7 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
 
                         lpTable.setConstraint(eqKey, p, 1);
                         lpTable.setConstraintType(eqKey, 1);
+                        createdConstraints.add(eqKey);
 
                         if (!p.getLeft().isEmpty() && p.getLeft().getLast() instanceof GadgetAction) {
                             if (!eqsToDelete.containsKey(((GadgetAction) p.getLeft().getLast()).getState()))
@@ -360,7 +372,10 @@ public class GadgetOracle2pSumForbiddingLP extends GadgetSefceLPWithoutMiddleSta
 
                     if (p.getRight().equals(brokenStrategyCause)) {
                         Pair<String, Pair<Sequence, Sequence>> eqKey = new Pair<>("restr", p);
-                        lpTable.deleteConstraintWithoutVars(eqKey);
+                        if (lpTable instanceof GadgetLPTable) {
+                            deletedConstraints.put(eqKey, ((GadgetLPTable) lpTable).getVarsInEq(eqKey));
+                            ((GadgetLPTable) lpTable).deleteConstraintWithoutVars(eqKey);
+                        }
                     }
                 }
             }

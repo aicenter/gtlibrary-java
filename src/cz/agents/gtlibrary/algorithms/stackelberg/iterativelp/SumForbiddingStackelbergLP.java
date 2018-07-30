@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.br.FollowerBestResponse;
@@ -26,7 +27,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
     public static boolean USE_BR_CUT = false;
 
     protected double eps;
-    protected RecyclingMILPTable lpTable;
+    protected LPTable lpTable;
     protected Player leader;
     protected Player follower;
     protected GameInfo info;
@@ -41,7 +42,7 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
 
     public SumForbiddingStackelbergLP(Player leader, GameInfo info) {
         super(new Player[]{info.getAllPlayers()[0], info.getAllPlayers()[1]}, leader, info.getOpponent(leader));
-        lpTable = new RecyclingMILPTable();
+        lpTable = new LPTable();//RecyclingMILPTable();
         this.leader = leader;
         this.follower = info.getOpponent(leader);
         this.info = info;
@@ -313,7 +314,9 @@ public class SumForbiddingStackelbergLP extends StackelbergSequenceFormLP {
                         Pair<String, Pair<Sequence, Sequence>> eqKey = new Pair<>("restr", p);
 
                         lpTable.removeFromConstraint(eqKey, p);
-                        lpTable.removeConstant(eqKey);
+                        if (lpTable instanceof RecyclingLPTable)
+                            ((RecyclingLPTable) lpTable).removeConstant(eqKey);
+//                        lpTable.removeConstant(eqKey);
                     }
                 }
             }

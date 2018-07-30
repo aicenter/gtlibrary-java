@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.stackelberg.iterativelp;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPData;
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.RecyclingLPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.iterativelp.sets.SequenceSet;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.InformationSet;
@@ -95,7 +96,8 @@ public class SumEnforcingStackelbergLP extends SumForbiddingStackelbergLP {
 
                         lpTable.removeFromConstraint(eqKey, p);
                         lpTable.removeFromConstraint(eqKey, prefixKey);
-                        lpTable.removeConstant(eqKey);
+                        if (lpTable instanceof RecyclingLPTable)
+                            ((RecyclingLPTable) lpTable).removeConstant(eqKey);
                     }
                 }
             }

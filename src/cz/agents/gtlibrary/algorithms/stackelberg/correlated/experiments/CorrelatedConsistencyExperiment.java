@@ -54,11 +54,11 @@ public class CorrelatedConsistencyExperiment {
 //        runGenSumRandomImproved();
 //        runBPG(new String[]{"B", "4", "1"});
 //        runFlipIt(args);
-//        runFlipIt(new String[]{"F", "6", "2", "F", "5"});
+        runFlipIt(new String[]{"F", "3", "1", "AP", "1"});
 //            runFlipIt(new String[]{"F", "3", "3", "F", "20"});
 //            runFlipItGeneration(new String[]{"F", "2", "2", "AP", "10"});
 //            runOshiZumo(args);
-            runPursuit(new String[]{"P", "4", "20"});
+//            runPursuit(new String[]{"P", "4", "20"});
         } else {
             switch (args[0]) {
                 case "F":

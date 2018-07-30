@@ -8,7 +8,7 @@ import java.util.HashMap;
  */
 public class TestGame1 implements GameDefinition {
 
-    protected static final boolean USE_TL = false;
+    protected static final boolean USE_TL = !false;
 
         // State -> States
     public static final HashMap<Integer, ArrayList<Integer>> successors = new HashMap<Integer, ArrayList<Integer>>() {{
