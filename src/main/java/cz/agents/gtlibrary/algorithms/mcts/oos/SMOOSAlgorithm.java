@@ -27,10 +27,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.Pair;
@@ -62,9 +59,9 @@ protected double epsilon = 0.6;
         this.simulator = simulator;
         this.epsilon = epsilon;
         if (rootState.isPlayerToMoveNature())
-            this.rootNode = new ChanceNode(expander, rootState, random);
+            this.rootNode = new ChanceNodeImpl(expander, rootState, random);
         else
-            this.rootNode = new InnerNode(expander, rootState);
+            this.rootNode = new InnerNodeImpl(expander, rootState);
         threadBean = ManagementFactory.getThreadMXBean();
         config = rootNode.getAlgConfig();
         this.rnd = random;
@@ -346,7 +343,7 @@ protected double epsilon = 0.6;
 //            }
 //            is = config.getInformationSetFor(gameState);
 //            is.setAlgorithmData(new OOSAlgorithmData(in.getActions()));
-            InnerNode in = new InnerNode(expander, gameState);
+            InnerNode in = new InnerNodeImpl(expander, gameState);
 
             is = in.getInformationSet();
             is.setAlgorithmData(new OOSAlgorithmData(in.getActions()));

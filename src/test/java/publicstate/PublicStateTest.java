@@ -3,8 +3,8 @@ package publicstate;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.ocr.OCR_CFV_Experiments;
 import cz.agents.gtlibrary.iinodes.ISKey;
@@ -37,25 +37,25 @@ public class PublicStateTest extends OCR_CFV_Experiments {
 
         exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
 
-        InnerNode rootNode;
+        InnerNodeImpl rootNode;
         if (exp.rootState.isPlayerToMoveNature()) {
-            rootNode = new ChanceNode(exp.expander, exp.rootState, 0);
+            rootNode = new ChanceNodeImpl(exp.expander, exp.rootState, 0);
         } else {
-            rootNode = new InnerNode(exp.expander, exp.rootState);
+            rootNode = new InnerNodeImpl(exp.expander, exp.rootState);
         }
 
         // build set of "inner" game states to compare with
         Set<GameState> expectedInnerGameStates = new HashSet<>();
-        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
+        ArrayDeque<InnerNodeImpl> q = new ArrayDeque<InnerNodeImpl>();
         expectedInnerGameStates.add(exp.rootState);
         q.add(rootNode);
         HashMap<ISKey, MCTSInformationSet> infoSets = ((MCTSConfig) exp.expander.getAlgorithmConfig()).getAllInformationSets();
         while (!q.isEmpty()) {
-            InnerNode n = q.removeFirst();
+            InnerNodeImpl n = q.removeFirst();
             for (Action a : n.getActions()) {
                 Node ch = n.getChildFor(a);
-                if (ch instanceof InnerNode) {
-                    q.add((InnerNode) ch);
+                if (ch instanceof InnerNodeImpl) {
+                    q.add((InnerNodeImpl) ch);
                     // added state should always be novel (states are unique within the game)
                     assertTrue(expectedInnerGameStates.add(ch.getGameState()));
                 }

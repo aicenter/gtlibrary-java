@@ -19,35 +19,19 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
-
-import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 
-import java.io.Serializable;
+public class LeafNodeImpl extends NodeImpl implements LeafNode {
 
-public interface Node extends Serializable {
-    GameState getGameState();
+    private final double[] utilities;
 
-    int getDepth();
+    public LeafNodeImpl(InnerNode parent, GameState gameState, Action lastAction) {
+        super(parent, lastAction, gameState);
+        this.utilities = gameState.getUtilities();
+    }
 
-    Expander<MCTSInformationSet> getExpander();
-
-    MCTSConfig getAlgConfig();
-
-    InnerNode getParent();
-
-    void setParent(InnerNode parent);
-
-    Action getLastAction();
-
-    void setLastAction(Action lastAction);
-
-    AlgorithmData getAlgorithmData();
-
-    void setAlgorithmData(AlgorithmData algorithmData);
-
+    public double[] getUtilities() {
+        return utilities;
+    }
 }

@@ -21,10 +21,7 @@ package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.*;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Selector;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
@@ -58,9 +55,9 @@ public class GenSumISMCTSAlgorithm implements GamePlayingAlgorithm {
         this.simulator = simulator;
         this.fact = fact;
         if (rootState.isPlayerToMoveNature())
-            this.rootNode = new ChanceNode(expander, rootState, fact.getRandom());
+            this.rootNode = new ChanceNodeImpl(expander, rootState, fact.getRandom());
         else
-            this.rootNode = new InnerNode(expander, rootState);
+            this.rootNode = new InnerNodeImpl(expander, rootState);
         backupRootNode = rootNode;
         threadBean = ManagementFactory.getThreadMXBean();
         curISArray = new InnerNode[]{rootNode};
@@ -250,7 +247,7 @@ public class GenSumISMCTSAlgorithm implements GamePlayingAlgorithm {
 //                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
 //            }
 //            is = config.getInformationSetFor(gameState);
-            InnerNode in = new InnerNode(expander, gameState);
+            InnerNode in = new InnerNodeImpl(expander, gameState);
 
             is = in.getInformationSet();
             is.setAlgorithmData(fact.createSelector(expander.getActions(gameState)));

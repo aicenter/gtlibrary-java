@@ -25,10 +25,7 @@ package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.*;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMSelector;
 import cz.agents.gtlibrary.interfaces.*;
@@ -58,9 +55,9 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         this.fact = fact;
         this.expander = expander;
         if (rootState.isPlayerToMoveNature())
-            this.rootNode = new ChanceNode(expander, rootState, fact.getRandom());
+            this.rootNode = new ChanceNodeImpl(expander, rootState, fact.getRandom());
         else
-            this.rootNode = new InnerNode(expander, rootState);
+            this.rootNode = new InnerNodeImpl(expander, rootState);
         config = rootNode.getAlgConfig();
         threadBean = ManagementFactory.getThreadMXBean();
     }
@@ -170,7 +167,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
 //                in = (InnerNode) in.getChildFor(gameState.getSequenceFor(gameState.getAllPlayers()[2]).getLast());
 //            }
 //            is = config.getInformationSetFor(gameState);
-            InnerNode in = new InnerNode(expander, gameState);
+            InnerNode in = new InnerNodeImpl(expander, gameState);
 
             is = in.getInformationSet();
             assert !is.getAllNodes().isEmpty();

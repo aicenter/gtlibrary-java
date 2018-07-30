@@ -43,8 +43,8 @@ public abstract class NodeImpl implements Node {
         this.parent = parent;
         this.lastAction = lastAction;
         this.gameState = gameState;
-        this.expander = parent.expander;
-        depth = parent.depth + 1;
+        this.expander = parent.getExpander();
+        depth = parent.getDepth() + 1;
     }
 
     public NodeImpl(Expander<MCTSInformationSet> expander, GameState gameState) {

@@ -29,10 +29,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.experiments.SMConvergenceExperiment;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.*;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.runner.SMJournalExperiments;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
@@ -146,11 +143,11 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         this.delta = delta;
         this.epsilon = epsilon;
         if (rootState.isPlayerToMoveNature()) {
-            this.rootNode = new ChanceNode(expander, rootState, rnd);
+            this.rootNode = new ChanceNodeImpl(expander, rootState, rnd);
             //InnerNode next = (InnerNode) rootNode.getChildFor((Action) (expander.getActions(rootState).get(0)));
             //curIS = next.getInformationSet();
         } else {
-            this.rootNode = new InnerNode(expander, rootState);
+            this.rootNode = new InnerNodeImpl(expander, rootState);
             curIS = rootNode.getInformationSet();
         }
         OOSAlgorithmData.useEpsilonRM = false;

@@ -27,10 +27,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.*;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.experiments.StrategyStrengthLargeExperiments;
@@ -132,8 +129,8 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
 
     public CFRAlgorithm(Player searchingPlayer, GameState rootState, Expander expander) {
         this.searchingPlayer = searchingPlayer;
-        if (rootState.isPlayerToMoveNature()) this.rootNode = new ChanceNode(expander, rootState);
-        else this.rootNode = new InnerNode(expander, rootState);
+        if (rootState.isPlayerToMoveNature()) this.rootNode = new ChanceNodeImpl(expander, rootState);
+        else this.rootNode = new InnerNodeImpl(expander, rootState);
         threadBean = ManagementFactory.getThreadMXBean();
     }
 
