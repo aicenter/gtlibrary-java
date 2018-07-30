@@ -26,9 +26,10 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
@@ -59,10 +60,7 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class OCR_CFV_Experiments {
 
@@ -349,6 +347,9 @@ public class OCR_CFV_Experiments {
         this.alg = alg;
 
         buildCompleteTree(alg.getRootNode());
+
+        this.gadgetTest();
+
         System.err.println("Several first infosets:");
         printSeveralFirstInfoSets(alg.getRootNode(), 10, 10, new HashSet<>());
 
@@ -377,6 +378,28 @@ public class OCR_CFV_Experiments {
 
             loop++;
         } while (exploitability > minExploitability);
+    }
+
+    private void gadgetTest() {
+        Set<MCTSPublicState> publicStates = ((OOSAlgorithm) this.alg).getRootNode().getAlgConfig().getAllPublicStates();
+        Iterator it = publicStates.iterator();
+        it.next();it.next();
+        MCTSPublicState publicState = (MCTSPublicState) it.next();
+        Set<GameState> states = publicState.getAllStates();
+        Set<GameState> reconstructStates = new HashSet<>();
+        Set<InnerNode> reconstructNodes = new HashSet<>();
+
+        for(GameState state : states) {
+            GameState copied = state.copy();
+            reconstructStates.add(copied);
+            InnerNode gadgetNode = new InnerNodeImpl(expander, copied);
+            reconstructNodes.add(gadgetNode);
+
+            buildCompleteTree(gadgetNode);
+        }
+
+
+
     }
 
     private void printSeveralFirstInfoSets(InnerNode state, int maxDepth, int maxNames, Set<String> uniqueISNames) {

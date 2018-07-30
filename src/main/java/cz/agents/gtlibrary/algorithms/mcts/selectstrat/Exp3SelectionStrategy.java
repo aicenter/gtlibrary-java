@@ -24,9 +24,9 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Player;
+
 import java.util.Arrays;
 import java.util.List;
 

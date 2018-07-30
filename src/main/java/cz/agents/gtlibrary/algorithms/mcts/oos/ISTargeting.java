@@ -7,10 +7,9 @@
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;

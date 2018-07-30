@@ -6,7 +6,7 @@
 
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 

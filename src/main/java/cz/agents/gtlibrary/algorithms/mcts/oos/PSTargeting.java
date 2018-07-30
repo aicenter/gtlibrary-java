@@ -19,7 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.History;
 import cz.agents.gtlibrary.interfaces.InformationSet;

@@ -23,14 +23,10 @@ import cz.agents.gtlibrary.algorithms.mcts.oos.SMOOSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.SMMCTSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
 import cz.agents.gtlibrary.algorithms.mcts.*;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BasicStats;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTSelector;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
@@ -57,11 +53,9 @@ import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimAlphaBetaAlgorithm;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
-import java.util.ArrayDeque;
 
 import java.util.List;
 import java.util.Random;
-import java.util.Scanner;
 
 public class SMJournalOnlineExperiments {
 

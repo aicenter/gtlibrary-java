@@ -27,7 +27,7 @@ import cz.agents.gtlibrary.algorithms.cfr.ir.FixedForIterationData;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFR;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRConfig;
 import cz.agents.gtlibrary.algorithms.cfr.ir.IRCFRInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;

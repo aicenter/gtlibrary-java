@@ -28,17 +28,15 @@ import cz.agents.gtlibrary.algorithms.mcts.SMMCTSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
 import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.FrequenceDistribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.ConjectureFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.ABackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Exp3BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
-import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMConjectureFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
@@ -62,16 +60,11 @@ import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 import cz.agents.gtlibrary.strategy.Strategy;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.Map;
-import javax.print.attribute.standard.DateTimeAtCompleted;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  *

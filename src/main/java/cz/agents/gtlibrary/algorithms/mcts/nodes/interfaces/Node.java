@@ -17,22 +17,37 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
+package cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces;
 
 
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameState;
 
 import java.io.Serializable;
 
-public interface Selector extends Serializable, AlgorithmData {
+public interface Node extends Serializable {
+    GameState getGameState();
 
-    /**
-     * Returns selected action index.
-     */
-    public int select();
-    /**
-    * Updates the selector with action result
-    */
-    public void update(int selection, double value);
+    int getDepth();
+
+    Expander<MCTSInformationSet> getExpander();
+
+    MCTSConfig getAlgConfig();
+
+    InnerNode getParent();
+
+    void setParent(InnerNode parent);
+
+    Action getLastAction();
+
+    void setLastAction(Action lastAction);
+
+    AlgorithmData getAlgorithmData();
+
+    void setAlgorithmData(AlgorithmData algorithmData);
 
 }

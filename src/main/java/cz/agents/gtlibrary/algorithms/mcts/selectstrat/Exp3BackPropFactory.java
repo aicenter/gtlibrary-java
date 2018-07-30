@@ -23,8 +23,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.mcts.selectstrat;
 
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
