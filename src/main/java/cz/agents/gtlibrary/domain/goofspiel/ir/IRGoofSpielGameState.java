@@ -31,7 +31,7 @@ public class IRGoofSpielGameState extends IIGoofSpielGameState {
 
     @Override
     public ISKey getISKeyForPlayerToMove() {
-        if (key == null) {
+        if (isKey == null) {
             Player player = getPlayerToMove();
 
             if (player.equals(GSGameInfo.FIRST_PLAYER)) {
@@ -42,15 +42,15 @@ public class IRGoofSpielGameState extends IIGoofSpielGameState {
                     if (getSequenceForPlayerToMove().size() >= i)
                         observations.add(new ObservationImpl(((GoofSpielAction) getSequenceForPlayerToMove().get(getSequenceForPlayerToMove().size() - i)).getValue()));
                 }
-                key = new ImperfectRecallISKey(observations, null, null);
+                isKey = new ImperfectRecallISKey(observations, null, null);
             } else {
                 Observations observations = new Observations(player, player);
 
                 observations.add(new PerfectRecallObservation((PerfectRecallISKey) super.getISKeyForPlayerToMove()));
-                key = new ImperfectRecallISKey(observations, null, null);
+                isKey = new ImperfectRecallISKey(observations, null, null);
             }
         }
-        return key;
+        return isKey;
     }
 
     @Override

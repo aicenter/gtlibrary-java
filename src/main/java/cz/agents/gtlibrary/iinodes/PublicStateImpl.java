@@ -13,7 +13,7 @@ public class PublicStateImpl implements PublicState {
     private final int hashCode;
 
     public PublicStateImpl(GameState state) {
-        this.psKey = state.getPSKeyForPlayerToMove();
+        this.psKey = ((DomainWithPublicState) state).getPSKeyForPlayerToMove();
         this.gameStatesInPublicState.add(state);
         this.hashCode = psKey.getHash();
     }

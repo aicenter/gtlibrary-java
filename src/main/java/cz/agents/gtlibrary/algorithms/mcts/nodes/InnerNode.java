@@ -23,10 +23,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.Selector;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.PublicState;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 import java.util.List;
@@ -74,8 +71,10 @@ public class InnerNode extends NodeImpl {
         informationSet.addStateToIS(gameState);
     }
     private void attendPublicState() {
-        publicState = getAlgConfig().getPublicStateFor(gameState);
-        publicState.addStateToPublicState(gameState);
+        if(gameState instanceof DomainWithPublicState) {
+            publicState = getAlgConfig().getPublicStateFor(gameState);
+            publicState.addStateToPublicState(gameState);
+        }
     }
 
     protected Node getNewChildAfter(Action action) {

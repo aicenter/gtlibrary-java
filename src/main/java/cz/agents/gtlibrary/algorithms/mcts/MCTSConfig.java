@@ -118,7 +118,7 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
 
     @Override
     public MCTSPublicState getPublicStateFor(GameState gameState) {
-        PSKey psKey = gameState.getPSKeyForPlayerToMove();
+        PSKey psKey = ((DomainWithPublicState) gameState).getPSKeyForPlayerToMove();
         MCTSPublicState publicState = allPublicStates.get(psKey);
 
         if (publicState == null) {
