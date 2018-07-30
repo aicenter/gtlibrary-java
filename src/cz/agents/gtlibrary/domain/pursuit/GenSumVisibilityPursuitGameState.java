@@ -19,10 +19,10 @@ public class GenSumVisibilityPursuitGameState extends VisibilityPursuitGameState
     @Override
     protected double[] getEndGameUtilities() {
         if (isCaughtInNode() || isCaughtOnEdge())
-//            return new double[]{scaleUtility(-1), scaleUtility(2 - getSequenceFor(PursuitGameInfo.PATROLLER).size()*PursuitGameInfo.patrollerMoveCost)};
-//        return new double[]{scaleUtility(1), 0};
-            return new double[]{-10 + this.round, 20 - this.round*2};
-        return new double[]{5 + this.round, -20};
+            return new double[]{scaleUtility(-1), scaleUtility(2 - getSequenceFor(PursuitGameInfo.PATROLLER).size()*PursuitGameInfo.patrollerMoveCost)};
+        return new double[]{scaleUtility(1), 0};
+//            return new double[]{-10 + this.round, 20 - this.round*2};
+//        return new double[]{5 + this.round, -20};
 
     }
 

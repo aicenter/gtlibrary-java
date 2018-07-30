@@ -67,14 +67,14 @@ public class OracleVsCompleteBBExperiment {
 //            runGenSumRandomOneSeed(new String[]{"RO", "3", "3", "5","-0.4", "4", "F", "3", "AMILP", "3"});
 //        runGenSumRandomImproved();
 //            runBPG(new String[]{"B", "4", "1"});
-            runBPGOneSeed(new String[]{"B", "3", "1", "O", "LP", "4", "0"});
+//            runBPGOneSeed(new String[]{"B", "3", "1", "O", "LP", "4", "0"});
 //        runFlipIt(args);
-        runFlipIt(new String[]{"F", "4", "3", "AP", "100"});
+//        runFlipIt(new String[]{"F", "4", "3", "AP", "100"});
 //            for (int seed = 50; seed < 80; seed++)
 //                runFlipItOneSeed(new String[]{"F", "3", "3", "AP", Integer.toString(seed), "F"});
 //            runFlipItOneSeed(new String[]{"F", "3", "5", "AP", "128", "O" ,"LP", "4", "0", Double.toString(1e-12)});
 //            runPursuit(new String[]{"P", "3", "4", "10"});
-//            runPursuitOneSeed(new String[]{"PO", "3", "3", "2", "O", "LP", "2"});
+            runPursuitOneSeed(new String[]{"PO", "4", "4", "0", "O", "LP", "4", "1", "0.35", "0", "0"}); //   PO 3 4 0 O LP 4 1 0.15 0 1
         } else {
             switch (args[0]) {
                 case "F":
@@ -1044,7 +1044,7 @@ public class OracleVsCompleteBBExperiment {
 //
         if (algVersion.equals("F")) {
             int lpSolvingAlg = 1;
-            if(args.length > 5) lpSolvingAlg = Integer.parseInt(args[5]);
+            if(args.length > 6) lpSolvingAlg = Integer.parseInt(args[6]);
             startGeneration = threadBean.getCurrentThreadCpuTime();
             algConfig = new StackelbergConfig(rootState);
             expander = new PursuitExpander<>(algConfig);
