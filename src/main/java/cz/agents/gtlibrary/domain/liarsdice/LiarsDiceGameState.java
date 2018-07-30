@@ -22,18 +22,17 @@ import java.util.LinkedList;
 import java.util.Iterator;
 
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
+import cz.agents.gtlibrary.interfaces.*;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 
-public class LiarsDiceGameState extends GameStateImpl {
+public class LiarsDiceGameState extends GameStateImpl implements DomainWithPublicState {
     protected ISKey cachedISKey = null;
+    protected PSKey cachedPSKey = null;
 
     protected int currentBid = 0;
     protected int previousBid = 0;
@@ -197,6 +196,44 @@ public class LiarsDiceGameState extends GameStateImpl {
         
         cachedISKey = new PerfectRecallISKey(hc, history.getSequenceOf(getPlayerToMove()));
         return cachedISKey;
+    }
+
+    @Override
+    public PSKey getPSKeyForPlayerToMove() {
+        if (cachedPSKey != null) {
+            return cachedPSKey;
+        }
+
+        int hc = 0;
+
+        if (isPlayerToMoveNature()) { // nature plays only in the beginning
+            hc = getRound();
+        } else {
+            hc = LDGameInfo.P1DICE+LDGameInfo.P2DICE;
+
+            if (getPlayerToMove().getId() == 0) {
+                for (int i = 0; i < LDGameInfo.P1DICE; i++) {
+                    hc *= LDGameInfo.FACES;
+                    hc += rolls[i];
+                }
+            } else {
+                for (int i = 0; i < LDGameInfo.P2DICE; i++) {
+                    hc *= LDGameInfo.FACES;
+                    hc += rolls[LDGameInfo.P1DICE + i];
+                }
+            }
+            hc <<= LDGameInfo.CALLBID;
+            assert LDGameInfo.CALLBID < 30 && hc >= 0; //otherwise it has overrun
+
+            for (Action a : getSequenceFor(getPlayerToMove())) { // current player
+                hc |= 1 << ((LiarsDiceAction) a).getValue();
+            }
+            for (Action a : getSequenceFor(getAllPlayers()[1 - getPlayerToMove().getId()])) { // opponent
+                hc |= 1 << ((LiarsDiceAction) a).getValue();
+            }
+        }
+        cachedPSKey = new PSKey(hc);
+        return cachedPSKey;
     }
 
     @Override

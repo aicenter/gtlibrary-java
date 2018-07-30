@@ -20,10 +20,13 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.domain.goofspiel;
 
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.Iterator;
 
@@ -44,9 +47,9 @@ public class IIGoofSpielGameState extends GoofSpielGameState {
 
     @Override
     public ISKey getISKeyForPlayerToMove() {
-        if (key == null) {
+        if (isKey == null) {
             if (isPlayerToMoveNature())
-                key = new PerfectRecallISKey(0, history.getSequenceOf(getPlayerToMove()));
+                isKey = new PerfectRecallISKey(0, history.getSequenceOf(getPlayerToMove()));
             else {
                 int code = playerScore[0];
                 Iterator<Action> it = sequenceForAllPlayers.iterator();
@@ -57,10 +60,41 @@ public class IIGoofSpielGameState extends GoofSpielGameState {
                     code *= 3;
                     code += 1 + Math.signum(a0.compareTo(a1));
                 }
-                key = new PerfectRecallISKey(code, getSequenceForPlayerToMove());
+                isKey = new PerfectRecallISKey(code, getSequenceForPlayerToMove());
             }
         }
-        return key;
+        return isKey;
+    }
+
+    @Override
+    public PSKey getPSKeyForPlayerToMove() {
+        if (psKey == null) {
+            int hash = 0;
+            int gap = GSGameInfo.depth + 1;
+
+            int p1Action = 0;
+            int p2Action = 0;
+
+            for (Pair<Player, Action> edge: history.getHistory()) {
+                GoofSpielAction goofSpielAction = (GoofSpielAction) edge.getRight();
+                Integer playerIdx = edge.getLeft().getId();
+
+                int turn;
+                if (playerIdx == GSGameInfo.NATURE.getId()) {
+                    turn = goofSpielAction.getValue();
+                } else if (playerIdx == GSGameInfo.FIRST_PLAYER.getId()) {
+                    p1Action = goofSpielAction.getValue();
+                    turn = 1;
+                } else { // SECOND_PLAYER
+                    p2Action = goofSpielAction.getValue();
+                    turn = (int) Math.signum(p1Action-p2Action)+1;
+                }
+                hash *= gap;
+                hash += turn;
+            }
+            psKey = new PSKey(hash);
+        }
+        return psKey;
     }
 
     @Override

@@ -19,21 +19,18 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.rps;
 
+import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
-import cz.agents.gtlibrary.utils.FastTanh;
-import cz.agents.gtlibrary.utils.Pair;
+import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class RPSGameState extends SimultaneousGameState {
+public class RPSGameState extends SimultaneousGameState implements DomainWithPublicState {
 
     // lanctot: Note: maybe need to change this
     private static final long serialVersionUID = -1885423234236725674L;
@@ -44,7 +41,8 @@ public class RPSGameState extends SimultaneousGameState {
     protected int[] playerActions; 
     private int currentPlayerIndex;
 
-    protected ISKey key;
+    protected ISKey isKey;
+    protected PSKey psKey;
     private int hashCode = -1;
 
     // standard game
@@ -125,7 +123,7 @@ public class RPSGameState extends SimultaneousGameState {
     }
 
     private void cleanCache() {
-        key = null;
+        isKey = null;
         hashCode = -1;
     }
 
@@ -211,13 +209,22 @@ public class RPSGameState extends SimultaneousGameState {
 
     @Override
     public ISKey getISKeyForPlayerToMove() {
-        if (key == null) {
+        if (isKey == null) {
             if (isPlayerToMoveNature())
-                key = new PerfectRecallISKey(0, history.getSequenceOf(getPlayerToMove()));
+                isKey = new PerfectRecallISKey(0, history.getSequenceOf(getPlayerToMove()));
             else
-                key = new PerfectRecallISKey(sequenceForAllPlayers.hashCode(), getSequenceForPlayerToMove());
+                isKey = new PerfectRecallISKey(sequenceForAllPlayers.hashCode(), getSequenceForPlayerToMove());
         }
-        return key;
+        return isKey;
+    }
+
+    @Override
+    public PSKey getPSKeyForPlayerToMove() {
+        if (psKey == null) {
+            System.err.println("> "+history);
+            psKey = new PSKey(history.getLength()-1);
+        }
+        return psKey;
     }
 
     @Override

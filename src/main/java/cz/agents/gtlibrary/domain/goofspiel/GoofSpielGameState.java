@@ -19,21 +19,16 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.domain.goofspiel;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
-import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.iinodes.*;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FastTanh;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
+import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.*;
 import java.util.Map.Entry;
 
-public class GoofSpielGameState extends SimultaneousGameState {
+public class GoofSpielGameState extends SimultaneousGameState implements DomainWithPublicState {
 
     private static final long serialVersionUID = -1885375538236725674L;
 
@@ -47,7 +42,8 @@ public class GoofSpielGameState extends SimultaneousGameState {
     protected int round;
     private int currentPlayerIndex;
 
-    protected ISKey key;
+    protected ISKey isKey;
+    protected PSKey psKey;
     private int hashCode = -1;
 
     public GoofSpielGameState() {
@@ -167,7 +163,7 @@ public class GoofSpielGameState extends SimultaneousGameState {
     }
 
     private void cleanCache() {
-        key = null;
+        isKey = null;
         hashCode = -1;
     }
 
@@ -432,16 +428,47 @@ public class GoofSpielGameState extends SimultaneousGameState {
 
     @Override
     public ISKey getISKeyForPlayerToMove() {
-        if (key == null) {
+        if (isKey == null) {
             if (isPlayerToMoveNature())
-                key = new PerfectRecallISKey(0, new ArrayListSequenceImpl(
+                isKey = new PerfectRecallISKey(0, new ArrayListSequenceImpl(
                         getSequenceForPlayerToMove()));
             else
-                key = new PerfectRecallISKey(
+                isKey = new PerfectRecallISKey(
                         sequenceForAllPlayers.hashCode(),
                         new ArrayListSequenceImpl(getSequenceForPlayerToMove()));
         }
-        return key;
+        return isKey;
+    }
+
+    @Override
+    public PSKey getPSKeyForPlayerToMove() {
+        if (psKey == null) {
+            int hash = 0;
+            int gap = GSGameInfo.depth + 1;
+
+            int p1Action = 0;
+            int p2Action = 0;
+
+            for (Pair<Player, Action> edge: history.getHistory()) {
+                GoofSpielAction goofSpielAction = (GoofSpielAction) edge.getRight();
+                Integer playerIdx = edge.getLeft().getId();
+
+                int turn;
+                if (playerIdx == GSGameInfo.NATURE.getId()) {
+                    turn = goofSpielAction.getValue();
+                } else if (playerIdx == GSGameInfo.FIRST_PLAYER.getId()) {
+                    p1Action = goofSpielAction.getValue();
+                    turn = 1;
+                } else { // SECOND_PLAYER
+                    p2Action = goofSpielAction.getValue();
+                    turn = p1Action + gap*p2Action;
+                }
+                hash *= 2*gap;
+                hash += turn;
+            }
+            psKey = new PSKey(hash);
+        }
+        return psKey;
     }
 
     public Collection<Integer> getCardsForPlayerToMove() {

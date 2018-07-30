@@ -63,8 +63,6 @@ public interface GameState extends Serializable {
 
 	public ISKey getISKeyForPlayerToMove();
 
-	public PSKey getPSKeyForPlayerToMove();
-
 	public boolean checkConsistency(Action action);
 
     public double[] evaluate();
