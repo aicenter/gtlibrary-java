@@ -2,9 +2,14 @@ package cz.agents.gtlibrary.iinodes;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.DomainWithPublicState;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.PublicState;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -56,13 +61,31 @@ public class PublicStateImpl implements PublicState {
     }
 
     @Override
+    public Set<PublicState> getNextPublicStates() {
+        Set<PublicState> nextPS = new HashSet<>();
+        for (InnerNode node : gameNodesInPublicState) {
+            for(Action a : node.getActions()) {
+                Node nextNode = node.getChildFor(a);
+                if(nextNode instanceof LeafNode) continue;
+                if (nextNode instanceof ChanceNode) {
+                    nextPS.addAll(((ChanceNode) nextNode).getPublicState().getNextPublicStates());
+                } else {
+                    assert nextNode instanceof InnerNode;
+                    nextPS.add(((InnerNode) nextNode).getPublicState());
+                }
+            }
+        }
+        return nextPS;
+    }
+
+    @Override
     public PSKey getPSKey() {
         return psKey;
     }
 
     @Override
     public String toString() {
-        return "PS:("+psKey+")";
+        return "PS:(" + psKey + ")";
     }
 
     @Override

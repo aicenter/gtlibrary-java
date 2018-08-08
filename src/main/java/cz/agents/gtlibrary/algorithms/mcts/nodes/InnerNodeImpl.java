@@ -29,6 +29,7 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class InnerNodeImpl extends NodeImpl implements InnerNode {
 

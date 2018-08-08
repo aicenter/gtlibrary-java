@@ -389,7 +389,7 @@ public class MCCR_CFV_Experiments {
     private void runMCCR() {
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
         MCCRAlgorithm alg = new MCCRAlgorithm(rootState, expander, 0.6);
-
+        this.alg = alg;
 //        System.err.println("Several first infosets:");
 //        printSeveralFirstInfoSets(alg.getRootNode(), 10, 10, new HashSet<>());
 
@@ -406,10 +406,11 @@ public class MCCR_CFV_Experiments {
 //        OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
 //        printHeader(data);
 
-//        Double exploitability;
+        Double exploitability;
 //        for (int loop = 1; loop <= 100; loop++) {
-            alg.runIterations(1000000, 10000);
-//            exploitability = calcAggregateExploitability();
+        alg.solveEntireGame(100, 100000);
+        exploitability = calcExploitability();
+        System.out.println(exploitability);
 //            printIterationStatistics(loop * numItersPerLoop, data, exploitability);
 //        }
     }

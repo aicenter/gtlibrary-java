@@ -50,6 +50,7 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
         double isCFV;
         if(data.getIsVisitsCnt() == 0) {
             isCFV = CFV_NOT_VISITED_VALUE;
+            System.err.println(">>> CFV!");
         } else {
             isCFV = data.getIsCFV();
         }

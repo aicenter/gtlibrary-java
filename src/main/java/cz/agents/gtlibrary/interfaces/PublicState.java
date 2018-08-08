@@ -21,7 +21,6 @@ package cz.agents.gtlibrary.interfaces;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.iinodes.PSKey;
 
 import java.io.Serializable;
@@ -29,8 +28,14 @@ import java.util.Set;
 
 public interface PublicState extends Serializable {
     Set<GameState> getAllStates();
+
     Set<InnerNode> getAllNodes();
+
     Set<MCTSInformationSet> getAllInformationSets();
+
     void addNodeToPublicState(InnerNode node);
+
+    Set<PublicState> getNextPublicStates();
+
     PSKey getPSKey();
 }

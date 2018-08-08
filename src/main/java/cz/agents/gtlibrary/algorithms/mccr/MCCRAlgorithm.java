@@ -133,6 +133,27 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
         return action;
     }
 
+    public void solveEntireGame(int iterationsInRoot, int iterationsPerGadgetGame) {
+        System.err.println("Using " +
+                "iterationsInRoot="+iterationsInRoot+" " +
+                "iterationsPerGadgetGame="+iterationsPerGadgetGame);
+
+        Node curNode = getRootNode();
+        runRootMCCFR(iterationsInRoot);
+
+        ArrayDeque<PublicState> q = new ArrayDeque<>();
+        q.add(getRootNode().getPublicState());
+        while (!q.isEmpty()) {
+            PublicState s = q.removeFirst();
+
+            Node n = s.getAllNodes().iterator().next();
+            runStep(n, iterationsPerGadgetGame);
+
+            q.addAll(s.getNextPublicStates());
+        }
+
+    }
+
     private void buildTreeExpandChanceNodes(InnerNode startNode) {
         // basically expand all chance actions in the root, before the first players can act
         System.err.println("Building tree until first public states.");
