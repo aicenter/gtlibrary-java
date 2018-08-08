@@ -36,7 +36,11 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     protected List<Action> actions;
     protected MCTSInformationSet informationSet;
     private MCTSPublicState publicState;
+    private double reachPr = 1.;
 
+    /**
+     * Non-root node constructor
+     */
     public InnerNodeImpl(InnerNode parent, GameState gameState, Action lastAction) {
         super(parent, lastAction, gameState);
         attendInformationSet();
@@ -46,8 +50,12 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
         children = new FixedSizeMap<Action, Node>(actions.size());
     }
 
+    /**
+     * Root node constructor
+     */
     public InnerNodeImpl(Expander<MCTSInformationSet> expander, GameState gameState) {
         super(expander, gameState);
+        this.reachPr = 1;
         attendInformationSet();
         attendPublicState();
         if (actions == null)
@@ -73,8 +81,13 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     }
     private void attendPublicState() {
         if(gameState instanceof DomainWithPublicState) {
-            publicState = getAlgConfig().getPublicStateFor(gameState);
-            publicState.addStateToPublicState(gameState);
+            publicState = getAlgConfig().getPublicStateFor(this);
+            publicState.addNodeToPublicState(this);
+            if(informationSet!=null) {
+                informationSet.setPublicState(publicState);
+            } else {
+                assert gameState.isPlayerToMoveNature();
+            }
         }
     }
 
@@ -149,5 +162,16 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
 
     public void setActions(List<Action> actions) {
         this.actions = actions;
+    }
+
+    // reach probability of opponent player to this history
+    @Override
+    public double getReachPr() {
+        return reachPr;
+    }
+
+    @Override
+    public void setReachPr(double reachPr) {
+        this.reachPr = reachPr;
     }
 }

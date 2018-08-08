@@ -19,15 +19,18 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.interfaces;
 
-import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.iinodes.PSKey;
 
 import java.io.Serializable;
 import java.util.Set;
 
 public interface PublicState extends Serializable {
-    public Set<GameState> getAllStates();
-    public void addStateToPublicState(GameState state);
-    public void addInfoSetToPublicState(InformationSet state);
-    public PSKey getPSKey();
+    Set<GameState> getAllStates();
+    Set<InnerNode> getAllNodes();
+    Set<MCTSInformationSet> getAllInformationSets();
+    void addNodeToPublicState(InnerNode node);
+    PSKey getPSKey();
 }

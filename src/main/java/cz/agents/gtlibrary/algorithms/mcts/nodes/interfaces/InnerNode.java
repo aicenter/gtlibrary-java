@@ -3,26 +3,43 @@ package cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Player;
 
 import java.util.List;
 import java.util.Map;
 
 public interface InnerNode extends Node {
-    public Node getChildOrNull(Action action);
+    Node getChildOrNull(Action action);
 
-    public Node getChildFor(Action action);
+    Node getChildFor(Action action);
 
-    public List<Action> getActions();
+    List<Action> getActions();
 
-    public MCTSInformationSet getInformationSet();
+    void setActions(List<Action> actions);
 
-    public MCTSPublicState getPublicState();
+    MCTSInformationSet getInformationSet();
 
-    public void setInformationSet(MCTSInformationSet informationSet);
+    void setInformationSet(MCTSInformationSet informationSet);
 
-    public Map<Action, Node> getChildren();
+    MCTSPublicState getPublicState();
 
-    public void setChildren(Map<Action, Node> children);
+    Map<Action, Node> getChildren();
 
-    public void setActions(List<Action> actions);
+    void setChildren(Map<Action, Node> children);
+
+    double getReachPr();
+
+    void setReachPr(double meanStrategyActionPr);
+
+    default Player getPlayerToMove() {
+        return getGameState().getPlayerToMove();
+    }
+
+    default boolean isPlayerMoving(Player player) {
+        return player.equals(getPlayerToMove());
+    }
+
+    default boolean isGameEnd() {
+        return false;
+    }
 }

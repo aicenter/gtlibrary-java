@@ -17,17 +17,19 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.mcts.experiments;
+package cz.agents.gtlibrary.algorithms.mccr;
 
 import cz.agents.gtlibrary.algorithms.mcts.ISMCTSExploitability;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
@@ -58,18 +60,15 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-public class OCR_CFV_Experiments {
+public class MCCR_CFV_Experiments {
 
-    private GameInfo gameInfo;
-    private GameState rootState;
-    private SQFBestResponseAlgorithm brAlg0;
-    private SQFBestResponseAlgorithm brAlg1;
-    private Expander expander;
+    protected GameInfo gameInfo;
+    protected GameState rootState;
+    protected SQFBestResponseAlgorithm brAlg0;
+    protected SQFBestResponseAlgorithm brAlg1;
+    protected Expander expander;
 
     private String trackCFVinInformationSet;
     private GamePlayingAlgorithm alg;
@@ -78,36 +77,44 @@ public class OCR_CFV_Experiments {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: OnlineContinualResolvingExperiments " +
-                    "[trackingISName] {OOS|MCCFR|OCR} {LD|GS|OZ|PE|RG|RPS|Tron} [domain parameters].");
+            System.err.println("Missing Arguments: MCCR_CFV_Experiments " +
+                    "[trackingISName] {OOS|MCCFR|MCCR} {LD|GS|OZ|PE|RG|RPS|Tron} [seed] [domain parameters ... ].");
             System.exit(-1);
         }
 
         String trackCFVinInformationSet = args[0];
         String alg = args[1];
         String domain = args[2];
+        long seed = new Long(args[3]);
+        Random rnd = new Random(seed);
 
-        OCR_CFV_Experiments exp = new OCR_CFV_Experiments();
+        MCCR_CFV_Experiments exp = new MCCR_CFV_Experiments();
         exp.setTracking(trackCFVinInformationSet);
-        exp.handleDomain(domain, Arrays.copyOfRange(args, 3, args.length));
-        exp.loadGame(domain);
+        exp.handleDomain(domain, Arrays.copyOfRange(args, 4, args.length));
+        exp.loadGame(domain, rnd);
         exp.runAlgorithm(alg);
     }
 
     public static void buildCompleteTree(InnerNode r) {
         System.err.println("Building complete tree.");
-        int nodes = 0, infosets = 0;
+        int nodes = 0, infosets = 0, publicStates = 0;
         ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
         q.add(r);
         while (!q.isEmpty()) {
             nodes++;
             InnerNode n = q.removeFirst();
             MCTSInformationSet is = n.getInformationSet();
-            if (!(n instanceof ChanceNode))
+            MCTSPublicState ps = n.getPublicState();
+            if (!(n instanceof ChanceNode)) {
                 if (is.getAlgorithmData() == null) {
                     infosets++;
                     is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
                 }
+            }
+            if (ps.getAlgorithmData() == null) {
+                publicStates++;
+                ps.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+            }
             for (Action a : n.getActions()) {
                 Node ch = n.getChildFor(a);
                 if (ch instanceof InnerNode) {
@@ -115,10 +122,10 @@ public class OCR_CFV_Experiments {
                 }
             }
         }
-        System.err.println("Created nodes: " + nodes + "; infosets: " + infosets);
+        System.err.println("Created nodes: " + nodes + "; infosets: " + infosets + "; public states: " + publicStates);
     }
 
-    private void handleDomain(String domain, String[] domainParams) {
+    public void handleDomain(String domain, String[] domainParams) {
         switch (domain) {
             case "IIGS": // Goofspiel
                 if (domainParams.length != 4) {
@@ -141,6 +148,7 @@ public class OCR_CFV_Experiments {
                 LDGameInfo.P1DICE = new Integer(domainParams[0]);
                 LDGameInfo.P2DICE = new Integer(domainParams[1]);
                 LDGameInfo.FACES = new Integer(domainParams[2]);
+                LDGameInfo.CALLBID = (LDGameInfo.P1DICE + LDGameInfo.P2DICE) * LDGameInfo.FACES + 1;
                 break;
             case "OZ":  // Oshi Zumo
                 if (domainParams.length != 5) {
@@ -185,7 +193,7 @@ public class OCR_CFV_Experiments {
                 TronGameInfo.ROWS = new Integer(domainParams[2]);
                 TronGameInfo.COLS = new Integer(domainParams[3]);
                 break;
-            case "RPS":  // Rock Paper Scissors
+            case "RPS":  // Tron
                 if (domainParams.length != 1) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
                             "1 parameter is required {SEED}");
@@ -197,42 +205,44 @@ public class OCR_CFV_Experiments {
         }
     }
 
-    private void loadGame(String domain) {
+    public void loadGame(String domain, Random rnd) {
+        MCTSConfig mctsConfig = new MCTSConfig(rnd);
+
         switch (domain) {
             case "IIGS":
                 gameInfo = new GSGameInfo();
                 rootState = new IIGoofSpielGameState();
-                expander = new GoofSpielExpander<>(new MCTSConfig());
+                expander = new GoofSpielExpander<>(mctsConfig);
                 break;
             case "LD":
                 gameInfo = new LDGameInfo();
                 rootState = new LiarsDiceGameState();
-                expander = new LiarsDiceExpander<>(new MCTSConfig());
+                expander = new LiarsDiceExpander<>(mctsConfig);
                 break;
             case "PE":
                 gameInfo = new PursuitGameInfo();
                 rootState = new PursuitGameState();
-                expander = new PursuitExpander<>(new MCTSConfig());
+                expander = new PursuitExpander<>(mctsConfig);
                 break;
             case "OZ":
                 gameInfo = new OZGameInfo();
                 rootState = new OshiZumoGameState();
-                expander = new OshiZumoExpander<>(new MCTSConfig());
+                expander = new OshiZumoExpander<>(mctsConfig);
                 break;
             case "RG":
                 gameInfo = new RandomGameInfo();
                 rootState = new SimRandomGameState();
-                expander = new RandomGameExpander<>(new MCTSConfig());
+                expander = new RandomGameExpander<>(mctsConfig);
                 break;
             case "Tron":
                 gameInfo = new TronGameInfo();
                 rootState = new TronGameState();
-                expander = new TronExpander<>(new MCTSConfig());
+                expander = new TronExpander<>(mctsConfig);
                 break;
             case "RPS":
                 gameInfo = new RPSGameInfo();
                 rootState = new RPSGameState();
-                expander = new RPSExpander<>(new MCTSConfig());
+                expander = new RPSExpander<>(mctsConfig);
                 break;
             default:
                 throw new IllegalArgumentException("Incorrect game:" + domain);
@@ -240,14 +250,17 @@ public class OCR_CFV_Experiments {
         System.err.println(gameInfo.getInfo());
     }
 
-    private void runAlgorithm(String alg) {
+    public void runAlgorithm(String alg) {
         System.err.println("Using algorithm " + alg);
-        OOSAlgorithmData.gatherCFV = true;
+        OOSAlgorithmData.gatherActionCFV = true;
         if (alg.equals("OOS")) {
             runOOS(0.9, 0.6);
         }
         if (alg.equals("MCCFR")) {
             runMCCFR(0.6);
+        }
+        if (alg.equals("MCCR")) {
+            runMCCR();
         }
     }
 
@@ -263,7 +276,7 @@ public class OCR_CFV_Experiments {
     }
 
     private void printHeader(OOSAlgorithmData data) {
-        double[] incrementalCFVs = data.getIncrementalCfv();
+        double[] incrementalCFVs = data.getActionCFV();
         double[] mp = data.getMp();
 
         System.out.print("iteration,exploitability");
@@ -277,7 +290,7 @@ public class OCR_CFV_Experiments {
     }
 
     private void printIterationStatistics(int iterCnt, OOSAlgorithmData data, double exploitability) {
-        double[] incrementalCFVs = data.getIncrementalCfv();
+        double[] incrementalCFVs = data.getActionCFV();
         double[] mp = data.getMp();
 
         // print iteration info
@@ -342,6 +355,7 @@ public class OCR_CFV_Experiments {
         this.alg = alg;
 
         buildCompleteTree(alg.getRootNode());
+
         System.err.println("Several first infosets:");
         printSeveralFirstInfoSets(alg.getRootNode(), 10, 10, new HashSet<>());
 
@@ -370,6 +384,56 @@ public class OCR_CFV_Experiments {
 
             loop++;
         } while (exploitability > minExploitability);
+    }
+
+    private void runMCCR() {
+        expander.getAlgorithmConfig().createInformationSetFor(rootState);
+        MCCRAlgorithm alg = new MCCRAlgorithm(rootState, expander, 0.6);
+
+//        System.err.println("Several first infosets:");
+//        printSeveralFirstInfoSets(alg.getRootNode(), 10, 10, new HashSet<>());
+
+        Distribution dist = new MeanStratDist();
+        brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
+                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
+                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
+        brAlg1 = new SQFBestResponseAlgorithm(expander, 1,
+                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
+                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
+
+//        System.err.println("Searching for IS " + trackCFVinInformationSet);
+//        MCTSInformationSet is = identifyTargetInfoSet(alg.getRootNode(), trackCFVinInformationSet);
+//        OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
+//        printHeader(data);
+
+//        Double exploitability;
+//        for (int loop = 1; loop <= 100; loop++) {
+            alg.runIterations(1000000, 10000);
+//            exploitability = calcAggregateExploitability();
+//            printIterationStatistics(loop * numItersPerLoop, data, exploitability);
+//        }
+    }
+
+    private void gadgetTest() {
+        Set<MCTSPublicState> publicStates = ((OOSAlgorithm) this.alg).getRootNode().getAlgConfig().getAllPublicStates();
+        Iterator it = publicStates.iterator();
+        it.next();it.next();
+        MCTSPublicState publicState = (MCTSPublicState) it.next();
+        Set<GameState> states = publicState.getAllStates();
+        Set<GameState> reconstructStates = new HashSet<>();
+        Set<InnerNode> reconstructNodes = new HashSet<>();
+
+        for(GameState state : states) {
+            GameState copied = state.copy();
+            reconstructStates.add(copied);
+            InnerNode gadgetNode = new InnerNodeImpl(expander, copied);
+            reconstructNodes.add(gadgetNode);
+
+            buildCompleteTree(gadgetNode);
+        }
+
+
+
     }
 
     private void printSeveralFirstInfoSets(InnerNode state, int maxDepth, int maxNames, Set<String> uniqueISNames) {

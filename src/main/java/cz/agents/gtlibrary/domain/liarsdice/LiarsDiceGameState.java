@@ -17,18 +17,19 @@
  along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 package cz.agents.gtlibrary.domain.liarsdice;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Iterator;
-
+import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
-import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.DomainWithPublicState;
+import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
-import cz.agents.gtlibrary.iinodes.GameStateImpl;
-import cz.agents.gtlibrary.utils.Pair;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class LiarsDiceGameState extends GameStateImpl implements DomainWithPublicState {
     protected ISKey cachedISKey = null;
@@ -279,7 +280,9 @@ public class LiarsDiceGameState extends GameStateImpl implements DomainWithPubli
 
     @Override
     public String toString() {
-        return history.toString();
+        return history.getHistory().stream()
+                .map(pair -> pair.getLeft().getId()+"_"+((LiarsDiceAction) pair.getRight()).getValue())
+                .collect(Collectors.joining(", "));
     }
 
     protected void clearCachedValues() {

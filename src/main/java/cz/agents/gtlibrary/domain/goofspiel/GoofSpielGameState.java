@@ -27,6 +27,7 @@ import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class GoofSpielGameState extends SimultaneousGameState implements DomainWithPublicState {
 
@@ -443,7 +444,7 @@ public class GoofSpielGameState extends SimultaneousGameState implements DomainW
     @Override
     public PSKey getPSKeyForPlayerToMove() {
         if (psKey == null) {
-            int hash = 0;
+            int hash = 1;
             int gap = GSGameInfo.depth + 1;
 
             int p1Action = 0;
@@ -477,7 +478,9 @@ public class GoofSpielGameState extends SimultaneousGameState implements DomainW
 
     @Override
     public String toString() {
-        return history.toString();
+        return history.getHistory().stream()
+                .map(pair -> pair.getLeft().getId()+"_"+((GoofSpielAction) pair.getRight()).getValue())
+                .collect(Collectors.joining(", "));
     }
 
     public int getSumOfRemainingCards() {

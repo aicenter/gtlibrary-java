@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetISKey;
 import cz.agents.gtlibrary.interfaces.*;
 
 public abstract class InformationSetImpl implements PerfectRecallInformationSet {
@@ -38,14 +39,22 @@ public abstract class InformationSetImpl implements PerfectRecallInformationSet 
 		this.playerHistory = state.getSequenceForPlayerToMove();
 		this.player = state.getPlayerToMove();
 		this.statesInInformationSet.add(state);
-		this.hashCode = ((PerfectRecallISKey)state.getISKeyForPlayerToMove()).getHash();
+//		this.hashCode = ((PerfectRecallISKey)state.getISKeyForPlayerToMove()).getHash();
+
+		ISKey iskey = state.getISKeyForPlayerToMove();
+		assert iskey instanceof PerfectRecallISKey || iskey instanceof GadgetISKey;
+		this.hashCode = iskey.hashCode();
 	}
 	
 	public InformationSetImpl(GameState state, Sequence sequence) {
 		this.playerHistory = new ArrayListSequenceImpl(sequence);
 		this.player = state.getPlayerToMove();
 		this.statesInInformationSet.add(state);
-		this.hashCode = ((PerfectRecallISKey)state.getISKeyForPlayerToMove()).getHash();
+//		this.hashCode = ((PerfectRecallISKey)state.getISKeyForPlayerToMove()).getHash();
+
+		ISKey iskey = state.getISKeyForPlayerToMove();
+		assert iskey instanceof PerfectRecallISKey || iskey instanceof GadgetISKey;
+		this.hashCode = iskey.hashCode();
 	}
 
 	@Override

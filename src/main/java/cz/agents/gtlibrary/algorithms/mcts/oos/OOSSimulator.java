@@ -23,6 +23,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.Simulator;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
@@ -53,7 +54,8 @@ public class OOSSimulator implements Simulator {
     }
 
     public OOSSimulator(Expander expander) {
-        this(Integer.MAX_VALUE, expander, new HighQualityRandom());
+//        this(Integer.MAX_VALUE, expander, new HighQualityRandom());
+        this(Integer.MAX_VALUE, expander, ((MCTSConfig) expander.getAlgorithmConfig()).getRandom());
     }
     
     public OOSSimulator(Expander expander, long seed) {
@@ -71,7 +73,7 @@ public class OOSSimulator implements Simulator {
         playersProb = 1;
         playerProb[0]=playerProb[1]=1;
 
-        GameStateImpl state = (GameStateImpl) gameState.copy();
+        GameState state = gameState.copy();
         
         int step=0;
         while (!state.isGameEnd()) {

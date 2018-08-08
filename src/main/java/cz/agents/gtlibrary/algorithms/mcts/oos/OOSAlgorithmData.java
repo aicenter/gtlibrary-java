@@ -49,19 +49,21 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     private int actionCount;
 
     /** enable this flag to gather statistics about the CFV for each action */
-    public static boolean gatherCFV = false;
-    private double[] incrementalCfv;
-    private double n;
+    public static boolean gatherActionCFV = false;
+    private double[] actionCFV;
+    private double isCFV;
+    private double isVisitsCnt;
 
 
     public OOSAlgorithmData(int actionCount) {
         mp = new double[actionCount];
         r = new double[actionCount];
         this.actionCount = actionCount;
+        isCFV = 0.0;
+        isVisitsCnt = 0;
 
-        if (gatherCFV) {
-            incrementalCfv = new double[actionCount];
-            this.n = 0;
+        if (gatherActionCFV) {
+            actionCFV = new double[actionCount];
         }
     }
 
@@ -70,10 +72,11 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         this.actionCount = actions.size();
         mp = new double[actions.size()];
         r = new double[actions.size()];
+        this.isVisitsCnt = 0;
+        isCFV = 0.0;
 
-        if (gatherCFV) {
-            incrementalCfv = new double[actionCount];
-            this.n = 0;
+        if (gatherActionCFV) {
+            actionCFV = new double[actionCount];
         }
     }
 
@@ -85,15 +88,21 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         r = new double[actionCount];
         System.arraycopy(data.r, 0, r, 0, data.r.length);
 
-        if(gatherCFV) {
-            incrementalCfv = new double[actionCount];
-            System.arraycopy(data.r, 0, r, 0, data.incrementalCfv.length);
-            this.n = data.n;
+        isCFV = data.isCFV;
+        isVisitsCnt = data.isVisitsCnt;
+
+        if(gatherActionCFV) {
+            actionCFV = new double[actionCount];
+            System.arraycopy(data.actionCFV, 0, actionCFV, 0, data.actionCFV.length);
         }
     }
 
     public void getRMStrategy(double[] output) {
         final int K = actionCount;
+        if(K == 0) {
+            System.err.println("fuck");
+        }
+
         double R = 0;
         for (double ri : r) R += Math.max(0,ri);
         
@@ -110,16 +119,20 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return out;
     }
     
-    public void updateRegret(int ai, double W, double c, double x){
-        if(gatherCFV) n++;
+    public void updateRegret(int ai, double u, double pi, double pi_, double pi_c, double l, double c, double x){
+        double W = u * pi_ / l;
+        isVisitsCnt++;
 
         for (int i=0; i<r.length; i++){
             if (i==ai) r[i] += (c-x)*W;
             else r[i] += -x*W;
 
-            if(gatherCFV) {
-                if (i==ai) incrementalCfv[i] += ((W*c) - incrementalCfv[i]) / n;
-                else incrementalCfv[i] -=  incrementalCfv[i] / n;
+            double update_CFV = -u * (pi * pi_c) * c / l;
+            isCFV += (update_CFV - isCFV) / isVisitsCnt;
+
+            if(gatherActionCFV) {
+                if (i==ai) actionCFV[i] += ((W*c) - actionCFV[i]) / isVisitsCnt;
+                else actionCFV[i] -=  actionCFV[i] / isVisitsCnt;
             }
         }
     }
@@ -193,8 +206,20 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return actionCount;
     }
 
-    public double[] getIncrementalCfv() {
-        return incrementalCfv;
+    public double[] getActionCFV() {
+        return actionCFV;
+    }
+
+    public double getIsCFV() {
+        return isCFV;
+    }
+
+    public void setIsCFV(double isCFV) {
+        this.isCFV = isCFV;
+    }
+
+    public double getIsVisitsCnt() {
+        return isVisitsCnt;
     }
 
     public void setFrom(OOSAlgorithmData other) {
@@ -203,6 +228,40 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         System.arraycopy(other.mp, 0, mp, 0, other.mp.length);
         System.arraycopy(other.r, 0, r, 0, other.r.length);
         nbSamples = other.getNbSamples();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        OOSAlgorithmData that = (OOSAlgorithmData) o;
+
+        if (nbSamples != that.nbSamples) return false;
+        if (actionCount != that.actionCount) return false;
+        if (Double.compare(that.isCFV, isCFV) != 0) return false;
+        if (Double.compare(that.isVisitsCnt, isVisitsCnt) != 0) return false;
+        if (actions != null ? !actions.equals(that.actions) : that.actions != null) return false;
+        if (!Arrays.equals(mp, that.mp)) return false;
+        if (!Arrays.equals(r, that.r)) return false;
+        return Arrays.equals(actionCFV, that.actionCFV);
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        result = actions != null ? actions.hashCode() : 0;
+        result = 31 * result + Arrays.hashCode(mp);
+        result = 31 * result + Arrays.hashCode(r);
+        result = 31 * result + nbSamples;
+        result = 31 * result + actionCount;
+        result = 31 * result + Arrays.hashCode(actionCFV);
+        temp = Double.doubleToLongBits(isCFV);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(isVisitsCnt);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        return result;
     }
 }
 

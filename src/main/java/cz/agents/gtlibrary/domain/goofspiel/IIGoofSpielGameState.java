@@ -69,7 +69,7 @@ public class IIGoofSpielGameState extends GoofSpielGameState {
     @Override
     public PSKey getPSKeyForPlayerToMove() {
         if (psKey == null) {
-            int hash = 0;
+            int hash = 1;
             int gap = GSGameInfo.depth + 1;
 
             int p1Action = 0;

@@ -26,6 +26,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
 
 import java.io.Serializable;
 
@@ -50,4 +51,13 @@ public interface Node extends Serializable {
 
     void setAlgorithmData(AlgorithmData algorithmData);
 
+    default Player[] getAllPlayers() {
+        return getGameState().getAllPlayers();
+    }
+
+    default double getProbabilityOfNatureFor(Action action) {
+        return getGameState().getProbabilityOfNatureFor(action);
+    }
+
+    boolean isGameEnd();
 }

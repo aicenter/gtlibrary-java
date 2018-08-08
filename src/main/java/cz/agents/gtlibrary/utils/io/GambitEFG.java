@@ -19,9 +19,16 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.utils.io;
 
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
+import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -46,6 +53,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -53,15 +61,16 @@ import java.util.Map;
  * Assumes that nodes with the same hashCode() of information set key pair belong to the same information set (without check on equals())
  */
 public class GambitEFG {
-    private boolean wActionLabels = true;
-    private boolean wNodeLabels = false;
-    private boolean wISKeys = false; // if false, writes PS keys
+    private boolean wActionLabels = false;
+    private boolean wNodeLabels = true;
+    private boolean wISKeys = true; // if false, writes PS keys
     private Map<ISKey, Integer> infSetIndices;
     private int maxIndex;
 
     public static void main(String[] args) {
 //        exportRandomGame();
-        exportIIGoofSpiel();
+//        exportIIGoofSpiel();
+        exportLD();
 //        exportPhantomTTT();
     }
 
@@ -95,23 +104,26 @@ public class GambitEFG {
 
         GambitEFG exporter = new GambitEFG();
 
-
-        System.out.println("GoofSpielGameState");
-
         GameInfo gameInfo = new GSGameInfo(); // call to init natureSequence
 
         IIGoofSpielGameState root = new IIGoofSpielGameState();
-
-        System.out.println(root);
-
-
-        System.out.println("getNatureSequence");
-        System.out.println(root.getNatureSequence());
-
-        System.out.println("buildAndWrite");
-
         //exporter.buildAndWrite("MyGoofSpiel.gbt", root, new GoofSpielExpander<SimABInformationSet>(new SimABConfig()));
         exporter.buildAndWrite("MyIIGoofSpiel_"+(exporter.wISKeys?"IS":"PT")+".gbt", root, new GoofSpielExpander<>(new SequenceFormConfig<>()));
+    }
+
+    public static void exportLD() {
+        // setup Game:
+        LDGameInfo.P1DICE = 1;
+        LDGameInfo.P2DICE = 1;
+        LDGameInfo.FACES = 2;
+        LDGameInfo.CALLBID = (LDGameInfo.P1DICE + LDGameInfo.P2DICE) * LDGameInfo.FACES + 1;
+
+        GambitEFG exporter = new GambitEFG();
+
+        GameInfo gameInfo = new LDGameInfo();
+        LiarsDiceGameState root = new LiarsDiceGameState();
+
+        exporter.buildAndWrite("LD_"+(exporter.wISKeys?"IS":"PT")+".gbt", root, new LiarsDiceExpander<>(new SequenceFormConfig<>()));
     }
 
     public GambitEFG() {
@@ -123,11 +135,16 @@ public class GambitEFG {
         write(filename, root, expander, Integer.MAX_VALUE);
     }
 
+    public void write(String filename, Node root) {
+        write(filename, root, Integer.MAX_VALUE);
+    }
+
     public void write(String filename, GameState root, Expander<? extends InformationSet> expander, int cut_off_depth) {
 //        HashCodeEvaluator evaluator = new HashCodeEvaluator();
 //
 //        evaluator.build(root, expander);
 //        assert evaluator.getCollisionCount() == 0;
+        System.err.println("Writing to "+filename);
         try {
             PrintStream out = new PrintStream(filename);
 
@@ -141,6 +158,27 @@ public class GambitEFG {
             nextOutcome = 1;
             nextChance = 1;
             writeRec(out, root, expander, cut_off_depth);
+            out.flush();
+            out.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void write(String filename, Node root, int cut_off_depth) {
+        try {
+            PrintStream out = new PrintStream(filename);
+
+            out.print("EFG 2 R \"" + (wISKeys ? "IS" : "PT" ) + " "+ root.getClass().getSimpleName() + "\" {");
+            Player[] players = root.getAllPlayers();
+            for (int i = 0; i < 2; i++) {//assumes 2 playter games (possibly with nature) nature is the last player and always present!!!
+                if (i != 0) out.print(" ");
+                out.print("\"" + players[i] + "\"");
+            }
+            out.println("}");
+            nextOutcome = 1;
+            nextChance = 1;
+            writeRec(out, root, cut_off_depth);
             out.flush();
             out.close();
         } catch (Exception ex) {
@@ -181,6 +219,37 @@ public class GambitEFG {
         }
     }
 
+    private void writeRec(PrintStream out, Node node, int cut_off_depth) {
+        if (node.isGameEnd() || cut_off_depth == 0) {
+            out.print("t \"" + (wNodeLabels ? node.toString() : "") + "\" " + nextOutcome++ + " \"\" { ");
+            double[] u = ((LeafNode) node).getUtilities();
+            for (int i = 0; i < 2; i++) {
+                out.print((i == 0 ? "" : ", ") + u[i]);
+            }
+            out.println("}");
+        } else {
+            InnerNode inNode = ((InnerNode) node);
+            GameState state = inNode.getGameState();
+            List<Action> actions = inNode.getActions();
+            if (state.isPlayerToMoveNature()) {
+                out.print("c \"" + (wNodeLabels ? state.toString() + " RP " + inNode.getReachPr() : "") + "\" "+(wISKeys ? nextChance++ : getUniqueHash(((DomainWithPublicState) state).getPSKeyForPlayerToMove()))+" \"\" { ");
+                for (Action a : actions) {
+                    out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + state.getProbabilityOfNatureFor(a) + " ");
+                }
+            } else {
+                out.print("p \"" + (wNodeLabels ? state.toString() + " RP: " + inNode.getReachPr() : "") + "\" " + (state.getPlayerToMove().getId() + 1) + " " + getUniqueHash(wISKeys ? state.getISKeyForPlayerToMove() : ((DomainWithPublicState) state).getPSKeyForPlayerToMove()) + " \"\" { ");
+                for (Action a : actions) {
+                    out.print("\"" + (wActionLabels ? a.toString() : "") + "\" ");
+                }
+            }
+            out.println("} 0");
+            for (Action a : actions) {
+                Node next = ((InnerNode) node).getChildFor(a);
+                writeRec(out, next,cut_off_depth - 1);
+            }
+        }
+    }
+
     private Integer getUniqueHash(ISKey key) {
         if (!infSetIndices.containsKey(key))
             infSetIndices.put(key, ++maxIndex);
@@ -190,6 +259,11 @@ public class GambitEFG {
     public void buildAndWrite(String filename, GameState root, Expander<? extends InformationSet> expander) {
         BasicGameBuilder.build(root, expander.getAlgorithmConfig(), expander);
         write(filename, root, expander, Integer.MAX_VALUE);
+    }
+
+    public void buildAndWrite(String filename, InnerNode root) {
+        BasicGameBuilder.build(root);
+        write(filename, root, Integer.MAX_VALUE);
     }
 }
 

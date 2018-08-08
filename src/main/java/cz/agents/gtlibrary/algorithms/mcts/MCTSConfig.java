@@ -19,6 +19,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts;
 
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMSelector;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
@@ -112,17 +114,17 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
     }
 
     @Override
-    public MCTSPublicState createPublicStateFor(GameState gameState) {
-        return new MCTSPublicState(gameState);
+    public MCTSPublicState createPublicStateFor(InnerNode node) {
+        return new MCTSPublicState(this, node);
     }
 
     @Override
-    public MCTSPublicState getPublicStateFor(GameState gameState) {
-        PSKey psKey = ((DomainWithPublicState) gameState).getPSKeyForPlayerToMove();
+    public MCTSPublicState getPublicStateFor(InnerNode node) {
+        PSKey psKey = ((DomainWithPublicState) node.getGameState()).getPSKeyForPlayerToMove();
         MCTSPublicState publicState = allPublicStates.get(psKey);
 
         if (publicState == null) {
-            publicState = createPublicStateFor(gameState);
+            publicState = createPublicStateFor(node);
             allPublicStates.put(psKey, publicState);
         }
         return publicState;
@@ -131,5 +133,13 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
     @Override
     public Set<MCTSPublicState> getAllPublicStates() {
         return new HashSet<>(allPublicStates.values());
+    }
+
+    public MCTSInformationSet getInformationSetFor(Node node) {
+        return getInformationSetFor(node.getGameState());
+    }
+
+    public void setRandom(Random random) {
+        this.random = random;
     }
 }

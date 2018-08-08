@@ -6,21 +6,18 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.algorithms.ocr.OCR_CFV_Experiments;
+import cz.agents.gtlibrary.algorithms.mccr.MCCR_CFV_Experiments;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import org.junit.Test;
 
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class PublicStateTest extends OCR_CFV_Experiments {
+public class PublicStateTest extends MCCR_CFV_Experiments {
 
     @Test
     public void testGamesForSatisfyingPublicStateRepresentationConstraints() {
@@ -33,7 +30,7 @@ public class PublicStateTest extends OCR_CFV_Experiments {
     private void checkDomain(String domain, String[] params) {
         PublicStateTest exp = new PublicStateTest();
         exp.handleDomain(domain, params);
-        exp.loadGame(domain);
+        exp.loadGame(domain, new Random(0));
 
         exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
 

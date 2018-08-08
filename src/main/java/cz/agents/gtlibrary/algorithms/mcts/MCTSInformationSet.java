@@ -21,9 +21,11 @@ package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.iinodes.InformationSetImpl;
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class MCTSInformationSet extends InformationSetImpl {
@@ -59,5 +61,9 @@ public class MCTSInformationSet extends InformationSetImpl {
 
     public void setPublicState(MCTSPublicState publicState) {
         this.publicState = publicState;
+    }
+
+    public List<Action> getActions() {
+        return getAllNodes().iterator().next().getActions();
     }
 }
