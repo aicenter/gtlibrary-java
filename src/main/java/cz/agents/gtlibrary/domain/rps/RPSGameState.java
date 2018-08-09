@@ -46,15 +46,15 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
     private int hashCode = -1;
 
     // standard game
-    //public static double[][] payoffs = { {   0, -1,  1 }, 
-    //                                     {   1,  0, -1 },
-    //                                     {  -1,  1,  0 } }; 
+    public static double[][] payoffs = { {   0, -1,  1 },
+                                         {   1,  0, -1 },
+                                         {  -1,  1,  0 } };
 
     // biased game from Shafiei et al. 2009
     // http://web.cs.du.edu/~sturtevant/papers/uctcfr.pdf
-    public static double[][] payoffs = { {     0, -0.25,  0.50 }, 
-                                         {  0.25,     0, -0.05 },
-                                         { -0.50,  0.05,  0 } }; 
+//    public static double[][] payoffs = { {     0, -0.25,  0.50 },
+//                                         {  0.25,     0, -0.05 },
+//                                         { -0.50,  0.05,  0 } };
 
     public RPSGameState() {
         super(RPSGameInfo.ALL_PLAYERS);

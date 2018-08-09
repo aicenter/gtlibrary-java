@@ -162,7 +162,6 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         this.epsilon = epsilon;
         this.rootNode = rootNode;
 
-        OOSAlgorithmData.useEpsilonRM = false;
         threadBean = ManagementFactory.getThreadMXBean();
         String s = System.getProperty("DROPTREE");
         if (s != null) dropTree = Boolean.getBoolean(s);
@@ -257,9 +256,6 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         //useful for debugging
 //        ((NodeImpl)node).testSumS += 1/(delta*bs+(1-delta)*us);
 //        ((NodeImpl)node).visits += 1;
-        if(Double.isNaN(pi_c)) {
-            System.err.println("fiuck");
-        }
 
         if (node instanceof LeafNode) {
             x = 1;

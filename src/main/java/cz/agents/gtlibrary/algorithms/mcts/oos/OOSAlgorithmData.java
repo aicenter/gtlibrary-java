@@ -99,9 +99,6 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
 
     public void getRMStrategy(double[] output) {
         final int K = actionCount;
-        if(K == 0) {
-            System.err.println("fuck");
-        }
 
         double R = 0;
         for (double ri : r) R += Math.max(0,ri);

@@ -19,6 +19,10 @@ import static org.junit.Assert.assertTrue;
 
 public class PublicStateTest extends MCCR_CFV_Experiments {
 
+    public PublicStateTest(Long seed) {
+        super(seed);
+    }
+
     @Test
     public void testGamesForSatisfyingPublicStateRepresentationConstraints() {
         checkDomain("IIGS", new String[]{"0", "4", "true", "true"});
@@ -28,9 +32,9 @@ public class PublicStateTest extends MCCR_CFV_Experiments {
     }
 
     private void checkDomain(String domain, String[] params) {
-        PublicStateTest exp = new PublicStateTest();
+        PublicStateTest exp = new PublicStateTest(0L);
         exp.handleDomain(domain, params);
-        exp.loadGame(domain, new Random(0));
+        exp.loadGame(domain, new Random(0L));
 
         exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
 

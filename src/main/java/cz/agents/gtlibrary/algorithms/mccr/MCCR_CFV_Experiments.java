@@ -29,7 +29,6 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
@@ -64,6 +63,7 @@ import java.util.*;
 
 public class MCCR_CFV_Experiments {
 
+    private final Long seed;
     protected GameInfo gameInfo;
     protected GameState rootState;
     protected SQFBestResponseAlgorithm brAlg0;
@@ -75,20 +75,25 @@ public class MCCR_CFV_Experiments {
     private Double minExploitability = 0.01;
     private Integer numItersPerLoop = 100000;
 
+    public MCCR_CFV_Experiments(Long seed) {
+        this.seed = seed;
+    }
+
     public static void main(String[] args) {
         if (args.length < 2) {
             System.err.println("Missing Arguments: MCCR_CFV_Experiments " +
-                    "[trackingISName] {OOS|MCCFR|MCCR} {LD|GS|OZ|PE|RG|RPS|Tron} [seed] [domain parameters ... ].");
+                    "[trackingISName] [seed] {OOS|MCCFR|MCCR} {LD|GS|OZ|PE|RG|RPS|Tron} [domain parameters ... ].");
             System.exit(-1);
         }
 
         String trackCFVinInformationSet = args[0];
-        String alg = args[1];
-        String domain = args[2];
-        long seed = new Long(args[3]);
+        long seed = new Long(args[1]);
+        String alg = args[2];
+        String domain = args[3];
+
         Random rnd = new Random(seed);
 
-        MCCR_CFV_Experiments exp = new MCCR_CFV_Experiments();
+        MCCR_CFV_Experiments exp = new MCCR_CFV_Experiments(seed);
         exp.setTracking(trackCFVinInformationSet);
         exp.handleDomain(domain, Arrays.copyOfRange(args, 4, args.length));
         exp.loadGame(domain, rnd);
@@ -387,13 +392,14 @@ public class MCCR_CFV_Experiments {
     }
 
     private void runMCCR() {
-        expander.getAlgorithmConfig().createInformationSetFor(rootState);
-        MCCRAlgorithm alg = new MCCRAlgorithm(rootState, expander, 0.6);
-        this.alg = alg;
-//        System.err.println("Several first infosets:");
-//        printSeveralFirstInfoSets(alg.getRootNode(), 10, 10, new HashSet<>());
+        double epsExploration = new Double(getenv("epsExploration", "0.6"));
+        int iterationsInRoot = new Integer(getenv("iterationsInRoot", "100000"));
+        int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "100000"));
 
-        Distribution dist = new MeanStratDist();
+        expander.getAlgorithmConfig().createInformationSetFor(rootState);
+        MCCRAlgorithm alg = new MCCRAlgorithm(rootState, expander, epsExploration);
+        this.alg = alg;
+
         brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
                 new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
                 (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
@@ -401,40 +407,13 @@ public class MCCR_CFV_Experiments {
                 new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
                 (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
 
-//        System.err.println("Searching for IS " + trackCFVinInformationSet);
-//        MCTSInformationSet is = identifyTargetInfoSet(alg.getRootNode(), trackCFVinInformationSet);
-//        OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
-//        printHeader(data);
-
-        Double exploitability;
-//        for (int loop = 1; loop <= 100; loop++) {
-        alg.solveEntireGame(100, 100000);
-        exploitability = calcExploitability();
-        System.out.println(exploitability);
-//            printIterationStatistics(loop * numItersPerLoop, data, exploitability);
-//        }
+        alg.solveEntireGame(iterationsInRoot, iterationsPerGadgetGame);
+        Double exploitability = calcExploitability();
+        System.out.println(seed+","+epsExploration+","+iterationsInRoot+","+iterationsPerGadgetGame+","+exploitability);
     }
 
-    private void gadgetTest() {
-        Set<MCTSPublicState> publicStates = ((OOSAlgorithm) this.alg).getRootNode().getAlgConfig().getAllPublicStates();
-        Iterator it = publicStates.iterator();
-        it.next();it.next();
-        MCTSPublicState publicState = (MCTSPublicState) it.next();
-        Set<GameState> states = publicState.getAllStates();
-        Set<GameState> reconstructStates = new HashSet<>();
-        Set<InnerNode> reconstructNodes = new HashSet<>();
-
-        for(GameState state : states) {
-            GameState copied = state.copy();
-            reconstructStates.add(copied);
-            InnerNode gadgetNode = new InnerNodeImpl(expander, copied);
-            reconstructNodes.add(gadgetNode);
-
-            buildCompleteTree(gadgetNode);
-        }
-
-
-
+    private String getenv(String env, String def) {
+        return System.getenv(env) == null ? def : System.getenv(env);
     }
 
     private void printSeveralFirstInfoSets(InnerNode state, int maxDepth, int maxNames, Set<String> uniqueISNames) {
