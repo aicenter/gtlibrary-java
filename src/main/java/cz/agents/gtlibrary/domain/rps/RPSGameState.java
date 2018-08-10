@@ -221,7 +221,6 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
     @Override
     public PSKey getPSKeyForPlayerToMove() {
         if (psKey == null) {
-            System.err.println("> "+history);
             psKey = new PSKey(history.getLength()-1);
         }
         return psKey;
@@ -230,7 +229,7 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
     @Override
     public String toString() {
         //return history.toString();
-        String str = "Player: " + currentPlayerIndex + ", player actions = " 
+        String str = "Pl" + currentPlayerIndex + ", act= "
                 + playerActions[0] + " " + playerActions[1] + "\n\n";
         return str;
     }

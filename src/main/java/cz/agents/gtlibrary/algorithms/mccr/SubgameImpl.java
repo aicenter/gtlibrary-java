@@ -20,6 +20,7 @@ public class SubgameImpl implements Subgame {
 
     private final PublicState publicState;
     private final MCTSConfig originalConfig;
+    private final HashMap<PerfectRecallISKey, MCTSInformationSet> gadgetISs;
     private Expander<MCTSInformationSet> expander;
 
     public SubgameImpl(PublicState publicState,
@@ -28,6 +29,8 @@ public class SubgameImpl implements Subgame {
         this.publicState = publicState;
         this.originalConfig = originalConfig;
         this.expander = expander;
+
+        this.gadgetISs = new HashMap<>();
     }
 
     @Override
@@ -71,18 +74,12 @@ public class SubgameImpl implements Subgame {
 
         for (MCTSInformationSet informationSet : getOriginalRootInformationSets()) {
             GadgetISKey isKey = new GadgetISKey((PerfectRecallISKey) informationSet.getISKey());
-            Iterator<InnerNode> nodeIterator = informationSet.getAllNodes().iterator();
 
-            MCTSInformationSet gadgetIS = null;
-            while (nodeIterator.hasNext()) {
-                InnerNode origNode = nodeIterator.next();
+            for (InnerNode origNode : informationSet.getAllNodes()) {
                 GameState origState = origNode.getGameState();
                 GadgetInnerState gadgetState = new GadgetInnerState(origState, isKey);
 
-                if (gadgetIS == null) {
-                    gadgetIS = new MCTSInformationSet(gadgetState);
-                    gadgetIS.setAlgorithmData(new OOSAlgorithmData(2));
-                }
+                MCTSInformationSet gadgetIS = getGadgetIS(origNode);
                 gadgetState.setInformationSet(gadgetIS);
 
                 GadgetInnerNode gadgetNode = new GadgetInnerNode(gadgetState, origNode);
@@ -97,5 +94,15 @@ public class SubgameImpl implements Subgame {
         }
 
         return resolvingInnerNodes;
+    }
+
+    private MCTSInformationSet getGadgetIS(InnerNode origNode) {
+        PerfectRecallISKey isKey = origNode.getOpponentAugISKey();
+        if(gadgetISs.containsKey(isKey)) {
+            return gadgetISs.get(isKey);
+        }
+        MCTSInformationSet informationSet = new MCTSInformationSet(origNode.getGameState());
+        gadgetISs.put(isKey, informationSet);
+        return informationSet;
     }
 }

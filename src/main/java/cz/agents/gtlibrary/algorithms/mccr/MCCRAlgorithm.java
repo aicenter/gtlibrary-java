@@ -136,8 +136,8 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
                 assert curIS.getActions().contains(action);
             } catch (Throwable e){
                 // debug
-                new GambitEFG().write(expander.getClass().getSimpleName()+"_RP_node_"+curNode+".gbt", curNode);
-                new GambitEFG().write(expander.getClass().getSimpleName()+"_RP_root_"+curNode+".gbt", getRootNode());
+//                new GambitEFG().write(expander.getClass().getSimpleName()+"_RP_node_"+curNode+".gbt", curNode);
+//                new GambitEFG().write(expander.getClass().getSimpleName()+"_RP_root_"+curNode+".gbt", getRootNode());
                 throw e;
             }
         }
