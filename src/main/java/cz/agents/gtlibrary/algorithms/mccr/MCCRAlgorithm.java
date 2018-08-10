@@ -155,16 +155,13 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
 
         ArrayDeque<PublicState> q = new ArrayDeque<>();
         q.add(getRootNode().getPublicState());
-        int pubStates = 1;
         while (!q.isEmpty()) {
             PublicState s = q.removeFirst();
 
             Node n = s.getAllNodes().iterator().next();
             runStep(n, iterationsPerGadgetGame);
 
-            Set<PublicState> nextPublicStates = s.getNextPublicStates();
-            pubStates += nextPublicStates.size();
-            q.addAll(nextPublicStates);
+            q.addAll(s.getNextPublicStates());
 
 //            // check if this part of the tree is reachable
 //            // if not, we can keep any kind of strategy (also default)
@@ -177,7 +174,9 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
 //            }
         }
 
-        System.err.println("Visited "+pubStates+" public states");
+        MCTSConfig config = getRootNode().getAlgConfig();
+        System.err.println("Game has: "+config.getAllPublicStates().size()+" public states, "
+                +config.getAllInformationSets().size()+" info sets. ");
     }
 
     private void buildTreeExpandChanceNodes(InnerNode startNode) {
