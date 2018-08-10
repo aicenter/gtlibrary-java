@@ -29,6 +29,9 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
@@ -70,7 +73,8 @@ public class GambitEFG {
     public static void main(String[] args) {
 //        exportRandomGame();
 //        exportIIGoofSpiel();
-        exportLD();
+//        exportLD();
+        exportGP();
 //        exportPhantomTTT();
     }
 
@@ -124,6 +128,22 @@ public class GambitEFG {
         LiarsDiceGameState root = new LiarsDiceGameState();
 
         exporter.buildAndWrite("LD_"+(exporter.wISKeys?"IS":"PT")+".gbt", root, new LiarsDiceExpander<>(new SequenceFormConfig<>()));
+    }
+
+    public static void exportGP() {
+        // setup Game:
+        GPGameInfo.MAX_CARD_TYPES = 3;
+        GPGameInfo.MAX_CARD_OF_EACH_TYPE = 1;
+        GPGameInfo.MAX_RAISES_IN_ROW = 1;
+        GPGameInfo.MAX_DIFFERENT_BETS = 1;
+        GPGameInfo.MAX_DIFFERENT_RAISES = 1;
+
+        GambitEFG exporter = new GambitEFG();
+
+        GameInfo gameInfo = new GPGameInfo();
+        GenericPokerGameState root = new GenericPokerGameState();
+
+        exporter.buildAndWrite("GP_"+(exporter.wISKeys?"IS":"PT")+".gbt", root, new GenericPokerExpander<>(new SequenceFormConfig<>()));
     }
 
     public GambitEFG() {

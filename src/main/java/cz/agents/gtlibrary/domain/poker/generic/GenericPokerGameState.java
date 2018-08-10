@@ -22,7 +22,9 @@ package cz.agents.gtlibrary.domain.poker.generic;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.PokerGameState;
+import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.DomainWithPublicState;
 import cz.agents.gtlibrary.interfaces.GameState;
 
 public class GenericPokerGameState extends PokerGameState {
@@ -257,7 +259,7 @@ public class GenericPokerGameState extends PokerGameState {
 			playerCards[0]=null;
 		}
 	}
-	
+
 	private int countContinousRaiseCount(){
 		int raiseCount = 0;
 		for(int i = sequenceForAllPlayers.size()-2; i>=0; i--){
@@ -268,5 +270,4 @@ public class GenericPokerGameState extends PokerGameState {
 		}
 		return raiseCount;
 	}
-
 }

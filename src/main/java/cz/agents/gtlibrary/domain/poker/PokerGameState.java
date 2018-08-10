@@ -20,18 +20,19 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.domain.poker;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.GameStateImpl;
-import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
+import cz.agents.gtlibrary.iinodes.*;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.DomainWithPublicState;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.utils.Pair;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
-public abstract class PokerGameState extends GameStateImpl {
+public abstract class PokerGameState extends GameStateImpl implements DomainWithPublicState {
 
     private static final long serialVersionUID = 1768690890035774941L;
 
@@ -39,6 +40,7 @@ public abstract class PokerGameState extends GameStateImpl {
 
     protected PokerAction[] playerCards;
     protected ISKey cachedISKey = null;
+    protected PSKey cachedPSKey = null;
 
     protected int round;
     protected int pot;
@@ -345,6 +347,34 @@ public abstract class PokerGameState extends GameStateImpl {
         }
         cachedISKey = new PerfectRecallISKey(hcb.toHashCode(), history.getSequenceOf(getPlayerToMove()));
         return cachedISKey;
+    }
+
+    @Override
+    public PSKey getPSKeyForPlayerToMove() {
+        if (cachedPSKey != null)
+            return cachedPSKey;
+
+        // todo: check this is accurate!
+        HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
+
+        List<Pair<Player, Action>> seq = history.getHistory();
+        Iterator<Pair<Player, Action>> iterator = seq.iterator();
+        // skip initial distribution of cards
+        if(iterator.hasNext()) {
+            iterator.next();
+            hcb.append(1);
+        }
+        if(iterator.hasNext()) {
+            iterator.next();
+            hcb.append(2);
+        }
+        int moveNum = 3;
+        while (iterator.hasNext()) {
+            hcb.append(((PokerAction) iterator.next().getRight()).observableISHash());
+            hcb.append(moveNum++);
+        }
+        cachedPSKey = new PSKey(hcb.toHashCode());
+        return cachedPSKey;
     }
 
 

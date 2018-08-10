@@ -42,6 +42,9 @@ import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
@@ -155,6 +158,15 @@ public class MCCR_CFV_Experiments {
                 LDGameInfo.FACES = new Integer(domainParams[2]);
                 LDGameInfo.CALLBID = (LDGameInfo.P1DICE + LDGameInfo.P2DICE) * LDGameInfo.FACES + 1;
                 break;
+                
+            case "GP": // generic poker
+                GPGameInfo.MAX_CARD_TYPES = new Integer(domainParams[0]);
+                GPGameInfo.MAX_CARD_OF_EACH_TYPE = new Integer(domainParams[1]);
+                GPGameInfo.MAX_RAISES_IN_ROW = new Integer(domainParams[2]);
+                GPGameInfo.MAX_DIFFERENT_BETS = new Integer(domainParams[3]);
+                GPGameInfo.MAX_DIFFERENT_RAISES = GPGameInfo.MAX_DIFFERENT_BETS;
+                break;
+                
             case "OZ":  // Oshi Zumo
                 if (domainParams.length != 5) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
@@ -223,6 +235,11 @@ public class MCCR_CFV_Experiments {
                 gameInfo = new LDGameInfo();
                 rootState = new LiarsDiceGameState();
                 expander = new LiarsDiceExpander<>(mctsConfig);
+                break;
+            case "GP":
+                gameInfo = new GPGameInfo();
+                rootState = new GenericPokerGameState();
+                expander = new GenericPokerExpander<>(mctsConfig);
                 break;
             case "PE":
                 gameInfo = new PursuitGameInfo();
