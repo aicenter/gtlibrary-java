@@ -161,12 +161,17 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     }
 
     @Override
-    public double getReachPr() {
+    public double getPlayerReachPr() {
         throw new NotImplementedException();
     }
 
     @Override
-    public void setReachPr(double meanStrategyActionPr) {
+    public void setPlayerReachPr(double meanStrategyActionPr) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public double getChanceReachPr() {
         throw new NotImplementedException();
     }
 

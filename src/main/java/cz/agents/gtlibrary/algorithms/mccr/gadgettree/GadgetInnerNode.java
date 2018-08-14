@@ -45,6 +45,7 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
         MCTSInformationSet is = originalNode.getInformationSet();
         double isReach = is.getAllNodes().stream().map(InnerNode::getReachPr).reduce(0.0, Double::sum);
+
         assert is.getAlgorithmData() != null;
         OOSAlgorithmData data = ((OOSAlgorithmData) is.getAlgorithmData());
         double isCFV;
@@ -142,7 +143,7 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
     @Override
     public Player getPlayerToMove() {
-        return originalNode.getPlayerToMove();
+        return getGameState().getPlayerToMove();
     }
 
     @Override
@@ -156,7 +157,17 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     }
 
     @Override
-    public void setReachPr(double meanStrategyActionPr) {
+    public double getPlayerReachPr() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setPlayerReachPr(double meanStrategyActionPr) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public double getChanceReachPr() {
         throw new NotImplementedException();
     }
 

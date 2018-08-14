@@ -20,6 +20,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -52,6 +53,10 @@ public class MCTSInformationSet extends InformationSetImpl {
     }
 
     public void setAlgorithmData(AlgorithmData algorithmData) {
+        // todo: debug
+        if(toString().equals("IS:(Pl1):Pl1: []")) {
+            ((OOSAlgorithmData) algorithmData).track = true;
+        }
         this.algorithmData = algorithmData;
     }
 

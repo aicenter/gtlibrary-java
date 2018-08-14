@@ -30,12 +30,24 @@ public interface InnerNode extends Node {
 
     void setChildren(Map<Action, Node> children);
 
-    double getReachPr();
+    default double getReachPr() {
+        return getPlayerReachPr() * getChanceReachPr();
+    }
 
-    void setReachPr(double meanStrategyActionPr);
+    double getPlayerReachPr();
+    void setPlayerReachPr(double meanStrategyActionPr);
+    double getChanceReachPr();
 
     default Player getPlayerToMove() {
         return getGameState().getPlayerToMove();
+    }
+
+    default Player getOpponentPlayer() {
+        Player pl = getPlayerToMove();
+        if(pl.getId() == 2) {
+            throw new RuntimeException("Chance does not have opponent player!");
+        }
+        return getAllPlayers()[1-pl.getId()];
     }
 
     default boolean isPlayerMoving(Player player) {
@@ -48,9 +60,10 @@ public interface InnerNode extends Node {
 
     default PerfectRecallISKey getOpponentAugISKey() {
         History history = getGameState().getHistory();
-        Player player = getGameState().getPlayerToMove();
-        Player opp = getGameState().getAllPlayers()[1-player.getId()];
+        Player player = getPlayerToMove();
+        Player opp = getOpponentPlayer();
         Sequence oppSeq = history.getSequencesOfPlayers().get(opp);
-        return new PerfectRecallISKey(this.getGameState().getISKeyForPlayerToMove().hashCode(), oppSeq);
+        int hashCode = getGameState().getISKeyForPlayerToMove().hashCode();
+        return new PerfectRecallISKey(hashCode, oppSeq);
     }
 }

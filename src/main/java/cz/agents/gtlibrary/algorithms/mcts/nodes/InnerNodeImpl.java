@@ -19,9 +19,11 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
+import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.interfaces.*;
@@ -29,7 +31,6 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class InnerNodeImpl extends NodeImpl implements InnerNode {
 
@@ -37,13 +38,20 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     protected List<Action> actions;
     protected MCTSInformationSet informationSet;
     private MCTSPublicState publicState;
-    private double reachPr = 1.;
+    private double playerReachPr = 1.;
+    private double chanceReachPr = 1.;
 
     /**
      * Non-root node constructor
      */
     public InnerNodeImpl(InnerNode parent, GameState gameState, Action lastAction) {
         super(parent, lastAction, gameState);
+
+        chanceReachPr = parent.getChanceReachPr();
+        if(parent instanceof ChanceNode && !(parent instanceof GadgetChanceNode)) {
+            chanceReachPr *= parent.getProbabilityOfNatureFor(lastAction);
+        }
+
         attendInformationSet();
         attendPublicState();
         if (actions == null)
@@ -56,7 +64,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
      */
     public InnerNodeImpl(Expander<MCTSInformationSet> expander, GameState gameState) {
         super(expander, gameState);
-        this.reachPr = 1;
+        this.playerReachPr = 1;
         attendInformationSet();
         attendPublicState();
         if (actions == null)
@@ -165,14 +173,18 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
         this.actions = actions;
     }
 
-    // reach probability of opponent player to this history
     @Override
-    public double getReachPr() {
-        return reachPr;
+    public double getPlayerReachPr() {
+        return playerReachPr;
     }
 
     @Override
-    public void setReachPr(double reachPr) {
-        this.reachPr = reachPr;
+    public void setPlayerReachPr(double playerReachPr) {
+        this.playerReachPr = playerReachPr;
+    }
+
+    @Override
+    public double getChanceReachPr() {
+        return chanceReachPr;
     }
 }

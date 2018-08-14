@@ -128,6 +128,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     }
 
     public OOSAlgorithm(Player searchingPlayer, OOSSimulator simulator, GameState rootState, Expander expander, double delta, double epsilon) {
+        this.rnd = ((MCTSConfig) expander.getAlgorithmConfig()).getRandom();
         this.searchingPlayer = searchingPlayer;
         this.simulator = simulator;
         this.delta = delta;
@@ -135,7 +136,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         if (rootState.isPlayerToMoveNature()) {
             this.rootNode = new ChanceNodeImpl(expander, rootState, rnd);
             //InnerNode next = (InnerNode) rootNode.getChildFor((Action) (expander.getActions(rootState).get(0)));
-            //curIS = next.getInformationSet();
+            curIS = null;
         } else {
             this.rootNode = new InnerNodeImpl(expander, rootState);
             curIS = rootNode.getInformationSet();
@@ -161,6 +162,12 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         this.delta = 0.;
         this.epsilon = epsilon;
         this.rootNode = rootNode;
+
+        if(rootNode.getGameState().isPlayerToMoveNature()) {
+            curIS = null;
+        } else {
+            curIS = rootNode.getInformationSet();
+        }
 
         threadBean = ManagementFactory.getThreadMXBean();
         String s = System.getProperty("DROPTREE");

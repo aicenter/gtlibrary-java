@@ -33,7 +33,7 @@ public abstract class InformationSetImpl implements PerfectRecallInformationSet 
 	protected Sequence playerHistory;
 	protected Player player;
 	protected LinkedHashSet<GameState> statesInInformationSet = new LinkedHashSet<>();
-	private final int hashCode;
+	protected int hashCode;
 
 	public InformationSetImpl(GameState state) {
 		this.playerHistory = state.getSequenceForPlayerToMove();
@@ -43,6 +43,7 @@ public abstract class InformationSetImpl implements PerfectRecallInformationSet 
 
 		ISKey iskey = state.getISKeyForPlayerToMove();
 		assert iskey instanceof PerfectRecallISKey || iskey instanceof GadgetISKey;
+		assert playerHistory.getPlayer().equals(player);
 		this.hashCode = iskey.hashCode();
 	}
 	

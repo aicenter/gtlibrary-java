@@ -10,10 +10,12 @@ public class GadgetInnerState implements GameState {
     private final GameState originalGameState;
     private final GadgetISKey isKey;
     private MCTSInformationSet informationSet;
+    private final Sequence seq;
 
     public GadgetInnerState(GameState originalGameState, GadgetISKey isKey) {
         this.originalGameState = originalGameState;
         this.isKey = isKey;
+        this.seq = isKey.getSequence();
     }
 
     public void setInformationSet(MCTSInformationSet informationSet) {
@@ -27,7 +29,7 @@ public class GadgetInnerState implements GameState {
 
     @Override
     public Player getPlayerToMove() {
-        return originalGameState.getPlayerToMove();
+        return getAllPlayers()[1-originalGameState.getPlayerToMove().getId()];
     }
 
     @Override
@@ -47,7 +49,7 @@ public class GadgetInnerState implements GameState {
 
     @Override
     public Sequence getSequenceForPlayerToMove() {
-        return null; // todo: throw new NotImplementedException();
+        return seq; // todo: throw new NotImplementedException();
     }
 
     @Override
@@ -120,5 +122,8 @@ public class GadgetInnerState implements GameState {
         throw new NotImplementedException();
     }
 
-
+    @Override
+    public String toString() {
+        return "Gadget PL"+getPlayerToMove().getId() + " - Orig: "+originalGameState.toString();
+    }
 }

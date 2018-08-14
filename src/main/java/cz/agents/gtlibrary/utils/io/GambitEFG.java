@@ -252,12 +252,12 @@ public class GambitEFG {
             GameState state = inNode.getGameState();
             List<Action> actions = inNode.getActions();
             if (state.isPlayerToMoveNature()) {
-                out.print("c \"" + (wNodeLabels ? state.toString() + " RP " + inNode.getReachPr() : "") + "\" "+(wISKeys ? nextChance++ : getUniqueHash(((DomainWithPublicState) state).getPSKeyForPlayerToMove()))+" \"\" { ");
+                out.print("c \"" + (wNodeLabels ? state.toString()  : "") + "\" "+(wISKeys ? nextChance++ : getUniqueHash(((DomainWithPublicState) state).getPSKeyForPlayerToMove()))+" \"\" { ");
                 for (Action a : actions) {
                     out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + state.getProbabilityOfNatureFor(a) + " ");
                 }
             } else {
-                out.print("p \"" + (wNodeLabels ? state.toString() + " RP: " + inNode.getReachPr() : "") + "\" " + (state.getPlayerToMove().getId() + 1) + " " + getUniqueHash(wISKeys ? state.getISKeyForPlayerToMove() : ((DomainWithPublicState) state).getPSKeyForPlayerToMove()) + " \"\" { ");
+                out.print("p \"" + (wNodeLabels ? state.toString()  : "") + "\" " + (state.getPlayerToMove().getId() + 1) + " " + getUniqueHash(wISKeys ? state.getISKeyForPlayerToMove() : ((DomainWithPublicState) state).getPSKeyForPlayerToMove()) + " \"\" { ");
                 for (Action a : actions) {
                     out.print("\"" + (wActionLabels ? a.toString() : "") + "\" ");
                 }

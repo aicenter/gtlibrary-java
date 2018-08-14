@@ -3,7 +3,10 @@ package cz.agents.gtlibrary.algorithms.mccr;
 import cz.agents.gtlibrary.algorithms.mccr.gadgettree.*;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -11,16 +14,13 @@ import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.PublicState;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SubgameImpl implements Subgame {
 
     private final PublicState publicState;
     private final MCTSConfig originalConfig;
-    private final HashMap<PerfectRecallISKey, MCTSInformationSet> gadgetISs;
+    private final HashMap<GadgetISKey, GadgetInfoSet> gadgetISs;
     private Expander<MCTSInformationSet> expander;
 
     public SubgameImpl(PublicState publicState,
@@ -58,12 +58,11 @@ public class SubgameImpl implements Subgame {
         // by creating the chance node, we construct the whole gadget game
         GadgetChanceState chanceState = new GadgetChanceState(publicState.getAllNodes().iterator().next().getGameState());
         GadgetChanceNode chanceNode = new GadgetChanceNode(chanceState, expander, originalConfig.getRandom());
-        MCTSInformationSet chanceIS = new MCTSInformationSet(chanceState);
+        MCTSInformationSet chanceIS = null;
         chanceNode.setInformationSet(chanceIS);
 
         Map<Action, GadgetInnerNode> resolvingInnerNodes = createInnerNodes(chanceIS);
         chanceNode.createChildren(resolvingInnerNodes);
-        chanceIS.setAlgorithmData(new OOSAlgorithmData(resolvingInnerNodes.size()));
 
         return chanceNode;
     }
@@ -73,13 +72,12 @@ public class SubgameImpl implements Subgame {
         int idxChanceNode = 0;
 
         for (MCTSInformationSet informationSet : getOriginalRootInformationSets()) {
-            GadgetISKey isKey = new GadgetISKey((PerfectRecallISKey) informationSet.getISKey());
-
             for (InnerNode origNode : informationSet.getAllNodes()) {
+                GadgetISKey isKey = new GadgetISKey(origNode.getOpponentAugISKey());
                 GameState origState = origNode.getGameState();
                 GadgetInnerState gadgetState = new GadgetInnerState(origState, isKey);
 
-                MCTSInformationSet gadgetIS = getGadgetIS(origNode);
+                MCTSInformationSet gadgetIS = getGadgetIS(isKey, gadgetState);
                 gadgetState.setInformationSet(gadgetIS);
 
                 GadgetInnerNode gadgetNode = new GadgetInnerNode(gadgetState, origNode);
@@ -96,13 +94,44 @@ public class SubgameImpl implements Subgame {
         return resolvingInnerNodes;
     }
 
-    private MCTSInformationSet getGadgetIS(InnerNode origNode) {
-        PerfectRecallISKey isKey = origNode.getOpponentAugISKey();
-        if(gadgetISs.containsKey(isKey)) {
-            return gadgetISs.get(isKey);
+    private GadgetInfoSet getGadgetIS(GadgetISKey gadgetISKey, GadgetInnerState state) {
+        if(gadgetISs.containsKey(gadgetISKey)) {
+            return gadgetISs.get(gadgetISKey);
         }
-        MCTSInformationSet informationSet = new MCTSInformationSet(origNode.getGameState());
-        gadgetISs.put(isKey, informationSet);
+        GadgetInfoSet informationSet = new GadgetInfoSet(state, gadgetISKey);
+        gadgetISs.put(gadgetISKey, informationSet);
         return informationSet;
+    }
+
+    @Override
+    public void resetData() {
+        int infosets = 0;
+        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
+//        q.addAll(publicState.getAllNodes());
+        for (InnerNode node : publicState.getAllNodes()) {
+            for (Map.Entry<Action, Node> entry : node.getChildren().entrySet()) {
+                Node ch = entry.getValue();
+                if (ch instanceof InnerNode) {
+                    q.add((InnerNode) ch);
+                }
+            }
+        }
+        while (!q.isEmpty()) {
+            InnerNode n = q.removeFirst();
+            MCTSInformationSet is = n.getInformationSet();
+            if(is != null && is.getAlgorithmData() != null) {
+                OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
+                data.resetData();
+                infosets++;
+            }
+
+            for (Map.Entry<Action, Node> entry : n.getChildren().entrySet()) {
+                Node ch = entry.getValue();
+                if (ch instanceof InnerNode) {
+                    q.add((InnerNode) ch);
+                }
+            }
+        }
+        System.err.println("Reset "+infosets+" infosets.");
     }
 }

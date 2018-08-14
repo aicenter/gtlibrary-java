@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.mccr.gadgettree;
 
 import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
@@ -18,7 +19,7 @@ public class GadgetChanceState implements GameState {
 
     @Override
     public ISKey getISKeyForPlayerToMove() {
-        return new GadgetISKey(1);
+        return new GadgetISKey(1, new ArrayListSequenceImpl(this.getPlayerToMove()));
     }
 
     @Override

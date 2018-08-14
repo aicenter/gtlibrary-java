@@ -53,6 +53,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     private double[] actionCFV;
     private double isCFV;
     private double isVisitsCnt;
+    public boolean track = false;
 
 
     public OOSAlgorithmData(int actionCount) {
@@ -124,14 +125,14 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
             if (i==ai) r[i] += (c-x)*W;
             else r[i] += -x*W;
 
-            double update_CFV = -u * (pi * pi_c) * c / l;
-            isCFV += (update_CFV - isCFV) / isVisitsCnt;
-
             if(gatherActionCFV) {
                 if (i==ai) actionCFV[i] += ((W*c) - actionCFV[i]) / isVisitsCnt;
                 else actionCFV[i] -=  actionCFV[i] / isVisitsCnt;
             }
         }
+
+        double update_CFV = -u * (pi * pi_c) * c / l;
+        isCFV += (update_CFV - isCFV) / isVisitsCnt;
     }
     
     public void updateRegretSM(int ai, double W, double pa, double sa){
@@ -225,6 +226,33 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         System.arraycopy(other.mp, 0, mp, 0, other.mp.length);
         System.arraycopy(other.r, 0, r, 0, other.r.length);
         nbSamples = other.getNbSamples();
+    }
+
+    public void resetData() {
+        for (int i = 0; i < actionCount; i++) {
+            mp[i] = 0.0;
+            r[i] = 0.0;
+            if (gatherActionCFV) {
+                actionCFV[i] = 0.0;
+            }
+        }
+        isCFV = 0.0;
+        isVisitsCnt = 0;
+        nbSamples = 0;
+        isCFV = 0.0;
+        isVisitsCnt = 0;
+    }
+
+    public double[] getMeanStrategy() {
+        double[] meanStrat = new double[mp.length];
+
+        double mpSum = 0;
+        for (double d : mp) mpSum += d;
+
+        for (int j = 0; j < mp.length; j++) {
+            meanStrat[j] = (mpSum == 0 ? 1.0 / mp.length : mp[j] / mpSum);
+        }
+        return meanStrat;
     }
 
     @Override

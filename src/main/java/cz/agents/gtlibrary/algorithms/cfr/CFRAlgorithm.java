@@ -225,4 +225,59 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
     public Action runMiliseconds(int miliseconds, GameState gameState) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
+    public double computeCFVofIS(MCTSInformationSet is) {
+        double cfv = 0.0;
+        Player isPlayer = is.getPlayer();
+
+        for(Node n : is.getAllNodes()) {
+            // calc reach probability (chance moves / opponent moves)
+            double rp = 1.;
+            Node curNode = n;
+            while(curNode.getParent() != null) {
+                Action a = curNode.getLastAction();
+                Node parent = curNode.getParent();
+
+                if(parent instanceof ChanceNode) {
+                    rp *= parent.getProbabilityOfNatureFor(a);
+                } else if(parent instanceof InnerNode &&
+                        !((InnerNode) parent).getPlayerToMove().equals(isPlayer)) { // opp player
+                    OOSAlgorithmData data = (OOSAlgorithmData) ((InnerNode) parent).getInformationSet().getAlgorithmData();
+                    rp *= data.getMeanStrategy()[data.getActions().indexOf(a)];
+                }
+
+                curNode = parent;
+            }
+
+            cfv += rp * computeExpUtilityOfState(n, isPlayer);
+
+        }
+        return cfv;
+    }
+
+    private double computeExpUtilityOfState(Node node, Player player) {
+        if (node instanceof LeafNode) {
+            return ((LeafNode) node).getUtilities()[player.getId()];
+        }
+
+        double ev = 0;
+
+        if (node instanceof ChanceNode) {
+            ChanceNode cn = (ChanceNode) node;
+            for (Action ai : cn.getActions()) {
+                final double p = cn.getGameState().getProbabilityOfNatureFor(ai);
+                ev += p * computeExpUtilityOfState(cn.getChildFor(ai), player);
+            }
+            return ev;
+        }
+
+        InnerNode in = (InnerNode) node;
+        OOSAlgorithmData data = (OOSAlgorithmData) in.getInformationSet().getAlgorithmData();
+        double[] ms = data.getMeanStrategy();
+        for (Action ai : in.getActions()) {
+             ev += ms[data.getActions().indexOf(ai)] * computeExpUtilityOfState(in.getChildFor(ai), player);
+        }
+
+        return ev;
+    }
 }

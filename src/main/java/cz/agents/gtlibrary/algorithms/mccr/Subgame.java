@@ -18,4 +18,6 @@ public interface Subgame {
     Set<GameState> getOriginalRootStates();
 
     GadgetChanceNode getGadgetRoot();
+
+    void resetData();
 }
