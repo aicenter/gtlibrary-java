@@ -38,7 +38,7 @@ public class RPSGameInfo implements GameInfo {
 
     @Override
     public double getMaxUtility() {
-        return 1;
+        return 100;
     }
 
     @Override

@@ -6,6 +6,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.DomainWithPublicState;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -70,7 +71,11 @@ public class PublicStateImpl implements PublicState {
                 if (nextNode instanceof ChanceNode) {
                     nextPS.addAll(((ChanceNode) nextNode).getPublicState().getNextPublicStates());
                 } else {
-                    assert nextNode instanceof InnerNode;
+                    InnerNode innerNode = (InnerNode) nextNode;
+                    if(innerNode.getInformationSet().getAlgorithmData() == null) {
+                        innerNode.getInformationSet().setAlgorithmData(
+                                new OOSAlgorithmData(innerNode.getActions()));
+                    }
                     nextPS.add(((InnerNode) nextNode).getPublicState());
                 }
             }

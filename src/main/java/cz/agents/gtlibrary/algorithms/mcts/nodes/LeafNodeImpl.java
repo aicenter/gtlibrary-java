@@ -27,6 +27,7 @@ import cz.agents.gtlibrary.interfaces.GameState;
 public class LeafNodeImpl extends NodeImpl implements LeafNode {
 
     private final double[] utilities;
+    public static double scalingConstant = 1.0;
 
     public LeafNodeImpl(InnerNode parent, GameState gameState, Action lastAction) {
         super(parent, lastAction, gameState);
@@ -34,6 +35,22 @@ public class LeafNodeImpl extends NodeImpl implements LeafNode {
     }
 
     public double[] getUtilities() {
-        return utilities;
+        if(scalingConstant == 1.0) {
+            return utilities;
+        }
+
+        double[] scaledUtilities = new double[utilities.length];
+        for (int i = 0; i < utilities.length; i++) {
+            scaledUtilities[i] = utilities[i] * scalingConstant;
+        }
+        return scaledUtilities;
+    }
+
+    public static double getScalingConstant() {
+        return scalingConstant;
+    }
+
+    public static void setScalingConstant(double scalingConstant) {
+        LeafNodeImpl.scalingConstant = scalingConstant;
     }
 }

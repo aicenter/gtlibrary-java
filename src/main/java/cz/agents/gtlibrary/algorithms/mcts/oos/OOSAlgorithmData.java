@@ -49,7 +49,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     private int actionCount;
 
     /** enable this flag to gather statistics about the CFV for each action */
-    public static boolean gatherActionCFV = false;
+    public static boolean gatherActionCFV = true;
     private double[] actionCFV;
     private double isCFV;
     private double isVisitsCnt;
@@ -117,8 +117,11 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return out;
     }
     
-    public void updateRegret(int ai, double u, double pi, double pi_, double pi_c, double l, double c, double x){
+    public void updateRegret(int ai, double u, double pi_avg, double pi_, double pi_c, double l, double c, double x,
+                             double c_avg, double x_avg){
         double W = u * pi_ / l;
+//        double Wavg = W
+        double Wavg =  - u * pi_avg * pi_c / l;
         isVisitsCnt++;
 
         for (int i=0; i<r.length; i++){
@@ -126,13 +129,44 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
             else r[i] += -x*W;
 
             if(gatherActionCFV) {
-                if (i==ai) actionCFV[i] += ((W*c) - actionCFV[i]) / isVisitsCnt;
+                if (i==ai) actionCFV[i] += ((Wavg * c_avg) - actionCFV[i]) / isVisitsCnt;
                 else actionCFV[i] -=  actionCFV[i] / isVisitsCnt;
             }
         }
 
-        double update_CFV = -u * (pi * pi_c) * c / l;
+//        double update_CFV = W * x;
+        double update_CFV = Wavg * x_avg;
         isCFV += (update_CFV - isCFV) / isVisitsCnt;
+//        isCFV = 0.0;
+//        double[] meanStrat = getMeanStrategy();
+//        for (int i = 0; i < actionCFV.length; i++) {
+//            isCFV += actionCFV[i]*meanStrat[i];
+//        }
+//        if(track && isVisitsCnt % 10 == 0) {
+//        if(track) {
+//            System.err.println(actionCFV[0]+","+actionCFV[1]+","+actionCFV[2]);
+//            System.err.println(update_CFV);
+//            System.out.println(((int) isVisitsCnt) + ","+isCFV+","+actionCFV[0]+","+actionCFV[1]+","+actionCFV[2]);
+//        }
+    }
+
+    public void updateRegret(double u,
+                             double pi_,
+                             double l,
+                             double c,
+                             double u_t,
+                             double p_follow) {
+
+        assert r.length == 2; // this method is only for gadget inner nodes!
+
+        double v_f = pi_ * c * u / l;
+//        double v_t = pi_ * u_t / l;
+        double v_t = pi_ * u_t;
+
+        isVisitsCnt++;
+
+        r[0] += (1-p_follow) * (v_f - v_t); // follow
+        r[1] +=    p_follow  * (v_t - v_f); // terminate
     }
     
     public void updateRegretSM(int ai, double W, double pa, double sa){
@@ -208,8 +242,8 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return actionCFV;
     }
 
-    public double getIsCFV() {
-        return isCFV;
+    public double getIsCFV(int iterations) {
+        return isCFV; //* isVisitsCnt / iterations;
     }
 
     public void setIsCFV(double isCFV) {

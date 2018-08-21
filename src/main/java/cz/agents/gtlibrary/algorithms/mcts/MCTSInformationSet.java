@@ -57,6 +57,10 @@ public class MCTSInformationSet extends InformationSetImpl {
         if(toString().equals("IS:(Pl1):Pl1: []")) {
             ((OOSAlgorithmData) algorithmData).track = true;
         }
+//        if(toString().equals("IS:(Pl0):Pl0: []")) {
+//            ((OOSAlgorithmData) algorithmData).track = true;
+//            ((OOSAlgorithmData) algorithmData).gatherActionCFV = true;
+//        }
         this.algorithmData = algorithmData;
     }
 

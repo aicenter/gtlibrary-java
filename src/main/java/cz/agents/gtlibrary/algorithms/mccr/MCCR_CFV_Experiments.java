@@ -116,20 +116,21 @@ public class MCCR_CFV_Experiments {
             nodes++;
             InnerNode n = q.removeFirst();
             MCTSInformationSet is = n.getInformationSet();
-            MCTSPublicState ps = n.getPublicState();
+//            MCTSPublicState ps = n.getPublicState();
             if (!(n instanceof ChanceNode)) {
                 if (is.getAlgorithmData() == null) {
                     infosets++;
                     is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
                     if(is.toString().equals("IS:(Pl0):Pl0: []")) {
+//                    if(is.toString().equals("IS:(Pl1):Pl1: []")) {
                         retIS = is;
                     }
                 }
             }
-            if (ps.getAlgorithmData() == null) {
-                publicStates++;
-                ps.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
-            }
+//            if (ps.getAlgorithmData() == null) {
+//                publicStates++;
+//                ps.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+//            }
             for (Action a : n.getActions()) {
                 Node ch = n.getChildFor(a);
                 if (ch instanceof InnerNode) {
@@ -457,7 +458,20 @@ public class MCCR_CFV_Experiments {
             alg.runIterations(n);
             Double exploitability = calcExploitability();
             double cfv = alg.computeCFVofIS(is);
-            System.out.println(i*n+","+exploitability+","+cfv);
+            OOSAlgorithmData data= (OOSAlgorithmData) is.getAlgorithmData();
+            System.out.println("ITER:"+i*n+","+exploitability+","+cfv);
+            Map<Action, Double> dist = new MeanStratDist().getDistributionFor(data);
+            System.out.println(dist);
+
+            double cum = 0.0;
+            double[] cfvas = alg.computeCFVAofIS(is);
+            for (int a = 0; a < is.getActions().size(); a++) {
+                System.out.print(cfvas[a] +",");
+                cum += cfvas[a] * dist.get(is.getActions().get(a));
+            }
+
+            System.err.println(cum - cfv);
+            System.out.println();
         }
     }
 

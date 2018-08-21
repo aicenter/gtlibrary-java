@@ -44,7 +44,8 @@ public class GadgetChanceState implements GameState {
 
     @Override
     public Sequence getSequenceFor(Player player) {
-        throw new NotImplementedException();
+        return new ArrayListSequenceImpl(player);
+        //throw new NotImplementedException();
     }
 
     @Override
@@ -93,7 +94,8 @@ public class GadgetChanceState implements GameState {
 
     @Override
     public double getNatureProbability() {
-        throw new NotImplementedException();
+        return 1.0;
+//        throw new NotImplementedException();
     }
 
     @Override
@@ -119,5 +121,13 @@ public class GadgetChanceState implements GameState {
     @Override
     public double[] evaluate() {
         throw new NotImplementedException();
+    }
+
+    @Override
+    public String toString() {
+        return "GadgetChanceState{" +
+                "originalGameSomeState=" + originalGameSomeState +
+                ", chanceProbabilities=" + chanceProbabilities +
+                '}';
     }
 }

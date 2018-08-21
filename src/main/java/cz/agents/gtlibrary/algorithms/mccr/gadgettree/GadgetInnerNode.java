@@ -20,31 +20,36 @@ import java.util.Map;
 
 public class GadgetInnerNode implements InnerNode, GadgetNode {
 
-    private static final double CFV_NOT_VISITED_VALUE = 100000;
+    private static final double CFV_NOT_VISITED_VALUE = -100000;
     private final GadgetInnerState state;
     private final InnerNode originalNode;
+    private final int iterationsPerGadgetGame;
     private MCTSInformationSet informationSet;
     private List<Action> actions;
     private Map<Action, Node> children;
     private InnerNode parent;
     private Action lastAction;
+    private GadgetLeafNode terminateNode;
 
     public GadgetInnerNode(
             GadgetInnerState state,
-            InnerNode originalNode) {
+            InnerNode originalNode,
+            int iterationsPerGadgetGame) {
         this.state = state;
         this.originalNode = originalNode;
+        this.iterationsPerGadgetGame = iterationsPerGadgetGame;
     }
 
     public void createChildren(double rootReach) {
         GadgetInnerAction followAction = new GadgetInnerAction(true, originalNode.getInformationSet());
         GadgetInnerAction terminateAction = new GadgetInnerAction(false, originalNode.getInformationSet());
         actions = new ArrayList<>();
-        actions.add(followAction);
+        actions.add(followAction); // order is important!
         actions.add(terminateAction);
 
         MCTSInformationSet is = originalNode.getInformationSet();
         double isReach = is.getAllNodes().stream().map(InnerNode::getReachPr).reduce(0.0, Double::sum);
+        if(1.0 - isReach < 1e-9) isReach = 1.0; // sometimes sums can not sum up to 1
 
         assert is.getAlgorithmData() != null;
         OOSAlgorithmData data = ((OOSAlgorithmData) is.getAlgorithmData());
@@ -53,10 +58,21 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
             isCFV = CFV_NOT_VISITED_VALUE;
             System.err.println(">>> CFV!");
         } else {
-            isCFV = data.getIsCFV();
+            isCFV = data.getIsCFV(iterationsPerGadgetGame);
         }
 
-        GadgetLeafNode terminateNode = new GadgetLeafNode(originalNode.getGameState(), rootReach * isCFV / isReach);
+        int playerSign = getPlayerToMove().getId() == 0 ? 1 : -1;
+
+
+        double u = playerSign * rootReach * isCFV / isReach;
+        if(originalNode.getDepth() == 0) {
+            u = 0.3235250255823229;
+        }
+        if(originalNode.getDepth() == 1) {
+            u = 0.9558721200504063;
+        }
+        this.terminateNode = new GadgetLeafNode(
+                originalNode.getGameState(), u);
         terminateNode.setParent(this);
         terminateNode.setLastAction(terminateAction);
 
@@ -176,6 +192,15 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
         return children;
     }
 
+    public InnerNode getFollowNode() {
+        return originalNode;
+    }
+
+    public GadgetLeafNode getTerminateNode() {
+        return terminateNode;
+    }
+
+
     @Override
     public void setChildren(Map<Action, Node> children) {
         throw new NotImplementedException();
@@ -212,5 +237,10 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
     public InnerNode getOriginalNode() {
         return originalNode;
+    }
+
+    @Override
+    public String toString() {
+        return "Gadget PL"+getPlayerToMove().getId() + " - Orig: "+getOriginalNode().toString();
     }
 }

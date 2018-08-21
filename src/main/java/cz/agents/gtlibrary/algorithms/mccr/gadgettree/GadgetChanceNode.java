@@ -22,7 +22,6 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     private Map<Action, GadgetInnerNode> resolvingInnerNodes;
     private Map<Action, Double> chanceProbabilities;
     private List<Action> actions;
-    private MCTSInformationSet informationSet;
     private Double rootReach;
 
     public GadgetChanceNode(GadgetChanceState chanceState, Expander<MCTSInformationSet> originalExpander, Random random) {
@@ -40,6 +39,8 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
                 .map(resolvingInnerNodes::get)
                 .map(GadgetInnerNode::getOriginalReachPr)
                 .reduce(0.0, Double::sum);
+
+        if(1.0 - rootReach < 1e-9) rootReach = 1.0; // sometimes sums can not sum up to 1
 
         assert rootReach > 0; // at least IS must be reachable
 
@@ -107,13 +108,14 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
     @Override
     public MCTSInformationSet getInformationSet() {
-        return informationSet;
+        return null;
     }
 
     @Override
     public void setInformationSet(MCTSInformationSet informationSet) {
-        this.informationSet = informationSet;
+        throw new NotImplementedException();
     }
+
 
     @Override
     public Map<Action, Node> getChildren() {
@@ -137,7 +139,7 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
     @Override
     public InnerNode getParent() {
-        throw new NotImplementedException();
+        return null;
     }
 
     @Override
@@ -208,5 +210,10 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
         this.chanceProbabilities = chanceProbabilities;
     }
 
+    @Override
+    public String toString() {
+        GadgetInnerNode aNode = resolvingInnerNodes.values().iterator().next();
 
+        return "GadgetChance PL" + aNode.getPlayerToMove().getId() + " " + aNode.getOriginalNode().getDepth();
+    }
 }

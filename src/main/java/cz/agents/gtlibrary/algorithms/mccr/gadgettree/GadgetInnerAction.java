@@ -21,4 +21,13 @@ public class GadgetInnerAction extends ActionImpl{
     public int hashCode() {
         return doFollow ? 1 : 0;
     }
+
+    @Override
+    public String toString() {
+        return "gadget " + (doFollow ? "follow" : "terminate");
+    }
+
+    public boolean isFollow() {
+        return doFollow;
+    }
 }

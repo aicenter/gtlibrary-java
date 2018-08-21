@@ -46,7 +46,31 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
     private int hashCode = -1;
 
     // standard game
-    public static double[][] payoffs = { {   0, -1,  1 },
+    // Exploitability 0.0025173633941771856
+    //
+    // PPl0 Rock=0.01025513842259748,   PPl0 Scissors=0.3323003083557901    PPl0 Paper=0.6574445532216123,
+    // CFV -0.32352562045066463
+    // CFV-A -0.3095001859619614,-0.3217096899965995,-0.3246622440918455,
+
+    // CFR - resolved
+    // PPl0 Rock=0.010983753311312867,   PPl0 Scissors=0.3323306619654697   PPl0 Paper=0.6566855847232176,
+    // CFV -0.3234088188237126
+    // CFV-A -0.22108612935568495,-0.3229336703174805,-0.3253607325350743,
+
+
+    // {PPl1 Rock=0.3344196060883686,   PPl1 Scissors=0.009664948563089358  PPl1 Paper=0.6559154453485421   }
+    // CFV 0.9558721200504063
+    // CFV-A 0.0,99.0,0.0,
+
+    // CFR - resolved
+    // PPl1 Rock=0.13061764127790954,   PPl1 Scissors=8.027450092656224E-5  PPl1 Paper=0.869302084221164
+    // CFV 0.00794717559172975
+    // CFV-A 0.0,99.0,0.0,
+
+
+    // 0.0833327103525125
+    // 0.0832096829774322
+    public static double[][] payoffs = { {   0, -1,  100 },
                                          {   1,  0, -1 },
                                          {  -1,  1,  0 } };
 
@@ -230,7 +254,7 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
     public String toString() {
         //return history.toString();
         String str = "Pl" + currentPlayerIndex + ", act= "
-                + playerActions[0] + " " + playerActions[1] + "\n\n";
+                + playerActions[0] + " " + playerActions[1];
         return str;
     }
 

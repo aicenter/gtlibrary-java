@@ -11,9 +11,9 @@ public class GadgetISKey extends ISKey implements Serializable{
     private final int hash;
 
     public GadgetISKey(PerfectRecallISKey isKey) {
-        super(isKey.getHash(), isKey.getSequence(), "gadget");
+        super(isKey.getSequence().hashCode(), isKey.getSequence(), "gadget");
         this.sequence = isKey.getSequence();
-        this.hash = isKey.getHash();
+        this.hash = this.sequence.hashCode();
     }
 
     public GadgetISKey(int hashCode, Sequence sequence) {

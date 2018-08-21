@@ -35,6 +35,9 @@ import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
+import cz.agents.gtlibrary.domain.rps.RPSExpander;
+import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
+import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallAlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.*;
@@ -64,7 +67,7 @@ import java.util.Set;
  * Assumes that nodes with the same hashCode() of information set key pair belong to the same information set (without check on equals())
  */
 public class GambitEFG {
-    private boolean wActionLabels = false;
+    private boolean wActionLabels = true;
     private boolean wNodeLabels = true;
     private boolean wISKeys = true; // if false, writes PS keys
     private Map<ISKey, Integer> infSetIndices;
@@ -74,7 +77,8 @@ public class GambitEFG {
 //        exportRandomGame();
 //        exportIIGoofSpiel();
 //        exportLD();
-        exportGP();
+//        exportGP();
+        exportRPS();
 //        exportPhantomTTT();
     }
 
@@ -144,6 +148,14 @@ public class GambitEFG {
         GenericPokerGameState root = new GenericPokerGameState();
 
         exporter.buildAndWrite("GP_"+(exporter.wISKeys?"IS":"PT")+".gbt", root, new GenericPokerExpander<>(new SequenceFormConfig<>()));
+    }
+
+    public static void exportRPS() {
+        GambitEFG exporter = new GambitEFG();
+        GameInfo gameInfo = new RPSGameInfo();
+        GameState root = new RPSGameState();
+
+        exporter.buildAndWrite("RPS_"+(exporter.wISKeys?"IS":"PT")+".gbt", root, new RPSExpander<>(new SequenceFormConfig<>()));
     }
 
     public GambitEFG() {
@@ -252,12 +264,12 @@ public class GambitEFG {
             GameState state = inNode.getGameState();
             List<Action> actions = inNode.getActions();
             if (state.isPlayerToMoveNature()) {
-                out.print("c \"" + (wNodeLabels ? state.toString()  : "") + "\" "+(wISKeys ? nextChance++ : getUniqueHash(((DomainWithPublicState) state).getPSKeyForPlayerToMove()))+" \"\" { ");
+                out.print("c \"" + (wNodeLabels ? inNode.toString()  : "") + "\" "+(wISKeys ? nextChance++ : getUniqueHash(((DomainWithPublicState) state).getPSKeyForPlayerToMove()))+" \"\" { ");
                 for (Action a : actions) {
-                    out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + state.getProbabilityOfNatureFor(a) + " ");
+                    out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + inNode.getProbabilityOfNatureFor(a) + " ");
                 }
             } else {
-                out.print("p \"" + (wNodeLabels ? state.toString()  : "") + "\" " + (state.getPlayerToMove().getId() + 1) + " " + getUniqueHash(wISKeys ? state.getISKeyForPlayerToMove() : ((DomainWithPublicState) state).getPSKeyForPlayerToMove()) + " \"\" { ");
+                out.print("p \"" + (wNodeLabels ? inNode.toString()  : "") + "\" " + (inNode.getPlayerToMove().getId() + 1) + " " + getUniqueHash(wISKeys ? state.getISKeyForPlayerToMove() : ((DomainWithPublicState) state).getPSKeyForPlayerToMove()) + " \"\" { ");
                 for (Action a : actions) {
                     out.print("\"" + (wActionLabels ? a.toString() : "") + "\" ");
                 }

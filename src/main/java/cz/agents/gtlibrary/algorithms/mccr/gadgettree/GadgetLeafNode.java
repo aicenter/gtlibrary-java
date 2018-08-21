@@ -17,9 +17,10 @@ public class GadgetLeafNode implements LeafNode, GadgetNode {
     private Action lastAction;
     private GameState state;
 
+    // utility for the first player
     public GadgetLeafNode(GameState originalGameState, Double utility) {
         // todo: check signs
-        this.utilities = new double[]{-utility, utility, 0};
+        this.utilities = new double[]{utility, -utility, 0};
         this.state = new GadgetLeafState(originalGameState, utilities);
     }
 
@@ -77,5 +78,10 @@ public class GadgetLeafNode implements LeafNode, GadgetNode {
     @Override
     public void setAlgorithmData(AlgorithmData algorithmData) {
         throw new NotImplementedException();
+    }
+
+    @Override
+    public String toString() {
+        return "gadget leaf";
     }
 }

@@ -23,15 +23,17 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.cfr;
 
+import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.*;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.experiments.StrategyStrengthLargeExperiments;
@@ -42,10 +44,10 @@ import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMExpander;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameState;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.ArrayDeque;
 import java.util.Map;
 
 
@@ -138,6 +140,12 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         threadBean = ManagementFactory.getThreadMXBean();
     }
 
+    public CFRAlgorithm(Player searchingPlayer, InnerNode rootNode) {
+        this.searchingPlayer = searchingPlayer;
+        this.rootNode = rootNode;
+        threadBean = ManagementFactory.getThreadMXBean();
+    }
+
     @Override
     public Action runMiliseconds(int miliseconds) {
         int iters = 0;
@@ -226,9 +234,35 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    public void printStrategies(InnerNode root) {
+        ArrayDeque<Node> q = new ArrayDeque<>();
+        q.add(root);
+
+        while(!q.isEmpty()) {
+            Node n = q.removeFirst();
+
+            if(n.getParent() != null) {
+                InnerNode par = n.getParent();
+                double p = 1;
+                if(par instanceof ChanceNode) {
+                   p = par.getProbabilityOfNatureFor(n.getLastAction());
+                } else {
+                    p = ((OOSAlgorithmData) par.getInformationSet().getAlgorithmData())
+                            .getMeanStrategy()[par.getActions().indexOf(n.getLastAction())];
+                }
+                System.out.println(par + " -> " + n + " : P"+p);
+            }
+
+            if(n instanceof InnerNode) {
+                q.addAll(((InnerNode) n).getChildren().values());
+            }
+        }
+    }
+
     public double computeCFVofIS(MCTSInformationSet is) {
         double cfv = 0.0;
-        Player isPlayer = is.getPlayer();
+//        Player isPlayer = is.getPlayer();
+        Player isPlayer = is.getAllNodes().iterator().next().getAllPlayers()[1-is.getPlayer().getId()]; // opp
 
         for(Node n : is.getAllNodes()) {
             // calc reach probability (chance moves / opponent moves)
@@ -249,10 +283,45 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
                 curNode = parent;
             }
 
-            cfv += rp * computeExpUtilityOfState(n, isPlayer);
+            double ev = computeExpUtilityOfState(n, isPlayer);
+            cfv += rp * ev;
 
         }
         return cfv;
+    }
+
+    public double[] computeCFVAofIS(MCTSInformationSet is) {
+        double[] cfva = new double[is.getActions().size()];
+//        Player isPlayer = is.getPlayer();
+        Player isPlayer = is.getAllNodes().iterator().next().getAllPlayers()[1-is.getPlayer().getId()]; // opp
+
+        for(InnerNode n : is.getAllNodes()) {
+            // calc reach probability (chance moves / opponent moves)
+            double rp = 1.;
+            Node curNode = n;
+            while(curNode.getParent() != null) {
+                Action a = curNode.getLastAction();
+                InnerNode parent = curNode.getParent();
+
+                if(parent instanceof ChanceNode) {
+                    rp *= parent.getProbabilityOfNatureFor(a);
+                } else if(parent instanceof InnerNode &&
+                        !parent.getPlayerToMove().equals(isPlayer)) { // opp player
+                    OOSAlgorithmData data = (OOSAlgorithmData) parent.getInformationSet().getAlgorithmData();
+                    rp *= data.getMeanStrategy()[data.getActions().indexOf(a)];
+                }
+
+                curNode = parent;
+            }
+
+            for (int a = 0; a < cfva.length; a++) {
+                double eu = computeExpUtilityOfState(n.getChildFor(is.getActions().get(a)), isPlayer);
+                cfva[a] += rp * eu;
+            }
+
+
+        }
+        return cfva;
     }
 
     private double computeExpUtilityOfState(Node node, Player player) {
@@ -274,8 +343,15 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         InnerNode in = (InnerNode) node;
         OOSAlgorithmData data = (OOSAlgorithmData) in.getInformationSet().getAlgorithmData();
         double[] ms = data.getMeanStrategy();
+
+//        double[][] strats = {
+//                {0.009939, 0.333016, 0.657044},
+//                {0.333339, 0.009454, 0.657207},
+//        };
+
         for (Action ai : in.getActions()) {
              ev += ms[data.getActions().indexOf(ai)] * computeExpUtilityOfState(in.getChildFor(ai), player);
+//             ev += strats[in.getPlayerToMove().getId()][data.getActions().indexOf(ai)] * computeExpUtilityOfState(in.getChildFor(ai), player);
         }
 
         return ev;
