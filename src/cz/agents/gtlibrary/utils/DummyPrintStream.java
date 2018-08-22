@@ -44,4 +44,4 @@ public class DummyPrintStream extends PrintStream {
             });
         return ps;
     }
-}
+} 
