@@ -567,7 +567,12 @@ public class MCCR_CFV_Experiments {
     }
 
     private void runCFR() {
+        OOSAlgorithmData.useEpsilonRM = true;
+        OOSAlgorithmData.epsilon = 0.00001f;
+
         int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "100000"));
+
+        rootState = rootState.performAction((Action) expander.getActions(rootState).get(0));
 
         CFRAlgorithm algCFR = new CFRAlgorithm(
                 rootState.getAllPlayers()[0],
@@ -611,7 +616,9 @@ public class MCCR_CFV_Experiments {
         }
 
         System.err.println("Collecting behav strategy");
-        Map<ISKey, Map<Action,Double>> behavCFR = getBehavioralStrategy(algCFR.getRootNode());
+        Map<ISKey, Map<Action,Double>> solvedBehavCFR = getBehavioralStrategy(algCFR.getRootNode());
+        Map<ISKey, Map<Action,Double>> copyCFR = getBehavioralStrategy(algCFR.getRootNode());
+
 
         System.err.println("Running resolving");
         MCCRAlgorithm mccrAlg = new MCCRAlgorithm(algCFR.getRootNode(), expander, 0.6);
@@ -631,38 +638,55 @@ public class MCCR_CFV_Experiments {
 
             mccrAlg.runStep(n, iterationsPerGadgetGame);
 
-//            if(s.equals(targetPS)) {
-                Map<ISKey, Map<Action,Double>> behavMCCR = getBehavioralStrategy(mccrAlg.getRootNode());
+            // evaluate expl
+            copyCFR = cloneBehavStrategy(solvedBehavCFR);
+            Map<ISKey, Map<Action,Double>> behavMCCR = getBehavioralStrategy(mccrAlg.getRootNode());
 
-                substituteStrategy(behavCFR, behavMCCR, targetPS);
+            substituteStrategy(copyCFR, behavMCCR, targetPS);
 
-                Strategy strategy0 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
-                        behavCFR, rootState, expander, rootState.getAllPlayers()[0]);
-                Strategy strategy1 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
-                        behavCFR, rootState, expander, rootState.getAllPlayers()[1]);
+            Strategy strategy0 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
+                    copyCFR, rootState, expander, rootState.getAllPlayers()[0]);
+            Strategy strategy1 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
+                    copyCFR, rootState, expander, rootState.getAllPlayers()[1]);
 
-                Double br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
-                Double br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
-                exploitability = br0Val + br1Val;
-                System.err.println(">>> Exploit root: " + exploitability);
-//            }
+            Double br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
+            Double br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
+            exploitability = br0Val + br1Val;
+            System.err.println(">>> Exploit root: " + exploitability);
+            System.err.println(">>> Exploit normal: " + calcExploitability());
+            ;
             q.addAll(s.getNextPlayerPublicStates());
         }
 
         System.err.println("Calculating expl after");
         Map<ISKey, Map<Action,Double>> behavMCCR = getBehavioralStrategy(mccrAlg.getRootNode());
 
-        substituteStrategy(behavCFR, behavMCCR, targetPS);
+        substituteStrategy(solvedBehavCFR, behavMCCR, targetPS);
 
         Strategy strategy0 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
-                behavCFR, rootState, expander, rootState.getAllPlayers()[0]);
+                solvedBehavCFR, rootState, expander, rootState.getAllPlayers()[0]);
         Strategy strategy1 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
-                behavCFR, rootState, expander, rootState.getAllPlayers()[1]);
+                solvedBehavCFR, rootState, expander, rootState.getAllPlayers()[1]);
 
         Double br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
         Double br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
         exploitability = br0Val + br1Val;
         System.err.println(">>> Exploit After: " + exploitability);
+        System.out.println(seed +","+iterationsPerGadgetGame +"," + exploitability);
+    }
+
+    private  Map<ISKey, Map<Action,Double>> cloneBehavStrategy(Map<ISKey, Map<Action,Double>> orig) {
+        Map<ISKey, Map<Action,Double>> out = new HashMap<>();
+
+        for (Map.Entry<ISKey, Map<Action,Double>> entry : orig.entrySet()) {
+            Map<Action,Double> dist = new HashMap<Action,Double>();
+
+            for(Map.Entry<Action,Double> act : entry.getValue().entrySet()) {
+                dist.put(act.getKey(), new Double(act.getValue()));
+            }
+            out.put(entry.getKey(), dist);
+        }
+        return out;
     }
 
     private void exportPublicTree(InnerNode rootNode) {
