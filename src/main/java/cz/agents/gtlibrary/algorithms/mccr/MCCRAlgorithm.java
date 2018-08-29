@@ -2,6 +2,7 @@ package cz.agents.gtlibrary.algorithms.mccr;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetChanceNode;
+import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetInnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
@@ -209,6 +210,8 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
                 "epsilonExploration=" + epsilonExploration + " " +
                 "resetData=" + resetData + " ");
 
+        buildCompleteTree(rootNode);
+
         InnerNode curNode = getRootNode();
         if (iterationsInRoot < 2) {
             System.err.println("Skipping root MCCFR.");
@@ -378,6 +381,9 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
     private void runGadgetCFR(GadgetChanceNode gadgetRootNode, int iterations) {
         System.err.println("using CFR for resolving gadget!");
         buildCompleteTree(gadgetRootNode);
+
+//        InnerNode aRootNode = ((GadgetInnerNode) gadgetRootNode.getChildren().values().iterator().next()).getOriginalNode();
+//        CFRAlgorithm alg = new CFRAlgorithm(aRootNode);
         CFRAlgorithm alg = new CFRAlgorithm(gadgetRootNode);
         alg.runIterations(iterations);
 
