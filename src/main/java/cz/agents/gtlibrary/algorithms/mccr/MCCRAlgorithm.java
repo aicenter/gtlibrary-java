@@ -19,6 +19,7 @@ import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.iinodes.PublicStateImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
@@ -250,16 +251,32 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
                         .map(mapCh -> mapCh.stream().filter(Node::isGameEnd).count())
                         .reduce(0L, Long::sum))
                 .reduce(0L, Long::sum);
-        System.err.println("Game has: public states, info sets, inner nodes, leaf nodes: ");
+
+        PublicState deepestPS = config.getAllPublicStates().stream()
+                .sorted((ps1, ps2) -> Integer.compare(ps2.getDepth(), ps1.getDepth()))
+                .findFirst().get();
+        int numC = 0;
+        PublicState currentPs = deepestPS;
+        while(currentPs.getParentPublicState() != null) {
+            currentPs = currentPs.getParentPublicState();
+            if(currentPs.getAllNodes().stream().anyMatch(n -> (n instanceof ChanceNode))) {
+                numC++;
+            }
+        }
+        Integer maxPTdepth = deepestPS.getDepth() - numC + 1;
+
+        System.err.println("Game has: \n" +
+                "public states & info sets & inner nodes & leaf nodes & max PT depth");
         System.err.println(config.getAllPublicStates().size() + " & " +
                 config.getAllInformationSets().size() + " & " +
                 inners + " & " +
-                leafs);
+                leafs + " & " +
+                (maxPTdepth));
         System.err.println(
                 "F:" + gadgetActionChoices[0] + " " +
-                        "T:" + gadgetActionChoices[1] + " " +
-                        "ratio: " + ((double) gadgetActionChoices[0] / (gadgetActionChoices[0] + gadgetActionChoices[1])) + " " +
-                        "total: " + (gadgetActionChoices[0] + gadgetActionChoices[1]));
+                "T:" + gadgetActionChoices[1] + " " +
+                "ratio: " + ((double) gadgetActionChoices[0] / (gadgetActionChoices[0] + gadgetActionChoices[1])) + " " +
+                "total: " + (gadgetActionChoices[0] + gadgetActionChoices[1]));
     }
 
     private void buildTreeExpandChanceNodes(InnerNode startNode) {
@@ -355,7 +372,13 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
 //        System.err.println(playerIS + " gadget util: "+ utils.get()[0]);
 
         if (resetData) {
-            subgame.resetData();
+            boolean keepSeveralFirstResolvings = publicState.getAllNodes().stream()
+                    .filter(n -> (n.getChanceReachPr() == 1. && n.getPlayerReachPr() == 1.))
+                    .count() == publicState.getAllNodes().size();
+
+            if(!keepSeveralFirstResolvings) {
+                subgame.resetData();
+            }
         }
 
 //        new GambitEFG().write(expander.getClass().getSimpleName() + "_PS_"+publicState.getPSKey().getHash()+".gbt", gadgetRootNode);
