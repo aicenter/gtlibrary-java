@@ -241,7 +241,8 @@ public class SQFBestResponseAlgorithm {
 //                    v = -MAX_UTILITY_VALUE*alternativeNodesProbs.get(currentNode);
                     v = Double.NEGATIVE_INFINITY;
                 } else {
-                    v = sel.actionRealValues.get(currentNode).get(resultAction);
+                    HashMap<Action, Double> curNodeMap = sel.actionRealValues.get(currentNode);
+                    v = curNodeMap.get(resultAction);
                 }
 
                 cachedValuesForNodes.put(currentNode, v);

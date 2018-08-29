@@ -42,12 +42,8 @@ public interface InnerNode extends Node {
         return getGameState().getPlayerToMove();
     }
 
-    default Player getOpponentPlayer() {
-        Player pl = getPlayerToMove();
-        if(pl.getId() == 2) {
-            throw new RuntimeException("Chance does not have opponent player!");
-        }
-        return getAllPlayers()[1-pl.getId()];
+    default Player getOpponentPlayerToMove() {
+        return getGameState().getOpponentPlayerToMove();
     }
 
     default boolean isPlayerMoving(Player player) {
@@ -61,9 +57,15 @@ public interface InnerNode extends Node {
     default PerfectRecallISKey getOpponentAugISKey() {
         History history = getGameState().getHistory();
         Player player = getPlayerToMove();
-        Player opp = getOpponentPlayer();
+        Player opp = getOpponentPlayerToMove();
         Sequence oppSeq = history.getSequencesOfPlayers().get(opp);
         int hashCode = getGameState().getISKeyForPlayerToMove().hashCode();
         return new PerfectRecallISKey(hashCode, oppSeq);
     }
+
+    double getExpectedValue(int iterationNum);
+
+    void updateExpectedValue(double offPolicyAproxSample);
+
+    void resetData();
 }

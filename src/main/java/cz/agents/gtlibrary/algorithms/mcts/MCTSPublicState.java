@@ -12,7 +12,11 @@ public class MCTSPublicState extends PublicStateImpl {
     private AlgorithmData algorithmData;
 
     public MCTSPublicState(MCTSConfig config, InnerNode node) {
-        super(config, node);
+        super(config, node, null);
+    }
+
+    public MCTSPublicState(MCTSConfig mctsConfig, InnerNode node, MCTSPublicState parentPublicState) {
+        super(mctsConfig, node, parentPublicState);
     }
 
     public AlgorithmData getAlgorithmData() {

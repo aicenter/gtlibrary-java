@@ -28,6 +28,7 @@ public abstract class ExpanderImpl<I extends InformationSet> implements Expander
     private static final long serialVersionUID = -2367393002316400229L;
 
     private AlgorithmConfig<I> algConfig;
+    private GameInfo gameInfo;
 
     public ExpanderImpl(AlgorithmConfig<I> algConfig) {
         this.algConfig = algConfig;
@@ -57,5 +58,13 @@ public abstract class ExpanderImpl<I extends InformationSet> implements Expander
                 a.setInformationSet(informationSet);
             }
         return actions;
+    }
+
+    public GameInfo getGameInfo() {
+        return gameInfo;
+    }
+
+    public void setGameInfo(GameInfo gameInfo) {
+        this.gameInfo = gameInfo;
     }
 }

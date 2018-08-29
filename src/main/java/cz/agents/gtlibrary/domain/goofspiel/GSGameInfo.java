@@ -46,6 +46,7 @@ public class GSGameInfo implements GameInfo {
     public static boolean BINARY_UTILITIES = false;
 
     public static Sequence natureSequence;
+    private Double maxUtility = null;
 
 
     public GSGameInfo() {
@@ -63,17 +64,19 @@ public class GSGameInfo implements GameInfo {
 
     @Override
     public double getMaxUtility() {
+        if(maxUtility == null) {
+            if (BINARY_UTILITIES)
+                maxUtility = 1.;
+            else {
+                double value = 0;
 
-        if (BINARY_UTILITIES)
-            return 1;
-        else {
-            double value = 0;
-
-            for (int cardValue : CARDS_FOR_PLAYER) {
-                value += cardValue;
+                for (int cardValue : CARDS_FOR_PLAYER) {
+                    value += cardValue;
+                }
+                maxUtility = value;
             }
-            return value;
         }
+        return maxUtility;
     }
 
     private Sequence createRandomSequence() {

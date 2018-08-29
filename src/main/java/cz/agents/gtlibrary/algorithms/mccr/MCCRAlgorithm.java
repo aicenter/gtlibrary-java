@@ -2,13 +2,10 @@ package cz.agents.gtlibrary.algorithms.mccr;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetChanceNode;
-import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetInnerNode;
-import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetLeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNodeImpl;
@@ -18,27 +15,32 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
-import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static cz.agents.gtlibrary.algorithms.mccr.MCCR_CFV_Experiments.buildCompleteTree;
+import static cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm.gadgetActionChoices;
 
 // Monte Carlo Continual Resolving algorithm
 public class MCCRAlgorithm implements GamePlayingAlgorithm {
     private final GameState rootState;
     private final InnerNode rootNode;
     private final Expander expander;
-    boolean printed = false;
     private Random rnd;
     private double epsilonExploration = 0.6;
     private Node statefulCurNode;
     private double pi_c = 1.0;
+
+    private boolean resetData = true;
+
+    public static boolean updateCRstatistics = true;
+    public boolean gadgetMCCFR = true;
 
     public MCCRAlgorithm(GameState rootState, Expander expander, double epsilonExploration) {
         this.rootState = rootState;
@@ -59,7 +61,21 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
         OOSAlgorithmData.epsilon = 0.00001f;
     }
 
-    public Strategy runIterations(int iterationsInRoot, int iterationsPerGadgetGame) {
+    public MCCRAlgorithm(InnerNode rootNode, Expander expander, double epsilonExploration) {
+        this.rootState = rootNode.getGameState();
+        this.expander = expander;
+        this.rnd = ((MCTSConfig) expander.getAlgorithmConfig()).getRandom();
+        this.rootNode = rootNode;
+
+        this.statefulCurNode = rootNode;
+        this.epsilonExploration = epsilonExploration;
+        // use epsRM so that traversal into all parts of the public tree is well defined
+        // otherwise we may get 0-prob of some actions which prohibit visiting some parts of the tree
+        OOSAlgorithmData.useEpsilonRM = true;
+        OOSAlgorithmData.epsilon = 0.00001f;
+    }
+
+    public double[] runIterations(int iterationsInRoot, int iterationsPerGadgetGame) {
         System.err.println("Using " +
                 "iterationsInRoot=" + iterationsInRoot + " " +
                 "iterationsPerGadgetGame=" + iterationsPerGadgetGame + " " +
@@ -75,7 +91,8 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
             curNode = ((InnerNode) curNode).getChildFor(action);
         }
 
-        return StrategyCollector.getStrategyFor(getRootNode(), getRootNode().getAllPlayers()[0], new MeanStratDist());
+        return ((LeafNode) curNode).getUtilities();
+        //StrategyCollector.getStrategyFor(getRootNode(), getRootNode().getAllPlayers()[0], new MeanStratDist());
     }
 
     public Action runStepStateful(int iterationsPerGadgetGame) {
@@ -109,33 +126,52 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
             assert curNode instanceof InnerNode;
 
             MCTSInformationSet curIS = ((InnerNode) curNode).getInformationSet();
+            PublicState curPS = curIS.getPublicState();
+            PublicState parentPS = curPS.getParentPublicState();
+
+            if(parentPS != null) {
+                while (isChancePS(parentPS)) {
+                    if(parentPS.getParentPublicState() == null) break;
+                    parentPS = parentPS.getParentPublicState();
+                }
+            }
+
             try {
                 System.err.println("--------------------------");
-                System.err.println(
-                        "Resolving " + curIS + "  --  current " + curNode + " -- " + curIS.getPublicState().getAllNodes().size() + " nodes, " + curIS.getPublicState().getAllInformationSets().size() + " infosets in public state");
+                System.err.println("Resolving " +
+                        "\n\tPS: " + curPS + " (parent "+ parentPS +") " +
+                        "\n\tIS: " + curIS + " " +
+                        "\n\tN: " + curNode + " " +
+                        "\n\t" + curPS.getAllNodes().size() + " nodes, " +
+                        curPS.getAllInformationSets().size() + " infosets in public state");
 
-                if (curIS.getActions().size() == 1) {
+                if (curIS.getActions().size() == 1 &&
+                        (curNode.getGameState() instanceof IIGoofSpielGameState
+                                || curNode.getGameState() instanceof LiarsDiceGameState
+                                || curNode.getGameState() instanceof GenericPokerGameState)) {
                     System.err.println("Only one action possible, skipping resolving");
                     action = curIS.getActions().iterator().next();
                 } else {
                     Map<Action, Double> distributionBefore = getDistributionFor(curIS.getAlgorithmData());
-                    Map<Action, Double> distribution = resolveGadgetGame(curIS, iterationsPerGadgetGame);
+                    resolveGadgetGame(curPS, iterationsPerGadgetGame);
+                    Map<Action, Double> distributionAfter = getDistributionFor(curIS.getAlgorithmData());
+
                     Map<Action, Double> diff = distributionBefore.keySet().stream()
                             .collect(Collectors.toMap(
                                     entry -> entry,
-                                    distAction -> distributionBefore.get(distAction) - distribution.get(distAction)
+                                    distAction -> distributionBefore.get(distAction) - distributionAfter.get(distAction)
                                                      ));
 
                     System.err.println("Before: " + distributionToString(curIS.getActions(), distributionBefore));
-                    System.err.println("After:  " + distributionToString(curIS.getActions(), distribution));
+                    System.err.println("After:  " + distributionToString(curIS.getActions(), distributionAfter));
                     System.err.println("Diff:   " + distributionToString(curIS.getActions(), diff));
-                    action = randomChoice(distribution);
-                }
+                    action = randomChoice(distributionAfter);
+                } // else
 
                 System.err.println("Updating reach probabilities");
                 // this builds tree until next public states
-                for (InnerNode node : curIS.getPublicState().getAllNodes()) {
-                    updateRp_newAvgStrategyFound(curIS.getPlayer(), node.getReachPr(), node);
+                for (InnerNode node : curPS.getAllNodes()) {
+                    updateRp_newAvgStrategyFound(curIS.getPlayer(), curIS.getOpponent(), node.getReachPr(), node);
                 }
 
                 assert curIS.getActions().contains(action);
@@ -148,6 +184,10 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
             }
         }
         return action;
+    }
+
+    private boolean isChancePS(PublicState ps) {
+        return ps.getAllNodes().iterator().next() instanceof ChanceNode;
     }
 
     private String distributionToString(List<Action> actions, Map<Action, Double> distribution) {
@@ -166,35 +206,57 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
         System.err.println("Using " +
                 "iterationsInRoot=" + iterationsInRoot + " " +
                 "iterationsPerGadgetGame=" + iterationsPerGadgetGame + " " +
-                "epsilonExploration=" + epsilonExploration + " ");
+                "epsilonExploration=" + epsilonExploration + " " +
+                "resetData=" + resetData + " ");
 
-        Node curNode = getRootNode();
-        runRootMCCFR(iterationsInRoot);
-
-        ArrayDeque<PublicState> q = new ArrayDeque<>();
-        q.add(getRootNode().getPublicState());
-        while (!q.isEmpty()) {
-            PublicState s = q.removeFirst();
-
-            Node n = s.getAllNodes().iterator().next();
-            runStep(n, iterationsPerGadgetGame);
-
-            q.addAll(s.getNextPublicStates());
-
-//            // check if this part of the tree is reachable
-//            // if not, we can keep any kind of strategy (also default)
-//            double rootReach = s.getAllNodes().stream()
-//                    .map(InnerNode::getReachPr)
-//                    .reduce(0.0, Double::sum);
-//            if(rootReach > 0){
-//                runStep(n, iterationsPerGadgetGame);
-//                q.addAll(s.getNextPublicStates());
-//            }
+        InnerNode curNode = getRootNode();
+        if (iterationsInRoot < 2) {
+            System.err.println("Skipping root MCCFR.");
+        } else {
+            runRootMCCFR(iterationsInRoot);
         }
 
+        if (iterationsPerGadgetGame < 2) {
+            System.err.println("Skipping resolving.");
+        } else {
+            ArrayDeque<PublicState> q = new ArrayDeque<>();
+            q.add(getRootNode().getPublicState());
+            while (!q.isEmpty()) {
+                PublicState s = q.removeFirst();
+
+                InnerNode n = s.getAllNodes().iterator().next();
+                runStep(n, iterationsPerGadgetGame);
+
+                q.addAll(s.getNextPlayerPublicStates());
+            }
+        }
+        printDomainStatistics();
+    }
+
+    private void printDomainStatistics() {
         MCTSConfig config = getRootNode().getAlgConfig();
-        System.err.println("Game has: " + config.getAllPublicStates().size() + " public states, "
-                + config.getAllInformationSets().size() + " info sets. ");
+
+        Integer inners = config.getAllInformationSets().values()
+                .stream().map(MCTSInformationSet::getAllNodes)
+                .map(Set::size).reduce(0, Integer::sum);
+        Long leafs = config.getAllInformationSets().values().stream()
+                .map(MCTSInformationSet::getAllNodes)
+                .map(setIN -> setIN.stream()
+                        .map(InnerNode::getChildren)
+                        .map(Map::values)
+                        .map(mapCh -> mapCh.stream().filter(Node::isGameEnd).count())
+                        .reduce(0L, Long::sum))
+                .reduce(0L, Long::sum);
+        System.err.println("Game has: public states, info sets, inner nodes, leaf nodes: ");
+        System.err.println(config.getAllPublicStates().size() + " & " +
+                config.getAllInformationSets().size() + " & " +
+                inners + " & " +
+                leafs);
+        System.err.println(
+                "F:" + gadgetActionChoices[0] + " " +
+                        "T:" + gadgetActionChoices[1] + " " +
+                        "ratio: " + ((double) gadgetActionChoices[0] / (gadgetActionChoices[0] + gadgetActionChoices[1])) + " " +
+                        "total: " + (gadgetActionChoices[0] + gadgetActionChoices[1]));
     }
 
     private void buildTreeExpandChanceNodes(InnerNode startNode) {
@@ -229,7 +291,8 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
         return (new MeanStratDist()).getDistributionFor(algorithmData);
     }
 
-    private void updateRp_newAvgStrategyFound(Player updatingPlayer, double updatePr, InnerNode node) {
+    private void updateRp_newAvgStrategyFound(Player updatingPlayer, Player opponentPlayer,
+                                              double updatePr, InnerNode node) {
         // Top-down update of reach probabilities.
         //
         // From current public state until next public states of the same player,
@@ -243,8 +306,6 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
             avgStrategy = getDistributionFor(node.getInformationSet().getAlgorithmData());
         }
 
-        Player opponentPlayer = node.getAllPlayers()[1 - updatingPlayer.getId()];
-
         // todo: dont ignore multi-level IS, and chance player in public state
         for (Action action : node.getActions()) {
             Node nextNode = node.getChildFor(action);
@@ -256,21 +317,19 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
             }
 
             InnerNode nextInner = (InnerNode) nextNode;
-            if (nextInner.isPlayerMoving(opponentPlayer)) {
+            if (nextInner.isPlayerMoving(updatingPlayer)) {
                 nextInner.setPlayerReachPr(updatePr * pA); // we are done, no more recursion
             } else {
-                updateRp_newAvgStrategyFound(updatingPlayer, updatePr * pA, nextInner);
+                updateRp_newAvgStrategyFound(updatingPlayer, opponentPlayer, updatePr * pA, nextInner);
             }
         }
 
     }
 
-    private Map<Action, Double> resolveGadgetGame(MCTSInformationSet playerIS, int iterationsPerGadgetGame) {
-        InnerNode aNode = playerIS.getAllNodes().iterator().next();
+    private void resolveGadgetGame(PublicState publicState, int iterationsPerGadgetGame) {
+        InnerNode aNode = publicState.getAllNodes().iterator().next();
 
-        PublicState publicState = playerIS.getPublicState();
-        publicState.getNextPublicStates(); // build all the nodes until next public states
-
+        publicState.getNextPlayerPublicStates(); // build all the nodes until next public states
 
         Subgame subgame = new SubgameImpl(
                 publicState,
@@ -279,7 +338,6 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
                 iterationsPerGadgetGame);
         GadgetChanceNode gadgetRootNode = subgame.getGadgetRoot();
 
-        LeafNodeImpl.setScalingConstant(gadgetRootNode.getRootReachPr());
 
 //        new GambitEFG().write(expander.getClass().getSimpleName() + "_RP_gadget_" + gadgetRootNode + ".gbt",
 //                gadgetRootNode);
@@ -292,20 +350,20 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
 //                .findFirst().map(gadgetInnerNode -> ((GadgetInnerNode) gadgetInnerNode).getTerminateNode())
 //                .map(GadgetLeafNode::getUtilities);
 //        System.err.println(playerIS + " gadget util: "+ utils.get()[0]);
-        subgame.resetData();
 
-//        new GambitEFG().write(expander.getClass().getSimpleName() + "_RP_gadget_reset_" + gadgetRootNode + ".gbt",
-//                gadgetRootNode);
+        if (resetData) {
+            subgame.resetData();
+        }
 
+//        new GambitEFG().write(expander.getClass().getSimpleName() + "_PS_"+publicState.getPSKey().getHash()+".gbt", gadgetRootNode);
 
-        Map<Action, Double> distribution = runGadgetMCCFR(gadgetRootNode, playerIS, iterationsPerGadgetGame);
-//        Map<Action, Double> distribution = runGadgetCFR(gadgetRootNode, playerIS, iterationsPerGadgetGame);
-        LeafNodeImpl.setScalingConstant(1.0);
-
-        System.err.println(playerIS +" visited num times: "+ ((OOSAlgorithmData) playerIS.getAlgorithmData()).getIsVisitsCnt());
-
-        return distribution;
+        if(gadgetMCCFR) {
+            runGadgetMCCFR(gadgetRootNode, iterationsPerGadgetGame);
+        } else {
+            runGadgetCFR(gadgetRootNode, iterationsPerGadgetGame);
+        }
     }
+
 
     private void runRootMCCFR(int iterations) {
         System.err.println("Calculating initial strategy from root...");
@@ -313,43 +371,34 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
         alg.setRnd(rnd);
         alg.runIterations(iterations);
 
-        printCFVs(((MCTSConfig) expander.getAlgorithmConfig()).getAllInformationSets().values().stream()
-                .filter(is -> is.getAlgorithmData() != null), iterations);
+//        printCFVs(((MCTSConfig) expander.getAlgorithmConfig()).getAllInformationSets().values().stream()
+//                .filter(is -> is.getAlgorithmData() != null), iterations);
     }
 
-    private Map<Action, Double> runGadgetCFR(GadgetChanceNode gadgetRootNode,
-                                             MCTSInformationSet playerIS,
-                                             int iterations) {
+    private void runGadgetCFR(GadgetChanceNode gadgetRootNode, int iterations) {
+        System.err.println("using CFR for resolving gadget!");
         buildCompleteTree(gadgetRootNode);
-        CFRAlgorithm alg = new CFRAlgorithm(playerIS.getPlayer(), gadgetRootNode);
+        CFRAlgorithm alg = new CFRAlgorithm(gadgetRootNode);
         alg.runIterations(iterations);
 
-        printCFVs(((MCTSConfig) expander.getAlgorithmConfig()).getAllInformationSets().values().stream()
-                        .filter(is -> is.getAlgorithmData() != null),
-                iterations);
+//        printCFVs(((MCTSConfig) expander.getAlgorithmConfig()).getAllInformationSets().values().stream()
+//                        .filter(is -> is.getAlgorithmData() != null),
+//                iterations);
 
-        alg.printStrategies(gadgetRootNode);
-
-        return getDistributionFor(playerIS.getAlgorithmData());
+//        alg.printStrategies(gadgetRootNode);
     }
 
-    private Map<Action, Double> runGadgetMCCFR(GadgetChanceNode gadgetRoot,
-                                               MCTSInformationSet playerIS,
-                                               int iterations) {
-
-        OOSAlgorithm alg = new OOSAlgorithm(playerIS.getPlayer(), gadgetRoot, epsilonExploration);
+    private void runGadgetMCCFR(GadgetChanceNode gadgetRoot, int iterations) {
+        OOSAlgorithm alg = new OOSAlgorithm(gadgetRoot, epsilonExploration);
         alg.setRnd(rnd);
         alg.runIterations(iterations);
 
-        printCFVs(((MCTSConfig) expander.getAlgorithmConfig()).getAllInformationSets().values().stream()
-                .filter(is -> is.getAlgorithmData() != null),
-                iterations);
-
-        return getDistributionFor(playerIS.getAlgorithmData());
+//        printCFVs(((MCTSConfig) expander.getAlgorithmConfig()).getAllInformationSets().values().stream()
+//                .filter(is -> is.getAlgorithmData() != null),
+//                iterations);
     }
 
-    private void printCFVs(Stream<MCTSInformationSet> stream, int iterations) {
-//        if(!printed) {
+//    private void printCFVs(Stream<MCTSInformationSet> stream, int iterations) {
 //        stream
 //                .forEach(is -> {
 //                    OOSAlgorithmData data = ((OOSAlgorithmData) is.getAlgorithmData());
@@ -382,9 +431,7 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
 //                    System.out.println("---");
 //
 //                });
-//            printed = true;
-//        }
-    }
+//    }
 
     @Override
     public Action runMiliseconds(int miliseconds, GameState gameState) {
@@ -416,5 +463,9 @@ public class MCCRAlgorithm implements GamePlayingAlgorithm {
         }
 
         return null;
+    }
+
+    public void setResetData(boolean resetData) {
+        this.resetData = resetData;
     }
 }

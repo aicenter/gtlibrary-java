@@ -29,7 +29,7 @@ public class GadgetInnerState implements GameState {
 
     @Override
     public Player getPlayerToMove() {
-        return getAllPlayers()[1-originalGameState.getPlayerToMove().getId()];
+        return originalGameState.getOpponentPlayerToMove();
     }
 
     @Override

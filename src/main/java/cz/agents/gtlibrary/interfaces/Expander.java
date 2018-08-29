@@ -50,4 +50,9 @@ public interface Expander<I extends InformationSet> extends Serializable {
 	public List<Action> getActions(I informationSet);
 
     public void setAlgConfig(AlgorithmConfig<I> algConfig);
+
+	public GameInfo getGameInfo();
+
+	public void setGameInfo(GameInfo gameInfo);
+
 }

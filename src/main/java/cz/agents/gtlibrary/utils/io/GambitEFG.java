@@ -78,8 +78,8 @@ public class GambitEFG {
 //        exportIIGoofSpiel();
 //        exportLD();
 //        exportGP();
-        exportRPS();
-//        exportPhantomTTT();
+//        exportRPS();
+        exportPhantomTTT();
     }
 
     public static void exportRandomGame() {
@@ -123,7 +123,7 @@ public class GambitEFG {
         // setup Game:
         LDGameInfo.P1DICE = 1;
         LDGameInfo.P2DICE = 1;
-        LDGameInfo.FACES = 2;
+        LDGameInfo.FACES = 3;
         LDGameInfo.CALLBID = (LDGameInfo.P1DICE + LDGameInfo.P2DICE) * LDGameInfo.FACES + 1;
 
         GambitEFG exporter = new GambitEFG();

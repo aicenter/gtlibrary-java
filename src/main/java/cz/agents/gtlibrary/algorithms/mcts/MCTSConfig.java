@@ -115,7 +115,11 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
 
     @Override
     public MCTSPublicState createPublicStateFor(InnerNode node) {
-        return new MCTSPublicState(this, node);
+        if(node.getParent() == null) {
+            return new MCTSPublicState(this, node);
+        } else {
+            return new MCTSPublicState(this, node, node.getParent().getPublicState());
+        }
     }
 
     @Override

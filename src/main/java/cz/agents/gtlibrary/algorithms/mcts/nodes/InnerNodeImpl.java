@@ -32,6 +32,8 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 import java.util.List;
 import java.util.Map;
 
+import static cz.agents.gtlibrary.algorithms.mccr.MCCRAlgorithm.updateCRstatistics;
+
 public class InnerNodeImpl extends NodeImpl implements InnerNode {
 
     protected Map<Action, Node> children;
@@ -40,6 +42,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     private MCTSPublicState publicState;
     private double playerReachPr = 1.;
     private double chanceReachPr = 1.;
+    private double evSum = 0.;
 
     /**
      * Non-root node constructor
@@ -186,5 +189,35 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     @Override
     public double getChanceReachPr() {
         return chanceReachPr;
+    }
+
+    private Double reachPr = null;
+    @Override
+    public double getReachPr() {
+        if(updateCRstatistics || reachPr == null) {
+            return getPlayerReachPr() * getChanceReachPr();
+        }
+        return reachPr;
+    }
+
+    public void setReachPr(double reachPr) {
+        this.reachPr = reachPr;
+    }
+
+    @Override
+    public double getExpectedValue(int iterationNum) {
+        return this.evSum / iterationNum;
+    }
+
+    @Override
+    public void updateExpectedValue(double offPolicyAproxSample) {
+        this.evSum += offPolicyAproxSample;
+    }
+
+    @Override
+    public void resetData() {
+        if(updateCRstatistics) {
+            this.evSum = 0;
+        }
     }
 }

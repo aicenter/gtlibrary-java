@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 
 public class GadgetInnerNode implements InnerNode, GadgetNode {
-
-    private static final double CFV_NOT_VISITED_VALUE = -100000;
     private final GadgetInnerState state;
     private final InnerNode originalNode;
     private final int iterationsPerGadgetGame;
@@ -47,32 +45,44 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
         actions.add(followAction); // order is important!
         actions.add(terminateAction);
 
-        MCTSInformationSet is = originalNode.getInformationSet();
-        double isReach = is.getAllNodes().stream().map(InnerNode::getReachPr).reduce(0.0, Double::sum);
-        if(1.0 - isReach < 1e-9) isReach = 1.0; // sometimes sums can not sum up to 1
+        MCTSInformationSet origIs = originalNode.getInformationSet();
+        MCTSInformationSet gadgetIs = getInformationSet();
+        MCTSPublicState ps = originalNode.getPublicState();
+        // todo: which isReach? gadget or orig IS? :/
+        double isReach = gadgetIs.getAllNodes().stream()
+                .map(in -> ((GadgetInnerNode) in).getOriginalReachPr())
+                .reduce(0.0, Double::sum);
+//        double isReach = origIs.getAllNodes().stream().map(InnerNode::getReachPr).reduce(0.0, Double::sum);
+        assert origIs.getAlgorithmData() != null;
 
-        assert is.getAlgorithmData() != null;
-        OOSAlgorithmData data = ((OOSAlgorithmData) is.getAlgorithmData());
+        OOSAlgorithmData data = ((OOSAlgorithmData) origIs.getAlgorithmData());
+        double maxIsCFV = getExpander().getGameInfo().getMaxUtility();
+
         double isCFV;
-        if(data.getIsVisitsCnt() == 0) {
-            isCFV = CFV_NOT_VISITED_VALUE;
-            System.err.println(">>> CFV!");
-        } else {
-            isCFV = data.getIsCFV(iterationsPerGadgetGame);
+//        if (data.getIsVisitsCnt() == 0) {
+//            isCFV = -maxIsCFV;
+//        } else {
+//            isCFV = data.getIsCFV();
+//        }
+        isCFV = 0;
+        for(InnerNode in: gadgetIs.getAllNodes()) {
+            GadgetInnerNode n = (GadgetInnerNode) in;
+            InnerNode o = n.getOriginalNode();
+            isCFV += o.getReachPr() * o.getExpectedValue(iterationsPerGadgetGame);
         }
 
-        int playerSign = getPlayerToMove().getId() == 0 ? 1 : -1;
-
-
-        double u = playerSign * rootReach * isCFV / isReach;
-        if(originalNode.getDepth() == 0) {
-            u = 0.3235250255823229;
+        // shouldnt happen often!
+        if (isCFV < -maxIsCFV) {
+            isCFV = -maxIsCFV;
+//            System.err.println(">>> underflow");
+        } else if (isCFV > maxIsCFV) {
+            isCFV = maxIsCFV;
+//            System.err.println(">>> overflow");
         }
-        if(originalNode.getDepth() == 1) {
-            u = 0.9558721200504063;
-        }
-        this.terminateNode = new GadgetLeafNode(
-                originalNode.getGameState(), u);
+
+        int playerSign = state.getPlayerToMove().getId() == 0 ? 1 : -1;
+        double u = playerSign * isCFV / isReach; // rootReach is multipled by OOSAlgorithm.normalizingUtils
+        this.terminateNode = new GadgetLeafNode(originalNode.getGameState(), u);
         terminateNode.setParent(this);
         terminateNode.setLastAction(terminateAction);
 
@@ -98,10 +108,6 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     @Override
     public void setActions(List<Action> actions) {
         throw new NotImplementedException();
-    }
-
-    public List<Action> getOriginalActions() {
-        return originalNode.getActions();
     }
 
     @Override
@@ -154,12 +160,26 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
     @Override
     public Expander<MCTSInformationSet> getExpander() {
-        throw new NotImplementedException();
+        return originalNode.getExpander();
     }
 
     @Override
     public Player getPlayerToMove() {
         return getGameState().getPlayerToMove();
+    }
+
+    @Override
+    public double getExpectedValue(int iterationNum) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateExpectedValue(double offPolicyAproxSample) {
+    }
+
+    @Override
+    public void resetData() {
+        throw new NotImplementedException();
     }
 
     @Override
@@ -192,18 +212,17 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
         return children;
     }
 
+    @Override
+    public void setChildren(Map<Action, Node> children) {
+        throw new NotImplementedException();
+    }
+
     public InnerNode getFollowNode() {
         return originalNode;
     }
 
     public GadgetLeafNode getTerminateNode() {
         return terminateNode;
-    }
-
-
-    @Override
-    public void setChildren(Map<Action, Node> children) {
-        throw new NotImplementedException();
     }
 
     @Override
@@ -241,6 +260,6 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
     @Override
     public String toString() {
-        return "Gadget PL"+getPlayerToMove().getId() + " - Orig: "+getOriginalNode().toString();
+        return "Gadget PL" + getPlayerToMove().getId() + " - Orig: " + getOriginalNode().toString();
     }
 }

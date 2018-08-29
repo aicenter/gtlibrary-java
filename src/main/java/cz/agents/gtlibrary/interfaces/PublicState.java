@@ -35,7 +35,11 @@ public interface PublicState extends Serializable {
 
     void addNodeToPublicState(InnerNode node);
 
-    Set<PublicState> getNextPublicStates();
+    Set<PublicState> getNextPlayerPublicStates();
 
     PSKey getPSKey();
+
+    int getDepth();
+
+    PublicState getParentPublicState();
 }

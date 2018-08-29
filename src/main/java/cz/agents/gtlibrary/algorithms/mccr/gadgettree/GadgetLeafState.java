@@ -10,8 +10,8 @@ public class GadgetLeafState implements GameState {
     private final GameState originalGameState;
     private final double[] utilities;
 
-    public GadgetLeafState(GameState originalGameState, double[] utilities) {
-        this.originalGameState = originalGameState;
+    public GadgetLeafState(GameState parentOriginalGameState, double[] utilities) {
+        this.originalGameState = parentOriginalGameState;
         this.utilities = utilities;
     }
 

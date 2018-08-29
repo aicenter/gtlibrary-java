@@ -26,11 +26,15 @@ package cz.agents.gtlibrary.algorithms.mcts.oos;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.interfaces.Action;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
+
+import static cz.agents.gtlibrary.algorithms.mccr.MCCRAlgorithm.updateCRstatistics;
 
 /**
  *
@@ -122,6 +126,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         double W = u * pi_ / l;
 //        double Wavg = W
         double Wavg =  - u * pi_avg * pi_c / l;
+//        double Wavg =  - u / LeafNodeImpl.getScalingConstant() * pi_avg * pi_c / l;
         isVisitsCnt++;
 
         for (int i=0; i<r.length; i++){
@@ -135,8 +140,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         }
 
 //        double update_CFV = W * x;
-        double update_CFV = Wavg * x_avg;
-        isCFV += (update_CFV - isCFV) / isVisitsCnt;
+        if(updateCRstatistics) {
+            double update_CFV = Wavg * x_avg;
+            isCFV += (update_CFV - isCFV) / isVisitsCnt;
+        }
 //        isCFV = 0.0;
 //        double[] meanStrat = getMeanStrategy();
 //        for (int i = 0; i < actionCFV.length; i++) {
@@ -242,8 +249,8 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return actionCFV;
     }
 
-    public double getIsCFV(int iterations) {
-        return isCFV; //* isVisitsCnt / iterations;
+    public double getIsCFV() {
+        return isCFV;
     }
 
     public void setIsCFV(double isCFV) {
@@ -270,11 +277,11 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
                 actionCFV[i] = 0.0;
             }
         }
-        isCFV = 0.0;
-        isVisitsCnt = 0;
         nbSamples = 0;
-        isCFV = 0.0;
-        isVisitsCnt = 0;
+        if(updateCRstatistics) {
+            isCFV = 0.0;
+            isVisitsCnt = 0;
+        }
     }
 
     public double[] getMeanStrategy() {

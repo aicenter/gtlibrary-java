@@ -24,6 +24,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.cfr;
 
 import cz.agents.gtlibrary.NotImplementedException;
+import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
@@ -55,6 +56,8 @@ import java.util.Map;
  * @author vilo
  */
 public class CFRAlgorithm implements GamePlayingAlgorithm {
+
+    private Double normalizingUtils = 1.0;
 
     public static void main(String[] args) {
         runMPoCHM();
@@ -146,6 +149,17 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         threadBean = ManagementFactory.getThreadMXBean();
     }
 
+    public CFRAlgorithm(InnerNode rootNode) {
+        this.searchingPlayer = null;
+        this.rootNode = rootNode;
+        threadBean = ManagementFactory.getThreadMXBean();
+    }
+
+    public CFRAlgorithm(GadgetChanceNode rootNode) {
+        this((InnerNode) rootNode);
+        this.normalizingUtils = rootNode.getRootReachPr();
+    }
+
     @Override
     public Action runMiliseconds(int miliseconds) {
         int iters = 0;
@@ -180,7 +194,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
     protected double iteration(Node node, double pi1, double pi2, Player expPlayer) {
         if (pi1 == 0 && pi2 == 0) return 0;
         if (node instanceof LeafNode) {
-            return ((LeafNode) node).getUtilities()[expPlayer.getId()];
+            return ((LeafNode) node).getUtilities()[expPlayer.getId()] * normalizingUtils;
         }
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode) node;
@@ -261,33 +275,36 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
 
     public double computeCFVofIS(MCTSInformationSet is) {
         double cfv = 0.0;
-//        Player isPlayer = is.getPlayer();
-        Player isPlayer = is.getAllNodes().iterator().next().getAllPlayers()[1-is.getPlayer().getId()]; // opp
+        Player isPlayer = is.getPlayer();
+        Player opPlayer = is.getOpponent();
 
-        for(Node n : is.getAllNodes()) {
-            // calc reach probability (chance moves / opponent moves)
-            double rp = 1.;
-            Node curNode = n;
-            while(curNode.getParent() != null) {
-                Action a = curNode.getLastAction();
-                Node parent = curNode.getParent();
+        for(InnerNode n : is.getAllNodes()) {
+            double rp = calcRpOfNode(n, isPlayer);
+            double eu = computeExpUtilityOfState(n, opPlayer);
+            cfv += rp * eu;
+        }
 
-                if(parent instanceof ChanceNode) {
-                    rp *= parent.getProbabilityOfNatureFor(a);
-                } else if(parent instanceof InnerNode &&
-                        !((InnerNode) parent).getPlayerToMove().equals(isPlayer)) { // opp player
-                    OOSAlgorithmData data = (OOSAlgorithmData) ((InnerNode) parent).getInformationSet().getAlgorithmData();
-                    rp *= data.getMeanStrategy()[data.getActions().indexOf(a)];
-                }
+        return cfv;
+    }
 
-                curNode = parent;
+    public double calcRpOfNode(InnerNode n, Player isPlayer) {
+        double rp = 1.;
+        Node curNode = n;
+        while(curNode.getParent() != null) {
+            Action a = curNode.getLastAction();
+            Node parent = curNode.getParent();
+
+            if(parent instanceof ChanceNode) {
+                rp *= parent.getProbabilityOfNatureFor(a);
+            } else if(parent instanceof InnerNode &&
+                    ((InnerNode) parent).getPlayerToMove().equals(isPlayer)) {
+                OOSAlgorithmData data = (OOSAlgorithmData) ((InnerNode) parent).getInformationSet().getAlgorithmData();
+                rp *= data.getMeanStrategy()[data.getActions().indexOf(a)];
             }
 
-            double ev = computeExpUtilityOfState(n, isPlayer);
-            cfv += rp * ev;
-
+            curNode = parent;
         }
-        return cfv;
+        return rp;
     }
 
     public double[] computeCFVAofIS(MCTSInformationSet is) {
@@ -324,36 +341,31 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         return cfva;
     }
 
-    private double computeExpUtilityOfState(Node node, Player player) {
+    public double computeExpUtilityOfState(Node node, Player player) {
         if (node instanceof LeafNode) {
             return ((LeafNode) node).getUtilities()[player.getId()];
         }
 
-        double ev = 0;
+        double eu = 0;
 
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode) node;
-            for (Action ai : cn.getActions()) {
-                final double p = cn.getGameState().getProbabilityOfNatureFor(ai);
-                ev += p * computeExpUtilityOfState(cn.getChildFor(ai), player);
+            for (Action a : cn.getActions()) {
+                final double p = cn.getGameState().getProbabilityOfNatureFor(a);
+                eu += p * computeExpUtilityOfState(cn.getChildFor(a), player);
             }
-            return ev;
+            return eu;
         }
 
+        assert node instanceof InnerNode;
         InnerNode in = (InnerNode) node;
         OOSAlgorithmData data = (OOSAlgorithmData) in.getInformationSet().getAlgorithmData();
         double[] ms = data.getMeanStrategy();
 
-//        double[][] strats = {
-//                {0.009939, 0.333016, 0.657044},
-//                {0.333339, 0.009454, 0.657207},
-//        };
-
-        for (Action ai : in.getActions()) {
-             ev += ms[data.getActions().indexOf(ai)] * computeExpUtilityOfState(in.getChildFor(ai), player);
-//             ev += strats[in.getPlayerToMove().getId()][data.getActions().indexOf(ai)] * computeExpUtilityOfState(in.getChildFor(ai), player);
+        for (Action a : in.getActions()) {
+             eu += ms[data.getActions().indexOf(a)] * computeExpUtilityOfState(in.getChildFor(a), player);
         }
 
-        return ev;
+        return eu;
     }
 }

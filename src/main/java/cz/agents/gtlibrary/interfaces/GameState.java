@@ -66,4 +66,12 @@ public interface GameState extends Serializable {
 	public boolean checkConsistency(Action action);
 
     public double[] evaluate();
+
+    default Player getOpponentPlayerToMove() {
+		Player pl = getPlayerToMove();
+		if(pl.getId() == 2) {
+			throw new RuntimeException("Chance does not have opponent player!");
+		}
+		return getAllPlayers()[1-pl.getId()];
+	}
 }

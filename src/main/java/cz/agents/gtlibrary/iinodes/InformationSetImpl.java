@@ -64,6 +64,11 @@ public abstract class InformationSetImpl implements PerfectRecallInformationSet 
 	}
 
 	@Override
+	public Player getOpponent() {
+		return statesInInformationSet.iterator().next().getOpponentPlayerToMove();
+	}
+
+	@Override
 	public Sequence getPlayersHistory() {
 		return playerHistory;
 	}
@@ -112,6 +117,6 @@ public abstract class InformationSetImpl implements PerfectRecallInformationSet 
 
 	@Override
 	public String toString() {
-		return "IS:(" + player + "):" + playerHistory;
+		return "IS:(" + player + "):" + playerHistory + getISKey();
 	}
 }

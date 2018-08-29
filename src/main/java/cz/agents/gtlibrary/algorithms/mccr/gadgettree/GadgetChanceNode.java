@@ -40,16 +40,16 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
                 .map(GadgetInnerNode::getOriginalReachPr)
                 .reduce(0.0, Double::sum);
 
-        if(1.0 - rootReach < 1e-9) rootReach = 1.0; // sometimes sums can not sum up to 1
-
-        assert rootReach > 0; // at least IS must be reachable
+        assert rootReach > 0; // at least one IS must be reachable
 
         chanceProbabilities = new HashMap<>();
         for(Action action: resolvingInnerNodes.keySet()) {
             GadgetInnerNode node = resolvingInnerNodes.get(action);
             if(node.getOriginalReachPr() == 0.) continue;
 
-            chanceProbabilities.put(action, node.getOriginalReachPr() / rootReach);
+            double p = node.getOriginalReachPr() / rootReach;
+            assert p <= 1 && p >= 0;
+            chanceProbabilities.put(action, p);
             actions.add(action);
 
             node.setParent(this);
@@ -174,6 +174,21 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
     @Override
     public double getChanceReachPr() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public double getExpectedValue(int iterationNum) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateExpectedValue(double offPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void resetData() {
         throw new NotImplementedException();
     }
 

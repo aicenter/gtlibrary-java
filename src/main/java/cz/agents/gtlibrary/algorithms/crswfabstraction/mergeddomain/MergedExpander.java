@@ -10,6 +10,7 @@ import java.util.Map;
 public class MergedExpander<I extends InformationSet> implements Expander<I> {
 
     private Expander<I> expander;
+    private GameInfo gameInfo;
 
     public MergedExpander(Expander<I> expander) {
         this.expander = expander;
@@ -38,5 +39,15 @@ public class MergedExpander<I extends InformationSet> implements Expander<I> {
     @Override
     public void setAlgConfig(AlgorithmConfig<I> algConfig) {
         expander.setAlgConfig(algConfig);
+    }
+
+    @Override
+    public GameInfo getGameInfo() {
+        return gameInfo;
+    }
+
+    @Override
+    public void setGameInfo(GameInfo gameInfo) {
+        this.gameInfo=gameInfo;
     }
 }

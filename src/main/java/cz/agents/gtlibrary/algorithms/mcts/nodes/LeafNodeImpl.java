@@ -35,22 +35,7 @@ public class LeafNodeImpl extends NodeImpl implements LeafNode {
     }
 
     public double[] getUtilities() {
-        if(scalingConstant == 1.0) {
-            return utilities;
-        }
-
-        double[] scaledUtilities = new double[utilities.length];
-        for (int i = 0; i < utilities.length; i++) {
-            scaledUtilities[i] = utilities[i] * scalingConstant;
-        }
-        return scaledUtilities;
+        return utilities;
     }
 
-    public static double getScalingConstant() {
-        return scalingConstant;
-    }
-
-    public static void setScalingConstant(double scalingConstant) {
-        LeafNodeImpl.scalingConstant = scalingConstant;
-    }
 }

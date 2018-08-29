@@ -211,30 +211,29 @@ public class LiarsDiceGameState extends GameStateImpl implements DomainWithPubli
             hc = getRound();
         } else {
             hc = LDGameInfo.P1DICE+LDGameInfo.P2DICE;
+            int shift = getLeftMostSetBit(hc);
+            assert LDGameInfo.CALLBID < 16-shift; //otherwise it has overrun
 
-            if (getPlayerToMove().getId() == 0) {
-                for (int i = 0; i < LDGameInfo.P1DICE; i++) {
-                    hc *= LDGameInfo.FACES;
-                    hc += rolls[i];
-                }
-            } else {
-                for (int i = 0; i < LDGameInfo.P2DICE; i++) {
-                    hc *= LDGameInfo.FACES;
-                    hc += rolls[LDGameInfo.P1DICE + i];
-                }
+            for (Action a : getSequenceFor(getPlayerToMove())) {
+                hc |= 1 << (((LiarsDiceAction) a).getValue() + shift);
             }
-            hc <<= LDGameInfo.CALLBID;
-            assert LDGameInfo.CALLBID < 30 && hc >= 0; //otherwise it has overrun
-
-            for (Action a : getSequenceFor(getPlayerToMove())) { // current player
-                hc |= 1 << ((LiarsDiceAction) a).getValue();
-            }
-            for (Action a : getSequenceFor(getAllPlayers()[1 - getPlayerToMove().getId()])) { // opponent
-                hc |= 1 << ((LiarsDiceAction) a).getValue();
+            for (Action a : getSequenceFor(getOpponentPlayerToMove())) {
+                hc |= 1 << (LDGameInfo.CALLBID + 1 + shift + ((LiarsDiceAction) a).getValue());
             }
         }
         cachedPSKey = new PSKey(hc);
         return cachedPSKey;
+    }
+
+    private int getLeftMostSetBit(long x) {
+        x |= x >> 32;
+        x |= x >> 16;
+        x |= x >> 8;
+        x |= x >> 4;
+        x |= x >> 2;
+        x |= x >> 1;
+        x ^= x >> 1;
+        return (int) x;
     }
 
     @Override

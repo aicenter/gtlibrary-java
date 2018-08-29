@@ -24,9 +24,17 @@ public class PublicStateImpl implements PublicState {
     private final LinkedHashSet<InnerNode> gameNodesInPublicState = new LinkedHashSet<>();
     private final int hashCode;
     private final MCTSConfig config;
+    private final PublicStateImpl parentPublicState;
+    private final int depth;
 
-    public PublicStateImpl(MCTSConfig config, InnerNode node) {
+    public PublicStateImpl(MCTSConfig config, InnerNode node, PublicStateImpl parentPublicState) {
         this.config = config;
+        this.parentPublicState = parentPublicState;
+        if (parentPublicState != null) {
+            depth = parentPublicState.getDepth() + 1;
+        } else {
+            depth = 0;
+        }
 
         this.gameNodesInPublicState.add(node);
         GameState state = node.getGameState();
@@ -62,21 +70,22 @@ public class PublicStateImpl implements PublicState {
     }
 
     @Override
-    public Set<PublicState> getNextPublicStates() {
+    public Set<PublicState> getNextPlayerPublicStates() {
         Set<PublicState> nextPS = new HashSet<>();
         for (InnerNode node : gameNodesInPublicState) {
             for(Action a : node.getActions()) {
                 Node nextNode = node.getChildFor(a);
                 if(nextNode instanceof LeafNode) continue;
                 if (nextNode instanceof ChanceNode) {
-                    nextPS.addAll(((ChanceNode) nextNode).getPublicState().getNextPublicStates());
+                    nextPS.addAll(((ChanceNode) nextNode).getPublicState().getNextPlayerPublicStates());
+//                    nextPS.add(((ChanceNode) nextNode).getPublicState());
                 } else {
                     InnerNode innerNode = (InnerNode) nextNode;
                     if(innerNode.getInformationSet().getAlgorithmData() == null) {
                         innerNode.getInformationSet().setAlgorithmData(
                                 new OOSAlgorithmData(innerNode.getActions()));
                     }
-                    nextPS.add(((InnerNode) nextNode).getPublicState());
+                    nextPS.add(innerNode.getPublicState());
                 }
             }
         }
@@ -109,5 +118,15 @@ public class PublicStateImpl implements PublicState {
         PublicState other = (PublicState) obj;
 
         return this.psKey.equals(other.getPSKey());
+    }
+
+    @Override
+    public int getDepth() {
+        return depth;
+    }
+
+    @Override
+    public PublicState getParentPublicState() {
+        return parentPublicState;
     }
 }

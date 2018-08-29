@@ -74,6 +74,9 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     private Random rnd = new HighQualityRandom(seed);
     private OOSTargeting targeting;
 
+    private static long totalIterCalls = 0;
+    public static long[] gadgetActionChoices = new long[3];
+
 
     public static void main(String[] args) {
         seed = Integer.parseInt(args[0]);
@@ -159,7 +162,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         } else targeting = new ISTargeting(rootNode, delta);
     }
 
-    public OOSAlgorithm(Player searchingPlayer, InnerNode rootNode,  double epsilon) {
+    public OOSAlgorithm(Player searchingPlayer, InnerNode rootNode, double epsilon) {
         this.searchingPlayer = searchingPlayer;
         this.simulator = new OOSSimulator(rootNode.getExpander());
         this.delta = 0.;
@@ -186,8 +189,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         } else targeting = new ISTargeting(rootNode, delta);
     }
 
-    public OOSAlgorithm(Player searchingPlayer, GadgetChanceNode rootNode,  double epsilon) {
-        this(searchingPlayer, (InnerNode) rootNode, epsilon);
+    public OOSAlgorithm(GadgetChanceNode rootNode, double epsilon) {
+        this(null, (InnerNode) rootNode, epsilon);
         this.normalizingUtils = rootNode.getRootReachPr();
     }
 
@@ -324,6 +327,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         double pai = -1;
         double p_avg_ai = -1;
 //        boolean probe = in instanceof GadgetInnerNode;
+        boolean isGadgetIN = in instanceof GadgetInnerNode;
         boolean probe = false;
         if (is.getAlgorithmData() == null) {//this is a new Information Set
             data = new OOSAlgorithmData(in.getActions());
@@ -396,7 +400,6 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
 //                double uspai = rmProbs[ai];
 
-
                 u = iteration(in.getChildFor(in.getActions().get(ai)),
                         pi_avg * p_avg_ai,
                         pi_, pi_c,
@@ -424,6 +427,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             }
         }
 
+        if(isGadgetIN) gadgetActionChoices[ai]++;
+
         //regret/mean strategy update
         double s = delta * bs + (1 - delta) * us;
         double c = x;
@@ -443,10 +448,15 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             } else {
                 data.updateRegret(ai, u, pi_avg, pi_, pi_c, l, c, x, c_avg, x_avg);
             }
-            // RP? pre aktualne h to je (pi * pi_c)
+
+            // todo: try x_avg
+            // todo: check signs
+            ((InnerNode) node).updateExpectedValue(-u * x / l);
+//            assert data.getIsVisitsCnt() < 100000 || Math.abs(data.getIsCFV()) <= node.getExpander().getGameInfo().getMaxUtility()*1.1;
         } else {
             data.getRMStrategy(rmProbs);
             data.updateMeanStrategy(rmProbs, pi_ / s);
+            ((InnerNode) node).updateExpectedValue(u * x / l);
         }
         return u;
     }

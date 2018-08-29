@@ -42,16 +42,16 @@ public class UniformStrategyForMissingSequences extends StrategyImpl {
 		}
 		return distribution;
 	}
-	
-	public static class Factory implements Strategy.Factory {
+
+    public static class Factory implements Strategy.Factory {
 
 		@Override
 		public Strategy create() {
 			return new UniformStrategyForMissingSequences();
 		}
-		
-	}
-        
+
+
+    }
         public static UniformStrategyForMissingSequences computeMeanStrategy(Collection<Strategy> strategies, GameState root, Expander expander){
             UniformStrategyForMissingSequences out = new UniformStrategyForMissingSequences();
             Player pl = strategies.iterator().next().keySet().iterator().next().getPlayer();
@@ -125,6 +125,46 @@ public class UniformStrategyForMissingSequences extends StrategyImpl {
             }
             return out;
         }
-        
+
+    public static Strategy fromBehavioralStrategy(Map<ISKey, Map<Action, Double>> behav,
+                                                  GameState root,
+                                                  Expander expander, Player pl) {
+        UniformStrategyForMissingSequences out = new UniformStrategyForMissingSequences();
+        out.put(new ArrayListSequenceImpl(pl), 1.0);
+        Deque<GameState> q = new ArrayDeque();
+        q.add(root);
+        while(!q.isEmpty()){//DFS
+            GameState curState = q.removeFirst();
+            if (curState.isGameEnd()) continue;
+            List<Action> actions = expander.getActions(curState);
+            if (curState.getPlayerToMove().equals(pl)){
+                Sequence tmp = new ArrayListSequenceImpl(curState.getSequenceForPlayerToMove());
+                tmp.addLast(actions.get(0));
+                if (!out.containsKey(tmp)){
+                    Map<Action, Double> curDist = behav.get(curState.getISKeyForPlayerToMove());
+                    if (curDist == null){
+                        curDist = new FixedSizeMap(actions.size());
+                        for (Action a : actions){
+                            curDist.put(a, 1.0/actions.size());
+                        }
+                    }
+                    double sum=0;
+                    for (Double d : curDist.values()) sum += d;
+                    assert sum>0;
+                    double prefProb = out.get(curState.getSequenceForPlayerToMove());
+                    for (Action a : actions){
+                        tmp = new ArrayListSequenceImpl(curState.getSequenceForPlayerToMove());
+                        tmp.addLast(a);
+                        out.put(tmp, prefProb*curDist.get(a)/sum);
+                    }
+                }
+            }
+            for (Action a : actions){
+                q.addFirst(curState.performAction(a));
+            }
+        }
+        return out;
+    }
+
 }
 

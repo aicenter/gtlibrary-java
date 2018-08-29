@@ -69,29 +69,62 @@ public class IIGoofSpielGameState extends GoofSpielGameState {
     @Override
     public PSKey getPSKeyForPlayerToMove() {
         if (psKey == null) {
-            int hash = 1;
-            int gap = GSGameInfo.depth + 1;
+            if(!GSGameInfo.useFixedNatureSequence) {
+                throw new RuntimeException("pskey implemented only for fixed nature sequences!");
+            }
+            if(GSGameInfo.depth > 10) {
+                throw new RuntimeException("pskey works up to depth of 10");
+            }
 
-            int p1Action = 0;
-            int p2Action = 0;
-
+            int hash = 0;
+            int round = -1;
+            int roundHash;
+            int p1Action = 0, p2Action;
             for (Pair<Player, Action> edge: history.getHistory()) {
                 GoofSpielAction goofSpielAction = (GoofSpielAction) edge.getRight();
                 Integer playerIdx = edge.getLeft().getId();
 
-                int turn;
                 if (playerIdx == GSGameInfo.NATURE.getId()) {
-                    turn = goofSpielAction.getValue();
+                    roundHash = 1; // nature moved
+                    round++;
                 } else if (playerIdx == GSGameInfo.FIRST_PLAYER.getId()) {
+                    roundHash = 3; // nature and 1st player moved
                     p1Action = goofSpielAction.getValue();
-                    turn = 1;
                 } else { // SECOND_PLAYER
                     p2Action = goofSpielAction.getValue();
-                    turn = (int) Math.signum(p1Action-p2Action)+1;
+                    roundHash = ((int) Math.signum(p1Action - p2Action) + 2) << 2; // nature, 1st player, and outcome of round
                 }
-                hash *= gap;
-                hash += turn;
+
+                // roundHash is at most 6, so fits into 3 bits
+                hash |= roundHash << 4 * round;
             }
+
+
+//            int hash = 1;
+//            int gap = GSGameInfo.depth + 1;
+//
+//            int p1Action = 0;
+//            int p2Action = 0;
+//
+//            for (Pair<Player, Action> edge: history.getHistory()) {
+//                GoofSpielAction goofSpielAction = (GoofSpielAction) edge.getRight();
+//                Integer playerIdx = edge.getLeft().getId();
+//
+//                int turn;
+//                if (playerIdx == GSGameInfo.NATURE.getId()) {
+//                    turn = goofSpielAction.getValue();
+//                } else if (playerIdx == GSGameInfo.FIRST_PLAYER.getId()) {
+//                    p1Action = goofSpielAction.getValue();
+//                    turn = 1;
+//                } else { // SECOND_PLAYER
+//                    p2Action = goofSpielAction.getValue();
+//                    turn = (int) Math.signum(p1Action-p2Action)+1;
+//                }
+//                hash *= gap;
+//                hash += turn;
+//            }
+
+
             psKey = new PSKey(hash);
         }
         return psKey;

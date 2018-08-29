@@ -26,6 +26,7 @@ import java.util.Set;
 
 public interface InformationSet extends Serializable {
 	public Player getPlayer();
+	public Player getOpponent();
 	public Set<GameState> getAllStates();
 	public void addStateToIS(GameState state);
     public ISKey getISKey();

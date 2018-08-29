@@ -19,8 +19,8 @@ import static org.junit.Assert.assertTrue;
 
 public class MCCRTest extends MCCR_CFV_Experiments {
 
-    public MCCRTest(Long seed) {
-        super(seed);
+    public MCCRTest() {
+        super(0L);
     }
 
     @Test
@@ -34,7 +34,7 @@ public class MCCRTest extends MCCR_CFV_Experiments {
 
     private void checkDomain(String domain, String[] params) {
         for (long seed = 0; seed < 10; seed++) {
-            MCCRTest exp = new MCCRTest(seed);
+            MCCRTest exp = new MCCRTest();
             exp.handleDomain(domain, params);
             exp.loadGame(domain, new Random(seed));
             exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
@@ -43,7 +43,7 @@ public class MCCRTest extends MCCR_CFV_Experiments {
             alg.runStepStateful(100000); // root
 
             for (int i = 0; i < 10; i++) {
-                Action action = alg.runStepStateful(100000); // first gadget
+                Action action = alg.runStepStateful(1000); // first gadget
                 if (action == null) break;
 
                 Collection<MCTSInformationSet> infoSets = ((MCTSConfig) exp.expander.getAlgorithmConfig())
@@ -77,7 +77,7 @@ public class MCCRTest extends MCCR_CFV_Experiments {
         String domain = "IIGS";
         String[] params = new String[]{"0", "4", "true", "true"};
 
-        MCCRTest exp = new MCCRTest(0L);
+        MCCRTest exp = new MCCRTest();
         exp.handleDomain(domain, params);
         exp.loadGame(domain, new Random(seed));
         exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);

@@ -31,6 +31,7 @@ import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.DoubleOracleInfo
 import cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle.GeneralDoubleOracle;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -43,7 +44,7 @@ import java.util.Map;
  * Phantom tic tac toe game state.
  */
 
-public class TTTState extends GameStateImpl {
+public class TTTState extends GameStateImpl implements DomainWithPublicState {
 
     private static final long serialVersionUID = -8229777952409518678L;
 
@@ -53,6 +54,8 @@ public class TTTState extends GameStateImpl {
     public char toMove = 'x';
     public byte moveNum = 0;
     int hashCode;
+    private ISKey cachedIsKey;
+    private PSKey cachedPsKey;
 
     public char getOpponent() {
         return (toMove == 'x' ? 'o' : 'x');
@@ -240,6 +243,29 @@ public class TTTState extends GameStateImpl {
         return new PerfectRecallISKey(hash, history.getSequenceOf(getPlayerToMove()));
     }
 
+
+//    public ISKey getISKeyForPlayerToMove() {
+//        if(cachedIsKey == null) {
+//
+//            int hash;
+//            if (isGameEnd()) {
+//                hash = 0;
+//            } else {
+//                hash = 1;//creates a bitmap of successful actions
+//                for (Action a : history.getSequenceOf(getPlayerToMove())) {
+//                    hash <<= 1;
+//                    hash |= getSymbol(((TTTAction) a).fieldID) == toMove ? 1 : 0;
+//                }
+//            }
+//            cachedIsKey = new PerfectRecallISKey(hash, history.getSequenceOf(getPlayerToMove()));
+//        }
+//        return cachedIsKey;
+//    }
+
+    @Override
+    public PSKey getPSKeyForPlayerToMove() {
+        return new PSKey(1+moveNum);
+    }
 
     public static Map<Player, Map<Sequence, Double>> runDO() {
         GameState rootState = new TTTState();

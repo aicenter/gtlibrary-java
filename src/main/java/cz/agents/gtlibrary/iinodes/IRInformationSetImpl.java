@@ -52,6 +52,11 @@ public class IRInformationSetImpl implements InformationSet, Serializable {
     }
 
     @Override
+    public Player getOpponent() {
+        return statesInformationSet.iterator().next().getOpponentPlayerToMove();
+    }
+
+    @Override
     public int hashCode() {
         return this.hashCode;
     }
