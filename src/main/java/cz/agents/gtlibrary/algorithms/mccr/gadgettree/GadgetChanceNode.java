@@ -8,9 +8,11 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.PublicState;
 
 import java.util.*;
 
@@ -18,16 +20,22 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     private final GadgetChanceState state;
     private final Random random;
     private final Expander<MCTSInformationSet> originalExpander;
+    private final PublicState ps;
 
     private Map<Action, GadgetInnerNode> resolvingInnerNodes;
     private Map<Action, Double> chanceProbabilities;
     private List<Action> actions;
     private Double rootReach;
 
-    public GadgetChanceNode(GadgetChanceState chanceState, Expander<MCTSInformationSet> originalExpander, Random random) {
+    public GadgetChanceNode(
+            GadgetChanceState chanceState,
+            Expander<MCTSInformationSet> originalExpander,
+            Random random,
+            PublicState ps) {
         this.state = chanceState;
         this.originalExpander = originalExpander;
         this.random = random;
+        this.ps = ps;
     }
 
     public void createChildren(Map<Action, GadgetInnerNode> resolvingInnerNodes) {
@@ -43,9 +51,9 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
         assert rootReach > 0; // at least one IS must be reachable
 
         chanceProbabilities = new HashMap<>();
-        for(Action action: resolvingInnerNodes.keySet()) {
+        for (Action action : resolvingInnerNodes.keySet()) {
             GadgetInnerNode node = resolvingInnerNodes.get(action);
-            if(node.getOriginalReachPr() == 0.) continue;
+            if (node.getOriginalReachPr() == 0.) continue;
 
             double p = node.getOriginalReachPr() / rootReach;
             assert p <= 1 && p >= 0;
@@ -54,7 +62,26 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
             node.setParent(this);
             node.setLastAction(action);
-            node.createChildren(rootReach);
+            MCTSInformationSet gadgetIs = node.getInformationSet();
+
+            ArrayList<Action> gadgetActions = new ArrayList<>();
+            GadgetInnerAction followAction = new GadgetInnerAction(true, gadgetIs);
+            gadgetActions.add(followAction); // order is important!
+            boolean resolveForAugInfoSetsTerminate = gadgetIs.getAllNodes().size() != ps.getAllNodes().size();
+            if (resolveForAugInfoSetsTerminate) {
+                GadgetInnerAction terminateAction = new GadgetInnerAction(false, gadgetIs);
+                gadgetActions.add(terminateAction);
+            }
+
+            node.createChildren(gadgetActions);
+            if (gadgetIs.getAlgorithmData() == null) {
+                gadgetIs.setAlgorithmData(new OOSAlgorithmData(gadgetActions));
+            }
+
+            assert gadgetIs.getAllNodes().size() != ps.getAllNodes().size() ||
+                    resolvingInnerNodes.values().stream()
+                            .map(GadgetInnerNode::getInformationSet)
+                            .filter(is -> !is.equals(gadgetIs)).count() == 0;
         }
 
         state.setChanceProbabilities(chanceProbabilities);
@@ -80,7 +107,7 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     @Override
     public double getProbabilityOfNatureFor(Action action) {
         Double prob = chanceProbabilities.get(action);
-        if(prob == null) {
+        if (prob == null) {
             throw new NullPointerException();
         }
         return prob;
@@ -107,6 +134,11 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     }
 
     @Override
+    public void setActions(List<Action> actions) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public MCTSInformationSet getInformationSet() {
         return null;
     }
@@ -116,10 +148,14 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
         throw new NotImplementedException();
     }
 
-
     @Override
     public Map<Action, Node> getChildren() {
         return (Map) this.resolvingInnerNodes;
+    }
+
+    @Override
+    public void setChildren(Map<Action, Node> children) {
+        throw new NotImplementedException();
     }
 
     @Override
@@ -143,8 +179,18 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     }
 
     @Override
+    public void setParent(InnerNode parent) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public Action getLastAction() {
         return null;
+    }
+
+    @Override
+    public void setLastAction(Action lastAction) {
+        throw new NotImplementedException();
     }
 
     @Override
@@ -153,12 +199,12 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     }
 
     @Override
-    public MCTSPublicState getPublicState() {
+    public void setAlgorithmData(AlgorithmData algorithmData) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void setChildren(Map<Action, Node> children) {
+    public MCTSPublicState getPublicState() {
         throw new NotImplementedException();
     }
 
@@ -193,28 +239,8 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     }
 
     @Override
-    public void setActions(List<Action> actions) {
-        throw new NotImplementedException();
-    }
-
-    @Override
     public GameState getGameState() {
         return this.state;
-    }
-
-    @Override
-    public void setParent(InnerNode parent) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public void setLastAction(Action lastAction) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public void setAlgorithmData(AlgorithmData algorithmData) {
-        throw new NotImplementedException();
     }
 
     public void setResolvingInnerNodes(Map<Action, GadgetInnerNode> resolvingInnerNodes) {

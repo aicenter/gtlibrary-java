@@ -38,57 +38,47 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
         this.iterationsPerGadgetGame = iterationsPerGadgetGame;
     }
 
-    public void createChildren(double rootReach) {
-        GadgetInnerAction followAction = new GadgetInnerAction(true, originalNode.getInformationSet());
-        GadgetInnerAction terminateAction = new GadgetInnerAction(false, originalNode.getInformationSet());
-        actions = new ArrayList<>();
-        actions.add(followAction); // order is important!
-        actions.add(terminateAction);
-
-        MCTSInformationSet origIs = originalNode.getInformationSet();
+    public void createChildren(List<Action> actions) {
+        this.actions = actions;
         MCTSInformationSet gadgetIs = getInformationSet();
-        MCTSPublicState ps = originalNode.getPublicState();
-        // todo: which isReach? gadget or orig IS? :/
-        double isReach = gadgetIs.getAllNodes().stream()
-                .map(in -> ((GadgetInnerNode) in).getOriginalReachPr())
-                .reduce(0.0, Double::sum);
-//        double isReach = origIs.getAllNodes().stream().map(InnerNode::getReachPr).reduce(0.0, Double::sum);
-        assert origIs.getAlgorithmData() != null;
-
-        OOSAlgorithmData data = ((OOSAlgorithmData) origIs.getAlgorithmData());
-        double maxIsCFV = getExpander().getGameInfo().getMaxUtility();
-
-        double isCFV;
-//        if (data.getIsVisitsCnt() == 0) {
-//            isCFV = -maxIsCFV;
-//        } else {
-//            isCFV = data.getIsCFV();
-//        }
-        isCFV = 0;
-        for(InnerNode in: gadgetIs.getAllNodes()) {
-            GadgetInnerNode n = (GadgetInnerNode) in;
-            InnerNode o = n.getOriginalNode();
-            isCFV += o.getReachPr() * o.getExpectedValue(iterationsPerGadgetGame);
-        }
-
-        // shouldnt happen often!
-        if (isCFV < -maxIsCFV) {
-            isCFV = -maxIsCFV;
-//            System.err.println(">>> underflow");
-        } else if (isCFV > maxIsCFV) {
-            isCFV = maxIsCFV;
-//            System.err.println(">>> overflow");
-        }
-
-        int playerSign = state.getPlayerToMove().getId() == 0 ? 1 : -1;
-        double u = playerSign * isCFV / isReach; // rootReach is multipled by OOSAlgorithm.normalizingUtils
-        this.terminateNode = new GadgetLeafNode(originalNode.getGameState(), u);
-        terminateNode.setParent(this);
-        terminateNode.setLastAction(terminateAction);
+        GadgetInnerAction followAction = (GadgetInnerAction) actions.get(0); // order is important!
 
         children = new HashMap<>();
         children.put(followAction, originalNode);
-        children.put(terminateAction, terminateNode);
+
+        if(actions.size() == 2) { // has terminate action
+            GadgetInnerAction terminateAction = (GadgetInnerAction) actions.get(1);
+
+            double maxIsCFV = getExpander().getGameInfo().getMaxUtility();
+
+            double isReach = gadgetIs.getAllNodes().stream()
+                    .map(in -> ((GadgetInnerNode) in).getOriginalReachPr())
+                    .reduce(0.0, Double::sum);
+
+            double isCFV = 0; // let's keep 0 by default (if the games are balanced at public states)
+            for (InnerNode in : gadgetIs.getAllNodes()) {
+                GadgetInnerNode n = (GadgetInnerNode) in;
+                InnerNode o = n.getOriginalNode();
+                isCFV += o.getReachPr() * o.getExpectedValue(iterationsPerGadgetGame);
+            }
+
+            // shouldnt happen often!
+            if (isCFV < -maxIsCFV) {
+                isCFV = -maxIsCFV;
+//            System.err.println(">>> underflow");
+            } else if (isCFV > maxIsCFV) {
+                isCFV = maxIsCFV;
+//            System.err.println(">>> overflow");
+            }
+
+            int playerSign = state.getPlayerToMove().getId() == 0 ? 1 : -1;
+            double u = playerSign * isCFV / isReach; // rootReach is multipled by OOSAlgorithm.normalizingUtils
+
+            this.terminateNode = new GadgetLeafNode(originalNode.getGameState(), u);
+            terminateNode.setParent(this);
+            terminateNode.setLastAction(terminateAction);
+            children.put(terminateAction, terminateNode);
+        }
     }
 
     public double getOriginalReachPr() {

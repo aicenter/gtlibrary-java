@@ -59,7 +59,8 @@ public class SubgameImpl implements Subgame {
         // by creating the chance node, we construct the whole gadget game
         GadgetChanceState chanceState = new GadgetChanceState(
                 publicState.getAllNodes().iterator().next().getGameState());
-        GadgetChanceNode chanceNode = new GadgetChanceNode(chanceState, expander, originalConfig.getRandom());
+        GadgetChanceNode chanceNode = new GadgetChanceNode(
+                chanceState, expander, originalConfig.getRandom(), publicState);
 
         Map<Action, GadgetInnerNode> resolvingInnerNodes = createInnerNodes();
         chanceNode.createChildren(resolvingInnerNodes);
@@ -97,7 +98,6 @@ public class SubgameImpl implements Subgame {
             return gadgetISs.get(gadgetISKey);
         }
         GadgetInfoSet informationSet = new GadgetInfoSet(state, gadgetISKey);
-        informationSet.setAlgorithmData(new OOSAlgorithmData(2));
         gadgetISs.put(gadgetISKey, informationSet);
         return informationSet;
     }
