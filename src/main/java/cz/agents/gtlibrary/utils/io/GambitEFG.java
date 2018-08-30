@@ -78,8 +78,8 @@ public class GambitEFG {
 //        exportIIGoofSpiel();
 //        exportLD();
 //        exportGP();
-//        exportRPS();
-        exportPhantomTTT();
+        exportRPS();
+//        exportPhantomTTT();
     }
 
     public static void exportRandomGame() {

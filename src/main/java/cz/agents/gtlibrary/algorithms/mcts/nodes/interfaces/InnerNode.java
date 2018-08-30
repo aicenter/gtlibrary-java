@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces;
 
+import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
@@ -28,15 +29,46 @@ public interface InnerNode extends Node {
 
     Map<Action, Node> getChildren();
 
+    default Map<Action, Node> buildChildren() {
+        if(getChildren().size() != getActions().size()) {
+            getActions().forEach(this::getChildFor);
+        }
+        return getChildren();
+    }
+
     void setChildren(Map<Action, Node> children);
 
-    default double getReachPr() {
+    default double getReachPrPlayerChance() {
         return getPlayerReachPr() * getChanceReachPr();
     }
 
-    double getPlayerReachPr();
-    void setPlayerReachPr(double meanStrategyActionPr);
-    double getChanceReachPr();
+    default double getPlayerReachPr() {
+        return getReachPrByPlayer(getPlayerToMove());
+    }
+
+    default double getOpponentReachPr() {
+        return getReachPrByPlayer(getOpponentPlayerToMove());
+    }
+
+    default double getChanceReachPr() {
+        return getReachPrByPlayer(getChancePlayer());
+    }
+
+    default void setPlayerReachPr(double meanStrategyPr) {
+        setReachPrByPlayer(getPlayerToMove(), meanStrategyPr);
+    }
+    default void setOpponentReachPr(double meanStrategyPr) {
+        setReachPrByPlayer(getOpponentPlayerToMove(), meanStrategyPr);
+    }
+
+    default double getReachPrByPlayer(Player player) {
+        return getReachPrByPlayer(player.getId());
+    }
+    double getReachPrByPlayer(int playerId);
+    default void setReachPrByPlayer(Player player, double meanStrategyPr) {
+        setReachPrByPlayer(player.getId(), meanStrategyPr);
+    }
+    void setReachPrByPlayer(int playerId, double meanStrategyPr);
 
     default Player getPlayerToMove() {
         return getGameState().getPlayerToMove();
@@ -44,6 +76,10 @@ public interface InnerNode extends Node {
 
     default Player getOpponentPlayerToMove() {
         return getGameState().getOpponentPlayerToMove();
+    }
+
+    default Player getChancePlayer() {
+        return getGameState().getAllPlayers()[2];
     }
 
     default boolean isPlayerMoving(Player player) {

@@ -4,7 +4,6 @@ import cz.agents.gtlibrary.algorithms.mccr.MCCRAlgorithm;
 import cz.agents.gtlibrary.algorithms.mccr.MCCR_CFV_Experiments;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -40,10 +39,10 @@ public class MCCRTest extends MCCR_CFV_Experiments {
             exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
 
             MCCRAlgorithm alg = new MCCRAlgorithm(exp.rootState, exp.expander, 0.6);
-            alg.runStepStateful(100000); // root
+            alg.runStepStateful(100000, 0); // root
 
             for (int i = 0; i < 10; i++) {
-                Action action = alg.runStepStateful(1000); // first gadget
+                Action action = alg.runStepStateful(1000, 100000); // first gadget
                 if (action == null) break;
 
                 Collection<MCTSInformationSet> infoSets = ((MCTSConfig) exp.expander.getAlgorithmConfig())
@@ -52,12 +51,12 @@ public class MCCRTest extends MCCR_CFV_Experiments {
                     Double rp = null;
                     for (InnerNode node : infoSet.getAllNodes()) {
                         if (rp == null) {
-                            rp = node.getReachPr();
+                            rp = node.getReachPrPlayerChance();
                         }
 
-                        assertEquals(rp, node.getReachPr(), 1e-7);
-                        assertTrue(node.getReachPr() <= 1.0);
-                        assertTrue(node.getReachPr() >= 0.0);
+                        assertEquals(rp, node.getReachPrPlayerChance(), 1e-7);
+                        assertTrue(node.getReachPrPlayerChance() <= 1.0);
+                        assertTrue(node.getReachPrPlayerChance() >= 0.0);
                     }
                 }
             }

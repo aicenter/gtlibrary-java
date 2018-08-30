@@ -75,7 +75,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     private OOSTargeting targeting;
 
     private static long totalIterCalls = 0;
-    public static long[] gadgetActionChoices = new long[3];
+    public static long[] gadgetActionChoices = new long[2];
 
 
     public static void main(String[] args) {
@@ -449,14 +449,11 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 data.updateRegret(ai, u, pi_avg, pi_, pi_c, l, c, x, c_avg, x_avg);
             }
 
-            // todo: try x_avg
-            // todo: check signs
-            ((InnerNode) node).updateExpectedValue(-u * x / l);
-//            assert data.getIsVisitsCnt() < 100000 || Math.abs(data.getIsCFV()) <= node.getExpander().getGameInfo().getMaxUtility()*1.1;
+            ((InnerNode) node).updateExpectedValue((-u * x / l) / normalizingUtils);
         } else {
             data.getRMStrategy(rmProbs);
             data.updateMeanStrategy(rmProbs, pi_ / s);
-            ((InnerNode) node).updateExpectedValue(u * x / l);
+//            ((InnerNode) node).updateExpectedValue((u * x / l) / normalizingUtils);
         }
         return u;
     }

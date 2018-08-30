@@ -7,13 +7,11 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +19,7 @@ import java.util.Map;
 public class GadgetInnerNode implements InnerNode, GadgetNode {
     private final GadgetInnerState state;
     private final InnerNode originalNode;
-    private final int iterationsPerGadgetGame;
+    private final int expUtilityIterations;
     private MCTSInformationSet informationSet;
     private List<Action> actions;
     private Map<Action, Node> children;
@@ -32,10 +30,10 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     public GadgetInnerNode(
             GadgetInnerState state,
             InnerNode originalNode,
-            int iterationsPerGadgetGame) {
+            int expUtilityIterations) {
         this.state = state;
         this.originalNode = originalNode;
-        this.iterationsPerGadgetGame = iterationsPerGadgetGame;
+        this.expUtilityIterations = expUtilityIterations;
     }
 
     public void createChildren(List<Action> actions) {
@@ -52,14 +50,15 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
             double maxIsCFV = getExpander().getGameInfo().getMaxUtility();
 
             double isReach = gadgetIs.getAllNodes().stream()
-                    .map(in -> ((GadgetInnerNode) in).getOriginalReachPr())
+                    .map(in -> ((GadgetInnerNode) in).getOriginalNode().getReachPrPlayerChance())
                     .reduce(0.0, Double::sum);
 
             double isCFV = 0; // let's keep 0 by default (if the games are balanced at public states)
             for (InnerNode in : gadgetIs.getAllNodes()) {
                 GadgetInnerNode n = (GadgetInnerNode) in;
                 InnerNode o = n.getOriginalNode();
-                isCFV += o.getReachPr() * o.getExpectedValue(iterationsPerGadgetGame);
+                // todo: iterations in "keep" version of resolving
+                isCFV += o.getReachPrPlayerChance() * o.getExpectedValue(expUtilityIterations);
             }
 
             // shouldnt happen often!
@@ -79,10 +78,6 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
             terminateNode.setLastAction(terminateAction);
             children.put(terminateAction, terminateNode);
         }
-    }
-
-    public double getOriginalReachPr() {
-        return originalNode.getReachPr();
     }
 
     @Override
@@ -178,7 +173,7 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     }
 
     @Override
-    public double getReachPr() {
+    public double getReachPrPlayerChance() {
         throw new NotImplementedException();
     }
 
@@ -189,6 +184,16 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
     @Override
     public void setPlayerReachPr(double meanStrategyActionPr) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public double getReachPrByPlayer(int player) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setReachPrByPlayer(int player, double meanStrategyPr) {
         throw new NotImplementedException();
     }
 

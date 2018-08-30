@@ -6,10 +6,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.PublicState;
+import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,17 +16,17 @@ public class SubgameImpl implements Subgame {
     private final PublicState publicState;
     private final MCTSConfig originalConfig;
     private final HashMap<GadgetISKey, GadgetInfoSet> gadgetISs;
-    private final int iterationsPerGadgetGame;
+    private final int expUtilityIterations;
     private Expander<MCTSInformationSet> expander;
 
     public SubgameImpl(PublicState publicState,
                        MCTSConfig originalConfig,
                        Expander<MCTSInformationSet> expander,
-                       int iterationsPerGadgetGame) {
+                       int expUtilityIterations) {
         this.publicState = publicState;
         this.originalConfig = originalConfig;
         this.expander = expander;
-        this.iterationsPerGadgetGame = iterationsPerGadgetGame;
+        this.expUtilityIterations = expUtilityIterations;
 
         this.gadgetISs = new HashMap<>();
     }
@@ -80,7 +77,7 @@ public class SubgameImpl implements Subgame {
             MCTSInformationSet gadgetIS = getGadgetIS(isKey, gadgetState);
             gadgetState.setInformationSet(gadgetIS);
 
-            GadgetInnerNode gadgetNode = new GadgetInnerNode(gadgetState, origNode, iterationsPerGadgetGame);
+            GadgetInnerNode gadgetNode = new GadgetInnerNode(gadgetState, origNode, expUtilityIterations);
             gadgetNode.setInformationSet(gadgetIS);
 
             gadgetIS.addNode(gadgetNode);
@@ -103,20 +100,25 @@ public class SubgameImpl implements Subgame {
     }
 
     @Override
-    public void resetData() {
+    public void resetData(Player resettingPlayer, Set<PublicState> doNotResetAtPlayerPs) {
         ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
         q.addAll(publicState.getAllNodes());
 
         while (!q.isEmpty()) {
             InnerNode n = q.removeFirst();
-            n.resetData();
 
-            MCTSInformationSet is = n.getInformationSet();
-            if (is != null && is.getAlgorithmData() != null) {
-                OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
-                data.resetData();
+            if(n.getPlayerToMove().equals(resettingPlayer) && !doNotResetAtPlayerPs.contains(n.getPublicState())) {
+//                System.err.println("Reset at "+n.getPublicState());
+                n.resetData();
+
+                MCTSInformationSet is = n.getInformationSet();
+                if (is != null && is.getAlgorithmData() != null) {
+                    OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
+                    data.resetData();
+                }
             }
 
+            // update all of existing tree
             for (Map.Entry<Action, Node> entry : n.getChildren().entrySet()) {
                 Node ch = entry.getValue();
                 if (ch instanceof InnerNode) {

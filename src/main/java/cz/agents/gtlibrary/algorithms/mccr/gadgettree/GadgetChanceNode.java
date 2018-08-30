@@ -9,10 +9,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.Expander;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.PublicState;
+import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.*;
 
@@ -45,7 +42,8 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
         rootReach = resolvingInnerNodes.keySet().stream()
                 .map(resolvingInnerNodes::get)
-                .map(GadgetInnerNode::getOriginalReachPr)
+                .map(GadgetInnerNode::getOriginalNode)
+                .map(InnerNode::getReachPrPlayerChance)
                 .reduce(0.0, Double::sum);
 
         assert rootReach > 0; // at least one IS must be reachable
@@ -53,9 +51,9 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
         chanceProbabilities = new HashMap<>();
         for (Action action : resolvingInnerNodes.keySet()) {
             GadgetInnerNode node = resolvingInnerNodes.get(action);
-            if (node.getOriginalReachPr() == 0.) continue;
+            if (node.getOriginalNode().getReachPrPlayerChance() == 0.) continue;
 
-            double p = node.getOriginalReachPr() / rootReach;
+            double p = node.getOriginalNode().getReachPrPlayerChance() / rootReach;
             assert p <= 1 && p >= 0;
             chanceProbabilities.put(action, p);
             actions.add(action);
@@ -215,6 +213,16 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
     @Override
     public void setPlayerReachPr(double meanStrategyActionPr) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public double getReachPrByPlayer(int player) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setReachPrByPlayer(int player, double meanStrategyPr) {
         throw new NotImplementedException();
     }
 

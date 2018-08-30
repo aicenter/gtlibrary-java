@@ -72,6 +72,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
+import static cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm.gadgetActionChoices;
+
 public class MCCR_CFV_Experiments {
 
     private final Long seed;
@@ -485,7 +487,18 @@ public class MCCR_CFV_Experiments {
 
         alg.solveEntireGame(iterationsInRoot, iterationsPerGadgetGame);
         Double exploitability = calcExploitability();
-        System.out.println(seed+","+epsExploration+","+iterationsInRoot+","+iterationsPerGadgetGame+","+resetData+","+exploitability);
+        double ftRatio = ((double) gadgetActionChoices[0] / (gadgetActionChoices[0] + gadgetActionChoices[1]));
+        MCTSConfig config = alg.getRootNode().getAlgConfig();
+        double timePerResolve = MCCRAlgorithm.totalTimeResolving / config.getAllPublicStates().size();
+
+        System.out.println(seed+","+
+                epsExploration+","+
+                iterationsInRoot+","+
+                iterationsPerGadgetGame+
+                ","+resetData+
+                ","+exploitability+
+                ","+ftRatio +
+                ","+timePerResolve);
     }
 
     private void runUniform() {
@@ -571,6 +584,7 @@ public class MCCR_CFV_Experiments {
         OOSAlgorithmData.epsilon = 0.00001f;
 
         int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "100000"));
+        int iterationsInRoot = 0;
 
         rootState = rootState.performAction((Action) expander.getActions(rootState).get(0));
 
@@ -607,7 +621,7 @@ public class MCCR_CFV_Experiments {
 
                 for(InnerNode in : IS.getAllNodes()) {
                     double rp = algCFR.calcRpOfNode(in, IS.getPlayer());
-                    ((InnerNodeImpl) in).setReachPr(rp);
+                    ((InnerNodeImpl) in).overwriteReachPrPlayerChance(rp);
                     double eu = algCFR.computeExpUtilityOfState(in, IS.getOpponent());
                     in.updateExpectedValue(eu * iterationsPerGadgetGame);
                 }
@@ -623,7 +637,7 @@ public class MCCR_CFV_Experiments {
         System.err.println("Running resolving");
         MCCRAlgorithm mccrAlg = new MCCRAlgorithm(algCFR.getRootNode(), expander, 0.6);
         mccrAlg.updateCRstatistics = false;
-        mccrAlg.gadgetMCCFR = false;
+        mccrAlg.resolveUsingMCCFR = false;
         mccrAlg.setResetData(true);
 
         q.add(targetPS);
@@ -636,7 +650,7 @@ public class MCCR_CFV_Experiments {
             }
             InnerNode n = s.getAllNodes().iterator().next();
 
-            mccrAlg.runStep(n, iterationsPerGadgetGame);
+            mccrAlg.runStep(n, iterationsPerGadgetGame, iterationsInRoot);
 
             // evaluate expl
             copyCFR = cloneBehavStrategy(solvedBehavCFR);

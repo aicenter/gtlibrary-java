@@ -7,14 +7,9 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.DomainWithPublicState;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.PublicState;
+import cz.agents.gtlibrary.interfaces.*;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class PublicStateImpl implements PublicState {
     private static final long serialVersionUID = 3656457672077909L;
@@ -70,17 +65,48 @@ public class PublicStateImpl implements PublicState {
     }
 
     @Override
-    public Set<PublicState> getNextPlayerPublicStates() {
+    public Set<PublicState> getNextPlayerPublicStates(Player player) {
+        Set<PublicState> nextPS = new HashSet<>();
+        ArrayDeque<Node> q = new ArrayDeque<>();
+        gameNodesInPublicState.forEach(node -> q.addAll(node.buildChildren().values()));
+
+        while(!q.isEmpty()) {
+            Node nextNode = q.removeFirst();
+
+            if(nextNode instanceof LeafNode) continue;
+            if (nextNode instanceof ChanceNode) {
+                q.addAll(  ((ChanceNode) nextNode).buildChildren().values());
+            } else {
+                InnerNode innerNode = (InnerNode) nextNode;
+
+                // init data
+                if(innerNode.getInformationSet().getAlgorithmData() == null) {
+                    innerNode.getInformationSet().setAlgorithmData(
+                            new OOSAlgorithmData(innerNode.getActions()));
+                }
+                if(innerNode.getPlayerToMove().equals(player)) {
+                    nextPS.add(innerNode.getPublicState());
+                } else {
+                    q.addAll(innerNode.buildChildren().values());
+                }
+            }
+        }
+
+        return nextPS;
+    }
+
+    @Override
+    public Set<PublicState> getNextPublicStates() {
         Set<PublicState> nextPS = new HashSet<>();
         for (InnerNode node : gameNodesInPublicState) {
             for(Action a : node.getActions()) {
                 Node nextNode = node.getChildFor(a);
                 if(nextNode instanceof LeafNode) continue;
                 if (nextNode instanceof ChanceNode) {
-                    nextPS.addAll(((ChanceNode) nextNode).getPublicState().getNextPlayerPublicStates());
-//                    nextPS.add(((ChanceNode) nextNode).getPublicState());
+                    nextPS.addAll(((ChanceNode) nextNode).getPublicState().getNextPublicStates());
                 } else {
                     InnerNode innerNode = (InnerNode) nextNode;
+                    // init data
                     if(innerNode.getInformationSet().getAlgorithmData() == null) {
                         innerNode.getInformationSet().setAlgorithmData(
                                 new OOSAlgorithmData(innerNode.getActions()));
@@ -90,6 +116,12 @@ public class PublicStateImpl implements PublicState {
             }
         }
         return nextPS;
+    }
+
+    @Override
+    public Player getPlayer() {
+        // todo: PS with chance
+        return getAllNodes().iterator().next().getPlayerToMove();
     }
 
     @Override

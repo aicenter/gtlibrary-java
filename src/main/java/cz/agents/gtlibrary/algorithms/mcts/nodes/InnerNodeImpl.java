@@ -40,8 +40,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     protected List<Action> actions;
     protected MCTSInformationSet informationSet;
     private MCTSPublicState publicState;
-    private double playerReachPr = 1.;
-    private double chanceReachPr = 1.;
+    private double[] playerReachPr = new double[] {1.,1.,1.};
     private double evSum = 0.;
 
     /**
@@ -49,10 +48,9 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
      */
     public InnerNodeImpl(InnerNode parent, GameState gameState, Action lastAction) {
         super(parent, lastAction, gameState);
-
-        chanceReachPr = parent.getChanceReachPr();
+        playerReachPr[2] = parent.getChanceReachPr();
         if(parent instanceof ChanceNode && !(parent instanceof GadgetChanceNode)) {
-            chanceReachPr *= parent.getProbabilityOfNatureFor(lastAction);
+            playerReachPr[2] *= parent.getProbabilityOfNatureFor(lastAction);
         }
 
         attendInformationSet();
@@ -67,7 +65,6 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
      */
     public InnerNodeImpl(Expander<MCTSInformationSet> expander, GameState gameState) {
         super(expander, gameState);
-        this.playerReachPr = 1;
         attendInformationSet();
         attendPublicState();
         if (actions == null)
@@ -177,30 +174,29 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     }
 
     @Override
-    public double getPlayerReachPr() {
-        return playerReachPr;
+    public double getReachPrByPlayer(int player) {
+        assert playerReachPr[player] <= 2 && playerReachPr[player] >= 0;
+        return playerReachPr[player];
     }
 
     @Override
-    public void setPlayerReachPr(double playerReachPr) {
-        this.playerReachPr = playerReachPr;
-    }
-
-    @Override
-    public double getChanceReachPr() {
-        return chanceReachPr;
+    public void setReachPrByPlayer(int player, double meanStrategyPr) {
+        if(player == 2) throw new RuntimeException("Cannot overwrite reach probability for chance");
+        playerReachPr[player] = meanStrategyPr;
+        assert meanStrategyPr <= 1 && meanStrategyPr >= 0;
     }
 
     private Double reachPr = null;
     @Override
-    public double getReachPr() {
+    public double getReachPrPlayerChance() {
         if(updateCRstatistics || reachPr == null) {
             return getPlayerReachPr() * getChanceReachPr();
         }
+        assert reachPr <= 1 && reachPr >= 0;
         return reachPr;
     }
 
-    public void setReachPr(double reachPr) {
+    public void overwriteReachPrPlayerChance(double reachPr) {
         this.reachPr = reachPr;
     }
 
