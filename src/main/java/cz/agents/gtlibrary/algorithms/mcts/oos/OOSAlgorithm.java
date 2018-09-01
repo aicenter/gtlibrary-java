@@ -189,8 +189,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         } else targeting = new ISTargeting(rootNode, delta);
     }
 
-    public OOSAlgorithm(GadgetChanceNode rootNode, double epsilon) {
-        this(null, (InnerNode) rootNode, epsilon);
+    public OOSAlgorithm(Player searchingPlayer, GadgetChanceNode rootNode, double epsilon) {
+        this(searchingPlayer, (InnerNode) rootNode, epsilon);
         this.normalizingUtils = rootNode.getRootReachPr();
     }
 
@@ -448,16 +448,21 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             } else {
                 data.updateRegret(ai, u, pi_avg, pi_, pi_c, l, c, x, c_avg, x_avg);
             }
-
-            ((InnerNode) node).updateExpectedValue((-u * x / l) / normalizingUtils);
         } else {
             data.getRMStrategy(rmProbs);
             data.updateMeanStrategy(rmProbs, pi_ / s);
-//            ((InnerNode) node).updateExpectedValue((u * x / l) / normalizingUtils);
         }
+
+        if(searchingPlayer.equals(expPlayer)) {
+            if (is.getPlayer().equals(expPlayer)) {
+                ((InnerNode) node).updateExpectedValue((-u * x / l) / normalizingUtils);
+            } else {
+                ((InnerNode) node).updateExpectedValue((u * x / l) / normalizingUtils);
+            }
+        }
+
         return u;
     }
-
 
     private double[] rmProbs = new double[1000];
     private double[] tmpProbs = new double[1000];

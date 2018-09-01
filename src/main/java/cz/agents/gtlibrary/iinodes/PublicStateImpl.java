@@ -20,11 +20,15 @@ public class PublicStateImpl implements PublicState {
     private final int hashCode;
     private final MCTSConfig config;
     private final PublicStateImpl parentPublicState;
+    private final PublicStateImpl playerParentPublicState;
     private final int depth;
 
-    public PublicStateImpl(MCTSConfig config, InnerNode node, PublicStateImpl parentPublicState) {
+    public PublicStateImpl(MCTSConfig config, InnerNode node,
+                           PublicStateImpl parentPublicState,
+                           PublicStateImpl playerParentPublicState) {
         this.config = config;
         this.parentPublicState = parentPublicState;
+        this.playerParentPublicState = playerParentPublicState;
         if (parentPublicState != null) {
             depth = parentPublicState.getDepth() + 1;
         } else {
@@ -160,5 +164,10 @@ public class PublicStateImpl implements PublicState {
     @Override
     public PublicState getParentPublicState() {
         return parentPublicState;
+    }
+
+    @Override
+    public PublicState getPlayerParentPublicState() {
+        return playerParentPublicState;
     }
 }

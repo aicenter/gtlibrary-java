@@ -19,6 +19,7 @@ import java.util.Map;
 public class GadgetInnerNode implements InnerNode, GadgetNode {
     private final GadgetInnerState state;
     private final InnerNode originalNode;
+    public static int debugExpUtility = -1;
     private final int expUtilityIterations;
     private MCTSInformationSet informationSet;
     private List<Action> actions;
@@ -33,7 +34,8 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
             int expUtilityIterations) {
         this.state = state;
         this.originalNode = originalNode;
-        this.expUtilityIterations = expUtilityIterations;
+        if(debugExpUtility != -1) this.expUtilityIterations = debugExpUtility;
+        else this.expUtilityIterations = expUtilityIterations;
     }
 
     public void createChildren(List<Action> actions) {

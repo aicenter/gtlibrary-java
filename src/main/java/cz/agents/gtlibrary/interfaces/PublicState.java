@@ -50,4 +50,6 @@ public interface PublicState extends Serializable {
     int getDepth();
 
     PublicState getParentPublicState();
+
+    PublicState getPlayerParentPublicState();
 }

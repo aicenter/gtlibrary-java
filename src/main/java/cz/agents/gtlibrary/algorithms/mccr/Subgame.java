@@ -20,4 +20,6 @@ public interface Subgame {
     GadgetChanceNode getGadgetRoot();
 
     void resetData(Player player, Set<PublicState> doNotResetAtPlayerPs);
+
+    void resetData();
 }

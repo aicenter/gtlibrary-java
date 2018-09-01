@@ -34,15 +34,15 @@ public class MCCRTest extends MCCR_CFV_Experiments {
     private void checkDomain(String domain, String[] params) {
         for (long seed = 0; seed < 10; seed++) {
             MCCRTest exp = new MCCRTest();
-            exp.handleDomain(domain, params);
-            exp.loadGame(domain, new Random(seed));
+            exp.prepareDomain(domain, params);
+            exp.createGame(domain, new Random(seed));
             exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
 
             MCCRAlgorithm alg = new MCCRAlgorithm(exp.rootState, exp.expander, 0.6);
-            alg.runStepStateful(100000, 0); // root
+            alg.runStepStateful(rootState.getAllPlayers()[0],100000, 0); // root
 
             for (int i = 0; i < 10; i++) {
-                Action action = alg.runStepStateful(1000, 100000); // first gadget
+                Action action = alg.runStepStateful(rootState.getAllPlayers()[0],1000, 100000); // first gadget
                 if (action == null) break;
 
                 Collection<MCTSInformationSet> infoSets = ((MCTSConfig) exp.expander.getAlgorithmConfig())
@@ -77,12 +77,12 @@ public class MCCRTest extends MCCR_CFV_Experiments {
         String[] params = new String[]{"0", "4", "true", "true"};
 
         MCCRTest exp = new MCCRTest();
-        exp.handleDomain(domain, params);
-        exp.loadGame(domain, new Random(seed));
+        exp.prepareDomain(domain, params);
+        exp.createGame(domain, new Random(seed));
         exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
 
         MCCRAlgorithm alg = new MCCRAlgorithm(exp.rootState, exp.expander, 0.6);
-        alg.runIterations(1000, 1000);
+        alg.runIterations(rootState.getAllPlayers()[0],1000, 1000);
 
         Collection<MCTSInformationSet> infoSets = ((MCTSConfig) exp.expander.getAlgorithmConfig())
                 .getAllInformationSets().values();

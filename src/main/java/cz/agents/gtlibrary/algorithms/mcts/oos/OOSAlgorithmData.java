@@ -192,6 +192,9 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     public void updateMeanStrategy(double[] p, double w){
         for (int i=0; i<r.length; i++){
             mp[i] += w*p[i];
+            if(Double.isNaN(mp[i])) {
+                System.out.println("fuck");
+            }
         }
         nbSamples++;
     }

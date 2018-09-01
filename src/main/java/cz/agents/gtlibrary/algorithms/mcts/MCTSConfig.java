@@ -118,7 +118,18 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
         if(node.getParent() == null) {
             return new MCTSPublicState(this, node);
         } else {
-            return new MCTSPublicState(this, node, node.getParent().getPublicState());
+            MCTSPublicState parentPs = node.getParent().getPublicState();
+
+
+            MCTSPublicState playerParentPs = null;
+            Player targetPl = node.getPlayerToMove();
+            InnerNode curNode = node.getParent();
+            while(curNode != null && !curNode.getPlayerToMove().equals(targetPl)) {
+                curNode = curNode.getParent();
+            }
+            if(curNode != null) playerParentPs = curNode.getPublicState();
+
+            return new MCTSPublicState(this, node, parentPs, playerParentPs);
         }
     }
 

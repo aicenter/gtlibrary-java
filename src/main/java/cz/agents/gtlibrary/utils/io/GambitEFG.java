@@ -23,7 +23,9 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
+import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormLP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
@@ -75,10 +77,10 @@ public class GambitEFG {
 
     public static void main(String[] args) {
 //        exportRandomGame();
-//        exportIIGoofSpiel();
+        exportIIGoofSpiel();
 //        exportLD();
 //        exportGP();
-        exportRPS();
+//        exportRPS();
 //        exportPhantomTTT();
     }
 

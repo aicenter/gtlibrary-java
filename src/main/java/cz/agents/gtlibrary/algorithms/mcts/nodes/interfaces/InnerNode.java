@@ -42,6 +42,10 @@ public interface InnerNode extends Node {
         return getPlayerReachPr() * getChanceReachPr();
     }
 
+    default double getReachPr() {
+        return getPlayerReachPr() * getOpponentReachPr() * getChanceReachPr();
+    }
+
     default double getPlayerReachPr() {
         return getReachPrByPlayer(getPlayerToMove());
     }
@@ -51,7 +55,12 @@ public interface InnerNode extends Node {
     }
 
     default double getChanceReachPr() {
-        return getReachPrByPlayer(getChancePlayer());
+        try {
+            return getReachPrByPlayer(getChancePlayer());
+        // todo: better solution
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return 1.0;
+        }
     }
 
     default void setPlayerReachPr(double meanStrategyPr) {

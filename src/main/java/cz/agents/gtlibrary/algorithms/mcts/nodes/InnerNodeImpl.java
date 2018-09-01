@@ -207,7 +207,9 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
 
     @Override
     public void updateExpectedValue(double offPolicyAproxSample) {
-        this.evSum += offPolicyAproxSample;
+        if(updateCRstatistics) {
+            this.evSum += offPolicyAproxSample;
+        }
     }
 
     @Override

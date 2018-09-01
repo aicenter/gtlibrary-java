@@ -4,6 +4,7 @@ import cz.agents.gtlibrary.algorithms.mccr.gadgettree.*;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.interfaces.*;
@@ -127,6 +128,33 @@ public class SubgameImpl implements Subgame {
             }
         }
     }
+
+    @Override
+    public void resetData() {
+        ArrayDeque<Node> q = new ArrayDeque<Node>();
+        q.addAll(publicState.getAllNodes());
+
+        while (!q.isEmpty()) {
+            Node n = q.removeFirst();
+            if(n instanceof LeafNode) continue;;
+            InnerNode in = (InnerNode) n;
+            in.resetData();
+
+            MCTSInformationSet is = in.getInformationSet();
+            if (is != null && is.getAlgorithmData() != null) {
+                OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
+                data.resetData();
+            }
+
+            for (Map.Entry<Action, Node> entry : in.getChildren().entrySet()) {
+                Node ch = entry.getValue();
+                if (ch instanceof InnerNode) {
+                    q.add((InnerNode) ch);
+                }
+            }
+        }
+    }
+
 
     private Set<InnerNode> getTopMostOriginalNodes() {
         Set<InnerNode> originalNodes = new HashSet<>();
