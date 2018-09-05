@@ -72,57 +72,49 @@ public class IIGoofSpielGameState extends GoofSpielGameState {
             if(!GSGameInfo.useFixedNatureSequence) {
                 throw new RuntimeException("pskey implemented only for fixed nature sequences!");
             }
-            if(GSGameInfo.depth > 10) {
-                throw new RuntimeException("pskey works up to depth of 10");
+            if(GSGameInfo.depth > 15) {
+                throw new RuntimeException("pskey works up to depth of 15");
             }
 
+            // hash code idea:
+            // For each round except the current one, keep 2 bits of information
+            // as for win/lose/draw at that round. Move that to the left (so the
+            // latest round is the leftest). The current round keeps 2 bits as for
+            // chance playing/player 1 playing.
+
             int hash = 0;
-            int round = -1;
+            int round = 0;
             int roundHash;
             int p1Action = 0, p2Action;
+            int totalRounds = (history.getHistory().size()) / 3;
             for (Pair<Player, Action> edge: history.getHistory()) {
                 GoofSpielAction goofSpielAction = (GoofSpielAction) edge.getRight();
                 Integer playerIdx = edge.getLeft().getId();
 
-                if (playerIdx == GSGameInfo.NATURE.getId()) {
-                    roundHash = 1; // nature moved
-                    round++;
-                } else if (playerIdx == GSGameInfo.FIRST_PLAYER.getId()) {
-                    roundHash = 3; // nature and 1st player moved
-                    p1Action = goofSpielAction.getValue();
-                } else { // SECOND_PLAYER
-                    p2Action = goofSpielAction.getValue();
-                    roundHash = ((int) Math.signum(p1Action - p2Action) + 2) << 2; // nature, 1st player, and outcome of round
+                if(round < totalRounds) {
+                    if (playerIdx == GSGameInfo.NATURE.getId()) {
+                        continue;
+                    }
+                    if (playerIdx == GSGameInfo.FIRST_PLAYER.getId()) {
+                        p1Action = goofSpielAction.getValue();
+                        continue;
+                    }
+                    if (playerIdx == GSGameInfo.SECOND_PLAYER.getId()) {
+                        p2Action = goofSpielAction.getValue();
+                        roundHash = ((int) Math.signum(p1Action - p2Action) + 2);
+                        round++;
+                        hash |= roundHash << 2 * round;
+                    }
+                } else {
+                    if (playerIdx == GSGameInfo.NATURE.getId()) {
+                        roundHash = 1; // nature moved
+                    } else  {
+                        assert (playerIdx == GSGameInfo.FIRST_PLAYER.getId());
+                        roundHash = 2; // nature and 1st player moved
+                    }
+                    hash |= roundHash;
                 }
-
-                // roundHash is at most 6, so fits into 3 bits
-                hash |= roundHash << 4 * round;
             }
-
-
-//            int hash = 1;
-//            int gap = GSGameInfo.depth + 1;
-//
-//            int p1Action = 0;
-//            int p2Action = 0;
-//
-//            for (Pair<Player, Action> edge: history.getHistory()) {
-//                GoofSpielAction goofSpielAction = (GoofSpielAction) edge.getRight();
-//                Integer playerIdx = edge.getLeft().getId();
-//
-//                int turn;
-//                if (playerIdx == GSGameInfo.NATURE.getId()) {
-//                    turn = goofSpielAction.getValue();
-//                } else if (playerIdx == GSGameInfo.FIRST_PLAYER.getId()) {
-//                    p1Action = goofSpielAction.getValue();
-//                    turn = 1;
-//                } else { // SECOND_PLAYER
-//                    p2Action = goofSpielAction.getValue();
-//                    turn = (int) Math.signum(p1Action-p2Action)+1;
-//                }
-//                hash *= gap;
-//                hash += turn;
-//            }
 
 
             psKey = new PSKey(hash);
