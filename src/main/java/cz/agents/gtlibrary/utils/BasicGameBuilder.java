@@ -1,6 +1,6 @@
 package cz.agents.gtlibrary.utils;
 
-import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetNode;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetNode;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;

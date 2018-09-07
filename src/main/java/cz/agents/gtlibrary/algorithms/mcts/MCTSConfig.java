@@ -65,6 +65,10 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
         return infoSet;
     }
 
+    public MCTSInformationSet getInformationSetFor(Node node) {
+        return getInformationSetFor(node.getGameState());
+    }
+
     /**
      * This method assumes setting where the only uncertainty is caused by simultaneous moves
      *
@@ -116,7 +120,7 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
     @Override
     public MCTSPublicState createPublicStateFor(InnerNode node) {
         if(node.getParent() == null) {
-            return new MCTSPublicState(this, node);
+            return new MCTSPublicState(this, node.getExpander(), node);
         } else {
             MCTSPublicState parentPs = node.getParent().getPublicState();
 
@@ -129,7 +133,7 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
             }
             if(curNode != null) playerParentPs = curNode.getPublicState();
 
-            return new MCTSPublicState(this, node, parentPs, playerParentPs);
+            return new MCTSPublicState(this, node.getExpander(), node, parentPs, playerParentPs);
         }
     }
 
@@ -150,9 +154,6 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
         return new HashSet<>(allPublicStates.values());
     }
 
-    public MCTSInformationSet getInformationSetFor(Node node) {
-        return getInformationSetFor(node.getGameState());
-    }
 
     public void setRandom(Random random) {
         this.random = random;

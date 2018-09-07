@@ -17,17 +17,17 @@ You should have received a copy of the GNU Lesser General Public License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
-package cz.agents.gtlibrary.algorithms.mccr;
+package cz.agents.gtlibrary.algorithms.cr;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
-import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetInnerNode;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInfoSet;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.ISMCTSExploitability;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
@@ -72,8 +72,12 @@ import cz.agents.gtlibrary.utils.HighQualityRandom;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
+import java.util.stream.Collectors;
 
-import static cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm.gadgetActionChoices;
+import static cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm.updateCFRResolvingData;
+import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_CFR;
+import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
+
 
 public class MCCR_CFV_Experiments {
 
@@ -91,12 +95,13 @@ public class MCCR_CFV_Experiments {
 
     public MCCR_CFV_Experiments(Long seed) {
         this.seed = seed;
+        System.err.println("Using seed "+seed);
     }
 
     public static void main(String[] args) {
         if (args.length < 2) {
             System.err.println("Missing Arguments: MCCR_CFV_Experiments " +
-                    "[trackingISName] [seed] {OOS|MCCFR|MCCR} {LD|GS|OZ|PE|RG|RPS|Tron} [domain parameters ... ].");
+                    "[trackingISName] [seed] {OOS|RESOLVE_MCCFR|MCCR} {LD|GS|OZ|PE|RG|RPS|Tron} [domain parameters ... ].");
             System.exit(-1);
         }
 
@@ -114,33 +119,51 @@ public class MCCR_CFV_Experiments {
         exp.runAlgorithm(alg);
     }
 
-    public static InformationSet buildCompleteTree(InnerNode r) {
+    public static void buildCompleteTree(InnerNode r) {
+        buildCompleteTree(r, Integer.MAX_VALUE);
+    }
+    public static void buildCompleteTree(InnerNode r, Integer maxDepth) {
         System.err.println("Building complete tree.");
-        int nodes = 0, infosets = 0, publicStates = 0;
+        int nodes = 0, infosets = 0;
         ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
         q.add(r);
 
-        // todo: debug
-        InformationSet retIS = null;
         while (!q.isEmpty()) {
             nodes++;
             InnerNode n = q.removeFirst();
             MCTSInformationSet is = n.getInformationSet();
-//            MCTSPublicState ps = n.getPublicState();
             if (!(n instanceof ChanceNode)) {
                 if (is.getAlgorithmData() == null) {
                     infosets++;
                     is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
-                    if (is.toString().equals("IS:(Pl0):Pl0: []")) {
-//                    if(is.toString().equals("IS:(Pl1):Pl1: []")) {
-                        retIS = is;
+                }
+            }
+
+            if(n.getDepth() < maxDepth) {
+                for (Action a : n.getActions()) {
+                    Node ch = n.getChildFor(a);
+                    if (ch instanceof InnerNode) {
+                        q.add((InnerNode) ch);
                     }
                 }
             }
-//            if (ps.getAlgorithmData() == null) {
-//                publicStates++;
-//                ps.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
-//            }
+        }
+        System.err.println("Created nodes: " + nodes + "; infosets: " + infosets);
+    }
+
+    public static boolean checkDomainPublicTree(InnerNode r) {
+        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
+        q.add(r);
+
+        while (!q.isEmpty()) {
+            InnerNode n = q.removeFirst();
+
+            assert !(n.getGameState() instanceof IIGoofSpielGameState) || (
+                    ((n.getPublicState().getPlayer().getId() == 2 && n.getPublicState().getNextPublicStates().size() == 1)
+                 || (n.getPublicState().getPlayer().getId() == 0 && n.getPublicState().getNextPublicStates().size() == 1)
+                 || (n.getPublicState().getPlayer().getId() == 1 && (n.getPublicState().getNextPublicStates().size() == 3 || n.getPublicState().getNextPublicStates().size() == 0))
+            ));
+
             for (Action a : n.getActions()) {
                 Node ch = n.getChildFor(a);
                 if (ch instanceof InnerNode) {
@@ -148,10 +171,10 @@ public class MCCR_CFV_Experiments {
                 }
             }
         }
-        System.err.println("Created nodes: " + nodes + "; infosets: " + infosets + "; public states: " + publicStates);
-
-        return retIS;
+        return true;
     }
+
+
 
     public void prepareDomain(String domain, String[] domainParams) {
         switch (domain) {
@@ -166,10 +189,10 @@ public class MCCR_CFV_Experiments {
                 GSGameInfo.useFixedNatureSequence = new Boolean(domainParams[3]);
                 GSGameInfo.regenerateCards = true;
 
-                if(GSGameInfo.seed==0 && GSGameInfo.depth==4) {
+                if (GSGameInfo.seed == 0 && GSGameInfo.depth == 4) {
                     GSGameInfo.seed = 0;
                     GSGameInfo.depth = 4;
-                    GSGameInfo.CARDS_FOR_PLAYER = new int[]{4,3,2,1};
+                    GSGameInfo.CARDS_FOR_PLAYER = new int[]{4, 3, 2, 1};
                     GSGameInfo.BINARY_UTILITIES = true;
                     GSGameInfo.useFixedNatureSequence = true;
                     GSGameInfo.regenerateCards = false;
@@ -312,24 +335,47 @@ public class MCCR_CFV_Experiments {
     public void runAlgorithm(String alg) {
         System.err.println("Using algorithm " + alg);
         OOSAlgorithmData.gatherActionCFV = true;
+
+        // prepare BR
+        brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
+                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
+                (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        brAlg1 = new SQFBestResponseAlgorithm(expander, 1,
+                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
+                (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+
+
         if (alg.equals("OOS")) {
             runOOS_CFVA();
+            return;
         }
-        if (alg.equals("MCCFR")) {
-            runMCCFR_CFVA();
+        if (alg.equals("MCCFR_gadget_CFV")) {
+            runMCCFR_gadget_CFV();
+            return;
         }
         if (alg.equals("MCCR")) {
             runMCCR();
+            return;
         }
         if (alg.equals("MCCR-match")) {
             runMCCR_match();
+            return;
         }
         if (alg.equals("CFR")) {
             runCFR();
+            return;
+        }
+        if (alg.equals("CR-mix")) {
+            runCR_mix();
+            return;
         }
         if (alg.equals("uniform")) {
             runUniform();
+            return;
         }
+
+        System.err.println("No such algorithm found!");
+        System.exit(1);
     }
 
     private double calcExploitability(InnerNode rootNode) {
@@ -385,13 +431,6 @@ public class MCCR_CFV_Experiments {
 
         this.alg = alg;
 
-        brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
-        brAlg1 = new SQFBestResponseAlgorithm(expander, 1,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
-
         // run algorithm until we find the information set
         System.err.println("Searching for IS " + trackCFVinInformationSet);
         MCTSInformationSet is;
@@ -427,40 +466,55 @@ public class MCCR_CFV_Experiments {
         } while (exploitability > minExploitability);
     }
 
-    private void runMCCFR_CFVA() {
+    private void runMCCFR_gadget_CFV() {
         double epsilonExploration = new Double(getenv("epsExploration", "0.6"));
+        int iterationsInRoot = new Integer(getenv("iterationsInRoot", "1000"));
+        int resolvingPlayerIdx = new Integer(getenv("resolvingPlayer", "0"));
 
-
+        MCTSConfig config = ((MCTSConfig) expander.getAlgorithmConfig());
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
+        Player resolvingPlayer = rootState.getAllPlayers()[resolvingPlayerIdx];
 
-        OOSAlgorithm alg = new OOSAlgorithm(rootState.getAllPlayers()[0], new OOSSimulator(expander), rootState,
+        OOSAlgorithm alg = new OOSAlgorithm(resolvingPlayer, new OOSSimulator(expander), rootState,
                 expander, 0., epsilonExploration);
         this.alg = alg;
 
-        buildCompleteTree(alg.getRootNode());
-//
-//        System.err.println("Several first infosets:");
-//        printSeveralFirstInfoSets(alg.getRootNode(), 10, 10, new HashSet<>());
-//        Distribution dist = new MeanStratDist();
+        InnerNode rootNode = alg.getRootNode();
 
-        brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
-        brAlg1 = new SQFBestResponseAlgorithm(expander, 1,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
+        buildCompleteTree(rootNode, 5);
+//        assert checkDomainPublicTree(rootNode);
 
-        System.err.println("Searching for IS " + trackCFVinInformationSet);
-        MCTSInformationSet is = identifyTargetInfoSet(alg.getRootNode(), trackCFVinInformationSet);
-        OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
+        Map<PublicState, List<GadgetInfoSet>> targetPsGadgetIs = new LinkedHashMap<>();
+        rootNode.getPublicState()
+                .getNextPlayerPublicStates(resolvingPlayer)
+                .iterator().next()
+                .getNextPlayerPublicStates(resolvingPlayer)
+                .forEach(ps -> {
+                    Set<GadgetInfoSet> gadgetIs= ps.getSubgame().getGadgetInformationSets();
+                    targetPsGadgetIs.put(ps, new ArrayList<>(gadgetIs));
+                });
 
-        printHeader(data);
 
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         double loop = 10.;
         int total = 0;
         Double exploitability;
         long runningTime = 0;
+
+        System.out.print("seed;iterations;expl;runningTime");
+        targetPsGadgetIs.forEach((ps, gadgetIs) -> {
+            System.out.print(";ps_"+ps.hashCode());
+            int i = 0;
+            for (GadgetInfoSet gadgetI : gadgetIs) {
+                System.out.print(
+                        ";is_reach_"+ps.hashCode()+"_"+i+
+                        ";is_cfv_"+ps.hashCode()+"_"+i+
+                        ";is_visits_"+ps.hashCode()+"_"+i);
+                i++;
+            }
+        });
+        System.out.println();
+
         do {
             int iters = (int) Math.floor(Math.pow(10., 1 + loop / 10.)) - total;
             long time = threadBean.getCurrentThreadCpuTime();
@@ -468,12 +522,48 @@ public class MCCR_CFV_Experiments {
             runningTime += threadBean.getCurrentThreadCpuTime() - time;
             total += iters;
 
-            exploitability = calcExploitability(alg.getRootNode());
-            printIterationStatistics(total, runningTime, data, exploitability);
+            exploitability = calcExploitability(rootNode);
+            int finalTotal = total;
+
+            System.out.print(seed + ";" + total + ";"+exploitability+";"+runningTime);
+            targetPsGadgetIs.forEach((ps, gadgetIs) -> {
+                System.out.print(";"+ps.hashCode());
+                for (GadgetInfoSet gadgetI : gadgetIs) {
+                    System.out.print(";" + gadgetI.getIsReach());
+                    System.out.print(";" + gadgetI.getIsCFV(finalTotal));
+
+                    int visits = gadgetI.getAllNodes().stream()
+                            .map(in -> ((GadgetInnerNode) in).getOriginalNode())
+                            .map(InnerNode::getInformationSet)
+                            .map(MCTSInformationSet::getVisitsCnt)
+                            .reduce(0, Integer::sum);
+                    System.out.print(";" + visits);
+                }
+            });
+            System.out.println();
+
+//            if(total > 1000) {
+//                System.err.println("wait");
+//                PublicState ps13 = config.getAllPublicStates().stream().filter(ps -> ps.hashCode() == 13).findFirst().get();
+//                int finalTotal1 = total;
+//                ps13.getSubgame().getGadgetInformationSets().forEach(gis -> {
+//                    for(InnerNode in : gis.getAllNodes()) {
+//                        InnerNode par = ((GadgetInnerNode) in).getOriginalNode().getParent();
+//                        OOSAlgorithmData data1 = (OOSAlgorithmData) par.getParent().getInformationSet().getAlgorithmData();
+//                        double pi_1 = data1.getMeanStrategy()[par.getParent().getActions().indexOf(
+//                                par.getLastAction())];
+//
+//                        OOSAlgorithmData data0 = (OOSAlgorithmData) par.getParent().getParent().getInformationSet().getAlgorithmData();
+//                        double pi_0 = data0.getMeanStrategy()[par.getParent().getParent().getActions().indexOf(
+//                                par.getParent().getLastAction())];
+//                        System.out.println(
+//                                finalTotal1 + ";" +gis+" "+ in + " pi_0=" + pi_0 + " pi_1=" + pi_1 + " rp=" + (pi_0 * pi_1));
+//                    }
+//                });
+//            }
 
             loop++;
-        } while (total <= 10e7);
-//        } while (exploitability > minExploitability);
+        } while (total <= iterationsInRoot);
     }
 
     private void runMCCR() {
@@ -485,16 +575,10 @@ public class MCCR_CFV_Experiments {
 
 
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
-        MCCRAlgorithm alg = new MCCRAlgorithm(rootState, expander, epsExploration);
-        alg.setResetData(resetData);
+        CRAlgorithm alg = new CRAlgorithm(rootState, expander, epsExploration);
+        alg.setDoResetData(resetData);
         this.alg = alg;
 
-        brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
-        brAlg1 = new SQFBestResponseAlgorithm(expander, 1,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
 
         InnerNode rootNode = alg.solveEntireGame(rootState.getAllPlayers()[player], iterationsInRoot,
                 iterationsPerGadgetGame);
@@ -516,12 +600,11 @@ public class MCCR_CFV_Experiments {
         double expl0 = gameValue + br1Val;
         double expl1 = -gameValue + br0Val;
 
-        double ftRatio = ((double) gadgetActionChoices[0] / (gadgetActionChoices[0] + gadgetActionChoices[1]));
         MCTSConfig config = rootNode.getAlgConfig();
-        double timePerResolve = MCCRAlgorithm.totalTimeResolving / config.getAllPublicStates().size();
+        double timePerResolve = CRAlgorithm.totalTimeResolving / config.getAllPublicStates().size();
 
         System.err.println("seed,epsExploration,iterationsInRoot,iterationsPerGadgetGame,resetData,player," +
-                "expl0,expl1,br1Val,br0Val,exploitability,ftRatio,timePerResolve");
+                "expl0,expl1,br1Val,br0Val,exploitability,timePerResolve");
         System.out.println(seed + "," +
                 epsExploration + "," +
                 iterationsInRoot + "," +
@@ -533,23 +616,15 @@ public class MCCR_CFV_Experiments {
                 + br1Val + ","
                 + br0Val + ","
                 + exploitability + ","
-                + ftRatio + ","
                 + timePerResolve);
     }
 
     private void runUniform() {
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
-        MCCRAlgorithm alg = new MCCRAlgorithm(rootState, expander, 0.6);
+        CRAlgorithm alg = new CRAlgorithm(rootState, expander, 0.6);
         this.alg = alg;
         InnerNode rootNode = alg.getRootNode();
         buildCompleteTree(rootNode);
-
-        brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
-        brAlg1 = new SQFBestResponseAlgorithm(expander, 1,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
 
         Double exploitability = calcExploitability(rootNode);
         System.out.println(exploitability);
@@ -562,37 +637,26 @@ public class MCCR_CFV_Experiments {
         boolean resetData = new Boolean(getenv("resetData", "true"));
 
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
-        MCCRAlgorithm alg = new MCCRAlgorithm(rootState, expander, epsExploration);
-        alg.setResetData(resetData);
+        CRAlgorithm alg = new CRAlgorithm(rootState, expander, epsExploration);
+        alg.setDoResetData(resetData);
         this.alg = alg;
 
-        brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
-        brAlg1 = new SQFBestResponseAlgorithm(expander, 1,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig(), gameInfo);
 
         double[] utils = alg.runIterations(rootState.getAllPlayers()[0], iterationsInRoot, iterationsPerGadgetGame);
         System.err.println(utils[0]);
     }
 
-    private void runCFR_d() {
+    private void runCFR() {
         CFRAlgorithm alg = new CFRAlgorithm(
                 rootState.getAllPlayers()[0],
                 rootState, expander);
         this.alg = alg;
 
-        MCTSInformationSet is = (MCTSInformationSet) buildCompleteTree(alg.getRootNode());
+        MCTSInformationSet is = null; // todo
+        buildCompleteTree(alg.getRootNode());
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
         buildCompleteTree(alg.getRootNode());
 
-        brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
-        brAlg1 = new SQFBestResponseAlgorithm(expander, 1,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
 
         int n = 100;
         for (int i = 1; i <= 1000; i++) {
@@ -616,152 +680,209 @@ public class MCCR_CFV_Experiments {
         }
     }
 
-    private void runCFR() {
+    private void runCR_mix() {
         OOSAlgorithmData.useEpsilonRM = true;
         OOSAlgorithmData.epsilon = 0.00001f;
 
-        int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "100000"));
-        int targetPSId = new Integer(getenv("targetPSId", "1"));
-        int iterationsInRoot = 1000;
+        // CFR-specific settings
+//        int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "1000000"));
+        int iterationsInRoot = new Integer(getenv("iterationsInRoot", "1000"));
+        int iterationsLevel2 = new Integer(getenv("iterationsLevel2", "100000"));
+        int iterationsLevel3 = new Integer(getenv("iterationsLevel3", "100000"));
+        int targetPSId = new Integer(getenv("targetPSId", "5"));
+        boolean subtreeResolving = new Boolean(getenv("subtreeResolving", "true"));
+        int resolvingPlayerIdx = new Integer(getenv("resolvingPlayer", "0"));
+        ResolvingMethod resolvingMethod2 = ResolvingMethod.fromString(getenv("resolvingMethod2", "RESOLVE_MCCFR"));
+        ResolvingMethod resolvingMethod3 = ResolvingMethod.fromString(getenv("resolvingMethod3", "RESOLVE_MCCFR"));
+        ResolvingMethod rootMethod = ResolvingMethod.fromString(getenv("rootMethod", "RESOLVE_CFR"));
 
-//        rootState = rootState.performAction((Action) expander.getActions(rootState).get(0));
+        Player resolvingPlayer = rootState.getAllPlayers()[resolvingPlayerIdx];
+        MCTSConfig config = ((MCTSConfig) expander.getAlgorithmConfig());
+        Random rnd = config.getRandom();
 
-        CFRAlgorithm algCFR = new CFRAlgorithm(
-                rootState.getAllPlayers()[0],
-                rootState, expander);
-        this.alg = algCFR;
+        // Alg init
+        CRAlgorithm mccrAlg = new CRAlgorithm(rootState, expander, 0.6);
+        mccrAlg.defaultResolvingMethod = RESOLVE_CFR;
+        mccrAlg.setDoResetData(false);
+        InnerNode rootNode = mccrAlg.getRootNode();
 
-//        MCTSInformationSet is = (MCTSInformationSet) buildCompleteTree(alg.getRootNode());
-        expander.getAlgorithmConfig().createInformationSetFor(rootState);
-        buildCompleteTree(algCFR.getRootNode());
-//        exportPublicTree(algCFR.getRootNode());
+        // Target ps
+        buildCompleteTree(rootNode);
+        Set<MCTSPublicState> publicStates = config.getAllPublicStates();
+        MCTSPublicState targetPS = publicStates.stream().filter(
+                ps -> ps.getPSKey().getHash() == targetPSId).findFirst().get();
 
-        brAlg0 = new SQFBestResponseAlgorithm(expander, 0,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
-        brAlg1 = new SQFBestResponseAlgorithm(expander, 1,
-                new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]},
-                (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
 
-        algCFR.runIterations(iterationsInRoot);
-        System.err.println("Game value " + algCFR.computeExpUtilityOfState(algCFR.getRootNode(), rootState.getAllPlayers()[0]));
+        // Run root
+        //        for (int i = 1; i <= 10; i++) {
+//            mccrAlg.runRoot(rootMethod, resolvingPlayer, rootNode, iterationsInRoot / 10 *i);
+//            System.err.println("Game value for resolving player: " + mccrAlg.rootCfrData.historyExpValues.get(rootNode));
+//            solvedBehavCFR = getBehavioralStrategy(rootNode);
+//            exp = calcExploitability(solvedBehavCFR);
+//            System.err.println("Root CFR exploitability: expl,expl0,expl1");
+//            System.err.println(exp.total() + "," + exp.expl0+ "," + exp.expl1);
+//
+//            int finalI = i;
+//            targetPS.getAllNodes().forEach(in ->
+//                System.out.println("root;"+(iterationsInRoot / 10 *finalI) +";"+targetPS+";"+in + ";"+
+//                    mccrAlg.rootCfrData.historyExpValues.get(in) +";"+
+//                    mccrAlg.rootCfrData.reachProbs.get(in)));
+//        }
 
-        Strategy strategy0 = StrategyCollector.getStrategyFor(
-                algCFR.getRootNode(), rootState.getAllPlayers()[0], new MeanStratDist());
-        Strategy strategy1 = StrategyCollector.getStrategyFor(
-                algCFR.getRootNode(), rootState.getAllPlayers()[1], new MeanStratDist());
+//        targetPS.getNextPlayerPublicStates().stream()
+//                .map(ps -> {
+//                    Subgame subgame = new SubgameImpl(ps, (MCTSConfig) expander.getAlgorithmConfig(), expander);
+//                    subgame.getGadgetRoot();
+//                    return subgame.getGadgetInformationSets().size();
+//                }).forEach(System.err::println);
 
-        Double br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
-        Double br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
-        double exploitability = br0Val+br1Val;
-        System.err.println(">>> Exploit Before: " + exploitability + " - "+ br1Val);
+//                .map(PublicState::getAllNodes).map(Set::size).forEach(s -> System.err.println(s));
+//        System.err.println(targetPS.getNextPlayerPublicStates().stream().map(PublicState::getAllInformationSets).map(Set::size).reduce(0, Integer::sum));
+        mccrAlg.runRoot(rootMethod, resolvingPlayer, rootNode, iterationsInRoot);
+        System.err.println("Game value for resolving player: " + mccrAlg.rootCfrData.historyExpValues.get(rootNode));
+        Map<ISKey, Map<Action, Double>> solvedBehavCFR = getBehavioralStrategy(rootNode);
+        Exploitability exp = calcExploitability(solvedBehavCFR);
+        System.err.println("Root CFR exploitability: expl,expl0,expl1");
+        System.err.println(exp.total() + "," + exp.expl0 + "," + exp.expl1);
 
-        Set<MCTSPublicState> publicStates = ((MCTSConfig) expander.getAlgorithmConfig()).getAllPublicStates();
-        MCTSPublicState targetPS = publicStates.stream().filter(ps -> ps.getPSKey().getHash() == targetPSId).findFirst().get();
+        // Prepare resolving
+        System.err.println("Running resolving");
 
+        // IIGS-4 1M iters 0 - good, 45 - bad
+        //  0,1000000,true,23,0.0029039396736384674
+        // 45,1000000,true,23,0.06524478611583413
+
+        // IIGS-4 10M iters 58 bad, 71 goo
+        //  1,10000000,true,23,0.0029039396736384674
+        // 45,10000000,true,23,0.06280332746107144
+
+        long seed = 0;
+//        for (long i = 0; i < 5; i++) {
+//        if(resolvingMethod2 == RESOLVE_MCCFR) {
+            for (long i = 0; i < 100; i++) {
+                seed = i;
+                rnd.setSeed(seed);
+                System.out.println(rnd.nextDouble());
+
+                // prepare node reach pr / exp values
+                targetPS.resetData();
+                targetPS.setResolvingIterations(iterationsInRoot);
+                targetPS.setResolvingMethod(rootMethod);
+                updateCFRResolvingData(targetPS, mccrAlg.rootCfrData.reachProbs, mccrAlg.rootCfrData.historyExpValues);
+
+                repeatedEvaluation(seed, targetPS, iterationsInRoot,
+                        resolvingMethod2, resolvingMethod3,
+                        iterationsLevel2, iterationsLevel3,
+                        resolvingPlayer, mccrAlg,
+                        solvedBehavCFR, rootNode, subtreeResolving);
+            }
+//        } else if(resolvingMethod3 == RESOLVE_MCCFR) {
+//            assert resolvingMethod2 == RESOLVE_CFR;
+//            repeatedEvaluation(seed, targetPS, iterationsInRoot,
+//                    resolvingMethod2, resolvingMethod3,
+//                    iterationsLevel2, iterationsLevel3,
+//                    resolvingPlayer, mccrAlg,
+//                    solvedBehavCFR, rootNode, subtreeResolving);
+//        }
+    }
+
+    private void repeatedEvaluation(long seed,
+                                    PublicState targetPS,
+                                    int iterationsInRoot,
+                                    ResolvingMethod resolvingMethod2,
+                                    ResolvingMethod resolvingMethod3,
+                                    int iterationsLevel2,
+                                    int iterationsLevel3,
+                                    Player resolvingPlayer,
+                                    CRAlgorithm mccrAlg,
+                                    Map<ISKey, Map<Action, Double>> solvedBehavCFR,
+                                    InnerNode rootNode,
+                                    boolean subtreeResolving) {
+        System.err.println("########################################################################");
+        System.err.println("using seed " + seed);
+
+        // run resolving
+        ResolvingMethod resolvingMethod;
+        int iterationsPerGadgetGame = 0;
+        Exploitability exp;
+        Map<ISKey, Map<Action, Double>> copyCFR;
+        Map<ISKey, Map<Action, Double>> behavMCCR;
         ArrayDeque<PublicState> q = new ArrayDeque<>();
         q.add(targetPS);
         while (!q.isEmpty()) {
-            PublicState PS = q.removeFirst();
-            for (MCTSInformationSet IS : PS.getAllInformationSets()) {
-                ((OOSAlgorithmData) IS.getAlgorithmData()).setIsCFV(algCFR.computeCFVofIS(IS));
+            PublicState ps = q.removeFirst();
+            InnerNode n = ps.getAllNodes().iterator().next();
 
-                for (InnerNode in : IS.getAllNodes()) {
-                    double rp = algCFR.calcRpOfNode(in, IS.getPlayer());
-                    ((InnerNodeImpl) in).overwriteReachPrPlayerChance(rp);
-                    double eu = algCFR.computeExpUtilityOfState(in, IS.getOpponent());
-                    in.updateExpectedValue(eu);
-                }
+            if (ps.equals(targetPS)) {
+                resolvingMethod = resolvingMethod2;
+                iterationsPerGadgetGame = iterationsLevel2;
+            } else {
+                resolvingMethod = resolvingMethod3;
+                iterationsPerGadgetGame = iterationsLevel3;
             }
-            q.addAll(PS.getNextPlayerPublicStates());
-        }
+            mccrAlg.runStep(resolvingPlayer, n, resolvingMethod,
+                    iterationsPerGadgetGame, iterationsInRoot);
 
-        System.err.println("Collecting behav strategy");
-        Map<ISKey, Map<Action, Double>> solvedBehavCFR = getBehavioralStrategy(algCFR.getRootNode());
-        Map<ISKey, Map<Action, Double>> copyCFR = getBehavioralStrategy(algCFR.getRootNode());
-
-
-        System.err.println("Running resolving");
-        MCCRAlgorithm mccrAlg = new MCCRAlgorithm(algCFR.getRootNode(), expander, 0.6);
-        mccrAlg.updateCRstatistics = false;
-        mccrAlg.resolveUsingMCCFR = true;
-//        mccrAlg.resolveUsingMCCFR = false;
-        mccrAlg.setResetData(true);
-        GadgetInnerNode.debugExpUtility = 1;
-
-        Random rnd = ((MCTSConfig) expander.getAlgorithmConfig()).getRandom();
-
-        for (long i = 1; i < 100; i++) {
-            rnd.setSeed(i);
-            InnerNode n = targetPS.getAllNodes().iterator().next();
-            mccrAlg.runStep(rootState.getAllPlayers()[0], n, iterationsPerGadgetGame, iterationsInRoot);
-
-            // evaluate expl
             copyCFR = cloneBehavStrategy(solvedBehavCFR);
-            Map<ISKey, Map<Action, Double>> behavMCCR = getBehavioralStrategy(algCFR.getRootNode());
+            behavMCCR = getBehavioralStrategy(rootNode);
             substituteStrategy(copyCFR, behavMCCR, targetPS);
+            exp = calcExploitability(copyCFR);
+            System.err.println("seed;iterationsPerGadgetGame;subtreeResolving;currentPS;expl0;expl1;total");
+            System.err.println(
+                    seed + ";" + iterationsPerGadgetGame + ";" + subtreeResolving + ";" + ps + ";" + exp.expl0 + ";" + exp.expl1 + ";" + exp.total());
 
-            strategy0 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
-                    copyCFR, rootState, expander, rootState.getAllPlayers()[0]);
-            strategy1 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
-                    copyCFR, rootState, expander, rootState.getAllPlayers()[1]);
+//            Subgame subgame = new SubgameImpl(ps, (MCTSConfig) expander.getAlgorithmConfig(), expander);
+//            subgame.getGadgetRoot();
+//            long finalSeed = seed;
+//            int finalIterationsPerGadgetGame = iterationsPerGadgetGame;
+//            subgame.getGadgetInformationSets().forEach(gis -> {
+//                double cfrGisCFV = 0.;
+//                for (InnerNode in : gis.getAllNodes()) {
+//                    InnerNode o = ((GadgetInnerNode) in).getOriginalNode();
+//                    double p = mccrAlg.rootCfrData.reachProbs.get(o);
+//                    double eu = mccrAlg.rootCfrData.historyExpValues.get(o);
+//                    cfrGisCFV += p * eu;
+//                }
+//                double resolveGisCFV = gis.getIsCFV(finalIterationsPerGadgetGame);
+//                System.out.println(
+//                        "gadget_is;" + finalSeed + ";" + ps.hashCode() + ";" + gis.hashCode() + ";" + cfrGisCFV + ";" + resolveGisCFV);
+//            });
 
-            br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
-            br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
-            exploitability = br0Val + br1Val;
-            System.err.println(">>> Exploit root: " + exploitability);
-            System.out.println(br1Val);
-//            System.out.println("10^"+i+": "+exploitability + " - "+br1Val);
+//            subgame.getOriginalNodes().forEach(origN -> {
+//                double p = mccrAlg.rootCfrData.reachProbs.get(origN);
+//                double eu = mccrAlg.rootCfrData.historyExpValues.get(origN);
+//
+//                System.out.println("gadget_node;" + finalSeed + ";" + ps.hashCode() + ";" + origN.hashCode() + ";" +
+//                        p + ";" + eu + ";" +
+//                        origN.getReachPrPlayerChance() + ";" + origN.getExpectedValue(ps.getResolvingIterations()));
+//            });
+
+            ps.resetData();
+
+            if (subtreeResolving) {
+                q.addAll(ps.getNextPlayerPublicStates());
+            }
         }
 
+        // evaluate expl
+        copyCFR = cloneBehavStrategy(solvedBehavCFR);
+        behavMCCR = getBehavioralStrategy(rootNode);
+        substituteStrategy(copyCFR, behavMCCR, targetPS);
+        exp = calcExploitability(copyCFR);
+        System.err.println("seed;iterationsPerGadgetGame;subtreeResolving;targetPSId;expl0;expl1;total");
+        System.out.println(seed + ";" + iterationsPerGadgetGame + ";" + subtreeResolving + ";" + targetPS.hashCode() + ";" + exp.expl0 + ";" + exp.expl1 + ";" + exp.total());
 
+    }
 
-//        q.add(targetPS);
-//        int depth = -1;
-//        while (!q.isEmpty()) {
-//            PublicState s = q.removeFirst();
-//            if (s.getDepth() != depth) {
-//                System.err.println("=========================================== Depth " + s.getDepth());
-//                depth = s.getDepth();
-//            }
-//            InnerNode n = s.getAllNodes().iterator().next();
-//
-//            mccrAlg.runStep(rootState.getAllPlayers()[0], n, iterationsPerGadgetGame, iterationsInRoot);
-//
-//            // evaluate expl
-//            copyCFR = cloneBehavStrategy(solvedBehavCFR);
-//            Map<ISKey, Map<Action, Double>> behavMCCR = getBehavioralStrategy(algCFR.getRootNode());
-//
-//            substituteStrategy(copyCFR, behavMCCR, targetPS);
-//
-//            Strategy strategy0 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
-//                    copyCFR, rootState, expander, rootState.getAllPlayers()[0]);
-//            Strategy strategy1 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
-//                    copyCFR, rootState, expander, rootState.getAllPlayers()[1]);
-//
-//            Double br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
-//            Double br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
-//            exploitability = br0Val + br1Val;
-//            System.err.println(">>> Exploit root: " + exploitability);
-//            ;
-//            q.addAll(s.getNextPlayerPublicStates());
-//        }
-//
-//        System.err.println("Calculating expl after");
-//        Map<ISKey, Map<Action, Double>> behavMCCR = getBehavioralStrategy(algCFR.getRootNode());
-//
-//        substituteStrategy(solvedBehavCFR, behavMCCR, targetPS);
-//
-//        Strategy strategy0 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
-//                solvedBehavCFR, rootState, expander, rootState.getAllPlayers()[0]);
-//        Strategy strategy1 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
-//                solvedBehavCFR, rootState, expander, rootState.getAllPlayers()[1]);
-//
-//        Double br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
-//        Double br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
-//        exploitability = br0Val + br1Val;
-//        System.err.println(">>> Exploit After: " + exploitability);
-//        System.out.println(seed + "," + iterationsPerGadgetGame + "," + exploitability);
+    private Exploitability calcExploitability(Map<ISKey, Map<Action, Double>> solvedBehavCFR) {
+        Strategy strategy0 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
+                solvedBehavCFR, rootState, expander, rootState.getAllPlayers()[0]);
+        Strategy strategy1 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
+                solvedBehavCFR, rootState, expander, rootState.getAllPlayers()[1]);
+
+        double br1Val = brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0));
+        double br0Val = brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1));
+        return new Exploitability(br1Val, br0Val);
     }
 
     private Map<ISKey, Map<Action, Double>> cloneBehavStrategy(Map<ISKey, Map<Action, Double>> orig) {
@@ -819,8 +940,8 @@ public class MCCR_CFV_Experiments {
 
                 boolean hasnan = ((HashMap) dist).values()
                         .stream()
-                        .anyMatch(v->Double.isNaN((double)v));
-                if(hasnan) {
+                        .anyMatch(v -> Double.isNaN((double) v));
+                if (hasnan) {
                     System.out.println("fuck");
                 }
                 out.put(curNodeIS.getISKey(), dist);
@@ -837,10 +958,10 @@ public class MCCR_CFV_Experiments {
         return System.getenv(env) == null ? def : System.getenv(env);
     }
 
-    private void substituteStrategy(Map<ISKey, Map<Action, Double>> s1, Map<ISKey, Map<Action, Double>> s2,
-                                    PublicState replaceS1byS2atPublicState) {
+    private void substituteStrategy(Map<ISKey, Map<Action, Double>> target, Map<ISKey, Map<Action, Double>> replacement,
+                                    PublicState replaceStartingAtPublicPlace) {
         ArrayDeque<InnerNode> q = new ArrayDeque<>();
-        q.addAll(replaceS1byS2atPublicState.getAllNodes());
+        q.addAll(replaceStartingAtPublicPlace.getAllNodes());
 
         while (!q.isEmpty()) {
             InnerNode curNode = q.removeFirst();
@@ -850,11 +971,10 @@ public class MCCR_CFV_Experiments {
             } else {
                 // substitute
                 ISKey key = curNodeIS.getISKey();
-                if (s1.containsKey(key) && s2.containsKey(key)) {
-                    Map<Action, Double> oldvalue = s1.get(key);
-                    Map<Action, Double> newvalue = s2.get(key);
-                    s1.put(key, newvalue);
-//                    System.err.println(oldvalue + " : " + newvalue);
+                if (target.containsKey(key) && replacement.containsKey(key)) {
+                    Map<Action, Double> oldvalue = target.get(key);
+                    Map<Action, Double> newvalue = replacement.get(key);
+                    target.put(key, newvalue);
                 }
             }
 
@@ -901,5 +1021,19 @@ public class MCCR_CFV_Experiments {
 
     public void setTracking(String tracking) {
         this.trackCFVinInformationSet = tracking;
+    }
+
+    private class Exploitability {
+        public double expl0;
+        public double expl1;
+
+        public Exploitability(double expl0, double expl1) {
+            this.expl0 = expl0;
+            this.expl1 = expl1;
+        }
+
+        public double total() {
+            return expl0 + expl1;
+        }
     }
 }

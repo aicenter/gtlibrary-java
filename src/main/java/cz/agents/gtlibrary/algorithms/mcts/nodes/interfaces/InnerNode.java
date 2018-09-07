@@ -112,5 +112,7 @@ public interface InnerNode extends Node {
 
     void updateExpectedValue(double offPolicyAproxSample);
 
+    void setExpectedValue(double offPolicyAproxSample);
+
     void resetData();
 }

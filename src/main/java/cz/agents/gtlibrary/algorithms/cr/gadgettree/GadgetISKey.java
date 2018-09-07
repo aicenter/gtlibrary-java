@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.mccr.gadgettree;
+package cz.agents.gtlibrary.algorithms.cr.gadgettree;
 
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;

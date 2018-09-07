@@ -1,7 +1,7 @@
 package algorithms.mccr;
 
-import cz.agents.gtlibrary.algorithms.mccr.MCCRAlgorithm;
-import cz.agents.gtlibrary.algorithms.mccr.MCCR_CFV_Experiments;
+import cz.agents.gtlibrary.algorithms.cr.CRAlgorithm;
+import cz.agents.gtlibrary.algorithms.cr.MCCR_CFV_Experiments;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
@@ -38,7 +38,7 @@ public class MCCRTest extends MCCR_CFV_Experiments {
             exp.createGame(domain, new Random(seed));
             exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
 
-            MCCRAlgorithm alg = new MCCRAlgorithm(exp.rootState, exp.expander, 0.6);
+            CRAlgorithm alg = new CRAlgorithm(exp.rootState, exp.expander, 0.6);
             alg.runStepStateful(rootState.getAllPlayers()[0],100000, 0); // root
 
             for (int i = 0; i < 10; i++) {
@@ -81,7 +81,7 @@ public class MCCRTest extends MCCR_CFV_Experiments {
         exp.createGame(domain, new Random(seed));
         exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
 
-        MCCRAlgorithm alg = new MCCRAlgorithm(exp.rootState, exp.expander, 0.6);
+        CRAlgorithm alg = new CRAlgorithm(exp.rootState, exp.expander, 0.6);
         alg.runIterations(rootState.getAllPlayers()[0],1000, 1000);
 
         Collection<MCTSInformationSet> infoSets = ((MCTSConfig) exp.expander.getAlgorithmConfig())

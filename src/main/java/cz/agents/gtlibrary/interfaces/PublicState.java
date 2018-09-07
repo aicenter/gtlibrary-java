@@ -19,6 +19,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.interfaces;
 
+import cz.agents.gtlibrary.algorithms.cr.ResolvingMethod;
+import cz.agents.gtlibrary.algorithms.cr.Subgame;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.iinodes.PSKey;
@@ -52,4 +54,18 @@ public interface PublicState extends Serializable {
     PublicState getParentPublicState();
 
     PublicState getPlayerParentPublicState();
+
+    int getResolvingIterations();
+    void setResolvingIterations(int iterations);
+    void incrResolvingIterations(int iterations);
+
+    void setDataKeeping(boolean b);
+    boolean isDataKeeping();
+
+    void resetData();
+
+    void setResolvingMethod(ResolvingMethod resolve);
+    ResolvingMethod getResolvingMethod();
+
+    Subgame getSubgame();
 }

@@ -34,7 +34,6 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
-import static cz.agents.gtlibrary.algorithms.mccr.MCCRAlgorithm.updateCRstatistics;
 
 /**
  *
@@ -55,8 +54,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     /** enable this flag to gather statistics about the CFV for each action */
     public static boolean gatherActionCFV = true;
     private double[] actionCFV;
-    private double isCFV;
-    private double isVisitsCnt;
+//    private double isCFV;
     public boolean track = false;
 
 
@@ -64,8 +62,6 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         mp = new double[actionCount];
         r = new double[actionCount];
         this.actionCount = actionCount;
-        isCFV = 0.0;
-        isVisitsCnt = 0;
 
         if (gatherActionCFV) {
             actionCFV = new double[actionCount];
@@ -77,8 +73,6 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         this.actionCount = actions.size();
         mp = new double[actions.size()];
         r = new double[actions.size()];
-        this.isVisitsCnt = 0;
-        isCFV = 0.0;
 
         if (gatherActionCFV) {
             actionCFV = new double[actionCount];
@@ -92,9 +86,6 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         System.arraycopy(data.mp, 0, mp, 0, data.mp.length);
         r = new double[actionCount];
         System.arraycopy(data.r, 0, r, 0, data.r.length);
-
-        isCFV = data.isCFV;
-        isVisitsCnt = data.isVisitsCnt;
 
         if(gatherActionCFV) {
             actionCFV = new double[actionCount];
@@ -121,60 +112,15 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return out;
     }
     
-    public void updateRegret(int ai, double u, double pi_avg, double pi_, double pi_c, double l, double c, double x,
-                             double c_avg, double x_avg){
+    public void updateRegret(int ai, double u, double pi_, double l, double c, double x){
         double W = u * pi_ / l;
-//        double Wavg = W
-        double Wavg =  - u * pi_avg * pi_c / l;
-//        double Wavg =  - u / LeafNodeImpl.getScalingConstant() * pi_avg * pi_c / l;
-        isVisitsCnt++;
 
         for (int i=0; i<r.length; i++){
             if (i==ai) r[i] += (c-x)*W;
             else r[i] += -x*W;
-
-            if(gatherActionCFV) {
-                if (i==ai) actionCFV[i] += ((Wavg * c_avg) - actionCFV[i]) / isVisitsCnt;
-                else actionCFV[i] -=  actionCFV[i] / isVisitsCnt;
-            }
         }
-
-//        double update_CFV = W * x;
-        if(updateCRstatistics) {
-            double update_CFV = Wavg * x_avg;
-            isCFV += (update_CFV - isCFV) / isVisitsCnt;
-        }
-//        isCFV = 0.0;
-//        double[] meanStrat = getMeanStrategy();
-//        for (int i = 0; i < actionCFV.length; i++) {
-//            isCFV += actionCFV[i]*meanStrat[i];
-//        }
-//        if(track && isVisitsCnt % 10 == 0) {
-//        if(track) {
-//            System.err.println(actionCFV[0]+","+actionCFV[1]+","+actionCFV[2]);
-//            System.err.println(update_CFV);
-//            System.out.println(((int) isVisitsCnt) + ","+isCFV+","+actionCFV[0]+","+actionCFV[1]+","+actionCFV[2]);
-//        }
     }
 
-    public void updateRegret(double u,
-                             double pi_,
-                             double l,
-                             double c,
-                             double u_t,
-                             double p_follow) {
-
-        assert r.length == 2; // this method is only for gadget inner nodes!
-
-        double v_f = pi_ * c * u / l;
-//        double v_t = pi_ * u_t / l;
-        double v_t = pi_ * u_t;
-
-        isVisitsCnt++;
-
-        r[0] += (1-p_follow) * (v_f - v_t); // follow
-        r[1] +=    p_follow  * (v_t - v_f); // terminate
-    }
     
     public void updateRegretSM(int ai, double W, double pa, double sa){
         for (int i=0; i<r.length; i++){
@@ -252,17 +198,14 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return actionCFV;
     }
 
-    public double getIsCFV() {
-        return isCFV;
-    }
+//    public double getIsCFV() {
+//        return isCFV;
+//    }
 
-    public void setIsCFV(double isCFV) {
-        this.isCFV = isCFV;
-    }
+//    public void setIsCFV(double isCFV) {
+//        this.isCFV = isCFV;
+//    }
 
-    public double getIsVisitsCnt() {
-        return isVisitsCnt;
-    }
 
     public void setFrom(OOSAlgorithmData other) {
 //        assert nbSamples == 0 || IntStream.range(0, r.length).allMatch(i -> Math.abs(r[i] - other.r[i]) < 1e-6);
@@ -281,10 +224,6 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
             }
         }
         nbSamples = 0;
-        if(updateCRstatistics) {
-            isCFV = 0.0;
-            isVisitsCnt = 0;
-        }
     }
 
     public double[] getMeanStrategy() {
@@ -308,8 +247,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
 
         if (nbSamples != that.nbSamples) return false;
         if (actionCount != that.actionCount) return false;
-        if (Double.compare(that.isCFV, isCFV) != 0) return false;
-        if (Double.compare(that.isVisitsCnt, isVisitsCnt) != 0) return false;
+//        if (Double.compare(that.isCFV, isCFV) != 0) return false;
         if (actions != null ? !actions.equals(that.actions) : that.actions != null) return false;
         if (!Arrays.equals(mp, that.mp)) return false;
         if (!Arrays.equals(r, that.r)) return false;
@@ -326,10 +264,6 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         result = 31 * result + nbSamples;
         result = 31 * result + actionCount;
         result = 31 * result + Arrays.hashCode(actionCFV);
-        temp = Double.doubleToLongBits(isCFV);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(isVisitsCnt);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
 }

@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetISKey;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetISKey;
 import cz.agents.gtlibrary.interfaces.*;
 
 public abstract class InformationSetImpl implements PerfectRecallInformationSet {

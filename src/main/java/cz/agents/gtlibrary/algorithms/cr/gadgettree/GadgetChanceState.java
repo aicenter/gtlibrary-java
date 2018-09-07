@@ -1,28 +1,35 @@
-package cz.agents.gtlibrary.algorithms.mccr.gadgettree;
+package cz.agents.gtlibrary.algorithms.cr.gadgettree;
 
 import cz.agents.gtlibrary.NotImplementedException;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.*;
 
-public class GadgetLeafState implements GameState {
-    private final GameState originalGameState;
-    private final double[] utilities;
+import java.util.Map;
 
-    public GadgetLeafState(GameState parentOriginalGameState, double[] utilities) {
-        this.originalGameState = parentOriginalGameState;
-        this.utilities = utilities;
+public class GadgetChanceState implements GameState {
+    private final GameState originalGameSomeState;
+    private Map<Action, Double> chanceProbabilities;
+
+    public GadgetChanceState(GameState originalGameSomeState) {
+        this.originalGameSomeState = originalGameSomeState;
+    }
+
+    @Override
+    public ISKey getISKeyForPlayerToMove() {
+        return new GadgetISKey(1, new ArrayListSequenceImpl(this.getPlayerToMove()));
     }
 
     @Override
     public Player[] getAllPlayers() {
-        return originalGameState.getAllPlayers();
+        return originalGameSomeState.getAllPlayers();
     }
 
     @Override
     public Player getPlayerToMove() {
-        return originalGameState.getPlayerToMove();
+        return new PlayerImpl(2);
     }
 
     @Override
@@ -37,7 +44,8 @@ public class GadgetLeafState implements GameState {
 
     @Override
     public Sequence getSequenceFor(Player player) {
-        throw new NotImplementedException();
+        return new ArrayListSequenceImpl(player);
+        //throw new NotImplementedException();
     }
 
     @Override
@@ -47,12 +55,12 @@ public class GadgetLeafState implements GameState {
 
     @Override
     public GameState copy() {
-        return new GadgetLeafState(originalGameState, utilities);
+        throw new NotImplementedException();
     }
 
     @Override
     public double[] getUtilities() {
-        return utilities;
+        throw new NotImplementedException();
     }
 
     @Override
@@ -62,7 +70,11 @@ public class GadgetLeafState implements GameState {
 
     @Override
     public double getProbabilityOfNatureFor(Action action) {
-        throw new NotImplementedException();
+        return chanceProbabilities.get(action);
+    }
+
+    public void setChanceProbabilities(Map<Action, Double> chanceProbabilities) {
+        this.chanceProbabilities = chanceProbabilities;
     }
 
     @Override
@@ -72,17 +84,18 @@ public class GadgetLeafState implements GameState {
 
     @Override
     public boolean isGameEnd() {
-        return true;
-    }
-
-    @Override
-    public boolean isPlayerToMoveNature() {
         return false;
     }
 
     @Override
+    public boolean isPlayerToMoveNature() {
+        return true;
+    }
+
+    @Override
     public double getNatureProbability() {
-        throw new NotImplementedException();
+        return 1.0;
+//        throw new NotImplementedException();
     }
 
     @Override
@@ -101,11 +114,6 @@ public class GadgetLeafState implements GameState {
     }
 
     @Override
-    public ISKey getISKeyForPlayerToMove() {
-        throw new NotImplementedException();
-    }
-
-    @Override
     public boolean checkConsistency(Action action) {
         throw new NotImplementedException();
     }
@@ -113,5 +121,13 @@ public class GadgetLeafState implements GameState {
     @Override
     public double[] evaluate() {
         throw new NotImplementedException();
+    }
+
+    @Override
+    public String toString() {
+        return "GadgetChanceState{" +
+                "originalGameSomeState=" + originalGameSomeState +
+                ", chanceProbabilities=" + chanceProbabilities +
+                '}';
     }
 }

@@ -1,6 +1,7 @@
-package cz.agents.gtlibrary.algorithms.mccr.gadgettree;
+package cz.agents.gtlibrary.algorithms.cr.gadgettree;
 
 import cz.agents.gtlibrary.NotImplementedException;
+import cz.agents.gtlibrary.algorithms.cr.ResolvingMethod;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
@@ -16,11 +17,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
+
 public class GadgetInnerNode implements InnerNode, GadgetNode {
     private final GadgetInnerState state;
     private final InnerNode originalNode;
-    public static int debugExpUtility = -1;
     private final int expUtilityIterations;
+    private final ResolvingMethod resolvingMethod;
     private MCTSInformationSet informationSet;
     private List<Action> actions;
     private Map<Action, Node> children;
@@ -31,16 +34,17 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     public GadgetInnerNode(
             GadgetInnerState state,
             InnerNode originalNode,
-            int expUtilityIterations) {
+            int expUtilityIterations,
+            ResolvingMethod resolvingMethod) {
         this.state = state;
         this.originalNode = originalNode;
-        if(debugExpUtility != -1) this.expUtilityIterations = debugExpUtility;
-        else this.expUtilityIterations = expUtilityIterations;
+        this.expUtilityIterations = expUtilityIterations;
+        this.resolvingMethod = resolvingMethod;
     }
 
     public void createChildren(List<Action> actions) {
         this.actions = actions;
-        MCTSInformationSet gadgetIs = getInformationSet();
+        GadgetInfoSet gadgetIs = (GadgetInfoSet) getInformationSet();
         GadgetInnerAction followAction = (GadgetInnerAction) actions.get(0); // order is important!
 
         children = new HashMap<>();
@@ -51,17 +55,8 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
             double maxIsCFV = getExpander().getGameInfo().getMaxUtility();
 
-            double isReach = gadgetIs.getAllNodes().stream()
-                    .map(in -> ((GadgetInnerNode) in).getOriginalNode().getReachPrPlayerChance())
-                    .reduce(0.0, Double::sum);
-
-            double isCFV = 0; // let's keep 0 by default (if the games are balanced at public states)
-            for (InnerNode in : gadgetIs.getAllNodes()) {
-                GadgetInnerNode n = (GadgetInnerNode) in;
-                InnerNode o = n.getOriginalNode();
-                // todo: iterations in "keep" version of resolving
-                isCFV += o.getReachPrPlayerChance() * o.getExpectedValue(expUtilityIterations);
-            }
+            double isCFV = gadgetIs.getIsCFV(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
+            double isReach = gadgetIs.getIsReach();
 
             // shouldnt happen often!
             if (isCFV < -maxIsCFV) {
@@ -165,6 +160,11 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     }
 
     @Override
+    public void setExpectedValue(double offPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public void resetData() {
         throw new NotImplementedException();
     }
@@ -258,5 +258,30 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     @Override
     public String toString() {
         return "Gadget PL" + getPlayerToMove().getId() + " - Orig: " + getOriginalNode().toString();
+    }
+
+
+    private int[] terminateCnt = new int[2];
+    private int[] followCnt = new int[2];
+
+    public int getFollowCnt(int playerId) {
+        return followCnt[playerId];
+    }
+    public int getTerminateCnt(int playerId) {
+        return terminateCnt[playerId];
+    }
+    public void incrFollowCnt(int playerId) {
+        followCnt[playerId]++;
+    }
+    public void incrTerminateCnt(int playerId) {
+        terminateCnt[playerId]++;
+    }
+
+    public void setTerminateCnt(int terminateCnt, int playerId) {
+        this.terminateCnt[playerId] = terminateCnt;
+    }
+
+    public void setFollowCnt(int followCnt, int playerId) {
+        this.followCnt[playerId] = followCnt;
     }
 }

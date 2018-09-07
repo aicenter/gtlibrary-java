@@ -26,10 +26,15 @@ package cz.agents.gtlibrary.algorithms.mcts.oos;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.Simulator;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
+import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import java.util.List;
 import java.util.Random;
@@ -88,6 +93,48 @@ public class OOSSimulator implements Simulator {
                 step++;
         }
         return state.getUtilities();
+    }
+
+    public double simulate(Node node, Player expPlayer) {
+        //fact.l = (fact.bs == 1 && fact.us == 1 ? fact.s : fact.delta*fact.bs + (1-fact.delta)*fact.us);
+        playOutProb = 1;
+        playersProb = 1;
+        playerProb[0]=playerProb[1]=1;
+
+        int step=0;
+        while (!node.isGameEnd()) {
+            InnerNode in = (InnerNode) node;
+            if(in.getPlayerToMove().equals(expPlayer)) {
+                in.getInformationSet().incrVisitsCnt();
+            }
+
+            if (step==simLenght) {
+                return node.getGameState().evaluate()[expPlayer.getId()];
+            }
+
+            if(in instanceof ChanceNode) {
+                Action a = ((ChanceNode) in).getRandomAction();
+                node = in.getChildFor(a);
+                playOutProb *= in.getProbabilityOfNatureFor(a);
+            } else {
+                List<Action> actions = in.getActions();
+                playOutProb *= 1.0/actions.size();
+                playersProb *= 1.0/actions.size();
+                playerProb[in.getPlayerToMove().getId()] *= 1.0/actions.size();
+                node = in.getChildFor(actions.get(rnd.nextInt(actions.size())));
+            }
+
+//                List<Action> actions = in.getActions();
+//                playOutProb *= 1.0/actions.size();
+//                if(!(in instanceof ChanceNode)) {
+//                    playersProb *= 1.0 / actions.size();
+//                    playerProb[in.getPlayerToMove().getId()] *= 1.0 / actions.size();
+//                }
+//                node = in.getChildFor(actions.get(rnd.nextInt(actions.size())));
+
+            step++;
+        }
+        return ((LeafNode) node).getUtilities()[expPlayer.getId()];
     }
     
     

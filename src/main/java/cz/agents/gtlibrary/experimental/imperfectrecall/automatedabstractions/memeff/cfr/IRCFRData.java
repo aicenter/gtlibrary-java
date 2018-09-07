@@ -46,7 +46,7 @@ public class IRCFRData extends OOSAlgorithmData implements Serializable {
     }
 
     @Override
-    public void updateRegret(int ai, double u, double pi, double pi_, double pi_c, double l, double c, double x, double c_avg, double x_avg){
+    public void updateRegret(int ai, double u, double pi_, double l, double c, double x){
         throw new UnsupportedOperationException("Wrong method used");
     }
 

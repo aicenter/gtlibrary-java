@@ -19,14 +19,11 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.utils.io;
 
-import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormLP;
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
@@ -43,16 +40,12 @@ import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallAlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
-import cz.agents.gtlibrary.nfg.simalphabeta.SimABInformationSet;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 
 //my GoofSpiel exporter
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
-import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 // my PhantomTTT exporter
-import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
 
@@ -61,7 +54,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -74,6 +66,7 @@ public class GambitEFG {
     private boolean wISKeys = true; // if false, writes PS keys
     private Map<ISKey, Integer> infSetIndices;
     private int maxIndex;
+    private Double normalizingUtils = 1.0;
 
     public static void main(String[] args) {
 //        exportRandomGame();
@@ -170,7 +163,11 @@ public class GambitEFG {
     }
 
     public void write(String filename, Node root) {
+        if(root instanceof GadgetChanceNode) {
+            this.normalizingUtils = ((GadgetChanceNode) root).getRootReachPr();
+        }
         write(filename, root, Integer.MAX_VALUE);
+        normalizingUtils = 1.0;
     }
 
     public void write(String filename, GameState root, Expander<? extends InformationSet> expander, int cut_off_depth) {
@@ -228,7 +225,7 @@ public class GambitEFG {
             out.print("t \"" + (wNodeLabels ? node.toString() : "") + "\" " + nextOutcome++ + " \"\" { ");
             double[] u = node.getUtilities();
             for (int i = 0; i < 2; i++) {
-                out.print((i == 0 ? "" : ", ") + u[i]);
+                out.print((i == 0 ? "" : ", ") + u[i] * normalizingUtils);
             }
             out.println("}");
         } else {
@@ -256,9 +253,9 @@ public class GambitEFG {
     private void writeRec(PrintStream out, Node node, int cut_off_depth) {
         if (node.isGameEnd() || cut_off_depth == 0) {
             out.print("t \"" + (wNodeLabels ? node.toString() : "") + "\" " + nextOutcome++ + " \"\" { ");
-            double[] u = ((LeafNode) node).getUtilities();
+            double[] u = ((LeafNode) node).getUtilities() ;
             for (int i = 0; i < 2; i++) {
-                out.print((i == 0 ? "" : ", ") + u[i]);
+                out.print((i == 0 ? "" : ", ") + u[i]* normalizingUtils);
             }
             out.println("}");
         } else {

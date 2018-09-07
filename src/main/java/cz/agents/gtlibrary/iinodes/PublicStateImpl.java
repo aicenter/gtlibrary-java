@@ -1,5 +1,8 @@
 package cz.agents.gtlibrary.iinodes;
 
+import cz.agents.gtlibrary.algorithms.cr.ResolvingMethod;
+import cz.agents.gtlibrary.algorithms.cr.Subgame;
+import cz.agents.gtlibrary.algorithms.cr.SubgameImpl;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
@@ -22,10 +25,16 @@ public class PublicStateImpl implements PublicState {
     private final PublicStateImpl parentPublicState;
     private final PublicStateImpl playerParentPublicState;
     private final int depth;
+    private final Expander expander;
+    private int resolvingIterations = 0;
+    private boolean dataKeeping;
 
-    public PublicStateImpl(MCTSConfig config, InnerNode node,
+    public PublicStateImpl(MCTSConfig config,
+                           Expander expander,
+                           InnerNode node,
                            PublicStateImpl parentPublicState,
                            PublicStateImpl playerParentPublicState) {
+        this.expander = expander;
         this.config = config;
         this.parentPublicState = parentPublicState;
         this.playerParentPublicState = playerParentPublicState;
@@ -51,8 +60,8 @@ public class PublicStateImpl implements PublicState {
     @Override
     public Set<MCTSInformationSet> getAllInformationSets() {
         Set<MCTSInformationSet> informationSets = new HashSet<>();
-        for (GameState gameState : gameStatesInPublicState) {
-            informationSets.add(config.getInformationSetFor(gameState));
+        for (InnerNode node: gameNodesInPublicState) {
+            informationSets.add(node.getInformationSet());
         }
         return informationSets;
     }
@@ -128,6 +137,47 @@ public class PublicStateImpl implements PublicState {
         return getAllNodes().iterator().next().getPlayerToMove();
     }
 
+
+    @Override
+    public void resetData() {
+        setResolvingMethod(null);
+        setResolvingIterations(0);
+        setDataKeeping(false);
+
+        ArrayDeque<Node> q = new ArrayDeque<Node>();
+        q.addAll(getAllNodes());
+
+        while (!q.isEmpty()) {
+            Node n = q.removeFirst();
+            if(n instanceof LeafNode) continue;;
+            InnerNode in = (InnerNode) n;
+            in.resetData();
+
+            MCTSInformationSet is = in.getInformationSet();
+            if (is != null && is.getAlgorithmData() != null) {
+                OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
+                data.resetData();
+            }
+
+            for (Map.Entry<Action, Node> entry : in.getChildren().entrySet()) {
+                Node ch = entry.getValue();
+                if (ch instanceof InnerNode) {
+                    q.add((InnerNode) ch);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void setResolvingMethod(ResolvingMethod resolveMccfr) {
+
+    }
+
+    @Override
+    public ResolvingMethod getResolvingMethod() {
+        return null;
+    }
+
     @Override
     public PSKey getPSKey() {
         return psKey;
@@ -169,5 +219,35 @@ public class PublicStateImpl implements PublicState {
     @Override
     public PublicState getPlayerParentPublicState() {
         return playerParentPublicState;
+    }
+
+    @Override
+    public int getResolvingIterations() {
+        return resolvingIterations;
+    }
+
+    @Override
+    public void setResolvingIterations(int iterations) {
+        this.resolvingIterations = iterations;
+    }
+
+    @Override
+    public void incrResolvingIterations(int iterations) {
+        resolvingIterations += iterations;
+    }
+
+    @Override
+    public void setDataKeeping(boolean b) {
+        this.dataKeeping = b;
+    }
+
+    @Override
+    public boolean isDataKeeping() {
+        return dataKeeping;
+    }
+
+    @Override
+    public Subgame getSubgame() {
+        return new SubgameImpl(this, config, expander);
     }
 }

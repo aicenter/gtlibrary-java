@@ -1,9 +1,8 @@
-package cz.agents.gtlibrary.algorithms.mccr.gadgettree;
+package cz.agents.gtlibrary.algorithms.cr.gadgettree;
 
 import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.InformationSet;
 
 public class GadgetChanceAction extends ActionImpl {
     private final int actionIndex;

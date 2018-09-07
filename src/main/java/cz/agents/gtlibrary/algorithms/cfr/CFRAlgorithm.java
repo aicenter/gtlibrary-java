@@ -24,7 +24,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.cfr;
 
 import cz.agents.gtlibrary.NotImplementedException;
-import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetChanceNode;
+import cz.agents.gtlibrary.algorithms.cr.CFRData;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
@@ -45,11 +46,11 @@ import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMExpander;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameState;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.Pair;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.ArrayDeque;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -279,7 +280,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         Player opPlayer = is.getOpponent();
 
         for(InnerNode n : is.getAllNodes()) {
-            double rp = calcRpOfNode(n, isPlayer);
+            double rp = calcRpPlayerChanceOfNode(n, isPlayer);
             double eu = computeExpUtilityOfState(n, opPlayer);
             cfv += rp * eu;
         }
@@ -287,7 +288,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         return cfv;
     }
 
-    public double calcRpOfNode(InnerNode n, Player isPlayer) {
+    public double calcRpPlayerChanceOfNode(InnerNode n, Player isPlayer) {
         double rp = 1.;
         Node curNode = n;
         while(curNode.getParent() != null) {
@@ -297,6 +298,24 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
             if(parent instanceof ChanceNode) {
                 rp *= parent.getProbabilityOfNatureFor(a);
             } else if(parent instanceof InnerNode &&
+                    ((InnerNode) parent).getPlayerToMove().equals(isPlayer)) {
+                OOSAlgorithmData data = (OOSAlgorithmData) ((InnerNode) parent).getInformationSet().getAlgorithmData();
+                rp *= data.getMeanStrategy()[data.getActions().indexOf(a)];
+            }
+
+            curNode = parent;
+        }
+        return rp;
+    }
+
+    public static double calcRpPlayerOfNode(InnerNode n, Player isPlayer) {
+        double rp = 1.;
+        Node curNode = n;
+        while(curNode.getParent() != null) {
+            Action a = curNode.getLastAction();
+            Node parent = curNode.getParent();
+
+            if(parent instanceof InnerNode &&
                     ((InnerNode) parent).getPlayerToMove().equals(isPlayer)) {
                 OOSAlgorithmData data = (OOSAlgorithmData) ((InnerNode) parent).getInformationSet().getAlgorithmData();
                 rp *= data.getMeanStrategy()[data.getActions().indexOf(a)];
@@ -341,7 +360,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         return cfva;
     }
 
-    public double computeExpUtilityOfState(Node node, Player player) {
+    public static double computeExpUtilityOfState(Node node, Player player) {
         if (node instanceof LeafNode) {
             return ((LeafNode) node).getUtilities()[player.getId()];
         }
@@ -367,5 +386,43 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         }
 
         return eu;
+    }
+
+
+    public static CFRData collectCFRResolvingData(Set<PublicState> startAtPs) {
+        ArrayDeque<PublicState> q = new ArrayDeque<>();
+        q.addAll(startAtPs);
+        Map<InnerNode, Double> reachProbs = new HashMap<>();
+        Map<InnerNode, Double> historyExpValues = new HashMap<>();
+        while (!q.isEmpty()) {
+            PublicState ps = q.removeFirst();
+            for (MCTSInformationSet is : ps.getAllInformationSets()) {
+                for (InnerNode in : is.getAllNodes()) {
+                    reachProbs.put(in, calcRpPlayerOfNode(in, is.getPlayer()));
+                    historyExpValues.put(in, computeExpUtilityOfState(in, is.getOpponent()));
+                }
+            }
+            q.addAll(ps.getNextPlayerPublicStates());
+        }
+        return new CFRData(reachProbs, historyExpValues);
+    }
+
+    public static CFRData collectCFRResolvingData(PublicState startAtPs) {
+        Set<PublicState> hs = new HashSet<PublicState>();
+        hs.add(startAtPs);
+        return collectCFRResolvingData(hs);
+    }
+
+    public static void updateCFRResolvingData(
+            PublicState publicState,
+            Map<InnerNode, Double> reachProbs,
+            Map<InnerNode, Double> historyExpValues) {
+        for (MCTSInformationSet is : publicState.getAllInformationSets()) {
+            ((OOSAlgorithmData) is.getAlgorithmData()).resetData();
+            for (InnerNode in : is.getAllNodes()) {
+                in.setReachPrByPlayer(is.getPlayer(), reachProbs.get(in));
+                in.setExpectedValue(historyExpValues.get(in));
+            }
+        }
     }
 }

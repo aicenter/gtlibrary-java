@@ -23,7 +23,7 @@ public class FixedForIterationData extends OOSAlgorithmData {
     }
 
     @Override
-    public void updateRegret(int ai, double u, double pi, double pi_, double pi_c, double l, double c, double x, double c_avg, double x_avg){
+    public void updateRegret(int ai, double u, double pi_, double l, double c, double x){
         double W = u * pi_ / l;
         for (int i = 0; i < regretUpdate.length; i++) {
             if (i == ai)

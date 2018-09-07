@@ -1,4 +1,4 @@
-package cz.agents.gtlibrary.algorithms.mccr.gadgettree;
+package cz.agents.gtlibrary.algorithms.cr.gadgettree;
 
 import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
@@ -16,17 +16,26 @@ import java.util.*;
 public class GadgetChanceNode implements ChanceNode, GadgetNode {
     private final GadgetChanceState state;
     private final Random random;
-    private final Expander<MCTSInformationSet> originalExpander;
+    private final Expander originalExpander;
     private final PublicState ps;
 
     private Map<Action, GadgetInnerNode> resolvingInnerNodes;
+
+    public Map<Action, Double> getChanceProbabilities() {
+        return chanceProbabilities;
+    }
+
+    public Map<Action, GadgetInnerNode> getResolvingInnerNodes() {
+        return resolvingInnerNodes;
+    }
+
     private Map<Action, Double> chanceProbabilities;
     private List<Action> actions;
     private Double rootReach;
 
     public GadgetChanceNode(
             GadgetChanceState chanceState,
-            Expander<MCTSInformationSet> originalExpander,
+            Expander originalExpander,
             Random random,
             PublicState ps) {
         this.state = chanceState;
@@ -35,8 +44,8 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
         this.ps = ps;
     }
 
-    public void createChildren(Map<Action, GadgetInnerNode> resolvingInnerNodes) {
-        this.resolvingInnerNodes = resolvingInnerNodes;
+    public void createChildren(Map<Action, GadgetInnerNode> allResolvingInnerNodes) {
+        resolvingInnerNodes = allResolvingInnerNodes;
 
         actions = new ArrayList<>();
 
@@ -51,7 +60,7 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
         chanceProbabilities = new HashMap<>();
         for (Action action : resolvingInnerNodes.keySet()) {
             GadgetInnerNode node = resolvingInnerNodes.get(action);
-            if (node.getOriginalNode().getReachPrPlayerChance() == 0.) continue;
+//            if (node.getOriginalNode().getReachPrPlayerChance() == 0.) continue;
 
             double p = node.getOriginalNode().getReachPrPlayerChance() / rootReach;
             assert p <= 1 && p >= 0;
@@ -60,15 +69,20 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
             node.setParent(this);
             node.setLastAction(action);
-            MCTSInformationSet gadgetIs = node.getInformationSet();
 
-            ArrayList<Action> gadgetActions = new ArrayList<>();
-            GadgetInnerAction followAction = new GadgetInnerAction(true, gadgetIs);
-            gadgetActions.add(followAction); // order is important!
-            boolean resolveForAugInfoSetsTerminate = gadgetIs.getAllNodes().size() != ps.getAllNodes().size();
-            if (resolveForAugInfoSetsTerminate) {
-                GadgetInnerAction terminateAction = new GadgetInnerAction(false, gadgetIs);
-                gadgetActions.add(terminateAction);
+            MCTSInformationSet gadgetIs = node.getInformationSet();
+            List<Action> gadgetActions;
+            if(gadgetIs.getActions() == null) {
+                gadgetActions = new ArrayList<>();
+                GadgetInnerAction followAction = new GadgetInnerAction(true, gadgetIs);
+                gadgetActions.add(followAction); // order is important!
+                boolean resolveForAugInfoSetsTerminate = gadgetIs.getAllNodes().size() != ps.getAllNodes().size();
+                if (resolveForAugInfoSetsTerminate) {
+                    GadgetInnerAction terminateAction = new GadgetInnerAction(false, gadgetIs);
+                    gadgetActions.add(terminateAction);
+                }
+            } else {
+                gadgetActions = gadgetIs.getActions();
             }
 
             node.createChildren(gadgetActions);
@@ -238,6 +252,11 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
     @Override
     public void updateExpectedValue(double offPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setExpectedValue(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 

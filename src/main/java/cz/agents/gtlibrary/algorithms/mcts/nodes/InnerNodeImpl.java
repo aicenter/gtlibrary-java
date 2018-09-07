@@ -19,7 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
-import cz.agents.gtlibrary.algorithms.mccr.gadgettree.GadgetChanceNode;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
@@ -32,7 +32,6 @@ import cz.agents.gtlibrary.utils.FixedSizeMap;
 import java.util.List;
 import java.util.Map;
 
-import static cz.agents.gtlibrary.algorithms.mccr.MCCRAlgorithm.updateCRstatistics;
 
 public class InnerNodeImpl extends NodeImpl implements InnerNode {
 
@@ -42,6 +41,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     private MCTSPublicState publicState;
     private double[] playerReachPr = new double[] {1.,1.,1.};
     private double evSum = 0.;
+    protected MCTSInformationSet oppAugInformationSet;
 
     /**
      * Non-root node constructor
@@ -189,15 +189,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     private Double reachPr = null;
     @Override
     public double getReachPrPlayerChance() {
-        if(updateCRstatistics || reachPr == null) {
-            return getPlayerReachPr() * getChanceReachPr();
-        }
-        assert reachPr <= 1 && reachPr >= 0;
-        return reachPr;
-    }
-
-    public void overwriteReachPrPlayerChance(double reachPr) {
-        this.reachPr = reachPr;
+        return getPlayerReachPr() * getChanceReachPr();
     }
 
     @Override
@@ -206,16 +198,17 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     }
 
     @Override
+    public void setExpectedValue(double sum) {
+        this.evSum = sum;
+    }
+
+    @Override
     public void updateExpectedValue(double offPolicyAproxSample) {
-        if(updateCRstatistics) {
-            this.evSum += offPolicyAproxSample;
-        }
+        this.evSum += offPolicyAproxSample;
     }
 
     @Override
     public void resetData() {
-        if(updateCRstatistics) {
-            this.evSum = 0;
-        }
+        this.evSum = 0;
     }
 }

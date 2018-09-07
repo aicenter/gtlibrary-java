@@ -75,4 +75,18 @@ public class MCTSInformationSet extends InformationSetImpl {
     public List<Action> getActions() {
         return getAllNodes().iterator().next().getActions();
     }
+
+    /** not intentended for regular use :) */
+    private int visitsCnt;
+
+    public int getVisitsCnt() {
+        return visitsCnt;
+    }
+    public void setVisitsCnt(int cnt) {
+        visitsCnt = cnt;
+    }
+    public void incrVisitsCnt() {
+        visitsCnt++;
+    }
+
 }
