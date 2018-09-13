@@ -23,11 +23,12 @@ public class GadgetInfoSet extends MCTSInformationSet {
         for (InnerNode in : getAllNodes()) {
             GadgetInnerNode n = (GadgetInnerNode) in;
             InnerNode o = n.getOriginalNode();
-            assert o.getReachPrPlayerChance() > 0;
             // todo: iterations in "keep" version of resolving
-            isCFV += o.getReachPrPlayerChance() * o.getExpectedValue(expUtilityIterations);
+            double p = o.getReachPrPlayerChance();
+            double eu = o.getExpectedValue(expUtilityIterations);
+            isCFV += p * eu;
         }
-        return isCFV * 2;
+        return isCFV;
     }
 
     public double getIsReach() {

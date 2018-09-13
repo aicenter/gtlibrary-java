@@ -17,5 +17,5 @@ mail -s "Job finished" "michal.sustr@gmail.com" <<< "Job finished: $PBS_O_HOST -
 # qsub -l select=1:ncpus=32:mem=60gb -l walltime=02:00:00 metacentrum_job28.sh
 
 
-# for i in `seq 1 160`; do echo $i; qsub -l select=1:ncpus=4:mem=8gb -l walltime=02:00:00 metacentrum_job3.sh; done
+# for i in `seq 1 10`; do echo $i; qsub -l select=1:ncpus=4:mem=8gb -l walltime=02:00:00 metacentrum_job3.sh; done
 

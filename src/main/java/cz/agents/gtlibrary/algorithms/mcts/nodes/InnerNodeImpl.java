@@ -211,4 +211,9 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     public void resetData() {
         this.evSum = 0;
     }
+
+    @Override
+    public double getReachPr() {
+        return playerReachPr[0]*playerReachPr[1]*playerReachPr[2];
+    }
 }

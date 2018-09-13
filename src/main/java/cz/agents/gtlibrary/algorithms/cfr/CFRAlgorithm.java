@@ -288,7 +288,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         return cfv;
     }
 
-    public double calcRpPlayerChanceOfNode(InnerNode n, Player isPlayer) {
+    public static double calcRpPlayerChanceOfNode(InnerNode n, Player isPlayer) {
         double rp = 1.;
         Node curNode = n;
         while(curNode.getParent() != null) {
@@ -398,7 +398,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
             PublicState ps = q.removeFirst();
             for (MCTSInformationSet is : ps.getAllInformationSets()) {
                 for (InnerNode in : is.getAllNodes()) {
-                    reachProbs.put(in, calcRpPlayerOfNode(in, is.getPlayer()));
+                    reachProbs.put(in, calcRpPlayerChanceOfNode(in, is.getPlayer()));
                     historyExpValues.put(in, computeExpUtilityOfState(in, is.getOpponent()));
                 }
             }

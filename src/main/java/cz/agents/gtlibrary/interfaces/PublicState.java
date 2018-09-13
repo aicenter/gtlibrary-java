@@ -62,10 +62,12 @@ public interface PublicState extends Serializable {
     void setDataKeeping(boolean b);
     boolean isDataKeeping();
 
-    void resetData();
+    void resetData(boolean includingThisPublicState);
 
     void setResolvingMethod(ResolvingMethod resolve);
     ResolvingMethod getResolvingMethod();
 
     Subgame getSubgame();
+
+    boolean isReachable();
 }

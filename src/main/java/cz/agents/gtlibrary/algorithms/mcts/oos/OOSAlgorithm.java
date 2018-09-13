@@ -276,7 +276,6 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     private double x = -1;
     private double l = -1;
 
-    public int dep4 = 0;
     /**
      * The main function for OOS iteration.
      *
@@ -337,10 +336,6 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         }
         InnerNode in = (InnerNode) node;
         MCTSInformationSet is = in.getInformationSet();
-
-        if(in.getDepth() == 4)
-            dep4++;
-
         OOSAlgorithmData data;
         Action selectedA;
         double u = 0;
@@ -451,16 +446,14 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             data.updateMeanStrategy(rmProbs, pi_ / s);
         }
 
-        if(rp > 1e-10) {
-            if (searchingPlayer.equals(expPlayer)) {
-                if (is.getPlayer().equals(expPlayer)) {
-                    ((InnerNode) node).updateExpectedValue((-u * x / l) / normalizingUtils);
-                } else {
-                    ((InnerNode) node).updateExpectedValue((u * x / l) / normalizingUtils);
-                }
+        if(rp > 0) {
+            double updateVal = (u * x / l) / normalizingUtils;
+            if (is.getPlayer().equals(expPlayer)) {
+                updateVal *= -1;
             }
+            ((InnerNode) node).updateExpectedValue(updateVal);
         } else {
-             samplesSkipped++;
+            samplesSkipped++;
         }
 
         return u;

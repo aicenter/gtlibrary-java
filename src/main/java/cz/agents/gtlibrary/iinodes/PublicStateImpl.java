@@ -139,13 +139,18 @@ public class PublicStateImpl implements PublicState {
 
 
     @Override
-    public void resetData() {
-        setResolvingMethod(null);
-        setResolvingIterations(0);
-        setDataKeeping(false);
-
+    public void resetData(boolean includingThisPublicState) {
         ArrayDeque<Node> q = new ArrayDeque<Node>();
-        q.addAll(getAllNodes());
+
+        if(includingThisPublicState) {
+            q.addAll(getAllNodes());
+            setResolvingMethod(null);
+            setResolvingIterations(0);
+            setDataKeeping(false);
+        } else {
+            getAllNodes().forEach(in -> q.addAll(in.getChildren().values()));
+        }
+
 
         while (!q.isEmpty()) {
             Node n = q.removeFirst();
@@ -249,5 +254,13 @@ public class PublicStateImpl implements PublicState {
     @Override
     public Subgame getSubgame() {
         return new SubgameImpl(this, config, expander);
+    }
+
+    @Override
+    public boolean isReachable() {
+        return getAllNodes().stream()
+                .map(InnerNode::getReachPr)
+                .max(Double::compare)
+                .get() > 0;
     }
 }
