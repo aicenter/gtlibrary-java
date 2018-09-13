@@ -185,11 +185,6 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     }
 
     @Override
-    public void setPlayerReachPr(double meanStrategyActionPr) {
-        throw new NotImplementedException();
-    }
-
-    @Override
     public double getReachPrByPlayer(int player) {
         throw new NotImplementedException();
     }

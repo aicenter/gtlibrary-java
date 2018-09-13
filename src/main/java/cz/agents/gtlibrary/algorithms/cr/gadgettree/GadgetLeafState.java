@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.algorithms.cr.gadgettree;
 import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.interfaces.*;
 
 public class GadgetLeafState implements GameState {
@@ -111,6 +112,16 @@ public class GadgetLeafState implements GameState {
 
     @Override
     public double[] evaluate() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public PSKey getPSKeyForPlayerToMove() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setPSKeyForPlayerToMove(PSKey psKey) {
         throw new NotImplementedException();
     }
 }

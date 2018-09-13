@@ -22,9 +22,7 @@ package cz.agents.gtlibrary.domain.poker.generic;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.domain.poker.PokerGameState;
-import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.DomainWithPublicState;
 import cz.agents.gtlibrary.interfaces.GameState;
 
 public class GenericPokerGameState extends PokerGameState {

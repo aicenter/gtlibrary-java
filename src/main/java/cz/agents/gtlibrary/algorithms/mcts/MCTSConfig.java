@@ -19,6 +19,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts;
 
+import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMSelector;
@@ -122,18 +124,8 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
         if(node.getParent() == null) {
             return new MCTSPublicState(this, node.getExpander(), node);
         } else {
-            MCTSPublicState parentPs = node.getParent().getPublicState();
-
-
-            MCTSPublicState playerParentPs = null;
-            Player targetPl = node.getPlayerToMove();
-            InnerNode curNode = node.getParent();
-            while(curNode != null && !curNode.getPlayerToMove().equals(targetPl)) {
-                curNode = curNode.getParent();
-            }
-            if(curNode != null) playerParentPs = curNode.getPublicState();
-
-            return new MCTSPublicState(this, node.getExpander(), node, parentPs, playerParentPs);
+            return new MCTSPublicState(this, node.getExpander(), node,
+                    getPlayerParentPublicState(node), getPlayerParentPublicState(node));
         }
     }
 
@@ -150,8 +142,33 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
     }
 
     @Override
+    public void addPublicState(MCTSPublicState publicState) {
+        allPublicStates.put(publicState.getPSKey(), publicState);
+    }
+
+    @Override
     public Set<MCTSPublicState> getAllPublicStates() {
         return new HashSet<>(allPublicStates.values());
+    }
+
+    @Override
+    public void setAllPublicStates(HashMap<PSKey, MCTSPublicState> publicStates) {
+        this.allPublicStates = publicStates;
+    }
+
+    public MCTSPublicState getParentPublicState(InnerNode node) {
+        return node.getParent().getPublicState();
+    }
+
+    public MCTSPublicState getPlayerParentPublicState(InnerNode node) {
+        MCTSPublicState playerParentPs = null;
+        Player targetPl = node.getPlayerToMove();
+        InnerNode curNode = node.getParent();
+        while(curNode != null && !curNode.getPlayerToMove().equals(targetPl)) {
+            curNode = curNode.getParent();
+        }
+        if(curNode != null) playerParentPs = curNode.getPublicState();
+        return  playerParentPs;
     }
 
 

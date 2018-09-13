@@ -30,6 +30,7 @@ public abstract class GameStateImpl implements GameState {
     protected History history;
     protected double natureProbability;
     protected Rational exactNatureProbability;
+    private PSKey forceablePskey;
 
     public GameStateImpl(Player[] players) {
         this.history = new HistoryImpl(players);
@@ -159,4 +160,14 @@ public abstract class GameStateImpl implements GameState {
 
     @Override
     public abstract boolean equals(Object object);
+
+    @Override
+    public PSKey getPSKeyForPlayerToMove() {
+        return forceablePskey;
+    }
+
+    @Override
+    public void setPSKeyForPlayerToMove(PSKey psKey) {
+        this.forceablePskey = psKey;
+    }
 }

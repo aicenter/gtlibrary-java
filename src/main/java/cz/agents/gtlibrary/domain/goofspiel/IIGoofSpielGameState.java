@@ -68,6 +68,9 @@ public class IIGoofSpielGameState extends GoofSpielGameState {
 
     @Override
     public PSKey getPSKeyForPlayerToMove() {
+        PSKey maybeHasForcedKey = super.getPSKeyForPlayerToMove();
+        if(maybeHasForcedKey != null) return maybeHasForcedKey;
+
         if (psKey == null) {
             if(!GSGameInfo.useFixedNatureSequence) {
                 throw new RuntimeException("pskey implemented only for fixed nature sequences!");

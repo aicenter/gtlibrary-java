@@ -443,6 +443,9 @@ public class GoofSpielGameState extends SimultaneousGameState implements DomainW
 
     @Override
     public PSKey getPSKeyForPlayerToMove() {
+        PSKey maybeHasForcedKey = super.getPSKeyForPlayerToMove();
+        if(maybeHasForcedKey != null) return maybeHasForcedKey;
+
         if (psKey == null) {
             int hash = 1;
             int gap = GSGameInfo.depth + 1;

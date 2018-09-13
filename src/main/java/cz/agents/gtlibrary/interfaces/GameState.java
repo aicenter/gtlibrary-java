@@ -4,74 +4,80 @@ Copyright 2014 Faculty of Electrical Engineering at CTU in Prague
 This file is part of Game Theoretic Library.
 
 Game Theoretic Library is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
+it under the terms of the GNU Lesser General  License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
 Game Theoretic Library is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
+GNU Lesser General  License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
+You should have received a copy of the GNU Lesser General  License
 along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*/
 
 
 package cz.agents.gtlibrary.interfaces;
 
-import java.io.Serializable;
-
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PSKey;
-import cz.agents.gtlibrary.utils.Pair;
+
+import java.io.Serializable;
 
 public interface GameState extends Serializable {
-	public Player[] getAllPlayers();
+    Player[] getAllPlayers();
 
-	public Player getPlayerToMove();
+    Player getPlayerToMove();
 
-	public GameState performAction(Action action);
+    GameState performAction(Action action);
 
-	public History getHistory();
+    History getHistory();
 
-	public Sequence getSequenceFor(Player player);
+    Sequence getSequenceFor(Player player);
 
-	public Sequence getSequenceForPlayerToMove();
+    Sequence getSequenceForPlayerToMove();
 
-	public GameState copy();
+    GameState copy();
 
-	public double[] getUtilities();
+    double[] getUtilities();
 
-    public Rational[] getExactUtilities();
+    Rational[] getExactUtilities();
 
-	public double getProbabilityOfNatureFor(Action action);
+    double getProbabilityOfNatureFor(Action action);
 
-    public Rational getExactProbabilityOfNatureFor(Action action);
+    Rational getExactProbabilityOfNatureFor(Action action);
 
-	public boolean isGameEnd();
+    boolean isGameEnd();
 
-	public boolean isPlayerToMoveNature();
+    boolean isPlayerToMoveNature();
 
-	public double getNatureProbability();
+    double getNatureProbability();
 
-    public Rational getExactNatureProbability();
+    Rational getExactNatureProbability();
 
-	public void performActionModifyingThisState(Action action);
+    void performActionModifyingThisState(Action action);
 
-	public void reverseAction();
+    void reverseAction();
 
-	public ISKey getISKeyForPlayerToMove();
+    ISKey getISKeyForPlayerToMove();
 
-	public boolean checkConsistency(Action action);
+    boolean checkConsistency(Action action);
 
-    public double[] evaluate();
+    double[] evaluate();
 
     default Player getOpponentPlayerToMove() {
-		Player pl = getPlayerToMove();
-		if(pl.getId() == 2) {
-			throw new RuntimeException("Chance does not have opponent player!");
-		}
-		return getAllPlayers()[1-pl.getId()];
-	}
+        Player pl = getPlayerToMove();
+        if (pl.getId() == 2) {
+            throw new RuntimeException("Chance does not have opponent player!");
+        }
+        return getAllPlayers()[1 - pl.getId()];
+    }
+
+    // Note that there exists "DomainWithState" which has these as well
+    // DomainWithState means the domain can generate it's  state without building the whole
+    // game tree and using cz.agents.gtlibrary.algorithms.cr.TreeGenerator
+    PSKey getPSKeyForPlayerToMove();
+
+    void setPSKeyForPlayerToMove(PSKey psKey);
 }

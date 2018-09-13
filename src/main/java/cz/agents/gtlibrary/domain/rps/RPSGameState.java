@@ -244,6 +244,9 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
 
     @Override
     public PSKey getPSKeyForPlayerToMove() {
+        PSKey maybeHasForcedKey = super.getPSKeyForPlayerToMove();
+        if(maybeHasForcedKey != null) return maybeHasForcedKey;
+
         if (psKey == null) {
             psKey = new PSKey(history.getLength()-1);
         }

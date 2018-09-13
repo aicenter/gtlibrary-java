@@ -6,7 +6,7 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.algorithms.cr.MCCR_CFV_Experiments;
+import cz.agents.gtlibrary.algorithms.cr.CRExperiments;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -17,7 +17,7 @@ import java.util.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class PublicStateTest extends MCCR_CFV_Experiments {
+public class PublicStateTest extends CRExperiments {
 
     public PublicStateTest(Long seed) {
         super(seed);

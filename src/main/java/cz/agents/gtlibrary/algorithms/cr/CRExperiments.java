@@ -21,7 +21,6 @@ package cz.agents.gtlibrary.algorithms.cr;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInfoSet;
-import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.ISMCTSExploitability;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
@@ -35,18 +34,10 @@ import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
-import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
-import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
-import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
-import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
-import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
-import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
-import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
-import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
-import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
-import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
-import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
-import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
+import cz.agents.gtlibrary.domain.goofspiel.*;
+import cz.agents.gtlibrary.domain.liarsdice.*;
+import cz.agents.gtlibrary.domain.oshizumo.*;
+import cz.agents.gtlibrary.domain.phantomTTT.*;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
@@ -72,29 +63,27 @@ import cz.agents.gtlibrary.utils.HighQualityRandom;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm.collectCFRResolvingData;
 import static cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm.updateCFRResolvingData;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_CFR;
-import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
 
 
-public class MCCR_CFV_Experiments {
+public class CRExperiments {
 
     private final Long seed;
     protected GameInfo gameInfo;
     protected GameState rootState;
     protected SQFBestResponseAlgorithm brAlg0;
     protected SQFBestResponseAlgorithm brAlg1;
-    protected Expander expander;
+    protected Expander<MCTSInformationSet> expander;
+    protected MCTSConfig config;
 
     private String trackCFVinInformationSet;
     private GamePlayingAlgorithm alg;
     private Double minExploitability = 0.01;
     private Integer numItersPerLoop = 10000;
 
-    public MCCR_CFV_Experiments(Long seed) {
+    public CRExperiments(Long seed) {
         this.seed = seed;
         System.err.println("Using seed "+seed);
     }
@@ -113,7 +102,7 @@ public class MCCR_CFV_Experiments {
 
         Random rnd = new Random(seed);
 
-        MCCR_CFV_Experiments exp = new MCCR_CFV_Experiments(seed);
+        CRExperiments exp = new CRExperiments(seed);
         exp.setTracking(trackCFVinInformationSet);
         exp.prepareDomain(domain, Arrays.copyOfRange(args, 4, args.length));
         exp.createGame(domain, rnd);
@@ -175,8 +164,6 @@ public class MCCR_CFV_Experiments {
         }
         return true;
     }
-
-
 
     public void prepareDomain(String domain, String[] domainParams) {
         switch (domain) {
@@ -245,8 +232,8 @@ public class MCCR_CFV_Experiments {
                     throw new IllegalArgumentException("Illegal random game domain arguments count. " +
                             "6 are required {SEED} {DEPTH} {BF} {CENTER_MODIFICATION} {BINARY_UTILITY} {FIXED BF}");
                 }
-                RandomGameInfo.seed = new Integer(domainParams[0]);
                 RandomGameInfo.rnd = new HighQualityRandom(RandomGameInfo.seed);
+                RandomGameInfo.seed = new Integer(domainParams[0]);
                 RandomGameInfo.MAX_DEPTH = new Integer(domainParams[1]);
                 RandomGameInfo.MAX_BF = new Integer(domainParams[2]);
                 RandomGameInfo.MAX_CENTER_MODIFICATION = new Integer(domainParams[3]);
@@ -278,53 +265,53 @@ public class MCCR_CFV_Experiments {
     }
 
     public void createGame(String domain, Random rnd) {
-        MCTSConfig mctsConfig = new MCTSConfig(rnd);
+        config = new MCTSConfig(rnd);
 
         switch (domain) {
             case "IIGS":
                 gameInfo = new GSGameInfo();
                 rootState = new IIGoofSpielGameState();
-                expander = new GoofSpielExpander<>(mctsConfig);
+                expander = new GoofSpielExpander<>(config);
                 break;
             case "LD":
                 gameInfo = new LDGameInfo();
                 rootState = new LiarsDiceGameState();
-                expander = new LiarsDiceExpander<>(mctsConfig);
+                expander = new LiarsDiceExpander<>(config);
                 break;
             case "GP":
                 gameInfo = new GPGameInfo();
                 rootState = new GenericPokerGameState();
-                expander = new GenericPokerExpander<>(mctsConfig);
+                expander = new GenericPokerExpander<>(config);
                 break;
             case "PE":
                 gameInfo = new PursuitGameInfo();
                 rootState = new PursuitGameState();
-                expander = new PursuitExpander<>(mctsConfig);
+                expander = new PursuitExpander<>(config);
                 break;
             case "OZ":
                 gameInfo = new OZGameInfo();
                 rootState = new OshiZumoGameState();
-                expander = new OshiZumoExpander<>(mctsConfig);
+                expander = new OshiZumoExpander<>(config);
                 break;
             case "RG":
                 gameInfo = new RandomGameInfo();
                 rootState = new SimRandomGameState();
-                expander = new RandomGameExpander<>(mctsConfig);
+                expander = new RandomGameExpander<>(config);
                 break;
             case "Tron":
                 gameInfo = new TronGameInfo();
                 rootState = new TronGameState();
-                expander = new TronExpander<>(mctsConfig);
+                expander = new TronExpander<>(config);
                 break;
             case "PTTT":
                 gameInfo = new TTTInfo();
                 rootState = new TTTState();
-                expander = new TTTExpander(mctsConfig);
+                expander = new TTTExpander(config);
                 break;
             case "RPS":
                 gameInfo = new RPSGameInfo();
                 rootState = new RPSGameState();
-                expander = new RPSExpander<>(mctsConfig);
+                expander = new RPSExpander<>(config);
                 break;
             default:
                 throw new IllegalArgumentException("Incorrect game:" + domain);
@@ -358,10 +345,10 @@ public class MCCR_CFV_Experiments {
             runMCCR();
             return;
         }
-        if (alg.equals("MCCR-match")) {
-            runMCCR_match();
-            return;
-        }
+//        if (alg.equals("MCCR-match")) {
+//            runMCCR_match();
+//            return;
+//        }
         if (alg.equals("CFR")) {
             runCFR();
             return;
@@ -482,7 +469,6 @@ public class MCCR_CFV_Experiments {
         int iterationsInRoot = new Integer(getenv("iterationsInRoot", "1000"));
         int resolvingPlayerIdx = new Integer(getenv("resolvingPlayer", "0"));
 
-        MCTSConfig config = ((MCTSConfig) expander.getAlgorithmConfig());
         expander.getAlgorithmConfig().createInformationSetFor(rootState);
         Player resolvingPlayer = rootState.getAllPlayers()[resolvingPlayerIdx];
 
@@ -715,21 +701,21 @@ public class MCCR_CFV_Experiments {
         System.out.println(exploitability);
     }
 
-    private void runMCCR_match() {
-        double epsExploration = new Double(getenv("epsExploration", "0.6"));
-        int iterationsInRoot = new Integer(getenv("iterationsInRoot", "100000"));
-        int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "100000"));
-        boolean resetData = new Boolean(getenv("resetData", "true"));
-
-        expander.getAlgorithmConfig().createInformationSetFor(rootState);
-        CRAlgorithm alg = new CRAlgorithm(rootState, expander, epsExploration);
-        alg.setDoResetData(resetData);
-        this.alg = alg;
-
-
-        double[] utils = alg.runIterations(rootState.getAllPlayers()[0], iterationsInRoot, iterationsPerGadgetGame);
-        System.err.println(utils[0]);
-    }
+//    private void runMCCR_match() {
+//        double epsExploration = new Double(getenv("epsExploration", "0.6"));
+//        int iterationsInRoot = new Integer(getenv("iterationsInRoot", "100000"));
+//        int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "100000"));
+//        boolean resetData = new Boolean(getenv("resetData", "true"));
+//
+//        expander.getAlgorithmConfig().createInformationSetFor(rootState);
+//        CRAlgorithm alg = new CRAlgorithm(rootState, expander, epsExploration);
+//        alg.setDoResetData(resetData);
+//        this.alg = alg;
+//
+//
+//        double[] utils = alg.runIterations(rootState.getAllPlayers()[0], iterationsInRoot, iterationsPerGadgetGame);
+//        System.err.println(utils[0]);
+//    }
 
     private void runCFR() {
         CFRAlgorithm alg = new CFRAlgorithm(
@@ -883,7 +869,7 @@ public class MCCR_CFV_Experiments {
         System.out.println(seed + ";" + iterationsPerGadgetGame + ";" + subtreeResolving + ";" + targetPS.hashCode() + ";" + exp.expl0 + ";" + exp.expl1 + ";" + exp.total());
     }
 
-    private Exploitability calcExploitability(Map<ISKey, Map<Action, Double>> solvedBehavCFR) {
+    protected Exploitability calcExploitability(Map<ISKey, Map<Action, Double>> solvedBehavCFR) {
         Strategy strategy0 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
                 solvedBehavCFR, rootState, expander, rootState.getAllPlayers()[0]);
         Strategy strategy1 = UniformStrategyForMissingSequences.fromBehavioralStrategy(
@@ -894,7 +880,7 @@ public class MCCR_CFV_Experiments {
         return new Exploitability(br1Val, br0Val);
     }
 
-    private Map<ISKey, Map<Action, Double>> cloneBehavStrategy(Map<ISKey, Map<Action, Double>> orig) {
+    protected Map<ISKey, Map<Action, Double>> cloneBehavStrategy(Map<ISKey, Map<Action, Double>> orig) {
         Map<ISKey, Map<Action, Double>> out = new HashMap<>();
 
         for (Map.Entry<ISKey, Map<Action, Double>> entry : orig.entrySet()) {
@@ -932,7 +918,7 @@ public class MCCR_CFV_Experiments {
         System.out.println("}");
     }
 
-    private Map<ISKey, Map<Action, Double>> getBehavioralStrategy(InnerNode rootNode) {
+    protected Map<ISKey, Map<Action, Double>> getBehavioralStrategy(InnerNode rootNode) {
         Map<ISKey, Map<Action, Double>> out = new HashMap<>();
 
         ArrayDeque<InnerNode> q = new ArrayDeque<>();
@@ -960,7 +946,7 @@ public class MCCR_CFV_Experiments {
         return System.getenv(env) == null ? def : System.getenv(env);
     }
 
-    private void substituteStrategy(Map<ISKey, Map<Action, Double>> target, Map<ISKey, Map<Action, Double>> replacement,
+    protected void substituteStrategy(Map<ISKey, Map<Action, Double>> target, Map<ISKey, Map<Action, Double>> replacement,
                                     PublicState replaceStartingAtPublicPlace) {
         ArrayDeque<InnerNode> q = new ArrayDeque<>();
         q.addAll(replaceStartingAtPublicPlace.getAllNodes());
@@ -1025,7 +1011,7 @@ public class MCCR_CFV_Experiments {
         this.trackCFVinInformationSet = tracking;
     }
 
-    private class Exploitability {
+    protected class Exploitability {
         public double expl0;
         public double expl1;
 
@@ -1036,6 +1022,14 @@ public class MCCR_CFV_Experiments {
 
         public double total() {
             return expl0 + expl1;
+        }
+
+        @Override
+        public String toString() {
+            return "Exploitability{" +
+                    "expl0=" + expl0 +
+                    ", expl1=" + expl1 +
+                    '}';
         }
     }
 }

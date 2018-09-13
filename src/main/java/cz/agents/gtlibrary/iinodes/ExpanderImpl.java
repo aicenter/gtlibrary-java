@@ -19,6 +19,10 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.iinodes;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.List;

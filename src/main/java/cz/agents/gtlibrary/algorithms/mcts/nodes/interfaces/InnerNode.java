@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces;
 import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
+import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.History;
@@ -61,13 +62,6 @@ public interface InnerNode extends Node {
         } catch (ArrayIndexOutOfBoundsException e) {
             return 1.0;
         }
-    }
-
-    default void setPlayerReachPr(double meanStrategyPr) {
-        setReachPrByPlayer(getPlayerToMove(), meanStrategyPr);
-    }
-    default void setOpponentReachPr(double meanStrategyPr) {
-        setReachPrByPlayer(getOpponentPlayerToMove(), meanStrategyPr);
     }
 
     default double getReachPrByPlayer(Player player) {

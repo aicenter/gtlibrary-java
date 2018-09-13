@@ -351,6 +351,11 @@ public abstract class PokerGameState extends GameStateImpl implements DomainWith
 
     @Override
     public PSKey getPSKeyForPlayerToMove() {
+        PSKey maybeHasForcedKey = super.getPSKeyForPlayerToMove();
+        if(maybeHasForcedKey != null) {
+            return maybeHasForcedKey;
+        }
+
         if (cachedPSKey != null)
             return cachedPSKey;
 

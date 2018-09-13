@@ -48,7 +48,8 @@ public class PublicStateImpl implements PublicState {
         GameState state = node.getGameState();
         this.gameStatesInPublicState.add(state);
 
-        this.psKey = ((DomainWithPublicState) state).getPSKeyForPlayerToMove();
+        this.psKey = state.getPSKeyForPlayerToMove();
+        assert this.psKey != null;
         this.hashCode = psKey.getHash();
     }
 

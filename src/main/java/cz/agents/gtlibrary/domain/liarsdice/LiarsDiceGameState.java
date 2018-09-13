@@ -201,6 +201,9 @@ public class LiarsDiceGameState extends GameStateImpl implements DomainWithPubli
 
     @Override
     public PSKey getPSKeyForPlayerToMove() {
+        PSKey maybeHasForcedKey = super.getPSKeyForPlayerToMove();
+        if(maybeHasForcedKey != null) return maybeHasForcedKey;
+
         if (cachedPSKey != null) {
             return cachedPSKey;
         }

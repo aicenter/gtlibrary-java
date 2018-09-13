@@ -19,11 +19,13 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.interfaces;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.iinodes.PSKey;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,5 +35,9 @@ public interface AlgorithmPublicStateStorage<I extends PublicState> extends Seri
 
     I createPublicStateFor(InnerNode node);
 
+    void addPublicState(MCTSPublicState publicState);
+
     Set<I> getAllPublicStates();
+
+    void setAllPublicStates(HashMap<PSKey, MCTSPublicState> publicStates);
 }

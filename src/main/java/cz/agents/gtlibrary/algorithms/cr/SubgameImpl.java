@@ -33,9 +33,7 @@ public class SubgameImpl implements Subgame {
     private GadgetChanceNode createRoot(Expander expander, Random rnd) {
         GadgetChanceState chanceState = new GadgetChanceState(
                 publicState.getAllNodes().iterator().next().getGameState());
-        GadgetChanceNode chanceNode = new GadgetChanceNode(
-                chanceState, expander, rnd, publicState);
-        return chanceNode;
+        return new GadgetChanceNode(chanceState, expander, rnd, publicState);
     }
 
     private Map<Action, GadgetInnerNode> createInnerNodes() {
