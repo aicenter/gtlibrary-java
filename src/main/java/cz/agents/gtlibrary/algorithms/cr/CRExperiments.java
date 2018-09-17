@@ -115,7 +115,7 @@ public class CRExperiments {
     public static void buildCompleteTree(InnerNode r, Integer maxDepth) {
         System.err.println("Building complete tree.");
         int nodes = 0, infosets = 0;
-        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
+        ArrayDeque<InnerNode> q = new ArrayDeque<>();
         q.add(r);
 
         while (!q.isEmpty()) {
@@ -363,6 +363,10 @@ public class CRExperiments {
         }
         if (alg.equals("stats")) {
             runStats();
+            return;
+        }
+        if (alg.equals("CRrootCFRresolvingCFR")) {
+            runCRrootCFRresolvingCFR();
             return;
         }
 
@@ -751,6 +755,65 @@ public class CRExperiments {
         }
     }
 
+    private void runCRrootCFRresolvingCFR() {
+        OOSAlgorithmData.useEpsilonRM = true;
+        OOSAlgorithmData.epsilon = 0.00001f;
+
+        // CFR-specific settings
+        int iterationsInRoot = new Integer(getenv("iterationsInRoot", "1000"));
+        int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "100000"));
+        int targetPSId = new Integer(getenv("targetPSId", "5"));
+        int resolvingPlayerIdx = new Integer(getenv("resolvingPlayer", "0"));
+        ResolvingMethod rootMethod = ResolvingMethod.fromString(getenv("rootMethod", "RESOLVE_CFR"));
+
+        Player resolvingPlayer = rootState.getAllPlayers()[resolvingPlayerIdx];
+        MCTSConfig config = ((MCTSConfig) expander.getAlgorithmConfig());
+        Random rnd = config.getRandom();
+
+        // Alg init
+        CRAlgorithm mccrAlg = new CRAlgorithm(rootState, expander, 0.6);
+        mccrAlg.defaultResolvingMethod = RESOLVE_CFR;
+        mccrAlg.setDoResetData(false);
+        InnerNode rootNode = mccrAlg.getRootNode();
+
+        // Target ps
+        buildCompleteTree(rootNode);
+        Set<MCTSPublicState> publicStates = config.getAllPublicStates();
+        MCTSPublicState targetPS = publicStates.stream().filter(
+                ps -> ps.getPSKey().getHash() == targetPSId).findFirst().get();
+
+        // Run root
+        mccrAlg.runRoot(rootMethod, resolvingPlayer, rootNode, iterationsInRoot);
+        Map<ISKey, Map<Action, Double>> solvedBehavCFR = getBehavioralStrategy(rootNode);
+        Exploitability exp = calcExploitability(solvedBehavCFR);
+        System.out.println(iterationsInRoot+";0;"+ exp.expl0+";"+exp.expl1+";"+exp.total());
+
+
+        // Prepare resolving
+//        mccrAlg.runStep(resolvingPlayer, targetPS.getAllNodes().iterator().next(), RESOLVE_CFR, 1000);
+//        exp = calcExploitability(getBehavioralStrategy(mccrAlg.getRootNode()));
+//        System.out.println(iterationsInRoot+";1000;"+ exp.expl0+";"+exp.expl1+";"+exp.total());
+
+
+        System.err.println("Running resolving");
+        int loop = 0;
+        int total = 0;
+        do {
+            targetPS.resetData(true);
+            targetPS.setResolvingIterations(iterationsInRoot);
+            targetPS.setResolvingMethod(rootMethod);
+            updateCFRResolvingData(targetPS, mccrAlg.rootCfrData.reachProbs, mccrAlg.rootCfrData.historyExpValues);
+
+            int iters = (int) Math.floor(Math.pow(10., 1 + loop / 10.)) - total;
+            mccrAlg.runStep(resolvingPlayer, targetPS.getAllNodes().iterator().next(), RESOLVE_CFR, total);
+            exp = calcExploitability(getBehavioralStrategy(mccrAlg.getRootNode()));
+            System.out.println(iterationsInRoot+";"+total+";"+ exp.expl0+";"+exp.expl1+";"+exp.total());
+
+            total += iters;
+            loop++;
+        } while (total <= iterationsPerGadgetGame);
+    }
+
     private void runCR_mix() {
         OOSAlgorithmData.useEpsilonRM = true;
         OOSAlgorithmData.epsilon = 0.00001f;
@@ -792,10 +855,10 @@ public class CRExperiments {
 
         // Prepare resolving
         System.err.println("Running resolving");
-        long seed = 0;
-        for (long i = 0; i < 100; i++) {
-            seed = i;
-            rnd.setSeed(seed);
+//        long seed = 0;
+//        for (long i = 0; i < 100; i++) {
+//            seed = i;
+//            rnd.setSeed(seed);
 
             // prepare node reach pr / exp values
             targetPS.resetData(true);
@@ -803,19 +866,19 @@ public class CRExperiments {
             targetPS.setResolvingMethod(rootMethod);
             updateCFRResolvingData(targetPS, mccrAlg.rootCfrData.reachProbs, mccrAlg.rootCfrData.historyExpValues);
 
-            repeatedEvaluation(seed, targetPS, iterationsInRoot,
+            repeatedEvaluation(seed, targetPS,
                     resolvingMethod2, resolvingMethod3,
-                    iterationsLevel2, iterationsLevel3,
+                    iterationsInRoot, iterationsLevel2, iterationsLevel3,
                     resolvingPlayer, mccrAlg,
                     solvedBehavCFR, rootNode, subtreeResolving);
-        }
+//        }
     }
 
     private void repeatedEvaluation(long seed,
                                     PublicState targetPS,
-                                    int iterationsInRoot,
                                     ResolvingMethod resolvingMethod2,
                                     ResolvingMethod resolvingMethod3,
+                                    int iterationsInRoot,
                                     int iterationsLevel2,
                                     int iterationsLevel3,
                                     Player resolvingPlayer,
@@ -846,7 +909,7 @@ public class CRExperiments {
                 iterationsPerGadgetGame = iterationsLevel3;
             }
             mccrAlg.runStep(resolvingPlayer, node, resolvingMethod,
-                    iterationsPerGadgetGame, iterationsInRoot);
+                    iterationsPerGadgetGame);
 
             copyCFR = cloneBehavStrategy(solvedBehavCFR);
             behavMCCR = getBehavioralStrategy(rootNode);
@@ -865,8 +928,12 @@ public class CRExperiments {
         behavMCCR = getBehavioralStrategy(rootNode);
         substituteStrategy(copyCFR, behavMCCR, targetPS);
         exp = calcExploitability(copyCFR);
-        System.err.println("seed;iterationsPerGadgetGame;subtreeResolving;targetPSId;expl0;expl1;total");
-        System.out.println(seed + ";" + iterationsPerGadgetGame + ";" + subtreeResolving + ";" + targetPS.hashCode() + ";" + exp.expl0 + ";" + exp.expl1 + ";" + exp.total());
+
+        System.err.println("seed;targetPS;resolvingMethod2;resolvingMethod3;iterationsInRoot;iterationsLevel2;iterationsLevel3;subtreeResolving;expl0;expl1;total");
+        System.out.println(
+                seed+";"+targetPS.hashCode()+";"+resolvingMethod2+";"+resolvingMethod3+";"+iterationsInRoot+";"+iterationsLevel2+";"+
+                        iterationsLevel3+";"+subtreeResolving+";"+exp.expl0+";"+exp.expl1+";"+exp.total()
+                          );
     }
 
     protected Exploitability calcExploitability(Map<ISKey, Map<Action, Double>> solvedBehavCFR) {
@@ -931,12 +998,16 @@ public class CRExperiments {
                 assert (curNode.getGameState().isPlayerToMoveNature());
             } else {
                 OOSAlgorithmData data = ((OOSAlgorithmData) curNodeIS.getAlgorithmData());
+                assert data != null;
                 Map<Action, Double> dist = new MeanStratDist().getDistributionFor(data);
+                assert dist != null;
                 out.put(curNodeIS.getISKey(), dist);
             }
 
             for (Node n : curNode.getChildren().values()) {
-                if ((n instanceof InnerNode)) q.addLast((InnerNode) n);
+                if (n instanceof InnerNode) {
+                    q.add((InnerNode) n);
+                }
             }
         }
         return out;
@@ -962,6 +1033,8 @@ public class CRExperiments {
                 if (target.containsKey(key) && replacement.containsKey(key)) {
                     Map<Action, Double> oldvalue = target.get(key);
                     Map<Action, Double> newvalue = replacement.get(key);
+                    assert oldvalue != null;
+                    assert newvalue != null;
                     target.put(key, newvalue);
                 }
             }
@@ -1029,6 +1102,7 @@ public class CRExperiments {
             return "Exploitability{" +
                     "expl0=" + expl0 +
                     ", expl1=" + expl1 +
+                    ", total=" + total() +
                     '}';
         }
     }

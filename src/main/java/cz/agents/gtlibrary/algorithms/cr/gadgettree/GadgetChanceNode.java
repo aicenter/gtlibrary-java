@@ -69,6 +69,7 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
             node.setParent(this);
             node.setLastAction(action);
+            node.setReachPrByPlayer(2, p);
 
             MCTSInformationSet gadgetIs = node.getInformationSet();
             List<Action> gadgetActions;

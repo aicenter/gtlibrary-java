@@ -390,6 +390,10 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
 
 
     public static CFRData collectCFRResolvingData(Set<PublicState> startAtPs) {
+        double maxUtility = startAtPs.iterator().next().
+                getAllNodes().iterator().next().
+                getExpander().getGameInfo().getMaxUtility()+1e-10;
+
         ArrayDeque<PublicState> q = new ArrayDeque<>();
         q.addAll(startAtPs);
         Map<InnerNode, Double> reachProbs = new HashMap<>();
@@ -398,8 +402,12 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
             PublicState ps = q.removeFirst();
             for (MCTSInformationSet is : ps.getAllInformationSets()) {
                 for (InnerNode in : is.getAllNodes()) {
-                    reachProbs.put(in, calcRpPlayerChanceOfNode(in, is.getPlayer()));
-                    historyExpValues.put(in, computeExpUtilityOfState(in, is.getOpponent()));
+                    double p = calcRpPlayerChanceOfNode(in, is.getPlayer());
+                    assert p >= 0 && p <= 1;
+                    reachProbs.put(in, p);
+                    double ev = computeExpUtilityOfState(in, is.getOpponent());
+                    assert ev <= maxUtility && ev >= -maxUtility;
+                    historyExpValues.put(in, ev);
                 }
             }
             q.addAll(ps.getNextPlayerPublicStates());
@@ -418,7 +426,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
             Map<InnerNode, Double> reachProbs,
             Map<InnerNode, Double> historyExpValues) {
         for (MCTSInformationSet is : publicState.getAllInformationSets()) {
-            ((OOSAlgorithmData) is.getAlgorithmData()).resetData();
+//            ((OOSAlgorithmData) is.getAlgorithmData()).resetData();
             for (InnerNode in : is.getAllNodes()) {
                 in.setReachPrByPlayer(is.getPlayer(), reachProbs.get(in));
                 in.setExpectedValue(historyExpValues.get(in));

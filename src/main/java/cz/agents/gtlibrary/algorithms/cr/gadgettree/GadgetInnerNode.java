@@ -174,29 +174,31 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
         throw new NotImplementedException();
     }
 
+    private double[] playerReachPr = new double[] {1.,1.,1.};
+
     @Override
     public double getReachPrPlayerChance() {
-        throw new NotImplementedException();
+        return playerReachPr[getPlayerToMove().getId()] * playerReachPr[2];
     }
 
     @Override
     public double getPlayerReachPr() {
-        throw new NotImplementedException();
+        return playerReachPr[getPlayerToMove().getId()];
     }
 
     @Override
     public double getReachPrByPlayer(int player) {
-        throw new NotImplementedException();
+        return playerReachPr[player];
     }
 
     @Override
     public void setReachPrByPlayer(int player, double meanStrategyPr) {
-        throw new NotImplementedException();
+        playerReachPr[player] = meanStrategyPr;
     }
 
     @Override
     public double getChanceReachPr() {
-        throw new NotImplementedException();
+        return playerReachPr[2];
     }
 
     @Override

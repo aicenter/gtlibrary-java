@@ -94,7 +94,7 @@ public class GambitEFG {
 
     public static void exportIIGoofSpiel() {
         // setup Game:
-        GSGameInfo.seed = 2;
+        GSGameInfo.seed = 0;
         GSGameInfo.depth = 3;
         GSGameInfo.BINARY_UTILITIES = true;
         GSGameInfo.useFixedNatureSequence = true;
@@ -131,8 +131,8 @@ public class GambitEFG {
 
     public static void exportGP() {
         // setup Game:
-        GPGameInfo.MAX_CARD_TYPES = 3;
-        GPGameInfo.MAX_CARD_OF_EACH_TYPE = 1;
+        GPGameInfo.MAX_CARD_TYPES = 2;
+        GPGameInfo.MAX_CARD_OF_EACH_TYPE = 2;
         GPGameInfo.MAX_RAISES_IN_ROW = 1;
         GPGameInfo.MAX_DIFFERENT_BETS = 1;
         GPGameInfo.MAX_DIFFERENT_RAISES = 1;

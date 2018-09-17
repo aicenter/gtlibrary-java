@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-public class GoofSpielGameState extends SimultaneousGameState implements DomainWithPublicState {
+public class GoofSpielGameState extends SimultaneousGameState {
 
     private static final long serialVersionUID = -1885375538236725674L;
 
@@ -439,40 +439,6 @@ public class GoofSpielGameState extends SimultaneousGameState implements DomainW
                         new ArrayListSequenceImpl(getSequenceForPlayerToMove()));
         }
         return isKey;
-    }
-
-    @Override
-    public PSKey getPSKeyForPlayerToMove() {
-        PSKey maybeHasForcedKey = super.getPSKeyForPlayerToMove();
-        if(maybeHasForcedKey != null) return maybeHasForcedKey;
-
-        if (psKey == null) {
-            int hash = 1;
-            int gap = GSGameInfo.depth + 1;
-
-            int p1Action = 0;
-            int p2Action = 0;
-
-            for (Pair<Player, Action> edge: history.getHistory()) {
-                GoofSpielAction goofSpielAction = (GoofSpielAction) edge.getRight();
-                Integer playerIdx = edge.getLeft().getId();
-
-                int turn;
-                if (playerIdx == GSGameInfo.NATURE.getId()) {
-                    turn = goofSpielAction.getValue();
-                } else if (playerIdx == GSGameInfo.FIRST_PLAYER.getId()) {
-                    p1Action = goofSpielAction.getValue();
-                    turn = 1;
-                } else { // SECOND_PLAYER
-                    p2Action = goofSpielAction.getValue();
-                    turn = p1Action + gap*p2Action;
-                }
-                hash *= 2*gap;
-                hash += turn;
-            }
-            psKey = new PSKey(hash);
-        }
-        return psKey;
     }
 
     public Collection<Integer> getCardsForPlayerToMove() {

@@ -21,6 +21,7 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -172,13 +173,13 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             runRoot(resolvingPlayer, statefulRootNode, iterationsPerGadgetGame);
         }
 
-        Action action = runStep(resolvingPlayer, statefulCurNode, iterationsPerGadgetGame, iterationsInRoot);
+        Action action = runStep(resolvingPlayer, statefulCurNode, iterationsPerGadgetGame);
         statefulCurNode = ((InnerNode) statefulCurNode).getChildFor(action);
         return action;
     }
 
-    public Action runStep(Player resolvingPlayer, Node curNode, int iterationsPerGadgetGame, int iterationsInRoot) {
-        return runStep(resolvingPlayer, curNode, defaultResolvingMethod, iterationsPerGadgetGame, iterationsInRoot);
+    public Action runStep(Player resolvingPlayer, Node curNode, int iterationsPerGadgetGame) {
+        return runStep(resolvingPlayer, curNode, defaultResolvingMethod, iterationsPerGadgetGame);
     }
 
 //    public void solveEntireGame(int iterationsInRoot, int iterationsPerGadgetGame) {
@@ -220,11 +221,10 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     public Action runStep(Player resolvingPlayer,
                           Node curNode,
                           ResolvingMethod resolvingMethod,
-                          int iterationsPerGadgetGame,
-                          int iterationsInRoot) {
-        if (iterationsPerGadgetGame < 2 || iterationsInRoot < 2) {
-            throw new RuntimeException("Cannot resolve with small number of samples!");
-        }
+                          int iterationsPerGadgetGame) {
+//        if (iterationsPerGadgetGame < 2 || iterationsInRoot < 2) {
+//            throw new RuntimeException("Cannot resolve with small number of samples!");
+//        }
 
         if (curNode instanceof LeafNode) {
             return null;
@@ -278,9 +278,8 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             System.err.println("Diff:   " + distributionToString(curIS.getActions(), diff));
             action = randomChoice(distributionAfter);
         } // else
-
-        System.err.println("Updating reach probabilities");
         updatePlayerRp(curPS);
+
         assert curIS.getActions().contains(action);
         return action;
     }
@@ -320,7 +319,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 }
 
                 InnerNode n = s.getAllNodes().iterator().next();
-                runStep(resolvingPlayer, n, iterationsPerGadgetGame, iterationsInRoot);
+                runStep(resolvingPlayer, n, iterationsPerGadgetGame);
 
                 q.addAll(s.getNextPlayerPublicStates(resolvingPlayer));
             }
@@ -341,6 +340,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         //
         // Basically, we know that between the public states the current player
         // will play the resolved average strategy.
+        System.err.println("Updating reach probabilities");
         Player updatingPlayer = ps.getPlayer();
 
         Set<InnerNode> nextPsNodesBarrier = new HashSet<>();
@@ -396,9 +396,9 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             publicState.setDataKeeping(true);
         }
 
-//        new GambitEFG().write(
-//                expander.getClass().getSimpleName() + "_PS_" + publicState.getPSKey().getHash() + ".gbt",
-//                gadgetRootNode);
+        new GambitEFG().write(
+                expander.getClass().getSimpleName() + "_PS_" + publicState.getPSKey().getHash() + ".gbt",
+                gadgetRootNode);
 
         runGadget(resolvingMethod, resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
     }
@@ -421,13 +421,16 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 break;
             case RESOLVE_MCCFR:
                 samplesSkipped = runGadgetMCCFR(resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
-
+                break;
+            case RESOLVE_RANDOM:
+                runGadgetRandom(resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
+                break;
         }
         double diff = (threadBean.getCurrentThreadCpuTime() - start) / 1e6;
         System.err.println("resolved in " + diff + " ms");
         totalTimeResolving += diff;
 
-        publicState.setResolvingMethod(RESOLVE_MCCFR);
+        publicState.setResolvingMethod(resolvingMethod);
 
         // update resolving iterations
         PublicState parentPs = publicState.getPlayerParentPublicState();
@@ -482,12 +485,12 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             rootCfrData = collectCFRResolvingData(publicState.getNextPlayerPublicStates(resolvingPlayer));
         }
 
-//        if (publicState.getPlayer().equals(resolvingPlayer)) {
-//            updateCFRResolvingData(publicState, rootCfrData.reachProbs, rootCfrData.historyExpValues);
-//        }
-//        publicState.getNextPlayerPublicStates(resolvingPlayer).forEach(ps -> {
-//            updateCFRResolvingData(ps, rootCfrData.reachProbs, rootCfrData.historyExpValues);
-//        });
+        if (publicState.getPlayer().equals(resolvingPlayer)) {
+            updateCFRResolvingData(publicState, rootCfrData.reachProbs, rootCfrData.historyExpValues);
+        }
+        publicState.getNextPlayerPublicStates(resolvingPlayer).forEach(ps -> {
+            updateCFRResolvingData(ps, rootCfrData.reachProbs, rootCfrData.historyExpValues);
+        });
     }
 
     private int runGadgetMCCFR(Player resolvingPlayer,
@@ -514,8 +517,45 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         // update values needed for next resolving
         gadgetCfrData = collectCFRResolvingData(publicState);
         publicState.getNextPlayerPublicStates().forEach(ps -> {
-            updateCFRResolvingData(ps, rootCfrData.reachProbs, rootCfrData.historyExpValues);
+            updateCFRResolvingData(ps, gadgetCfrData.reachProbs, gadgetCfrData.historyExpValues);
         });
+    }
+
+    /**
+     * Not intended for general use. Overwrite strategy by random numbers.
+     */
+    private void runGadgetRandom(Player resolvingPlayer,
+                                PublicState publicState,
+                                GadgetChanceNode gadgetRootNode,
+                                int iterationsPerGadgetGame) {
+        buildCompleteTree(gadgetRootNode);
+
+        Random rnd = new Random(123456);
+        ArrayDeque<InnerNode> q = new ArrayDeque<>();
+        q.addAll(publicState.getAllNodes());
+        while (!q.isEmpty()) {
+            InnerNode n = q.removeFirst();
+            if (!(n instanceof ChanceNode)) {
+                MCTSInformationSet is = n.getInformationSet();
+                OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
+
+                double[] mp = data.getMp();
+                for (int i = 0; i < mp.length; i++) {
+                    mp[i] = rnd.nextDouble();
+                }
+
+            } else { // expand chance nodes
+                for (Action a : n.getActions()) {
+                    Node ch = n.getChildFor(a);
+                    if (ch instanceof InnerNode) {
+                        q.add((InnerNode) ch);
+                    }
+                }
+            }
+        }
+
+
+
     }
 
 //    private void printCFVs(Stream<MCTSInformationSet> stream, int iterations) {

@@ -22,15 +22,12 @@ package cz.agents.gtlibrary.domain.goofspiel;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.GameState;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.Sequence;
+import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 
 import java.util.Iterator;
 
-public class IIGoofSpielGameState extends GoofSpielGameState {
+public class IIGoofSpielGameState extends GoofSpielGameState implements DomainWithPublicState {
 
     public IIGoofSpielGameState(GoofSpielGameState gameState) {
         super(gameState);

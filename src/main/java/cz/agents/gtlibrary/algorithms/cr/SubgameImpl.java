@@ -40,12 +40,13 @@ public class SubgameImpl implements Subgame {
         Map<Action, GadgetInnerNode> resolvingInnerNodes = new HashMap<>();
         int idxChanceNode = 0;
 
-        double rootReach = getTopMostOriginalNodes().stream()
+        double tmpRootReach = getTopMostOriginalNodes().stream()
                 .map(InnerNode::getReachPrPlayerChance)
                 .reduce(0.0, Double::sum);
 
         for (InnerNode origNode : getTopMostOriginalNodes()) {
-            if(origNode.getReachPrPlayerChance() / rootReach < (1e-4 / publicState.getAllNodes().size())) continue;
+            // filter out nodes that have small chance probability
+            if(origNode.getReachPrPlayerChance() / tmpRootReach < (1e-4 / publicState.getAllNodes().size())) continue;
 
             GadgetISKey isKey = new GadgetISKey(origNode.getOpponentAugISKey());
             GameState origState = origNode.getGameState();
