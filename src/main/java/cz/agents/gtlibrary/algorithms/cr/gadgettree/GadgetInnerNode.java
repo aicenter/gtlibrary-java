@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.cr.gadgettree;
 
 import cz.agents.gtlibrary.NotImplementedException;
+import cz.agents.gtlibrary.algorithms.cr.CRExperiments;
 import cz.agents.gtlibrary.algorithms.cr.ResolvingMethod;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
@@ -56,6 +57,10 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
             double maxIsCFV = getExpander().getGameInfo().getMaxUtility();
 
             double isCFV = gadgetIs.getIsCFV(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
+            if(CRExperiments.cfvHack) {
+                if (Math.abs(isCFV) < 1e-3) isCFV = 0;
+                else isCFV *= 0.99;
+            }
             double isReach = gadgetIs.getIsReach();
 
             // shouldnt happen often!
