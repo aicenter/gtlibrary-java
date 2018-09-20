@@ -65,10 +65,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         this.statefulRootNode = buildRootNode();
         this.statefulCurNode = statefulRootNode;
         this.epsilonExploration = epsilonExploration;
-        // use epsRM so that traversal into all parts of the public tree is well defined
-        // otherwise we may get 0-prob of some actions which prohibit visiting some parts of the tree
-        OOSAlgorithmData.useEpsilonRM = true;
-        OOSAlgorithmData.epsilon = 0.00001f;
+        OOSAlgorithmData.useEpsilonRM = false;
         threadBean = ManagementFactory.getThreadMXBean();
     }
     public CRAlgorithm(InnerNode rootNode, Expander expander) {
@@ -82,10 +79,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         this.statefulRootNode = rootNode;
         this.statefulCurNode = rootNode;
         this.epsilonExploration = epsilonExploration;
-        // use epsRM so that traversal into all parts of the public tree is well defined
-        // otherwise we may get 0-prob of some actions which prohibit visiting some parts of the tree
-        OOSAlgorithmData.useEpsilonRM = true;
-        OOSAlgorithmData.epsilon = 0.00001f;
+        OOSAlgorithmData.useEpsilonRM = false;
         threadBean = ManagementFactory.getThreadMXBean();
     }
 
@@ -396,9 +390,9 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             publicState.setDataKeeping(true);
         }
 
-        new GambitEFG().write(
-                expander.getClass().getSimpleName() + "_PS_" + publicState.getPSKey().getHash() + ".gbt",
-                gadgetRootNode);
+//        new GambitEFG().write(
+//                expander.getClass().getSimpleName() + "_PS_" + publicState.getPSKey().getHash() + ".gbt",
+//                gadgetRootNode);
 
         runGadget(resolvingMethod, resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
     }
