@@ -46,13 +46,13 @@ import java.util.Map;
  */
 public class StrategyCollector {
     
-        static public Strategy getStrategyFor(InnerNode node, Player player, Distribution distribution){
+        static public UniformStrategyForMissingSequences getStrategyFor(InnerNode node, Player player, Distribution distribution){
             return getStrategyFor(node, player, distribution, Integer.MAX_VALUE);
         }
 
         
-	static public Strategy getStrategyFor(InnerNode rootNode, Player player, Distribution distribution, int cutOffDepth) {
-            Strategy strategy = new UniformStrategyForMissingSequences();
+	static public UniformStrategyForMissingSequences getStrategyFor(InnerNode rootNode, Player player, Distribution distribution, int cutOffDepth) {
+            UniformStrategyForMissingSequences strategy = new UniformStrategyForMissingSequences();
             for (Sequence sq : rootNode.getGameState().getSequenceFor(player).getAllPrefixes()){
                 strategy.put(sq,1.0);
             }

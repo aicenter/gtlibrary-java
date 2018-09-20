@@ -28,7 +28,7 @@ import java.util.*;
 
 public class StrategyImpl extends Strategy {
 
-    private Map<Sequence, Double> strategy;
+    protected Map<Sequence, Double> strategy;
 
     public StrategyImpl() {
         strategy = new HashMap<Sequence, Double>();

@@ -33,10 +33,18 @@ import java.util.*;
 
 public class UniformStrategyForMissingSequences extends StrategyImpl {
 
-	@Override
+    public UniformStrategyForMissingSequences copy() {
+        UniformStrategyForMissingSequences strat = new UniformStrategyForMissingSequences();
+        strategy.forEach((seq, prob) -> {
+           strat.put(seq, new Double(prob));
+        });
+        return strat;
+    }
+
+    @Override
 	protected Map<Action, Double> getMissingSeqDistribution(Collection<Action> actions) {
 		Map<Action, Double> distribution = new HashMap<Action, Double>();
-		
+
 		for (Action action : actions) {
 			distribution.put(action, 1./actions.size());
 		}
