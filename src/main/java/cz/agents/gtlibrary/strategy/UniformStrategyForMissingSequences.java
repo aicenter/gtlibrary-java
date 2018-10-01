@@ -78,7 +78,7 @@ public class UniformStrategyForMissingSequences extends StrategyImpl {
                         for (Action a : actions) meanDist.put(a, 0.0);
                         for (Strategy s : strategies){
                             Map<Action, Double> dist = s.getDistributionOfContinuationOf(curState.getSequenceForPlayerToMove(), actions);
-                            for (Action a : actions) meanDist.put(a, meanDist.get(a)+dist.get(a)/strategies.size());
+                            for (Action a : actions) meanDist.put(a, meanDist.get(a)+dist.getOrDefault(a, 0.)/strategies.size());
                         }
                         double prefProb = out.get(curState.getSequenceForPlayerToMove());
                         for (Action a : actions){

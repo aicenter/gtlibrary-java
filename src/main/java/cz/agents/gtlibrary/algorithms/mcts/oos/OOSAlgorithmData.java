@@ -177,6 +177,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         return nbSamples;
     }
 
+    public void setNbSamples(int nbSamples) {
+        this.nbSamples = nbSamples;
+    }
+
     public double[] getRegrets() {
         return r;
     }
@@ -262,6 +266,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         result = 31 * result + actionCount;
         result = 31 * result + Arrays.hashCode(actionCFV);
         return result;
+    }
+
+    public void setMp(double[] mp) {
+        this.mp = mp;
     }
 }
 

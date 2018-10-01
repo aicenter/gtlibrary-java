@@ -57,10 +57,10 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
             double maxIsCFV = getExpander().getGameInfo().getMaxUtility();
 
             double isCFV = gadgetIs.getIsCFV(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
-            if(CRExperiments.cfvHack) {
-                if (Math.abs(isCFV) < 1e-3) isCFV = 0;
-                else isCFV *= 0.99;
-            }
+//            if(CRExperiments.cfvHack) {
+//                if (resolvingMethod == RESOLVE_MCCFR && Math.abs(isCFV) < 0.1 / Math.sqrt(expUtilityIterations)) isCFV = 0;
+//                isCFV *= 0.99;
+//            }
             double isReach = gadgetIs.getIsReach();
 
             // shouldnt happen often!

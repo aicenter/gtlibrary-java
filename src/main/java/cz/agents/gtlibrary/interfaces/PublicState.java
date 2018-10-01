@@ -69,5 +69,5 @@ public interface PublicState extends Serializable {
 
     Subgame getSubgame();
 
-    boolean isReachable();
+    boolean isReachable(Player player);
 }

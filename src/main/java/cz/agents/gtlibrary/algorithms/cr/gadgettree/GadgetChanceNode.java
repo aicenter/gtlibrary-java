@@ -77,6 +77,7 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
                 gadgetActions = new ArrayList<>();
                 GadgetInnerAction followAction = new GadgetInnerAction(true, gadgetIs);
                 gadgetActions.add(followAction); // order is important!
+                // todo: should we really do this?
                 boolean resolveForAugInfoSetsTerminate = gadgetIs.getAllNodes().size() != ps.getAllNodes().size();
                 if (resolveForAugInfoSetsTerminate) {
                     GadgetInnerAction terminateAction = new GadgetInnerAction(false, gadgetIs);

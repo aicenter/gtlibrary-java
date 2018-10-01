@@ -27,6 +27,7 @@ public class PublicStateImpl implements PublicState {
     private final int depth;
     private final Expander expander;
     private int resolvingIterations = 0;
+    private ResolvingMethod resolvingMethod;
     private boolean dataKeeping;
 
     public PublicStateImpl(MCTSConfig config,
@@ -61,7 +62,7 @@ public class PublicStateImpl implements PublicState {
     @Override
     public Set<MCTSInformationSet> getAllInformationSets() {
         Set<MCTSInformationSet> informationSets = new HashSet<>();
-        for (InnerNode node: gameNodesInPublicState) {
+        for (InnerNode node : gameNodesInPublicState) {
             informationSets.add(node.getInformationSet());
         }
         return informationSets;
@@ -84,21 +85,21 @@ public class PublicStateImpl implements PublicState {
         ArrayDeque<Node> q = new ArrayDeque<>();
         gameNodesInPublicState.forEach(node -> q.addAll(node.buildChildren().values()));
 
-        while(!q.isEmpty()) {
+        while (!q.isEmpty()) {
             Node nextNode = q.removeFirst();
 
-            if(nextNode instanceof LeafNode) continue;
+            if (nextNode instanceof LeafNode) continue;
             if (nextNode instanceof ChanceNode) {
-                q.addAll(  ((ChanceNode) nextNode).buildChildren().values());
+                q.addAll(((ChanceNode) nextNode).buildChildren().values());
             } else {
                 InnerNode innerNode = (InnerNode) nextNode;
 
                 // init data
-                if(innerNode.getInformationSet().getAlgorithmData() == null) {
+                if (innerNode.getInformationSet().getAlgorithmData() == null) {
                     innerNode.getInformationSet().setAlgorithmData(
                             new OOSAlgorithmData(innerNode.getActions()));
                 }
-                if(innerNode.getPlayerToMove().equals(player)) {
+                if (innerNode.getPlayerToMove().equals(player)) {
                     nextPS.add(innerNode.getPublicState());
                 } else {
                     q.addAll(innerNode.buildChildren().values());
@@ -113,15 +114,15 @@ public class PublicStateImpl implements PublicState {
     public Set<PublicState> getNextPublicStates() {
         Set<PublicState> nextPS = new HashSet<>();
         for (InnerNode node : gameNodesInPublicState) {
-            for(Action a : node.getActions()) {
+            for (Action a : node.getActions()) {
                 Node nextNode = node.getChildFor(a);
-                if(nextNode instanceof LeafNode) continue;
+                if (nextNode instanceof LeafNode) continue;
                 if (nextNode instanceof ChanceNode) {
                     nextPS.addAll(((ChanceNode) nextNode).getPublicState().getNextPublicStates());
                 } else {
                     InnerNode innerNode = (InnerNode) nextNode;
                     // init data
-                    if(innerNode.getInformationSet().getAlgorithmData() == null) {
+                    if (innerNode.getInformationSet().getAlgorithmData() == null) {
                         innerNode.getInformationSet().setAlgorithmData(
                                 new OOSAlgorithmData(innerNode.getActions()));
                     }
@@ -143,19 +144,22 @@ public class PublicStateImpl implements PublicState {
     public void resetData(boolean includingThisPublicState) {
         ArrayDeque<Node> q = new ArrayDeque<Node>();
 
-        if(includingThisPublicState) {
+        if (includingThisPublicState) {
             q.addAll(getAllNodes());
             setResolvingMethod(null);
             setResolvingIterations(0);
             setDataKeeping(false);
         } else {
+            // todo: only works in nice games!
             getAllNodes().forEach(in -> q.addAll(in.getChildren().values()));
         }
 
-
+        // reset only walks on existing nodes, it doesn't expand the tree!
+        // (difference between `innerNode.getChildren()` and `innerNode.getChildFor(action)`
         while (!q.isEmpty()) {
             Node n = q.removeFirst();
-            if(n instanceof LeafNode) continue;;
+            if (n instanceof LeafNode) continue;
+            ;
             InnerNode in = (InnerNode) n;
             in.resetData();
 
@@ -175,13 +179,13 @@ public class PublicStateImpl implements PublicState {
     }
 
     @Override
-    public void setResolvingMethod(ResolvingMethod resolveMccfr) {
-
+    public ResolvingMethod getResolvingMethod() {
+        return resolvingMethod;
     }
 
     @Override
-    public ResolvingMethod getResolvingMethod() {
-        return null;
+    public void setResolvingMethod(ResolvingMethod resolvingMethod) {
+        this.resolvingMethod = resolvingMethod;
     }
 
     @Override
@@ -243,13 +247,13 @@ public class PublicStateImpl implements PublicState {
     }
 
     @Override
-    public void setDataKeeping(boolean b) {
-        this.dataKeeping = b;
+    public boolean isDataKeeping() {
+        return dataKeeping;
     }
 
     @Override
-    public boolean isDataKeeping() {
-        return dataKeeping;
+    public void setDataKeeping(boolean b) {
+        this.dataKeeping = b;
     }
 
     @Override
@@ -258,10 +262,9 @@ public class PublicStateImpl implements PublicState {
     }
 
     @Override
-    public boolean isReachable() {
+    public boolean isReachable(Player player) {
         return getAllNodes().stream()
-                .map(InnerNode::getReachPr)
-                .max(Double::compare)
-                .get() > 0;
+                .map(in -> in.getReachPrByPlayer(player))
+                .anyMatch(p -> p > 0);
     }
 }

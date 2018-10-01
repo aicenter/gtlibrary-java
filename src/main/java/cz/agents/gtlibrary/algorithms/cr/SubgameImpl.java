@@ -47,6 +47,7 @@ public class SubgameImpl implements Subgame {
         for (InnerNode origNode : getTopMostOriginalNodes()) {
             // filter out nodes that have small chance probability
             if(origNode.getReachPrPlayerChance() / tmpRootReach < (1e-4 / publicState.getAllNodes().size())) continue;
+//            if(origNode.getReachPrPlayerChance() == 0) continue;
 
             GadgetISKey isKey = new GadgetISKey(origNode.getOpponentAugISKey());
             GameState origState = origNode.getGameState();
@@ -130,6 +131,7 @@ public class SubgameImpl implements Subgame {
 //                .filter(n -> !originalNodes.contains(n.getParent()))
 //                .collect(Collectors.toSet());
 
+        // todo: multi-level gadget
         return getOriginalNodes();
     }
 }

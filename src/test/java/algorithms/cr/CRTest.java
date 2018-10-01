@@ -173,7 +173,7 @@ public class CRTest extends CRExperiments {
         assertEquals(stratRoot, stratCFR_copy);
 
         alg.runStep(resolvingPlayer, targetPS.getAllNodes().iterator().next(),
-                ResolvingMethod.RESOLVE_RANDOM, 0);
+                ResolvingMethod.RESOLVE_UNIFORM, 0);
         Map<ISKey, Map<Action, Double>> stratResolve = exp.getBehavioralStrategy(rootNode);
         assertFalse(stratRoot.equals(stratResolve));
         assertEquals(stratRoot.size(), stratResolve.size());

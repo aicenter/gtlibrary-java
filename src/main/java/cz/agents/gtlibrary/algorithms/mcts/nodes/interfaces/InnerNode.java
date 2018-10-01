@@ -95,7 +95,6 @@ public interface InnerNode extends Node {
 
     default PerfectRecallISKey getOpponentAugISKey() {
         History history = getGameState().getHistory();
-        Player player = getPlayerToMove();
         Player opp = getOpponentPlayerToMove();
         Sequence oppSeq = history.getSequencesOfPlayers().get(opp);
         int hashCode = getGameState().getISKeyForPlayerToMove().hashCode();

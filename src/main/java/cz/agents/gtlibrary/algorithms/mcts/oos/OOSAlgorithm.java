@@ -73,7 +73,6 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
     private static long totalIterCalls = 0;
     public int[][] gadgetActionChoices;
-    public int samplesSkipped = 0;
 
 
     public static void main(String[] args) {
@@ -131,7 +130,12 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         this(searchingPlayer, simulator, rootState, expander, 0.9, 0.6);
     }
 
-    public OOSAlgorithm(Player searchingPlayer, OOSSimulator simulator, GameState rootState, Expander expander, double delta, double epsilon) {
+    public OOSAlgorithm(Player searchingPlayer,
+                        OOSSimulator simulator,
+                        GameState rootState,
+                        Expander expander,
+                        double delta,
+                        double epsilon) {
         gadgetActionChoices = new int[2][2];
         this.rnd = ((MCTSConfig) expander.getAlgorithmConfig()).getRandom();
         this.searchingPlayer = searchingPlayer;
@@ -169,7 +173,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         this.epsilon = epsilon;
         this.rootNode = rootNode;
 
-        if(rootNode.getGameState().isPlayerToMoveNature()) {
+        if (rootNode.getGameState().isPlayerToMoveNature()) {
             curIS = null;
         } else {
             curIS = rootNode.getInformationSet();
@@ -446,15 +450,11 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             data.updateMeanStrategy(rmProbs, pi_ / s);
         }
 
-        if(rp > 0) {
-            double updateVal = (u * x / l) / normalizingUtils;
-            if (is.getPlayer().equals(expPlayer)) {
-                updateVal *= -1;
-            }
-            ((InnerNode) node).updateExpectedValue(updateVal);
-        } else {
-            samplesSkipped++;
+        double updateVal = (u * x / l) / normalizingUtils;
+        if (is.getPlayer().equals(expPlayer)) {
+            updateVal *= -1;
         }
+        ((InnerNode) node).updateExpectedValue(updateVal);
 
         return u;
     }
@@ -523,5 +523,22 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
     public void setRnd(Random rnd) {
         this.rnd = rnd;
+    }
+
+
+    public int runIterations(int iterations, boolean gadgetIterationsCountFollow) {
+        if(gadgetIterationsCountFollow) {
+            int i = 0;
+            underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
+            while(gadgetActionChoices[0][0]+gadgetActionChoices[1][0] < iterations) {
+                iteration(rootNode, 1, 1, 1, 1, 1, 1, rootNode.getAllPlayers()[0]);
+                iteration(rootNode, 1, 1, 1, 1, 1, 1, rootNode.getAllPlayers()[1]);
+                i+=2;
+            }
+            return i;
+        } else {
+            runIterations(iterations);
+            return iterations;
+        }
     }
 }

@@ -21,7 +21,6 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -39,7 +38,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     public static double totalTimeResolving = 0.;
     public static double totalTimeRoot = 0.;
     private final GameState rootState;
-    private final Expander expander;
+    private final Expander<MCTSInformationSet> expander;
     private final InnerNode statefulRootNode;
     private final ThreadMXBean threadBean;
     private final MCTSConfig config;
@@ -48,15 +47,15 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     private Node statefulCurNode;
     private Random rnd;
     private double epsilonExploration = 0.6;
-    private double pi_c = 1.0;
     private boolean resetData = true;
     public CFRData rootCfrData;
     public CFRData gadgetCfrData;
+    public boolean gadgetIterationsCountFollow = false;
 
-    public CRAlgorithm(GameState rootState, Expander expander) {
+    public CRAlgorithm(GameState rootState, Expander<MCTSInformationSet> expander) {
         this(rootState, expander, 0.6);
     }
-    public CRAlgorithm(GameState rootState, Expander expander, double epsilonExploration) {
+    public CRAlgorithm(GameState rootState, Expander<MCTSInformationSet> expander, double epsilonExploration) {
         this.rootState = rootState;
         this.expander = expander;
         this.config = ((MCTSConfig) expander.getAlgorithmConfig());
@@ -71,7 +70,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     public CRAlgorithm(InnerNode rootNode, Expander expander) {
         this(rootNode, expander, 0.6);
     }
-    public CRAlgorithm(InnerNode rootNode, Expander expander, double epsilonExploration) {
+    public CRAlgorithm(InnerNode rootNode, Expander<MCTSInformationSet> expander, double epsilonExploration) {
         this.rootState = rootNode.getGameState();
         this.expander = expander;
         this.config = ((MCTSConfig) expander.getAlgorithmConfig());
@@ -83,7 +82,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         threadBean = ManagementFactory.getThreadMXBean();
     }
 
-    public Expander getExpander() {
+    public Expander<MCTSInformationSet> getExpander() {
         return expander;
     }
 
@@ -132,10 +131,9 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                         int iterationsInRoot) {
         long start = threadBean.getCurrentThreadCpuTime();
 
-        int samplesSkipped = 0;
         switch (rootResolveMethod) {
             case RESOLVE_MCCFR:
-                samplesSkipped = runRootMCCFR(resolvingPlayer, rootNode, iterationsInRoot);
+                runRootMCCFR(resolvingPlayer, rootNode, iterationsInRoot);
                 break;
             case RESOLVE_CFR:
                 runRootCFR(resolvingPlayer, rootNode, iterationsInRoot);
@@ -145,15 +143,13 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         totalTimeRoot += diff;
         System.err.println("root iters in " + diff + " ms");
 
-        int totalIterations = iterationsInRoot - samplesSkipped;
-
         if (rootNode.getPlayerToMove().equals(resolvingPlayer)) {
-            rootNode.getPublicState().incrResolvingIterations(totalIterations);
+            rootNode.getPublicState().incrResolvingIterations(iterationsInRoot);
             rootNode.getPublicState().setResolvingMethod(rootResolveMethod);
         }
-        rootNode.getPublicState().getNextPlayerPublicStates(resolvingPlayer).forEach(ps -> {
-            ps.incrResolvingIterations(totalIterations);
-            ps.setResolvingMethod(rootResolveMethod);
+        rootNode.getPublicState().getNextPlayerPublicStates(resolvingPlayer).forEach(nextPs -> {
+            nextPs.incrResolvingIterations(iterationsInRoot);
+            nextPs.setResolvingMethod(rootResolveMethod);
         });
     }
 
@@ -175,42 +171,6 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     public Action runStep(Player resolvingPlayer, Node curNode, int iterationsPerGadgetGame) {
         return runStep(resolvingPlayer, curNode, defaultResolvingMethod, iterationsPerGadgetGame);
     }
-
-//    public void solveEntireGame(int iterationsInRoot, int iterationsPerGadgetGame) {
-//        System.err.println("Using " +
-//                "iterationsInRoot=" + iterationsInRoot + " " +
-//                "iterationsPerGadgetGame=" + iterationsPerGadgetGame + " " +
-//                "epsilonExploration=" + epsilonExploration + " " +
-//                "resetData=" + resetData + " ");
-//
-////        buildCompleteTree(rootNode);
-//
-//        InnerNode curNode = getRootNode();
-//        if (iterationsInRoot < 2) {
-//            System.err.println("Skipping root MCCFR.");
-//        } else {
-//            runRootMCCFR(iterationsInRoot);
-//        }
-//
-//        if (iterationsPerGadgetGame < 2) {
-//            System.err.println("Skipping resolving.");
-//        } else {
-//            ArrayDeque<PublicState> q = new ArrayDeque<>();
-//            q.add(getRootNode().getPublicState());
-//            while (!q.isEmpty()) {
-//                PublicState s = q.removeFirst();
-//
-//                InnerNode n = s.getAllNodes().iterator().next();
-//                runStep(n, iterationsPerGadgetGame, iterationsInRoot);
-//
-//                q.addAll(s.getNextPublicStates());
-//            }
-//        }
-//
-//        // make sure we have everything needed for domain stats
-////        buildCompleteTree(rootNode);
-//        printDomainStatistics();
-//    }
 
     public Action runStep(Player resolvingPlayer,
                           Node curNode,
@@ -253,7 +213,13 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 "\n\t" + curPS.getAllNodes().size() + " nodes, " +
                 curPS.getAllInformationSets().size() + " infosets in public state");
 
-        if (curIS.getActions().size() == 1 && isNiceGame(curNode.getGameState())) {
+        // weird optimization to speed up resolvings in nice games
+        // most public states are at the end of the public tree, but if they have only
+        // one action and it is one round before the end of the game it is senseless to resolve here
+        // so we can speed up the entire resolving about 2x => faster experiments!
+        int maxNumActionsAtPs = curPS.getAllInformationSets().stream().map(
+                is -> is.getActions().size()).max(Integer::compareTo).get();
+        if (maxNumActionsAtPs == 1 && isNiceGame(curNode.getGameState())) {
             System.err.println("Only one action possible, skipping resolving");
             action = curIS.getActions().iterator().next();
         } else {
@@ -307,21 +273,21 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             while (!q.isEmpty()) {
                 PublicState s = q.removeFirst();
 
-                if(!s.isReachable()) {
+                if(!s.isReachable(resolvingPlayer)) {
+                    // If public state is not reachable by our player, we can leave whatever strategy was there.
                     System.err.println("Skipping resolving public state "+s+" - not reachable.");
                     continue;
                 }
 
+                // NextPlayerPublicStates builds up the tree incrementally until
+                // next public states, so everything is properly defined between
+                // resolvings
+                q.addAll(s.getNextPlayerPublicStates(resolvingPlayer));
+
                 InnerNode n = s.getAllNodes().iterator().next();
                 runStep(resolvingPlayer, n, iterationsPerGadgetGame);
-
-                q.addAll(s.getNextPlayerPublicStates(resolvingPlayer));
             }
         }
-
-        // make sure we have everything needed for domain stats
-        buildCompleteTree(solvingRoot);
-        printDomainStatistics();
 
         return solvingRoot;
     }
@@ -346,24 +312,24 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         q.addAll(ps.getAllNodes());
 
         while (!q.isEmpty()) {
-            InnerNode node = q.removeFirst();
+            InnerNode curNode = q.removeFirst();
 
             Map<Action, Double> avgStrategy = null;
-            if (node.isPlayerMoving(updatingPlayer)) {
-                avgStrategy = getDistributionFor(node.getInformationSet().getAlgorithmData());
+            if (curNode.isPlayerMoving(updatingPlayer)) {
+                avgStrategy = getDistributionFor(curNode.getInformationSet().getAlgorithmData());
             }
 
-            for (Action action : node.getActions()) {
-                Node nextNode = node.getChildFor(action);
+            for (Action action : curNode.getActions()) {
+                Node nextNode = curNode.getChildFor(action);
                 if (nextNode instanceof LeafNode) continue;
 
-                Double pA = 1.0;
+                Double pA = 1.0; // action probability if the *opponent* is moving in curNode
                 if (avgStrategy != null) {
                     pA = avgStrategy.get(action);
                 }
 
                 InnerNode nextInner = (InnerNode) nextNode;
-                nextInner.setReachPrByPlayer(updatingPlayer, node.getReachPrByPlayer(updatingPlayer) * pA);
+                nextInner.setReachPrByPlayer(updatingPlayer, curNode.getReachPrByPlayer(updatingPlayer) * pA);
                 if (!nextPsNodesBarrier.contains(nextInner)) {
                     q.add(nextInner);
                 }
@@ -375,11 +341,13 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                                    PublicState publicState,
                                    ResolvingMethod resolvingMethod,
                                    int iterationsPerGadgetGame) {
+        // todo: check redundancy of incrmeentally building tree
         System.err.println("Incrementally building tree");
         publicState.getNextPlayerPublicStates(); // build all the nodes until next public states
 
         System.err.println("Building gadget");
-        GadgetChanceNode gadgetRootNode = publicState.getSubgame().getGadgetRoot();
+        Subgame subgame = publicState.getSubgame();
+        GadgetChanceNode gadgetRootNode = subgame.getGadgetRoot();
 
         if (resetData && !isPublicTreeRootKeeping(publicState)) {
             System.err.println("Resetting data");
@@ -394,6 +362,10 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
 //                expander.getClass().getSimpleName() + "_PS_" + publicState.getPSKey().getHash() + ".gbt",
 //                gadgetRootNode);
 
+//        subgame.getGadgetInformationSets().forEach(gis -> {
+//            System.out.println(gis + " " + gis.getIsCFV(publicState.getResolvingIterations()));
+//        });
+
         runGadget(resolvingMethod, resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
     }
 
@@ -403,41 +375,40 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                            GadgetChanceNode gadgetRootNode,
                            int iterationsPerGadgetGame) {
 
-        System.err.println(
-                "Using " + resolvingMethod + " for resolving gadget " +
+        System.err.println("Using " + resolvingMethod + " for resolving gadget " +
                         "with " + iterationsPerGadgetGame + " iterations");
 
         long start = threadBean.getCurrentThreadCpuTime();
-        int samplesSkipped = 0;
+        int iterations = iterationsPerGadgetGame;
         switch (resolvingMethod) {
             case RESOLVE_CFR:
                 runGadgetCFR(resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
                 break;
             case RESOLVE_MCCFR:
-                samplesSkipped = runGadgetMCCFR(resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
+                iterations = runGadgetMCCFR(resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
                 break;
-            case RESOLVE_RANDOM:
-                runGadgetRandom(resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
+            case RESOLVE_UNIFORM:
+                runGadgetUniform(resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
                 break;
         }
         double diff = (threadBean.getCurrentThreadCpuTime() - start) / 1e6;
         System.err.println("resolved in " + diff + " ms");
         totalTimeResolving += diff;
 
-        publicState.setResolvingMethod(resolvingMethod);
-
+//         todo: fix bug root MCCFR number of iterations?!
         // update resolving iterations
-        PublicState parentPs = publicState.getPlayerParentPublicState();
-        final Integer totalIterations = (parentPs != null // propagate # of iterations down if applicable
-                && parentPs.isDataKeeping()
-                && parentPs.getResolvingMethod() == RESOLVE_MCCFR)
-                ? iterationsPerGadgetGame - samplesSkipped + parentPs.getResolvingIterations()
-                : iterationsPerGadgetGame - samplesSkipped;
+//        PublicState parentPs = publicState.getPlayerParentPublicState();
+//        final Integer totalIterations = (parentPs != null // propagate # of iterations down if applicable
+//                && parentPs.isDataKeeping()
+//                && parentPs.getResolvingMethod() == RESOLVE_MCCFR)
+//                ? iterations + parentPs.getResolvingIterations()
+//                : iterations;
+        final Integer totalIterations = iterations;
 
         publicState.getNextPlayerPublicStates().forEach(ps -> {
             ps.incrResolvingIterations(totalIterations);
+            ps.setResolvingMethod(resolvingMethod);
         });
-
     }
 
     private boolean isPublicTreeRootKeeping(PublicState publicState) {
@@ -451,7 +422,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         );
     }
 
-    public int runRootMCCFR(Player resolvingPlayer, InnerNode rootNode, int iterations) {
+    public void runRootMCCFR(Player resolvingPlayer, InnerNode rootNode, int iterations) {
         System.err.println("Calculating initial strategy from root using MCCFR in "+iterations+" iterations");
         OOSAlgorithm alg = new OOSAlgorithm(resolvingPlayer, rootNode, epsilonExploration);
         alg.setRnd(rnd);
@@ -460,13 +431,13 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
 
         // debug
 //        assert debugDepthSamplingAssert(rootNode, alg) == iterations / 2;
-        return alg.samplesSkipped;
     }
 
     public void runRootCFR(Player resolvingPlayer, InnerNode rootNode, int iterations) {
         System.err.println("Calculating initial strategy from root using CFR in "+iterations+" iterations");
         CFRAlgorithm alg = new CFRAlgorithm(rootNode);
 
+        // todo: check if should build or not!
 //        buildCompleteTree(rootNode);
         alg.runIterations(iterations);
 
@@ -493,10 +464,13 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                                 int iterations) {
         OOSAlgorithm alg = new OOSAlgorithm(resolvingPlayer, gadgetRoot, epsilonExploration);
         alg.setRnd(rnd);
-        alg.runIterations(iterations);
 
-//        assert debugDepthSamplingAssert(gadgetRoot, alg) == iterations / 2; // debug
-        return alg.samplesSkipped;
+        int iters = alg.runIterations(iterations, gadgetIterationsCountFollow);
+
+//        System.out.println("follow: " + alg.gadgetActionChoices[0][0]+" "+alg.gadgetActionChoices[1][0]);
+//        System.out.println("terminate: " +alg.gadgetActionChoices[0][1]+" "+alg.gadgetActionChoices[1][1]);
+
+        return iters;
     }
 
     private void runGadgetCFR(Player resolvingPlayer,
@@ -518,10 +492,10 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     /**
      * Not intended for general use. Overwrite strategy by random numbers.
      */
-    private void runGadgetRandom(Player resolvingPlayer,
-                                PublicState publicState,
-                                GadgetChanceNode gadgetRootNode,
-                                int iterationsPerGadgetGame) {
+    private void runGadgetUniform(Player resolvingPlayer,
+                                  PublicState publicState,
+                                  GadgetChanceNode gadgetRootNode,
+                                  int iterationsPerGadgetGame) {
         buildCompleteTree(gadgetRootNode);
 
         Random rnd = new Random(123456);
