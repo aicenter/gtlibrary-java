@@ -59,6 +59,7 @@ import java.util.*;
 public class CFRAlgorithm implements GamePlayingAlgorithm {
 
     private Double normalizingUtils = 1.0;
+    public int iters;
 
     public static void main(String[] args) {
         runMPoCHM();
@@ -181,6 +182,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
             iteration(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[0]);
             iteration(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[1]);
         }
+        this.iters = iterations;
         return null;
     }
 

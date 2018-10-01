@@ -172,7 +172,7 @@ public class CRTest extends CRExperiments {
         Map<ISKey, Map<Action, Double>> stratCFR_copy = exp.cloneBehavStrategy(stratRoot);
         assertEquals(stratRoot, stratCFR_copy);
 
-        alg.runStep(resolvingPlayer, targetPS.getAllNodes().iterator().next(),
+        alg.runStep(resolvingPlayer, targetPS.getAllInformationSets().iterator().next(),
                 ResolvingMethod.RESOLVE_UNIFORM, 0);
         Map<ISKey, Map<Action, Double>> stratResolve = exp.getBehavioralStrategy(rootNode);
         assertFalse(stratRoot.equals(stratResolve));
@@ -324,10 +324,9 @@ public class CRTest extends CRExperiments {
         Map<ISKey, Map<Action, Double>> stratCR;
         while (!q.isEmpty()) {
             PublicState ps = q.removeFirst();
-            InnerNode node = ps.getAllNodes().iterator().next();
+            MCTSInformationSet is = ps.getAllInformationSets().iterator().next();
 
-            alg.runStep(resolvingPlayer, node,
-                    ResolvingMethod.RESOLVE_CFR, resolvingIterations);
+            alg.runStep(resolvingPlayer, is, ResolvingMethod.RESOLVE_CFR, resolvingIterations);
 
             stratCFR_copy = exp.cloneBehavStrategy(stratRoot);
 

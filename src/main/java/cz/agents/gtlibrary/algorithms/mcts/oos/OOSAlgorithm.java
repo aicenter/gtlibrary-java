@@ -73,6 +73,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
     private static long totalIterCalls = 0;
     public int[][] gadgetActionChoices;
+    public int iters;
 
 
     public static void main(String[] args) {
@@ -201,7 +202,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     @Override
     public Action runMiliseconds(int miliseconds) {
         if (giveUp) return null;
-        int iters = 0;
+        iters = 0;
         int targISHits = 0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
@@ -267,6 +268,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
 //            if(i%1000000 == 0) System.err.println(i + "," + ((System.currentTimeMillis() - starttime) / 1000));
         }
+        this.iters = iterations;
         if (curIS == null || !curIS.getPlayer().equals(searchingPlayer)) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
 
@@ -535,9 +537,11 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 iteration(rootNode, 1, 1, 1, 1, 1, 1, rootNode.getAllPlayers()[1]);
                 i+=2;
             }
+            this.iters = i;
             return i;
         } else {
             runIterations(iterations);
+            this.iters = iterations;
             return iterations;
         }
     }

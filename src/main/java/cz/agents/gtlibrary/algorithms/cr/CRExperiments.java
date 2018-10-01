@@ -1007,7 +1007,7 @@ public class CRExperiments {
             updateCFRResolvingData(targetPS, mccrAlg.rootCfrData.reachProbs, mccrAlg.rootCfrData.historyExpValues);
 
             int iters = (int) Math.floor(Math.pow(10., 1 + loop / 10.)) - total;
-            mccrAlg.runStep(resolvingPlayer, targetPS.getAllNodes().iterator().next(), RESOLVE_CFR, total);
+            mccrAlg.runStep(resolvingPlayer, targetPS.getAllInformationSets().iterator().next(), RESOLVE_CFR, total);
             exp = calcExploitability(getBehavioralStrategy(mccrAlg.getRootNode()));
             System.out.println(iterationsInRoot+";"+total+";"+ exp.expl0+";"+exp.expl1+";"+exp.total());
 
@@ -1121,7 +1121,7 @@ public class CRExperiments {
 
         while (!q.isEmpty()) {
             PublicState ps = q.removeFirst();
-            InnerNode node = ps.getAllNodes().iterator().next();
+            MCTSInformationSet is = ps.getAllInformationSets().iterator().next();
 
             if (ps.equals(target2)) {
                 resolvingMethod = resolvingMethod2;
@@ -1132,7 +1132,7 @@ public class CRExperiments {
                 iterationsPerGadgetGame = iterationsLevel3;
                 rnd.setSeed(seed3);
             }
-            mccrAlg.runStep(resolvingPlayer, node, resolvingMethod, iterationsPerGadgetGame);
+            mccrAlg.runStep(resolvingPlayer, is, resolvingMethod, iterationsPerGadgetGame);
 
             behavMCCR = getBehavioralStrategy(rootNode);
             substituteStrategy(copyCFR, behavMCCR, ps);
