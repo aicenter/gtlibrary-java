@@ -96,6 +96,8 @@ public class SQFBestResponseAlgorithm {
 
     protected Double calculateEvaluation(Map<Player, Sequence> currentHistory, GameState gameState) {
         double utRes = 0;
+
+        /* ORIGINAL ZERO-SUM SETTING
         if (algConfig.getActualNonzeroUtilityValues(gameState) != null) {
             utRes = algConfig.getActualNonzeroUtilityValues(gameState);
         } else {
@@ -107,6 +109,11 @@ public class SQFBestResponseAlgorithm {
         if (searchingPlayerIndex == 1) {
             utRes *= -1; // a zero sum game
         }
+        */
+        // UPDATED TO GENERAL-SUM SETTING
+        utRes = gameState.getUtilities()[searchingPlayerIndex] * gameState.getNatureProbability();
+        if(algConfig.getActualNonzeroUtilityValues(gameState) == null) algConfig.setUtility(gameState, gameState.getUtilities()[0] * gameState.getNatureProbability());
+
         Double weight = getOpponentRealizationPlan().get(currentHistory.get(players[opponentPlayerIndex]));
         if (weight == null || weight == 0) {
             weight = 1d;
@@ -276,13 +283,17 @@ public class SQFBestResponseAlgorithm {
                 nonZeroORP = true;
             }
             if (algConfig.getActualNonzeroUtilityValues(gameState) != null) {
+                /* ZERO-SUM SETTING:
                 returnValue = algConfig.getActualNonzeroUtilityValues(gameState);
+                if (searchingPlayerIndex != 0) {
+                    returnValue *= -1;
+                } */
+                // GENERAL-SUM SETTING:
+                returnValue = gameState.getUtilities()[searchingPlayerIndex] * gameState.getNatureProbability();
                 if (nonZeroORP) {
                     returnValue *= currentOppRealizationPlan;
                 }
-                if (searchingPlayerIndex != 0) {
-                    returnValue *= -1;
-                }
+
             } else {
                 BROppSelection sel = new BROppSelection(lowerBound, nodeProbability, nonZeroORP);
                 List<Action> actionsToExplore = expander.getActions(gameState);
@@ -435,7 +446,7 @@ public class SQFBestResponseAlgorithm {
                 sortedMap.putAll(actionMap);
                 result.addAll(sortedMap.keySet());
             } else {
-                // sort according to the opponent realizaiton plan
+                // sort according to the opponent realization plan
                 Sequence currentSequence = state.getSequenceFor(players[opponentPlayerIndex]);
                 Map<Action, Double> sequenceMap = new FixedSizeMap<Action, Double>(actions.size());
                 for (Action a : actions) {

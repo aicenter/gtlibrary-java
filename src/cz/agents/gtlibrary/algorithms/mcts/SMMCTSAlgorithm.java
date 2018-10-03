@@ -30,6 +30,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMConjectureFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMSelector;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
@@ -63,6 +64,14 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
             this.rootNode = new InnerNode(expander, rootState);
         config = rootNode.getAlgConfig();
         threadBean = ManagementFactory.getThreadMXBean();
+    }
+
+    public String getFactoryInfo(){
+        if (fact instanceof SMConjectureFactory){
+            return ((SMConjectureFactory) fact).getFactoryInfo();
+        }
+        else
+            return fact.getClass().getSimpleName();
     }
 
     @Override
@@ -119,6 +128,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
             assert n.getInformationSet().getAllNodes().size() == 1;
             selector = (SMSelector) n.getInformationSet().getAlgorithmData();
             if (selector != null) {
+//                System.out.println(selector.getClass().getSimpleName() + " / " + n.getGameState().getPlayerToMove().getId());
                 selActionIdxs = selector.select();
                 selAction = n.getActions().get(selActionIdxs.getLeft());
                 InnerNode bottom = (InnerNode) n.getChildFor(selAction);
@@ -127,6 +137,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
             } else {
                 expandNode(n);
                 selector = (SMSelector) n.getInformationSet().getAlgorithmData();
+//                System.out.println(selector.getClass().getSimpleName() + " / " + n.getInformationSet().getPlayer().getId());
                 selActionIdxs = selector.select();
                 selAction = n.getActions().get(selActionIdxs.getLeft());
                 InnerNode bottom = (InnerNode) n.getChildFor(selAction);
@@ -138,7 +149,7 @@ public class SMMCTSAlgorithm implements GamePlayingAlgorithm {
         }
     }
 
-    private void expandNode(InnerNode n) {
+    protected void expandNode(InnerNode n) {
         InnerNode bottom = (InnerNode) n.getChildFor(n.getActions().get(0));
         SMSelector selector = fact.createSlector(n.getActions(), bottom.getActions());
         n.getInformationSet().setAlgorithmData(selector);

@@ -1,11 +1,12 @@
 package cz.agents.gtlibrary.domain.bpg;
 
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.AbstractObservationProvider;
 import cz.agents.gtlibrary.domain.bpg.data.GenSumBorderPatrollingGraph;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.utils.graph.Node;
 
-public class GenSumBPGGameState extends BPGGameState {
+public class GenSumBPGGameState extends BPGGameState implements AbstractObservationProvider {
 
     private double evaderPenalty;
     private double defenderPenalty;
@@ -84,5 +85,11 @@ public class GenSumBPGGameState extends BPGGameState {
     @Override
     public GameState copy() {
         return new GenSumBPGGameState(this);
+    }
+
+
+    @Override
+    public Object getAbstractObservation() {
+        return BPGGameInfo.dummyAttackerObservation;
     }
 }

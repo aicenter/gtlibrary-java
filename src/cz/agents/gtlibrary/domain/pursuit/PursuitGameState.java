@@ -56,6 +56,10 @@ public class PursuitGameState extends SimultaneousGameState {
         p1Position = graph.getP1Start();
         p2Position = graph.getP2Start();
         sequence = new ArrayList<>();
+        if(PursuitGameInfo.randomizeStartPositions){
+            System.out.println("Evader start: " + evaderPosition.getIntID() + ", P1 start: "
+                    + p1Position.getIntID() + ", P2 start: " + p2Position.getIntID());
+        }
     }
 
     public PursuitGameState(PursuitGameState gameState) {

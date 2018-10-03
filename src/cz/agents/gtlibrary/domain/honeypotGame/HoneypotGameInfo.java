@@ -19,26 +19,29 @@ public class HoneypotGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[]{DEFENDER, ATTACKER};//, NATURE};
     public static final int NO_ACTION_ID = -1;
 
-    public static int attacksAllowed = 1;
+    public static int attacksAllowed = 50;
     public static HoneypotGameNode[] allNodes;
-    public static final double[] NODE_REWARDS = new double[]{25, 35, 20, 30, 30};//, 4, 23, 12, 34, 45};
-    public static final double[] NODE_ATTACKERCOSTS = new double[]{10, 15, 10, 10, 15};//, 55, 25, 5, 15, 5};
-    public static final double[] NODE_DEFENDERCOSTS = new double[]{5, 5, 5, 5, 5};//, 35, 35, 35, 35, 35};
+    public static final double[] NODE_REWARDS = new double[]{15, 40, 35, 20, 35};//, 20};//, 30, 30};//, 4, 23, 12, 34, 45};
+    public static final double[] NODE_ATTACKERCOSTS = new double[]{5, 20, 10, 5, 15};//, 55, 25, 5, 15, 5};
+    public static final double[] NODE_DEFENDERCOSTS = new double[]{10, 20, 15, 15, 20};//, 35, 35, 35, 35, 35};
     public static double initialAttackerBudget =  0.0;
-    public static double initialDefenderBudget = 10.0;
+    public static double initialDefenderBudget = 20;//40.0;
     public static double minValue = Double.MAX_VALUE;
     public static double uniformAttackCost = initialAttackerBudget / attacksAllowed;
 
     public static final boolean USE_UNIFORM_COSTS = false;
     public static final boolean CAN_ATTACK_WITH_NEGATIVE_POINTS = true;
-    public static int NUMBER_OF_PASSES_TO_END_GAME = 1;
+    public static int NUMBER_OF_PASSES_TO_END_GAME = 2;
 
     private static boolean readInputFile = false;
     private static String inputFile  = "honeypot_deployed1.txt";
 
     public static final boolean ENABLE_ITERATIVE_SOLVING = true;
+    public static final boolean ENABLE_PASS = true;
 
     public static long seed = 11;
+
+    public static double maximumAttackUtility;
 
     public HoneypotGameInfo() {
         if (readInputFile) readFile();
@@ -63,6 +66,13 @@ public class HoneypotGameInfo implements GameInfo {
             }
         }
         Arrays.sort(allNodes, (a,b) -> -1 * Double.compare(a.reward, b.reward));
+
+        maximumAttackUtility = Double.NEGATIVE_INFINITY;
+        for(HoneypotGameNode node : allNodes){
+            if(node.reward - node.attackCost > maximumAttackUtility){
+                maximumAttackUtility = node.reward - node.attackCost;
+            }
+        }
     }
 
     private void readFile(){

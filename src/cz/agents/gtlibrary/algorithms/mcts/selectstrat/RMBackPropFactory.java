@@ -33,8 +33,8 @@ import java.util.Random;
  * @author vilo
  */
 public class RMBackPropFactory implements BackPropFactory  {
-    double gamma = 0.2;
-    Random random = new HighQualityRandom();
+    protected double gamma = 0.2;
+    public Random random = new HighQualityRandom();
 
     private double minUtility=-1;
     private double maxUtility=1;

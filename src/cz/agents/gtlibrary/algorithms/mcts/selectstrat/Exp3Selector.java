@@ -34,8 +34,8 @@ import java.util.List;
  * @author vilo
  */
 public class Exp3Selector implements Selector, AlgorithmData, MeanStrategyProvider, NbSamplesProvider {
-    private Exp3BackPropFactory fact;
-    private List<Action> actions;
+    protected Exp3BackPropFactory fact;
+    protected List<Action> actions;
     /** Current probability of playing this action. */
     public double[] p;
     /** Cumulative reward. */
@@ -75,6 +75,7 @@ public class Exp3Selector implements Selector, AlgorithmData, MeanStrategyProvid
     
     @Override
     public int select(){
+
         updateProb();
 
         double rand = fact.random.nextDouble();

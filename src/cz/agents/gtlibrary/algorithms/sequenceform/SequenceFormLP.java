@@ -164,8 +164,9 @@ public class SequenceFormLP implements FullSequenceFormLP {
             try {
                 double relPl = cplex.getValue(variables.get(sequence));
                 if (relPl < EPS) relPl = 0;
-                if (sequence.size() == 0)
+                if (sequence.size() == 0) {
                     relPl = 1;
+                }
                 solution.put(sequence, relPl);
             } catch (UnknownObjectException e) {
                 if (sequence.size() == 0)

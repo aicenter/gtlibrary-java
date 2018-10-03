@@ -44,6 +44,10 @@ public class SMDecoupledFactory implements SMBackPropFactory {
         this.useAverageForUpdates = useAverageForUpdates;
     }
 
+    public String getFactoryInfo(){
+        return fact.getClass().getSimpleName();
+    }
+
     @Override
     public SMSelector createSlector(List<Action> actions1, List<Action> actions2) {
         if (useAverageForUpdates)

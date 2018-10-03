@@ -90,6 +90,8 @@ public class SMConjuctureSelector implements SMSelector, MeanStrategyProvider{
                 max[i][j]=Math.abs(stats[i][j].getEV()-(wsum[i][j]/sumw[i][j]));
             }
         }
+        Pair<Integer, Integer> sel = select();
+        out.append("EV = " + stats[sel.getLeft()][sel.getRight()].getEV() + "\n");
         return out.toString();
     }
 

@@ -43,10 +43,14 @@ public class FlipItGameInfo implements GameInfo {
 //    public static final boolean CALCULATE_REWARDS = false;
 
     private static final boolean FULLY_RATIONAL_ATTACKER = true;
-    public static boolean ZERO_SUM_APPROX = true;
-    public static boolean ENABLE_PASS = false;
+    public static boolean ZERO_SUM_APPROX = !false;
+    public static boolean ENABLE_PASS = true;
 
-    public static final double INITIAL_POINTS = 50.0;
+    public static final double INITIAL_POINTS = 0.0;//50.0;
+
+    public static final int ALL_NODES_OWNING_PLAYER = 1;
+    public static final boolean GENERATE_NODES_UNIFORMLY = true;
+    public static final boolean REWARD_ALWAYS_HIGHER = true;
 
     public static final boolean RANDOM_TERMINATION = false;
     public static final double RANDOM_TERMINATION_PROBABILITY = 0.3;
@@ -129,8 +133,30 @@ public class FlipItGameInfo implements GameInfo {
             types[i] = new ExponentialGreedyType(typesPrior[i], typesDiscounts[i],i);
         }
         MAX_UTILITY = getMaxUtility();
+    }
 
+    public FlipItGameInfo(int depth, int numTypes, String graphFile, double[] typesPrior){
+        this.seed = seed;
+        this.depth = depth;
+        this.numTypes = numTypes;
+        this.graphFile = graphFile;
 
+        this.ZERO_SUM_APPROX = false;
+
+        graph = new FlipItGraph(graphFile);
+
+        Random rnd = new HighQualityRandom(seed);
+
+        typesDiscounts = new double[numTypes];
+        Arrays.fill(typesDiscounts, 1.0);
+
+        if (numTypes == 1 && FULLY_RATIONAL_ATTACKER) typesDiscounts[0] = 1.0;
+
+        types = new FollowerType[numTypes];
+        for(int i = 0; i < numTypes; i++) {
+            types[i] = new ExponentialGreedyType(typesPrior[i], typesDiscounts[i],i);
+        }
+        MAX_UTILITY = getMaxUtility();
     }
 
     public FlipItGameInfo(int depth, int numTypes, String graphFile){
@@ -224,7 +250,8 @@ public class FlipItGameInfo implements GameInfo {
         String info = "";
         info+= "Flip It Game : depth = " + depth + "; attacker types = "+getAttackerInfo() + "; graph = " +graphFile;
         info+= "; initial points = " + INITIAL_POINTS + "; info = "+gameVersion + "; zero-sum = "+ZERO_SUM_APPROX;
-        info+= "; pass = "+ENABLE_PASS;
+        info+= "; pass = "+ENABLE_PASS + "; nodes-owning player = " + ALL_PLAYERS[ALL_NODES_OWNING_PLAYER].getName();
+        info+= "; r>c = " + REWARD_ALWAYS_HIGHER + "; unigen = " + GENERATE_NODES_UNIFORMLY;
         info+= "\n" + graph.getInfo();
         return info;
     }

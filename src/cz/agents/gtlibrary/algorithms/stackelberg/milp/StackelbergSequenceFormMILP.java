@@ -22,6 +22,8 @@ package cz.agents.gtlibrary.algorithms.stackelberg.milp;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.EmptyFeasibilitySequenceFormLP;
+import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.PureRealPlanIterator;
 import cz.agents.gtlibrary.interfaces.*;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
@@ -46,6 +48,10 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
     protected ThreadMXBean threadBean;
 
 
+    public static boolean RESTRICT_TO_SMALL = false;
+    public static final boolean VERBOSE = false;
+
+
     public StackelbergSequenceFormMILP(Player[] players, Player leader, Player follower, GameInfo info, Expander<SequenceInformationSet> expander) {
         super(players, leader, follower);
         this.players = players;
@@ -67,6 +73,45 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
         objectiveForPlayers.put(player, v0);
     }
 
+    protected void restrictToSmall(StackelbergConfig algConfig, IloCplex cplex){
+        debugOutput.println("Restricting to small schemata");
+        PureRealPlanIterator iterator = algConfig.getIterator(follower, expander, new EmptyFeasibilitySequenceFormLP());
+        int idx = 0;
+        IloNumExpr sumbin = null;
+        try {
+            sumbin = cplex.constant(0);
+            while (true) {
+                Set<Sequence> pureRP = iterator.next();
+
+                // create new binary variable
+                IloNumVar b = cplex.numVar(0, 1, IloNumVarType.Int, "RPBin" + idx);
+                // add to global sum constraint
+                sumbin = cplex.sum(sumbin, b);
+
+                // create set constraint
+                IloNumExpr sumL = cplex.constant(0);
+                for(Sequence seq : pureRP) {
+                    sumL = cplex.sum(sumL, variables.get(seq));
+                }
+                cplex.addGe(cplex.diff(sumL, cplex.prod(pureRP.size(), b)), 0.0, "RPCon:" + idx);
+                idx++;
+//                if(idx==1) throw new NoSuchElementException();
+            }
+        }
+        catch (NoSuchElementException e) {
+            try {
+                // only one RP is selected
+                cplex.addEq(sumbin, 1.0, "RPBinCon");
+                System.out.println("# of RPS: "+idx);
+            } catch (IloException e1) {
+                e1.printStackTrace();
+            }
+
+        } catch (IloException e) {
+            e.printStackTrace();
+        }
+    }
+
     public double calculateLeaderStrategies(StackelbergConfig algConfig, Expander<SequenceInformationSet> expander) {
         double maxValue = Double.NEGATIVE_INFINITY;
         Set<Sequence> followerBR = new HashSet<Sequence>();
@@ -82,6 +127,12 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
             createConstraintsForStates(cplex, algConfig.getAllLeafs());
             createConstraintsForSequences(algConfig, cplex, algConfig.getSequencesFor(follower));
             setObjective(cplex, v0, algConfig);
+
+            if(RESTRICT_TO_SMALL){
+//                StackelbergConfig.USE_SCHEMATA = true;
+                restrictToSmall(algConfig, cplex);
+            }
+
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += threadBean.getCurrentThreadCpuTime() - startTime;
 
@@ -101,13 +152,16 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
 
                 maxValue = v;
 
-                for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
-                    try {
-                        debugOutput.println(ee.getKey().toString() + "=" + cplex.getValue(ee.getValue()));
-                    } catch (IloCplex.UnknownObjectException e) {
-                        continue;
+                if(VERBOSE) {
+                    for (Map.Entry<Object, IloNumVar> ee : variables.entrySet()) {
+                        try {
+                            double value = cplex.getValue(ee.getValue());
+                            if (value > 0.0)
+                                debugOutput.println(ee.getKey().toString() + "=" + value);
+                        } catch (IloCplex.UnknownObjectException e) {
+                            continue;
+                        }
                     }
-                }
 //                debugOutput.println("-------");
 //                for (Map.Entry<Object, IloNumVar> ee : slackVariables.entrySet()) {
 //                    try {
@@ -116,16 +170,17 @@ public class StackelbergSequenceFormMILP extends StackelbergSequenceFormLP {
 //                        continue;
 //                    }
 //                }
-                leaderResult = createSolution(algConfig, leader, cplex);
-                debugOutput.println("leader rp: ");
-                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
-                    if (entry.getValue() > 0)
-                        debugOutput.println(entry);
-                }
-                debugOutput.println("follower rp: ");
-                for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, cplex).entrySet()) {
-                    if (entry.getValue() > 0)
-                        debugOutput.println(entry);
+                    leaderResult = createSolution(algConfig, leader, cplex);
+                    debugOutput.println("leader rp: ");
+                    for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+                        if (entry.getValue() > 0)
+                            debugOutput.println(entry);
+                    }
+                    debugOutput.println("follower rp: ");
+                    for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, follower, cplex).entrySet()) {
+                        if (entry.getValue() > 0)
+                            debugOutput.println(entry);
+                    }
                 }
 //                debugOutput.println("Leaf probs");
 //                for (Map.Entry<Object, IloNumVar> entry : variables.entrySet()) {

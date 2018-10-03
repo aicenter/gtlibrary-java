@@ -23,10 +23,13 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
+
+import java.util.HashMap;
 import java.util.Random;
 
 public class ChanceNode extends InnerNode {
 	private Random random;
+	private HashMap<Action, Double> actionProbabilities;
 
 	public ChanceNode(InnerNode parent, GameState gameState, Action lastAction) {
 		this(parent, gameState, lastAction, new Random());
@@ -64,5 +67,15 @@ public class ChanceNode extends InnerNode {
 			}
 		}
 		return actions.get(actions.size() - 1);
+	}
+
+	public void setActionProbabilities(){
+		for (Action action : actions) {
+			actionProbabilities.put(action, gameState.getProbabilityOfNatureFor(action));
+		}
+	}
+
+	public double getProbabilityOfNatureFor(Action action){
+		return actionProbabilities.get(action);
 	}
 }

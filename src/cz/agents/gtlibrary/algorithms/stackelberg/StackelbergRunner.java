@@ -19,8 +19,11 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.stackelberg;
 
+import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.TieBreakingBestResponseAlgorithm;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.experiments.StrategyStrengthLargeExperiments;
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.LPTable;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.LeaderGenerationConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetSefceLP;
@@ -58,6 +61,9 @@ import cz.agents.gtlibrary.domain.simpleGeneralSum.SimpleGSState;
 import cz.agents.gtlibrary.domain.stacktest.StackTestExpander;
 import cz.agents.gtlibrary.domain.stacktest.StackTestGameInfo;
 import cz.agents.gtlibrary.domain.stacktest.StackTestGameState;
+import cz.agents.gtlibrary.domain.testGame.TestGameExpander;
+import cz.agents.gtlibrary.domain.testGame.TestGameInfo;
+import cz.agents.gtlibrary.domain.testGame.TestGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -78,11 +84,12 @@ import java.util.Map;
  */
 public class StackelbergRunner {
 
-    protected static int LEADER = 1;
+    protected static int LEADER = 0;
     protected final static int depth = 3;
+    public static boolean COUNT_PRUNED = true;
 
     public static void main(String[] args) {
-        runExtendedKuhn();
+//        runExtendedKuhn();
 //        runKuhn();
 //        runPoker();
 //        runGenSumRandom();
@@ -94,9 +101,23 @@ public class StackelbergRunner {
 //        runStackTest();
 //        runBPG("", depth);
 //        runFlipIt(args);
-//        runFlipIt(new String[]{"F", "4", "3", "N", "G"});
+//        runFlipIt(new String[]{"F", "4", "2", "AP"});
 //        runPEGGadget();
 //        runGoofSpiel();
+        runTestGame();
+    }
+
+    public static void runTestGame() {
+
+        GameInfo gameInfo = new TestGameInfo();
+        GameState rootState = new TestGameState();
+        StackelbergConfig algConfig = new StackelbergConfig(rootState);
+        Expander<SequenceInformationSet> expander = new TestGameExpander(algConfig);
+        StackelbergRunner runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
+
+//        runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER], new StackelbergSequenceFormMILP(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[LEADER], rootState.getAllPlayers()[1-LEADER], gameInfo, expander));
+//
     }
 
     private static void runExtendedKuhn() {
@@ -147,7 +168,7 @@ public class StackelbergRunner {
 
 
         LEADER = 0;
-        if (args.length > 0) {
+        if (args.length > 4) {
             switch (args[4]) {
                 case "B":
                     runner.generate(rootState.getAllPlayers()[LEADER], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[LEADER], gameInfo));
@@ -166,7 +187,12 @@ public class StackelbergRunner {
                     break;
             }
         }
-//        Double MLP = runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander)).getLeft();
+        // Schema iterator setting
+        algConfig.USE_SCHEMATA = true;
+        algConfig.USE_FEASIBILITY_CUT = true;
+        algConfig.MAX_SCHEMA_SIZE = 2;//Integer.parseInt(args[1]);
+
+        Double MLP = runner.generate(rootState.getAllPlayers()[0], new StackelbergSequenceFormMultipleLPs(new Player[]{rootState.getAllPlayers()[0], rootState.getAllPlayers()[1]}, rootState.getAllPlayers()[0], rootState.getAllPlayers()[1], gameInfo, expander)).getLeft();
 //        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
 //        Double LP = runner.generate(rootState.getAllPlayers()[0], new SumForbiddingStackelbergLP(rootState.getAllPlayers()[0], gameInfo)).getLeft();
 //        runner = new StackelbergRunner(rootState, expander, gameInfo, algConfig);
@@ -394,6 +420,7 @@ public class StackelbergRunner {
 
     private PrintStream debugOutput = System.out;
     final private static boolean DEBUG = false;
+    final private static boolean COMPUTE_BR = true;
     private ThreadMXBean threadBean;
 
     private double gameValue = Double.NaN;
@@ -555,10 +582,6 @@ public class StackelbergRunner {
         System.out.println("final RGB time: " + 0);
         System.out.println("final StrategyGenerating time: " + overallSequenceGeneration);
         System.out.println("final IS count: " + algConfig.getAllInformationSets().size());
-        if (solver instanceof StackelbergSequenceFormMultipleLPs) {
-            System.out.println("Computing rp count");
-            System.out.println("pruned rp count: " + ((StackelbergSequenceFormMultipleLPs) solver).prunnedRPCountWhileBuilding(algConfig));
-        }
 
         if (solver instanceof SumForbiddingStackelbergLP) {
             System.out.println("LP invocations: " + ((SumForbiddingStackelbergLP)solver).getLPInvocationCount());
@@ -580,6 +603,50 @@ public class StackelbergRunner {
 
             algConfig.validateGameStructure(rootState, expander);
         }
+
+        LEADER = leader.getId();
+
+        if(COMPUTE_BR &&
+                realizationPlans.containsKey(actingPlayers[LEADER]) &&
+                realizationPlans.get(actingPlayers[LEADER]) != null){
+//            SQFBestResponseAlgorithm brAlg = new SQFBestResponseAlgorithm(expander, 0, actingPlayers, algConfig, gameConfig);
+//            System.out.println("BR: " + brAlg.calculateBR(rootState, realizationPlans.get(actingPlayers[1])));
+            StrategyStrengthLargeExperiments s = new StrategyStrengthLargeExperiments();
+//            double[] euu = s.computeExpectedValue(realizationPlans.get(actingPlayers[0]), realizationPlans.get(actingPlayers[1]), rootState, expander);
+//            System.out.println(euu[LEADER] + "\t " + euu[1-LEADER]);
+//            for(Sequence seq : realizationPlans.get(actingPlayers[1-LEADER]).keySet())
+//                System.out.println(seq);
+//            System.out.println("...............................................................");
+
+//            SQFBestResponseAlgorithm brAlg2 = new SQFBestResponseAlgorithm(expander, 1, actingPlayers, algConfig, gameConfig);
+//            System.out.println(LEADER);
+            TieBreakingBestResponseAlgorithm brAlg2 = new TieBreakingBestResponseAlgorithm(expander, 1-LEADER, actingPlayers, algConfig, gameConfig);
+            brAlg2.calculateBR(rootState, realizationPlans.get(actingPlayers[LEADER]));
+            double[] eu = null;
+            if(LEADER == 0)
+                eu = s.computeExpectedValue(realizationPlans.get(actingPlayers[LEADER]), brAlg2.getBRStategy(), rootState, expander);
+            else
+                eu = s.computeExpectedValue(brAlg2.getBRStategy(), realizationPlans.get(actingPlayers[LEADER]), rootState, expander);
+
+//            System.out.println(eu[0] + "\t " + eu[1]);
+//            eu = s.computeExpectedValue(realizationPlans.get(actingPlayers[LEADER]), realizationPlans, rootState, expander);
+//            System.out.println(eu[0] + "\t " + eu[1]);
+            if(solver instanceof StackelbergSequenceFormMultipleLPs)
+                System.out.println(gameValue + " "
+                        + eu[LEADER] + " "
+                        + ((StackelbergSequenceFormMultipleLPs) solver).getTotalRPCount() + " "
+                        + ((StackelbergSequenceFormMultipleLPs) solver).getSkippedRPCount());
+        }
+
+        if (solver instanceof StackelbergSequenceFormMultipleLPs) {
+//            System.out.println("Computing rp count");
+            if(COUNT_PRUNED)
+                System.out.println("pruned rp count: " + ((StackelbergSequenceFormMultipleLPs) solver).prunnedRPCountWhileBuilding(algConfig));
+            else{
+                System.out.println("pruned rp count: X ");
+            }
+        }
+
         return new Pair<>(gameValue,realizationPlans);
     }
 
@@ -614,4 +681,6 @@ public class StackelbergRunner {
     public long getFinalTime() {
         return finalTime;
     }
+
+
 }

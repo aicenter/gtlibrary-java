@@ -49,7 +49,8 @@ public class HoneypotExpander<I extends InformationSet> extends ExpanderImpl<I> 
         }
 
         // attacker can also pass -> then the game ends
-        actions.add(new HoneypotAction(new HoneypotGameNode(HoneypotGameInfo.NO_ACTION_ID, 0, 0, 0), getAlgorithmConfig().getInformationSetFor(gameState), gameState.getPlayerToMove()));
+        if (HoneypotGameInfo.ENABLE_PASS)
+            actions.add(new HoneypotAction(new HoneypotGameNode(HoneypotGameInfo.NO_ACTION_ID, 0, 0, 0), getAlgorithmConfig().getInformationSetFor(gameState), gameState.getPlayerToMove()));
 
         return actions;
     }

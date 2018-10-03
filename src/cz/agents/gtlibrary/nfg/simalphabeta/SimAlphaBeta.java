@@ -259,7 +259,7 @@ public class SimAlphaBeta {
 //        System.out.println("P2 strategy: " + oracle.getStrategyFor(rootState.getAllPlayers()[1]));
 //        gameValue = oracle.getGameValue();
 
-        SimAlphaBetaResult result;// = new SimAlphaBetaResult(getStrategy(player, player.getId() == 0? p2AlphaBeta : p1AlphaBeta, oracle), oracle.getCache(), (player.getId() == 0?1:-1)*getGameValue(oracle, p1ABBound, p2ABBound));
+        SimAlphaBetaResult result;// = new SimAlphaBetaResult(getStrategyOfPlayerIdx(player, player.getId() == 0? p2AlphaBeta : p1AlphaBeta, oracle), oracle.getCache(), (player.getId() == 0?1:-1)*getGameValue(oracle, p1ABBound, p2ABBound));
 //        System.out.println(rootState.getSequenceFor(player));
 //        System.out.println(rootState.getSequenceFor(gameInfo.getOpponent(player)));
 //        for (ActionPureStrategy strategy : result.strategy.getPureStrategies())

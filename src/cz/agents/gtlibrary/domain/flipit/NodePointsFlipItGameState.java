@@ -149,7 +149,8 @@ public class NodePointsFlipItGameState extends SimultaneousGameState {
 //        attackerControlledNodes = new HashSet<Node>();
 //        attackerPossiblyControlledNodes = new HashSet<Node>();
         defenderControlledNodes = new boolean[FlipItGameInfo.graph.getAllNodes().size()];
-        Arrays.fill(defenderControlledNodes, true);
+        Arrays.fill(defenderControlledNodes, FlipItGameInfo.ALL_NODES_OWNING_PLAYER == 0 ? true : false);
+
         attackerPossiblyControlledNodes = new boolean[FlipItGameInfo.graph.getAllNodes().size()];
 //        defenderObservations = new ArrayList<>();
 //        attackerObservations = new ArrayList<>();

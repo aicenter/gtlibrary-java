@@ -49,17 +49,27 @@ public class PursuitGraph extends Graph {
         if (PursuitGameInfo.randomizeStartPositions) {
             Random random = new HighQualityRandom(PursuitGameInfo.seed);
 
+            if(PursuitGameInfo.fixSecondPursuer) {
+                p2Start = getAllNodes().get("ID" + (getAllNodes().size() - 1));
+                System.out.println("Placed second pursuer at node: "+p2Start.getIntID());
+            }
+
             while (p1Start == null || p2Start == null) {
                 int nodeCount = getAllNodes().size();
                 double correctDistance = Math.floor(2 / 3. * PursuitGameInfo.depth);
                 List<Node> nodes = new ArrayList<>(getAllNodes().values());
 
-                evaderStart = getAllNodes().get("ID" + random.nextInt(nodeCount));
+                if(PursuitGameInfo.fixSecondPursuer)
+                    evaderStart = getAllNodes().get("ID" + random.nextInt(nodeCount-1));
+                else {
+                    evaderStart = getAllNodes().get("ID" + random.nextInt(nodeCount));
+                }
                 Collections.shuffle(nodes, random);
                 for (Node node : nodes) {
                     if (distanceMatrix[evaderStart.getIntID()][node.getIntID()] <= correctDistance)
                         if (p1Start == null) {
                             p1Start = node;
+                            if(PursuitGameInfo.fixSecondPursuer) break;
                         } else {
                             p2Start = node;
                             break;

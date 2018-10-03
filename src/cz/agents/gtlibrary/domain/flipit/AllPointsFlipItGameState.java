@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.domain.flipit;
 
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.AbstractObservationProvider;
 import cz.agents.gtlibrary.algorithms.flipit.iskeys.FlipItPerfectRecallISKey;
 import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.Action;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 /**
  * Created by Jakub Cerny on 29/06/2017.
  */
-public class AllPointsFlipItGameState extends NoInfoFlipItGameState {
+public class AllPointsFlipItGameState extends NoInfoFlipItGameState implements AbstractObservationProvider {
 
     int hash = 0;
 
@@ -96,6 +97,26 @@ public class AllPointsFlipItGameState extends NoInfoFlipItGameState {
             return new PerfectRecallISKey(0, new ArrayListSequenceImpl(history.getSequenceOf(getPlayerToMove())));
 
         }
+    }
+
+
+    public Object getAbstractObservation(){
+        double temp = 0;
+        switch (currentPlayerIndex) {
+            case 0:
+                temp = defenderReward;
+                temp -= getSequenceForPlayerToMove().size() > 0 ?
+                        ((AllPointsFlipItGameState)getSequenceForPlayerToMove().getLast()
+                                .getInformationSet().getAllStates().iterator().next()).defenderReward : 0;
+                break;
+            case 1:
+                temp = attackerPoints;
+                temp -= getSequenceForPlayerToMove().size() > 0 ?
+                        ((AllPointsFlipItGameState)getSequenceForPlayerToMove().getLast()
+                                .getInformationSet().getAllStates().iterator().next()).attackerPoints : 0;
+                break;
+        }
+        return Double.doubleToLongBits(Math.abs(temp));
     }
 
 

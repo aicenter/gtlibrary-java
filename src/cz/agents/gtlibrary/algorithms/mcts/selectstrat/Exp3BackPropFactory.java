@@ -41,7 +41,7 @@ public class Exp3BackPropFactory implements BackPropFactory  {
     public boolean useCFRValues = false;
     public boolean storeExploration = false;
     public boolean useExp3L = false;
-    Random random;
+    public Random random;
     /** Each player's contribution to the probability of being in current IS. */
     double[] pi = new double[]{1,1,1};
     ArrayDeque<Double> pis = new ArrayDeque<Double>();

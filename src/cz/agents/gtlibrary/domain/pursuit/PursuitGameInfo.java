@@ -24,12 +24,25 @@ public class PursuitGameInfo implements GameInfo {
     public static double patrollerMoveCost = 0.5/depth;//0 for zero sum game
 	public static boolean forceMoves = true;
     public static boolean randomizeStartPositions = false;
+	public static boolean fixSecondPursuer = false;
 
 	public static int visibility = 1;
 
 	public static final boolean SCALE_UTILITIES = true;
 	public static final double SCALING_FACTOR = 10;
 	public static final int ROUNDING = 2;
+
+	public static final Integer SAME  = 0;
+	public static final Integer UP    = 1;
+	public static final Integer DOWN  = 2;
+	public static final Integer LEFT  = 3;
+	public static final Integer RIGHT = 4;
+	public static final Integer LR 	  = 5;
+	public static final Integer LU 	  = 6;
+	public static final Integer LD 	  = 7;
+	public static final Integer RU 	  = 8;
+	public static final Integer RD 	  = 9;
+	public static final Integer UD 	  = 10;
 
 	public static void initValue(boolean randomizeStartPositions, long seed, int depth){
 		PursuitGameInfo.randomizeStartPositions = randomizeStartPositions;
@@ -43,7 +56,16 @@ public class PursuitGameInfo implements GameInfo {
 		PursuitGameInfo.seed = seed;
 		PursuitGameInfo.depth = depth;
 		PursuitGameInfo.graphFile = "grid_"+gridSize+".txt";
-		patrollerMoveCost = 0.5/depth;
+		PursuitGameInfo.patrollerMoveCost = 0.5/depth;
+	}
+
+	public static void initValue(boolean randomizeStartPositions, long seed, int depth, String gridSize, boolean fixSecondPursuer){
+		PursuitGameInfo.randomizeStartPositions = randomizeStartPositions;
+		PursuitGameInfo.seed = seed;
+		PursuitGameInfo.depth = depth;
+		PursuitGameInfo.graphFile = "grid_"+gridSize+".txt";
+		PursuitGameInfo.patrollerMoveCost = 0.5/depth;
+		PursuitGameInfo.fixSecondPursuer = fixSecondPursuer;
 	}
 
 
@@ -64,7 +86,12 @@ public class PursuitGameInfo implements GameInfo {
 
 	@Override
 	public String getInfo() {
-		return "Pursuit, Evader start: " + evaderStart + ", P1 start: " + p1Start + ", P2 start: " + p2Start + ", depth: " + depth + ", graph: " + graphFile;
+		if(!randomizeStartPositions) {
+			return "Pursuit, Evader start: " + evaderStart + ", P1 start: " + p1Start + ", P2 start: " + p2Start + ", depth: " + depth + ", graph: " + graphFile;
+		}
+		else{
+			return "Pursuit, positions randomized, depth: " + depth + ", graph: " + graphFile;
+		}
 	}
 
 	@Override

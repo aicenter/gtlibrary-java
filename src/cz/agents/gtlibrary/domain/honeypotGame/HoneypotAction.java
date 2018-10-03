@@ -1,15 +1,15 @@
 package cz.agents.gtlibrary.domain.honeypotGame;
 
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.AbstractActionProvider;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * Created by Petr Tomasek on 29.4.2017.
  */
-public class HoneypotAction extends ActionImpl {
+public class HoneypotAction extends ActionImpl implements AbstractActionProvider {
     HoneypotGameNode node;
     private Player player;
 
@@ -62,5 +62,28 @@ public class HoneypotAction extends ActionImpl {
 //        return "node " + node.getID();
         return "("+node+")";
 //        return player + " - " + node;
+    }
+
+
+    protected Integer dummySituationAbstraction = 0;
+
+    @Override
+    public Object getSituationAbstraction() {
+        return dummySituationAbstraction;
+    }
+
+    @Override
+    public Object getActionAbstraction() {
+        return node;
+    }
+
+    @Override
+    public double getMaximumActionUtility() {
+        return HoneypotGameInfo.maximumAttackUtility;
+    }
+
+    @Override
+    public double[] getAllPossibleOutcomes() {
+        return node.getPossibleOutcomes();
     }
 }

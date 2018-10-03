@@ -21,11 +21,14 @@ package cz.agents.gtlibrary.algorithms.stackelberg.multiplelps;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.TieBreakingBestResponseAlgorithm;
+import cz.agents.gtlibrary.algorithms.sequenceform.gensum.experiments.StrategyStrengthLargeExperiments;
 import cz.agents.gtlibrary.algorithms.stackelberg.GeneralSumBestResponse;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergSequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.NoCutDepthPureRealPlanIterator;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.PureRealPlanIterator;
+import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.siterator.SmallSchemaCheckingIterator;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.NoMissingSeqStrategy;
@@ -50,6 +53,12 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
     protected int totalRPCount;
     protected int feasibilityCuts;
     private int evaluatedLPCount;
+    protected int skippedRPCount;
+
+    protected double minEU;
+    protected double maxEU;
+
+    public boolean CHECK_FEASIBILITY = false;
 
 
     public StackelbergSequenceFormMultipleLPs(Player[] players, Player leader, Player follower, GameInfo info, Expander<SequenceInformationSet> expander) {
@@ -59,6 +68,10 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
         this.info = info;
         this.expander = expander;
         mxBean = ManagementFactory.getThreadMXBean();
+        skippedRPCount = 0;
+
+        maxEU = Double.NEGATIVE_INFINITY;
+        minEU = Double.POSITIVE_INFINITY;
     }
 
 
@@ -83,6 +96,13 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
         FeasibilitySequenceFormLP feasibilitySolver = new FeasibilitySequenceFormLP(leader, follower, algConfig, informationSets, sequences);
         Set<Sequence> followerBR = new HashSet<>();
         Map<Sequence, Double> leaderResult = new HashMap<>();
+        PureRealPlanIterator iterator = null;
+
+        long rpFindingTime = 0;
+        long setSlackTime = 0;
+        long printingStatsTime = 0;
+        long settingObjectiveBVConstraintsTime = 0;
+        long startRPFinding;
 
         totalRPCount = 0;
         try {
@@ -96,11 +116,14 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
             debugOutput.println("phase 1 done");
             overallConstraintGenerationTime += mxBean.getCurrentThreadCpuTime() - startTime;
 
-            PureRealPlanIterator iterator = algConfig.getIterator(follower, expander, feasibilitySolver);
+            iterator = algConfig.getIterator(follower, expander, feasibilitySolver);
 
             while (true) {
+                startTime = mxBean.getCurrentThreadCpuTime();
+//                debugOutput.print("Getting next pureRP...");
                 Set<Sequence> pureRP = iterator.next();
-//                debugOutput.println(iteration);
+//                debugOutput.println("done");
+                rpFindingTime += mxBean.getCurrentThreadCpuTime() - startTime;
 
 //                debugOutput.println("---");
 //                for (Sequence sequence : pureRP) {
@@ -112,10 +135,16 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
                     break;
                 }
                 iteration++;
-                if (feasibilitySolver.checkFeasibilityFor(pureRP, maxValue)) {
+                if (!CHECK_FEASIBILITY || feasibilitySolver.checkFeasibilityFor(pureRP, maxValue)) {
+                    startTime = mxBean.getCurrentThreadCpuTime();
                     setValueForBRSlack(cplex, pureRP, 0);
+                    setSlackTime += mxBean.getCurrentThreadCpuTime() - startTime;
+
+                    startTime = mxBean.getCurrentThreadCpuTime();
                     updateObjective(cplex, v0, pureRP, algConfig);
                     addBestValueConstraint(cplex, v0, maxValue + 1e-5);
+                    settingObjectiveBVConstraintsTime += mxBean.getCurrentThreadCpuTime() - startTime;
+
 //                  cplex.exportModel("stck-" + leader + ".lp"); // uncomment for model export
                     startTime = mxBean.getCurrentThreadCpuTime();
 //                  debugOutput.println("Solving");
@@ -126,23 +155,43 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
                     if (cplex.getStatus() == IloCplex.Status.Optimal) {
                         double v = cplex.getValue(v0);
 
+                        if(v < minEU){
+                            minEU = v;
+                        }
+                        if(v > maxEU){
+                            maxEU = v;
+                        }
+
                         evaluatedLPCount++;
-                        System.out.println(iteration);
+//                        System.out.println(iteration);
                         debugOutput.println("Best reward is " + v + " for follower strategy: ");
-                        for (Sequence sequence : pureRP) {
-                            debugOutput.println(sequence);
-                        }
-                        debugOutput.println("Leader's strategy: ");
-                        for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
-                            if (entry.getValue() > 0)
-                                debugOutput.println(entry);
-                        }
+//                        for (Sequence sequence : pureRP) {
+//                            debugOutput.println(sequence);
+//                        }
+//                        debugOutput.println("Leader's strategy: ");
+//                        for (Map.Entry<Sequence, Double> entry : createSolution(algConfig, leader, cplex).entrySet()) {
+//                            if (entry.getValue() > 0)
+//                                debugOutput.println(entry);
+//                        }
                         if (v > maxValue) {
                             maxValue = v;
                             iterator.setBestValue(maxValue);
                             resultStrategies.put(leader, createSolution(algConfig, leader, cplex));
                             followerBR = pureRP;
                             leaderResult = createSolution(algConfig, leader, cplex);
+
+                            TieBreakingBestResponseAlgorithm brAlg2 = new TieBreakingBestResponseAlgorithm(expander, 1-leader.getId(), players, algConfig, info);
+                            brAlg2.calculateBR(algConfig.getRootState(), leaderResult);
+                            double[] eu;// = null;
+                            if(leader.getId() == 0) {
+                                eu = StrategyStrengthLargeExperiments.computeExpectedValue(leaderResult, brAlg2.getBRStategy(), algConfig.getRootState(), expander);
+                            }
+                            else{
+                                eu = StrategyStrengthLargeExperiments.computeExpectedValue(brAlg2.getBRStategy(), leaderResult, algConfig.getRootState(), expander);
+                            }
+
+                            System.out.println(maxValue + " " + eu[leader.getId()] + " " + totalRPCount + " " + skippedRPCount);
+                            System.out.println("pruned rp count: X ");
                         }
                     } else {
                         feasibilityCut++;
@@ -150,7 +199,9 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
                 } else {
                     feasibilityCutWithoutObjective++;
                 }
+                startTime = mxBean.getCurrentThreadCpuTime();
                 setValueForBRSlack(cplex, pureRP, 1);
+                setSlackTime += mxBean.getCurrentThreadCpuTime() - startTime;
 
             }
         } catch (IloException e) {
@@ -158,18 +209,30 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
         } catch (NoSuchElementException e) {
 
         }
+        if(iterator instanceof SmallSchemaCheckingIterator)
+            skippedRPCount = ((SmallSchemaCheckingIterator) iterator).getSkipped();
         resultStrategies.put(leader, leaderResult);
+//        resultStrategies.put(follower, followerBR);
         resultValues.put(leader, maxValue);
         System.out.println("final result with reward " + maxValue + ": ");
-        for (Map.Entry<Sequence, Double> entry : leaderResult.entrySet()) {
-            if (entry.getValue() > 0)
-                System.out.println(entry);
-        }
+//        for (Map.Entry<Sequence, Double> entry : leaderResult.entrySet()) {
+//            if (entry.getValue() > 0)
+//                System.out.println(entry);
+//        }
+        HashMap<Sequence, Double> followerStrategy = new HashMap<>();
+        for(Sequence seq : followerBR) followerStrategy.put(seq, 1.0);
+        resultStrategies.put(follower, followerStrategy);
         System.out.println("Upper bound cuts: " + upperBoundCut);
         System.out.println("Feasibility cuts: " + feasibilityCut);
         System.out.println("Total RP count: " + totalRPCount);
+        if(iterator instanceof SmallSchemaCheckingIterator) System.out.println("Skipped RP count: " + ((SmallSchemaCheckingIterator) iterator).getSkipped());
         System.out.println("Feasibility cut without obj: " + feasibilityCutWithoutObjective);
         System.out.println("Feasibility time: " + feasibilitySolver.getCplexSolvingTime() / 1000000l);
+        System.out.println("Max leader's EU: " + maxEU);
+        System.out.println("Min leader's EU: " + minEU);
+        System.out.println("RP finding time: " + rpFindingTime / 1000000l);
+        System.out.println("Slack setting time: " + setSlackTime / 1000000l);
+        System.out.println("Setting objective and best-value time: " + settingObjectiveBVConstraintsTime / 1000000l);
         feasibilityCuts = feasibilityCut + feasibilityCutWithoutObjective;
         return maxValue;
     }
@@ -396,6 +459,8 @@ public class StackelbergSequenceFormMultipleLPs extends StackelbergSequenceFormL
     public int getTotalRPCount() {
         return totalRPCount;
     }
+
+    public int getSkippedRPCount() { return skippedRPCount; }
 
     public int getFeasibilityCuts() {
         return feasibilityCuts;

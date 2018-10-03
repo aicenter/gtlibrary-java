@@ -33,12 +33,27 @@ public class BPGGameInfo implements GameInfo {
 	public static int DEPTH = 3;
 	public static boolean SLOW_MOVES = true;
 	public static String graphFile = /*"GridW3-fully-connected.txt";*/"GridW3-almost-connected.txt";//*/"GridW3.txt";
-    public static double EVADER_MOVE_COST = 0.5/(2*DEPTH);
+    public static double EVADER_MOVE_COST = 0.4/(2*DEPTH);
     public static double DEFENDER_MOVE_COST = 0.5/(2*DEPTH);
 
 	public static final boolean SCALE_UTILITIES = false;
 	public static final double SCALING_FACTOR = 100;
 	public static final int ROUNDING = 2;
+
+	public static final Boolean dummyAttackerObservation = false;
+	public static final Boolean dummyAttackerSituation = true;
+	public static final Integer SAME  = 0;
+	public static final Integer UP    = 1;
+	public static final Integer DOWN  = 2;
+	public static final Integer LEFT  = 3;
+	public static final Integer RIGHT = 4;
+	public static final Integer LL    = 5;
+
+	public static final Integer UP_S    = 6;
+	public static final Integer DOWN_S  = 7;
+	public static final Integer LEFT_S  = 8;
+	public static final Integer RIGHT_S = 9;
+	public static final Integer LL_S    = 10;
 
 	@Override
 	public double getMaxUtility() {

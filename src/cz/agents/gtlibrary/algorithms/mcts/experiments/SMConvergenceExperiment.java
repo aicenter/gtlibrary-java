@@ -23,6 +23,10 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.mcts.experiments;
 
+import cz.agents.gtlibrary.algorithms.mcts.behavioral.DepthLimitedSMMCTSAlgorithm;
+import cz.agents.gtlibrary.algorithms.mcts.behavioral.Exp3TSBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.behavioral.RMTSBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.behavioral.ThompsonSamplingSimulator;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.SMMCTSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
@@ -51,6 +55,9 @@ import cz.agents.gtlibrary.domain.antiMCTS.AntiMCTSState;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.honeypotSMGame.HoneypotGameState;
+import cz.agents.gtlibrary.domain.honeypotSMGame.HoneypotExpander;
+import cz.agents.gtlibrary.domain.honeypotSMGame.HoneypotGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
@@ -163,6 +170,13 @@ public class SMConvergenceExperiment {
         gameInfo = new OZGameInfo();
         rootState = new OshiZumoGameState();
         expander = new OshiZumoExpander<>(new MCTSConfig());
+    }
+
+    public static void setupHoneyPot(){
+        gameInfo = new HoneypotGameInfo();
+        rootState = new HoneypotGameState();
+        expander = new HoneypotExpander<MCTSInformationSet>(new MCTSConfig());
+//        (new GambitEFG()).write("hpSM.efg", rootState, expander);
     }
     
     public static void buildCompleteTree(InnerNode r){
@@ -334,13 +348,15 @@ public class SMConvergenceExperiment {
 
         assert algorithm.equals("Exp3") || !keepExploration;
         
-        SMMCTSAlgorithm alg = new SMMCTSAlgorithm(
+        SMMCTSAlgorithm alg = new DepthLimitedSMMCTSAlgorithm(
                     rootState.getAllPlayers()[0],
-                    new DefaultSimulator(expander),
+                    new ThompsonSamplingSimulator(expander, 1, rootState.getAllPlayers()[0]), //new DefaultSimulator(expander),
                     //new SMConjectureFactory(gamma),
-                    algorithm.equals("Exp3") ? new SMConjectureFactory(new Exp3BackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma, keepExploration), propagateMeans) 
-                            : new SMConjectureFactory(new RMBackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma), propagateMeans),
-                    rootState, expander);
+                    algorithm.equals("Exp3") ? new SMConjectureFactory(new Exp3TSBackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma, keepExploration, rootState.getAllPlayers()[0]), propagateMeans)
+                            : new SMConjectureFactory(new RMTSBackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma, rootState.getAllPlayers()[0]), propagateMeans),
+                    rootState, expander, maxDepth);
+
+        System.out.println("Using factory = " + alg.getFactoryInfo());
 
         assert !buildCompleteTree;
         
@@ -355,7 +371,7 @@ public class SMConvergenceExperiment {
         
         
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
-        int its = 1000;
+        int its = 1000000;
         int totalIts = 0;
         double totalTime=0;
         
@@ -365,23 +381,28 @@ public class SMConvergenceExperiment {
             alg.runIterations(its);
             totalTime += (threadBean.getCurrentThreadCpuTime() - start)/1e6;
             totalIts+=its;
-            
+
+            /*
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
             p1brs.append(brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0)) + " ");
             p0brs.append(brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1)) + " ");
             times.append(totalTime + " ");
+            */
             if (alg.getRootNode().getGameState().isPlayerToMoveNature())
                 System.out.println(((InnerNode)alg.getRootNode().getChildren().values().iterator().next()).getInformationSet().getAlgorithmData().toString());
-            else 
+            else {
+                System.out.println("Iteration = " + totalIts);
+//                System.out.println(alg.getRootNode().getInformationSet().getAlgorithmData().getClass().getSimpleName());
                 System.out.println(alg.getRootNode().getInformationSet().getAlgorithmData().toString());
+            }
             System.out.flush();
             
 
             //System.out.println("Strat: " + strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
             //System.out.println("BR: " + brAlg.getFullBRSequences());
-            its *= 1.2;
+            //its *= 1.2;
         }
         System.out.println();
         System.out.println("P0BRs: " + p0brs.toString());
@@ -396,7 +417,7 @@ public class SMConvergenceExperiment {
     //arguments: Anti[EL]D/GSX/RNDYYY OOS6/Exp3[MV][RK]2 100000
     
     private static int runs=50;
-    private static int iterations = (int) 1e6;
+    private static int iterations = (int) 1e12;
     private static String algorithm = "Exp3";
     private static boolean keepExploration = false;
     private static boolean propagateMeans = false;
@@ -456,9 +477,37 @@ public class SMConvergenceExperiment {
             
         }
     }
+
+    protected static int maxDepth;
+
+    public static void runHoneypot(String[] args){
+        int depth = 50;
+        algorithm = "RM";
+        maxDepth = 50;
+        if(args.length > 0) {
+            algorithm = args[0];//"RM";//"Exp3";
+        }
+        if(args.length > 1)
+            depth = Integer.parseInt(args[1]);
+        if(args.length > 2)
+            maxDepth = Integer.parseInt(args[2]);
+        gamma = 0.01;
+        setupHoneyPot();
+        HoneypotGameInfo.attacksAllowed = depth;
+
+        System.out.println(gameInfo.getInfo());
+        System.out.println("Algorithm = " + algorithm);
+        System.out.println("Cutting depth = " + maxDepth);
+        try {
+            runSMMCTS_Decoupled();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     
     public static void main(String[] args) throws Exception {
-        batchMain(args);
+        runHoneypot(args);
+//        batchMain(args);
         //setupGoofSpiel(3);
         //setupOshiZumo(8, 2);
         //setupRnd(6);

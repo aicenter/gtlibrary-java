@@ -19,13 +19,15 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.stackelberg;
 
-import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.GenSumSequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.FeasibilitySequenceFormLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.DepthPureRealPlanIterator;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.NoCutDepthPureRealPlanIterator;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator.PureRealPlanIterator;
+import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.siterator.RandomlySamplingIterator;
+import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.siterator.SmallSchemaCheckingIterator;
+import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.siterator.SmallSchemaGeneratingIterator;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -45,6 +47,13 @@ public class StackelbergConfig extends GenSumSequenceFormConfig {
 
     public static boolean USE_FEASIBILITY_CUT = false;
     public static boolean USE_UPPERBOUND_CUT = true;
+    public static boolean USE_SCHEMATA = false;
+    public static boolean GENERATE_SCHEMATA = false;
+    public static boolean USE_RANDOM = false;
+    public static int MAX_SCHEMA_SIZE = 4;
+
+    public static int MAX_RPS = 500;
+    public static double RPS_PROB = MAX_RPS/140000.00;
 
     protected Set<GameState> allLeafs = new HashSet<>();
     private GameState rootState;
@@ -56,6 +65,12 @@ public class StackelbergConfig extends GenSumSequenceFormConfig {
 
     public PureRealPlanIterator getIterator(Player player, Expander<SequenceInformationSet> expander, FeasibilitySequenceFormLP solver) {
 //        return new WidthPureRealPlanIterator(player, this, expander, solver);
+        if(USE_RANDOM)
+            return new RandomlySamplingIterator(player, this, expander, solver, MAX_RPS, RPS_PROB);
+        if(USE_SCHEMATA)
+            return new SmallSchemaCheckingIterator(player, this, expander, solver, MAX_SCHEMA_SIZE);
+        if (GENERATE_SCHEMATA)
+            return new SmallSchemaGeneratingIterator(player, this, expander, solver, MAX_SCHEMA_SIZE);
         if (USE_UPPERBOUND_CUT)
             return new DepthPureRealPlanIterator(player, this, expander, solver);
         else

@@ -30,9 +30,9 @@ import java.util.Map;
 import java.util.Random;
 
 public class DefaultSimulator implements Simulator {
-    final private Random rnd;
-    final private Expander expander;
-    final private int simLenght;
+    final protected Random rnd;
+    final protected Expander expander;
+    final protected int simLenght;
 
     public DefaultSimulator(Expander expander) {
         this(Integer.MAX_VALUE, expander, new HighQualityRandom());
@@ -69,7 +69,7 @@ public class DefaultSimulator implements Simulator {
         return state.getUtilities();
     }
 
-    private Action getActionForNature(GameStateImpl state) {
+    protected Action getActionForNature(GameStateImpl state) {
         List<Action> actions = expander.getActions(new MCTSInformationSet(state));
         double move = rnd.nextDouble();
 
@@ -82,7 +82,7 @@ public class DefaultSimulator implements Simulator {
         return actions.get(actions.size() - 1);
     }
 
-    private Action getAction(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent) {
+    protected Action getAction(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent) {
         if (state.isPlayerToMoveNature())
             return getActionForNature(state);
         if (state.getPlayerToMove().equals(opponent))
@@ -90,13 +90,13 @@ public class DefaultSimulator implements Simulator {
         return getActionForRegularPlayer(state);
     }
 
-    private Action getActionForRegularPlayer(GameStateImpl state) {
+    protected Action getActionForRegularPlayer(GameStateImpl state) {
         List<Action> possibleActions = expander.getActions(new MCTSInformationSet(state));
 
         return possibleActions.get(rnd.nextInt(possibleActions.size()));
     }
 
-    private Action getActionForOpponent(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent) {
+    protected Action getActionForOpponent(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent) {
         List<Action> possibleActions = expander.getActions(new MCTSInformationSet(state));
         Double oppValueOfThisState = getValueOfThisState(state.getSequenceFor(opponent), opponentRealizationPlan);
         Map<Action, Double> contInRealPlan = getContinuationOfRP(state, possibleActions, opponentRealizationPlan, opponent);
@@ -107,13 +107,13 @@ public class DefaultSimulator implements Simulator {
         return getRandActionFromContInRealPlan(possibleActions, oppValueOfThisState, contInRealPlan);
     }
 
-    private Double getValueOfThisState(Sequence sequence, Map<Sequence, Double> opponentRealizationPlan) {
+    protected Double getValueOfThisState(Sequence sequence, Map<Sequence, Double> opponentRealizationPlan) {
         if (sequence.size() == 0)
             return 1d;
         return opponentRealizationPlan.get(sequence);
     }
 
-    private Action getRandActionFromContInRealPlan(List<Action> possibleActions, Double oppValueOfThisState, Map<Action, Double> contInRealPlan) {
+    protected Action getRandActionFromContInRealPlan(List<Action> possibleActions, Double oppValueOfThisState, Map<Action, Double> contInRealPlan) {
         double rndVal = rnd.nextDouble() * oppValueOfThisState;
 
         for (Action action : contInRealPlan.keySet()) {
@@ -134,7 +134,7 @@ public class DefaultSimulator implements Simulator {
         return state.getUtilities();
     }
 
-    private Map<Action, Double> getContinuationOfRP(GameStateImpl state, List<Action> possibleActions, Map<Sequence, Double> opponentRealizationPlan, Player opponent) {
+    protected Map<Action, Double> getContinuationOfRP(GameStateImpl state, List<Action> possibleActions, Map<Sequence, Double> opponentRealizationPlan, Player opponent) {
         Map<Action, Double> contInRealPlan = new HashMap<Action, Double>();
 
         for (Action action : possibleActions) {
@@ -146,7 +146,7 @@ public class DefaultSimulator implements Simulator {
         return contInRealPlan;
     }
 
-    private Double getContValFor(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent, Action action) {
+    protected Double getContValFor(GameStateImpl state, Map<Sequence, Double> opponentRealizationPlan, Player opponent, Action action) {
         Sequence nextSequence = new LinkedListSequenceImpl(state.getHistory().getSequenceOf(opponent));
 
         nextSequence.addLast(action);

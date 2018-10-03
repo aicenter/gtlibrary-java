@@ -102,4 +102,6 @@ public abstract class NodeImpl implements Node {
     public void setAlgorithmData(AlgorithmData algorithmData) {
         this.algorithmData = algorithmData;
     }
+
+    public void deleteGameState(){ getAlgConfig().getInformationSetFor(gameState).getAllStates().clear(); this.gameState = null; }
 }

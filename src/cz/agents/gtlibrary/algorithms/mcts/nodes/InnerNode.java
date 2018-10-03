@@ -36,12 +36,15 @@ public class InnerNode extends NodeImpl {
     protected List<Action> actions;
     protected MCTSInformationSet informationSet;
 
+    protected int hashCode;
+
     public InnerNode(InnerNode parent, GameState gameState, Action lastAction) {
         super(parent, lastAction, gameState);
         attendInformationSet();
         if (actions == null)
             actions = getExpander().getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
+        hashCode = gameState.getHistory().hashCode();
     }
 
     public InnerNode(Expander<MCTSInformationSet> expander, GameState gameState) {
@@ -50,6 +53,7 @@ public class InnerNode extends NodeImpl {
         if (actions == null)
             actions = expander.getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
+        hashCode = gameState.getHistory().hashCode();
     }
 
     private void attendInformationSet() {
@@ -104,13 +108,18 @@ public class InnerNode extends NodeImpl {
 
     @Override
     public int hashCode() {
-        return gameState.getHistory().hashCode();
+        return hashCode;
+//        return gameState.getHistory().hashCode();
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(Object obj) {;
         if (!(obj instanceof InnerNode))
             return false;
+        if(gameState == null){
+            System.out.println("testing equals without gamestate");
+            return hashCode == ((InnerNode) obj).hashCode();
+        }
         return gameState.getHistory().equals(((InnerNode) obj).getGameState().getHistory());
     }
 

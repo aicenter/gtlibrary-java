@@ -571,7 +571,7 @@ public class MDPIterativeStrategy extends MDPStrategy {
 
 
         for (MDPStateActionMarginal marginal : getAllMarginalsInStrategy()) {
-//            if (getStrategy().containsKey(marginal)) {
+//            if (getStrategyOfPlayerIdx().containsKey(marginal)) {
                 if (lastActions.contains(marginal) && isActionFullyExpandedInRG(marginal))
                     assert false;
                 if (!isActionFullyExpandedInRG(marginal) && !lastActions.contains(marginal))

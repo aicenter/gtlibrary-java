@@ -1,6 +1,9 @@
 package cz.agents.gtlibrary.domain.flipit;
 
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.AbstractActionProvider;
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.ImmediateActionOutcomeProvider;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
+import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -9,7 +12,7 @@ import cz.agents.gtlibrary.utils.graph.Node;
 /**
  * Created by Jakub Cerny on 13/03/17.
  */
-public class FlipItAction extends ActionImpl {
+public class FlipItAction extends ActionImpl implements AbstractActionProvider, ImmediateActionOutcomeProvider {
 
     private Node controlNode;
     private boolean isNoop;
@@ -109,5 +112,44 @@ public class FlipItAction extends ActionImpl {
 //                ", " + (isNoop ? "NOOP" : "_") +
 //                ", " + (controller == null ? "_" : ((controller.equals(FlipItGameInfo.DEFENDER)) ? "D" : "A")) + ", " + getInformationSet().hashCode() +
 //                '}';
+    }
+
+    protected Integer dummySituationAbstraction = 0;
+    protected Integer dummyActionAbstraction = 0;
+
+    @Override
+    public Object getSituationAbstraction() {
+        return dummySituationAbstraction;
+    }
+
+    @Override
+    public Object getActionAbstraction() {
+        return controlNode == null ? dummyActionAbstraction : controlNode;
+    }
+
+    @Override
+    public double getMaximumActionUtility() {
+        return controlNode == null ? 0.0 : FlipItGameInfo.graph.getReward(controlNode);
+    }
+
+    @Override
+    public double[] getAllPossibleOutcomes() {
+        return new double[0];
+    }
+
+
+    @Override
+    public double getImmediateRewardForAction(Action action) {
+        return 0;
+    }
+
+    @Override
+    public double getImmediateReward() {
+        return isNoop ? 0.0 : FlipItGameInfo.graph.getReward(controlNode);
+    }
+
+    @Override
+    public double getImmediateCost() {
+        return isNoop ? 0.0 : FlipItGameInfo.graph.getControlCost(controlNode);
     }
 }

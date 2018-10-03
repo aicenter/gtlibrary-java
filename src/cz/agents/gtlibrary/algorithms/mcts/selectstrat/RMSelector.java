@@ -36,16 +36,16 @@ import java.util.List;
  * @author vilo
  */
 public class RMSelector implements Selector, MeanStrategyProvider,  NbSamplesProvider {
-    private RMBackPropFactory fact;
-    private List<Action> actions;
+    protected RMBackPropFactory fact;
+    protected List<Action> actions;
     /** Current probability of playing this action. */
-    double[] p;
-    double[] mp;
+    protected double[] p;
+    protected double[] mp;
     /** Cumulative regret estimate. */
-    double[] r;
+    protected double[] r;
     /** Current time step. */
-    int t=1;
-    double d_t;
+    protected int t=1;
+    protected double d_t;
     public RMSelector(List<Action> actions, RMBackPropFactory fact){
         this(actions.size(), fact);
         this.actions = actions;

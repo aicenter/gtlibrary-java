@@ -1,6 +1,10 @@
 package cz.agents.gtlibrary.algorithms.cfr.br;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.BestResponse;
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.PureResponse;
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.QuantalResponse;
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.VanillaIBLResponse;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
@@ -9,11 +13,14 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
-import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.experiments.StrategyStrengthLargeExperiments;
 import cz.agents.gtlibrary.domain.flipit.*;
+import cz.agents.gtlibrary.domain.honeypotGame.HoneypotExpander;
+import cz.agents.gtlibrary.domain.honeypotGame.HoneypotGameInfo;
+import cz.agents.gtlibrary.domain.honeypotGame.HoneypotGameState;
+import cz.agents.gtlibrary.domain.honeypotGame.HoneypotTurntakingGameState;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
@@ -24,17 +31,21 @@ import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
-import java.util.Arrays;
 import java.util.Map;
 
 public class CFRBR extends CFRAlgorithm {
 
-    protected static int BRplayer = 1;
+    protected static int BRplayerIndex = 1;
+    protected static Player BRplayer;
     protected static double eps = 1e-3;
+
+    protected static boolean MAKE_MS_UPDATE = false;
+    protected static boolean IS_ZERO_SUM = true;
 
     public CFRBR(Player searchingPlayer, GameState rootState, Expander expander, int BRplayer) {
         super(searchingPlayer, rootState, expander);
-        this.BRplayer = BRplayer;
+        this.BRplayerIndex = BRplayer;
+        this.BRplayer = rootState.getAllPlayers()[BRplayer];
     }
 
     public static void main(String[] args) {
@@ -44,6 +55,29 @@ public class CFRBR extends CFRAlgorithm {
 //        runKuhnPoker();
         runFlipIt();
 //        runRandom();
+//        runHoneyPot();
+    }
+
+    private static void runHoneyPot(){
+        HoneypotGameInfo gameInfo = new HoneypotGameInfo();
+        HoneypotTurntakingGameState rootState = new HoneypotTurntakingGameState(gameInfo.allNodes);
+
+        System.out.println(HoneypotGameInfo.attacksAllowed + " " + rootState.getRemainingAttacks());
+
+//        GambitEFG gambit = new GambitEFG();
+//        gambit.buildAndWrite("TurntakingHoneyPot.gbt", rootState, new HoneypotExpander<>(new SequenceFormConfig<>()));
+
+        HoneypotExpander<MCTSInformationSet> expander = new HoneypotExpander<>(new MCTSConfig());
+//        Expander<SequenceInformationSet> brExpander = new HoneypotExpander<>(new SequenceFormConfig<>());
+
+        CFRBR cfr = new CFRBR(rootState.getAllPlayers()[0], rootState, expander, BRplayerIndex);
+        StrategyStrengthLargeExperiments.buildCFRBRCompleteTree(cfr.getRootNode(), BRplayerIndex);
+
+//        BestResponse response = new PureResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayerIndex], cfr.getRootNode());
+//        BestResponse response = new QuantalResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayerIndex], cfr.getRootNode(), 0.05);
+        BestResponse response = new VanillaIBLResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayerIndex], cfr.getRootNode(), 0.5, 0.5, cfr.getRootNode().getGameState().getAllPlayers()[1 - BRplayerIndex]);
+
+        cfr.runIterations(100000, response);
     }
 
     private static void runRandom(){
@@ -57,10 +91,10 @@ public class CFRBR extends CFRAlgorithm {
         RandomGameExpander<MCTSInformationSet> expander = new RandomGameExpander<>(new MCTSConfig());
         Expander<SequenceInformationSet> brExpander = new RandomGameExpander<>(new SequenceFormConfig<>());
 
-        CFRBR cfr = new CFRBR(rootState.getAllPlayers()[0], rootState, expander, BRplayer);
-        StrategyStrengthLargeExperiments.buildCFRBRCompleteTree(cfr.getRootNode(), BRplayer);
+        CFRBR cfr = new CFRBR(rootState.getAllPlayers()[0], rootState, expander, BRplayerIndex);
+        StrategyStrengthLargeExperiments.buildCFRBRCompleteTree(cfr.getRootNode(), BRplayerIndex);
 
-        BestResponse response = new PureResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayer], cfr.getRootNode());
+        BestResponse response = new PureResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayerIndex], cfr.getRootNode());
 
         cfr.runIterations(10000000, response);
 
@@ -72,9 +106,10 @@ public class CFRBR extends CFRAlgorithm {
         FlipItGameInfo gameInfo = new FlipItGameInfo();
         gameInfo.ZERO_SUM_APPROX = true;
         gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_ALL_POINTS;
-        gameInfo.depth = 3;
+        gameInfo.depth = 1;
         gameInfo.ENABLE_PASS = false;
         gameInfo.graphFile = "flipit_empty2.txt";
+        gameInfo.graph = new FlipItGraph(gameInfo.graphFile);
 
         System.out.println(gameInfo.getInfo());
 
@@ -90,11 +125,14 @@ public class CFRBR extends CFRAlgorithm {
         FlipItExpander<MCTSInformationSet> expander = new FlipItExpander<>(new MCTSConfig());
         Expander<SequenceInformationSet> brExpander = new FlipItExpander<>(new SequenceFormConfig<>());
 
-        CFRBR cfr = new CFRBR(rootState.getAllPlayers()[0], rootState, expander, BRplayer);
-        StrategyStrengthLargeExperiments.buildCFRBRCompleteTree(cfr.getRootNode(), BRplayer);
+//        GambitEFG gambit = new GambitEFG();
+//        gambit.buildAndWrite("SunnyFlip.gbt", rootState, new FlipItExpander<>(new SequenceFormConfig<>()));
 
-//        BestResponse response = new PureResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayer], cfr.getRootNode());
-        BestResponse response = new QuantalResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayer], cfr.getRootNode(), 0.000001);
+        CFRBR cfr = new CFRBR(rootState.getAllPlayers()[0], rootState, expander, BRplayerIndex);
+        StrategyStrengthLargeExperiments.buildCFRBRCompleteTree(cfr.getRootNode(), BRplayerIndex);
+
+//        BestResponse response = new PureResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayerIndex], cfr.getRootNode());
+        BestResponse response = new QuantalResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayerIndex], cfr.getRootNode(), 0.5);
 
         cfr.runIterations(10000000, response);
 
@@ -129,10 +167,10 @@ public class CFRBR extends CFRAlgorithm {
         Expander<MCTSInformationSet> expander = new KuhnPokerExpander<>(new MCTSConfig());
         Expander<SequenceInformationSet> brExpander = new KuhnPokerExpander<>(new SequenceFormConfig<>());
         CFRBR cfr = new CFRBR(root.getAllPlayers()[0], root, expander,1);
-        StrategyStrengthLargeExperiments.buildCFRBRCompleteTree(cfr.getRootNode(), BRplayer);
+        StrategyStrengthLargeExperiments.buildCFRBRCompleteTree(cfr.getRootNode(), BRplayerIndex);
 
-        BestResponse response = new QuantalResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayer], cfr.getRootNode(), -10);
-//        BestResponse response = new PureResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayer], cfr.getRootNode());
+        BestResponse response = new QuantalResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayerIndex], cfr.getRootNode(), -10);
+//        BestResponse response = new PureResponse(cfr.getRootNode().getGameState().getAllPlayers()[BRplayerIndex], cfr.getRootNode());
 
         cfr.runIterations(1000000, response);
 
@@ -163,7 +201,7 @@ public class CFRBR extends CFRAlgorithm {
         int iters = 0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
-            iteration(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[0]);
+            iteration(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[0], BRplayerIndex);
             iters++;
             response.computeBR(rootNode);//(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[1],100);
             iters++;
@@ -177,21 +215,47 @@ public class CFRBR extends CFRAlgorithm {
         System.out.println("Running");
         double value = 0.0;
         for (int i = 0; i < iterations; i++) {
-            if (i % 1000 == 0)
+            if (i % 10 == 0)
                 System.out.println("Iteration " + i + ", value = " + value);
             for(int j = 0; j < 10; j++) {
-                value = iteration(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[1 - BRplayer]);
+                value = iteration(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[1 - BRplayerIndex], BRplayerIndex);
             }
-//            iteration(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[BRplayer]);
-            response.computeBR(rootNode);//(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[BRplayer],0.001);
+//            iteration(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[BRplayerIndex]);
+            response.computeBR(rootNode);//(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[BRplayerIndex],0.001);
         }
         return null;
     }
 
-    protected double iteration(Node node, double pi1, double pi2, Player expPlayer) {
+    public double runIteration(BestResponse response) {
+        double value = iteration(rootNode, 1, 1, rootNode.getGameState().getAllPlayers()[1 - BRplayerIndex], BRplayerIndex);
+        response.computeBR(rootNode);
+        return value;
+    }
+
+    public double runCFRIteration() {
+        return iteration(rootNode, 1, 1, searchingPlayer, 1 - searchingPlayer.getId());
+    }
+
+    public double runCFRIterationAgainst(int playerIdx, double playerProbability) {
+        if (searchingPlayer.getId() == 0)
+            return iteration(rootNode, 1.0, playerProbability, searchingPlayer, playerIdx);
+        else
+            return iteration(rootNode, playerProbability, 1.0, searchingPlayer, playerIdx);
+    }
+
+    public double runBRIteration(BestResponse response) {
+        return response.computeBR(rootNode);
+    }
+
+    protected double iteration(Node node, double pi1, double pi2, Player expPlayer, int brPlayerIdx) {
         if (pi1 == 0 && pi2 == 0) return 0;
         if (node instanceof LeafNode) {
-            return ((LeafNode) node).getUtilities()[expPlayer.getId()];
+            if (!IS_ZERO_SUM){
+                return -1.0 * ((LeafNode) node).getUtilities()[brPlayerIdx];
+            }
+            else {
+                return ((LeafNode) node).getUtilities()[expPlayer.getId()];
+            }
         }
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode) node;
@@ -200,7 +264,7 @@ public class CFRBR extends CFRAlgorithm {
                 final double p = cn.getGameState().getProbabilityOfNatureFor(ai);
                 double new_p1 = expPlayer.getId() == 1 ? pi1 * p : pi1;
                 double new_p2 = expPlayer.getId() == 0 ? pi2 * p : pi2;
-                ev += p * iteration(cn.getChildFor(ai), new_p1, new_p2, expPlayer);
+                ev += p * iteration(cn.getChildFor(ai), new_p1, new_p2, expPlayer, brPlayerIdx);
             }
             return ev;
         }
@@ -208,7 +272,8 @@ public class CFRBR extends CFRAlgorithm {
         MCTSInformationSet is = in.getInformationSet();
         CFRBRAlgorithmData data = (CFRBRAlgorithmData) is.getAlgorithmData();
 
-        double[] strategy = data.getStrategyAsList();
+        double[] strategy = is.getPlayer().getId() != expPlayer.getId() ?
+                data.getStrategyOfPlayerAsList(brPlayerIdx) : data.getStrategyOfPlayerAsList(expPlayer.getId());
         double[] expectedValues = new double[strategy.length];
         double ev = 0;
 
@@ -216,21 +281,25 @@ public class CFRBR extends CFRAlgorithm {
         for (Action ai : in.getActions()) {
             i++;
             if (is.getPlayer().getId() == 0) {
-                expectedValues[i] = iteration(in.getChildFor(ai), pi1 * strategy[i], pi2, expPlayer);
+                expectedValues[i] = iteration(in.getChildFor(ai), pi1 * strategy[i], pi2, expPlayer, brPlayerIdx);
             } else {
-                expectedValues[i] = iteration(in.getChildFor(ai), pi1, strategy[i] * pi2, expPlayer);
+                expectedValues[i] = iteration(in.getChildFor(ai), pi1, strategy[i] * pi2, expPlayer, brPlayerIdx);
             }
             ev += strategy[i] * expectedValues[i];
         }
         if (is.getPlayer().equals(expPlayer)) {
             data.updateAllRegrets(expectedValues, ev, (expPlayer.getId() == 0 ? pi2 : pi1));
-            data.updateMeanStrategy(strategy, (expPlayer.getId() == 0 ? pi1 : pi2));
+            if (MAKE_MS_UPDATE) data.updateMeanStrategy(strategy, (expPlayer.getId() == 0 ? pi1 : pi2));
         }
         else{
 //            System.out.println(Arrays.toString(strategy));
         }
 
         return ev;
+    }
+
+    public void setIsZeroSum(boolean isZeroSum){
+        IS_ZERO_SUM = isZeroSum;
     }
 
 }

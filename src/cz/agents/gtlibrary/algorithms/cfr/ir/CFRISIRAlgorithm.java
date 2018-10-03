@@ -104,7 +104,7 @@ public class CFRISIRAlgorithm extends CFRISAlgorithm {
 //            return;
 //        }
 //
-//        double[] rmProbs = getStrategy(data, node);
+//        double[] rmProbs = getStrategyOfPlayerIdx(data, node);
 //
 //        int i = -1;
 //        for (Action ai : actions) {

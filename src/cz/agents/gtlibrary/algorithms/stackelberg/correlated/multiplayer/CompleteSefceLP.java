@@ -8,6 +8,7 @@ import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.Pair;
 import cz.agents.gtlibrary.utils.Triplet;
+import ilog.concert.IloNumVar;
 import ilog.cplex.IloCplex;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.strategy.*;
 
@@ -566,6 +567,29 @@ public class CompleteSefceLP implements Solver {
 
                 System.out.println("-----------------------");
                 System.out.println("LP value: " + gameValue);
+
+                ArrayList<PureStrategyImpl> profile  = initStrategyProfile();
+                for(PureStrategyImpl strategy0 : strategiesOfAllPlayers.get(0)){
+                    profile.set(0, strategy0);
+                    for(PureStrategyImpl strategy1 : strategiesOfAllPlayers.get(1)){
+                        profile.set(1, strategy1);
+                        int hash = profile.hashCode();
+                        IloNumVar var = null;
+                        for (Map.Entry<Object, IloNumVar> entry : lpData.getWatchedPrimalVariables().entrySet()) {
+                            if(entry.getKey().equals(hash)) {
+                                var = entry.getValue();
+                                break;
+                            }
+                        }
+                        double value = lpData.getSolver().getValue(var);
+                        if(value > 0.0){
+                            System.out.println(strategy0);
+                            System.out.println(strategy1);
+                            System.out.println(value);
+                            System.out.println("//////////////////");
+                        }
+                    }
+                }
             }
         }
         catch(Exception e){

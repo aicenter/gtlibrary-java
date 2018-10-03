@@ -19,12 +19,13 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.pursuit;
 
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.AbstractActionProvider;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.utils.graph.Node;
 
-public class EvaderPursuitAction extends ActionImpl {
+public class EvaderPursuitAction extends ActionImpl implements AbstractActionProvider {
 
 	private static final long serialVersionUID = 4464689353944463622L;
 	
@@ -93,4 +94,32 @@ public class EvaderPursuitAction extends ActionImpl {
 		return "E: "+ informationSet.getAllStates().iterator().next() + " [" + origin + "->" + destination + "]";
 	}
 
+	protected Integer dummySituationAbstraction = 1;
+
+	@Override
+	public Object getSituationAbstraction() {
+		return dummySituationAbstraction;
+	}
+
+	// assumes grid !
+
+	@Override
+	public Object getActionAbstraction() {
+		if(origin.getIntID() == destination.getIntID()) return PursuitGameInfo.SAME;
+		if(origin.getIntID() == destination.getIntID() + 1) return PursuitGameInfo.LEFT;
+		if(origin.getIntID() == destination.getIntID() - 1) return PursuitGameInfo.RIGHT;
+		if(origin.getIntID() > destination.getIntID()) return PursuitGameInfo.UP;
+		if(origin.getIntID() < destination.getIntID()) return PursuitGameInfo.DOWN;
+		return null;
+	}
+
+	@Override
+	public double getMaximumActionUtility() {
+		return 0;
+	}
+
+	@Override
+	public double[] getAllPossibleOutcomes() {
+		return new double[0];
+	}
 }

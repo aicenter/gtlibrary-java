@@ -1,5 +1,7 @@
 package cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.rpiterator;
 
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.AbstractActionProvider;
+import cz.agents.gtlibrary.algorithms.cfr.br.responses.AbstractObservationProvider;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.multiplelps.FeasibilitySequenceFormLP;

@@ -9,12 +9,19 @@ public class HoneypotGameNode {
     protected double reward;
     protected double attackCost;
     protected double defendCost;
+    protected double[] possibleOutcomes;
 
     public HoneypotGameNode(int id, double reward, double attackCost, double defendCost){
         this.id = id;
         this.reward = reward;
         this.attackCost = attackCost;
         this.defendCost = defendCost;
+
+        if (id == HoneypotGameInfo.NO_ACTION_ID)
+            possibleOutcomes = new double[]{0.0};
+        else
+            possibleOutcomes = new double[]{reward - attackCost, -attackCost};
+
     }
 
     public double getRewardAfterNumberOfAttacks(int numberOfAttacks){
@@ -49,5 +56,9 @@ public class HoneypotGameNode {
 
     public int getID(){
         return  id;
+    }
+
+    public double[] getPossibleOutcomes(){
+        return possibleOutcomes;
     }
 }

@@ -38,7 +38,13 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
 
     }
 
-    public HashMap<Action,Double> getStrategy(){
+    public CFRBRAlgorithmData(boolean BRData) {
+        isBRData = BRData;
+        iteration = -1;
+
+    }
+
+    public HashMap<Action,Double> getStrategyOfPlayerIdx(int playerIdx){
         HashMap<Action,Double> strategy = new HashMap<>();
         double sum = 1.0;
         if (true) {
@@ -68,7 +74,7 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
         return strategy;
     }
 
-    public double[] getStrategyAsList(){
+    public double[] getStrategyOfPlayerAsList(int playerIdx){
         double[] strategy = new double[data.length];
         double sum = 1.0;
         if (true) {
@@ -92,6 +98,9 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
         return strategy;
     }
 
+    /*
+        Only used for the leader
+     */
     public double getProbabilityOfPlaying(Action action){
         double sum = 0;
         for (double data_i : data) {
@@ -115,11 +124,11 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
     }
 
 
-    public void resetData(double value){
+    public void resetDataOfPlayer(int playerIdx, double value){
         Arrays.fill(data, value);
     }
 
-    public void setData(HashMap<Action, Double> values){
+    public void setDataOfPlayerIdx(int playerIdx, HashMap<Action, Double> values){
         int i = 0;
         for (Action a : actions){
             data[i] = values.get(a);
@@ -128,12 +137,13 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
 //        System.out.println("Data set : " + Arrays.toString(data));
     }
 
-    public void setData(int idx, double value){
+    public void setDataOfPlayerIdx(int playerIdx, int idx, double value){
+        if(value > 1.0 || value < 0.0) System.err.println("Cannot set strategy: not a probability!");
         data[idx] = value;
     }
 
-    public void setData(Action action, double value){
-        if (action == null) System.out.println("null action");
+    public void setDataOfPlayerIdx(int playerIdx, Action action, double value){
+        if (action == null) System.err.println("Cannot set strategy: null action!");
         data[actions.indexOf(action)] = value;
     }
 
@@ -145,14 +155,14 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
     @Override
     public double[] getMp() {
         if (isBRData) return data;
-        return mp;//getStrategyAsList();
+        return mp;//getStrategyOfPlayerAsList();
     }
 
     public int getNumActions(){
         return actions.size();
     }
 
-    public void setIteration(int value){
+    public void setIterationForPlayerIdx(int playerIdx, int value){
         iteration = value;
     }
 
@@ -160,7 +170,7 @@ public class CFRBRAlgorithmData implements AlgorithmData, Serializable, MeanStra
         iteration++;
     }
 
-    public int getIteration(){
+    public int getIterationForPlayerIdx(int playerIdx){
         return iteration;
     }
 

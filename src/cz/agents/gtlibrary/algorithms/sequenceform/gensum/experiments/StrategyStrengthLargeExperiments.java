@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.sequenceform.gensum.experiments;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
+import cz.agents.gtlibrary.algorithms.cfr.br.BCFRBRAlgorithmData;
 import cz.agents.gtlibrary.algorithms.cfr.br.CFRBRAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
@@ -8,6 +9,7 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.NodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
@@ -675,21 +677,73 @@ public class StrategyStrengthLargeExperiments {
         ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
         q.add(r);
         while (!q.isEmpty()) {
+            if(nodes % 100000 == 0) {
+                System.gc();
+            }
             nodes++;
             InnerNode n = q.removeFirst();
             MCTSInformationSet is = n.getInformationSet();
-            if (!(n instanceof ChanceNode))
+            if (!(n instanceof ChanceNode)) {
                 if (is.getAlgorithmData() == null) {
                     infosets++;
                     is.setAlgorithmData(new CFRBRAlgorithmData(n.getActions(), is.getPlayer().getId() == brPlayer));
                 }
+            }
+            else{
+                ((ChanceNode) n).setActionProbabilities();
+            }
             for (Action a : n.getActions()) {
-                Node ch = n.getChildFor(a);
+                NodeImpl ch = (NodeImpl) n.getChildFor(a);
                 if (ch instanceof InnerNode) {
                     q.add((InnerNode) ch);
                 }
+                else{
+                    ch.deleteGameState();
+                }
             }
+            n.deleteGameState();
         }
+
+        System.gc();
+        System.out.println("Created nodes: " + nodes + "; infosets: " + infosets);
+    }
+
+    /* typeIdxs ... indexes in utility corresponding to individual types
+        generally either [ 0 2 ... n ] or [ 1 2 ... n ] */
+    public static void buildBCFRBRCompleteTree(InnerNode r, int brPlayer, int[] typeIdxs) {
+        System.out.println("Building complete tree.");
+        int nodes = 0, infosets = 0;
+        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
+        q.add(r);
+        while (!q.isEmpty()) {
+            if(nodes % 100000 == 0) {
+                System.gc();
+            }
+            nodes++;
+            InnerNode n = q.removeFirst();
+            MCTSInformationSet is = n.getInformationSet();
+            if (!(n instanceof ChanceNode)) {
+                if (is.getAlgorithmData() == null) {
+                    infosets++;
+                    is.setAlgorithmData(new BCFRBRAlgorithmData(n.getActions(), is.getPlayer().getId() == brPlayer, typeIdxs));
+                }
+            }
+            else{
+                ((ChanceNode) n).setActionProbabilities();
+            }
+            for (Action a : n.getActions()) {
+                NodeImpl ch = (NodeImpl) n.getChildFor(a);
+                if (ch instanceof InnerNode) {
+                    q.add((InnerNode) ch);
+                }
+                else{
+                    ch.deleteGameState();
+                }
+            }
+            n.deleteGameState();
+        }
+
+        System.gc();
         System.out.println("Created nodes: " + nodes + "; infosets: " + infosets);
     }
 
@@ -740,7 +794,7 @@ public class StrategyStrengthLargeExperiments {
         return realPlan;
     }
 
-    private static double[] computeExpectedValue(Map<Sequence, Double> p1RealPlan, Map<Sequence, Double> p2RealPlan, GameState root, Expander<? extends InformationSet> expander) {
+    public static double[] computeExpectedValue(Map<Sequence, Double> p1RealPlan, Map<Sequence, Double> p2RealPlan, GameState root, Expander<? extends InformationSet> expander) {
         if (root.isGameEnd())
             return getWeightedUtilities(p1RealPlan, p2RealPlan, root);
         if (root.isPlayerToMoveNature())
@@ -754,7 +808,7 @@ public class StrategyStrengthLargeExperiments {
             if (realizationProb > 0) {
                 double[] actionUtilities = computeExpectedValue(p1RealPlan, p2RealPlan, nextState, expander);
 
-                for (int i = 0; i < actionUtilities.length; i++) {
+                for (int i = 0; i < expectedUtilities.length; i++) {
                     expectedUtilities[i] += actionUtilities[i];
                 }
             }

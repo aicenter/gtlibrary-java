@@ -46,7 +46,7 @@ public class HoneypotGameState extends GameStateImpl {
 //        this.uniformAttackCost = HoneypotGameInfo.uniformAttackCost;
     }
 
-    private HoneypotGameState(HoneypotGameState gameState) {
+    protected HoneypotGameState(HoneypotGameState gameState) {
         super(gameState);
 
         this.possibleNodes = gameState.possibleNodes;//Arrays.copyOf(gameState.possibleNodes, gameState.possibleNodes.length);
@@ -64,6 +64,10 @@ public class HoneypotGameState extends GameStateImpl {
         if (playerToMove != HoneypotGameInfo.ATTACKER) {
             this.lastDefendedNode = gameState.lastDefendedNode;
         }
+    }
+
+    public int getRemainingAttacks(){
+        return remainingAttacks;
     }
 
     @Override
@@ -113,7 +117,7 @@ public class HoneypotGameState extends GameStateImpl {
         }
         return true;
 //        return history != null && history.getLength() > 0  && HoneypotGameInfo.ATTACKER.equals(history.getLastPlayer()) && history.getLastAction() != null
-//                && ((HoneypotAction)history.getLastAction()).node.id == HoneypotGameInfo.NO_ACTION_ID;
+//                && ((HoneypotAttackerAction)history.getLastAction()).node.id == HoneypotGameInfo.NO_ACTION_ID;
     }
     private boolean attackerCanAttack(){
         if (HoneypotGameInfo.CAN_ATTACK_WITH_NEGATIVE_POINTS) return true;

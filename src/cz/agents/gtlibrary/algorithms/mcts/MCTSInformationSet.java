@@ -20,7 +20,9 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNode;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.InformationSetImpl;
+import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.GameState;
 
 import java.util.HashSet;
@@ -50,6 +52,16 @@ public class MCTSInformationSet extends InformationSetImpl {
 
     public void setAlgorithmData(AlgorithmData algorithmData) {
         this.algorithmData = algorithmData;
+    }
+
+    @Override
+    public ISKey getISKey() {
+        if(!statesInInformationSet.isEmpty()) {
+            return statesInInformationSet.iterator().next().getISKeyForPlayerToMove();
+        }
+        else {
+            return new PerfectRecallISKey(hashCode(), playerHistory);
+        }
     }
 
 }
