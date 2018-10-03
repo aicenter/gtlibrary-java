@@ -21,13 +21,15 @@ package cz.agents.gtlibrary.algorithms.sequenceform.doubleoracle;
 
 import cz.agents.gtlibrary.algorithms.flipit.bestresponse.FlipItBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.flipit.iskeys.FlipItPerfectRecallISKey;
-import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.artificialchance.ACExpander;
 import cz.agents.gtlibrary.domain.artificialchance.ACGameInfo;
 import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameExpander;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameInfo;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -41,6 +43,9 @@ import cz.agents.gtlibrary.domain.honeypotGame.HoneypotGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
+import cz.agents.gtlibrary.domain.observationGame.ObsGameExpander;
+import cz.agents.gtlibrary.domain.observationGame.ObsGameInfo;
+import cz.agents.gtlibrary.domain.observationGame.ObsGameState;
 import cz.agents.gtlibrary.domain.oshizumo.IIOshiZumoGameState;
 import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
@@ -61,7 +66,6 @@ import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgameimproved.RandomGameState;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.DummyPrintStream;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
 import java.io.PrintStream;
@@ -82,7 +86,7 @@ public class GeneralDoubleOracle {
     private int iterations;
 
     final private double EPS = 0.00000001;
-    final public static boolean DEBUG = false;
+    final public static boolean DEBUG = true;
     final private static boolean MY_RP_BR_ORDERING = false;
     private ThreadMXBean threadBean;
     private MemoryMXBean memoryBean;
@@ -109,7 +113,37 @@ public class GeneralDoubleOracle {
 //        runPhantomTTT();
 //		runAoS();
 //        runFlipIt(args);
-        runHoneyPot(args);
+//        runHoneyPot(args);
+//        runObservationGame();
+        runBandit();
+    }
+
+
+    private static void runBandit(){
+        BanditGameInfo gameInfo = new BanditGameInfo("MAS/graph6.txt");
+        BanditGameState rootState = new BanditGameState();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new BanditGameExpander<>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        doefg.generate(null);
+
+//        GambitEFG gambit = new GambitEFG();
+//        gambit.buildAndWrite("bandit.gbt", rootState, new BanditGameExpander<>(algConfig));
+//        traverseCompleteGameTree(rootState,expander);
+    }
+
+
+    public static void runObservationGame() {
+        GameState rootState = new ObsGameState();
+        GameInfo gameInfo = new ObsGameInfo();
+        DoubleOracleConfig<DoubleOracleInformationSet> algConfig = new DoubleOracleConfig<DoubleOracleInformationSet>(rootState, gameInfo);
+        Expander<DoubleOracleInformationSet> expander = new ObsGameExpander<>(algConfig);
+        GeneralDoubleOracle doefg = new GeneralDoubleOracle(rootState, expander, gameInfo, algConfig);
+        doefg.generate(null);
+//        GambitEFG ggg = new GambitEFG();
+//        ggg.write("obsgame.gbt", rootState, expander);
+//        traverseCompleteGameTree(rootState,expander);
+
     }
 
     private static void runHoneyPot(String[] args) {

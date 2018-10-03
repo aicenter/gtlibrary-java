@@ -25,7 +25,6 @@ import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.multiplayer.CompleteSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.CompleteTwoPlayerSefceLP;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.*;
-import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetAction;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.gadgets.GadgetSefceLP;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
@@ -38,12 +37,11 @@ import cz.agents.gtlibrary.domain.pursuit.GenSumPursuitGameState;
 import cz.agents.gtlibrary.domain.pursuit.PursuitExpander;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.GenSumSimRandomGameState;
-import cz.agents.gtlibrary.domain.randomgame.GeneralSumRandomGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.testGame.TestGameExpander;
-import cz.agents.gtlibrary.domain.testGame.TestGameState;
 import cz.agents.gtlibrary.domain.testGame.TestGameInfo;
+import cz.agents.gtlibrary.domain.testGame.TestGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
@@ -51,7 +49,9 @@ import cz.agents.gtlibrary.utils.io.GambitEFG;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 
 public class SefceRunner {
 
@@ -61,7 +61,7 @@ public class SefceRunner {
 
     private double restrictedGameRatio;
 
-    protected final boolean PRINT_STRATEGY = true;
+    protected final boolean PRINT_STRATEGY = false;
 
     public static void main(String[] args) {
 //        runPoker();
@@ -81,8 +81,8 @@ public class SefceRunner {
         Expander<SequenceInformationSet> expander = new TestGameExpander(algConfig);
         SefceRunner runner = new SefceRunner(rootState, expander, gameInfo, algConfig);
 
-//        runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
-        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
+        runner.generate(rootState.getAllPlayers()[LEADER],new LeaderGenerationTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER],gameInfo));
+//        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new LeaderGeneration2pLessMemSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));
 //        runner.generate(rootState.getAllPlayers()[LEADER], new CompleteTwoPlayerSefceLP(rootState.getAllPlayers()[LEADER], gameInfo));

@@ -1,6 +1,5 @@
 package cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative;
 
-import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.GenSumSequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.stackelberg.StackelbergConfig;
@@ -10,7 +9,6 @@ import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.iinodes.TLExpander;
 import cz.agents.gtlibrary.algorithms.stackelberg.correlated.twoplayer.iterative.iinodes.TLGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 

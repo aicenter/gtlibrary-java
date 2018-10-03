@@ -33,6 +33,8 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
+import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.experiments.StrategyStrengthLargeExperiments;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
@@ -40,7 +42,11 @@ import cz.agents.gtlibrary.domain.informeraos.InformerAoSExpander;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMExpander;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameState;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
+import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
+import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.strategy.Strategy;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.management.ManagementFactory;
@@ -54,9 +60,37 @@ import java.util.Map;
 public class CFRAlgorithm implements GamePlayingAlgorithm {
 
     public static void main(String[] args) {
-        runMPoCHM();
+//        runMPoCHM();
 //        runIAoS();
 //        runAoS();
+        runKuhnPoker();
+    }
+
+    private static void runKuhnPoker() {
+        GameState root = new KuhnPokerGameState();
+        Expander<MCTSInformationSet> expander = new KuhnPokerExpander<>(new MCTSConfig());
+        Expander<SequenceInformationSet> brExpander = new KuhnPokerExpander<>(new SequenceFormConfig<>());
+        CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[0], root, expander);
+        StrategyStrengthLargeExperiments.buildCFRCompleteTree(cfr.getRootNode());
+
+        cfr.runIterations(5000);
+
+        Strategy p1rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
+        Strategy p2rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
+
+        UtilityCalculator calculator = new UtilityCalculator(root, brExpander);
+
+        System.out.println(calculator.computeUtility(p1rp, p2rp));
+
+        for (Map.Entry<Sequence, Double> entry : p1rp.entrySet()) {
+            if (entry.getValue() > 0)
+                System.out.println(entry);
+        }
+        System.out.println("-----------");
+        for (Map.Entry<Sequence, Double> entry : p2rp.entrySet()) {
+            if (entry.getValue() > 0)
+                System.out.println(entry);
+        }
     }
 
     private static void runMPoCHM() {

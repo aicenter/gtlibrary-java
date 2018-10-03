@@ -25,6 +25,9 @@ import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.artificialchance.ACExpander;
 import cz.agents.gtlibrary.domain.artificialchance.ACGameInfo;
 import cz.agents.gtlibrary.domain.artificialchance.ACGameState;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameExpander;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameInfo;
+import cz.agents.gtlibrary.domain.banditGame.BanditGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameInfo;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
@@ -63,7 +66,6 @@ import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
 import cz.agents.gtlibrary.domain.upordown.UDExpander;
 import cz.agents.gtlibrary.domain.upordown.UDGameInfo;
 import cz.agents.gtlibrary.domain.upordown.UDGameState;
-import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.iinodes.SimultaneousGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.nfg.simalphabeta.SimABConfig;
@@ -101,7 +103,7 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-//		runKuhnPoker();
+		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
@@ -115,6 +117,18 @@ public class FullSequenceEFG {
 //        testExploitGame();
 		runFlipIt();
 //		runHoneyPot();
+//		runBandit();
+	}
+
+	private static void runBandit(){
+		BanditGameInfo gameInfo = new BanditGameInfo("MAS/new_graph_6.txt");
+		BanditGameState rootState = new BanditGameState();
+		SequenceFormConfig<SequenceInformationSet> algConfig = new SequenceFormConfig<>();
+		FullSequenceEFG efg = new FullSequenceEFG(rootState, new BanditGameExpander<>(algConfig), gameInfo, algConfig);
+		efg.generate();
+
+//		GambitEFG gambit = new GambitEFG();
+//		gambit.buildAndWrite("bandit.gbt", rootState, new BanditGameExpander<>(algConfig));
 	}
 
 	private static void runHoneyPot(){

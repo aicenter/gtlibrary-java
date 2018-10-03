@@ -19,7 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform.refinements;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import ilog.concert.*;
 import ilog.cplex.IloCplex;
 

@@ -775,7 +775,7 @@ public class LeaderGeneration2pLessMemSefceLP extends LeaderGenerationTwoPlayerS
             pool.push(currentState);
         }
         if (PRINT_STATS){
-            System.out.println("Size of set of relevant seqs for " + leaderSequence.hashCode() + " : " + relevant.size());
+            System.out.println("Size of set of relevant seq for " + leaderSequence.hashCode() + " : " + relevant.size());
         }
         stack = null;
         if (USE_GC) System.gc();

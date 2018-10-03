@@ -19,13 +19,11 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.sequenceform;
 
-import java.util.*;
-
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
-import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
-import cz.agents.gtlibrary.utils.Pair;
+
+import java.util.*;
 
 public class SequenceFormConfig<I extends SequenceInformationSet> extends ConfigImpl<I> {
 	protected Map<GameState, Double> actualNonZeroUtilityValuesInLeafs = new HashMap<GameState, Double>();
@@ -156,7 +154,7 @@ public class SequenceFormConfig<I extends SequenceInformationSet> extends Config
 
 	public void setUtility(GameState leaf) {
 		final double[] utilities = leaf.getUtilities();
-		assert utilities[0] == -utilities[1] : "not a zero-sum game";
+//		assert utilities[0] == -utilities[1] : "not a zero-sum game";
 		double utility = utilities[0] * leaf.getNatureProbability();
 		setUtility(leaf, utility);
 	}

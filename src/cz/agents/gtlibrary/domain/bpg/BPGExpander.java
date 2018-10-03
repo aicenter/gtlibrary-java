@@ -19,10 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.bpg;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
 import cz.agents.gtlibrary.domain.bpg.AttackerAction.AttackerMovementType;
 import cz.agents.gtlibrary.domain.bpg.data.BorderPatrollingGraph;
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
@@ -32,6 +28,10 @@ import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.utils.graph.Edge;
 import cz.agents.gtlibrary.utils.graph.Node;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class BPGExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
@@ -107,7 +107,7 @@ public class BPGExpander<I extends InformationSet> extends ExpanderImpl<I> {
 		for (Edge edge : graph.getGraph().outgoingEdgesOf(position)) {
 			if (edge.getTarget().equals(graph.getDestination()))
 				continue;
-			if (edge.getTarget().getIntID() > 10)
+			if (edge.getTarget().getIntID() >= 10)
 				nodes.add(edge.getTarget());
 		}
 		return nodes;

@@ -3,13 +3,11 @@ package cz.agents.gtlibrary.domain.metroTransport;
 import cz.agents.gtlibrary.utils.graph.Graph;
 import cz.agents.gtlibrary.utils.graph.Node;
 
-import java.util.Collections;
-import java.util.HashMap;
-
 /**
  * Created by Jakub Cerny on 05/10/2017.
  */
 public class MetroGraph extends Graph{
+
 
     private int[] rewards;
     private int[] init_rewards = new int[]{5, 2, 3};

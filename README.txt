@@ -37,7 +37,7 @@ Prerequisites:
 
 Java 7.0+
 CPLEX 12.4+
-other free libraries available at https://dl.dropboxusercontent.com/u/102512308/libraries.zip
+other free libraries available at https://www.dropbox.com/s/w8h48dls5ti9jcz/libraries.zip?dl=0
 
 Integration with other projects:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

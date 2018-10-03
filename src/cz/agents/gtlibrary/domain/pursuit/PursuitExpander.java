@@ -19,15 +19,15 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.pursuit;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import cz.agents.gtlibrary.iinodes.ExpanderImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.AlgorithmConfig;
 import cz.agents.gtlibrary.interfaces.GameState;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.utils.graph.Edge;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PursuitExpander<I extends InformationSet> extends ExpanderImpl<I> {
 
@@ -69,6 +69,7 @@ public class PursuitExpander<I extends InformationSet> extends ExpanderImpl<I> {
 					actions.add(new PatrollerPursuitAction(state.getP1Position(), p1Edge.getTarget(), state.getP2Position(), state.getP2Position(), getAlgorithmConfig().getInformationSetFor(state)));
 				}
 			}
+			if (!actions.isEmpty()) break;
 		}
 //		if (!PursuitGameInfo.forceMoves) {
 //			actions.add(new PatrollerPursuitAction(state.getP1Position(), state.getP1Position(), state.getP2Position(), state.getP2Position(), getAlgorithmConfig().getInformationSetFor(state)));
