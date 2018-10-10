@@ -46,8 +46,8 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     private final MCTSConfig config;
     public ResolvingMethod defaultResolvingMethod = RESOLVE_MCCFR;
     public ResolvingMethod defaultRootMethod = RESOLVE_MCCFR;
-    public Budget budgetRoot = BUDGET_TIME;
-    public Budget budgetGadget = BUDGET_TIME;
+    public Budget budgetRoot = BUDGET_NUM_SAMPLES;
+    public Budget budgetGadget = BUDGET_NUM_SAMPLES;
     public CFRData rootCfrData;
     public CFRData gadgetCfrData;
     public boolean gadgetIterationsCountFollow = false;
@@ -55,19 +55,27 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     private double epsilonExploration = 0.6;
     private boolean resetData = true;
 
+    private Player defaultResolvingPlayer;
+    private MCTSInformationSet currentIs;
+    private InnerNode rootNode;
+
     public CRAlgorithm(GameState rootState, Expander<MCTSInformationSet> expander) {
         this(rootState, expander, 0.6);
     }
 
-    public CRAlgorithm(GameState rootState, Expander<MCTSInformationSet> expander, double epsilonExploration) {
+    public CRAlgorithm(Player resolvingPlayer, GameState rootState, Expander<MCTSInformationSet> expander, double epsilonExploration) {
         this.rootState = rootState;
         this.expander = expander;
         this.config = ((MCTSConfig) expander.getAlgorithmConfig());
         this.rnd = config.getRandom();
-
         this.epsilonExploration = epsilonExploration;
+        this.defaultResolvingPlayer = resolvingPlayer;
         OOSAlgorithmData.useEpsilonRM = false;
         threadBean = ManagementFactory.getThreadMXBean();
+    }
+
+    public CRAlgorithm(GameState rootState, Expander<MCTSInformationSet> expander, double epsilonExploration) {
+        this(rootState.getAllPlayers()[0], rootState, expander, epsilonExploration);
     }
 
     public CRAlgorithm(InnerNode rootNode, Expander expander) {
@@ -75,13 +83,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     }
 
     public CRAlgorithm(InnerNode rootNode, Expander<MCTSInformationSet> expander, double epsilonExploration) {
-        this.rootState = rootNode.getGameState();
-        this.expander = expander;
-        this.config = ((MCTSConfig) expander.getAlgorithmConfig());
-        this.rnd = config.getRandom();
-        this.epsilonExploration = epsilonExploration;
-        OOSAlgorithmData.useEpsilonRM = false;
-        threadBean = ManagementFactory.getThreadMXBean();
+        this(rootNode.getGameState(), expander, epsilonExploration);
     }
 
     public Expander<MCTSInformationSet> getExpander() {
@@ -218,7 +220,12 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             System.err.println("Skipping resolving.");
         }
         ArrayDeque<PublicState> q = new ArrayDeque<>();
-        q.add(getRootNode().getPublicState());
+        PublicState playerRootPs = getRootNode().getPublicState();
+        if(playerRootPs.getPlayer().getId() == resolvingPlayer.getId()) {
+            q.add(playerRootPs);
+        } else {
+            q.addAll(playerRootPs.getNextPlayerPublicStates(resolvingPlayer));
+        }
         while (!q.isEmpty()) {
             PublicState s = q.removeFirst();
 
@@ -499,54 +506,29 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         throw new NotImplementedException();
     }
 
-//    private void printCFVs(Stream<MCTSInformationSet> stream, int iterations) {
-//        stream
-//                .forEach(is -> {
-//                    OOSAlgorithmData data = ((OOSAlgorithmData) is.getAlgorithmData());
-//                    System.out.println(
-//                            "CFV:" + is.toString() + "," + ((int) data.getIsVisitsCnt()) + "," + data.getIsCFV(
-//                                    iterations));
-//
-//                    Map<Action, Double> distribution = getDistributionFor(data);
-//
-//                    System.out.println("Strat:" + distributionToString(is.getActions(), distribution));
-//
-//                    double[][] optimal = {
-//                            {0.010244883284174892, 0.3322823662715796, 0.6574727504442456},
-//                            {0.3342004650475451, 0.009645618665963192, 0.6561539162864918}
-//                    };
-//
-//
-//                    for (int i = 0; i < is.getActions().size(); i++) {
-//                        Action a = is.getActions().get(i);
-//                        distribution.put(a, optimal[is.getPlayer().getId()][i] - distribution.get(a));
-//                    }
-//
-//                    System.out.println("Diff:" + distributionToString(is.getActions(), distribution));
-//
-//                    double[] rmstrat = data.getRMStrategy();
-//                    double[] cfvas = data.getActionCFV();
-//
-//                    System.out.println("RMSStrat:" + rmstrat[0] + "," + rmstrat[1] + "," + rmstrat[2] + ",");
-//                    System.out.println("CFVAs:" + cfvas[0] + "," + cfvas[1] + "," + cfvas[2] + ",");
-//                    System.out.println("---");
-//
-//                });
-//    }
-
     @Override
     public Action runMiliseconds(int miliseconds) {
-        throw new NotImplementedException();
+        budgetGadget = BUDGET_TIME;
+
+        if(currentIs == null) {
+            runRoot(RESOLVE_MCCFR, defaultResolvingPlayer, getRootNode(), miliseconds);
+            return null;
+        } else {
+            return runStep(defaultResolvingPlayer, currentIs, RESOLVE_MCCFR, miliseconds);
+        }
     }
 
     @Override
-    public void setCurrentIS(InformationSet currentIS) {
-        throw new NotImplementedException();
+    public void setCurrentIS(InformationSet currentIs) {
+        this.currentIs = (MCTSInformationSet) currentIs;
     }
 
     @Override
     public InnerNode getRootNode() {
-        return buildRootNode();
+        if(rootNode == null) {
+            rootNode = buildRootNode();
+        }
+        return rootNode;
     }
 
     private boolean isNiceGame(GameState gameState) {
