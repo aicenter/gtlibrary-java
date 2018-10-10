@@ -1,5 +1,6 @@
 package publicstate;
 
+import cz.agents.gtlibrary.algorithms.cr.Game;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
@@ -19,8 +20,8 @@ import static org.junit.Assert.assertTrue;
 
 public class PublicStateTest extends CRExperiments {
 
-    public PublicStateTest(Long seed) {
-        super(seed);
+    public PublicStateTest() {
+        super(0L);
     }
 
     @Test
@@ -32,25 +33,25 @@ public class PublicStateTest extends CRExperiments {
     }
 
     private void checkDomain(String domain, String[] params) {
-        PublicStateTest exp = new PublicStateTest(0L);
+        PublicStateTest exp = new PublicStateTest();
         exp.prepareDomain(domain, params);
-        exp.createGame(domain, new Random(0L));
+        Game g = exp.createGame(domain, new Random(0L));
 
-        exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
+        g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
 
         InnerNodeImpl rootNode;
-        if (exp.rootState.isPlayerToMoveNature()) {
-            rootNode = new ChanceNodeImpl(exp.expander, exp.rootState, 0);
+        if (g.rootState.isPlayerToMoveNature()) {
+            rootNode = new ChanceNodeImpl(g.expander, g.rootState, 0);
         } else {
-            rootNode = new InnerNodeImpl(exp.expander, exp.rootState);
+            rootNode = new InnerNodeImpl(g.expander, g.rootState);
         }
 
         // build set of "inner" game states to compare with
         Set<GameState> expectedInnerGameStates = new HashSet<>();
         ArrayDeque<InnerNodeImpl> q = new ArrayDeque<InnerNodeImpl>();
-        expectedInnerGameStates.add(exp.rootState);
+        expectedInnerGameStates.add(g.rootState);
         q.add(rootNode);
-        HashMap<ISKey, MCTSInformationSet> infoSets = ((MCTSConfig) exp.expander.getAlgorithmConfig()).getAllInformationSets();
+        HashMap<ISKey, MCTSInformationSet> infoSets = ((MCTSConfig) g.expander.getAlgorithmConfig()).getAllInformationSets();
         while (!q.isEmpty()) {
             InnerNodeImpl n = q.removeFirst();
             for (Action a : n.getActions()) {
@@ -64,7 +65,7 @@ public class PublicStateTest extends CRExperiments {
         }
 
         Set<GameState> actualInnerGameStates = new HashSet<>();
-        Set<MCTSPublicState> publicStates = ((MCTSConfig) exp.expander.getAlgorithmConfig()).getAllPublicStates();
+        Set<MCTSPublicState> publicStates = ((MCTSConfig) g.expander.getAlgorithmConfig()).getAllPublicStates();
         for (MCTSPublicState publicState : publicStates) {
             GameState firstState = null;
             for (GameState state : publicState.getAllStates()) {

@@ -34,15 +34,15 @@ public class PublicTreeGeneratorTest extends CRExperiments {
         // expected
         CRTest expected = new CRTest();
         expected.prepareDomain(domain, params);
-        expected.createGame(domain, new Random(0));
-        if (expected.rootState.isPlayerToMoveNature()) {
-            rootNode = new ChanceNodeImpl(expected.expander, expected.rootState, expected.config.getRandom());
+        Game g_exp = expected.createGame(domain, new Random(0));
+        if (g_exp.rootState.isPlayerToMoveNature()) {
+            rootNode = new ChanceNodeImpl(g_exp.expander, g_exp.rootState, g_exp.config.getRandom());
         } else {
-            rootNode = new InnerNodeImpl(expected.expander, expected.rootState);
+            rootNode = new InnerNodeImpl(g_exp.expander, g_exp.rootState);
         }
         buildCompleteTree(rootNode);
         HashMap<InnerNode, MCTSPublicState> expectedMap = new HashMap<>();
-        expected.config.getAllInformationSets().values().stream()
+        g_exp.config.getAllInformationSets().values().stream()
                 .flatMap(is -> is.getAllNodes().stream())
                 .forEach(in -> {
                     MCTSPublicState ps = in.getPublicState();
@@ -53,22 +53,22 @@ public class PublicTreeGeneratorTest extends CRExperiments {
         // actual
         CRTest actual = new CRTest();
         actual.prepareDomain(domain, params);
-        actual.createGame(domain, new Random(0));
-        if (actual.rootState.isPlayerToMoveNature()) {
-            rootNode = new ChanceNodeImpl(actual.expander, actual.rootState, actual.config.getRandom());
+        Game g_act = actual.createGame(domain, new Random(0));
+        if (g_act.rootState.isPlayerToMoveNature()) {
+            rootNode = new ChanceNodeImpl(g_act.expander, g_act.rootState, g_act.config.getRandom());
         } else {
-            rootNode = new InnerNodeImpl(actual.expander, actual.rootState);
+            rootNode = new InnerNodeImpl(g_act.expander, g_act.rootState);
         }
 
         HashMap<InnerNode, MCTSPublicState> actualMap = new HashMap<>();
         PublicTreeGenerator.constructPublicTree(rootNode);
-        actual.config.getAllInformationSets().values().stream()
+        g_act.config.getAllInformationSets().values().stream()
                 .flatMap(is -> is.getAllNodes().stream())
                 .forEach(in -> actualMap.put(in, in.getPublicState()));
 
         assertEquals(expectedMap, actualMap);
 
-        Player[] pl = expected.rootState.getAllPlayers();
+        Player[] pl = g_exp.rootState.getAllPlayers();
 
         expectedMap.forEach((ein, eps) -> {
             MCTSPublicState aps = actualMap.get(ein);

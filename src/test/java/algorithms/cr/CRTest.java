@@ -1,9 +1,6 @@
 package algorithms.cr;
 
-import cz.agents.gtlibrary.algorithms.cr.CRAlgorithm;
-import cz.agents.gtlibrary.algorithms.cr.CRExperiments;
-import cz.agents.gtlibrary.algorithms.cr.ResolvingMethod;
-import cz.agents.gtlibrary.algorithms.cr.Subgame;
+import cz.agents.gtlibrary.algorithms.cr.*;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInfoSet;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode;
@@ -34,25 +31,33 @@ public class CRTest extends CRExperiments {
 
     @Test
     public void testGamesRpIsSameInAllHistoriesWithinInfoSets() {
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets("IIGS", new String[]{"0", "2", "true", "true"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets("IIGS", new String[]{"0", "3", "true", "true"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets("IIGS", new String[]{"0", "4", "true", "true"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets("RPS", new String[]{"0"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets("LD", new String[]{"1", "1", "3"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets("GP", new String[]{"2", "2", "1", "1"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets("GP", new String[]{"2", "2", "2", "2"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets("GP", new String[]{"3", "3", "2", "2"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"IIGS", new String[]{"0", "2", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"IIGS", new String[]{"0", "2", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"IIGS", new String[]{"0", "3", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"IIGS", new String[]{"0", "3", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"IIGS", new String[]{"0", "4", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"IIGS", new String[]{"0", "4", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"RPS", new String[]{"0"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"RPS", new String[]{"0"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"LD", new String[]{"1", "1", "3"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"LD", new String[]{"1", "1", "3"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"GP", new String[]{"2", "2", "1", "1"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"GP", new String[]{"2", "2", "1", "1"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"GP", new String[]{"2", "2", "2", "2"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"GP", new String[]{"2", "2", "2", "2"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"GP", new String[]{"3", "3", "2", "2"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"GP", new String[]{"3", "3", "2", "2"});
     }
 
-    private void checkDomainRpIsSameInAllHistoriesWithinInfoSets(String domain, String[] params) {
+    private void checkDomainRpIsSameInAllHistoriesWithinInfoSets(Integer player, String domain, String[] params) {
         for (long seed = 0; seed < 3; seed++) {
             CRTest exp = new CRTest();
             exp.prepareDomain(domain, params);
-            exp.createGame(domain, new Random(seed));
-            exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
-            Player resolvingPlayer = exp.rootState.getAllPlayers()[0];
+            Game g = exp.createGame(domain, new Random(seed));
+            g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
+            Player resolvingPlayer = g.rootState.getAllPlayers()[player];
 
-            CRAlgorithm alg = new CRAlgorithm(exp.rootState, exp.expander, 0.6);
+            CRAlgorithm alg = new CRAlgorithm(g.rootState, g.expander, 0.6);
             alg.defaultResolvingMethod = ResolvingMethod.RESOLVE_MCCFR;
             alg.defaultRootMethod = ResolvingMethod.RESOLVE_MCCFR;
             alg.solveEntireGame(resolvingPlayer, 100, 100);
@@ -86,10 +91,10 @@ public class CRTest extends CRExperiments {
     private void checkDomainPublicStateHaveNoCommonIS(String domain, String[] params) {
         CRTest exp = new CRTest();
         exp.prepareDomain(domain, params);
-        exp.createGame(domain, new Random(0));
-        exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
+        Game g = exp.createGame(domain, new Random(0));
+        g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
 
-        CRAlgorithm alg = new CRAlgorithm(exp.rootState, exp.expander, 0.6);
+        CRAlgorithm alg = new CRAlgorithm(g.rootState, g.expander, 0.6);
         buildCompleteTree(alg.getRootNode());
 
         Set<MCTSInformationSet> processed = new HashSet<>();
@@ -120,13 +125,13 @@ public class CRTest extends CRExperiments {
 
         CRTest exp = new CRTest();
         exp.prepareDomain(domain, params);
-        exp.createGame(domain, new Random(seed));
-        exp.expander.getAlgorithmConfig().createInformationSetFor(exp.rootState);
+        Game g = exp.createGame(domain, new Random(seed));
+        g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
 
-        CRAlgorithm alg = new CRAlgorithm(exp.rootState, exp.expander, 0.6);
-        alg.solveEntireGame(exp.rootState.getAllPlayers()[0], 1000, 1000);
+        CRAlgorithm alg = new CRAlgorithm(g.rootState, g.expander, 0.6);
+        alg.solveEntireGame(g.rootState.getAllPlayers()[0], 1000, 1000);
 
-        Collection<MCTSInformationSet> infoSets = ((MCTSConfig) exp.expander.getAlgorithmConfig())
+        Collection<MCTSInformationSet> infoSets = ((MCTSConfig) g.expander.getAlgorithmConfig())
                 .getAllInformationSets().values();
         for (MCTSInformationSet infoSet : infoSets) {
             OOSAlgorithmData data = ((OOSAlgorithmData) infoSet.getAlgorithmData());
@@ -151,12 +156,12 @@ public class CRTest extends CRExperiments {
     private void checkDomainRunStepChangesStrategyInPublicSubtree(String domain, String[] params) {
         CRTest exp = new CRTest();
         exp.prepareDomain(domain, params);
-        exp.createGame(domain, new Random(0L));
-        exp.config.createInformationSetFor(exp.rootState);
+        Game g = exp.createGame(domain, new Random(0L));
+        g.config.createInformationSetFor(g.rootState);
 
-        Player resolvingPlayer = exp.rootState.getAllPlayers()[0];
+        Player resolvingPlayer = g.rootState.getAllPlayers()[0];
 
-        CRAlgorithm alg = new CRAlgorithm(exp.rootState, exp.expander);
+        CRAlgorithm alg = new CRAlgorithm(g.rootState, g.expander);
         InnerNode rootNode = alg.getRootNode();
         alg.setDoResetData(true);
         buildCompleteTree(rootNode);
@@ -258,12 +263,12 @@ public class CRTest extends CRExperiments {
                                                              int resolvingIterations) {
         CRTest exp = new CRTest();
         exp.prepareDomain(domain, params);
-        exp.createGame(domain, new Random(0L));
-        exp.config.createInformationSetFor(exp.rootState);
+        Game g = exp.createGame(domain, new Random(0L));
+        g.config.createInformationSetFor(g.rootState);
 
-        Player resolvingPlayer = exp.rootState.getAllPlayers()[0];
+        Player resolvingPlayer = g.rootState.getAllPlayers()[0];
 
-        CRAlgorithm alg = new CRAlgorithm(exp.rootState, exp.expander);
+        CRAlgorithm alg = new CRAlgorithm(g.rootState, g.expander);
         InnerNode rootNode = alg.getRootNode();
         alg.setDoResetData(true);
         buildCompleteTree(rootNode);
@@ -309,7 +314,7 @@ public class CRTest extends CRExperiments {
         System.out.println("RootReachPr " + gadgetRoot.getRootReachPr());
 
         Map<ISKey, Map<Action, Double>> stratRoot = exp.getBehavioralStrategy(rootNode);
-        Exploitability cfrExpl = exp.calcExploitability(stratRoot);
+        Exploitability cfrExpl = exp.calcExploitability(g, stratRoot);
         System.out.println("Root " + cfrExpl);
 
         targetPS.resetData(true);
@@ -331,16 +336,16 @@ public class CRTest extends CRExperiments {
             stratCFR_copy = exp.cloneBehavStrategy(stratRoot);
 
             Exploitability resolvedExpl;
-            resolvedExpl = exp.calcExploitability(stratCFR_copy);
+            resolvedExpl = exp.calcExploitability(g, stratCFR_copy);
             System.out.println("stratCFR_copy " + resolvedExpl);
 
             stratCR = exp.getBehavioralStrategy(rootNode);
 
-            resolvedExpl = exp.calcExploitability(stratCR);
+            resolvedExpl = exp.calcExploitability(g, stratCR);
             System.out.println("stratCR " + resolvedExpl);
 
             exp.substituteStrategy(stratCFR_copy, stratCR, ps);
-            resolvedExpl = exp.calcExploitability(stratCFR_copy);
+            resolvedExpl = exp.calcExploitability(g, stratCFR_copy);
             System.out.println("stratCFR_copy+CR " + resolvedExpl);
 
             assertTrue(cfrExpl.total() - resolvedExpl.total() >= 0);
