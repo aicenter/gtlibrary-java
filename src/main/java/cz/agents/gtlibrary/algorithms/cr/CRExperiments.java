@@ -42,6 +42,7 @@ import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
+import cz.agents.gtlibrary.domain.rps.BRPSGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
@@ -250,12 +251,19 @@ public class CRExperiments {
                 break;
             case "PTTT":  // Phantom Tic tac toe
                 break;
-            case "RPS":  // Tron
+            case "RPS":
                 if (domainParams.length != 1) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
                             "1 parameter is required {SEED}");
                 }
                 RPSGameInfo.seed = new Integer(domainParams[0]);
+                break;
+            case "BRPS":
+                if (domainParams.length != 1) {
+                    throw new IllegalArgumentException("Illegal domain arguments count: " +
+                            "1 parameter is required {SEED}");
+                }
+                BRPSGameInfo.seed = new Integer(domainParams[0]);
                 break;
             default:
                 throw new IllegalArgumentException("Illegal domain: " + domainParams[1]);

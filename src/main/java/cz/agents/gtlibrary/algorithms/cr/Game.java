@@ -23,9 +23,7 @@ import cz.agents.gtlibrary.domain.pursuit.PursuitGameState;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameExpander;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.SimRandomGameState;
-import cz.agents.gtlibrary.domain.rps.RPSExpander;
-import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
-import cz.agents.gtlibrary.domain.rps.RPSGameState;
+import cz.agents.gtlibrary.domain.rps.*;
 import cz.agents.gtlibrary.domain.tron.TronExpander;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.domain.tron.TronGameState;
@@ -92,6 +90,11 @@ public class Game {
             case "RPS":
                 gameInfo = new RPSGameInfo();
                 rootState = new RPSGameState();
+                expander = new RPSExpander<>(config);
+                break;
+            case "BRPS":
+                gameInfo = new BRPSGameInfo();
+                rootState = new BRPSGameState();
                 expander = new RPSExpander<>(config);
                 break;
             default:
