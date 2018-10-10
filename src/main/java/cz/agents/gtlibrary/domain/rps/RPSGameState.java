@@ -19,7 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.rps;
 
-import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
@@ -38,41 +37,15 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
     protected List<Action> sequenceForAllPlayers;
 
     protected int round;
-    protected int[] playerActions; 
-    private int currentPlayerIndex;
-
+    protected int[] playerActions;
     protected ISKey isKey;
     protected PSKey psKey;
+    double[][] payoffs = {
+            {0, -1, 1},
+            {1, 0, -1},
+            {-1, 1, 0}};
+    private int currentPlayerIndex;
     private int hashCode = -1;
-
-    // standard game
-    // Exploitability 0.0025173633941771856
-    //
-    // PPl0 Rock=0.01025513842259748,   PPl0 Scissors=0.3323003083557901    PPl0 Paper=0.6574445532216123,
-    // CFV -0.32352562045066463
-    // CFV-A -0.3095001859619614,-0.3217096899965995,-0.3246622440918455,
-
-    // CFR - resolved
-    // PPl0 Rock=0.010983753311312867,   PPl0 Scissors=0.3323306619654697   PPl0 Paper=0.6566855847232176,
-    // CFV -0.3234088188237126
-    // CFV-A -0.22108612935568495,-0.3229336703174805,-0.3253607325350743,
-
-
-    // {PPl1 Rock=0.3344196060883686,   PPl1 Scissors=0.009664948563089358  PPl1 Paper=0.6559154453485421   }
-    // CFV 0.9558721200504063
-    // CFV-A 0.0,99.0,0.0,
-
-    // CFR - resolved
-    // PPl1 Rock=0.13061764127790954,   PPl1 Scissors=8.027450092656224E-5  PPl1 Paper=0.869302084221164
-    // CFV 0.00794717559172975
-    // CFV-A 0.0,99.0,0.0,
-
-
-    // 0.0833327103525125
-    // 0.0832096829774322
-    public static double[][] payoffs = { {   0, -1,  100 },
-                                         {   1,  0, -1 },
-                                         {  -1,  1,  0 } };
 
     // biased game from Shafiei et al. 2009
     // http://web.cs.du.edu/~sturtevant/papers/uctcfr.pdf
@@ -96,10 +69,6 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
         playerActions = new int[2];
     }
 
-    private Sequence createRandomSequence() {
-        return null;
-    }
-
     public RPSGameState(RPSGameState gameState) {
         super(gameState);
         this.round = gameState.round;
@@ -107,6 +76,10 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
         this.playerActions = Arrays.copyOf(gameState.playerActions, gameState.playerActions.length);
 
         this.sequenceForAllPlayers = new ArrayList<Action>(gameState.sequenceForAllPlayers);
+    }
+
+    private Sequence createRandomSequence() {
+        return null;
     }
 
     @Override
@@ -158,13 +131,13 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
 
     @Override
     protected double[] getEndGameUtilities() {
-        double p1eval = payoffs[playerActions[0]-1][playerActions[1]-1];
+        double p1eval = payoffs[playerActions[0] - 1][playerActions[1] - 1];
         return new double[]{p1eval, -p1eval, 0};
     }
 
     @Override
     public boolean isActualGameEnd() {
-        return (round >= 1); 
+        return (round >= 1);
     }
 
     @Override
@@ -245,10 +218,10 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
     @Override
     public PSKey getPSKeyForPlayerToMove() {
         PSKey maybeHasForcedKey = super.getPSKeyForPlayerToMove();
-        if(maybeHasForcedKey != null) return maybeHasForcedKey;
+        if (maybeHasForcedKey != null) return maybeHasForcedKey;
 
         if (psKey == null) {
-            psKey = new PSKey(history.getLength()-1);
+            psKey = new PSKey(history.getLength() - 1);
         }
         return psKey;
     }

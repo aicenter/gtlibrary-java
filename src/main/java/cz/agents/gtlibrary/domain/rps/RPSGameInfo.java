@@ -19,8 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.rps;
 
-import java.util.Arrays;
-
 import cz.agents.gtlibrary.iinodes.PlayerImpl;
 import cz.agents.gtlibrary.interfaces.GameInfo;
 import cz.agents.gtlibrary.interfaces.Player;
@@ -29,8 +27,9 @@ public class RPSGameInfo implements GameInfo {
 
     public static final Player FIRST_PLAYER = new PlayerImpl(0);
     public static final Player SECOND_PLAYER = new PlayerImpl(1);
+    public static final Player NATURE_PLAYER = new PlayerImpl(2); // doesnt play
 
-    public static final Player[] ALL_PLAYERS = {FIRST_PLAYER, SECOND_PLAYER};
+    public static final Player[] ALL_PLAYERS = {FIRST_PLAYER, SECOND_PLAYER, NATURE_PLAYER};
     public static long seed = 1;
 
     public RPSGameInfo() {
@@ -38,7 +37,7 @@ public class RPSGameInfo implements GameInfo {
 
     @Override
     public double getMaxUtility() {
-        return 100;
+        return 1;
     }
 
     @Override
@@ -53,11 +52,7 @@ public class RPSGameInfo implements GameInfo {
 
     @Override
     public String getInfo() {
-        String str = ""; 
-        for (int r = 0; r < 3; r++) 
-          for (int c = 0; c < 3; c++)
-            str += (RPSGameState.payoffs[r][c] + " "); 
-        return "Rock Paper Scissors, payoff matrix = " + str; 
+        return "Unbiased Rock Paper Scissors";
     }
 
     @Override
