@@ -57,25 +57,20 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
             double maxIsCFV = getExpander().getGameInfo().getMaxUtility();
 
             double isCFV = gadgetIs.getIsCFV(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
-//            if(CRExperiments.cfvHack) {
-//                if (resolvingMethod == RESOLVE_MCCFR && Math.abs(isCFV) < 0.1 / Math.sqrt(expUtilityIterations)) isCFV = 0;
-//                isCFV *= 0.99;
-//            }
             double isReach = gadgetIs.getIsReach();
 
             // shouldnt happen often!
             if (isCFV < -maxIsCFV) {
                 isCFV = -maxIsCFV;
-//            System.err.println(">>> underflow");
+//                System.err.println(">>> underflow");
             } else if (isCFV > maxIsCFV) {
                 isCFV = maxIsCFV;
-//            System.err.println(">>> overflow");
+//                System.err.println(">>> overflow");
             }
 
+            double u_opponent = isCFV / isReach; // rootReach is multipled by OOSAlgorithm.normalizingUtils
             int playerSign = state.getPlayerToMove().getId() == 0 ? 1 : -1;
-            double u = playerSign * isCFV / isReach; // rootReach is multipled by OOSAlgorithm.normalizingUtils
-
-            this.terminateNode = new GadgetLeafNode(originalNode.getGameState(), u);
+            this.terminateNode = new GadgetLeafNode(originalNode.getGameState(), playerSign * u_opponent);
             terminateNode.setParent(this);
             terminateNode.setLastAction(terminateAction);
             children.put(terminateAction, terminateNode);
