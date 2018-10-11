@@ -21,6 +21,7 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -33,7 +34,6 @@ import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_NUM_SA
 import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_TIME;
 import static cz.agents.gtlibrary.algorithms.cr.CRExperiments.buildCompleteTree;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
-//import static cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm.gadgetActionChoices;
 
 // Continual Resolving algorithm
 public class CRAlgorithm implements GamePlayingAlgorithm {
@@ -211,10 +211,9 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         }
 
         if (iterationsInRoot < 2) { // no root init
-            System.err.println("Skipping root initialization.");
+            throw new RuntimeException("Cannot skip root initialization!");
         }
         runRoot(resolvingPlayer, solvingRoot, iterationsInRoot);
-
 
         if (iterationsPerGadgetGame < 2) { // uniform resolving
             System.err.println("Skipping resolving.");
@@ -309,16 +308,18 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
 
         if (resetData && !isPublicTreeRootKeeping(publicState)) {
             System.err.println("Resetting data");
-            publicState.resetData(false);
+            publicState.resetData(true);
             publicState.setDataKeeping(false);
         } else {
             System.err.println("Keeping data");
             publicState.setDataKeeping(true);
         }
 
-//        new GambitEFG().write(
-//                expander.getClass().getSimpleName() + "_PS_" + publicState.getPSKey().getHash() + ".gbt",
-//                gadgetRootNode);
+        if(System.getenv("writeEFG") != null && System.getenv("writeEFG").equals("true")) {
+            new GambitEFG().write(
+                    expander.getClass().getSimpleName() + "_PS_" + publicState.getPSKey().getHash() + ".gbt",
+                    gadgetRootNode);
+        }
 
 //        subgame.getGadgetInformationSets().forEach(gis -> {
 //            System.out.println(gis + " " + gis.getIsCFV(publicState.getResolvingIterations()));
@@ -351,7 +352,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 break;
         }
         double diff = (threadBean.getCurrentThreadCpuTime() - start) / 1e6;
-        System.err.println("resolved in " + diff + " ms");
+        System.err.println("resolved in " + diff + " ms using "+iterations + " iterations");
         totalTimeResolving += diff;
 
         final Integer totalIterations = iterations;
@@ -434,7 +435,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             alg.runMiliseconds(iterations);
         } else {
             assert budgetGadget == BUDGET_NUM_SAMPLES;
-            alg.runIterations(iterations, gadgetIterationsCountFollow);
+            alg.runIterations(iterations);
         }
 
         return alg.iters;
@@ -634,109 +635,10 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 inners + " & " +
                 leafs + " & " +
                 (maxPTdepth));
-//        System.err.println(
-//                "F:" + gadgetActionChoices[0] + " " +
-//                "T:" + gadgetActionChoices[1] + " " +
-//                "ratio: " + ((double) gadgetActionChoices[0] / (gadgetActionChoices[0] + gadgetActionChoices[1])) + " " +
-//                "total: " + (gadgetActionChoices[0] + gadgetActionChoices[1]));
     }
 
     private Map<Action, Double> getDistributionFor(AlgorithmData algorithmData) {
         return (new MeanStratDist()).getDistributionFor(algorithmData);
-    }
-
-    private void debugClearISVisitCounts(InnerNode rootNode) {
-        // clear out IS counts
-        ArrayDeque<Node> qn = new ArrayDeque<>();
-        qn.add(rootNode);
-        while (!qn.isEmpty()) {
-            InnerNode in = (InnerNode) qn.removeFirst();
-            if (in.getInformationSet() != null) {
-                in.getInformationSet().setVisitsCnt(0);
-                if (in.getInformationSet() instanceof GadgetInfoSet) {
-                    ((GadgetInfoSet) in.getInformationSet()).setFollowCnt(0);
-                    ((GadgetInfoSet) in.getInformationSet()).setTerminateCnt(0);
-                }
-                if (in instanceof GadgetInnerNode) {
-                    ((GadgetInnerNode) in).setFollowCnt(0, 0);
-                    ((GadgetInnerNode) in).setFollowCnt(0, 1);
-                    ((GadgetInnerNode) in).setTerminateCnt(0, 0);
-                    ((GadgetInnerNode) in).setTerminateCnt(0, 1);
-                }
-            }
-            for (Node next : in.getChildren().values()) {
-                if (next instanceof InnerNode) {
-                    qn.add(next);
-                }
-            }
-        }
-    }
-
-    private int debugDepthSamplingAssert(InnerNode rootNode, OOSAlgorithm alg) {
-        Map<Integer, Integer> depthTest = new HashMap<>();
-        Set<InformationSet> processed = new HashSet<>();
-        ArrayDeque<InnerNode> q = new ArrayDeque<>();
-        q.add(rootNode);
-
-        // at each depth level, we should get the same number of samples
-        // (applies for goofspiel and liar's dice)
-        while (!q.isEmpty()) {
-            InnerNode n = q.removeFirst();
-
-            if (n.getInformationSet() != null) {
-                if (!processed.contains(n.getInformationSet())) {
-                    int defValue = n.getDepth() == 1 ? 0 : alg.gadgetActionChoices[n.getPlayerToMove().getId()][1];
-                    depthTest.put(n.getDepth(),
-                            depthTest.getOrDefault(n.getDepth(), defValue) + n.getInformationSet().getVisitsCnt());
-                    processed.add(n.getInformationSet());
-                }
-            }
-
-            for (Node next : n.getChildren().values()) {
-                if (next instanceof InnerNode) {
-                    q.add((InnerNode) next);
-                }
-            }
-        }
-        Integer numVisits = null;
-        for (Map.Entry<Integer, Integer> entry : depthTest.entrySet()) {
-            if (numVisits == null) numVisits = entry.getValue();
-            assert numVisits == (int) entry.getValue();
-        }
-
-        // the number of expPlayer taking "follow" should be the same as original IS regret update visits
-        GadgetChanceNode gadgetRootNode = (GadgetChanceNode) rootNode;
-        Map<MCTSInformationSet, Integer> originalIsVisitCnts = new HashMap<>();
-        Map<MCTSInformationSet, Integer> followIsVisitCnts = new HashMap<>();
-        gadgetRootNode.getResolvingInnerNodes().values().stream()
-                .map(GadgetInnerNode::getOriginalNode)
-                .map(InnerNode::getInformationSet)
-                .forEach(origIs -> originalIsVisitCnts.put(origIs, origIs.getVisitsCnt()));
-        gadgetRootNode.getResolvingInnerNodes().values()
-                .forEach(gadgetNode -> {
-                    MCTSInformationSet origIs = gadgetNode.getOriginalNode().getInformationSet();
-                    followIsVisitCnts.put(origIs, followIsVisitCnts.getOrDefault(origIs, 0)
-                            + gadgetNode.getFollowCnt(origIs.getPlayer().getId()));
-                });
-        originalIsVisitCnts.keySet().forEach(is -> {
-            assert (int) originalIsVisitCnts.get(is) == (int) followIsVisitCnts.get(is);
-        });
-
-//
-//        Map<Action, Double> chanceProbabilities = gadgetRootNode.getChanceProbabilities();
-//        Map<Action, GadgetInnerNode> resolvingInnerNodes = gadgetRootNode.getResolvingInnerNodes();
-//        for(Action a: chanceProbabilities.keySet()) {
-//            double p = chanceProbabilities.get(a);
-//            int orig_cnt = (resolvingInnerNodes.get(a).getOriginalNode().getInformationSet()).getVisitsCnt();
-//            int gadget_cnt = resolvingInnerNodes.get(a).getInformationSet().getVisitsCnt();
-//            GadgetInfoSet g_is = ((GadgetInfoSet) resolvingInnerNodes.get(a).getInformationSet());
-////            assert g_is.getTerminateCnt()+g_is.getFollowCnt() == numVisits;
-//            System.err.println(a + "," + String.format("%.10f", p) + ","+orig_cnt+","+gadget_cnt+","+g_is.getFollowCnt()+","+g_is.getTerminateCnt());
-//        }
-
-        debugClearISVisitCounts(rootNode);
-
-        return numVisits;
     }
 
     public enum Budget {
