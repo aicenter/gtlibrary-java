@@ -43,7 +43,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     private double[] playerReachPr = new double[] {1.,1.,1.};
     private double evSum = 0.;
     protected MCTSInformationSet oppAugInformationSet;
-
+    public static boolean simulatingNode = false;
     /**
      * Non-root node constructor
      */
@@ -54,8 +54,10 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
             playerReachPr[2] *= parent.getProbabilityOfNatureFor(lastAction);
         }
 
-        attendInformationSet();
-        attendPublicState();
+        if(!simulatingNode) {
+            attendInformationSet();
+            attendPublicState();
+        }
         if (actions == null)
             actions = getExpander().getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
@@ -130,7 +132,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     protected Node createChild(Action action) {
         Node child = getNewChildAfter(action);
 
-        children.put(action, child);
+        if(!simulatingNode) children.put(action, child);
         return child;
     }
 

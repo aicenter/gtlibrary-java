@@ -26,6 +26,7 @@ package cz.agents.gtlibrary.algorithms.mcts.oos;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.Simulator;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
@@ -101,13 +102,11 @@ public class OOSSimulator implements Simulator {
         playersProb = 1;
         playerProb[0]=playerProb[1]=1;
 
+        InnerNodeImpl.simulatingNode = true;
+
         int step=0;
         while (!node.isGameEnd()) {
             InnerNode in = (InnerNode) node;
-            if(in.getPlayerToMove().equals(expPlayer)) {
-                in.getInformationSet().incrVisitsCnt();
-            }
-
             if (step==simLenght) {
                 return node.getGameState().evaluate()[expPlayer.getId()];
             }
@@ -124,16 +123,10 @@ public class OOSSimulator implements Simulator {
                 node = in.getChildFor(actions.get(rnd.nextInt(actions.size())));
             }
 
-//                List<Action> actions = in.getActions();
-//                playOutProb *= 1.0/actions.size();
-//                if(!(in instanceof ChanceNode)) {
-//                    playersProb *= 1.0 / actions.size();
-//                    playerProb[in.getPlayerToMove().getId()] *= 1.0 / actions.size();
-//                }
-//                node = in.getChildFor(actions.get(rnd.nextInt(actions.size())));
-
             step++;
         }
+
+        InnerNodeImpl.simulatingNode = false;
         return ((LeafNode) node).getUtilities()[expPlayer.getId()];
     }
     
