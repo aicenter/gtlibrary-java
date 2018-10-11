@@ -107,6 +107,8 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
     @Override
     public Action getRandomAction() {
+        if(actions.size() == 1) return actions.get(0);
+
         double move = random.nextDouble();
 
         for (Action action : actions) {
