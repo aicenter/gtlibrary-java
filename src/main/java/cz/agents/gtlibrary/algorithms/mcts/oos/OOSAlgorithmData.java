@@ -23,11 +23,15 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInfoSet;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.interfaces.Action;
 
 import java.io.Serializable;
@@ -121,7 +125,36 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         }
     }
 
-    
+//    public void updateRegret(GadgetInfoSet gis, double pai, int iters, int player) {
+//        GadgetInnerNode one_gn = (GadgetInnerNode) gis.getAllNodes().iterator().next();
+//        if(one_gn.getTerminateNode() == null) {
+//            assert r.length == 1;
+//            return; // only follow, no need to update anything
+//        }
+//
+//        Double r_ = 0.;
+//        Double u_t = one_gn.getTerminateNode().getUtilities()[player];;
+//        int playerSign = gis.getPlayer().getId() == player ? 1 : -1;
+//        for(InnerNode node: gis.getAllNodes()) {
+//           GadgetInnerNode gn = (GadgetInnerNode) node;
+//           double pi_c = gn.getReachPrByPlayer(2);
+//           double u_f = gn.getOriginalNode().getExpectedValue(iters+1) * playerSign;
+//           r_ += pi_c * (u_t - u_f);
+//        }
+//
+//        r[0] += pai * r_;
+//        r[1] += (pai - 1) * r_;
+//    }
+
+
+    public void updateRegret(double p_f, double u_t, double u_f) {
+        double c = (u_f - u_t);
+        double upd_r0 = (1-p_f) * c;
+        double upd_r1 = -p_f * c;
+        r[0] += upd_r0;
+        r[1] += upd_r1;
+    }
+
     public void updateRegretSM(int ai, double W, double pa, double sa){
         for (int i=0; i<r.length; i++){
             if (i==ai) r[i] += W*(1-pa)/sa;
