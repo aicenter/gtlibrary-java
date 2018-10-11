@@ -40,10 +40,6 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
     protected int[] playerActions;
     protected ISKey isKey;
     protected PSKey psKey;
-    double[][] payoffs = {
-            {0, -1, 1},
-            {1, 0, -1},
-            {-1, 1, 0}};
     private int currentPlayerIndex;
     private int hashCode = -1;
 
@@ -76,6 +72,14 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
         this.playerActions = Arrays.copyOf(gameState.playerActions, gameState.playerActions.length);
 
         this.sequenceForAllPlayers = new ArrayList<Action>(gameState.sequenceForAllPlayers);
+    }
+
+    public double[][] getPayoffs() {
+        return new double[][]{
+                {0, -1, RPSGameInfo.biasing},
+                {1, 0, -1},
+                {-1, 1, 0}
+        };
     }
 
     private Sequence createRandomSequence() {
@@ -131,7 +135,7 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
 
     @Override
     protected double[] getEndGameUtilities() {
-        double p1eval = payoffs[playerActions[0] - 1][playerActions[1] - 1];
+        double p1eval = getPayoffs()[playerActions[0] - 1][playerActions[1] - 1];
         return new double[]{p1eval, -p1eval, 0};
     }
 

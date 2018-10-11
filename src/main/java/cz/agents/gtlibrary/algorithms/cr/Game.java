@@ -88,13 +88,9 @@ public class Game {
                 expander = new TTTExpander(config);
                 break;
             case "RPS":
+            case "BRPS":
                 gameInfo = new RPSGameInfo();
                 rootState = new RPSGameState();
-                expander = new RPSExpander<>(config);
-                break;
-            case "BRPS":
-                gameInfo = new BRPSGameInfo();
-                rootState = new BRPSGameState();
                 expander = new RPSExpander<>(config);
                 break;
             default:

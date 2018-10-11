@@ -42,7 +42,6 @@ import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
 import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
-import cz.agents.gtlibrary.domain.rps.BRPSGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
@@ -257,13 +256,15 @@ public class CRExperiments {
                             "1 parameter is required {SEED}");
                 }
                 RPSGameInfo.seed = new Integer(domainParams[0]);
+                RPSGameInfo.biasing = 1.;
                 break;
             case "BRPS":
                 if (domainParams.length != 1) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
                             "1 parameter is required {SEED}");
                 }
-                BRPSGameInfo.seed = new Integer(domainParams[0]);
+                RPSGameInfo.seed = new Integer(domainParams[0]);
+                RPSGameInfo.biasing = 100.;
                 break;
             default:
                 throw new IllegalArgumentException("Illegal domain: " + domainParams[1]);
@@ -380,7 +381,7 @@ public class CRExperiments {
 
     private void runMCCFR_gadget_CFV(Game g) {
         double epsilonExploration = new Double(getenv("epsExploration", "0.6"));
-        int iterationsInRoot = new Integer(getenv("iterationsInRoot", "1000"));
+        double memoryLimit = new Double(getenv("memoryLimit", "3.5")) * 1e+9; // in GB
         int resolvingPlayerIdx = new Integer(getenv("resolvingPlayer", "0"));
         boolean printHeader = new Boolean(getenv("printHeader", "false"));
         boolean calcExploitability = new Boolean(getenv("calcExploitability", "false"));
@@ -502,8 +503,10 @@ public class CRExperiments {
 
             Runtime runtime = Runtime.getRuntime();
             allocatedMemory = runtime.totalMemory();
-        } while (allocatedMemory < 3.5e+9 && runningTime < runMinutes*60*1e9);
+        } while (allocatedMemory < memoryLimit && runningTime < runMinutes*60*1e9);
 
+        if(allocatedMemory >= memoryLimit) System.err.println("exited due to memoryout");
+        if(runningTime >= runMinutes*60*1e9) System.err.println("exited due to timeout");
 //
         // re-create expander and config
 //        prepareDomain("IIGS", new String[]{"0", "5", "true", "true"});
@@ -585,9 +588,9 @@ public class CRExperiments {
         Double br0Val = brAlg0.calculateBR(g.rootState, ISMCTSExploitability.filterLow(strategy1));
 
         double gameValue = 0.; // for player 0
-//        if (g.rootState instanceof RPSGameState) {
-//            gameValue = 0.3235;
-//        }
+        if (g.rootState instanceof RPSGameState && RPSGameInfo.biasing == 100.) {
+            gameValue = 0.32353;
+        }
 
         double exploitability = br0Val + br1Val;
         double expl0 = gameValue + br1Val;
@@ -655,19 +658,22 @@ public class CRExperiments {
             Strategy avgStrategy0 = normalizeStrategy(player0, rootNode, cumulativeStrategy0);
             Strategy avgStrategy1 = normalizeStrategy(player1, rootNode, cumulativeStrategy1);
 
+            double gameValue = 0.; // for player 0
+            if (g.rootState instanceof RPSGameState && RPSGameInfo.biasing == 100.) {
+                gameValue = 0.3235;
+            }
+
             double br1Val_cur = brAlg1.calculateBR(g.rootState, ISMCTSExploitability.filterLow(strategy0));
             double br0Val_cur = brAlg0.calculateBR(g.rootState, ISMCTSExploitability.filterLow(strategy1));
-            double gameValue_cur = 0.; // for player 0
             double exploitability_cur = br0Val_cur + br1Val_cur;
-            double expl0_cur = gameValue_cur + br1Val_cur;
-            double expl1_cur = -gameValue_cur + br0Val_cur;
+            double expl0_cur = gameValue + br1Val_cur;
+            double expl1_cur = -gameValue + br0Val_cur;
 
             double br1Val_avg = brAlg1.calculateBR(g.rootState, ISMCTSExploitability.filterLow(avgStrategy0));
             double br0Val_avg = brAlg0.calculateBR(g.rootState, ISMCTSExploitability.filterLow(avgStrategy1));
-            double gameValue_avg = 0.; // for player 0
             double exploitability_avg = br0Val_avg + br1Val_avg;
-            double expl0_avg = gameValue_avg + br1Val_avg;
-            double expl1_avg = -gameValue_avg + br0Val_avg;
+            double expl0_avg = gameValue + br1Val_avg;
+            double expl1_avg = -gameValue + br0Val_avg;
 
             avg_expl0_cur = avg_expl0_cur + (expl0_cur - avg_expl0_cur) / seed;
             avg_expl1_cur = avg_expl1_cur + (expl1_cur - avg_expl1_cur) / seed;

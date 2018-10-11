@@ -32,12 +32,14 @@ public class RPSGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = {FIRST_PLAYER, SECOND_PLAYER, NATURE_PLAYER};
     public static long seed = 1;
 
+    public static double biasing = 1.;
+
     public RPSGameInfo() {
     }
 
     @Override
     public double getMaxUtility() {
-        return 1;
+        return biasing;
     }
 
     @Override
@@ -52,7 +54,8 @@ public class RPSGameInfo implements GameInfo {
 
     @Override
     public String getInfo() {
-        return "Unbiased Rock Paper Scissors";
+        if(biasing == 1) return "Unbiased Rock Paper Scissors";
+        return biasing+"-biased Rock Paper Scissors";
     }
 
     @Override
