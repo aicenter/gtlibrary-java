@@ -101,11 +101,17 @@ public interface InnerNode extends Node {
         return new PerfectRecallISKey(hashCode, oppSeq);
     }
 
-    double getExpectedValue(int iterationNum);
+    double getExpectedValue(double iterationNum);
 
-    void updateExpectedValue(double offPolicyAproxSample);
+    void updateExpectedValue(double currentOffPolicyAproxSample);
 
-    void setExpectedValue(double offPolicyAproxSample);
+    void setExpectedValue(double sumOffPolicyAproxSample);
+
+    double getSumReachp();
+
+    void updateSumReachp(double currentReachP);
+
+    void setSumReachp(double sumReachP);
 
     void resetData();
 }

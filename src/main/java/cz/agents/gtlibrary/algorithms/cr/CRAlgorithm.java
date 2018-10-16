@@ -209,6 +209,8 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         } else {
             solvingRoot = new InnerNodeImpl(expander, rootState);
         }
+        // todo: remove
+        buildCompleteTree(solvingRoot);
 
         if (iterationsInRoot < 2) { // no root init
             throw new RuntimeException("Cannot skip root initialization!");

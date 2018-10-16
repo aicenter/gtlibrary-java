@@ -9,6 +9,8 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
+import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -59,6 +61,30 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
             double isCFV = gadgetIs.getIsCFV(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
             double isReach = gadgetIs.getIsReach();
 
+//            double isCFV = 0;
+//            double stratCFV1 = 0;
+            double stratCFV2 = 0;
+//            OOSAlgorithmData data1 = ((OOSAlgorithmData) originalNode.getParent().getInformationSet().getAlgorithmData());
+            OOSAlgorithmData data2 = ((OOSAlgorithmData) originalNode.getInformationSet().getAlgorithmData());
+//            double[] strat1 = data1.getMeanStrategy();
+            double[] strat2 = data2.getMeanStrategy();
+            if(((RPSGameState) originalNode.getGameState()).getPlayerActions()[0] == 1) {
+//                stratCFV1 = (strat1[0] * 0 + strat1[1] * -1 + strat1[2] * 100);
+                stratCFV2 = (strat2[0] * 0 + strat2[1] * -1 + strat2[2] * 100);
+            }
+            if(((RPSGameState) originalNode.getGameState()).getPlayerActions()[0] == 2) {
+//                stratCFV1 = (strat1[0] * 1 + strat1[1] * 0 + strat1[2] * -1);
+                stratCFV2 = (strat2[0] * 1 + strat2[1] * 0 + strat2[2] * -1);
+            }
+            if(((RPSGameState) originalNode.getGameState()).getPlayerActions()[0] == 3) {
+//                stratCFV1 = (strat1[0] * -1 + strat1[1] * 1 + strat1[2] * 0);
+                stratCFV2 = (strat2[0] * -1 + strat2[1] * 1 + strat2[2] * 0);
+            }
+//
+////            System.out.println(strat1[0] +"," + strat1[1] +"," + strat1[2]);
+////            System.out.println(strat2[0] +"," + strat2[1] +"," + strat2[2]);
+//            System.out.println(((RPSGameState) originalNode.getGameState()).getPlayerActions()[0] +", "
+//                    + "sampledIsCFV=" + isCFV+", stratCFV2="+stratCFV2);
             // shouldnt happen often!
             if (isCFV < -maxIsCFV) {
                 isCFV = -maxIsCFV;
@@ -67,7 +93,6 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
                 isCFV = maxIsCFV;
 //                System.err.println(">>> overflow");
             }
-
             double u_opponent = isCFV / isReach; // rootReach is multipled by OOSAlgorithm.normalizingUtils
             int playerSign = state.getPlayerToMove().getId() == 0 ? 1 : -1;
             this.terminateNode = new GadgetLeafNode(originalNode.getGameState(), playerSign * u_opponent);
@@ -151,18 +176,35 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     }
 
     @Override
-    public double getExpectedValue(int iterationNum) {
+    public double getExpectedValue(double iterationNum) {
         throw new NotImplementedException();
     }
 
     @Override
     public void updateExpectedValue(double offPolicyAproxSample) {
+        throw new NotImplementedException();
     }
 
     @Override
     public void setExpectedValue(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
+
+    @Override
+    public double getSumReachp() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateSumReachp(double currentReachP) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setSumReachp(double sumReachP) {
+        throw new NotImplementedException();
+    }
+
 
     @Override
     public void resetData() {

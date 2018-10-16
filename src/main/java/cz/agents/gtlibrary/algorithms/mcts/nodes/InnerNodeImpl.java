@@ -42,6 +42,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     private MCTSPublicState publicState;
     private double[] playerReachPr = new double[] {1.,1.,1.};
     private double evSum = 0.;
+    private Double sumReachP = 0.;
     protected MCTSInformationSet oppAugInformationSet;
     public static boolean simulatingNode = false;
     /**
@@ -189,15 +190,16 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
         assert meanStrategyPr <= 1 && meanStrategyPr >= 0;
     }
 
-    private Double reachPr = null;
     @Override
     public double getReachPrPlayerChance() {
         return getPlayerReachPr() * getChanceReachPr();
     }
 
     @Override
-    public double getExpectedValue(int iterationNum) {
-        return this.evSum / iterationNum;
+    public double getExpectedValue(double iterationNum) {
+//        return evSum == 0 ? 0 : evSum / (getSumReachp() * iterationNum);
+//        return evSum == 0 ? 0 : evSum / (getSumReachp());
+        return evSum == 0 ? 0 : evSum / iterationNum;
     }
 
     @Override
@@ -211,8 +213,24 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     }
 
     @Override
+    public double getSumReachp() {
+        return sumReachP;
+    }
+
+    @Override
+    public void updateSumReachp(double currentReachP) {
+        sumReachP += currentReachP;
+    }
+
+    @Override
+    public void setSumReachp(double sumReachP) {
+        this.sumReachP = sumReachP;
+    }
+
+    @Override
     public void resetData() {
-        this.evSum = 0;
+        this.evSum = 0.;
+        this.sumReachP = 0.;
     }
 
     @Override

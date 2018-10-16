@@ -245,7 +245,7 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     }
 
     @Override
-    public double getExpectedValue(int iterationNum) {
+    public double getExpectedValue(double iterationNum) {
         throw new NotImplementedException();
     }
 
@@ -258,6 +258,22 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     public void setExpectedValue(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
+
+    @Override
+    public double getSumReachp() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateSumReachp(double currentReachP) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setSumReachp(double sumReachP) {
+        throw new NotImplementedException();
+    }
+
 
     @Override
     public void resetData() {
