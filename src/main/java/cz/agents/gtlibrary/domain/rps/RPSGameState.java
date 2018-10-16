@@ -238,4 +238,7 @@ public class RPSGameState extends SimultaneousGameState implements DomainWithPub
         return str;
     }
 
+    public int[] getPlayerActions() {
+        return playerActions;
+    }
 }

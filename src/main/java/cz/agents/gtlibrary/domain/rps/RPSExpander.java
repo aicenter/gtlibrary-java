@@ -46,7 +46,7 @@ public class RPSExpander<I extends InformationSet> extends ExpanderImpl<I> {
         List<Action> actions = new ArrayList<Action>();
 
         addBidsForPlayerToMove(gsState, actions);
-        Collections.shuffle(actions, new HighQualityRandom(RPSGameInfo.seed));
+//        Collections.shuffle(actions, new HighQualityRandom(RPSGameInfo.seed));
 
         return actions;
     }
