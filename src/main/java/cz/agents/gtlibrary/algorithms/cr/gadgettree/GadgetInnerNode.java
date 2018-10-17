@@ -63,23 +63,23 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
 //            double isCFV = 0;
 //            double stratCFV1 = 0;
-            double stratCFV2 = 0;
+//            double stratCFV2 = 0;
 //            OOSAlgorithmData data1 = ((OOSAlgorithmData) originalNode.getParent().getInformationSet().getAlgorithmData());
-            OOSAlgorithmData data2 = ((OOSAlgorithmData) originalNode.getInformationSet().getAlgorithmData());
+//            OOSAlgorithmData data2 = ((OOSAlgorithmData) originalNode.getInformationSet().getAlgorithmData());
 //            double[] strat1 = data1.getMeanStrategy();
-            double[] strat2 = data2.getMeanStrategy();
-            if(((RPSGameState) originalNode.getGameState()).getPlayerActions()[0] == 1) {
+//            double[] strat2 = data2.getMeanStrategy();
+//            if(((RPSGameState) originalNode.getGameState()).getPlayerActions()[0] == 1) {
 //                stratCFV1 = (strat1[0] * 0 + strat1[1] * -1 + strat1[2] * 100);
-                stratCFV2 = (strat2[0] * 0 + strat2[1] * -1 + strat2[2] * 100);
-            }
-            if(((RPSGameState) originalNode.getGameState()).getPlayerActions()[0] == 2) {
+//                stratCFV2 = (strat2[0] * 0 + strat2[1] * -1 + strat2[2] * 100);
+//            }
+//            if(((RPSGameState) originalNode.getGameState()).getPlayerActions()[0] == 2) {
 //                stratCFV1 = (strat1[0] * 1 + strat1[1] * 0 + strat1[2] * -1);
-                stratCFV2 = (strat2[0] * 1 + strat2[1] * 0 + strat2[2] * -1);
-            }
-            if(((RPSGameState) originalNode.getGameState()).getPlayerActions()[0] == 3) {
+//                stratCFV2 = (strat2[0] * 1 + strat2[1] * 0 + strat2[2] * -1);
+//            }
+//            if(((RPSGameState) originalNode.getGameState()).getPlayerActions()[0] == 3) {
 //                stratCFV1 = (strat1[0] * -1 + strat1[1] * 1 + strat1[2] * 0);
-                stratCFV2 = (strat2[0] * -1 + strat2[1] * 1 + strat2[2] * 0);
-            }
+//                stratCFV2 = (strat2[0] * -1 + strat2[1] * 1 + strat2[2] * 0);
+//            }
 //
 ////            System.out.println(strat1[0] +"," + strat1[1] +"," + strat1[2]);
 ////            System.out.println(strat2[0] +"," + strat2[1] +"," + strat2[2]);

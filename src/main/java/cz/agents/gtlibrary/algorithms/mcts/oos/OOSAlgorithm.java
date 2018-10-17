@@ -429,20 +429,30 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
         // history expected value
         double updateVal = (u * x) / (l * normalizingUtils);
-        if (is.getPlayer().equals(expPlayer)) {
-            updateVal *= -1 * pi;
-        } else {
-            updateVal *= pi_ / pi_c;
-            ((InnerNode) node).updateExpectedValue(updateVal);
+        double reachp;
+        if(!(is instanceof GadgetInfoSet)) {
+            if (!is.getPlayer().equals(expPlayer)) {
+                reachp = pi_ / pi_c;
+                updateVal *= reachp;
+                ((InnerNode) node).updateExpectedValue(updateVal);
+                ((InnerNode) node).updateSumReachp(reachp / s);
+            } else {
+                reachp = pi;
+                updateVal *= -1 * reachp;
+                ((InnerNode) node).updateExpectedValue(updateVal);
+                ((InnerNode) node).updateSumReachp(reachp / s);
+            }
         }
 
-        if(is.getPlayer().getId()==1) {
-            double hsum = 0;
-            for (double d : data.getMp()) hsum += d;
-            hsum /= is.getAllNodes().size();
-            double avgval = ((InnerNode) node).getExpectedValue(hsum);
-            System.out.println(iters +","+((RPSGameState) node.getGameState()).getPlayerActions()[0] + ","+updateVal+","+avgval);
-        }
+//        if(is.getPlayer().getId()==1) {
+//            double hsum = 0;
+//            for (double d : data.getMp()) hsum += d;
+//            hsum /= is.getAllNodes().size();
+//            reachp = ((InnerNode) node).getSumReachp();
+//            double avgval = ((InnerNode) node).getExpectedValue(hsum);
+//            double avgval2 = ((InnerNode) node).getExpectedValue(reachp);
+//            System.out.println(iters +","+((RPSGameState) node.getGameState()).getPlayerActions()[0] + ","+updateVal+","+avgval+","+avgval2+","+hsum+","+reachp);
+//        }
 
         if (is.getPlayer().equals(expPlayer)) {
             if(is instanceof GadgetInfoSet) {
