@@ -259,12 +259,12 @@ public class CRExperiments {
                 RPSGameInfo.biasing = 1.;
                 break;
             case "BRPS":
-                if (domainParams.length != 1) {
+                if (domainParams.length != 2) {
                     throw new IllegalArgumentException("Illegal domain arguments count: " +
-                            "1 parameter is required {SEED}");
+                            "2 parameters are required {SEED} {BIASING}");
                 }
                 RPSGameInfo.seed = new Integer(domainParams[0]);
-                RPSGameInfo.biasing = 100.;
+                RPSGameInfo.biasing = new Double(domainParams[1]);
                 break;
             default:
                 throw new IllegalArgumentException("Illegal domain: " + domainParams[1]);
@@ -588,8 +588,8 @@ public class CRExperiments {
         Double br0Val = brAlg0.calculateBR(g.rootState, ISMCTSExploitability.filterLow(strategy1));
 
         double gameValue = 0.; // for player 0
-        if (g.rootState instanceof RPSGameState && RPSGameInfo.biasing == 100.) {
-            gameValue = 0.32353;
+        if (g.rootState instanceof RPSGameState) {
+            gameValue = 1/3. - 1/(RPSGameInfo.biasing+2);
         }
 
         double exploitability = br0Val + br1Val;
@@ -659,8 +659,8 @@ public class CRExperiments {
             Strategy avgStrategy1 = normalizeStrategy(player1, rootNode, cumulativeStrategy1);
 
             double gameValue = 0.; // for player 0
-            if (g.rootState instanceof RPSGameState && RPSGameInfo.biasing == 100.) {
-                gameValue = 0.3235;
+            if (g.rootState instanceof RPSGameState) {
+                gameValue = 1/3. - 1/(RPSGameInfo.biasing+2);
             }
 
             double br1Val_cur = brAlg1.calculateBR(g.rootState, ISMCTSExploitability.filterLow(strategy0));
