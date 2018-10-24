@@ -52,10 +52,10 @@ public class GSGameInfo implements GameInfo {
     public GSGameInfo() {
         if (regenerateCards) {
             CARDS_FOR_PLAYER = new int[depth];
-            //for (int i=1; i<=depth; i++) {
-            //    CARDS_FOR_PLAYER[i-1]=i;
-            for (int i = 0; i < depth; i++) {
-                CARDS_FOR_PLAYER[i] = i;
+            for (int i=1; i<=depth; i++) {
+                CARDS_FOR_PLAYER[i-1]=i;
+//            for (int i = 0; i < depth; i++) {
+//                CARDS_FOR_PLAYER[i] = i;
             }
         }
 
@@ -83,7 +83,10 @@ public class GSGameInfo implements GameInfo {
         ArrayList<Action> actions = new ArrayList(GSGameInfo.CARDS_FOR_PLAYER.length);
         for (int card : GSGameInfo.CARDS_FOR_PLAYER)
             actions.add(new GoofSpielAction(card, GSGameInfo.NATURE, null));
-        if (GSGameInfo.useFixedNatureSequence && GSGameInfo.seed == 1) {
+
+        if (GSGameInfo.seed == 0) {
+//            Collections.sort(actions);
+        } else if (GSGameInfo.seed == 1) {
             Collections.reverse(actions);
         } else {
             Collections.shuffle(actions, new HighQualityRandom(GSGameInfo.seed));
@@ -105,7 +108,7 @@ public class GSGameInfo implements GameInfo {
 
     @Override
     public String getInfo() {
-        return "Goofspiel, cards: " + Arrays.toString(CARDS_FOR_PLAYER) + ", fixed nature sequence: " + useFixedNatureSequence;
+        return "Goofspiel seed "+seed+", nature cards: " + natureSequence.getAsList() + ", fixed nature sequence: " + useFixedNatureSequence;
     }
 
     @Override

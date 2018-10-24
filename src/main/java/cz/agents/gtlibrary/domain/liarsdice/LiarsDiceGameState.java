@@ -204,27 +204,36 @@ public class LiarsDiceGameState extends GameStateImpl implements DomainWithPubli
         PSKey maybeHasForcedKey = super.getPSKeyForPlayerToMove();
         if(maybeHasForcedKey != null) return maybeHasForcedKey;
 
+        // pskey has following:
+        // hashCode that identifies PS of nature, and then bids in each round
+        // then additional number which identify which bids each player has played
+        // we can't fit everything into 32bit easily for larger games, so therefore we will rely on equals
+
         if (cachedPSKey != null) {
             return cachedPSKey;
         }
 
         int hc = 0;
+        int hcPl0 = 0;
+        int hcPl1 = 0;
 
         if (isPlayerToMoveNature()) { // nature plays only in the beginning
             hc = getRound();
         } else {
             hc = LDGameInfo.P1DICE+LDGameInfo.P2DICE;
             int shift = getLeftMostSetBit(hc);
-            assert LDGameInfo.CALLBID < 16-shift; //otherwise it has overrun
+            assert LDGameInfo.CALLBID < 32-shift; //otherwise it has overrun
 
-            for (Action a : getSequenceFor(getPlayerToMove())) {
-                hc |= 1 << (((LiarsDiceAction) a).getValue() + shift);
+            for (Action a : getSequenceFor(getAllPlayers()[0])) {
+                hc |= 1 << (((LiarsDiceAction) a).getValue()) + shift;
+                hcPl0 |= 1 << (((LiarsDiceAction) a).getValue());
             }
-            for (Action a : getSequenceFor(getOpponentPlayerToMove())) {
-                hc |= 1 << (LDGameInfo.CALLBID + 1 + shift + ((LiarsDiceAction) a).getValue());
+            for (Action a : getSequenceFor(getAllPlayers()[1])) {
+                hc |= 1 << (((LiarsDiceAction) a).getValue()) + shift;
+                hcPl1 |= 1 << (((LiarsDiceAction) a).getValue());
             }
         }
-        cachedPSKey = new PSKey(hc);
+        cachedPSKey = new PSKey(hc, hcPl0, hcPl1);
         return cachedPSKey;
     }
 
@@ -290,6 +299,7 @@ public class LiarsDiceGameState extends GameStateImpl implements DomainWithPubli
     protected void clearCachedValues() {
         hash = -1;
         cachedISKey = null;
+        cachedPSKey = null;
     }
 
     protected void switchPlayers() {

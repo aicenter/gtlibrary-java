@@ -20,6 +20,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.domain.poker;
 
 import cz.agents.gtlibrary.algorithms.sequenceform.refinements.quasiperfect.numbers.Rational;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerAction;
 import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.DomainWithPublicState;
@@ -27,10 +28,7 @@ import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.utils.Pair;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public abstract class PokerGameState extends GameStateImpl implements DomainWithPublicState {
 
@@ -197,19 +195,7 @@ public abstract class PokerGameState extends GameStateImpl implements DomainWith
     protected void clearCachedValues() {
         hash = -1;
         cachedISKey = null;
-    }
-
-    public void check(PokerAction action) {
-        if (isCheckValid()) {
-            clearCachedValues();
-            if (isLastMoveCheck()) {
-                increaseRound();
-            }
-            addActionToSequence(action);
-            switchPlayers();
-        } else {
-            throw new UnsupportedOperationException("invalid action");
-        }
+        cachedPSKey = null;
     }
 
     private boolean isLastMoveCheck() {
@@ -218,17 +204,6 @@ public abstract class PokerGameState extends GameStateImpl implements DomainWith
 
     private boolean isCheckValid() {
         return isRoundForRegularPlayers() && (isFirstMoveInRound() || isLastMoveCheck());
-    }
-
-    public void bet(PokerAction action) {
-        if (isBetOrCheckValid()) {
-            clearCachedValues();
-            addToPot(getValueOfAggressive(action));
-            addActionToSequence(action);
-            switchPlayers();
-        } else {
-            throw new UnsupportedOperationException("invalid action");
-        }
     }
 
     private boolean isBetOrCheckValid() {
@@ -264,6 +239,30 @@ public abstract class PokerGameState extends GameStateImpl implements DomainWith
         currentPlayerIndex = 1 - currentPlayerIndex;
     }
 
+    public void bet(PokerAction action) {
+        if (isBetOrCheckValid()) {
+            clearCachedValues();
+            addToPot(getValueOfAggressive(action));
+            addActionToSequence(action);
+            switchPlayers();
+        } else {
+            throw new UnsupportedOperationException("invalid action");
+        }
+    }
+
+    public void check(PokerAction action) {
+        if (isCheckValid()) {
+            clearCachedValues();
+            if (isLastMoveCheck()) {
+                increaseRound();
+            }
+            addActionToSequence(action);
+            switchPlayers();
+        } else {
+            throw new UnsupportedOperationException("invalid action");
+        }
+    }
+
     public void call(PokerAction action) {
         if (isCallValid()) {
             clearCachedValues();
@@ -284,6 +283,15 @@ public abstract class PokerGameState extends GameStateImpl implements DomainWith
             switchPlayers();
         } else {
             throw new UnsupportedOperationException("invalid action");
+        }
+    }
+
+    public void fold(PokerAction action) {
+        if (isFoldValid()) {
+            clearCachedValues();
+            round = getTerminalRound();
+            addActionToSequence(action);
+            switchPlayers();
         }
     }
 
@@ -318,15 +326,6 @@ public abstract class PokerGameState extends GameStateImpl implements DomainWith
         }
     }
 
-    public void fold(PokerAction action) {
-        if (isFoldValid()) {
-            clearCachedValues();
-            round = getTerminalRound();
-            addActionToSequence(action);
-            switchPlayers();
-        }
-    }
-
     @Override
     public ISKey getISKeyForPlayerToMove() {
         if (cachedISKey != null)
@@ -352,33 +351,41 @@ public abstract class PokerGameState extends GameStateImpl implements DomainWith
     @Override
     public PSKey getPSKeyForPlayerToMove() {
         PSKey maybeHasForcedKey = super.getPSKeyForPlayerToMove();
-        if(maybeHasForcedKey != null) {
-            return maybeHasForcedKey;
-        }
+        if(maybeHasForcedKey != null) return maybeHasForcedKey;
 
-        if (cachedPSKey != null)
+        if (cachedPSKey != null) return cachedPSKey;
+
+        if (isPlayerToMoveNature()) {
+            cachedPSKey = new PSKey(0, new ArrayListSequenceImpl(history.getSequenceOf(getPlayerToMove())));
             return cachedPSKey;
+        }
 
         // todo: check this is accurate!
         HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
 
         List<Pair<Player, Action>> seq = history.getHistory();
         Iterator<Pair<Player, Action>> iterator = seq.iterator();
+
         // skip initial distribution of cards
-        if(iterator.hasNext()) {
-            iterator.next();
-            hcb.append(1);
-        }
-        if(iterator.hasNext()) {
-            iterator.next();
-            hcb.append(2);
-        }
-        int moveNum = 3;
+        iterator.next();
+        iterator.next();
+
+        int moveNum = 1;
+        ArrayList<Object> actionHashes = new ArrayList<>();
         while (iterator.hasNext()) {
-            hcb.append(((PokerAction) iterator.next().getRight()).observableISHash());
-            hcb.append(moveNum++);
+            Pair<Player, Action> actionPair = iterator.next();
+            GenericPokerAction action = (GenericPokerAction) actionPair.getRight();
+            Integer actionHash = action.observableISHash();
+
+            actionHashes.add(moveNum);
+            actionHashes.add(action.getPlayer());
+            actionHashes.add(action.getActionType());
+            actionHashes.add(action.getValue());
+            hcb.append(actionHash);
+            hcb.append(moveNum);
+            moveNum++;
         }
-        cachedPSKey = new PSKey(hcb.toHashCode());
+        cachedPSKey = new PSKey(hcb.toHashCode(), actionHashes.toArray());
         return cachedPSKey;
     }
 

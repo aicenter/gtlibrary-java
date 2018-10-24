@@ -165,6 +165,7 @@ public class GoofSpielGameState extends SimultaneousGameState {
 
     private void cleanCache() {
         isKey = null;
+        psKey = null;
         hashCode = -1;
     }
 
