@@ -60,4 +60,6 @@ public interface Node extends Serializable {
     }
 
     boolean isGameEnd();
+
+    void destroy();
 }

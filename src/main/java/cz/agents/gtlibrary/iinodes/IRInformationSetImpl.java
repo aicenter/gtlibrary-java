@@ -101,4 +101,9 @@ public class IRInformationSetImpl implements InformationSet, Serializable {
     public String toString() {
         return "IS:(" + statesInformationSet + ")";
     }
+
+
+    @Override
+    public void destroy() {
+    }
 }

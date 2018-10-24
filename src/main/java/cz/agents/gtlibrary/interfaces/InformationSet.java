@@ -30,4 +30,6 @@ public interface InformationSet extends Serializable {
 	public Set<GameState> getAllStates();
 	public void addStateToIS(GameState state);
     public ISKey getISKey();
+
+	void destroy();
 }

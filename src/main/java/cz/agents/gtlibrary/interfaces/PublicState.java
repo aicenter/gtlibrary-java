@@ -70,4 +70,6 @@ public interface PublicState extends Serializable {
     Subgame getSubgame();
 
     boolean isReachable(Player player);
+
+    void destroy();
 }

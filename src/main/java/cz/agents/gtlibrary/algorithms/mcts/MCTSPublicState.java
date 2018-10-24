@@ -26,4 +26,10 @@ public class MCTSPublicState extends PublicStateImpl {
     public void setAlgorithmData(AlgorithmData algorithmData) {
         this.algorithmData = algorithmData;
     }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        this.algorithmData = null;
+    }
 }

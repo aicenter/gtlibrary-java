@@ -51,7 +51,7 @@ public class PublicStateImpl implements PublicState {
 
         this.psKey = state.getPSKeyForPlayerToMove();
         assert this.psKey != null;
-        this.hashCode = psKey.getHash();
+        this.hashCode = psKey.hashCode();
     }
 
     @Override
@@ -83,14 +83,14 @@ public class PublicStateImpl implements PublicState {
     public Set<PublicState> getNextPlayerPublicStates(Player player) {
         Set<PublicState> nextPS = new HashSet<>();
         ArrayDeque<Node> q = new ArrayDeque<>();
-        gameNodesInPublicState.forEach(node -> q.addAll(node.buildChildren().values()));
+        gameNodesInPublicState.forEach(node -> q.addAll(node.getChildren().values()));
 
         while (!q.isEmpty()) {
             Node nextNode = q.removeFirst();
 
             if (nextNode instanceof LeafNode) continue;
             if (nextNode instanceof ChanceNode) {
-                q.addAll(((ChanceNode) nextNode).buildChildren().values());
+                q.addAll(((ChanceNode) nextNode).getChildren().values());
             } else {
                 InnerNode innerNode = (InnerNode) nextNode;
 
@@ -102,7 +102,7 @@ public class PublicStateImpl implements PublicState {
                 if (innerNode.getPlayerToMove().equals(player)) {
                     nextPS.add(innerNode.getPublicState());
                 } else {
-                    q.addAll(innerNode.buildChildren().values());
+                    q.addAll(innerNode.getChildren().values());
                 }
             }
         }
@@ -213,6 +213,18 @@ public class PublicStateImpl implements PublicState {
             return false;
         PublicState other = (PublicState) obj;
 
+        if(other.getPlayer().getId() != this.getPlayer().getId())
+            return false;
+        if(other.getDepth() != this.getDepth())
+            return false;
+        if(other.getParentPublicState() == null ^ this.getParentPublicState() == null)
+           return false;
+        if(other.getPlayerParentPublicState() == null ^ this.getPlayerParentPublicState() == null)
+           return false;
+        if(other.getParentPublicState() != null && !other.getParentPublicState().getPSKey().equals(this.getParentPublicState().getPSKey()))
+            return false;
+        if(other.getPlayerParentPublicState() != null && !other.getPlayerParentPublicState().getPSKey().equals(this.getPlayerParentPublicState().getPSKey()))
+            return false;
         return this.psKey.equals(other.getPSKey());
     }
 
@@ -266,5 +278,10 @@ public class PublicStateImpl implements PublicState {
         return getAllNodes().stream()
                 .map(in -> in.getReachPrByPlayer(player))
                 .anyMatch(p -> p > 0);
+    }
+
+    @Override
+    public void destroy() {
+        resolvingMethod = null;
     }
 }

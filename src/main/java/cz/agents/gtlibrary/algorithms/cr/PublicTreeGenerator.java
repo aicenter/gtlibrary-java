@@ -3,14 +3,16 @@ package cz.agents.gtlibrary.algorithms.cr;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.iinodes.PerfectRecallISKey;
-import cz.agents.gtlibrary.iinodes.PublicStateImpl;
-import cz.agents.gtlibrary.interfaces.*;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.Expander;
+import cz.agents.gtlibrary.interfaces.GameState;
 
 import java.util.*;
 
@@ -35,7 +37,7 @@ public class PublicTreeGenerator {
                 gameState.setPSKeyForPlayerToMove(psKey);
 
                 MCTSPublicState ps = new MCTSPublicState(config, expander, in,
-                        config.getPlayerParentPublicState(in),
+                        config.getParentPublicState(in),
                         config.getPlayerParentPublicState(in));
                 config.addPublicState(ps);
 
@@ -58,6 +60,7 @@ public class PublicTreeGenerator {
                 }
 
                 psNodes.forEach(ps::addNodeToPublicState);
+                psNodes.forEach(n -> n.setPublicState(ps));
                 publicStates.put(psKey, ps);
             }
             for (Action a : in.getActions()) {
@@ -68,6 +71,9 @@ public class PublicTreeGenerator {
             }
 
         }
+        System.err.println("Constructed public tree");
+
+        InnerNodeImpl.attendPS = true;
         return publicStates;
     }
 

@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.utils.io;
 
+import cz.agents.gtlibrary.algorithms.cr.Game;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
@@ -63,7 +64,7 @@ import java.util.Map;
 public class GambitEFG {
     private boolean wActionLabels = true;
     private boolean wNodeLabels = true;
-    private boolean wISKeys = true; // if false, writes PS keys
+    public boolean wISKeys = false; // if false, writes PS keys
     private Map<ISKey, Integer> infSetIndices;
     private int maxIndex;
     private Double normalizingUtils = 1.0;
@@ -162,7 +163,7 @@ public class GambitEFG {
         write(filename, root, expander, Integer.MAX_VALUE);
     }
 
-    public void write(String filename, Node root) {
+    public void write(String filename, InnerNode root) {
         if(root instanceof GadgetChanceNode) {
             this.normalizingUtils = ((GadgetChanceNode) root).getRootReachPr();
         }
@@ -179,7 +180,7 @@ public class GambitEFG {
         try {
             PrintStream out = new PrintStream(filename);
 
-            out.print("EFG 2 R \"" + (wISKeys ? "IS" : "PT" ) + " "+ root.getClass().getSimpleName() + " " + expander.getClass().getSimpleName() + "\" {");
+            out.print("EFG 2 R \"" + (wISKeys ? "IS" : "PT" ) + " "+ root.getClass().getSimpleName() + " " + expander.getClass().getSimpleName() + " " + filename + "\" {");
             Player[] players = root.getAllPlayers();
             for (int i = 0; i < 2; i++) {//assumes 2 playter games (possibly with nature) nature is the last player and always present!!!
                 if (i != 0) out.print(" ");
@@ -200,7 +201,7 @@ public class GambitEFG {
         try {
             PrintStream out = new PrintStream(filename);
 
-            out.print("EFG 2 R \"" + (wISKeys ? "IS" : "PT" ) + " "+ root.getClass().getSimpleName() + "\" {");
+            out.print("EFG 2 R \"" + (wISKeys ? "IS" : "PT" ) + " "+ root.getClass().getSimpleName() + " " + filename + "\" {");
             Player[] players = root.getAllPlayers();
             for (int i = 0; i < 2; i++) {//assumes 2 playter games (possibly with nature) nature is the last player and always present!!!
                 if (i != 0) out.print(" ");
@@ -268,7 +269,7 @@ public class GambitEFG {
                     out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + inNode.getProbabilityOfNatureFor(a) + " ");
                 }
             } else {
-                out.print("p \"" + (wNodeLabels ? inNode.toString()  : "") + "\" " + (inNode.getPlayerToMove().getId() + 1) + " " + getUniqueHash(wISKeys ? state.getISKeyForPlayerToMove() : ((DomainWithPublicState) state).getPSKeyForPlayerToMove()) + " \"\" { ");
+                out.print("p \"" + (wNodeLabels ? inNode.toString()  : "") + "\" " + (inNode.getPlayerToMove().getId() + 1) + " " + getUniqueHash(wISKeys ? state.getISKeyForPlayerToMove() : inNode.getPublicState().getPSKey()) + " \"\" { ");
                 for (Action a : actions) {
                     out.print("\"" + (wActionLabels ? a.toString() : "") + "\" ");
                 }

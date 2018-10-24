@@ -26,7 +26,6 @@ import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
@@ -44,7 +43,9 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     private double evSum = 0.;
     private Double sumReachP = 0.;
     protected MCTSInformationSet oppAugInformationSet;
-    public static boolean simulatingNode = false;
+    public static boolean saveChildren = true;
+    public static boolean attendIS = true;
+    public static boolean attendPS = true;
     /**
      * Non-root node constructor
      */
@@ -55,10 +56,9 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
             playerReachPr[2] *= parent.getProbabilityOfNatureFor(lastAction);
         }
 
-        if(!simulatingNode) {
-            attendInformationSet();
-            attendPublicState();
-        }
+        if(attendIS) attendInformationSet();
+        if(attendPS) attendPublicState();
+
         if (actions == null)
             actions = getExpander().getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
@@ -69,8 +69,9 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
      */
     public InnerNodeImpl(Expander<MCTSInformationSet> expander, GameState gameState) {
         super(expander, gameState);
-        attendInformationSet();
-        attendPublicState();
+        if(attendIS) attendInformationSet();
+        if(attendPS) attendPublicState();
+
         if (actions == null)
             actions = expander.getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
@@ -133,7 +134,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     protected Node createChild(Action action) {
         Node child = getNewChildAfter(action);
 
-        if(!simulatingNode) children.put(action, child);
+        if(saveChildren) children.put(action, child);
         return child;
     }
 
@@ -157,8 +158,14 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
         return informationSet;
     }
 
+    @Override
     public MCTSPublicState getPublicState() {
         return publicState;
+    }
+
+    @Override
+    public void setPublicState(MCTSPublicState publicState) {
+        this.publicState = publicState;
     }
 
     public void setInformationSet(MCTSInformationSet informationSet) {
@@ -236,5 +243,15 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     @Override
     public double getReachPr() {
         return playerReachPr[0]*playerReachPr[1]*playerReachPr[2];
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        children = null;
+        actions = null;
+        informationSet = null;
+        publicState = null;
+        oppAugInformationSet = null;
     }
 }

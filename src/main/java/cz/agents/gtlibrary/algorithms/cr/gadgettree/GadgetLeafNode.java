@@ -86,4 +86,8 @@ public class GadgetLeafNode implements LeafNode, GadgetNode {
     public String toString() {
         return "gadget leaf";
     }
+
+    @Override
+    public void destroy() {
+    }
 }

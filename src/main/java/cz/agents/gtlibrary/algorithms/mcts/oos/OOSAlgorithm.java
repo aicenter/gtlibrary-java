@@ -225,10 +225,25 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 //        System.out.println("CurIS Mean Strategy: " + distribution.toString());
 //        System.out.println("CurIS Cur Strategy: " + Arrays.toString(((OOSAlgorithmData)curIS.getAlgorithmData()).getRMStrategy()));
 //        System.out.println("CurIS Actions: " + curIS.getAllNodes().iterator().next().getActions().toString());
-        if (useCurrentStrategy)
-            return curIS.getAllNodes().iterator().next().getActions().get(randomChoice(((OOSAlgorithmData) curIS.getAlgorithmData()).getRMStrategy(), 1));
-        else return Strategy.selectAction(distribution, rnd);
 
+        Action a;
+        if (useCurrentStrategy) {
+            double[] strat = ((OOSAlgorithmData) curIS.getAlgorithmData()).getRMStrategy();
+            int ai = randomChoice(strat, 1);
+            a = curIS.getAllNodes().iterator().next().getActions().get(ai);
+            actionChosenWithProb = strat[ai];
+        } else {
+            a = Strategy.selectAction(distribution, rnd);
+            actionChosenWithProb = distribution.get(a);
+        }
+
+        return a;
+    }
+
+    private double actionChosenWithProb = 1.;
+    @Override
+    public Double actionChosenWithProb() {
+        return actionChosenWithProb;
     }
 
     public Action runIterations(int iterations) {
@@ -276,6 +291,11 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         //useful for debugging
 //        ((NodeImpl)node).testSumS += 1/(delta*bs+(1-delta)*us);
 //        ((NodeImpl)node).visits += 1;
+//        if(Double.isNaN(us)
+//                || Double.isNaN(bs)) {
+//            System.err.println("break");
+//        }
+
         if (node instanceof LeafNode) {
             x = 1;
             mx = 1;
@@ -444,25 +464,15 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             }
         }
 
-//        if(is.getPlayer().getId()==1) {
-//            double hsum = 0;
-//            for (double d : data.getMp()) hsum += d;
-//            hsum /= is.getAllNodes().size();
-//            reachp = ((InnerNode) node).getSumReachp();
-//            double avgval = ((InnerNode) node).getExpectedValue(hsum);
-//            double avgval2 = ((InnerNode) node).getExpectedValue(reachp);
-//            System.out.println(iters +","+((RPSGameState) node.getGameState()).getPlayerActions()[0] + ","+updateVal+","+avgval+","+avgval2+","+hsum+","+reachp);
-//        }
-
         if (is.getPlayer().equals(expPlayer)) {
-            if(is instanceof GadgetInfoSet) {
+            if(is instanceof GadgetInfoSet) { // update regret for both follow/terminate
                 GadgetInnerNode one_gn = (GadgetInnerNode) is.getAllNodes().iterator().next();
                 if(one_gn.getTerminateNode() != null) {
                     double u_t = one_gn.getTerminateNode().getUtilities()[expPlayer.getId()] * normalizingUtils;
                     double u_f = u * pi_c * c / l;
                     data.updateRegret(pai, u_t, u_f);
                 }
-            } else {
+            } else { // regular regret update
                 data.updateRegret(ai, u, pi_, l, c, x);
             }
         } else {

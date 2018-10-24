@@ -56,12 +56,7 @@ public interface InnerNode extends Node {
     }
 
     default double getChanceReachPr() {
-        try {
-            return getReachPrByPlayer(getChancePlayer());
-        // todo: better solution
-        } catch (ArrayIndexOutOfBoundsException e) {
-            return 1.0;
-        }
+        return getReachPrByPlayer(getChancePlayer());
     }
 
     default double getReachPrByPlayer(Player player) {
@@ -97,7 +92,7 @@ public interface InnerNode extends Node {
         History history = getGameState().getHistory();
         Player opp = getOpponentPlayerToMove();
         Sequence oppSeq = history.getSequencesOfPlayers().get(opp);
-        int hashCode = getGameState().getISKeyForPlayerToMove().hashCode();
+        int hashCode = oppSeq.hashCode();
         return new PerfectRecallISKey(hashCode, oppSeq);
     }
 
@@ -114,4 +109,8 @@ public interface InnerNode extends Node {
     void setSumReachp(double sumReachP);
 
     void resetData();
+
+    void destroy();
+
+    void setPublicState(MCTSPublicState ps);
 }

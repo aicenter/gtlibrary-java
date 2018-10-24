@@ -104,4 +104,13 @@ public abstract class NodeImpl implements Node {
     public void setAlgorithmData(AlgorithmData algorithmData) {
         this.algorithmData = algorithmData;
     }
+
+    @Override
+    public void destroy() {
+        parent = null;
+        gameState = null;
+        lastAction = null;
+        expander = null;
+        algorithmData = null;
+    }
 }

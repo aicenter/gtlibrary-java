@@ -31,7 +31,6 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.iinodes.GameStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -102,7 +101,9 @@ public class OOSSimulator implements Simulator {
         playersProb = 1;
         playerProb[0]=playerProb[1]=1;
 
-        InnerNodeImpl.simulatingNode = true;
+        InnerNodeImpl.attendIS = false;
+        InnerNodeImpl.attendPS = false;
+        InnerNodeImpl.saveChildren = false;
 
         int step=0;
         while (!node.isGameEnd()) {
@@ -126,7 +127,9 @@ public class OOSSimulator implements Simulator {
             step++;
         }
 
-        InnerNodeImpl.simulatingNode = false;
+        InnerNodeImpl.attendIS = true;
+        InnerNodeImpl.attendPS = true;
+        InnerNodeImpl.saveChildren = true;
         return ((LeafNode) node).getUtilities()[expPlayer.getId()];
     }
     

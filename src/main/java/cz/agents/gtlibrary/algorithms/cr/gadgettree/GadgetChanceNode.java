@@ -77,7 +77,8 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
                 gadgetActions = new ArrayList<>();
                 GadgetInnerAction followAction = new GadgetInnerAction(true, gadgetIs);
                 gadgetActions.add(followAction); // order is important!
-                // todo: should we really do this?
+
+                // don't add terminate if aug infoset spans the whole public state
                 boolean resolveForAugInfoSetsTerminate = gadgetIs.getAllNodes().size() != ps.getAllNodes().size();
                 if (resolveForAugInfoSetsTerminate) {
                     GadgetInnerAction terminateAction = new GadgetInnerAction(false, gadgetIs);
@@ -298,5 +299,14 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
         GadgetInnerNode aNode = resolvingInnerNodes.values().iterator().next();
 
         return "GadgetChance PL" + aNode.getPlayerToMove().getId() + " " + aNode.getOriginalNode().getDepth();
+    }
+
+    @Override
+    public void destroy() {
+    }
+
+    @Override
+    public void setPublicState(MCTSPublicState ps) {
+        throw new NotImplementedException();
     }
 }

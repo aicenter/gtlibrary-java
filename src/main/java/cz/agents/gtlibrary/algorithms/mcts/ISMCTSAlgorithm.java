@@ -104,8 +104,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             }
         }
 //        System.out.println();
-        System.out.println("ISMCTS Iters: " + iters);
-        System.out.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.err.println("ISMCTS Iters: " + iters);
+        System.err.println("Mean leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
 //        System.out.println("CurIS size: " + curISArray.length);
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
@@ -181,7 +181,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
 
         if (useBelief){
-            System.out.println("Belief based tree progress.");
+            System.err.println("Belief based tree progress.");
             InnerNode[] oldArray = curISArray;
             double[] oldBelief = belief;
             curISArray = new InnerNode[newCurrentIS.getAllNodes().size()];
@@ -259,11 +259,11 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         }
         setCurrentIS(is);
         Action action = runMiliseconds(miliseconds);
-        System.out.println("Mean ISMCTS leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
-        System.out.println("Mean ISMCTS support size: " + StrategyCollector.meanSupportSize(StrategyCollector.getStrategyFor(rootNode, searchingPlayer, new MeanStratDist())));
+        System.err.println("Mean ISMCTS leaf depth: " + StrategyCollector.meanLeafDepth(rootNode));
+        System.err.println("Mean ISMCTS support size: " + StrategyCollector.meanSupportSize(StrategyCollector.getStrategyFor(rootNode, searchingPlayer, new MeanStratDist())));
         
-        System.out.println("ISMCTS p1: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
-        System.out.println("ISMCTS p2: " + (new MeanStratDist()).getDistributionFor(((InnerNode) (rootNode.getChildren().values().iterator().next())).getInformationSet().getAlgorithmData()));
+        System.err.println("ISMCTS p1: " + (new MeanStratDist()).getDistributionFor(is.getAlgorithmData()));
+        System.err.println("ISMCTS p2: " + (new MeanStratDist()).getDistributionFor(((InnerNode) (rootNode.getChildren().values().iterator().next())).getInformationSet().getAlgorithmData()));
         
         if (gameState.getPlayerToMove().equals(searchingPlayer)) {
             clean(action);

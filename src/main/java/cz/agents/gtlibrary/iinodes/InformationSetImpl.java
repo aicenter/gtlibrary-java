@@ -87,9 +87,14 @@ public abstract class InformationSetImpl implements PerfectRecallInformationSet 
         if (!(obj instanceof PerfectRecallInformationSet))
             return false;
 		PerfectRecallInformationSet other = (PerfectRecallInformationSet) obj;
-		
+		if(this.player == null || other.getPlayer() == null) {
+			return false;
+		}
 		if (!this.player.equals(other.getPlayer()))
 			return false;
+		if(this.playerHistory == null || other.getPlayersHistory() == null) {
+			return false;
+		}
 		if (!this.playerHistory.equals(other.getPlayersHistory()))
 			return false;
 		return true;
@@ -118,5 +123,12 @@ public abstract class InformationSetImpl implements PerfectRecallInformationSet 
 	@Override
 	public String toString() {
 		return "IS:(" + player + "):" + playerHistory + getISKey();
+	}
+
+	@Override
+	public void destroy() {
+		playerHistory = null;
+		player = null;
+		statesInInformationSet = null;
 	}
 }

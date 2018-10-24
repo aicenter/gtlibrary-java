@@ -20,7 +20,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.mcts;
 
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.iinodes.InformationSetImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -37,7 +36,7 @@ public class MCTSInformationSet extends InformationSetImpl {
 
     public MCTSInformationSet(GameState state) {
         super(state);
-        allNodes = new HashSet<InnerNode>();
+        allNodes = new HashSet<>();
     }
 
     public void addNode(InnerNode node) {
@@ -53,14 +52,6 @@ public class MCTSInformationSet extends InformationSetImpl {
     }
 
     public void setAlgorithmData(AlgorithmData algorithmData) {
-        // todo: debug
-        if(toString().equals("IS:(Pl1):Pl1: []") && algorithmData instanceof OOSAlgorithmData) {
-            ((OOSAlgorithmData) algorithmData).track = true;
-        }
-//        if(toString().equals("IS:(Pl0):Pl0: []")) {
-//            ((OOSAlgorithmData) algorithmData).track = true;
-//            ((OOSAlgorithmData) algorithmData).gatherActionCFV = true;
-//        }
         this.algorithmData = algorithmData;
     }
 
@@ -76,17 +67,9 @@ public class MCTSInformationSet extends InformationSetImpl {
         return getAllNodes().iterator().next().getActions();
     }
 
-    /** not intentended for regular use :) */
-    private int visitsCnt;
-
-    public int getVisitsCnt() {
-        return visitsCnt;
+    @Override
+    public void destroy() {
+        super.destroy();
+        allNodes = null;
     }
-    public void setVisitsCnt(int cnt) {
-        visitsCnt = cnt;
-    }
-    public void incrVisitsCnt() {
-        visitsCnt++;
-    }
-
 }

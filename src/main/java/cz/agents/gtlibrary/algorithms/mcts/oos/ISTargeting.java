@@ -84,11 +84,20 @@ public class ISTargeting implements OOSTargeting{
         bsSum = 0; usSum = 0;
         updateSampleProbsRec(curIS, rootNode, 1, 1);
         probMultiplayer = delta*bsSum/usSum + (1-delta);
+//        if(Double.isNaN(probMultiplayer)
+//                || Double.isNaN(probMultiplayer)) {
+//            System.err.println("break");
+//        }
     }
     
     MeanStratDist msd = new MeanStratDist();
     double bsSum,usSum;
     private void updateSampleProbsRec(InformationSet curIS, InnerNode n, double us, double bs){
+//        if(Double.isNaN(us)
+//                || Double.isNaN(bs)) {
+//            System.err.println("break");
+//        }
+
         if (curIS.equals(n.getInformationSet())){
             bsSum += bs; usSum += us;
         } else {

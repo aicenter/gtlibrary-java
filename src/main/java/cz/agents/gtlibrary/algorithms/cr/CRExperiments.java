@@ -21,19 +21,20 @@ package cz.agents.gtlibrary.algorithms.cr;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInfoSet;
-import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.ISMCTSExploitability;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
-import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
+import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
+import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
@@ -48,11 +49,13 @@ import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
 import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.RandomAlgorithm;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.StrategyImpl;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -179,7 +182,7 @@ public class CRExperiments {
                 if (GSGameInfo.seed == 0 && GSGameInfo.depth == 4) {
                     GSGameInfo.seed = 0;
                     GSGameInfo.depth = 4;
-                    GSGameInfo.CARDS_FOR_PLAYER = new int[]{4, 3, 2, 1};
+                    GSGameInfo.CARDS_FOR_PLAYER = new int[]{1,2,3,4};
                     GSGameInfo.BINARY_UTILITIES = true;
                     GSGameInfo.useFixedNatureSequence = true;
                     GSGameInfo.regenerateCards = false;
@@ -322,6 +325,10 @@ public class CRExperiments {
             runMatch(game);
             return;
         }
+        if (alg.equals("gambit")) {
+            runGambit(game);
+            return;
+        }
         if (alg.equals("CRrootCFRresolvingCFR")) {
             runCRrootCFRresolvingCFR(game);
             return;
@@ -329,6 +336,26 @@ public class CRExperiments {
 
         System.err.println("No such algorithm found!");
         System.exit(1);
+    }
+
+    private void runGambit(Game g) {
+        InnerNode rootNode;
+        if (g.rootState.isPlayerToMoveNature()) {
+            rootNode = new ChanceNodeImpl(g.expander, g.rootState, g.rnd);
+        } else {
+            rootNode = new InnerNodeImpl(g.expander, g.rootState);
+        }
+
+        String name = g.expander.getClass().getSimpleName() + "_"+ domain;
+        name += "_"+Arrays.stream(domainParams).reduce("", String::concat);
+
+        buildCompleteTree(rootNode);
+
+        GambitEFG gambit = new GambitEFG();
+        gambit.wISKeys = false;
+        gambit.write(name +" _PS.gbt", rootNode);
+        gambit.wISKeys = true;
+        gambit.write(name +"_IS.gbt", rootNode);
     }
 
     private void runStats(Game g) {
@@ -381,7 +408,7 @@ public class CRExperiments {
 
     private void runMCCFR_gadget_CFV(Game g) {
         double epsilonExploration = new Double(getenv("epsExploration", "0.6"));
-        double memoryLimit = new Double(getenv("memoryLimit", "3.5")) * 1e+9; // in GB
+        double memoryLimit = new Double(getenv("memoryLimit", "3.8")) * 1e+9; // in GB
         int resolvingPlayerIdx = new Integer(getenv("resolvingPlayer", "0"));
         boolean printHeader = new Boolean(getenv("printHeader", "false"));
         boolean calcExploitability = new Boolean(getenv("calcExploitability", "false"));
@@ -394,7 +421,7 @@ public class CRExperiments {
         this.alg = alg;
 
         InnerNode rootNode = alg.getRootNode();
-        buildCompleteTree(rootNode, 3);
+        buildCompleteTree(rootNode);
 
         Map<PublicState, List<GadgetInfoSet>> targetPsGadgetIs = new LinkedHashMap<>();
         rootNode.getPublicState()
@@ -435,8 +462,7 @@ public class CRExperiments {
                 for (GadgetInfoSet gadgetI : gadgetIs) {
                     System.out.print(
                             ";is_reach_" + ps.hashCode() + "_" + i +
-                                    ";is_cfv_" + ps.hashCode() + "_" + i +
-                                    ";is_visits_" + ps.hashCode() + "_" + i);
+                                    ";is_cfv_" + ps.hashCode() + "_" + i);
                     i++;
                 }
             });
@@ -467,13 +493,6 @@ public class CRExperiments {
 //                    });
                     System.out.print(";" + gadgetI.getIsReach());
                     System.out.print(";" + gadgetI.getIsCFV(finalTotal));
-
-                    int visits = gadgetI.getAllNodes().stream()
-                            .map(in -> ((GadgetInnerNode) in).getOriginalNode())
-                            .map(InnerNode::getInformationSet)
-                            .map(MCTSInformationSet::getVisitsCnt)
-                            .reduce(0, Integer::sum);
-                    System.out.print(";" + visits);
                 }
             });
             System.out.println();
@@ -575,8 +594,6 @@ public class CRExperiments {
 
         InnerNode rootNode = alg.solveEntireGame(g.rootState.getAllPlayers()[player], iterationsInRoot,
                 iterationsPerGadgetGame);
-        // make sure we have everything needed for domain stats
-        buildCompleteTree(rootNode);
 
 
         Strategy strategy0 = StrategyCollector.getStrategyFor(
@@ -643,7 +660,6 @@ public class CRExperiments {
             long time = threadBean.getCurrentThreadCpuTime();
             rootNode = alg.solveEntireGame(g.rootState.getAllPlayers()[player], iterationsInRoot, iterationsPerGadgetGame);
             double resolvingTime = (threadBean.getCurrentThreadCpuTime() - time) / 1e6; // in ms
-            buildCompleteTree(rootNode);
 
             strategy0 = StrategyCollector.getStrategyFor(rootNode, g.rootState.getAllPlayers()[0], new MeanStratDist());
             strategy1 = StrategyCollector.getStrategyFor(rootNode, g.rootState.getAllPlayers()[1], new MeanStratDist());
@@ -710,8 +726,8 @@ public class CRExperiments {
         Integer roundTime = new Integer(getenv("roundTime", "0")); // in ms
         Integer rnd1 = new Integer(getenv("rnd1", "0")); // random seed for alg
         Integer rnd2 = new Integer(getenv("rnd2", "0")); // random seed for alg
-        String alg1 = getenv("alg1", "MCCR"); // random seed for alg
-        String alg2 = getenv("alg2", "MCCR"); // random seed for alg
+        String alg1 = getenv("alg1", "MCCR"); // alg name
+        String alg2 = getenv("alg2", "MCCR"); // alg name
 
         GamePlayingAlgorithm p1 = initMatchAlg(g.clone(new Random(rnd1)), alg1,0);
         GamePlayingAlgorithm p2 = initMatchAlg(g.clone(new Random(rnd2)), alg2,1);
@@ -722,6 +738,13 @@ public class CRExperiments {
         }
 
         GameState curState = g.rootState.copy();
+        int i = 0;
+        int p1giveUpAtMove = -1;
+        int p2giveUpAtMove = -1;
+        int p1breaksAtMove = -1;
+        int p2breaksAtMove = -1;
+        double pa = 1.;
+        ArrayList<Move> moves = new ArrayList<>();
         while (!curState.isGameEnd()) {
             Action a=null;
 
@@ -730,66 +753,139 @@ public class CRExperiments {
                 for (Action ca : g.expander.getActions(curState)) {
                     final double ap = curState.getProbabilityOfNatureFor(ca);
                     if (r <= ap) {
+                        pa = ap;
                         a=ca;
                         break;
                     }
                     r -= ap;
                 }
             } else if (curState.getPlayerToMove().getId()==0) {
-                if (p1.getRootNode()!=null){ //mainly for the random player
-                    MCTSInformationSet curIS = p1.getRootNode().getExpander().getAlgorithmConfig().getInformationSetFor(curState);
-                    p1.setCurrentIS(curIS);
+                if(p1breaksAtMove == -1) {
+                    if (p1.getRootNode() != null) { //mainly for the random player
+                        MCTSInformationSet curIS = p1.getRootNode().getExpander()
+                                .getAlgorithmConfig().getInformationSetFor(curState);
+                        p1.setCurrentIS(curIS);
+                    }
+
+                    try {
+                        a = p1.runMiliseconds(roundTime);
+                        pa = p1.actionChosenWithProb();
+                    } catch(Exception e) {
+                        a = null;
+                        p1breaksAtMove = i;
+                        e.printStackTrace();
+                    }
+                } else { // if it's broken, play randomly
+                    a = null;
                 }
-                a = p1.runMiliseconds(roundTime);
-                System.err.println("P1 chose: " + a);
             } else {
-                if (p2.getRootNode()!=null){ //mainly for the random player
-                    MCTSInformationSet curIS = p2.getRootNode().getExpander().getAlgorithmConfig().getInformationSetFor(curState);
-                    p2.setCurrentIS(curIS);
+                if(p2breaksAtMove == -1) {
+                    if (p2.getRootNode()!=null){ //mainly for the random player
+                        MCTSInformationSet curIS = p2.getRootNode().getExpander()
+                                .getAlgorithmConfig().getInformationSetFor(curState);
+                        p2.setCurrentIS(curIS);
+                    }
+
+                    try {
+                        a = p2.runMiliseconds(roundTime);
+                        pa = p2.actionChosenWithProb();
+                    } catch(Exception e) {
+                        a = null;
+                        p2breaksAtMove = i;
+                        e.printStackTrace();
+                    }
+                } else { // if it's broken, play randomly
+                    a = null;
                 }
-                a = p2.runMiliseconds(roundTime);
-                System.err.println("P2 chose: " + a);
             }
 
             List<Action> actions = g.expander.getActions(curState);
-            if (a == null){
-                System.err.println("Warning!!! Selecting random move for " + curState.getPlayerToMove());
+            if (a == null) {
                 a = actions.get(g.config.getRandom().nextInt(actions.size()));
-                System.err.println("P"+(curState.getPlayerToMove().getId()+1)+" chose: " + a);
+                pa = 1./actions.size();
             } else {
                 a = actions.get(actions.indexOf(a));//just to prevent memory leaks
             }
+            System.err.println("P"+curState.getPlayerToMove().getId()+" chose: " + a);
+            moves.add(new Move(curState.getPlayerToMove().getId(), a.toString(), pa));
 
             curState = curState.performAction(a);
+
+            if(p1giveUpAtMove == -1 && p1.hasGivenUp()) p1giveUpAtMove = i;
+            if(p2giveUpAtMove == -1 && p2.hasGivenUp()) p2giveUpAtMove = i;
+            i++;
         }
-        System.out.println(curState.getUtilities()[0]);
+
+        System.out.println(
+                alg1 +";"+
+                alg2 +";"+
+                rnd1 +";"+
+                rnd2 +";"+
+                preplayTime +";"+
+                roundTime +";"+
+                curState.getUtilities()[0] +";" +
+                curState.getUtilities()[1] + ";"+
+                p1giveUpAtMove +";"+
+                p2giveUpAtMove + ";"+
+                p1breaksAtMove +";"+
+                p2breaksAtMove + ";"+
+                moves.stream().filter(m -> m.player == 0).map(m -> m.prob).reduce(1., (a,b) -> a*b) + ";" +
+                moves.stream().filter(m -> m.player == 1).map(m -> m.prob).reduce(1., (a,b) -> a*b) + ";" +
+                moves.stream().filter(m -> m.player == 2).map(m -> m.prob).reduce(1., (a,b) -> a*b) + ";" +
+                moves.stream().map(m -> m +", ").reduce("", String::concat)
+        );
     }
 
     private GamePlayingAlgorithm initMatchAlg(Game g, String algName, int playerId) {
         switch(algName) {
+            case "RND":
+                return new RandomAlgorithm(g.rootState.getAllPlayers()[playerId], g.expander);
+
             case "OOS":
                 return new OOSAlgorithm(
                         g.rootState.getAllPlayers()[playerId],
                         new OOSSimulator(g.expander),
                         g.rootState,
-                        g.expander, 0.2, 0.6);
+                        g.expander, 0.9, 0.4);
 
             case "MCCFR":
                 return new OOSAlgorithm(
                         g.rootState.getAllPlayers()[playerId],
                         new OOSSimulator(g.expander),
                         g.rootState,
-                        g.expander, 0., 0.6);
+                        g.expander, 0., 0.4);
 
             case "MCCR":
-                CRAlgorithm alg = new CRAlgorithm(
+                CRAlgorithm algMCCR = new CRAlgorithm(
                         g.rootState.getAllPlayers()[playerId], g.rootState, g.expander,
                         0.6);
-                alg.defaultRootMethod = RESOLVE_MCCFR;
-                alg.defaultResolvingMethod = RESOLVE_MCCFR;
-                alg.budgetRoot = BUDGET_TIME;
-                alg.budgetGadget = BUDGET_TIME;
-                return alg;
+                algMCCR.defaultRootMethod = RESOLVE_MCCFR;
+                algMCCR.defaultResolvingMethod = RESOLVE_MCCFR;
+                algMCCR.budgetRoot = BUDGET_TIME;
+                algMCCR.budgetGadget = BUDGET_TIME;
+                return algMCCR;
+
+            case "UCT":
+                Double c = 2d*g.gameInfo.getMaxUtility();
+                BackPropFactory bpFactory = new UCTBackPropFactory(c);
+
+                ISMCTSAlgorithm algUCT = new ISMCTSAlgorithm(
+                        g.rootState.getAllPlayers()[playerId],
+                        new DefaultSimulator(g.expander),
+                        bpFactory, g.rootState, g.expander);
+                algUCT.returnMeanValue = false;
+                return algUCT;
+
+            case "RM":
+                c = 0.1d;
+                bpFactory = new RMBackPropFactory(-g.gameInfo.getMaxUtility(), g.gameInfo.getMaxUtility(), c);
+
+                ISMCTSAlgorithm algRM = new ISMCTSAlgorithm(
+                        g.rootState.getAllPlayers()[playerId],
+                        new DefaultSimulator(g.expander),
+                        bpFactory, g.rootState, g.expander);
+                algRM.returnMeanValue = false;
+                return algRM;
 
             default:
                 throw new RuntimeException("alg not recognized");
@@ -941,7 +1037,7 @@ public class CRExperiments {
         buildCompleteTree(rootNode);
         Set<MCTSPublicState> publicStates = config.getAllPublicStates();
         MCTSPublicState targetPS = publicStates.stream().filter(
-                ps -> ps.getPSKey().getHash() == targetPSId).findFirst().get();
+                ps -> ps.getPSKey().getId() == targetPSId).findFirst().get();
 
         // Run root
         mccrAlg.runRoot(rootMethod, resolvingPlayer, rootNode, iterationsInRoot);
@@ -1012,9 +1108,9 @@ public class CRExperiments {
 //                        System.out.println(ps + " - "+ ps.getDepth() + " - "+ ps.getParentPublicState()));
 
         MCTSPublicState target2 = publicStates.stream().filter(
-                ps -> ps.getPSKey().getHash() == targetId2).findFirst().get();
+                ps -> ps.getPSKey().getId() == targetId2).findFirst().get();
         MCTSPublicState target3 = publicStates.stream().filter(
-                ps -> ps.getPSKey().getHash() == targetId3).findFirst().get();
+                ps -> ps.getPSKey().getId() == targetId3).findFirst().get();
 
         // Run root
         mccrAlg.runRoot(rootMethod, resolvingPlayer, rootNode, iterationsInRoot);
@@ -1155,7 +1251,7 @@ public class CRExperiments {
 
             for (PublicState n : ps.getNextPublicStates()) {
                 System.out.println(
-                        "\t\"ps " + ps.getPSKey().getHash() + "\" -- \"ps " + n.getPSKey().getHash() + "\";");
+                        "\t\"ps " + ps.getPSKey().getId() + "\" -- \"ps " + n.getPSKey().getId() + "\";");
                 q.add(n);
             }
         }
@@ -1258,6 +1354,27 @@ public class CRExperiments {
                     "expl0=" + expl0 +
                     ", expl1=" + expl1 +
                     ", total=" + total() +
+                    '}';
+        }
+    }
+
+    private class Move {
+        public int player;
+        public String action;
+        public double prob;
+
+        public Move(int player, String action, double prob) {
+            this.player = player;
+            this.action = action;
+            this.prob = prob;
+        }
+
+        @Override
+        public String toString() {
+            return "Move{" +
+                    "player=" + player +
+                    ", action='" + action + '\'' +
+                    ", prob=" + prob +
                     '}';
         }
     }

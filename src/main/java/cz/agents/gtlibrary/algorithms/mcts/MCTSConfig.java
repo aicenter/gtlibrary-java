@@ -125,7 +125,7 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
             return new MCTSPublicState(this, node.getExpander(), node);
         } else {
             return new MCTSPublicState(this, node.getExpander(), node,
-                    getPlayerParentPublicState(node), getPlayerParentPublicState(node));
+                    getParentPublicState(node), getPlayerParentPublicState(node));
         }
     }
 
@@ -157,7 +157,9 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
     }
 
     public MCTSPublicState getParentPublicState(InnerNode node) {
-        return node.getParent().getPublicState();
+        InnerNode parNode = node.getParent();
+        if(parNode == null) return null;
+        return parNode.getPublicState();
     }
 
     public MCTSPublicState getPlayerParentPublicState(InnerNode node) {
