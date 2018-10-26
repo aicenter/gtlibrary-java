@@ -48,7 +48,8 @@ public class TTTState extends GameStateImpl implements DomainWithPublicState {
 
     private static final long serialVersionUID = -8229777952409518678L;
 
-    //bitmap with 4 bits per board field. First two are the symbol: 00 -> ' ', 10 -> 'o', 11 -> 'x'. The next two bits are if the field has been tries out by x player and o player.
+    //bitmap with 4 bits per board field. First two are the symbol: 00 -> ' ', 10 -> 'o', 11 -> 'x'.
+    // The next two bits are if the field has been tries out by x player and o player.
     //could be reimplemented with 9x3 fields and a primitive type
     public BitSet s = new BitSet(36);
     public char toMove = 'x';
@@ -264,7 +265,18 @@ public class TTTState extends GameStateImpl implements DomainWithPublicState {
 
     @Override
     public PSKey getPSKeyForPlayerToMove() {
-        return new PSKey(1+moveNum);
+        int round =
+                (s.get(4 * 0) ? 1 : 0) +
+                (s.get(4 * 1) ? 1 : 0) +
+                (s.get(4 * 2) ? 1 : 0) +
+                (s.get(4 * 3) ? 1 : 0) +
+                (s.get(4 * 4) ? 1 : 0) +
+                (s.get(4 * 5) ? 1 : 0) +
+                (s.get(4 * 6) ? 1 : 0) +
+                (s.get(4 * 7) ? 1 : 0) +
+                (s.get(4 * 8) ? 1 : 0);
+        assert round <= 9;
+        return new PSKey(round);
     }
 
     public static Map<Player, Map<Sequence, Double>> runDO() {

@@ -72,4 +72,6 @@ public interface PublicState extends Serializable {
     boolean isReachable(Player player);
 
     void destroy();
+
+    Set<InnerNode> getTopMostOriginalNodes();
 }

@@ -171,12 +171,20 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         // most public states are at the end of the public tree, but if they have only
         // one action and it is one round before the end of the game it is senseless to resolve here
         // so we can speed up the entire resolving about 2x => faster experiments!
-        int maxNumActionsAtPs = curPS.getAllInformationSets().stream().map(
-                is -> {
-                    is.getActions();
-                    return is.getActions().size();
-                }).max(Integer::compareTo).get();
-        if (maxNumActionsAtPs == 1 && isNiceGame(curIS.getAllStates().iterator().next())) {
+        boolean skipResolving = false;
+        if (isNiceGame(curIS.getAllStates().iterator().next())) {
+            int maxNumActionsAtPs = curPS.getAllInformationSets().stream().map(
+                    is -> {
+                        is.getActions();
+                        return is.getActions().size();
+                    }).max(Integer::compareTo).get();
+
+            if(maxNumActionsAtPs == 1) {
+                skipResolving = true;
+            }
+        }
+
+        if (skipResolving) {
             System.err.println("Only one action possible, skipping resolving");
             action = curIS.getActions().iterator().next();
             actionChosenWithProb = 1.;
@@ -320,7 +328,9 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         }
 
         if(writeEFG) {
-            new GambitEFG().write(
+            GambitEFG gambit = new GambitEFG();
+            gambit.wISKeys = true;
+            gambit.write(
                     expander.getClass().getSimpleName() + "_PS_" + publicState.getPSKey().hashCode() + ".gbt",
                     gadgetRootNode);
         }

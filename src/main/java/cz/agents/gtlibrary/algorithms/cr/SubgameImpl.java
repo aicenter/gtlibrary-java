@@ -122,16 +122,6 @@ public class SubgameImpl implements Subgame {
     }
 
     private Set<InnerNode> getTopMostOriginalNodes() {
-//        Set<InnerNode> originalNodes = new HashSet<>();
-//        getOriginalRootInformationSets().stream()
-//                .map(MCTSInformationSet::getAllNodes)
-//                .forEach(originalNodes::addAll);
-//
-//        return originalNodes.stream()
-//                .filter(n -> !originalNodes.contains(n.getParent()))
-//                .collect(Collectors.toSet());
-
-        // todo: multi-level gadget
-        return getOriginalNodes();
+        return publicState.getTopMostOriginalNodes();
     }
 }

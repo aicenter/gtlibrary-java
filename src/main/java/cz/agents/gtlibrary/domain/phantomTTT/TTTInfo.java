@@ -41,11 +41,13 @@ import java.util.LinkedList;
 public class TTTInfo implements GameInfo{
 
     public static boolean useDomainDependentExpander = true;
+    public static boolean restrictWinningMoves = true;
 
     public static final Player XPlayer = new PlayerImpl(0,"x");
     public static final Player OPlayer = new PlayerImpl(1,"o");
-    
-    public static Player[] players = new Player[] { XPlayer, OPlayer};
+    public static final Player ChancePlayer = new PlayerImpl(2,"c");
+
+    public static Player[] players = new Player[] { XPlayer, OPlayer, ChancePlayer };
     
     @Override
     public Player getFirstPlayerToMove() {

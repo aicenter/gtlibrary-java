@@ -13,6 +13,7 @@ import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PublicStateImpl implements PublicState {
     private static final long serialVersionUID = 3656457672077909L;
@@ -81,6 +82,8 @@ public class PublicStateImpl implements PublicState {
 
     @Override
     public Set<PublicState> getNextPlayerPublicStates(Player player) {
+        boolean playerSpecified = player != null;
+
         Set<PublicState> nextPS = new HashSet<>();
         ArrayDeque<Node> q = new ArrayDeque<>();
         gameNodesInPublicState.forEach(node -> q.addAll(node.getChildren().values()));
@@ -91,20 +94,23 @@ public class PublicStateImpl implements PublicState {
             if (nextNode instanceof LeafNode) continue;
             if (nextNode instanceof ChanceNode) {
                 q.addAll(((ChanceNode) nextNode).getChildren().values());
-            } else {
-                InnerNode innerNode = (InnerNode) nextNode;
-
-                // init data
-                if (innerNode.getInformationSet().getAlgorithmData() == null) {
-                    innerNode.getInformationSet().setAlgorithmData(
-                            new OOSAlgorithmData(innerNode.getActions()));
-                }
-                if (innerNode.getPlayerToMove().equals(player)) {
-                    nextPS.add(innerNode.getPublicState());
-                } else {
-                    q.addAll(innerNode.getChildren().values());
-                }
+                continue;
             }
+            InnerNode innerNode = (InnerNode) nextNode;
+
+            // init data
+            if (innerNode.getInformationSet().getAlgorithmData() == null) {
+                innerNode.getInformationSet().setAlgorithmData(
+                        new OOSAlgorithmData(innerNode.getActions()));
+            }
+
+            if(innerNode.getPublicState().equals(this)
+                    || (playerSpecified && !innerNode.getPlayerToMove().equals(player))) {
+                q.addAll(innerNode.getChildren().values());
+                continue;
+            }
+
+            nextPS.add(innerNode.getPublicState());
         }
 
         return nextPS;
@@ -112,25 +118,7 @@ public class PublicStateImpl implements PublicState {
 
     @Override
     public Set<PublicState> getNextPublicStates() {
-        Set<PublicState> nextPS = new HashSet<>();
-        for (InnerNode node : gameNodesInPublicState) {
-            for (Action a : node.getActions()) {
-                Node nextNode = node.getChildFor(a);
-                if (nextNode instanceof LeafNode) continue;
-                if (nextNode instanceof ChanceNode) {
-                    nextPS.addAll(((ChanceNode) nextNode).getPublicState().getNextPublicStates());
-                } else {
-                    InnerNode innerNode = (InnerNode) nextNode;
-                    // init data
-                    if (innerNode.getInformationSet().getAlgorithmData() == null) {
-                        innerNode.getInformationSet().setAlgorithmData(
-                                new OOSAlgorithmData(innerNode.getActions(), config.useEpsilonRM));
-                    }
-                    nextPS.add(innerNode.getPublicState());
-                }
-            }
-        }
-        return nextPS;
+        return getNextPlayerPublicStates(null);
     }
 
     @Override
@@ -283,5 +271,13 @@ public class PublicStateImpl implements PublicState {
     @Override
     public void destroy() {
         resolvingMethod = null;
+    }
+
+    @Override
+    public Set<InnerNode> getTopMostOriginalNodes() {
+        return gameNodesInPublicState.stream()
+                .filter(n -> !gameNodesInPublicState.contains(n.getParent()))
+                .collect(Collectors.toSet());
+
     }
 }
