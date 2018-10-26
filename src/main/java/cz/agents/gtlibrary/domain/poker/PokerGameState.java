@@ -25,6 +25,7 @@ import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.DomainWithPublicState;
 import cz.agents.gtlibrary.interfaces.Player;
+import cz.agents.gtlibrary.interfaces.Sequence;
 import cz.agents.gtlibrary.utils.Pair;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -355,23 +356,38 @@ public abstract class PokerGameState extends GameStateImpl implements DomainWith
 
         if (cachedPSKey != null) return cachedPSKey;
 
-        if (isPlayerToMoveNature()) {
-            cachedPSKey = new PSKey(0, new ArrayListSequenceImpl(history.getSequenceOf(getPlayerToMove())));
-            return cachedPSKey;
-        }
+//        if (isPlayerToMoveNature()) {
+//            Sequence seq = new ArrayListSequenceImpl(history.getSequenceOf(getPlayerToMove()));
+//            if(seq.size() >= 2) {
+//                cachedPSKey = new PSKey(seq.size(), seq.getSubSequence(2, seq.size() - 2));
+//            } else {
+//                cachedPSKey = new PSKey(seq.size());
+//            }
+//            return cachedPSKey;
+//        }
 
-        // todo: check this is accurate!
         HashCodeBuilder hcb = new HashCodeBuilder(17, 31);
 
         List<Pair<Player, Action>> seq = history.getHistory();
         Iterator<Pair<Player, Action>> iterator = seq.iterator();
+        int moveNum = 0;
 
         // skip initial distribution of cards
-        iterator.next();
-        iterator.next();
-
-        int moveNum = 1;
         ArrayList<Object> actionHashes = new ArrayList<>();
+
+        if (iterator.hasNext()) {
+            moveNum++;
+            iterator.next();
+            hcb.append(moveNum);
+            actionHashes.add(moveNum);
+        }
+        if(iterator.hasNext()) {
+            moveNum++;
+            iterator.next();
+            hcb.append(moveNum);
+            actionHashes.add(moveNum);
+        }
+
         while (iterator.hasNext()) {
             Pair<Player, Action> actionPair = iterator.next();
             GenericPokerAction action = (GenericPokerAction) actionPair.getRight();
@@ -381,6 +397,7 @@ public abstract class PokerGameState extends GameStateImpl implements DomainWith
             actionHashes.add(action.getPlayer());
             actionHashes.add(action.getActionType());
             actionHashes.add(action.getValue());
+            hcb.append(action.getPlayer());
             hcb.append(actionHash);
             hcb.append(moveNum);
             moveNum++;
