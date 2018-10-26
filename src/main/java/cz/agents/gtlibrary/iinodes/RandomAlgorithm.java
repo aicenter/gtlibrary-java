@@ -19,6 +19,8 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.iinodes;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -30,10 +32,11 @@ public class RandomAlgorithm implements GamePlayingAlgorithm {
     protected Player player;
     private Expander<? extends InformationSet> expander;
     private Random random;
+    private MCTSInformationSet currentIS;
 
     public RandomAlgorithm(Player player, Expander<? extends InformationSet> expander) {
         this.expander = expander;
-        this.random = new HighQualityRandom();
+        this.random = ((MCTSConfig) expander.getAlgorithmConfig()).getRandom();
         this.player = player;
     }
 

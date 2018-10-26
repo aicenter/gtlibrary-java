@@ -43,7 +43,7 @@ public class RandomGameState extends SimultaneousGameState {
     protected int ID;
     protected int center;
     protected Player playerToMove;
-    protected Map<Player, ArrayList<Integer>> observations = new FixedSizeMap<Player, ArrayList<Integer>>(2);
+    protected Map<Player, ArrayList<Integer>> observations = new FixedSizeMap<Player, ArrayList<Integer>>(3);
 
     private int hash = 0;
     protected ISKey ISKey = null;
@@ -56,6 +56,7 @@ public class RandomGameState extends SimultaneousGameState {
         playerToMove = RandomGameInfo.FIRST_PLAYER;
         observations.put(players[0], new ArrayList<Integer>());
         observations.put(players[1], new ArrayList<Integer>());
+        observations.put(players[2], new ArrayList<Integer>());
         center = 0;
     }
 
@@ -65,6 +66,7 @@ public class RandomGameState extends SimultaneousGameState {
         this.playerToMove = gameState.playerToMove;
         observations.put(players[0], new ArrayList<Integer>(gameState.observations.get(players[0])));
         observations.put(players[1], new ArrayList<Integer>(gameState.observations.get(players[1])));
+        observations.put(players[2], new ArrayList<Integer>(gameState.observations.get(players[2])));
         center = gameState.center;
     }
 
