@@ -261,7 +261,7 @@ public class StrategyStrengthLargeExperiments {
         StrategyStrengthExperiments.checkIfNE(root, info, algConfig, expander, neResult);
         MCTSConfig mctsP1Config = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> mctsP1Expander = new GenericPokerExpander<>(mctsP1Config);
-        OOSAlgorithmData.useEpsilonRM = false;
+        mctsP1Config.useEpsilonRM = false;
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> cfrP1Expander = new GenericPokerExpander<>(cfrP1Config);
 
@@ -386,7 +386,7 @@ public class StrategyStrengthLargeExperiments {
         lp.calculateBothPlStrategy(root, algConfig);
 
         SolverResult maximinResult = new SolverResult(lp.getResultStrategiesForPlayer(root.getAllPlayers()[0]), lp.getResultStrategiesForPlayer(root.getAllPlayers()[1]), 0);
-        OOSAlgorithmData.useEpsilonRM = false;
+        mctsP1Config.useEpsilonRM = false;
         Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
         Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
 

@@ -204,9 +204,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
 
     @Override
     public double getExpectedValue(double iterationNum) {
-//        return evSum == 0 ? 0 : evSum / (getSumReachp() * iterationNum);
         return evSum == 0 ? 0 : evSum / (getSumReachp());
-//        return evSum == 0 ? 0 : evSum / iterationNum;
     }
 
     @Override

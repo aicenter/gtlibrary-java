@@ -74,7 +74,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         this.rnd = config.getRandom();
         this.epsilonExploration = epsilonExploration;
         this.defaultResolvingPlayer = resolvingPlayer;
-        OOSAlgorithmData.useEpsilonRM = false;
+        this.config.useEpsilonRM = false;
         threadBean = ManagementFactory.getThreadMXBean();
     }
 
@@ -172,7 +172,10 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         // one action and it is one round before the end of the game it is senseless to resolve here
         // so we can speed up the entire resolving about 2x => faster experiments!
         int maxNumActionsAtPs = curPS.getAllInformationSets().stream().map(
-                is -> is.getActions().size()).max(Integer::compareTo).get();
+                is -> {
+                    is.getActions();
+                    return is.getActions().size();
+                }).max(Integer::compareTo).get();
         if (maxNumActionsAtPs == 1 && isNiceGame(curIS.getAllStates().iterator().next())) {
             System.err.println("Only one action possible, skipping resolving");
             action = curIS.getActions().iterator().next();
@@ -393,8 +396,6 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         System.err.println("Calculating initial strategy from root using CFR in " + iterations + " iterations");
         CFRAlgorithm alg = new CFRAlgorithm(rootNode);
 
-        // todo: check if should build or not!
-//        buildCompleteTree(rootNode);
         if(budgetRoot == BUDGET_TIME) {
             alg.runMiliseconds(iterations);
         } else {
@@ -623,7 +624,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 MCTSInformationSet is = n.getInformationSet();
                 if (is.getAlgorithmData() == null) {
                     infosets++;
-                    is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+                    is.setAlgorithmData(new OOSAlgorithmData(n.getActions(), config.useEpsilonRM));
                 }
             } else { // expand chance nodes
                 for (Action a : n.getActions()) {

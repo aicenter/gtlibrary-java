@@ -110,9 +110,10 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
     }
 
     private static void runIAoS() {
-        OOSAlgorithmData.useEpsilonRM = true;
         GameState root = new InformerAoSGameState();
-        Expander<MCTSInformationSet> expander = new InformerAoSExpander<>(new MCTSConfig());
+        MCTSConfig config = new MCTSConfig();
+        config.useEpsilonRM = true;
+        Expander<MCTSInformationSet> expander = new InformerAoSExpander<>(config);
         CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[0], root, expander);
         StrategyStrengthLargeExperiments.buildCFRCompleteTree(cfr.getRootNode());
         cfr.runIterations(1000000);

@@ -10,6 +10,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.InformationSetImpl;
+import cz.agents.gtlibrary.iinodes.PublicStateImpl;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Player;
 import cz.agents.gtlibrary.interfaces.PublicState;
@@ -31,22 +32,22 @@ public class CRTest extends CRExperiments {
 
     @Test
     public void testGamesRpIsSameInAllHistoriesWithinInfoSets() {
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"IIGS", new String[]{"0", "2", "true", "true"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"IIGS", new String[]{"0", "2", "true", "true"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"IIGS", new String[]{"0", "3", "true", "true"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"IIGS", new String[]{"0", "3", "true", "true"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"IIGS", new String[]{"0", "4", "true", "true"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"IIGS", new String[]{"0", "4", "true", "true"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"RPS", new String[]{"0"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"RPS", new String[]{"0"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"LD", new String[]{"1", "1", "3"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"LD", new String[]{"1", "1", "3"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"GP", new String[]{"2", "2", "1", "1"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"GP", new String[]{"2", "2", "1", "1"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"GP", new String[]{"2", "2", "2", "2"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"GP", new String[]{"2", "2", "2", "2"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0,"GP", new String[]{"3", "3", "2", "2"});
-        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1,"GP", new String[]{"3", "3", "2", "2"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0, "IIGS", new String[]{"0", "2", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1, "IIGS", new String[]{"0", "2", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0, "IIGS", new String[]{"0", "3", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1, "IIGS", new String[]{"0", "3", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0, "IIGS", new String[]{"0", "4", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1, "IIGS", new String[]{"0", "4", "true", "true"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0, "RPS", new String[]{"0"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1, "RPS", new String[]{"0"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0, "LD", new String[]{"1", "1", "3"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1, "LD", new String[]{"1", "1", "3"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0, "GP", new String[]{"2", "2", "1", "1"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1, "GP", new String[]{"2", "2", "1", "1"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0, "GP", new String[]{"2", "2", "2", "2"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1, "GP", new String[]{"2", "2", "2", "2"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(0, "GP", new String[]{"3", "3", "2", "2"});
+        checkDomainRpIsSameInAllHistoriesWithinInfoSets(1, "GP", new String[]{"3", "3", "2", "2"});
     }
 
     private void checkDomainRpIsSameInAllHistoriesWithinInfoSets(Integer player, String domain, String[] params) {
@@ -86,6 +87,10 @@ public class CRTest extends CRExperiments {
         checkDomainPublicStateHaveNoCommonIS("RPS", new String[]{"0"});
         checkDomainPublicStateHaveNoCommonIS("LD", new String[]{"1", "1", "3"});
         checkDomainPublicStateHaveNoCommonIS("GP", new String[]{"2", "2", "2", "2"});
+        checkDomainPublicStateHaveNoCommonIS("GP", new String[]{"2", "2", "1", "1"});
+        checkDomainPublicStateHaveNoCommonIS("RG", new String[]{"1", "2", "3", "2", "false", "false", "false"});
+        checkDomainPublicStateHaveNoCommonIS("RG", new String[]{"1", "3", "3", "2", "false", "false", "false"});
+        checkDomainPublicStateHaveNoCommonIS("RG", new String[]{"1", "4", "3", "2", "false", "false", "false"});
     }
 
     private void checkDomainPublicStateHaveNoCommonIS(String domain, String[] params) {
@@ -94,14 +99,37 @@ public class CRTest extends CRExperiments {
         Game g = exp.createGame(domain, new Random(0));
         g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
 
+        buildCompleteTree(g.getRootNode());
+
+        Set<MCTSInformationSet> processed = new HashSet<>();
+        g.config.getAllPublicStates().stream()
+                .map(PublicStateImpl::getAllInformationSets)
+                .forEach(issets -> {
+                    issets.stream()
+                            .filter(Objects::nonNull)
+                            .forEach(is -> assertFalse(processed.contains(is)));
+                    processed.addAll(issets);
+                });
+        g.config.getAllPublicStates().stream()
+                .forEach(ps -> ps.getAllNodes().forEach(in -> {
+                    assertEquals(in.getPublicState(), ps);
+                    if(in.getParent() != null && ps.getParentPublicState() != null) {
+                        assertEquals(in.getParent().getPublicState(), ps.getParentPublicState());
+                    }
+                }));
+    }
+    private void checkDomainPublicStateHaveNoCommonIS(String[] randomGameParams) {
+        CRTest exp = new CRTest();
+        exp.prepareDomain("RG", randomGameParams);
+        Game g = exp.createGame("RG", new Random(0));
+        g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
+
         CRAlgorithm alg = new CRAlgorithm(g.rootState, g.expander, 0.6);
         buildCompleteTree(alg.getRootNode());
 
         Set<MCTSInformationSet> processed = new HashSet<>();
         alg.getConfig().getAllPublicStates().stream()
-                .map(ps -> {
-                    return ps.getAllInformationSets();
-                })
+                .map(ps -> ps.getAllInformationSets())
                 .forEach(issets -> {
                     issets.stream()
                             .filter(Objects::nonNull)
@@ -285,7 +313,8 @@ public class CRTest extends CRExperiments {
         Subgame subgame = targetPS.getSubgame();
         GadgetChanceNode gadgetRoot = subgame.getGadgetRoot();
         // chance probs must sum up to 1
-        assertTrue(Math.abs(gadgetRoot.getChanceProbabilities().values().stream().reduce(0., Double::sum) - 1.0) < 1e-10);
+        assertTrue(
+                Math.abs(gadgetRoot.getChanceProbabilities().values().stream().reduce(0., Double::sum) - 1.0) < 1e-10);
 
         Set<GadgetInfoSet> gadgetInfoSets = subgame.getGadgetInformationSets();
         Set<MCTSInformationSet> origInfoSets = subgame.getOriginalInformationSets();
@@ -293,7 +322,7 @@ public class CRTest extends CRExperiments {
         gadgetInfoSets.forEach(gis -> {
             Double rp = null;
             for (InnerNode in : gis.getAllNodes()) {
-                if(rp == null) rp = in.getReachPrPlayerChance();
+                if (rp == null) rp = in.getReachPrPlayerChance();
                 assertEquals(rp, in.getReachPrPlayerChance());
             }
         });
@@ -304,7 +333,7 @@ public class CRTest extends CRExperiments {
             Double tu = null;
             for (InnerNode in : is.getAllNodes()) {
                 GadgetInnerNode gin = n2gn.get(in);
-                if(tu == null) tu = gin.getTerminateNode().getUtilities()[0];
+                if (tu == null) tu = gin.getTerminateNode().getUtilities()[0];
                 assertEquals(tu, gin.getTerminateNode().getUtilities()[0]);
                 assertEquals(tu, -gin.getTerminateNode().getUtilities()[1]);
             }

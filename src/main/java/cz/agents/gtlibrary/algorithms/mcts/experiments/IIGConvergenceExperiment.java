@@ -19,7 +19,9 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts.experiments;
 
+import cz.agents.gtlibrary.algorithms.cr.CRAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm;
+import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSSimulator;
 import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
@@ -265,7 +267,11 @@ public class IIGConvergenceExperiment {
             s = System.getProperty("TARG");
             if (s != null) targ = new Double(s);
             alg = new OOSAlgorithm(rootState.getAllPlayers()[playerID], new OOSSimulator(expander), rootState, expander, targ, expl);
+            ((MCTSConfig) expander.getAlgorithmConfig()).useEpsilonRM = true;
             //((OOSAlgorithm) alg).runIterations(2);
+        } else if (algString.equals("MCCR")) {
+            Double expl = 0.4d;
+            alg = new CRAlgorithm(rootState, expander, expl);
         } else {
             switch (algString) {
                 case "MCTS-UCT":

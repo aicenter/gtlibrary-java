@@ -46,10 +46,7 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.ConfigImpl;
-import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.RandomAlgorithm;
+import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.StrategyImpl;
@@ -115,6 +112,7 @@ public class CRExperiments {
     }
     public static void buildCompleteTree(InnerNode r, Integer maxDepth) {
         System.err.println("Building complete tree.");
+        boolean useEpsilonRM = ((MCTSConfig) r.getExpander().getAlgorithmConfig()).useEpsilonRM;
         int nodes = 0, infosets = 0;
         ArrayDeque<InnerNode> q = new ArrayDeque<>();
         q.add(r);
@@ -126,7 +124,7 @@ public class CRExperiments {
             if (!(n instanceof ChanceNode)) {
                 if (is.getAlgorithmData() == null) {
                     infosets++;
-                    is.setAlgorithmData(new OOSAlgorithmData(n.getActions()));
+                    is.setAlgorithmData(new OOSAlgorithmData(n.getActions(), useEpsilonRM));
                 }
             }
 
@@ -229,7 +227,7 @@ public class CRExperiments {
                 PursuitGameInfo.graphFile = domainParams[2];
                 break;
             case "RG":  // Random Games
-                if (domainParams.length != 6) {
+                if (domainParams.length != 7) {
                     throw new IllegalArgumentException("Illegal random game domain arguments count. " +
                             "6 are required {SEED} {DEPTH} {BF} {CENTER_MODIFICATION} {BINARY_UTILITY} {FIXED BF}");
                 }
@@ -240,6 +238,9 @@ public class CRExperiments {
                 RandomGameInfo.MAX_CENTER_MODIFICATION = new Integer(domainParams[3]);
                 RandomGameInfo.BINARY_UTILITY = new Boolean(domainParams[4]);
                 RandomGameInfo.FIXED_SIZE_BF = new Boolean(domainParams[5]);
+                RandomGameInfo.UTILITY_CORRELATION = new Boolean(domainParams[6]);
+                RandomGameInfo.MAX_OBSERVATION = 3;
+                RandomGameInfo.MAX_UTILITY = 10;
                 break;
             case "Tron":  // Tron
                 if (domainParams.length != 4) {
@@ -269,6 +270,12 @@ public class CRExperiments {
                 RPSGameInfo.seed = new Integer(domainParams[0]);
                 RPSGameInfo.biasing = new Double(domainParams[1]);
                 break;
+            case "ML":;
+                if (domainParams.length != 0) {
+                    throw new IllegalArgumentException("Illegal domain arguments count: " +
+                            "0 parameters are required");
+                }
+                break;
             default:
                 throw new IllegalArgumentException("Illegal domain: " + domainParams[1]);
         }
@@ -285,6 +292,12 @@ public class CRExperiments {
         brAlg1 = new SQFBestResponseAlgorithm(g.expander, 1,
                 new Player[]{g.rootState.getAllPlayers()[0], g.rootState.getAllPlayers()[1]},
                 (ConfigImpl) g.expander.getAlgorithmConfig()/*sfAlgConfig*/, g.gameInfo);
+
+        if(domain.equals("RG")) {
+            InnerNode rootNode = g.getRootNode();
+            buildCompleteTree(rootNode);
+            PublicTreeGenerator.constructPublicTree(rootNode);
+        }
 
         return g;
     }
@@ -303,6 +316,10 @@ public class CRExperiments {
         }
         if (alg.equals("MCCRavg")) {
             runMCCRavg(game);
+            return;
+        }
+        if (alg.equals("OOSavg")) {
+            runOOSavg(game);
             return;
         }
         if (alg.equals("CFR")) {
@@ -339,13 +356,7 @@ public class CRExperiments {
     }
 
     private void runGambit(Game g) {
-        InnerNode rootNode;
-        if (g.rootState.isPlayerToMoveNature()) {
-            rootNode = new ChanceNodeImpl(g.expander, g.rootState, g.rnd);
-        } else {
-            rootNode = new InnerNodeImpl(g.expander, g.rootState);
-        }
-
+        InnerNode rootNode = g.getRootNode();
         String name = g.expander.getClass().getSimpleName() + "_"+ domain;
         name += "_"+Arrays.stream(domainParams).reduce("", String::concat);
 
@@ -587,6 +598,7 @@ public class CRExperiments {
 
         g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
         CRAlgorithm alg = new CRAlgorithm(g.rootState, g.expander, epsExploration);
+        alg.budgetRoot = BUDGET_TIME;
 //        alg.defaultRootMethod = ResolvingMethod.RESOLVE_CFR;
         alg.setDoResetData(resetData);
         this.alg = alg;
@@ -717,7 +729,96 @@ public class CRExperiments {
             assert (player == 0 && expl0_avg < avg_expl0_cur + 1e-9)
                     || (player == 1 && expl1_avg < avg_expl1_cur + 1e-9);
         }
+    }
 
+    private void runOOSavg(Game game) {
+        double epsExploration = new Double(getenv("epsExploration", "0.6"));
+        double deltaTargeting = new Double(getenv("deltaTargetting", "0.6"));
+        String targeting = new String(getenv("targetting", "IST"));
+        int iterationsInRoot = new Integer(getenv("iterationsInRoot", "100000"));
+        int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "100000"));
+        int numSeeds = new Integer(getenv("numSeeds", "30"));
+        boolean resetData = new Boolean(getenv("resetData", "true"));
+        int player = new Integer(getenv("player", "0"));
+
+        UniformStrategyForMissingSequences strategy0;
+        UniformStrategyForMissingSequences strategy1;
+        UniformStrategyForMissingSequences cumulativeStrategy0= null;
+        UniformStrategyForMissingSequences cumulativeStrategy1= null;
+        InnerNode rootNode;
+        double avg_expl0_cur = 0.;
+        double avg_expl1_cur = 0.;
+        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+
+        for(int seed = 1; seed <= numSeeds; seed++) {
+            Game g = game.clone();
+            g.config.createInformationSetFor(g.rootState);
+            OOSAlgorithm alg = new OOSAlgorithm(g.rootState.getAllPlayers()[player], new OOSSimulator(g.expander), g.rootState, g.expander, deltaTargeting, epsExploration);
+            g.config.useEpsilonRM = true;
+            alg.setTargeting(targeting);
+            Player player0 = g.rootState.getAllPlayers()[0];
+            Player player1 = g.rootState.getAllPlayers()[1];
+
+            long time = threadBean.getCurrentThreadCpuTime();
+            rootNode = alg.solveEntireGame(g.rootState.getAllPlayers()[player], iterationsInRoot, iterationsPerGadgetGame);
+            double resolvingTime = (threadBean.getCurrentThreadCpuTime() - time) / 1e6; // in ms
+
+            strategy0 = StrategyCollector.getStrategyFor(rootNode, g.rootState.getAllPlayers()[0], new MeanStratDist());
+            strategy1 = StrategyCollector.getStrategyFor(rootNode, g.rootState.getAllPlayers()[1], new MeanStratDist());
+            if(cumulativeStrategy0 == null) {
+                cumulativeStrategy0 = strategy0;
+                cumulativeStrategy1 = strategy1;
+            } else {
+                accumulateStrategy(cumulativeStrategy0, strategy0);
+                accumulateStrategy(cumulativeStrategy1, strategy1);
+            }
+
+            Strategy avgStrategy0 = normalizeStrategy(player0, rootNode, cumulativeStrategy0);
+            Strategy avgStrategy1 = normalizeStrategy(player1, rootNode, cumulativeStrategy1);
+
+            double gameValue = 0.; // for player 0
+            if (g.rootState instanceof RPSGameState) {
+                gameValue = 1/3. - 1/(RPSGameInfo.biasing+2);
+            }
+
+            double br1Val_cur = brAlg1.calculateBR(g.rootState, ISMCTSExploitability.filterLow(strategy0));
+            double br0Val_cur = brAlg0.calculateBR(g.rootState, ISMCTSExploitability.filterLow(strategy1));
+            double exploitability_cur = br0Val_cur + br1Val_cur;
+            double expl0_cur = gameValue + br1Val_cur;
+            double expl1_cur = -gameValue + br0Val_cur;
+
+            double br1Val_avg = brAlg1.calculateBR(g.rootState, ISMCTSExploitability.filterLow(avgStrategy0));
+            double br0Val_avg = brAlg0.calculateBR(g.rootState, ISMCTSExploitability.filterLow(avgStrategy1));
+            double exploitability_avg = br0Val_avg + br1Val_avg;
+            double expl0_avg = gameValue + br1Val_avg;
+            double expl1_avg = -gameValue + br0Val_avg;
+
+            avg_expl0_cur = avg_expl0_cur + (expl0_cur - avg_expl0_cur) / seed;
+            avg_expl1_cur = avg_expl1_cur + (expl1_cur - avg_expl1_cur) / seed;
+
+            System.err.println("seed,epsExploration,iterationsInRoot,iterationsPerGadgetGame," +
+                    "resetData,player,resolvingTime," +
+                    "expl0_avg,expl1_avg,exploitability_avg,"+
+                    "expl0_cur,expl1_cur,exploitability_cur,avg_expl0_cur,avg_expl1_cur");
+            System.out.println(seed + ","
+                    + epsExploration + ","
+                    + iterationsInRoot + ","
+                    + iterationsPerGadgetGame + ","
+                    + resetData + ","
+                    + player + ","
+                    + resolvingTime + ","
+                    + expl0_avg  + ","
+                    + expl1_avg  + ","
+                    + exploitability_avg + ","
+                    + expl0_cur  + ","
+                    + expl1_cur  + ","
+                    + exploitability_cur +","
+                    + avg_expl0_cur + ","
+                    + avg_expl1_cur );
+
+            assert (player == 0 && expl0_avg < avg_expl0_cur + 1e-9)
+                    || (player == 1 && expl1_avg < avg_expl1_cur + 1e-9);
+        }
     }
 
 
@@ -728,9 +829,14 @@ public class CRExperiments {
         Integer rnd2 = new Integer(getenv("rnd2", "0")); // random seed for alg
         String alg1 = getenv("alg1", "MCCR"); // alg name
         String alg2 = getenv("alg2", "MCCR"); // alg name
+        Boolean binaryUtils = new Boolean(getenv("binaryUtils", "false"));
 
-        GamePlayingAlgorithm p1 = initMatchAlg(g.clone(new Random(rnd1)), alg1,0);
-        GamePlayingAlgorithm p2 = initMatchAlg(g.clone(new Random(rnd2)), alg2,1);
+        Game gs[] = new Game[2];
+        gs[0] = g.clone(new Random(rnd1));
+        gs[1] = g.clone(new Random(rnd2));
+
+        GamePlayingAlgorithm p1 = initMatchAlg(gs[0], alg1,0);
+        GamePlayingAlgorithm p2 = initMatchAlg(gs[1], alg2,1);
 
         if (preplayTime > 0) {
             p1.runMiliseconds(preplayTime);
@@ -801,7 +907,7 @@ public class CRExperiments {
 
             List<Action> actions = g.expander.getActions(curState);
             if (a == null) {
-                a = actions.get(g.config.getRandom().nextInt(actions.size()));
+                a = actions.get(gs[curState.getPlayerToMove().getId()].config.getRandom().nextInt(actions.size()));
                 pa = 1./actions.size();
             } else {
                 a = actions.get(actions.indexOf(a));//just to prevent memory leaks
@@ -816,6 +922,13 @@ public class CRExperiments {
             i++;
         }
 
+        double utils0 = curState.getUtilities()[0];
+        double utils1 = curState.getUtilities()[1];
+        if(binaryUtils) {
+            utils0 = utils0 > 0 ? 1 : utils0 < 1 ? -1 : 0;
+            utils1 = utils1 > 0 ? 1 : utils1 < 1 ? -1 : 0;
+        }
+
         System.out.println(
                 alg1 +";"+
                 alg2 +";"+
@@ -823,8 +936,8 @@ public class CRExperiments {
                 rnd2 +";"+
                 preplayTime +";"+
                 roundTime +";"+
-                curState.getUtilities()[0] +";" +
-                curState.getUtilities()[1] + ";"+
+                utils0 +";" +
+                utils1 + ";"+
                 p1giveUpAtMove +";"+
                 p2giveUpAtMove + ";"+
                 p1breaksAtMove +";"+
@@ -842,6 +955,7 @@ public class CRExperiments {
                 return new RandomAlgorithm(g.rootState.getAllPlayers()[playerId], g.expander);
 
             case "OOS":
+                ((MCTSConfig) g.expander.getAlgorithmConfig()).useEpsilonRM = true;
                 return new OOSAlgorithm(
                         g.rootState.getAllPlayers()[playerId],
                         new OOSSimulator(g.expander),
@@ -849,6 +963,7 @@ public class CRExperiments {
                         g.expander, 0.9, 0.4);
 
             case "MCCFR":
+                ((MCTSConfig) g.expander.getAlgorithmConfig()).useEpsilonRM = true;
                 return new OOSAlgorithm(
                         g.rootState.getAllPlayers()[playerId],
                         new OOSSimulator(g.expander),
@@ -1013,8 +1128,6 @@ public class CRExperiments {
     }
 
     private void runCRrootCFRresolvingCFR(Game g) {
-        OOSAlgorithmData.useEpsilonRM = true;
-        OOSAlgorithmData.epsilon = 0.00001f;
 
         // CFR-specific settings
         int iterationsInRoot = new Integer(getenv("iterationsInRoot", "1000"));
@@ -1032,6 +1145,8 @@ public class CRExperiments {
         mccrAlg.defaultResolvingMethod = RESOLVE_CFR;
         mccrAlg.setDoResetData(false);
         InnerNode rootNode = mccrAlg.getRootNode();
+        g.config.useEpsilonRM = true;
+        OOSAlgorithmData.epsilon = 0.00001f;
 
         // Target ps
         buildCompleteTree(rootNode);

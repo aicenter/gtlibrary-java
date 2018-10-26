@@ -90,7 +90,7 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
             node.createChildren(gadgetActions);
             if (gadgetIs.getAlgorithmData() == null) {
-                gadgetIs.setAlgorithmData(new OOSAlgorithmData(gadgetActions));
+                gadgetIs.setAlgorithmData(new OOSAlgorithmData(gadgetActions, getAlgConfig().useEpsilonRM));
             }
 
             assert gadgetIs.getAllNodes().size() != ps.getAllNodes().size() ||
@@ -187,7 +187,7 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
     @Override
     public MCTSConfig getAlgConfig() {
-        return null;
+        return (MCTSConfig) originalExpander.getAlgorithmConfig();
     }
 
     @Override

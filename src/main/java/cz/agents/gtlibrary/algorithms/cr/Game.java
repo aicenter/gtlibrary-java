@@ -2,12 +2,18 @@ package cz.agents.gtlibrary.algorithms.cr;
 
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
+import cz.agents.gtlibrary.domain.multilevel.MLExpander;
+import cz.agents.gtlibrary.domain.multilevel.MLGameInfo;
+import cz.agents.gtlibrary.domain.multilevel.MLGameState;
 import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoExpander;
 import cz.agents.gtlibrary.domain.oshizumo.OshiZumoGameState;
@@ -40,6 +46,7 @@ public class Game {
     public final MCTSConfig config;
     public final GameInfo gameInfo;
     public final GameState rootState;
+    public InnerNode rootNode;
 
     public Game(String domain, Random rnd) {
         this.domain = domain;
@@ -93,6 +100,11 @@ public class Game {
                 rootState = new RPSGameState();
                 expander = new RPSExpander<>(config);
                 break;
+            case "ML":
+                gameInfo = new MLGameInfo();
+                rootState = new MLGameState();
+                expander = new MLExpander<>(config);
+                break;
             default:
                 throw new IllegalArgumentException("Incorrect game:" + domain);
         }
@@ -105,5 +117,16 @@ public class Game {
     }
     public Game clone(Random rnd) {
         return new Game(this.domain, rnd);
+    }
+
+    public InnerNode getRootNode() {
+        if(rootNode == null) {
+            if (rootState.isPlayerToMoveNature()) {
+                rootNode = new ChanceNodeImpl(expander, rootState, rnd);
+            } else {
+                rootNode = new InnerNodeImpl(expander, rootState);
+            }
+        }
+        return rootNode;
     }
 }

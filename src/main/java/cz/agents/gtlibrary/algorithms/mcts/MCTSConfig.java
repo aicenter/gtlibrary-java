@@ -39,14 +39,25 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
 
     private Random random;
 
+    public boolean useEpsilonRM = false;
+
     public MCTSConfig() {
         this.random = new HighQualityRandom();
         allPublicStates = new LinkedHashMap<>();
+    }
+    public MCTSConfig(boolean useEpsilonRM) {
+        this();
+        this.useEpsilonRM = useEpsilonRM;
     }
 
     public MCTSConfig(Random random) {
         this.random = random;
         allPublicStates = new LinkedHashMap<>();
+    }
+
+    public MCTSConfig(Random random, boolean useEpsilonRM) {
+        this(random);
+        this.useEpsilonRM = useEpsilonRM;
     }
 
     @Override

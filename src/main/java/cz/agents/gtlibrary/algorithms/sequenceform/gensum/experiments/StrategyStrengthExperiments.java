@@ -226,10 +226,10 @@ public class StrategyStrengthExperiments {
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> cfrP1Expander = new ExtendedKuhnPokerExpander<>(cfrP1Config);
 
-        OOSAlgorithmData.useEpsilonRM = false;
+        mctsP1Config.useEpsilonRM = false;
         Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
         Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
-        OOSAlgorithmData.useEpsilonRM = true;
+        cfrP1Config.useEpsilonRM = true;
         MCTSConfig cfrP1ConfigEps = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> cfrP1ExpanderEps = new ExtendedKuhnPokerExpander<>(cfrP1ConfigEps);
         Map<Sequence, Double> cfrEpsilonP1RealPlan = getCFRStrategy(root, cfrP1ExpanderEps);
@@ -302,10 +302,10 @@ public class StrategyStrengthExperiments {
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> cfrP1Expander = new InformerAoSExpander<>(cfrP1Config);
 
-        OOSAlgorithmData.useEpsilonRM = false;
+        mctsP1Config.useEpsilonRM = false;
         Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
         Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
-        OOSAlgorithmData.useEpsilonRM = true;
+        cfrP1Config.useEpsilonRM = true;
         MCTSConfig cfrP1ConfigEps = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> cfrP1ExpanderEps = new InformerAoSExpander<>(cfrP1ConfigEps);
         Map<Sequence, Double> cfrEpsilonP1RealPlan = getCFRStrategy(root, cfrP1ExpanderEps);
@@ -475,10 +475,10 @@ public class StrategyStrengthExperiments {
         MCTSConfig cfrP1Config = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> cfrP1Expander = new RandomGameExpander<>(cfrP1Config);
 
-        OOSAlgorithmData.useEpsilonRM = false;
+        mctsP1Config.useEpsilonRM = false;
         Map<Sequence, Double> cfrP1RealPlan = getCFRStrategy(root, cfrP1Expander);
         Map<Sequence, Double> mctsP1RealPlan = getMCTSStrategy(root, mctsP1Expander, info);
-        OOSAlgorithmData.useEpsilonRM = true;
+        cfrP1Config.useEpsilonRM = true;
         MCTSConfig cfrP1ConfigEps = new MCTSConfig(new Random(1));
         Expander<MCTSInformationSet> cfrP1ExpanderEps = new RandomGameExpander<>(cfrP1ConfigEps);
         Map<Sequence, Double> cfrEpsilonP1RealPlan = getCFRStrategy(root, cfrP1ExpanderEps);
@@ -1017,7 +1017,7 @@ public class StrategyStrengthExperiments {
             BufferedWriter bestNEWriter = new BufferedWriter(new FileWriter("P1BestNEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
             BufferedWriter worstNEWriter = new BufferedWriter(new FileWriter("P1WorstNEvsCFRExpVal" + getDomainDependentString() + ".csv", true));
 
-            OOSAlgorithmData.useEpsilonRM = false;
+            ((MCTSConfig) expander.getAlgorithmConfig()).useEpsilonRM = true;
             CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[1], root, expander);
 
             buildCFRCompleteTree(cfr.getRootNode());

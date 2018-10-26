@@ -124,7 +124,7 @@ public class PublicStateImpl implements PublicState {
                     // init data
                     if (innerNode.getInformationSet().getAlgorithmData() == null) {
                         innerNode.getInformationSet().setAlgorithmData(
-                                new OOSAlgorithmData(innerNode.getActions()));
+                                new OOSAlgorithmData(innerNode.getActions(), config.useEpsilonRM));
                     }
                     nextPS.add(innerNode.getPublicState());
                 }
@@ -207,7 +207,7 @@ public class PublicStateImpl implements PublicState {
     public boolean equals(Object obj) {
         if (obj == null)
             return false;
-        if (this.hashCode != obj.hashCode())
+        if (this.hashCode() != obj.hashCode())
             return false;
         if (!(obj instanceof PublicState))
             return false;

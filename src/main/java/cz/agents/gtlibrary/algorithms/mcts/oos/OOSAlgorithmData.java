@@ -44,7 +44,7 @@ import java.util.List;
  * @author vilo
  */
 public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider, Serializable{
-    public static boolean useEpsilonRM = false;
+    public boolean useEpsilonRM = false;
     public static double epsilon = 0.001;
     protected List<Action> actions;
     /** Mean strategy. */
@@ -72,6 +72,11 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         }
     }
 
+    public OOSAlgorithmData(int actionCount, boolean useEpsilonRM) {
+        this(actionCount);
+        this.useEpsilonRM = useEpsilonRM;
+    }
+
     public OOSAlgorithmData(List<Action> actions) {
         this.actions = actions;
         this.actionCount = actions.size();
@@ -81,6 +86,11 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         if (gatherActionCFV) {
             actionCFV = new double[actionCount];
         }
+    }
+
+    public OOSAlgorithmData(List<Action> actions, boolean useEpsilonRM) {
+        this(actions);
+        this.useEpsilonRM = useEpsilonRM;
     }
 
     public OOSAlgorithmData(OOSAlgorithmData data) {
@@ -97,25 +107,30 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         }
     }
 
+    public OOSAlgorithmData(OOSAlgorithmData data, boolean useEpsilonRM) {
+        this(data);
+        this.useEpsilonRM = useEpsilonRM;
+    }
+
     public void getRMStrategy(double[] output) {
         final int K = actionCount;
 
         double R = 0;
         for (double ri : r) R += Math.max(0,ri);
-        
+
         if (R <= 0){
             Arrays.fill(output,0,K,1.0/K);
         } else {
             for (int i=0; i<r.length; i++) output[i] = useEpsilonRM ? (1-epsilon)*Math.max(0,r[i])/R + epsilon/K : Math.max(0,r[i])/R;
         }
     }
-    
+
     public double[] getRMStrategy(){
         double[] out = new double[r.length];
         getRMStrategy(out);
         return out;
     }
-    
+
     public void updateRegret(int ai, double u, double pi_, double l, double c, double x){
         double W = u * pi_ / l;
 
@@ -161,7 +176,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
             else r[i] += -W*pa/sa;
         }
     }
-    
+
     public void updateAllRegrets(double[] Vs, double meanV, double w){
         for (int i=0; i<r.length; i++){
             r[i] += w*(Vs[i]-meanV);
@@ -190,7 +205,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     public void setRegret(double[] r) {
        this.r = r;
    }
-        
+
     @Override
     public List<Action> getActions() {
         return actions;
@@ -203,7 +218,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     @Override
     public double[] getMp() {
         return mp;
-    }    
+    }
 
     @Override
     public int getNbSamples() {

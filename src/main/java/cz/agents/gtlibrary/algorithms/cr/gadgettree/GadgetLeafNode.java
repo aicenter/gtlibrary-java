@@ -19,9 +19,6 @@ public class GadgetLeafNode implements LeafNode, GadgetNode {
 
     // utility for the first player
     public GadgetLeafNode(GameState parentOriginalGameState, Double utilityForPlayerToMoveInParent) {
-        // todo: check signs
-//        int playerSign = parentOriginalGameState.getPlayerToMove().getId() == 0 ? 1 : -1;
-//        utilityForPlayerToMoveInParent *= playerSign;
         this.utilities = new double[]{utilityForPlayerToMoveInParent, -utilityForPlayerToMoveInParent, 0};
         this.state = new GadgetLeafState(parentOriginalGameState, utilities);
     }

@@ -40,6 +40,7 @@ import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.ImperfectRecallAlgorithmConfig;
+import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.BasicGameBuilder;
 
@@ -283,6 +284,10 @@ public class GambitEFG {
     }
 
     private Integer getUniqueHash(ISKey key) {
+        if(key instanceof PSKey) {
+            return ((PSKey) key).getId();
+        }
+
         if (!infSetIndices.containsKey(key))
             infSetIndices.put(key, ++maxIndex);
         return infSetIndices.get(key);

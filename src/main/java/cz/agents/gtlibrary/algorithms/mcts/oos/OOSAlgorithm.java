@@ -23,6 +23,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
+import cz.agents.gtlibrary.algorithms.cr.CRAlgorithm;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.*;
 import cz.agents.gtlibrary.algorithms.mcts.ConvergenceExperiment;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
@@ -51,6 +52,10 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
 
+import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_NUM_SAMPLES;
+import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_TIME;
+import static cz.agents.gtlibrary.algorithms.cr.CRExperiments.buildCompleteTree;
+
 
 /**
  * @author vilo
@@ -73,6 +78,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     private OOSTargeting targeting;
 
     public int iters;
+    private MCTSConfig config;
 
 
     public static void main(String[] args) {
@@ -149,15 +155,16 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             this.rootNode = new InnerNodeImpl(expander, rootState);
             curIS = rootNode.getInformationSet();
         }
-        OOSAlgorithmData.useEpsilonRM = false;
+        this.config = (MCTSConfig) expander.getAlgorithmConfig();
+//        config.useEpsilonRM = false;
         threadBean = ManagementFactory.getThreadMXBean();
-        String s = System.getProperty("DROPTREE");
+        String s = System.getenv("DROPTREE");
         if (s != null) dropTree = Boolean.getBoolean(s);
-        s = System.getProperty("INCTREEBUILD");
+        s = System.getenv("INCTREEBUILD");
         if (s != null && !Boolean.parseBoolean(s)) SMConvergenceExperiment.buildCompleteTree(rootNode);
-        s = System.getProperty("CURSTRAT");
+        s = System.getenv("CURSTRAT");
         if (s != null) useCurrentStrategy = Boolean.getBoolean(s);
-        s = System.getProperty("TARGTYPE");
+        s = System.getenv("TARGTYPE");
         if (s != null) {
             if (s.equals("IST")) targeting = new ISTargeting(rootNode, delta);
             else if (s.equals("PST")) targeting = new PSTargeting(rootNode, delta);
@@ -177,6 +184,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             curIS = rootNode.getInformationSet();
         }
 
+        this.config = (MCTSConfig) rootNode.getExpander().getAlgorithmConfig();
         threadBean = ManagementFactory.getThreadMXBean();
         String s = System.getProperty("DROPTREE");
         if (s != null) dropTree = Boolean.getBoolean(s);
@@ -349,7 +357,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         double pai = -1;
         double mpai = -1;
         if (is.getAlgorithmData() == null) {//this is a new Information Set
-            data = new OOSAlgorithmData(in.getActions());
+            data = new OOSAlgorithmData(in.getActions(), config.useEpsilonRM);
             is.setAlgorithmData(data);
             ai = rnd.nextInt(in.getActions().size());
             pai = 1.0 / in.getActions().size();
@@ -549,4 +557,74 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         this.rnd = rnd;
     }
 
+
+    public CRAlgorithm.Budget budgetRoot = BUDGET_NUM_SAMPLES;
+    public CRAlgorithm.Budget budgetGadget = BUDGET_NUM_SAMPLES;
+
+    public InnerNode solveEntireGame(Player resolvingPlayer, int iterationsInRoot, int iterationsPerGadgetGame) {
+        System.err.println("Using " +
+                "iterationsInRoot=" + iterationsInRoot + " " +
+                "iterationsPerGadgetGame=" + iterationsPerGadgetGame + " " +
+                "epsilonExploration=" + epsilon + " " +
+                "deltaTargetting=" + delta + " " +
+                "targetting=" + targeting.toString() + " " +
+                "player=" + resolvingPlayer.getId() + " ");
+
+        InnerNode solvingRoot = rootNode;
+        // to able to calc best response, we need to have the whole tree built
+        buildCompleteTree(solvingRoot);
+
+        if (iterationsInRoot < 2) { // no root init
+            throw new RuntimeException("Cannot skip root initialization!");
+        }
+        if (budgetRoot == BUDGET_TIME) {
+            runMiliseconds(iterationsInRoot);
+        } else {
+            assert budgetRoot == BUDGET_NUM_SAMPLES;
+            runIterations(iterationsInRoot);
+        }
+
+        if (iterationsPerGadgetGame < 2) { // uniform resolving
+            System.err.println("Skipping resolving.");
+            return solvingRoot;
+        }
+
+        ArrayDeque<PublicState> q = new ArrayDeque<>();
+        PublicState maybePlayerRootPs = getRootNode().getPublicState();
+        if(maybePlayerRootPs.getPlayer().getId() == resolvingPlayer.getId()) {
+            q.add(maybePlayerRootPs); // it really is player's root ps
+        } else {
+            q.addAll(maybePlayerRootPs.getNextPlayerPublicStates(resolvingPlayer));
+        }
+        while (!q.isEmpty()) {
+            PublicState s = q.removeFirst();
+
+            if (!s.isReachable(resolvingPlayer)) {
+                // If public state is not reachable by our player, we can leave whatever strategy was there.
+                System.err.println("Skipping resolving public state " + s + " - not reachable.");
+                continue;
+            }
+
+            q.addAll(s.getNextPlayerPublicStates(resolvingPlayer));
+            // don't resolve in chance public states
+            if (s.getAllNodes().iterator().next() instanceof ChanceNode) continue;
+
+
+            s.resetData(true);
+            curIS = s.getAllInformationSets().iterator().next(); // pick one IS
+            if (budgetGadget == BUDGET_TIME) {
+                runMiliseconds(iterationsPerGadgetGame);
+            } else {
+                assert budgetGadget == BUDGET_NUM_SAMPLES;
+                runIterations(iterationsPerGadgetGame);
+            }
+        }
+
+        return solvingRoot;
+    }
+
+    public void setTargeting(String kind) {
+        if (kind.equals("IST")) targeting = new ISTargeting(rootNode, delta);
+        else if (kind.equals("PST")) targeting = new PSTargeting(rootNode, delta);
+    }
 }
