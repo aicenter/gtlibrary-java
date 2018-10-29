@@ -86,7 +86,7 @@ public class GeneralDoubleOracle {
     private int iterations;
 
     final private double EPS = 0.00000001;
-    final public static boolean DEBUG = true;
+    final public static boolean DEBUG = false;
     final private static boolean MY_RP_BR_ORDERING = false;
     private ThreadMXBean threadBean;
     private MemoryMXBean memoryBean;
@@ -112,10 +112,10 @@ public class GeneralDoubleOracle {
 //		runPursuit();
 //        runPhantomTTT();
 //		runAoS();
-//        runFlipIt(args);
+        runFlipIt(args);
 //        runHoneyPot(args);
 //        runObservationGame();
-        runBandit();
+//        runBandit();
     }
 
 

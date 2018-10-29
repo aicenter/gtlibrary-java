@@ -19,7 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.bpg;
 
-import com.sun.tools.doclets.formats.html.SourceToHTMLConverter;
 import cz.agents.gtlibrary.algorithms.cfr.br.responses.AbstractActionProvider;
 import cz.agents.gtlibrary.iinodes.ActionImpl;
 import cz.agents.gtlibrary.interfaces.GameState;

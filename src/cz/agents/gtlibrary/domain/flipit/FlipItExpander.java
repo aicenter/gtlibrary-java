@@ -85,7 +85,11 @@ public class FlipItExpander<I extends InformationSet> extends ExpanderImpl<I> {
 //            System.out.println(entry.getKey().getId() + " : " + entry.getValue());
             actions.add(new FlipItAction(entry.getKey(), getAlgorithmConfig().getInformationSetFor(gameState)));
         }
-        // NOOP action
+
+//        for (Node node : FlipItGameInfo.graph.getAllNodes().values()) {
+//            actions.add(new FlipItAction(node, getAlgorithmConfig().getInformationSetFor(gameState)));
+//        }
+            // NOOP action
         if (FlipItGameInfo.ENABLE_PASS) actions.add(new FlipItAction(getAlgorithmConfig().getInformationSetFor(gameState)));
 
         sorted = null;

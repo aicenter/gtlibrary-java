@@ -23,6 +23,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.cfr;
 
+import cz.agents.gtlibrary.algorithms.mcts.ConvergenceExperiment;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
@@ -33,18 +34,26 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.Node;
 import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.BackPropFactory;
+import cz.agents.gtlibrary.algorithms.sequenceform.FullSequenceEFG;
+import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceFormConfig;
 import cz.agents.gtlibrary.algorithms.sequenceform.SequenceInformationSet;
 import cz.agents.gtlibrary.algorithms.sequenceform.gensum.experiments.StrategyStrengthLargeExperiments;
 import cz.agents.gtlibrary.domain.aceofspades.AoSExpander;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
+import cz.agents.gtlibrary.domain.flipit.*;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSExpander;
 import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMExpander;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameState;
+import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerExpander;
+import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.domain.poker.kuhn.KPGameInfo;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerExpander;
 import cz.agents.gtlibrary.domain.poker.kuhn.KuhnPokerGameState;
 import cz.agents.gtlibrary.experimental.utils.UtilityCalculator;
+import cz.agents.gtlibrary.iinodes.ConfigImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -60,10 +69,88 @@ import java.util.Map;
 public class CFRAlgorithm implements GamePlayingAlgorithm {
 
     public static void main(String[] args) {
+
+        long start = System.currentTimeMillis();
+
+
 //        runMPoCHM();
 //        runIAoS();
 //        runAoS();
-        runKuhnPoker();
+//        runKuhnPoker();
+
+//        runGenericPoker();
+        runFlipIt();
+
+        System.out.println((System.currentTimeMillis() - start) + " ms");
+    }
+
+    private static void runGenericPoker() {
+        GameState root = new GenericPokerGameState();
+        GPGameInfo gameInfo = new GPGameInfo();
+        Expander<MCTSInformationSet> expander = new GenericPokerExpander<>(new MCTSConfig());
+//        Expander<SequenceInformationSet> brExpander = new GenericPokerExpander<>(new SequenceFormConfig<>());
+        CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[0], root, expander);
+        ConvergenceExperiment.buildCompleteTree(cfr.getRootNode());
+
+        cfr.runIterations(1000);
+
+        Strategy p1rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
+        Strategy p2rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
+
+        UtilityCalculator calculator = new UtilityCalculator(root, expander);
+
+        SQFBestResponseAlgorithm brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]}, (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        System.out.println(brAlg0.calculateBR(root, p2rp));
+
+//        System.out.println(calculator.computeUtility(p1rp, p2rp));
+
+//        for (Map.Entry<Sequence, Double> entry : p1rp.entrySet()) {
+//            if (entry.getValue() > 0)
+//                System.out.println(entry);
+//        }
+//        System.out.println("-----------");
+//        for (Map.Entry<Sequence, Double> entry : p2rp.entrySet()) {
+//            if (entry.getValue() > 0)
+//                System.out.println(entry);
+//        }
+    }
+
+    private static void runFlipIt() {
+        GameState root = null;
+        FlipItGameInfo gameInfo = new FlipItGameInfo();
+
+        if (FlipItGameInfo.CALCULATE_UTILITY_BOUNDS) gameInfo.calculateMinMaxBounds();
+
+        switch (FlipItGameInfo.gameVersion){
+            case NO:                    root = new NoInfoFlipItGameState(); break;
+            case FULL:                  root = new FullInfoFlipItGameState(); break;
+            case REVEALED_ALL_POINTS:   root = new AllPointsFlipItGameState(); break;
+            case REVEALED_NODE_POINTS:  root = new NodePointsFlipItGameState(); break;
+
+        }
+
+        Expander<MCTSInformationSet> expander = new FlipItExpander<>(new MCTSConfig());
+//        Expander<SequenceInformationSet> brExpander = new GenericPokerExpander<>(new SequenceFormConfig<>());
+        CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[0], root, expander);
+        long start = cfr.threadBean.getCurrentThreadCpuTime();
+        ConvergenceExperiment.buildCompleteTree(cfr.getRootNode());
+        System.out.println("Building took " + ((cfr.threadBean.getCurrentThreadCpuTime() - start)/1000000l) + " ms");
+
+        Strategy p1rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
+
+        UtilityCalculator calculator = new UtilityCalculator(root, expander);
+        SQFBestResponseAlgorithm brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]}, (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+        long total = 0;
+        for (int i=0; i<100; i++) {
+            start = cfr.threadBean.getCurrentThreadCpuTime();
+            cfr.runIterations(10);
+            total +=  (cfr.threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
+            Strategy p2rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
+            System.out.println(total + ":" + brAlg0.calculateBR(root, p2rp));
+        }
+
+
+
     }
 
     private static void runKuhnPoker() {

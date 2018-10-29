@@ -348,15 +348,13 @@ public class SMConvergenceExperiment {
 
         assert algorithm.equals("Exp3") || !keepExploration;
         
-        SMMCTSAlgorithm alg = new DepthLimitedSMMCTSAlgorithm(
+        SMMCTSAlgorithm alg = new SMMCTSAlgorithm(
                     rootState.getAllPlayers()[0],
-                    new ThompsonSamplingSimulator(expander, 1, rootState.getAllPlayers()[0]), //new DefaultSimulator(expander),
+                    new DefaultSimulator(expander),
                     //new SMConjectureFactory(gamma),
-                    algorithm.equals("Exp3") ? new SMConjectureFactory(new Exp3TSBackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma, keepExploration, rootState.getAllPlayers()[0]), propagateMeans)
-                            : new SMConjectureFactory(new RMTSBackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma, rootState.getAllPlayers()[0]), propagateMeans),
-                    rootState, expander, maxDepth);
-
-        System.out.println("Using factory = " + alg.getFactoryInfo());
+                    algorithm.equals("Exp3") ? new SMConjectureFactory(new Exp3BackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma, keepExploration), propagateMeans) 
+                            : new SMConjectureFactory(new RMBackPropFactory(-gameInfo.getMaxUtility(), gameInfo.getMaxUtility(), gamma), propagateMeans),
+                    rootState, expander);
 
         assert !buildCompleteTree;
         
@@ -371,7 +369,7 @@ public class SMConvergenceExperiment {
         
         
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
-        int its = 1000000;
+        int its = 1000;
         int totalIts = 0;
         double totalTime=0;
         
@@ -381,28 +379,23 @@ public class SMConvergenceExperiment {
             alg.runIterations(its);
             totalTime += (threadBean.getCurrentThreadCpuTime() - start)/1e6;
             totalIts+=its;
-
-            /*
+            
             strategy0 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[0], dist);
             strategy1 = StrategyCollector.getStrategyFor(alg.getRootNode(), rootState.getAllPlayers()[1], dist);
 
             p1brs.append(brAlg1.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy0)) + " ");
             p0brs.append(brAlg0.calculateBR(rootState, ISMCTSExploitability.filterLow(strategy1)) + " ");
             times.append(totalTime + " ");
-            */
             if (alg.getRootNode().getGameState().isPlayerToMoveNature())
                 System.out.println(((InnerNode)alg.getRootNode().getChildren().values().iterator().next()).getInformationSet().getAlgorithmData().toString());
-            else {
-                System.out.println("Iteration = " + totalIts);
-//                System.out.println(alg.getRootNode().getInformationSet().getAlgorithmData().getClass().getSimpleName());
+            else 
                 System.out.println(alg.getRootNode().getInformationSet().getAlgorithmData().toString());
-            }
             System.out.flush();
             
 
             //System.out.println("Strat: " + strategy0.fancyToString(rootState, expander, rootState.getAllPlayers()[0]));
             //System.out.println("BR: " + brAlg.getFullBRSequences());
-            //its *= 1.2;
+            its *= 1.2;
         }
         System.out.println();
         System.out.println("P0BRs: " + p0brs.toString());
@@ -417,7 +410,7 @@ public class SMConvergenceExperiment {
     //arguments: Anti[EL]D/GSX/RNDYYY OOS6/Exp3[MV][RK]2 100000
     
     private static int runs=50;
-    private static int iterations = (int) 1e12;
+    private static int iterations = (int) 1e6;
     private static String algorithm = "Exp3";
     private static boolean keepExploration = false;
     private static boolean propagateMeans = false;
@@ -506,9 +499,8 @@ public class SMConvergenceExperiment {
     }
     
     public static void main(String[] args) throws Exception {
-        runHoneypot(args);
 //        batchMain(args);
-        //setupGoofSpiel(3);
+        setupGoofSpiel(5);
         //setupOshiZumo(8, 2);
         //setupRnd(6);
         //setupAntiExploration();
@@ -516,5 +508,6 @@ public class SMConvergenceExperiment {
 //        gamma=0.01;
 //        runSMMCTS_Exp3();
         //runMCTSExp3();
+        runSMMCTS_RM();
     }
 }

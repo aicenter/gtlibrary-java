@@ -22,7 +22,7 @@ import java.util.Random;
 public class FlipItGameInfo implements GameInfo {
 
     // GRAPH FILE : topology, rewards and control costs
-    public static String graphFile = "flipit_empty3.txt";
+    public static String graphFile = "flipit_simple5.txt";
     public static FlipItGraph graph = new FlipItGraph(graphFile);
 
     // PLAYERS
@@ -32,7 +32,7 @@ public class FlipItGameInfo implements GameInfo {
     public static final Player[] ALL_PLAYERS = new Player[] {DEFENDER, ATTACKER};//, NATURE};
 
     public static long seed = 11;
-    public static int depth = 2;
+    public static int depth = 5;
     public static final boolean RANDOM_TIE = false;
     public static final boolean PREDETERMINED_RANDOM_TIE_WINNER = false;
     public static final Player RANDOM_TIE_WINNER = FlipItGameInfo.DEFENDER;
@@ -43,12 +43,12 @@ public class FlipItGameInfo implements GameInfo {
 //    public static final boolean CALCULATE_REWARDS = false;
 
     private static final boolean FULLY_RATIONAL_ATTACKER = true;
-    public static boolean ZERO_SUM_APPROX = !false;
+    public static boolean ZERO_SUM_APPROX = true;
     public static boolean ENABLE_PASS = true;
 
     public static final double INITIAL_POINTS = 0.0;//50.0;
 
-    public static final int ALL_NODES_OWNING_PLAYER = 1;
+    public static final int ALL_NODES_OWNING_PLAYER = 0;
     public static final boolean GENERATE_NODES_UNIFORMLY = true;
     public static final boolean REWARD_ALWAYS_HIGHER = true;
 
@@ -60,7 +60,7 @@ public class FlipItGameInfo implements GameInfo {
         NO, FULL, REVEALED_ALL_POINTS, REVEALED_NODE_POINTS
     }
 
-    public static FlipItInfo gameVersion = FlipItInfo.FULL;//REVEALED_NODE_POINTS;//FULL;//REVEALED_ALL_POINTS;//FULL;
+    public static FlipItInfo gameVersion = FlipItInfo.REVEALED_ALL_POINTS;//REVEALED_NODE_POINTS;//FULL;//REVEALED_ALL_POINTS;//FULL;
 
     public static boolean PERFECT_RECALL = true;
 
@@ -215,8 +215,13 @@ public class FlipItGameInfo implements GameInfo {
     @Override
     public double getMaxUtility() {
         double max = 0.0;
-        for (Node node : graph.getAllNodes().values())
+        double maxCost = Double.NEGATIVE_INFINITY;
+        for (Node node : graph.getAllNodes().values()) {
             max += graph.getReward(node);
+            if (graph.getControlCost(node) > maxCost)
+                maxCost = graph.getControlCost(node);
+        }
+        max += maxCost;
         max = depth*max;// + INITIAL_POINTS;
 //        for (int d = 1; d <= depth; d++){
 //            max += Math.min(d, graph.getAllNodes().size())*graph.getMaxReward() - graph.getMinControlCost();

@@ -45,8 +45,8 @@ public class GPGameInfo implements GameInfo, Serializable {
     public static final int ANTE = 1;
     public static int MAX_RAISES_IN_ROW = 1;
 
-    public static int MAX_DIFFERENT_BETS = 2;
-    public static int MAX_DIFFERENT_RAISES = 2;//MAX_DIFFERENT_BETS;
+    public static int MAX_DIFFERENT_BETS = 1;
+    public static int MAX_DIFFERENT_RAISES = 1;//MAX_DIFFERENT_BETS;
     public static int[] BETS_FIRST_ROUND;
 
     {
@@ -66,7 +66,7 @@ public class GPGameInfo implements GameInfo, Serializable {
             RAISES_FIRST_ROUND[i] = (i + 1) * 2;
     }
 
-    public static int MAX_CARD_TYPES = 4;
+    public static int MAX_CARD_TYPES = 3;
     public static int[] CARD_TYPES;
 
     {
@@ -84,7 +84,7 @@ public class GPGameInfo implements GameInfo, Serializable {
         }
     }
 
-    public static int MAX_CARD_OF_EACH_TYPE = 3;
+    public static int MAX_CARD_OF_EACH_TYPE = 2;
     public static int[] DECK;
 
     {

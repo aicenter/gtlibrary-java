@@ -93,7 +93,7 @@ public class FullSequenceEFG {
     private long finishTime;
 
 	private PrintStream debugOutput = System.out;
-	final private static boolean DEBUG = true;
+	final private static boolean DEBUG = false;
 	private ThreadMXBean threadBean;
 
 	private double gameValue = Double.NaN;
@@ -103,7 +103,7 @@ public class FullSequenceEFG {
 	public static void main(String[] args) {
 //		runAC();
 //		runAoS();
-		runKuhnPoker();
+//		runKuhnPoker();
 //		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
@@ -143,16 +143,16 @@ public class FullSequenceEFG {
 	}
 
 	private static void runFlipIt(){
-		boolean PRINT_STRATEGY = false;
+		boolean PRINT_STRATEGY = true;
 		boolean shiftedRootstate = false;
 		String[] defenderActions = new String[]{"ID1","ID4", "ID1", "ID4"};
 		String[] attackerActions = new String[]{"ID1", "ID1", "ID4", "ID1"};
 		FlipItGameInfo gameInfo = new FlipItGameInfo();
-		gameInfo.ZERO_SUM_APPROX = true;
-		gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_ALL_POINTS;
-		gameInfo.depth = 5;
-		gameInfo.ENABLE_PASS = false;
-		gameInfo.graphFile = "flipit_empty2.txt";
+//		gameInfo.ZERO_SUM_APPROX = true;
+//		gameInfo.gameVersion = FlipItGameInfo.FlipItInfo.REVEALED_ALL_POINTS;
+//		gameInfo.depth = 5;
+//		gameInfo.ENABLE_PASS = false;
+//		gameInfo.graphFile = "flipit_empty2.txt";
 		NodePointsFlipItGameState rootState = null;
 
 		switch (FlipItGameInfo.gameVersion){
@@ -534,12 +534,12 @@ public class FullSequenceEFG {
 
 	public void generateCompleteGame() {
 		ArrayDeque<GameState> queue = new ArrayDeque<GameState>();
-
+		double nodes = 0.0;
 		queue.add(rootState);
 
 		while (queue.size() > 0) {
 			GameState currentState = queue.removeLast();
-
+			nodes++;
 			algConfig.addStateToSequenceForm(currentState);
 			if (currentState.isGameEnd()) {
 				algConfig.setUtility(currentState);
@@ -549,6 +549,7 @@ public class FullSequenceEFG {
 				queue.add(currentState.performAction(action));
 			}
 		}
+		System.out.println("# of nodes in the tree: " + nodes);
 	}
 
 	public double getGameValue() {

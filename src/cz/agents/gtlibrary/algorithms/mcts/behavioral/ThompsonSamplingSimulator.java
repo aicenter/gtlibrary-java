@@ -86,7 +86,6 @@ public class ThompsonSamplingSimulator extends DefaultSimulator {
         }
     }
 
-    @Override
     protected Action getActionForRegularPlayer(GameStateImpl state) {
 
 //        List<Action> possibleActions = expander.getActions(new MCTSInformationSet(state));
