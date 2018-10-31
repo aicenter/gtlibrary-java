@@ -3,7 +3,6 @@ package cz.agents.gtlibrary.algorithms.cr;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
@@ -43,24 +42,27 @@ public class PublicTreeGenerator {
 
                 Set<InnerNode> psNodes = new HashSet<>();
                 ArrayDeque<InnerNode> qps = new ArrayDeque<>();
+                qps.add(in);
 
-                Set<InnerNode> initialSet = augInfoSets.get(in.getOpponentAugISKey());
-                assert initialSet.contains(in);
-                qps.addAll(initialSet);
-
-                while(!qps.isEmpty()) {
+                while (!qps.isEmpty()) {
                     InnerNode ps_in = qps.removeFirst();
 
-                    if(!psNodes.contains(ps_in)) {
-                        qps.addAll(augInfoSets.get(ps_in.getOpponentAugISKey()));
-                        qps.addAll(ps_in.getInformationSet().getAllNodes());
+                    if (!psNodes.contains(ps_in)) {
+                        Set<InnerNode> augIsNodes = augInfoSets.get(ps_in.getOpponentAugISKey());
+                        qps.addAll(augIsNodes);
+                        Set<InnerNode> isNodes = ps_in.getInformationSet().getAllNodes();
+                        qps.addAll(isNodes);
+
+                        psNodes.add(ps_in);
+                        processed.add(ps_in);
                     }
-                    psNodes.add(ps_in);
-                    processed.add(ps_in);
                 }
 
                 psNodes.forEach(ps::addNodeToPublicState);
-                psNodes.forEach(n -> n.setPublicState(ps));
+                psNodes.forEach(n -> {
+                    n.setPublicState(ps);
+                    n.getGameState().setPSKeyForPlayerToMove(psKey);
+                });
                 publicStates.put(psKey, ps);
             }
             for (Action a : in.getActions()) {
@@ -87,7 +89,7 @@ public class PublicTreeGenerator {
         while (!q.isEmpty()) {
             InnerNode n = q.removeFirst();
             MCTSInformationSet is = n.getInformationSet();
-            if(!(n instanceof ChanceNode)) {
+            if (!(n instanceof ChanceNode)) {
                 PerfectRecallISKey augiskey = n.getOpponentAugISKey();
                 if (augInfoSets.containsKey(augiskey)) {
                     s = augInfoSets.get(augiskey);

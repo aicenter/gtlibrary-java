@@ -113,4 +113,8 @@ public interface InnerNode extends Node {
     void destroy();
 
     void setPublicState(MCTSPublicState ps);
+
+    void updateExpectedValue2(double v);
+    double getExpectedValue2(double iterationNum);
+    void setExpectedValue2(double sumOffPolicyAproxSample);
 }

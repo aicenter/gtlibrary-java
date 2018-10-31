@@ -1,6 +1,7 @@
 package cz.agents.gtlibrary.algorithms.cr.gadgettree;
 
 import cz.agents.gtlibrary.NotImplementedException;
+import cz.agents.gtlibrary.algorithms.cr.CRExperiments;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
@@ -80,7 +81,7 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
                 // don't add terminate if aug infoset spans the whole public state
                 boolean resolveForAugInfoSetsTerminate = gadgetIs.getAllNodes().size() != ps.getAllNodes().size();
-                if (resolveForAugInfoSetsTerminate) {
+                if (CRExperiments.safeResolving && resolveForAugInfoSetsTerminate) {
                     GadgetInnerAction terminateAction = new GadgetInnerAction(false, gadgetIs);
                     gadgetActions.add(terminateAction);
                 }
@@ -257,6 +258,21 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
     @Override
     public void setExpectedValue(double offPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public double getExpectedValue2(double iterationNum) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateExpectedValue2(double offPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setExpectedValue2(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 

@@ -167,6 +167,21 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     }
 
     @Override
+    public double getExpectedValue2(double iterationNum) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateExpectedValue2(double offPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setExpectedValue2(double offPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public double getSumReachp() {
         throw new NotImplementedException();
     }

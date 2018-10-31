@@ -62,6 +62,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     private boolean writeEFG = System.getenv("writeEFG") != null && System.getenv("writeEFG").equals("true");
     private boolean skipGadgetResolvingIsMCCFR = System.getenv("skipGadget") != null && System.getenv("skipGadget").equals("true");
     private double actionChosenWithProb = 1.;
+    private double[] currentISprobDist;
 
     public CRAlgorithm(GameState rootState, Expander<MCTSInformationSet> expander) {
         this(rootState, expander, 0.6);
@@ -204,6 +205,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             System.err.println("Diff:   " + distributionToString(curIS.getActions(), diff));
             action = randomChoice(distributionAfter);
             actionChosenWithProb = distributionAfter.get(action);
+            currentISprobDist = ((OOSAlgorithmData) curIS.getAlgorithmData()).getMeanStrategy();
         }
 
         updatePlayerRp(curPS);
@@ -396,8 +398,11 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             alg.runIterations(iterations);
         }
 
-        return alg.iters;
+        numSamplesDuringRun = alg.numSamplesDuringRun();
+        numSamplesInCurrentIS = alg.numSamplesInCurrentIS();
+        numNodesTouchedDuringRun = alg.numNodesTouchedDuringRun();
 
+        return alg.numSamplesDuringRun();
         // debug
 //        assert debugDepthSamplingAssert(rootNode, alg) == iterations / 2;
     }
@@ -438,6 +443,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                                int iterations) {
         OOSAlgorithm alg = new OOSAlgorithm(resolvingPlayer, gadgetRoot, epsilonExploration);
         alg.setRnd(rnd);
+        alg.setTrackingIS(currentIs);
 
         if (budgetGadget == BUDGET_TIME) {
             alg.runMiliseconds(iterations);
@@ -446,7 +452,11 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             alg.runIterations(iterations);
         }
 
-        return alg.iters;
+        numSamplesDuringRun = alg.numSamplesDuringRun();
+        numSamplesInCurrentIS = alg.numSamplesInCurrentIS();
+        numNodesTouchedDuringRun = alg.numNodesTouchedDuringRun();
+
+        return alg.numSamplesDuringRun();
     }
 
     private int runGadgetCFR(Player resolvingPlayer,
@@ -710,5 +720,25 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     public enum Budget {
         BUDGET_NUM_SAMPLES, // num of samples
         BUDGET_TIME // in milisec
+    }
+
+    private int numSamplesDuringRun;
+    private int numSamplesInCurrentIS;
+    private int numNodesTouchedDuringRun;
+
+    public int numSamplesDuringRun() {
+        return numSamplesDuringRun;
+    }
+
+    public int numSamplesInCurrentIS() {
+        return numSamplesInCurrentIS;
+    }
+    public int numNodesTouchedDuringRun() {
+        return numNodesTouchedDuringRun;
+    }
+
+    @Override
+    public double[] currentISprobDist() {
+        return currentISprobDist;
     }
 }

@@ -1,5 +1,6 @@
 package cz.agents.gtlibrary.algorithms.cr.gadgettree;
 
+import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.iinodes.ISKey;
@@ -26,6 +27,32 @@ public class GadgetInfoSet extends MCTSInformationSet {
             // todo: iterations in "keep" version of resolving
             double p = o.getReachPrPlayerChance();
             double eu = o.getExpectedValue(expUtilityIterations);
+            isCFV += p * eu;
+        }
+        return isCFV;
+    }
+
+    public double getIsCFV2(int expUtilityIterations) {
+        double isCFV = 0; // let's keep 0 by default (if the games are balanced at public states)
+        for (InnerNode in : getAllNodes()) {
+            GadgetInnerNode n = (GadgetInnerNode) in;
+            InnerNode o = n.getOriginalNode();
+            // todo: iterations in "keep" version of resolving
+            double p = o.getReachPrPlayerChance();
+            double eu = o.getExpectedValue2(expUtilityIterations);
+            isCFV += p * eu;
+        }
+        return isCFV;
+    }
+
+    public double getIsCFV3(int expUtilityIterations) {
+        double isCFV = 0; // let's keep 0 by default (if the games are balanced at public states)
+        for (InnerNode in : getAllNodes()) {
+            GadgetInnerNode n = (GadgetInnerNode) in;
+            InnerNode o = n.getOriginalNode();
+            // todo: iterations in "keep" version of resolving
+            double p = o.getReachPrPlayerChance();
+            double eu = CFRAlgorithm.computeExpUtilityOfState(o, o.getOpponentPlayerToMove());
             isCFV += p * eu;
         }
         return isCFV;

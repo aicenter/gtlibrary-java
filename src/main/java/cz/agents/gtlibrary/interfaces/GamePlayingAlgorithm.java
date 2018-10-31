@@ -40,4 +40,18 @@ public interface GamePlayingAlgorithm {
     default Double actionChosenWithProb() {
         return 1.;
     }
+    default double[] currentISprobDist() {
+        return new double[]{};
+    }
+
+    default int numSamplesDuringRun() {
+        return 0;
+    }
+
+    default int numSamplesInCurrentIS() {
+        return 0;
+    }
+    default int numNodesTouchedDuringRun() {
+        return 0;
+    }
 }

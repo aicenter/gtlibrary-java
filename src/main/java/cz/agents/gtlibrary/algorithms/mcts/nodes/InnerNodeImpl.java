@@ -41,11 +41,13 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     private MCTSPublicState publicState;
     private double[] playerReachPr = new double[] {1.,1.,1.};
     private double evSum = 0.;
+    private double evSum2 = 0.;
     private Double sumReachP = 0.;
     protected MCTSInformationSet oppAugInformationSet;
     public static boolean saveChildren = true;
     public static boolean attendIS = true;
     public static boolean attendPS = true;
+
     /**
      * Non-root node constructor
      */
@@ -218,6 +220,21 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     }
 
     @Override
+    public double getExpectedValue2(double iterationNum) {
+        return evSum2 == 0 ? 0 : evSum2 / iterationNum;
+    }
+
+    @Override
+    public void setExpectedValue2(double sum) {
+        this.evSum2 = sum;
+    }
+
+    @Override
+    public void updateExpectedValue2(double offPolicyAproxSample) {
+        this.evSum2 += offPolicyAproxSample;
+    }
+
+    @Override
     public double getSumReachp() {
         return sumReachP;
     }
@@ -235,6 +252,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     @Override
     public void resetData() {
         this.evSum = 0.;
+        this.evSum2 = 0.;
         this.sumReachP = 0.;
     }
 

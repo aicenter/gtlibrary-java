@@ -42,7 +42,6 @@ import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
-import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
@@ -77,8 +76,12 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     private Random rnd = new HighQualityRandom(seed);
     private OOSTargeting targeting;
 
-    public int iters;
+    private int numSamplesDuringRun;
+    private int numSamplesInCurrentIS;
+    private int numNodesTouchedDuringRun;
     private MCTSConfig config;
+    private double[] currentISprobDist;
+    private MCTSInformationSet trackingIS;
 
 
     public static void main(String[] args) {
@@ -207,18 +210,18 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     @Override
     public Action runMiliseconds(int miliseconds) {
         if (giveUp) return null;
-        iters = 0;
+        numSamplesDuringRun = 0;
         int targISHits = 0;
         long start = threadBean.getCurrentThreadCpuTime();
         for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
             if (curIS != rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble() <= delta);
             underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
             iteration(rootNode, 1, 1, 1, 1, 1 / targeting.getSampleProbMultiplayer(), 1 / targeting.getSampleProbMultiplayer(), rootNode.getAllPlayers()[0]);//originally started by 1/10^d
-            iters++;
+            numSamplesDuringRun++;
             if (underTargetIS) targISHits++;
             underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
             iteration(rootNode, 1, 1, 1, 1,1 / targeting.getSampleProbMultiplayer(), 1 / targeting.getSampleProbMultiplayer(), rootNode.getAllPlayers()[1]);
-            iters++;
+            numSamplesDuringRun++;
             if (underTargetIS) targISHits++;
         }
 //        System.out.println();
@@ -240,9 +243,11 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             int ai = randomChoice(strat, 1);
             a = curIS.getAllNodes().iterator().next().getActions().get(ai);
             actionChosenWithProb = strat[ai];
+            currentISprobDist = strat;
         } else {
             a = Strategy.selectAction(distribution, rnd);
             actionChosenWithProb = distribution.get(a);
+            currentISprobDist = distribution.values().stream().mapToDouble(i->i).toArray();
         }
 
         return a;
@@ -258,16 +263,16 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         double p0Value = 0;
 
         long starttime = System.currentTimeMillis();
+        numSamplesDuringRun = 0;
         for (int i = 0; i < iterations / 2; i++) {
             if (curIS != rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble() <= delta);
             underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
             p0Value = iteration(rootNode, 1, 1, 1,1, 1, 1, rootNode.getAllPlayers()[0]);
-            iters++;
+            numSamplesDuringRun++;
             underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
             iteration(rootNode, 1, 1, 1, 1,1, 1,rootNode.getAllPlayers()[1]);
-            iters++;
+            numSamplesDuringRun++;
         }
-        this.iters = iterations;
         if (curIS == null || !curIS.getPlayer().equals(searchingPlayer)) return null;
         Map<Action, Double> distribution = (new MeanStratDist()).getDistributionFor(curIS.getAlgorithmData());
 
@@ -303,6 +308,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 //                || Double.isNaN(bs)) {
 //            System.err.println("break");
 //        }
+        numNodesTouchedDuringRun++;
 
         if (node instanceof LeafNode) {
             x = 1;
@@ -356,6 +362,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         int ai = -1;
         double pai = -1;
         double mpai = -1;
+        if(is.equals(trackingIS)) numSamplesInCurrentIS++;
+
         if (is.getAlgorithmData() == null) {//this is a new Information Set
             data = new OOSAlgorithmData(in.getActions(), config.useEpsilonRM);
             is.setAlgorithmData(data);
@@ -461,13 +469,13 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         if(!(is instanceof GadgetInfoSet)) {
             if (!is.getPlayer().equals(expPlayer)) {
                 reachp = pi_ / pi_c;
-                updateVal *= reachp;
-                ((InnerNode) node).updateExpectedValue(updateVal);
+                ((InnerNode) node).updateExpectedValue(reachp * updateVal);
+                ((InnerNode) node).updateExpectedValue2(updateVal);
                 ((InnerNode) node).updateSumReachp(reachp / s);
             } else {
                 reachp = pi;
-                updateVal *= -1 * reachp;
-                ((InnerNode) node).updateExpectedValue(updateVal);
+                ((InnerNode) node).updateExpectedValue(updateVal * -1 * reachp);
+                ((InnerNode) node).updateExpectedValue2(updateVal * -1);
                 ((InnerNode) node).updateSumReachp(reachp / s);
             }
         }
@@ -525,6 +533,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     @Override
     public void setCurrentIS(InformationSet is) {
         curIS = (MCTSInformationSet) is;
+        trackingIS = (MCTSInformationSet) is;
         if (curIS.getAllNodes().isEmpty()) {
             giveUp = true;
             clearTreeISs();
@@ -626,5 +635,25 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     public void setTargeting(String kind) {
         if (kind.equals("IST")) targeting = new ISTargeting(rootNode, delta);
         else if (kind.equals("PST")) targeting = new PSTargeting(rootNode, delta);
+    }
+
+    public int numSamplesDuringRun() {
+        return numSamplesDuringRun;
+    }
+
+    public int numSamplesInCurrentIS() {
+        return numSamplesInCurrentIS;
+    }
+    public int numNodesTouchedDuringRun() {
+        return numNodesTouchedDuringRun;
+    }
+
+    @Override
+    public double[] currentISprobDist() {
+        return currentISprobDist;
+    }
+
+    public void setTrackingIS(MCTSInformationSet trackingIS) {
+        this.trackingIS = trackingIS;
     }
 }
