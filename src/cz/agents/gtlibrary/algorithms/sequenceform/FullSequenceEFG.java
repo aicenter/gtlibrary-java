@@ -104,7 +104,7 @@ public class FullSequenceEFG {
 //		runAC();
 //		runAoS();
 //		runKuhnPoker();
-//		runGenericPoker();
+		runGenericPoker();
 //		runBPG();
 //		runGoofSpiel();
 //      runRandomGame();
@@ -115,7 +115,7 @@ public class FullSequenceEFG {
 //		runUpOrDown();
 //        runOshiZumo();
 //        testExploitGame();
-		runFlipIt();
+//		runFlipIt();
 //		runHoneyPot();
 //		runBandit();
 	}

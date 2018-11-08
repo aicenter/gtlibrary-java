@@ -60,7 +60,7 @@ public class FlipItGameInfo implements GameInfo {
         NO, FULL, REVEALED_ALL_POINTS, REVEALED_NODE_POINTS
     }
 
-    public static FlipItInfo gameVersion = FlipItInfo.REVEALED_ALL_POINTS;//REVEALED_NODE_POINTS;//FULL;//REVEALED_ALL_POINTS;//FULL;
+    public static FlipItInfo gameVersion = FlipItInfo.NO;//REVEALED_NODE_POINTS;//FULL;//REVEALED_ALL_POINTS;//FULL;
 
     public static boolean PERFECT_RECALL = true;
 

@@ -78,8 +78,8 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
 //        runAoS();
 //        runKuhnPoker();
 
-//        runGenericPoker();
-        runFlipIt();
+        runGenericPoker();
+//        runFlipIt();
 
         System.out.println((System.currentTimeMillis() - start) + " ms");
     }
@@ -92,15 +92,26 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         CFRAlgorithm cfr = new CFRAlgorithm(root.getAllPlayers()[0], root, expander);
         ConvergenceExperiment.buildCompleteTree(cfr.getRootNode());
 
-        cfr.runIterations(1000);
+//        cfr.runIterations(1000);
+//
+//        Strategy p1rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
+//        Strategy p2rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
+//
+//        UtilityCalculator calculator = new UtilityCalculator(root, expander);
+//
+//        SQFBestResponseAlgorithm brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]}, (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
+//        System.out.println(brAlg0.calculateBR(root, p2rp));
 
-        Strategy p1rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[0], new MeanStratDist());
-        Strategy p2rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
-
-        UtilityCalculator calculator = new UtilityCalculator(root, expander);
-
+        long start;
         SQFBestResponseAlgorithm brAlg0 = new SQFBestResponseAlgorithm(expander, 0, new Player[]{root.getAllPlayers()[0], root.getAllPlayers()[1]}, (ConfigImpl) expander.getAlgorithmConfig()/*sfAlgConfig*/, gameInfo);
-        System.out.println(brAlg0.calculateBR(root, p2rp));
+        long total = 0;
+        for (int i=0; i<100; i++) {
+            start = cfr.threadBean.getCurrentThreadCpuTime();
+            cfr.runIterations(50);
+            total +=  (cfr.threadBean.getCurrentThreadCpuTime() - start) / 1000000l;
+            Strategy p2rp = StrategyCollector.getStrategyFor(cfr.getRootNode(), root.getAllPlayers()[1], new MeanStratDist());
+            System.out.println(total + ":" + brAlg0.calculateBR(root, p2rp));
+        }
 
 //        System.out.println(calculator.computeUtility(p1rp, p2rp));
 
