@@ -19,6 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.nfg.simalphabeta;
 
+import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
@@ -135,6 +136,11 @@ public class ComparatorAlgorithm implements GamePlayingAlgorithm {
     @Override
     public Action runMiliseconds(int miliseconds) {
         return null;
+    }
+
+    @Override
+    public Action runIterations(int iterations) {
+        throw new NotImplementedException();
     }
 
     public void setCurrentIS(InformationSet currentIS) {

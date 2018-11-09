@@ -20,7 +20,9 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.cr;
 
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInfoSet;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
@@ -44,15 +46,13 @@ import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameState;
 import cz.agents.gtlibrary.domain.tron.TronGameInfo;
-import cz.agents.gtlibrary.iinodes.ArrayListSequenceImpl;
-import cz.agents.gtlibrary.iinodes.ConfigImpl;
-import cz.agents.gtlibrary.iinodes.ISKey;
-import cz.agents.gtlibrary.iinodes.RandomAlgorithm;
+import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.strategy.StrategyImpl;
 import cz.agents.gtlibrary.strategy.UniformStrategyForMissingSequences;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import cz.agents.gtlibrary.utils.MTRandom;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
 import java.lang.management.ManagementFactory;
@@ -63,6 +63,8 @@ import static cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm.updateCFRResolving
 import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_TIME;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_CFR;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
+import static cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode.useRootResolving;
+import static cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode.*;
 
 
 public class CRExperiments {
@@ -101,7 +103,7 @@ public class CRExperiments {
         String alg = args[2];
         String domain = args[3];
 
-        Random rnd = new Random(seed);
+        Random rnd = new MTRandom(seed);
 
         CRExperiments exp = new CRExperiments(seed);
         exp.domain = domain;
@@ -346,6 +348,10 @@ public class CRExperiments {
         }
         if (alg.equals("match")) {
             runMatch(game);
+            return;
+        }
+        if (alg.equals("firstMoves")) {
+            runFirstMoves(game);
             return;
         }
         if (alg.equals("gambit")) {
@@ -691,9 +697,15 @@ public class CRExperiments {
         int iterationsInRoot = new Integer(getenv("iterationsInRoot", "100000"));
         int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "100000"));
         safeResolving = new Boolean(getenv("safeResolving", "true"));
+        String resolvingCFVOption = getenv("resolvingCFV", "weighted");
         int numSeeds = new Integer(getenv("numSeeds", "30"));
         boolean resetData = new Boolean(getenv("resetData", "true"));
         int player = new Integer(getenv("player", "0"));
+
+        if(resolvingCFVOption.equals("time")) GadgetInnerNode.resolvingCFV = RESOLVE_TIME;
+        if(resolvingCFVOption.equals("weighted")) GadgetInnerNode.resolvingCFV = RESOLVE_WEIGHTED;
+        if(resolvingCFVOption.equals("exact")) GadgetInnerNode.resolvingCFV = RESOLVE_EXACT;
+        if(resolvingCFVOption.equals("fixed")) GadgetInnerNode.resolvingCFV = RESOLVE_FIXED;
 
         UniformStrategyForMissingSequences strategy0;
         UniformStrategyForMissingSequences strategy1;
@@ -805,8 +817,11 @@ public class CRExperiments {
             Player player1 = g.rootState.getAllPlayers()[1];
 
             long time = threadBean.getCurrentThreadCpuTime();
-            rootNode = alg.solveEntireGame(g.rootState.getAllPlayers()[player], iterationsInRoot,
-                    iterationsPerGadgetGame);
+            alg.runIterations(iterationsInRoot);
+            alg.runIterations(iterationsPerGadgetGame);
+//            rootNode = alg.solveEntireGame(g.rootState.getAllPlayers()[player], iterationsInRoot,
+//                    iterationsPerGadgetGame, resetData);
+            rootNode = alg.getRootNode();
             double resolvingTime = (threadBean.getCurrentThreadCpuTime() - time) / 1e6; // in ms
 
             strategy0 = StrategyCollector.getStrategyFor(rootNode, g.rootState.getAllPlayers()[0], new MeanStratDist());
@@ -882,17 +897,40 @@ public class CRExperiments {
         String alg2 = getenv("alg2", "MCCR"); // alg name
         Boolean binaryUtils = new Boolean(getenv("binaryUtils", "false"));
         Boolean prettyPrint = new Boolean(getenv("prettyPrint", "false"));
+        Boolean debug = new Boolean(getenv("debug", "false"));
+        Boolean runTime = new Boolean(getenv("runTime", "true"));
+
+        preplayTime1 = preplayTime1 == 0 ? preplayTime : preplayTime1;
+        preplayTime2 = preplayTime2 == 0 ? preplayTime : preplayTime2;
+        roundTime1  = roundTime1 == 0 ? roundTime : roundTime1;
+        roundTime2  = roundTime2 == 0 ? roundTime : roundTime2;
+
+        System.err.println("params:"+
+            " safeResolving="+safeResolving + " " +
+            " preplayTime1="+preplayTime1 + " " +
+            " preplayTime2="+preplayTime2 + " " +
+            " roundTime1="+roundTime1 + " " +
+            " roundTime2="+roundTime2 + " " +
+            " rnd1="+rnd1 + " " +
+            " rnd2="+rnd2 + " " +
+            " alg1="+alg1 + " " +
+            " alg2="+alg2 + " " +
+            " binaryUtils="+binaryUtils + " " +
+            " prettyPrint="+prettyPrint);
 
         Game gs[] = new Game[2];
-        gs[0] = g.clone(new Random(rnd1));
-        gs[1] = g.clone(new Random(rnd2));
+        gs[0] = g.clone(new MTRandom(rnd1));
+        gs[1] = g.clone(new MTRandom(rnd2));
 
         GamePlayingAlgorithm p1 = initMatchAlg(gs[0], alg1, 0);
         GamePlayingAlgorithm p2 = initMatchAlg(gs[1], alg2, 1);
 
-        if (preplayTime > 0) {
-            p1.runMiliseconds(preplayTime1 == 0 ? preplayTime : preplayTime1);
-            p2.runMiliseconds(preplayTime2 == 0 ? preplayTime : preplayTime2);
+        if(runTime) {
+            p1.runMiliseconds(preplayTime1);
+            p2.runMiliseconds(preplayTime2);
+        } else {
+            p1.runIterations(preplayTime1);
+            p2.runIterations(preplayTime2);
         }
 
         GameState curState = g.rootState.copy();
@@ -906,7 +944,263 @@ public class CRExperiments {
         int numSamplesDuringRun = 0;
         int numSamplesInCurrentIS = 0;
         int numNodesTouchedDuringRun = 0;
+        String info = "";
         ArrayList<Move> moves = new ArrayList<>();
+        while (!curState.isGameEnd()) {
+            Action a = null;
+            info = "";
+
+            if (curState.isPlayerToMoveNature()) {
+                double r = g.config.getRandom().nextDouble();
+                List<Action> actions = g.expander.getActions(curState);
+                for (Action ca : actions) {
+                    final double ap = curState.getProbabilityOfNatureFor(ca);
+                    if (r <= ap) {
+                        pa = ap;
+                        a = ca;
+                        break;
+                    }
+                    r -= ap;
+                }
+                p_dist = new double[actions.size()];
+                for (int j = 0; j < actions.size(); j++) {
+                    p_dist[j] = curState.getProbabilityOfNatureFor(actions.get(j));
+                }
+                numSamplesDuringRun = 0;
+                numSamplesInCurrentIS = 0;
+                numNodesTouchedDuringRun = 0;
+            } else if (curState.getPlayerToMove().getId() == 0) {
+                if (p1breaksAtMove == -1) {
+                    if (p1.getRootNode() != null) { //mainly for the random player
+                        MCTSInformationSet curIS = p1.getRootNode().getExpander()
+                                .getAlgorithmConfig().getInformationSetFor(curState);
+                        p1.setCurrentIS(curIS);
+                    }
+
+                    try {
+                        if(runTime) {
+                            a = p1.runMiliseconds(roundTime1);
+                        } else {
+                            a = p1.runIterations(roundTime1);
+                        }
+                        pa = p1.actionChosenWithProb();
+                        p_dist = p1.currentISprobDist();
+                        info = p1.extraInfo();
+                        numSamplesDuringRun = p1.numSamplesDuringRun();
+                        numSamplesInCurrentIS = p1.numSamplesInCurrentIS();
+                        numNodesTouchedDuringRun = p1.numNodesTouchedDuringRun();
+                    } catch (Exception e) {
+                        a = null;
+                        p1breaksAtMove = i;
+                        e.printStackTrace();
+                        if(debug) throw e;
+                    }
+                } else { // if it's broken, play randomly
+                    a = null;
+                }
+            } else {
+                if (p2breaksAtMove == -1) {
+                    if (p2.getRootNode() != null) { //mainly for the random player
+                        MCTSInformationSet curIS = p2.getRootNode().getExpander()
+                                .getAlgorithmConfig().getInformationSetFor(curState);
+                        p2.setCurrentIS(curIS);
+                    }
+
+                    try {
+                        if(runTime) {
+                        a = p2.runMiliseconds(roundTime2);
+                        } else {
+                            a = p2.runIterations(roundTime2);
+                        }
+                        pa = p2.actionChosenWithProb();
+                        p_dist = p2.currentISprobDist();
+                        info = p2.extraInfo();
+                        numSamplesDuringRun = p2.numSamplesDuringRun();
+                        numSamplesInCurrentIS = p2.numSamplesInCurrentIS();
+                        numNodesTouchedDuringRun = p2.numNodesTouchedDuringRun();
+                    } catch (Exception e) {
+                        a = null;
+                        p2breaksAtMove = i;
+                        e.printStackTrace();
+                        if(debug) throw e;
+                    }
+                } else { // if it's broken, play randomly
+                    a = null;
+                }
+            }
+
+            List<Action> actions = g.expander.getActions(curState);
+            if (a == null) {
+                a = actions.get(gs[curState.getPlayerToMove().getId()].config.getRandom().nextInt(actions.size()));
+                pa = 1. / actions.size();
+                p_dist = new double[actions.size()];
+                for (int j = 0; j < actions.size(); j++) {
+                    p_dist[j] = pa;
+                }
+                numSamplesDuringRun = 0;
+                numSamplesInCurrentIS = 0;
+                numNodesTouchedDuringRun = 0;
+            } else {
+                a = actions.get(actions.indexOf(a));//just to prevent memory leaks
+            }
+            System.err.println("P" + curState.getPlayerToMove().getId() + " chose: " + a + " with prob="+pa);
+            moves.add(new Move(
+                    curState.getPlayerToMove().getId(),
+                    a.toString(),
+                    pa,
+                    p_dist,
+                    numSamplesDuringRun,
+                    numSamplesInCurrentIS,
+                    numNodesTouchedDuringRun,
+                    info));
+
+            curState = curState.performAction(a);
+
+            if (p1giveUpAtMove == -1 && p1.hasGivenUp()) p1giveUpAtMove = i;
+            if (p2giveUpAtMove == -1 && p2.hasGivenUp()) p2giveUpAtMove = i;
+            i++;
+        }
+
+        double utils0 = curState.getUtilities()[0];
+        double utils1 = curState.getUtilities()[1];
+        if (binaryUtils) {
+            utils0 = utils0 > 0 ? 1 : utils0 < 1 ? -1 : 0;
+            utils1 = utils1 > 0 ? 1 : utils1 < 1 ? -1 : 0;
+        }
+
+        if(prettyPrint && (alg1.equals("FIX") || alg2.equals("FIX"))) {
+            System.out.println(moves.stream()
+                    .filter(m -> m.player == (alg1.equals("FIX") ? 1 : 0))
+                    .map(m ->
+                            m.action +"\n"+
+                            stratToString(m.p_dist) + "\n"+
+                            m.info.replace(" ~ ", "\n")
+                                    .replace("p_dist_before: ", "")+"\n"
+                        ).reduce("\n", String::concat)
+
+            );
+        } else {
+            System.out.println(
+                    alg1 + ";" +
+                            alg2 + ";" +
+                            rnd1 + ";" +
+                            rnd2 + ";" +
+                            utils0 + ";" +
+                            utils1 + ";" +
+                            preplayTime1 + ";" +
+                            preplayTime2 + ";" +
+                            roundTime1 + ";" +
+                            roundTime2 + ";" +
+                            p1giveUpAtMove + ";" +
+                            p2giveUpAtMove + ";" +
+                            p1breaksAtMove + ";" +
+                            p2breaksAtMove + ";" +
+                            moves.stream().filter(m -> m.player == 0).map(m -> m.prob).reduce(1.,
+                                    (a, b) -> a * b) + ";" +
+                            moves.stream().filter(m -> m.player == 1).map(m -> m.prob).reduce(1.,
+                                    (a, b) -> a * b) + ";" +
+                            moves.stream().filter(m -> m.player == 2).map(m -> m.prob).reduce(1.,
+                                    (a, b) -> a * b) + ";" +
+                            (prettyPrint ? moves.stream().map(
+                                    m -> (m.player == 2 ? "\n\n" : "") + m.pretty() + "\n").reduce("\n", String::concat)
+                                    : moves.stream().map(m -> m + ", ").reduce("", String::concat))
+                              );
+        }
+    }
+    public static String stratToString(double[] arr) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append('[');
+        int idx = 0;
+        int len = arr.length-1;
+
+        while(true) {
+            stringBuilder.append(String.format("% 2.5f", arr[idx]));
+            if (idx == len) {
+                return stringBuilder.append(']').toString();
+            }
+
+            stringBuilder.append(", ");
+            ++idx;
+        }
+    }
+
+
+    private void runFirstMoves(Game g) {
+        safeResolving = new Boolean(getenv("safeResolving", "true"));
+        Integer preplayTime = new Integer(getenv("preplayTime", "0")); // in ms
+        Integer preplayTime1 = new Integer(getenv("preplayTime1", "0")); // in ms
+        Integer preplayTime2 = new Integer(getenv("preplayTime2", "0")); // in ms
+        Integer roundTime = new Integer(getenv("roundTime", "0")); // in ms
+        Integer roundTime1 = new Integer(getenv("roundTime1", "0")); // in ms
+        Integer roundTime2 = new Integer(getenv("roundTime2", "0")); // in ms
+        Integer rnd1 = new Integer(getenv("rnd1", "0")); // random seed for alg
+        Integer rnd2 = new Integer(getenv("rnd2", "0")); // random seed for alg
+        String alg1 = getenv("alg1", "MCCR"); // alg name
+        String alg2 = getenv("alg2", "MCCR"); // alg name
+        Boolean binaryUtils = new Boolean(getenv("binaryUtils", "false"));
+        Boolean prettyPrint = new Boolean(getenv("prettyPrint", "false"));
+        Boolean debug = new Boolean(getenv("debug", "false"));
+        Boolean runTime = new Boolean(getenv("runTime", "true"));
+
+
+        System.err.println("params:"+
+            " safeResolving="+safeResolving + " " +
+            " preplayTime="+preplayTime + " " +
+            " preplayTime1="+preplayTime1 + " " +
+            " preplayTime2="+preplayTime2 + " " +
+            " roundTime="+roundTime + " " +
+            " roundTime1="+roundTime1 + " " +
+            " roundTime2="+roundTime2 + " " +
+            " rnd1="+rnd1 + " " +
+            " rnd2="+rnd2 + " " +
+            " alg1="+alg1 + " " +
+            " alg2="+alg2 + " " +
+            " binaryUtils="+binaryUtils + " " +
+            " prettyPrint="+prettyPrint);
+
+        Game gs[] = new Game[2];
+        gs[0] = g.clone(new Random(rnd1));
+        gs[1] = g.clone(new Random(rnd2));
+
+        GamePlayingAlgorithm p1 = initMatchAlg(gs[0], alg1, 0);
+        GamePlayingAlgorithm p2 = initMatchAlg(gs[1], alg2, 1);
+
+        if(runTime) {
+            p1.runMiliseconds(preplayTime1 == 0 ? preplayTime : preplayTime1);
+            p2.runMiliseconds(preplayTime2 == 0 ? preplayTime : preplayTime2);
+        } else {
+            p1.runIterations(preplayTime1 == 0 ? preplayTime : preplayTime1);
+            p2.runIterations(preplayTime2 == 0 ? preplayTime : preplayTime2);
+        }
+
+        GameState curState = g.rootState.copy();
+        int i = 0;
+        int p1giveUpAtMove = -1;
+        int p2giveUpAtMove = -1;
+        int p1breaksAtMove = -1;
+        int p2breaksAtMove = -1;
+        int moves1 = 0;
+        int moves2 = 0;
+        double pa = 1.;
+        double[] p_dist = new double[0];
+        int numSamplesDuringRun = 0;
+        int numSamplesInCurrentIS = 0;
+        int numNodesTouchedDuringRun = 0;
+        ArrayList<Move> moves = new ArrayList<>();
+
+        System.out.print(
+                "XXX;"+
+                alg1 +";"+
+                alg2 +";"+
+                rnd1 +";"+
+                rnd2 +";"+
+                preplayTime +";"+
+                roundTime +";"+
+                preplayTime1 +";"+
+                roundTime1 +";"+
+                preplayTime2 +";"+
+                roundTime2 +";"
+       );
         while (!curState.isGameEnd()) {
             Action a = null;
 
@@ -938,7 +1232,12 @@ public class CRExperiments {
                     }
 
                     try {
-                        a = p1.runMiliseconds(roundTime1 == 0 ? roundTime : roundTime1);
+                        moves1++;
+                        if(runTime) {
+                            a = p1.runMiliseconds(roundTime1 == 0 ? roundTime : roundTime1);
+                        } else {
+                            a = p1.runIterations(roundTime1 == 0 ? roundTime : roundTime1);
+                        }
                         pa = p1.actionChosenWithProb();
                         p_dist = p1.currentISprobDist();
                         numSamplesDuringRun = p1.numSamplesDuringRun();
@@ -948,6 +1247,7 @@ public class CRExperiments {
                         a = null;
                         p1breaksAtMove = i;
                         e.printStackTrace();
+                        if(debug) throw e;
                     }
                 } else { // if it's broken, play randomly
                     a = null;
@@ -961,7 +1261,12 @@ public class CRExperiments {
                     }
 
                     try {
+                        moves2++;
+                        if(runTime) {
                         a = p2.runMiliseconds(roundTime2 == 0 ? roundTime : roundTime2);
+                        } else {
+                            a = p2.runIterations(roundTime2 == 0 ? roundTime : roundTime2);
+                        }
                         pa = p2.actionChosenWithProb();
                         p_dist = p2.currentISprobDist();
                         numSamplesDuringRun = p2.numSamplesDuringRun();
@@ -971,75 +1276,33 @@ public class CRExperiments {
                         a = null;
                         p2breaksAtMove = i;
                         e.printStackTrace();
+                        if(debug) throw e;
                     }
                 } else { // if it's broken, play randomly
                     a = null;
                 }
             }
 
-            List<Action> actions = g.expander.getActions(curState);
-            if (a == null) {
-                a = actions.get(gs[curState.getPlayerToMove().getId()].config.getRandom().nextInt(actions.size()));
-                pa = 1. / actions.size();
-                p_dist = new double[actions.size()];
-                for (int j = 0; j < actions.size(); j++) {
-                    p_dist[j] = pa;
-                }
-                numSamplesDuringRun = 0;
-                numSamplesInCurrentIS = 0;
-                numNodesTouchedDuringRun = 0;
-            } else {
-                a = actions.get(actions.indexOf(a));//just to prevent memory leaks
-            }
-            System.err.println("P" + curState.getPlayerToMove().getId() + " chose: " + a);
-            moves.add(new Move(
-                    curState.getPlayerToMove().getId(),
-                    a.toString(),
-                    pa,
-                    p_dist,
-                    numSamplesDuringRun,
-                    numSamplesInCurrentIS,
-                    numNodesTouchedDuringRun));
-
+            System.out.print(Arrays.toString(p_dist)+";");
+            System.out.print(numSamplesDuringRun+";"+numSamplesInCurrentIS+";"+numNodesTouchedDuringRun+";");
             curState = curState.performAction(a);
 
             if (p1giveUpAtMove == -1 && p1.hasGivenUp()) p1giveUpAtMove = i;
             if (p2giveUpAtMove == -1 && p2.hasGivenUp()) p2giveUpAtMove = i;
             i++;
+            if(moves2 == 1) break;
         }
 
-        double utils0 = curState.getUtilities()[0];
-        double utils1 = curState.getUtilities()[1];
-        if (binaryUtils) {
-            utils0 = utils0 > 0 ? 1 : utils0 < 1 ? -1 : 0;
-            utils1 = utils1 > 0 ? 1 : utils1 < 1 ? -1 : 0;
-        }
-
-        System.out.println(
-                alg1 +";"+
-                alg2 +";"+
-                rnd1 +";"+
-                rnd2 +";"+
-                preplayTime +";"+
-                roundTime +";"+
-                utils0 +";" +
-                utils1 + ";"+
-                p1giveUpAtMove +";"+
-                p2giveUpAtMove + ";"+
-                p1breaksAtMove +";"+
-                p2breaksAtMove + ";"+
-                moves.stream().filter(m -> m.player == 0).map(m -> m.prob).reduce(1., (a,b) -> a*b) + ";" +
-                moves.stream().filter(m -> m.player == 1).map(m -> m.prob).reduce(1., (a,b) -> a*b) + ";" +
-                moves.stream().filter(m -> m.player == 2).map(m -> m.prob).reduce(1., (a,b) -> a*b) + ";" +
-                (prettyPrint ? moves.stream().map(m ->  (m.player==2?"\n":"") + m +",\n").reduce("\n", String::concat)
-                             : moves.stream().map(m -> m +", ").reduce("", String::concat))
-        );
+        System.out.println("YYY");
     }
 
     private GamePlayingAlgorithm initMatchAlg(Game g, String algName, int playerId) {
         switch (algName) {
             case "RND":
                 return new RandomAlgorithm(g.rootState.getAllPlayers()[playerId], g.expander);
+
+            case "FIX":
+                return new FixedPlayer(g.rootState.getAllPlayers()[playerId], g.expander, g.rootState);
 
             case "OOS":
                 ((MCTSConfig) g.expander.getAlgorithmConfig()).useEpsilonRM = true;
@@ -1056,17 +1319,6 @@ public class CRExperiments {
                         new OOSSimulator(g.expander),
                         g.rootState,
                         g.expander, 0., 0.4);
-
-            case "MCCR":
-                CRAlgorithm algMCCR = new CRAlgorithm(
-                        g.rootState.getAllPlayers()[playerId], g.rootState, g.expander,
-                        0.6);
-                algMCCR.defaultRootMethod = RESOLVE_MCCFR;
-                algMCCR.defaultResolvingMethod = RESOLVE_MCCFR;
-                algMCCR.budgetRoot = BUDGET_TIME;
-                algMCCR.budgetGadget = BUDGET_TIME;
-                algMCCR.setDoResetData(true);
-                return algMCCR;
 
             case "UCT":
                 Double c = 2d * g.gameInfo.getMaxUtility();
@@ -1091,7 +1343,64 @@ public class CRExperiments {
                 return algRM;
 
             default:
-                throw new RuntimeException("alg not recognized");
+                if(!algName.startsWith("MCCR")) {
+                    throw new RuntimeException("alg not recognized");
+                }
+
+                ((MCTSConfig) g.expander.getAlgorithmConfig()).useEpsilonRM = false;
+                CRAlgorithm algMCCR = new CRAlgorithm(
+                        g.rootState.getAllPlayers()[playerId], g.rootState, g.expander,0.6);
+                algMCCR.defaultRootMethod = RESOLVE_MCCFR;
+                algMCCR.defaultResolvingMethod = RESOLVE_MCCFR;
+
+                if(algName.contains("reset")) {
+                    algMCCR.setDoResetData(true);
+                } else { // keep
+                    algMCCR.setDoResetData(false);
+                }
+
+                if(algName.contains("cfvExact")) {
+                    GadgetInnerNode.resolvingCFV = RESOLVE_EXACT;
+                } else if(algName.contains("cfvTime")) {
+                    GadgetInnerNode.resolvingCFV = RESOLVE_TIME;
+                } else if(algName.contains("cfvFixed")) {
+                    GadgetInnerNode.resolvingCFV = RESOLVE_FIXED;
+                } else { // cfvWeighted
+                    GadgetInnerNode.resolvingCFV = RESOLVE_WEIGHTED;
+                }
+
+                if(algName.contains("rootNothing")) {
+                    GadgetChanceNode.useRootResolving = false;
+                } else if(algName.contains("rootOpponentOnly")) {
+                    GadgetChanceNode.useRootResolving = true;
+                    GadgetChanceNode.rootResolvingEpsilon = 0.;
+                } else { // rootOpponentEps
+                    GadgetChanceNode.useRootResolving = true;
+                    GadgetChanceNode.rootResolvingEpsilon = 0.1;
+                }
+
+                if(algName.contains("noIST")) {
+                    OOSAlgorithm.gadgetDelta = 0.;
+                    OOSAlgorithm.gadgetEpsilon = 0.;
+                } else { // useIST
+                    OOSAlgorithm.gadgetDelta = 0.5;
+                    OOSAlgorithm.gadgetEpsilon = 0.1;
+                }
+
+                if(algName.contains("unsafe")) {
+                    CRExperiments.safeResolving = false;
+                } else { // safe
+                    CRExperiments.safeResolving = true;
+                }
+
+                if(algName.contains("buildGadget")) {
+                    CRAlgorithm.buildResolvingGadget = 1000;
+                } else { // buildSampled
+                    CRAlgorithm.buildResolvingGadget = 0;
+                }
+                return algMCCR;
+
+
         }
     }
 
@@ -1490,7 +1799,7 @@ public class CRExperiments {
         return out;
     }
 
-    private String getenv(String env, String def) {
+    public static String getenv(String env, String def) {
         return System.getenv(env) == null ? def : System.getenv(env);
     }
 
@@ -1564,6 +1873,7 @@ public class CRExperiments {
     }
 
     private class Move {
+        public String info;
         public int player;
         public String action;
         public double prob;
@@ -1579,7 +1889,8 @@ public class CRExperiments {
                     double[] p_dist,
                     int numSamplesDuringRun,
                     int numSamplesInCurrentIS,
-                    int numNodesTouchedDuringRun
+                    int numNodesTouchedDuringRun,
+                    String info
                    ) {
             this.player = player;
             this.action = action;
@@ -1588,6 +1899,7 @@ public class CRExperiments {
             this.numSamplesDuringRun = numSamplesDuringRun;
             this.numSamplesInCurrentIS = numSamplesInCurrentIS;
             this.numNodesTouchedDuringRun = numNodesTouchedDuringRun;
+            this.info = info;
         }
 
         @Override
@@ -1595,12 +1907,24 @@ public class CRExperiments {
             return "Move{" +
                     "player=" + player +
                     ", action='" + action + '\'' +
+                    ", prob=" + prob +
                     ", numSamplesDuringRun=" + numSamplesDuringRun +
                     ", numSamplesInCurrentIS=" + numSamplesInCurrentIS +
                     ", numNodesTouchedDuringRun=" + numNodesTouchedDuringRun +
-                    ", prob=" + prob +
                     ", p_dist=" + Arrays.toString(p_dist) +
+                    ", info=" + info +
                     '}';
+        }
+
+        public String pretty() {
+            return "# Player: " + player +
+                   " (action=" + action + ")\n" +
+                   "prob=" + prob +
+                   " numSamplesDuringRun=" + numSamplesDuringRun +
+                   " numSamplesInCurrentIS=" + numSamplesInCurrentIS +
+                   " numNodesTouchedDuringRun=" + numNodesTouchedDuringRun + "\n" +
+                   "p_dist=" + Arrays.toString(p_dist) + "\n" +
+                   "info=\n" + info.replace(" ~ ", "\n");
         }
     }
 }

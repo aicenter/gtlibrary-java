@@ -32,6 +32,7 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 public interface GamePlayingAlgorithm {
     public Action runMiliseconds(int miliseconds, GameState gameState);
     public Action runMiliseconds(int miliseconds);
+    public Action runIterations(int iterations);
     public void setCurrentIS(InformationSet currentIS);
     public InnerNode getRootNode();
     default boolean hasGivenUp() {
@@ -53,5 +54,9 @@ public interface GamePlayingAlgorithm {
     }
     default int numNodesTouchedDuringRun() {
         return 0;
+    }
+
+    default String extraInfo() {
+        return "";
     }
 }

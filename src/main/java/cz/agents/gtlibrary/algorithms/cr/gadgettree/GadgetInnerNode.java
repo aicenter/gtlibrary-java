@@ -1,7 +1,6 @@
 package cz.agents.gtlibrary.algorithms.cr.gadgettree;
 
 import cz.agents.gtlibrary.NotImplementedException;
-import cz.agents.gtlibrary.algorithms.cr.CRExperiments;
 import cz.agents.gtlibrary.algorithms.cr.ResolvingMethod;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
@@ -9,8 +8,9 @@ import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
-import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
-import cz.agents.gtlibrary.domain.rps.RPSGameState;
+import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielAction;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
 import cz.agents.gtlibrary.interfaces.Action;
 import cz.agents.gtlibrary.interfaces.Expander;
 import cz.agents.gtlibrary.interfaces.GameState;
@@ -23,6 +23,12 @@ import java.util.Map;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
 
 public class GadgetInnerNode implements InnerNode, GadgetNode {
+    public static final int RESOLVE_WEIGHTED = 0;
+    public static final int RESOLVE_TIME = 1;
+    public static final int RESOLVE_EXACT = 2;
+    public static final int RESOLVE_FIXED = 3; // only somewhere possible
+    public static int resolvingCFV = RESOLVE_WEIGHTED;
+
     private final GadgetInnerState state;
     private final InnerNode originalNode;
     private final int expUtilityIterations;
@@ -58,7 +64,30 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
             double maxIsCFV = getExpander().getGameInfo().getMaxUtility();
 
-            double isCFV = gadgetIs.getIsCFV(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
+            double isCFV = 0;
+            switch (resolvingCFV) {
+                case RESOLVE_WEIGHTED:
+                    isCFV = gadgetIs.getIsCFV(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
+                    break;
+                case RESOLVE_TIME:
+                    isCFV = gadgetIs.getIsCFV2(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
+                    break;
+                case RESOLVE_EXACT:
+                    isCFV = gadgetIs.getIsCFV3(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
+                    break;
+                case RESOLVE_FIXED:
+                    if(!(originalNode.getGameState() instanceof GoofSpielGameState))
+                        throw new IllegalArgumentException();
+                    if(GSGameInfo.depth != 3 || GSGameInfo.seed != 1)
+                        throw new IllegalArgumentException();
+
+                    switch(((GoofSpielAction) originalNode.getLastAction()).getValue()) {
+                        case 3: isCFV = 0; break;
+                        default: isCFV = -1;
+                    }
+                    break;
+            }
+
             double isReach = gadgetIs.getIsReach();
 
             // shouldnt happen often!

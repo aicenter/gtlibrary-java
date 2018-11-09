@@ -382,10 +382,17 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         assert node instanceof InnerNode;
         InnerNode in = (InnerNode) node;
         OOSAlgorithmData data = (OOSAlgorithmData) in.getInformationSet().getAlgorithmData();
-        double[] ms = data.getMeanStrategy();
+        double[] ms;
+        if(data == null) {
+            int na = in.getActions().size();
+            ms = new double[1];
+            ms[0] = 1./na;
+        } else {
+            ms = data.getMeanStrategy();
+        }
 
         for (Action a : in.getActions()) {
-             eu += ms[data.getActions().indexOf(a)] * computeExpUtilityOfState(in.getChildFor(a), player);
+             eu += ms[data == null ? 0 : data.getActions().indexOf(a)] * computeExpUtilityOfState(in.getChildFor(a), player);
         }
 
         return eu;

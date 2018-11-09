@@ -13,6 +13,7 @@ import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GadgetChanceNode implements ChanceNode, GadgetNode {
     private final GadgetChanceState state;
@@ -21,6 +22,8 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     private final PublicState ps;
 
     private Map<Action, GadgetInnerNode> resolvingInnerNodes;
+    public static boolean useRootResolving = false;
+    public static double rootResolvingEpsilon = 0.;
 
     public Map<Action, Double> getChanceProbabilities() {
         return chanceProbabilities;
@@ -50,20 +53,39 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
         actions = new ArrayList<>();
 
-        rootReach = resolvingInnerNodes.keySet().stream()
-                .map(resolvingInnerNodes::get)
-                .map(GadgetInnerNode::getOriginalNode)
-                .map(InnerNode::getReachPrPlayerChance)
-                .reduce(0.0, Double::sum);
+        if (CRExperiments.safeResolving) {
+            rootReach = resolvingInnerNodes.keySet().stream()
+                    .map(resolvingInnerNodes::get)
+                    .map(GadgetInnerNode::getOriginalNode)
+                    .map(InnerNode::getReachPrPlayerChance)
+                    .reduce(0.0, Double::sum);
+        } else {
+            rootReach = resolvingInnerNodes.keySet().stream()
+                    .map(resolvingInnerNodes::get)
+                    .map(GadgetInnerNode::getOriginalNode)
+                    .map(InnerNode::getReachPr)
+                    .reduce(0.0, Double::sum);
+        }
 
         assert rootReach > 0; // at least one IS must be reachable
 
         chanceProbabilities = new HashMap<>();
+        boolean isRootResolving = ps.getPlayerParentPublicState() == null;
         for (Action action : resolvingInnerNodes.keySet()) {
             GadgetInnerNode node = resolvingInnerNodes.get(action);
 //            if (node.getOriginalNode().getReachPrPlayerChance() == 0.) continue;
 
-            double p = node.getOriginalNode().getReachPrPlayerChance() / rootReach;
+            double p;
+            if(CRExperiments.safeResolving) {
+                if (isRootResolving && useRootResolving) {
+                    p = (1 - rootResolvingEpsilon) * node.getOriginalNode().getReachPr()
+                            + rootResolvingEpsilon * (1. / resolvingInnerNodes.size());
+                } else {
+                    p = node.getOriginalNode().getReachPrPlayerChance() / rootReach;
+                }
+            } else {
+                p = node.getOriginalNode().getReachPr() / rootReach;
+            }
             assert p <= 1 && p >= 0;
             chanceProbabilities.put(action, p);
             actions.add(action);
@@ -324,5 +346,52 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     @Override
     public void setPublicState(MCTSPublicState ps) {
         throw new NotImplementedException();
+    }
+
+    private double[] cachedBiasedProbs;
+    private double cachedBsum;
+
+    public double getBiasedProbs(double[] biasedProbs, MCTSInformationSet trackingIS, double gadgetEpsilon, double gadgetDelta) {
+        if(cachedBiasedProbs == null) {
+            int N = getActions().size();
+            double p_unif = 1./N;
+
+            // calc probability of action in infoset
+            Set<GadgetInnerNode> gins2trackingIS = getChildren().entrySet().stream()
+                .filter(entry -> ((GadgetInnerNode) entry.getValue()).getOriginalNode().getInformationSet().equals(trackingIS))
+                .map(entry -> (GadgetInnerNode) entry.getValue())
+                .collect(Collectors.toSet());
+            HashMap<Action, Double> p_infoset = new HashMap<>();
+            gins2trackingIS.forEach(gin -> p_infoset.put(gin.getLastAction(), gin.getOriginalNode().getReachPr()));
+            double norm_p_infoset = p_infoset.values().stream().reduce(0., Double::sum);
+
+            // calc probability of action in subgame
+            HashMap<Action, Double> p_subgame= new HashMap<>();
+            resolvingInnerNodes.values().forEach(gin -> p_subgame.put(gin.getLastAction(), gin.getOriginalNode().getReachPr()));
+            double norm_p_subgame = p_subgame.values().stream().reduce(0., Double::sum);
+
+            // epsilon-convex of uniform and (delta-convex of infoset and subgame)
+            cachedBiasedProbs = new double[actions.size()];
+            cachedBsum = 0;
+            int i = 0;
+            for (Action ai : actions) {
+                if (resolvingInnerNodes.get(ai).getOriginalNode().getInformationSet().equals(trackingIS)) {
+                    cachedBiasedProbs[i] = gadgetEpsilon*p_unif + (1-gadgetEpsilon)*(
+                            gadgetDelta * p_infoset.get(ai) / norm_p_infoset +
+                            (1 - gadgetDelta) * p_subgame.get(ai) / norm_p_subgame
+                    );
+                } else {
+                    cachedBiasedProbs[i] = gadgetEpsilon*p_unif + (1-gadgetEpsilon)*(
+                            (1 - gadgetDelta) * p_subgame.get(ai) / norm_p_subgame
+                    );
+                }
+                cachedBsum += cachedBiasedProbs[i];
+                i++;
+            }
+            i++;
+        }
+
+        System.arraycopy(this.cachedBiasedProbs, 0, biasedProbs, 0, this.cachedBiasedProbs.length);
+        return cachedBsum;
     }
 }

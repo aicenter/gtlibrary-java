@@ -43,6 +43,8 @@ public interface PublicState extends Serializable {
         return getNextPlayerPublicStates(getPlayer());
     }
 
+    Set<PublicState> getNextPlayerPublicStates(Player player, boolean buildStates);
+
     Set<PublicState> getNextPlayerPublicStates(Player player);
 
     Set<PublicState> getNextPublicStates();
@@ -68,6 +70,8 @@ public interface PublicState extends Serializable {
     ResolvingMethod getResolvingMethod();
 
     Subgame getSubgame();
+
+    Subgame getSubgame(MCTSInformationSet currentIs);
 
     boolean isReachable(Player player);
 

@@ -3,6 +3,7 @@ package cz.agents.gtlibrary.algorithms.cr;
 import cz.agents.gtlibrary.NotImplementedException;
 import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
+import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
@@ -31,7 +32,7 @@ import static cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm.collectCFRResolvin
 import static cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm.updateCFRResolvingData;
 import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_NUM_SAMPLES;
 import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_TIME;
-import static cz.agents.gtlibrary.algorithms.cr.CRExperiments.buildCompleteTree;
+import static cz.agents.gtlibrary.algorithms.cr.CRExperiments.*;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
 
 // Continual Resolving algorithm
@@ -63,6 +64,9 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     private boolean skipGadgetResolvingIsMCCFR = System.getenv("skipGadget") != null && System.getenv("skipGadget").equals("true");
     private double actionChosenWithProb = 1.;
     private double[] currentISprobDist;
+    public static int buildResolvingGadget = 0;
+    private String extraInfo = "";
+    private boolean debug = new Boolean(getenv("debug", "false"));
 
     public CRAlgorithm(GameState rootState, Expander<MCTSInformationSet> expander) {
         this(rootState, expander, 0.6);
@@ -142,6 +146,8 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             nextPs.incrResolvingIterations(finalSamples);
             nextPs.setResolvingMethod(rootResolveMethod);
         });
+
+        updatePlayerRp(rootNode.getPublicState(), resolvingPlayer);
     }
 
     public Action runStep(Player resolvingPlayer, MCTSInformationSet curIS, int iterationsPerGadgetGame) {
@@ -208,7 +214,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             currentISprobDist = ((OOSAlgorithmData) curIS.getAlgorithmData()).getMeanStrategy();
         }
 
-        updatePlayerRp(curPS);
+        updatePlayerRp(curPS, resolvingPlayer);
 
         assert curIS.getActions().contains(action);
         return action;
@@ -220,6 +226,9 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 "iterationsPerGadgetGame=" + iterationsPerGadgetGame + " " +
                 "epsilonExploration=" + epsilonExploration + " " +
                 "resetData=" + resetData + " " +
+                "gadgetDelta=" + OOSAlgorithm.gadgetDelta + " " +
+                "safeResolving=" + safeResolving + " " +
+                "resolvingCFV=" + GadgetInnerNode.resolvingCFV + " " +
                 "player=" + resolvingPlayer.getId() + " ");
 
         InnerNode solvingRoot;
@@ -267,16 +276,15 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         return solvingRoot;
     }
 
-    private void updatePlayerRp(PublicState ps) {
+    private void updatePlayerRp(PublicState ps, Player updatingPlayer) {
         // Top-down update of reach probabilities.
         //
-        // From current public state until next public states of the same player,
+        // From current public state until next public states of the player,
         // update reach probabilities of each node.
         //
-        // Basically, we know that between the public states the current player
+        // Basically, we know that between the public states both players
         // will play the resolved average strategy.
         System.err.println("Updating reach probabilities");
-        Player updatingPlayer = ps.getPlayer();
 
         Set<InnerNode> nextPsNodesBarrier = new HashSet<>();
         ps.getNextPlayerPublicStates(updatingPlayer).stream()
@@ -290,7 +298,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             InnerNode curNode = q.removeFirst();
 
             Map<Action, Double> avgStrategy = null;
-            if (curNode.isPlayerMoving(updatingPlayer)) {
+            if (!(curNode instanceof ChanceNode)) {
                 avgStrategy = getDistributionFor(curNode.getInformationSet().getAlgorithmData());
             }
 
@@ -298,13 +306,21 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 Node nextNode = curNode.getChildOrNull(action);
                 if (nextNode == null || nextNode instanceof LeafNode) continue;
 
-                Double pA = 1.0; // action probability if the *opponent* is moving in curNode
+                Double pl0_pA = 1.0;
+                Double pl1_pA = 1.0;
                 if (avgStrategy != null) {
-                    pA = avgStrategy.get(action);
+                    if(curNode.getPlayerToMove().getId() == 0) {
+                        pl0_pA = avgStrategy.get(action);
+                    } else if(curNode.getPlayerToMove().getId() == 1) {
+                        pl1_pA = avgStrategy.get(action);
+                    } else {
+                        throw new IllegalStateException();
+                    }
                 }
 
                 InnerNode nextInner = (InnerNode) nextNode;
-                nextInner.setReachPrByPlayer(updatingPlayer, curNode.getReachPrByPlayer(updatingPlayer) * pA);
+                nextInner.setReachPrByPlayer(0, curNode.getReachPrByPlayer(0) * pl0_pA);
+                nextInner.setReachPrByPlayer(1, curNode.getReachPrByPlayer(1) * pl1_pA);
                 if (!nextPsNodesBarrier.contains(nextInner)) {
                     q.add(nextInner);
                 }
@@ -317,8 +333,14 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                                    ResolvingMethod resolvingMethod,
                                    int iterationsPerGadgetGame) {
         System.err.println("Building gadget");
-        Subgame subgame = publicState.getSubgame();
+        Subgame subgame = publicState.getSubgame(currentIs);
         GadgetChanceNode gadgetRootNode = subgame.getGadgetRoot();
+        if(subgame.getGadgetNodes().size() < buildResolvingGadget) {
+            System.err.println("Building next nodes");
+            publicState.getNextPlayerPublicStates(resolvingPlayer, true);
+        }
+
+        if(debug) writeExtraInfo(gadgetRootNode);
 
         if (resetData && !isPublicTreeRootKeeping(publicState)) {
             System.err.println("Resetting data");
@@ -339,6 +361,21 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
 
         runGadget(resolvingMethod, resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
     }
+
+    private void writeExtraInfo(GadgetChanceNode gadgetRootNode) {
+        extraInfo = "";
+        if(currentIs != null) {
+            OOSAlgorithmData data = (OOSAlgorithmData) (currentIs.getAlgorithmData());
+            extraInfo += "p_dist_before: " + stratToString(data.getMeanStrategy())+"\n";
+        }
+
+        gadgetRootNode.getResolvingInnerNodes().values().forEach(gin -> {
+            extraInfo += gin.toString() +": "+String.format("% 2.4f", gin.getChanceReachPr())+", ";
+            if(gin.getActions().size() == 2) extraInfo+= String.format("% 2.4f", gin.getTerminateNode().getUtilities()[0]);
+            extraInfo += " ~ ";
+        });
+    }
+
 
     private void runGadget(ResolvingMethod resolvingMethod,
                            Player resolvingPlayer,
@@ -528,6 +565,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     @Override
     public Action runMiliseconds(int miliseconds) {
         budgetGadget = BUDGET_TIME;
+        budgetRoot = BUDGET_TIME;
         if(currentIs == null) {
             runRoot(RESOLVE_MCCFR, defaultResolvingPlayer, getRootNode(), miliseconds);
             return null;
@@ -538,6 +576,25 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             }
 
             Action a = runStep(defaultResolvingPlayer, currentIs, RESOLVE_MCCFR, miliseconds);
+            if(deallocate) deallocateNonrelevantNodes(currentIs);
+            return a;
+        }
+    }
+
+    @Override
+    public Action runIterations(int iterations) {
+        budgetGadget = BUDGET_NUM_SAMPLES;
+        budgetRoot = BUDGET_NUM_SAMPLES;
+        if(currentIs == null) {
+            runRoot(RESOLVE_MCCFR, defaultResolvingPlayer, getRootNode(), iterations);
+            return null;
+        } else {
+            if (currentIs.getAllNodes().isEmpty()) {
+                giveUp = true;
+                return null;
+            }
+
+            Action a = runStep(defaultResolvingPlayer, currentIs, RESOLVE_MCCFR, iterations);
             if(deallocate) deallocateNonrelevantNodes(currentIs);
             return a;
         }
@@ -740,5 +797,10 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     @Override
     public double[] currentISprobDist() {
         return currentISprobDist;
+    }
+
+    @Override
+    public String extraInfo() {
+        return extraInfo;
     }
 }

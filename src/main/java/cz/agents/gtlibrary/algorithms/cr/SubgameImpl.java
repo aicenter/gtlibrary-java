@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 public class SubgameImpl implements Subgame {
 
+    private static final int MAX_GADGET_NODES = 1000;
     private final PublicState publicState;
     private final HashMap<GadgetISKey, GadgetInfoSet> gadgetISs;
     private final Set<GadgetInnerNode> gadgetNodes;
@@ -19,13 +20,14 @@ public class SubgameImpl implements Subgame {
 
     public SubgameImpl(PublicState publicState,
                        MCTSConfig originalConfig,
-                       Expander<MCTSInformationSet> expander) {
+                       Expander<MCTSInformationSet> expander,
+                       MCTSInformationSet currentIs) {
         this.publicState = publicState;
         this.gadgetISs = new HashMap<>();
 
         // by creating the chance node, we construct the whole gadget game
         this.gadgetRoot = createRoot(expander, originalConfig.getRandom());
-        Map<Action, GadgetInnerNode> resolvingInnerNodes = createInnerNodes();
+        Map<Action, GadgetInnerNode> resolvingInnerNodes = createInnerNodes(currentIs);
         gadgetNodes = new HashSet<>(resolvingInnerNodes.values());
         gadgetRoot.createChildren(resolvingInnerNodes);
     }
@@ -36,18 +38,28 @@ public class SubgameImpl implements Subgame {
         return new GadgetChanceNode(chanceState, expander, rnd, publicState);
     }
 
-    private Map<Action, GadgetInnerNode> createInnerNodes() {
+    private Map<Action, GadgetInnerNode> createInnerNodes(MCTSInformationSet currentIs) {
         Map<Action, GadgetInnerNode> resolvingInnerNodes = new HashMap<>();
         int idxChanceNode = 0;
 
-        double tmpRootReach = getTopMostOriginalNodes().stream()
+        List<InnerNode> topMostOriginalNodes = new ArrayList<>(getTopMostOriginalNodes());
+
+        double tmpRootReach = topMostOriginalNodes.stream()
                 .map(InnerNode::getReachPrPlayerChance)
                 .reduce(0.0, Double::sum);
 
-        for (InnerNode origNode : getTopMostOriginalNodes()) {
-            // filter out nodes that have small chance probability
-            if(origNode.getReachPrPlayerChance() / tmpRootReach < (1e-4 / publicState.getAllNodes().size())) continue;
-//            if(origNode.getReachPrPlayerChance() == 0) continue;
+        if(topMostOriginalNodes.size() > MAX_GADGET_NODES) {
+            Comparator<InnerNode> reachPrComparator = Comparator
+                    .comparing((InnerNode n)->n.getInformationSet().equals(currentIs))
+                    .thenComparing(InnerNode::getReachPrPlayerChance);
+            topMostOriginalNodes.sort(reachPrComparator.reversed());
+        }
+
+        for (InnerNode origNode : topMostOriginalNodes) {
+            // filter out nodes that have small chance probability and are not leading to current IS (if it is known)
+            if(
+                !origNode.getInformationSet().equals(currentIs) &&
+                origNode.getReachPrPlayerChance() / tmpRootReach < (1e-4 / publicState.getAllNodes().size())) continue;
 
             GadgetISKey isKey = new GadgetISKey(origNode.getOpponentAugISKey());
             GameState origState = origNode.getGameState();
@@ -65,6 +77,8 @@ public class SubgameImpl implements Subgame {
 
             GadgetChanceAction gadgetAction = new GadgetChanceAction(idxChanceNode++);
             resolvingInnerNodes.put(gadgetAction, gadgetNode);
+
+            if(resolvingInnerNodes.size() >= MAX_GADGET_NODES) break; // limit gadgets to max 1000 nodes
         }
 
         return resolvingInnerNodes;

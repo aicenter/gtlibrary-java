@@ -81,11 +81,12 @@ public class PublicStateImpl implements PublicState {
     }
 
     @Override
-    public Set<PublicState> getNextPlayerPublicStates(Player player) {
+    public Set<PublicState> getNextPlayerPublicStates(Player player, boolean buildStates) {
         boolean playerSpecified = player != null;
 
         Set<PublicState> nextPS = new HashSet<>();
         ArrayDeque<Node> q = new ArrayDeque<>();
+        if(buildStates) gameNodesInPublicState.forEach(InnerNode::buildChildren);
         gameNodesInPublicState.forEach(node -> q.addAll(node.getChildren().values()));
 
         while (!q.isEmpty()) {
@@ -93,6 +94,7 @@ public class PublicStateImpl implements PublicState {
 
             if (nextNode instanceof LeafNode) continue;
             if (nextNode instanceof ChanceNode) {
+                if(buildStates) ((ChanceNode) nextNode).buildChildren();
                 q.addAll(((ChanceNode) nextNode).getChildren().values());
                 continue;
             }
@@ -106,6 +108,7 @@ public class PublicStateImpl implements PublicState {
 
             if(innerNode.getPublicState().equals(this)
                     || (playerSpecified && !innerNode.getPlayerToMove().equals(player))) {
+                if(buildStates) innerNode.buildChildren();
                 q.addAll(innerNode.getChildren().values());
                 continue;
             }
@@ -114,6 +117,12 @@ public class PublicStateImpl implements PublicState {
         }
 
         return nextPS;
+    }
+
+
+    @Override
+    public Set<PublicState> getNextPlayerPublicStates(Player player) {
+        return getNextPlayerPublicStates(player, false);
     }
 
     @Override
@@ -258,7 +267,12 @@ public class PublicStateImpl implements PublicState {
 
     @Override
     public Subgame getSubgame() {
-        return new SubgameImpl(this, config, expander);
+        return new SubgameImpl(this, config, expander, null);
+    }
+
+    @Override
+    public Subgame getSubgame(MCTSInformationSet currentIs) {
+        return new SubgameImpl(this, config, expander, currentIs);
     }
 
     @Override
