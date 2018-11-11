@@ -60,6 +60,7 @@ import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 import static cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm.updateCFRResolvingData;
+import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_NUM_SAMPLES;
 import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_TIME;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_CFR;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
@@ -646,11 +647,13 @@ public class CRExperiments {
 
         g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
         CRAlgorithm alg = new CRAlgorithm(g.rootState, g.expander, epsExploration);
-        alg.budgetRoot = BUDGET_TIME;
-//        alg.defaultRootMethod = ResolvingMethod.RESOLVE_CFR;
+        alg.budgetRoot = BUDGET_NUM_SAMPLES;
+        alg.budgetGadget = BUDGET_NUM_SAMPLES;
         alg.setDoResetData(resetData);
         this.alg = alg;
 
+        GadgetChanceNode.useRootResolving = true;
+        GadgetChanceNode.rootResolvingEpsilon = 0.1;
 
         InnerNode rootNode = alg.solveEntireGame(g.rootState.getAllPlayers()[player], iterationsInRoot,
                 iterationsPerGadgetGame);
@@ -706,6 +709,9 @@ public class CRExperiments {
         if(resolvingCFVOption.equals("weighted")) GadgetInnerNode.resolvingCFV = RESOLVE_WEIGHTED;
         if(resolvingCFVOption.equals("exact")) GadgetInnerNode.resolvingCFV = RESOLVE_EXACT;
         if(resolvingCFVOption.equals("fixed")) GadgetInnerNode.resolvingCFV = RESOLVE_FIXED;
+
+        GadgetChanceNode.useRootResolving = true;
+        GadgetChanceNode.rootResolvingEpsilon = 0.1;
 
         UniformStrategyForMissingSequences strategy0;
         UniformStrategyForMissingSequences strategy1;
@@ -1069,6 +1075,14 @@ public class CRExperiments {
         }
 
         if(prettyPrint && (alg1.equals("FIX") || alg2.equals("FIX"))) {
+            System.out.println(
+                    alg1 + ";" +
+                    alg2 + ";" +
+                    rnd1 + ";" +
+                    rnd2 + ";" +
+                    utils0 + ";" +
+                    utils1
+            );
             System.out.println(moves.stream()
                     .filter(m -> m.player == (alg1.equals("FIX") ? 1 : 0))
                     .map(m ->
