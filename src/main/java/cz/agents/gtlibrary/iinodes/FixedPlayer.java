@@ -7,6 +7,10 @@ import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielAction;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceAction;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceExpander;
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.interfaces.*;
 
 import java.util.List;
@@ -34,19 +38,31 @@ public class FixedPlayer implements GamePlayingAlgorithm {
         if (currentIS == null) {
             return null;
         }
+
+        List<Action> actions = ((ExpanderImpl<MCTSInformationSet>) expander).getActions(currentIS);
+
         if(expander instanceof GoofSpielExpander) {
             GoofSpielGameState gs = (GoofSpielGameState) currentIS.getAllStates().iterator().next();
             Sequence seq = gs.getSequenceFor(gs.getAllPlayers()[2]);
             GoofSpielAction lastChanceAction = (GoofSpielAction) seq.getLast();
 
-            List<Action> actions = ((GoofSpielExpander) expander).getActions(currentIS);
             for (Action action : actions) {
                 if (((GoofSpielAction) action).getValue() == lastChanceAction.getValue()) {
                     return action;
                 }
             }
+        } else if(expander instanceof LiarsDiceExpander) {
+            // bet until it's expected value of dice
+            double expDiceValue = (LDGameInfo.P1DICE+LDGameInfo.P2DICE) * (LDGameInfo.FACES+1)/2;
+            LiarsDiceGameState gs = (LiarsDiceGameState) currentIS.getAllStates().iterator().next();
+            int bid = gs.getCurBid() > expDiceValue ? LDGameInfo.CALLBID : gs.getCurBid()+1;
+
+            for (Action action : actions) {
+                if(((LiarsDiceAction) action).getValue() == bid) return action;
+            }
+            // no such action found!
+            throw new IllegalStateException();
         } else {
-            List<Action> actions = ((GoofSpielExpander) expander).getActions(currentIS);
             return actions.get(0);
         }
         return null;
