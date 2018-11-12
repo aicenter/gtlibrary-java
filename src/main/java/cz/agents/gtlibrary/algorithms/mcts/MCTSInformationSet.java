@@ -33,6 +33,7 @@ public class MCTSInformationSet extends InformationSetImpl {
     private Set<InnerNode> allNodes;
     private AlgorithmData algorithmData;
     private MCTSPublicState publicState;
+    public boolean destroyed = false;
 
     public MCTSInformationSet(GameState state) {
         super(state);
@@ -71,5 +72,8 @@ public class MCTSInformationSet extends InformationSetImpl {
     public void destroy() {
         super.destroy();
         allNodes = null;
+        publicState = null;
+        algorithmData = null;
+        destroyed=true;
     }
 }

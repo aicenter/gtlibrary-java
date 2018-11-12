@@ -18,18 +18,19 @@ import java.util.stream.Collectors;
 public class PublicStateImpl implements PublicState {
     private static final long serialVersionUID = 3656457672077909L;
 
-    private final PSKey psKey;
-    private final LinkedHashSet<GameState> gameStatesInPublicState = new LinkedHashSet<>();
-    private final LinkedHashSet<InnerNode> gameNodesInPublicState = new LinkedHashSet<>();
-    private final int hashCode;
-    private final MCTSConfig config;
-    private final PublicStateImpl parentPublicState;
-    private final PublicStateImpl playerParentPublicState;
-    private final int depth;
-    private final Expander expander;
+    private PSKey psKey;
+    private LinkedHashSet<GameState> gameStatesInPublicState = new LinkedHashSet<>();
+    private LinkedHashSet<InnerNode> gameNodesInPublicState = new LinkedHashSet<>();
+    private int hashCode;
+    private MCTSConfig config;
+    private PublicStateImpl parentPublicState;
+    private PublicStateImpl playerParentPublicState;
+    private int depth;
+    private Expander expander;
     private int resolvingIterations = 0;
     private ResolvingMethod resolvingMethod;
     private boolean dataKeeping;
+    public boolean destroyed = false;
 
     public PublicStateImpl(MCTSConfig config,
                            Expander expander,
@@ -284,7 +285,15 @@ public class PublicStateImpl implements PublicState {
 
     @Override
     public void destroy() {
+        destroyed = true;
         resolvingMethod = null;
+        psKey = null;
+        gameStatesInPublicState = null;
+        gameNodesInPublicState = null;
+        config = null;
+        parentPublicState = null;
+        playerParentPublicState = null;
+        expander = null;
     }
 
     @Override

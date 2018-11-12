@@ -20,6 +20,7 @@ import cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithmData;
 import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
+import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
@@ -613,43 +614,86 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     private void deallocateNonrelevantNodes(MCTSInformationSet is) {
         // well ... "deallocate" - just set null pointers and hope GC will clean it up
         ArrayDeque<InnerNode> q = new ArrayDeque();
-        Set<InnerNode> nonremovalNodes = is.getPublicState().getAllNodes();
-        Set<InnerNode> startNodes = is.getPublicState().getAllNodes()
-                .stream().map(InnerNode::getParent).collect(Collectors.toSet());
-        q.addAll(startNodes);
-        while (!q.isEmpty()) {
-            InnerNode curNode = q.removeFirst();
 
-            // add parent to destroy
-            if(curNode.getParent() != null) q.add(curNode.getParent());
-            // add also child nodes that do not go through current public state
-            if(curNode.getChildren() != null) {
+        Set<InnerNode> startNodes = new HashSet<>(is.getPublicState().getAllNodes());
+        Set<InnerNode> nonremovalNodes = new HashSet<>();
+        Set<ISKey> nonremovalIS = new HashSet<>();
+
+        nonremovalNodes.addAll(startNodes);
+        nonremovalIS.addAll(startNodes.stream()
+                .map(in->in.getInformationSet().getISKey())
+                .collect(Collectors.toSet()));
+
+        q.addAll(startNodes);
+        // prepare non-removal nodes
+        while (!q.isEmpty()) {
+            InnerNodeImpl curNode = (InnerNodeImpl) q.removeFirst();
+
+            // add parent to keep
+            if (curNode.getParent() != null) {
+                InnerNode parNode = curNode.getParent();
+                q.add(parNode);
+                nonremovalNodes.add(parNode);
+                if(parNode.getInformationSet()!=null) {
+                    nonremovalIS.add(parNode.getInformationSet().getISKey());
+                }
+            }
+        }
+        assert nonremovalNodes.containsAll(is.getAllNodes());
+
+        // destroy nodes
+        q.addAll(startNodes);
+        int deallocatedIS = 0;
+        int deallocatedPS = 0;
+
+        while (!q.isEmpty()) {
+            InnerNodeImpl curNode = (InnerNodeImpl) q.removeFirst();
+
+            if(curNode.destroyed) continue;
+
+            // add parent to keep
+            if(curNode.getParent() != null) {
+                q.add(curNode.getParent());
+            }
+
+            // add child nodes that do not go through nonremoval nodes
+            if(curNode.getChildren() != null && !startNodes.contains(curNode)) {
                 curNode.getChildren().forEach((a, nextNode) -> {
-                    if (nextNode instanceof InnerNode
-                            && nextNode.getGameState() != null // is not destroyed already
-                            && !nonremovalNodes.contains(nextNode)) q.add((InnerNode) nextNode);
+                    if (nextNode instanceof InnerNodeImpl
+                            && !((InnerNodeImpl) nextNode).destroyed // is not destroyed already
+                            && !nonremovalNodes.contains(nextNode)
+                            ) {
+                        q.add((InnerNode) nextNode);
+                    }
                 });
             }
 
-            if(curNode.getParent() == null) continue; // don't destroy anything root related
+            if(nonremovalNodes.contains(curNode)) {
+                continue;
+            }
 
-            curNode.destroy();
+            // otherwise remove!
             MCTSPublicState curPS = curNode.getPublicState();
-            if(curPS != null) {
-                config.getAllPublicStates().remove(curPS);
+            if(curPS != null && !curPS.destroyed) {
+                deallocatedPS++;
+                config.getPsKeyPublicStates().remove(curPS.getPSKey());
                 curPS.destroy();
                 curPS = null;
             }
 
             MCTSInformationSet curIS = curNode.getInformationSet();
-            if(curIS != null) {
-                config.getAllInformationSets().values().remove(curIS);
+            if(curIS != null && !curIS.destroyed && !nonremovalIS.contains(curIS.getISKey())) {
+                deallocatedIS++;
+                config.getAllInformationSets().remove(curIS.getISKey());
                 curIS.destroy();
                 curIS = null;
             }
 
+            curNode.destroy();
             curNode = null;
         }
+
+        System.err.println("Deallocated PS: "+deallocatedPS+" IS: "+deallocatedIS);
     }
 
     @Override

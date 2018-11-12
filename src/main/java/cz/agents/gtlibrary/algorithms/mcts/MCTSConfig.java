@@ -19,8 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts;
 
-import cz.agents.gtlibrary.algorithms.mcts.nodes.ChanceNodeImpl;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.sm.SMRMSelector;
@@ -160,6 +158,10 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
     @Override
     public Set<MCTSPublicState> getAllPublicStates() {
         return new HashSet<>(allPublicStates.values());
+    }
+
+    public HashMap<PSKey, MCTSPublicState> getPsKeyPublicStates() {
+        return allPublicStates;
     }
 
     @Override

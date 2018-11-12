@@ -950,6 +950,8 @@ public class CRExperiments {
         int numSamplesDuringRun = 0;
         int numSamplesInCurrentIS = 0;
         int numNodesTouchedDuringRun = 0;
+        int numInfoSets = 0;;
+        int numNodes = 0;
         String info = "";
         ArrayList<Move> moves = new ArrayList<>();
         while (!curState.isGameEnd()) {
@@ -975,6 +977,8 @@ public class CRExperiments {
                 numSamplesDuringRun = 0;
                 numSamplesInCurrentIS = 0;
                 numNodesTouchedDuringRun = 0;
+                numInfoSets = 0;
+                numNodes = 0;
             } else if (curState.getPlayerToMove().getId() == 0) {
                 if (p1breaksAtMove == -1) {
                     if (p1.getRootNode() != null) { //mainly for the random player
@@ -995,6 +999,8 @@ public class CRExperiments {
                         numSamplesDuringRun = p1.numSamplesDuringRun();
                         numSamplesInCurrentIS = p1.numSamplesInCurrentIS();
                         numNodesTouchedDuringRun = p1.numNodesTouchedDuringRun();
+                        numInfoSets = gs[0].config.getAllInformationSets().size();
+                        numNodes = gs[0].config.getAllInformationSets().values().stream().map(is -> is.getAllNodes().size()).reduce(0, Integer::sum);
                     } catch (Exception e) {
                         a = null;
                         p1breaksAtMove = i;
@@ -1024,6 +1030,8 @@ public class CRExperiments {
                         numSamplesDuringRun = p2.numSamplesDuringRun();
                         numSamplesInCurrentIS = p2.numSamplesInCurrentIS();
                         numNodesTouchedDuringRun = p2.numNodesTouchedDuringRun();
+                        numInfoSets = gs[1].config.getAllInformationSets().size();
+                        numNodes = gs[1].config.getAllInformationSets().values().stream().map(is -> is.getAllNodes().size()).reduce(0, Integer::sum);
                     } catch (Exception e) {
                         a = null;
                         p2breaksAtMove = i;
@@ -1049,6 +1057,7 @@ public class CRExperiments {
             } else {
                 a = actions.get(actions.indexOf(a));//just to prevent memory leaks
             }
+
             System.err.println("P" + curState.getPlayerToMove().getId() + " chose: " + a + " with prob="+pa);
             moves.add(new Move(
                     curState.getPlayerToMove().getId(),
@@ -1058,6 +1067,8 @@ public class CRExperiments {
                     numSamplesDuringRun,
                     numSamplesInCurrentIS,
                     numNodesTouchedDuringRun,
+                    numInfoSets,
+                    numNodes,
                     info));
 
             curState = curState.performAction(a);
@@ -1895,6 +1906,8 @@ public class CRExperiments {
         public int numSamplesDuringRun;
         public int numSamplesInCurrentIS;
         public int numNodesTouchedDuringRun;
+        public int numInfoSets;
+        public int numNodes;
 
 
         public Move(int player,
@@ -1904,6 +1917,8 @@ public class CRExperiments {
                     int numSamplesDuringRun,
                     int numSamplesInCurrentIS,
                     int numNodesTouchedDuringRun,
+                    int numInfoSets,
+                    int numNodes,
                     String info
                    ) {
             this.player = player;
@@ -1913,6 +1928,8 @@ public class CRExperiments {
             this.numSamplesDuringRun = numSamplesDuringRun;
             this.numSamplesInCurrentIS = numSamplesInCurrentIS;
             this.numNodesTouchedDuringRun = numNodesTouchedDuringRun;
+            this.numInfoSets = numInfoSets;
+            this.numNodes = numNodes;
             this.info = info;
         }
 
@@ -1926,7 +1943,9 @@ public class CRExperiments {
                     ", numSamplesInCurrentIS=" + numSamplesInCurrentIS +
                     ", numNodesTouchedDuringRun=" + numNodesTouchedDuringRun +
                     ", p_dist=" + Arrays.toString(p_dist) +
-                    ", info=" + info +
+                    ", numInfoSets=" + numInfoSets +
+                    ", numNodes=" + numNodes +
+//                    ", info=" + info +
                     '}';
         }
 
@@ -1937,6 +1956,8 @@ public class CRExperiments {
                    " numSamplesDuringRun=" + numSamplesDuringRun +
                    " numSamplesInCurrentIS=" + numSamplesInCurrentIS +
                    " numNodesTouchedDuringRun=" + numNodesTouchedDuringRun + "\n" +
+                   " numInfoSets=" + numInfoSets+ "\n" +
+                   " numNodes=" + numNodes + "\n" +
                    "p_dist=" + Arrays.toString(p_dist) + "\n" +
                    "info=\n" + info.replace(" ~ ", "\n");
         }

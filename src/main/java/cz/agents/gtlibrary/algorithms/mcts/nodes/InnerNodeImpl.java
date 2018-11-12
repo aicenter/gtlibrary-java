@@ -47,6 +47,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     public static boolean saveChildren = true;
     public static boolean attendIS = true;
     public static boolean attendPS = true;
+    public boolean destroyed = false;
 
     /**
      * Non-root node constructor
@@ -149,7 +150,11 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     public boolean equals(Object obj) {
         if (!(obj instanceof InnerNode))
             return false;
-        return gameState.getHistory().equals(((InnerNode) obj).getGameState().getHistory());
+        if(this.gameState == null) return false;
+
+        InnerNode objNode = ((InnerNode) obj);
+        if(objNode.getGameState() == null) return false;
+        return gameState.getHistory().equals(objNode.getGameState().getHistory());
     }
 
     public List<Action> getActions() {
@@ -264,6 +269,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     @Override
     public void destroy() {
         super.destroy();
+        destroyed = true;
         children = null;
         actions = null;
         informationSet = null;
