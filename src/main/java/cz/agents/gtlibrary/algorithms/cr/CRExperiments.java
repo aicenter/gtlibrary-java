@@ -1377,6 +1377,7 @@ public class CRExperiments {
                         g.rootState.getAllPlayers()[playerId], g.rootState, g.expander,0.6);
                 algMCCR.defaultRootMethod = RESOLVE_MCCFR;
                 algMCCR.defaultResolvingMethod = RESOLVE_MCCFR;
+                algMCCR.deallocate = true;
 
                 if(algName.contains("reset")) {
                     algMCCR.setDoResetData(true);

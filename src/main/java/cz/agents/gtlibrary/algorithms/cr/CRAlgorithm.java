@@ -60,7 +60,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     private MCTSInformationSet currentIs;
     private InnerNode rootNode;
     private boolean giveUp = false;
-    private boolean deallocate = System.getenv("deallocate") != null && System.getenv("deallocate").equals("true");
+    public boolean deallocate = System.getenv("deallocate") != null && System.getenv("deallocate").equals("true");
     private boolean writeEFG = System.getenv("writeEFG") != null && System.getenv("writeEFG").equals("true");
     private boolean skipGadgetResolvingIsMCCFR = System.getenv("skipGadget") != null && System.getenv("skipGadget").equals("true");
     private double actionChosenWithProb = 1.;
@@ -620,7 +620,8 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         Set<ISKey> nonremovalIS = new HashSet<>();
 
         nonremovalNodes.addAll(startNodes);
-        nonremovalIS.addAll(startNodes.stream()
+        nonremovalNodes.addAll(is.getAllNodes());
+        nonremovalIS.addAll(nonremovalNodes.stream()
                 .map(in->in.getInformationSet().getISKey())
                 .collect(Collectors.toSet()));
 
@@ -639,7 +640,6 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 }
             }
         }
-        assert nonremovalNodes.containsAll(is.getAllNodes());
 
         // destroy nodes
         q.addAll(startNodes);
