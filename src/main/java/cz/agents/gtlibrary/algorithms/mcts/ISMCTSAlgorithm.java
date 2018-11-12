@@ -59,7 +59,13 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
 
     public boolean returnMeanValue = false;
     public boolean useUCTMax = true;
-    
+
+    private int numSamplesDuringRun = 0;
+    private int numSamplesInCurrentIS = 0;
+    private int numNodesTouchedDuringRun = 0;
+    private InformationSet curIS;
+
+
     public ISMCTSAlgorithm(Player searchingPlayer, Simulator simulator, BackPropFactory fact, GameState rootState, Expander expander) {
         this.searchingPlayer = searchingPlayer;
         this.simulator = simulator;
@@ -86,6 +92,10 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     private Distribution meanDist = new MeanStratDist();
     @Override
     public Action runMiliseconds(int miliseconds) {
+        numSamplesDuringRun = 0;
+        numSamplesInCurrentIS = 0;
+        numNodesTouchedDuringRun = 0;
+
         if (giveUp) return null;
         int iters = 0;
         long start = threadBean.getCurrentThreadCpuTime();
@@ -95,11 +105,13 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
                 for (int i=0; i<1+100*belief[rndNum]; i++){
                     InnerNode n = curISArray[rndNum];
                     iteration(n);
+                    numSamplesDuringRun++;
                     iters++;
                 }
             } else {
                 InnerNode n = curISArray[rndNum];
                 iteration(n);
+                numSamplesDuringRun++;
                 iters++;
             }
         }
@@ -117,10 +129,15 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     }
 
     public Action runIterations(int iterations) {
+        numSamplesDuringRun = 0;
+        numSamplesInCurrentIS = 0;
+        numNodesTouchedDuringRun = 0;
+
         assert useBelief==false;//not imlpemented
         for (int i = 0; i < iterations; i++) {
             InnerNode n = curISArray[fact.getRandom().nextInt(curISArray.length)];
             iteration(n);
+            numSamplesDuringRun++;
         }
         if (curISArray[0].getGameState().isPlayerToMoveNature()) return null;
         MCTSInformationSet is = curISArray[0].getInformationSet();
@@ -129,6 +146,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
     }
 
     protected double iteration(Node node) {
+        numNodesTouchedDuringRun++;
+
         if (node instanceof LeafNode) {
             return ((LeafNode) node).getUtilities()[searchingPlayer.getId()];
         } else {
@@ -148,6 +167,8 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
                 selector = (Selector) n.getInformationSet().getAlgorithmData();
                 selActionIdx = selector.select();
                 selAction = actions.get(selActionIdx);
+
+                if(n.getInformationSet().equals(curIS)) numSamplesInCurrentIS++;
             }
             Node child = n.getChildOrNull(selAction);
 
@@ -202,6 +223,7 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
         for (InnerNode n : curISArray)
             n.setParent(null);
         rootNode = curISArray[0];
+        curIS = newCurIS;
     }
     
     private int fillBelief(InnerNode n, MCTSInformationSet curIS, double p, int nextPos){
@@ -364,5 +386,18 @@ public class ISMCTSAlgorithm implements GamePlayingAlgorithm {
             rootNode.getInformationSet().setAlgorithmData(null);
         rootNode.setInformationSet(null);
         rootNode = null;
+    }
+
+    @Override
+    public int numSamplesDuringRun() {
+        return numSamplesDuringRun;
+    }
+    @Override
+    public int numSamplesInCurrentIS() {
+        return numSamplesInCurrentIS;
+    }
+    @Override
+    public int numNodesTouchedDuringRun() {
+        return numNodesTouchedDuringRun;
     }
 }

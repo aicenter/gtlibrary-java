@@ -48,7 +48,6 @@ public interface GamePlayingAlgorithm {
     default int numSamplesDuringRun() {
         return 0;
     }
-
     default int numSamplesInCurrentIS() {
         return 0;
     }
