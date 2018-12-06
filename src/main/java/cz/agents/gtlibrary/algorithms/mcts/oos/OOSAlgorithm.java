@@ -24,6 +24,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
 import cz.agents.gtlibrary.algorithms.cr.CRAlgorithm;
+import cz.agents.gtlibrary.algorithms.cr.Game;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.*;
 import cz.agents.gtlibrary.algorithms.mcts.ConvergenceExperiment;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSConfig;
@@ -42,17 +43,21 @@ import cz.agents.gtlibrary.domain.aceofspades.AoSGameInfo;
 import cz.agents.gtlibrary.domain.aceofspades.AoSGameState;
 import cz.agents.gtlibrary.domain.bpg.BPGExpander;
 import cz.agents.gtlibrary.domain.bpg.BPGGameState;
+import cz.agents.gtlibrary.iinodes.PublicStateImpl;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
+import org.apache.commons.lang3.SerializationUtils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_NUM_SAMPLES;
 import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_TIME;
+import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.isNiceGame;
 import static cz.agents.gtlibrary.algorithms.cr.CRExperiments.buildCompleteTree;
 
 
@@ -71,7 +76,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     public boolean useCurrentStrategy = false;
 
     private MCTSInformationSet curIS;
-    private static int seed = 49;
+    public static int seed = 49;
     private Double normalizingUtils = 1.;
     private Random rnd = new HighQualityRandom(seed);
     private OOSTargeting targeting;
@@ -84,6 +89,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     private MCTSInformationSet trackingIS;
     public static double gadgetDelta = 0.;
     public static double gadgetEpsilon = 0.;
+    public boolean resolveTime = false;
+    public boolean resolveWeighted = false;
 
     public static void main(String[] args) {
         seed = Integer.parseInt(args[0]);
@@ -203,6 +210,34 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         } else targeting = new ISTargeting(rootNode, delta);
     }
 
+    public OOSAlgorithm(Player searchingPlayer, InnerNode rootNode, double epsilon, double delta) {
+        this.searchingPlayer = searchingPlayer;
+        this.simulator = new OOSSimulator(rootNode.getExpander());
+        this.delta = delta;
+        this.epsilon = epsilon;
+        this.rootNode = rootNode;
+
+        if (rootNode.getGameState().isPlayerToMoveNature()) {
+            curIS = null;
+        } else {
+            curIS = rootNode.getInformationSet();
+        }
+
+        this.config = (MCTSConfig) rootNode.getExpander().getAlgorithmConfig();
+        threadBean = ManagementFactory.getThreadMXBean();
+        String s = System.getenv("DROPTREE");
+        if (s != null) dropTree = Boolean.getBoolean(s);
+        s = System.getenv("INCTREEBUILD");
+        if (s != null && !Boolean.parseBoolean(s)) SMConvergenceExperiment.buildCompleteTree(rootNode);
+        s = System.getenv("CURSTRAT");
+        if (s != null) useCurrentStrategy = Boolean.getBoolean(s);
+        s = System.getenv("TARGTYPE");
+        if (s != null) {
+            if (s.equals("IST")) targeting = new ISTargeting(rootNode, delta);
+            else if (s.equals("PST")) targeting = new PSTargeting(rootNode, delta);
+        } else targeting = new ISTargeting(rootNode, delta);
+    }
+
     public OOSAlgorithm(Player searchingPlayer, GadgetChanceNode rootNode, double epsilon) {
         this(searchingPlayer, (InnerNode) rootNode, epsilon);
         this.normalizingUtils = rootNode.getRootReachPr();
@@ -218,11 +253,11 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         long start = threadBean.getCurrentThreadCpuTime();
         for (; (threadBean.getCurrentThreadCpuTime() - start) / 1e6 < miliseconds; ) {
             if (curIS != rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble() <= delta);
-            underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
+            underTargetIS = (curIS == null || curIS.equals(rootNode.getInformationSet()));
             iteration(rootNode, 1, 1, 1, 1, 1 / targeting.getSampleProbMultiplayer(), 1 / targeting.getSampleProbMultiplayer(), rootNode.getAllPlayers()[0]);//originally started by 1/10^d
             numSamplesDuringRun++;
             if (underTargetIS) targISHits++;
-            underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
+            underTargetIS = (curIS == null || curIS.equals(rootNode.getInformationSet()));
             iteration(rootNode, 1, 1, 1, 1,1 / targeting.getSampleProbMultiplayer(), 1 / targeting.getSampleProbMultiplayer(), rootNode.getAllPlayers()[1]);
             numSamplesDuringRun++;
             if (underTargetIS) targISHits++;
@@ -273,10 +308,10 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
         for (int i = 0; i < iterations / 2; i++) {
             if (curIS != rootNode.getInformationSet()) biasedIteration = (rnd.nextDouble() <= delta);
-            underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
+            underTargetIS = (curIS == null || curIS.equals(rootNode.getInformationSet()));
             p0Value = iteration(rootNode, 1, 1, 1,1, 1, 1, rootNode.getAllPlayers()[0]);
             numSamplesDuringRun++;
-            underTargetIS = (curIS == null || curIS == rootNode.getInformationSet());
+            underTargetIS = (curIS == null || curIS.equals(rootNode.getInformationSet()));
             iteration(rootNode, 1, 1, 1, 1,1, 1,rootNode.getAllPlayers()[1]);
             numSamplesDuringRun++;
         }
@@ -507,15 +542,15 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         if(!(is instanceof GadgetInfoSet)) {
             if (!is.getPlayer().equals(expPlayer)) {
                 reachp = pi_ / pi_c;
-                if(GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_TIME) ((InnerNode) node).updateExpectedValue2(updateVal);
-                if(GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_WEIGHTED) {
+                if(resolveTime || GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_TIME) ((InnerNode) node).updateExpectedValue2(updateVal);
+                if(resolveWeighted || GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_WEIGHTED) {
                     ((InnerNode) node).updateExpectedValue(reachp * updateVal);
                     ((InnerNode) node).updateSumReachp(reachp / s);
                 }
             } else {
                 reachp = pi;
-                if(GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_TIME) ((InnerNode) node).updateExpectedValue2(updateVal * -1);
-                if(GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_WEIGHTED) {
+                if(resolveTime || GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_TIME) ((InnerNode) node).updateExpectedValue2(updateVal * -1);
+                if(resolveWeighted || GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_WEIGHTED) {
                     ((InnerNode) node).updateExpectedValue(-updateVal * reachp);
                     ((InnerNode) node).updateSumReachp(reachp / s);
                 }
@@ -612,7 +647,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     public CRAlgorithm.Budget budgetRoot = BUDGET_NUM_SAMPLES;
     public CRAlgorithm.Budget budgetGadget = BUDGET_NUM_SAMPLES;
 
-    public InnerNode solveEntireGame(Player resolvingPlayer, int iterationsInRoot, int iterationsPerGadgetGame, boolean resetData) {
+    public InnerNode solveEntireGame(Game targetG, Player resolvingPlayer, int iterationsInRoot, int iterationsPerGadgetGame) {
         System.err.println("Using " +
                 "iterationsInRoot=" + iterationsInRoot + " " +
                 "iterationsPerGadgetGame=" + iterationsPerGadgetGame + " " +
@@ -621,13 +656,47 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 "targetting=" + targeting.toString() + " " +
                 "player=" + resolvingPlayer.getId() + " ");
 
-        InnerNode solvingRoot = rootNode;
         // to able to calc best response, we need to have the whole tree built
-        buildCompleteTree(solvingRoot);
+        System.err.println("Building result tree");
+        buildCompleteTree(targetG.getRootNode());
+
+        // game for storing preplay iterations
+        Game rootGame = targetG.clone();
+        rootGame.config.useEpsilonRM = targetG.config.useEpsilonRM;
+        config = rootGame.config;
+        rootNode = rootGame.getRootNode();
+        buildCompleteTree(rootGame.getRootNode());
+
+        // build games for each depth of player's public states
+        int maxDepth = config.getAllPublicStates().stream().map(PublicStateImpl::getDepth).max(Integer::compare).get();
+        System.err.println("Building iterations trees");
+        Game[] gameAtDepth = new Game[maxDepth+1];
+        config.getAllPublicStates().stream()
+                .filter(ps -> ps.getPlayer().equals(resolvingPlayer))
+                .forEach(ps -> {
+                    int d = ps.getDepth();
+                    if(gameAtDepth[d] != null) return;
+                    System.err.println("Building at depth "+d);
+                    gameAtDepth[d] = targetG.clone();
+                    gameAtDepth[d].config.useEpsilonRM = targetG.config.useEpsilonRM;
+                    buildCompleteTree(gameAtDepth[d].getRootNode());
+                });
+        System.err.println("Resolving in "+config.getAllPublicStates().stream()
+                .filter(ps -> ps.getPlayer().equals(resolvingPlayer))
+                .filter(ps -> ps.getAllInformationSets().iterator().next().getActions().size() > 1)
+                .count()+" public states");
+
+
+        // build temp game where we will store the current resolving
+        Game tempGame = targetG.clone();
+        tempGame.config.useEpsilonRM = targetG.config.useEpsilonRM;
+        buildCompleteTree(tempGame.getRootNode());
 
         if (iterationsInRoot < 2) { // no root init
             throw new RuntimeException("Cannot skip root initialization!");
         }
+
+        System.err.println("Root iterations");
         if (budgetRoot == BUDGET_TIME) {
             runMiliseconds(iterationsInRoot);
         } else {
@@ -635,20 +704,31 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             runIterations(iterationsInRoot);
         }
 
-        if (iterationsPerGadgetGame < 2) {
-            System.err.println("Skipping resolving.");
-            return solvingRoot;
-        }
-
         ArrayDeque<PublicState> q = new ArrayDeque<>();
-        PublicState maybePlayerRootPs = getRootNode().getPublicState();
+
+        PublicState maybePlayerRootPs = rootNode.getPublicState();
         if(maybePlayerRootPs.getPlayer().getId() == resolvingPlayer.getId()) {
             q.add(maybePlayerRootPs); // it really is player's root ps
         } else {
             q.addAll(maybePlayerRootPs.getNextPlayerPublicStates(resolvingPlayer));
         }
+
+        int numPsVisited= 0;
         while (!q.isEmpty()) {
-            PublicState s = q.removeFirst();
+            numPsVisited++;
+            PublicState s = q.removeLast();
+            System.err.println("Resolving "+s);
+            Game sourceG;
+            if (s.getPlayerParentPublicState() != null) {
+                int parentDepth = s.getPlayerParentPublicState().getDepth();
+                sourceG = gameAtDepth[parentDepth];
+            } else {
+                sourceG = rootGame;
+            }
+            copyGame(tempGame, sourceG);
+            config = tempGame.config;
+            rootNode = tempGame.getRootNode();
+            rnd = tempGame.rnd;
 
             if (!s.isReachable(resolvingPlayer)) {
                 // If public state is not reachable by our player, we can leave whatever strategy was there.
@@ -657,21 +737,63 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             }
 
             q.addAll(s.getNextPlayerPublicStates(resolvingPlayer));
-            // don't resolve in chance public states
-            if (s.getAllNodes().iterator().next() instanceof ChanceNode) continue;
+//             don't resolve in chance public states
+//            if (s.getAllNodes().iterator().next() instanceof ChanceNode) continue;
 
+            setCurrentIS(s.getAllInformationSets().iterator().next()); // pick one IS
 
-            if(resetData) s.resetData(true);
-            curIS = s.getAllInformationSets().iterator().next(); // pick one IS
-            if (budgetGadget == BUDGET_TIME) {
-                runMiliseconds(iterationsPerGadgetGame);
-            } else {
-                assert budgetGadget == BUDGET_NUM_SAMPLES;
-                runIterations(iterationsPerGadgetGame);
+            boolean skipResolving = false;
+            if (isNiceGame(curIS.getAllStates().iterator().next())) {
+                int maxNumActionsAtPs = s.getAllInformationSets().stream()
+                        .map(is -> is.getActions().size())
+                        .max(Integer::compareTo).get();
+                if(maxNumActionsAtPs == 1) {
+                    skipResolving = true;
+                }
             }
-        }
+            if(!skipResolving) {
+                if (budgetGadget == BUDGET_TIME) {
+                    runMiliseconds(iterationsPerGadgetGame);
+                } else {
+                    assert budgetGadget == BUDGET_NUM_SAMPLES;
+                    runIterations(iterationsPerGadgetGame);
+                }
 
-        return solvingRoot;
+                System.out.println(">>>"+seed+";"+s+";"+numSamplesDuringRun+";"+numSamplesInCurrentIS+";"+numNodesTouchedDuringRun);
+            } else {
+                System.err.println("Skipping "+s);
+            }
+
+            // update original g strategy after resolving this public state
+            s.getAllInformationSets().forEach(is-> {
+                MCTSInformationSet sIS = tempGame.config.getAllInformationSets().get(is.getISKey());
+                MCTSInformationSet tIS = targetG.config.getAllInformationSets().get(is.getISKey());
+
+                OOSAlgorithmData sData = (OOSAlgorithmData) sIS.getAlgorithmData();
+                OOSAlgorithmData tData = (OOSAlgorithmData) tIS.getAlgorithmData();
+                tData.setFrom(sData);
+            });
+
+            // update strategy at this depth with resolved temp game
+            copyGame(gameAtDepth[s.getDepth()], tempGame);
+        }
+        assert numPsVisited == targetG.config.getAllPublicStates()
+                .stream().filter(ps->ps.getPlayer().equals(resolvingPlayer))
+                .count();
+        return targetG.getRootNode();
+    }
+
+    protected void copyGame(Game t, Game s) {
+        // target, source
+        // assumes fully built game trees!
+        s.config.getAllInformationSets().forEach((isKey, x) -> {
+            MCTSInformationSet sIS = s.config.getAllInformationSets().get(isKey);
+            MCTSInformationSet tIS = t.config.getAllInformationSets().get(isKey);
+
+            OOSAlgorithmData sData = (OOSAlgorithmData) sIS.getAlgorithmData();
+            OOSAlgorithmData tData = (OOSAlgorithmData) tIS.getAlgorithmData();
+            tData.setFrom(sData);
+        });
     }
 
     public void setTargeting(String kind) {

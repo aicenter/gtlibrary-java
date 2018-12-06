@@ -18,13 +18,16 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
+import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
+import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
-import cz.agents.gtlibrary.interfaces.Action;
-import cz.agents.gtlibrary.interfaces.History;
-import cz.agents.gtlibrary.interfaces.InformationSet;
-import cz.agents.gtlibrary.interfaces.Player;
-import cz.agents.gtlibrary.interfaces.PublicAction;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
+import cz.agents.gtlibrary.domain.goofspiel.GoofSpielGameState;
+import cz.agents.gtlibrary.interfaces.*;
+
+import java.util.List;
 
 /**
  *
@@ -34,21 +37,57 @@ public class PSTargeting implements OOSTargeting {
     History sampleHist;
     InnerNode rootNode;
     double delta;
+    private MCTSPublicState samplePs;
+    private List<PublicState> samplePsHist;
 
     public PSTargeting(InnerNode rootNode, double delta) {
         this.rootNode = rootNode;
         this.delta = delta;
     }
     
+//    @Override
+//    public boolean isAllowedAction(InnerNode node, Action action) {
+//        if (!(action instanceof PublicAction)) return true;
+//        Player pl = node.getGameState().getPlayerToMove();
+//        if (node.getGameState().getSequenceFor(pl).size() >= sampleHist.getSequenceOf(pl).size()) return true; //all actions are allowed here
+//        Action histAct = sampleHist.getSequenceOf(pl).get(node.getGameState().getSequenceFor(pl).size());//in other games, this might need to be more sophisticated
+//        return ((PublicAction)action).publicEquals(histAct);
+//    }
+
+
+//    @Override
+//    public boolean isAllowedAction(InnerNode node, Action action) {
+//        List<PublicState> nextPsHistory = node.getPublicState().getPsHistory();
+//        PublicState lastSamplePs = samplePsHist.get(samplePsHist.size()-1);
+//        if(!nextPsHistory.contains(lastSamplePs)) return false;
+//
+//        Node next = node.getChildFor(action);
+//        if(next instanceof LeafNode) return true;
+//
+//        InnerNode nextNode = (InnerNode) next;
+//        nextPsHistory = nextNode.getPublicState().getPsHistory();
+//        return nextPsHistory.contains(lastSamplePs);
+//    }
+
     @Override
     public boolean isAllowedAction(InnerNode node, Action action) {
-        if (!(action instanceof PublicAction)) return true;
-        Player pl = node.getGameState().getPlayerToMove();
-        if (node.getGameState().getSequenceFor(pl).size() >= sampleHist.getSequenceOf(pl).size()) return true; //all actions are allowed here
-        Action histAct = sampleHist.getSequenceOf(pl).get(node.getGameState().getSequenceFor(pl).size());//in other games, this might need to be more sophisticated
-        return ((PublicAction)action).publicEquals(histAct);
+        // action is allowed if the last public state of node OR next node is contained
+        // in sequence of public states stated by the current information set
+
+        // check if node is on path to current PS
+        List<PublicState> nodePsHistory = node.getPublicState().getPsHistory();
+        PublicState lastSamplePs = nodePsHistory.get(nodePsHistory.size()-1);
+        if(!samplePsHist.contains(lastSamplePs)) return false;
+
+        // check if next node is on path to current PS
+        Node next = node.getChildFor(action);
+        if(next instanceof LeafNode) return true;
+        InnerNode nextNode = (InnerNode) next;
+        nodePsHistory = nextNode.getPublicState().getPsHistory();
+        lastSamplePs = nodePsHistory.get(nodePsHistory.size()-1);
+        return samplePsHist.contains(lastSamplePs);
     }
-    
+
     private double probMultiplayer = 1;
     @Override
     public double getSampleProbMultiplayer(){
@@ -70,7 +109,9 @@ public class PSTargeting implements OOSTargeting {
     private MeanStratDist meanDist = new MeanStratDist();
     @Override
     public void update(InformationSet curIS) {
-        sampleHist = curIS.getAllStates().iterator().next().getHistory();
+        GameState gs = curIS.getAllStates().iterator().next();
+        sampleHist = gs.getHistory();
+        samplePsHist = ((MCTSInformationSet) curIS).getAllNodes().iterator().next().getPublicState().getPsHistory();
         
         probMultiplayer = 1;
         InnerNode n = rootNode;

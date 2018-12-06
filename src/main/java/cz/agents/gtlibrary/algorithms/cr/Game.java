@@ -112,6 +112,74 @@ public class Game {
         expander.setGameInfo(gameInfo);
     }
 
+    public Game(Game game) {
+        this.domain = game.domain;
+        this.rnd = game.rnd;
+
+        config = game.config.clone();
+        switch (domain) {
+            case "IIGS":
+                gameInfo = new GSGameInfo();
+                rootState = new IIGoofSpielGameState();
+                expander = new GoofSpielExpander<>(config);
+                break;
+            case "LD":
+                gameInfo = new LDGameInfo();
+                rootState = new LiarsDiceGameState();
+                expander = new LiarsDiceExpander<>(config);
+                break;
+            case "GP":
+                gameInfo = new GPGameInfo();
+                rootState = new GenericPokerGameState();
+                expander = new GenericPokerExpander<>(config);
+                break;
+            case "PE":
+                gameInfo = new PursuitGameInfo();
+                rootState = new PursuitGameState();
+                expander = new PursuitExpander<>(config);
+                break;
+            case "OZ":
+                gameInfo = new OZGameInfo();
+                rootState = new OshiZumoGameState();
+                expander = new OshiZumoExpander<>(config);
+                break;
+            case "RG":
+                gameInfo = new RandomGameInfo();
+                rootState = new SimRandomGameState();
+                expander = new RandomGameExpander<>(config);
+                break;
+            case "Tron":
+                gameInfo = new TronGameInfo();
+                rootState = new TronGameState();
+                expander = new TronExpander<>(config);
+                break;
+            case "PTTT":
+                gameInfo = new TTTInfo();
+                rootState = new TTTState();
+                expander = new TTTExpander(config);
+                break;
+            case "RPS":
+            case "BRPS":
+                gameInfo = new RPSGameInfo();
+                rootState = new RPSGameState();
+                expander = new RPSExpander<>(config);
+                break;
+            case "ML":
+                gameInfo = new MLGameInfo();
+                rootState = new MLGameState();
+                expander = new MLExpander<>(config);
+                break;
+            default:
+                throw new IllegalArgumentException("Incorrect game:" + domain);
+        }
+
+        expander.setGameInfo(gameInfo);
+    }
+
+    public Game deepClone() {
+        return new Game(this);
+    }
+
     public Game clone() {
         return new Game(this.domain, this.rnd);
     }

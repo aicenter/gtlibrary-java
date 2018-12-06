@@ -51,6 +51,7 @@ public class TTTAction extends ActionImpl  {
         
         if (' ' == s.getSymbol(fieldID)){
             s.setSymbol(fieldID, s.toMove);
+            s.round++;
             s.toMove = (s.toMove == 'x' ? 'o' : 'x' );
         }
         s.moveNum++;

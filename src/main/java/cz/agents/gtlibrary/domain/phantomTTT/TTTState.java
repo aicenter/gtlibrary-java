@@ -54,6 +54,7 @@ public class TTTState extends GameStateImpl implements DomainWithPublicState {
     public BitSet s = new BitSet(36);
     public char toMove = 'x';
     public byte moveNum = 0;
+    public int round = 0;
     int hashCode;
     private ISKey cachedIsKey;
     private PSKey cachedPsKey;
@@ -113,6 +114,7 @@ public class TTTState extends GameStateImpl implements DomainWithPublicState {
         if (state.s != null) this.s = (BitSet) state.s.clone();
         this.toMove = state.toMove;
         this.moveNum = state.moveNum;
+        this.round = state.round;
     }
 
     @Override
@@ -265,16 +267,16 @@ public class TTTState extends GameStateImpl implements DomainWithPublicState {
 
     @Override
     public PSKey getPSKeyForPlayerToMove() {
-        int round =
-                (s.get(4 * 0) ? 1 : 0) +
-                (s.get(4 * 1) ? 1 : 0) +
-                (s.get(4 * 2) ? 1 : 0) +
-                (s.get(4 * 3) ? 1 : 0) +
-                (s.get(4 * 4) ? 1 : 0) +
-                (s.get(4 * 5) ? 1 : 0) +
-                (s.get(4 * 6) ? 1 : 0) +
-                (s.get(4 * 7) ? 1 : 0) +
-                (s.get(4 * 8) ? 1 : 0);
+//        int round =
+//                (s.get(4 * 0) ? 1 : 0) +
+//                (s.get(4 * 1) ? 1 : 0) +
+//                (s.get(4 * 2) ? 1 : 0) +
+//                (s.get(4 * 3) ? 1 : 0) +
+//                (s.get(4 * 4) ? 1 : 0) +
+//                (s.get(4 * 5) ? 1 : 0) +
+//                (s.get(4 * 6) ? 1 : 0) +
+//                (s.get(4 * 7) ? 1 : 0) +
+//                (s.get(4 * 8) ? 1 : 0);
         assert round <= 9;
         return new PSKey(round);
     }

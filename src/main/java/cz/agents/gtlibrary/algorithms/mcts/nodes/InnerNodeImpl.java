@@ -143,6 +143,8 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
 
     @Override
     public int hashCode() {
+        if(gameState == null) return 0;
+        if(gameState.getHistory() == null) return 0;
         return gameState.getHistory().hashCode();
     }
 
@@ -151,9 +153,11 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
         if (!(obj instanceof InnerNode))
             return false;
         if(this.gameState == null) return false;
+        if(this.gameState.getHistory() == null) return false;
 
         InnerNode objNode = ((InnerNode) obj);
         if(objNode.getGameState() == null) return false;
+        if(objNode.getGameState().getHistory() == null) return false;
         return gameState.getHistory().equals(objNode.getGameState().getHistory());
     }
 

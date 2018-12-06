@@ -139,7 +139,12 @@ public class ISTargeting implements OOSTargeting{
     public double getSampleProbMultiplayer() {
         return probMultiplayer;
     }
-    
+
+    @Override
+    public String toString() {
+        return "ISTargeting{" +
+                '}';
+    }
 }
     
 

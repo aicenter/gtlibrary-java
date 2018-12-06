@@ -27,6 +27,8 @@ import cz.agents.gtlibrary.iinodes.ISKey;
 import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.HighQualityRandom;
+import cz.agents.gtlibrary.utils.MTRandom;
+import org.apache.commons.lang3.SerializationUtils;
 
 import java.util.*;
 
@@ -189,5 +191,10 @@ public class MCTSConfig extends ConfigImpl<MCTSInformationSet>
 
     public void setRandom(Random random) {
         this.random = random;
+    }
+
+    public MCTSConfig clone() {
+        // todo: really clone random number generator, no time for that now:/
+        return (MCTSConfig) SerializationUtils.clone(this);
     }
 }

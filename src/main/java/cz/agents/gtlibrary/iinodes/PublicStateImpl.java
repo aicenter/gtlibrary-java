@@ -21,6 +21,7 @@ public class PublicStateImpl implements PublicState {
     private PSKey psKey;
     private LinkedHashSet<GameState> gameStatesInPublicState = new LinkedHashSet<>();
     private LinkedHashSet<InnerNode> gameNodesInPublicState = new LinkedHashSet<>();
+    private List<PublicState> psHistory;
     private int hashCode;
     private MCTSConfig config;
     private PublicStateImpl parentPublicState;
@@ -41,11 +42,14 @@ public class PublicStateImpl implements PublicState {
         this.config = config;
         this.parentPublicState = parentPublicState;
         this.playerParentPublicState = playerParentPublicState;
+        this.psHistory = new ArrayList<>();
         if (parentPublicState != null) {
             depth = parentPublicState.getDepth() + 1;
+            psHistory.addAll(parentPublicState.getPsHistory());
         } else {
             depth = 0;
         }
+        psHistory.add(this);
 
         this.gameNodesInPublicState.add(node);
         GameState state = node.getGameState();
@@ -302,5 +306,9 @@ public class PublicStateImpl implements PublicState {
                 .filter(n -> !gameNodesInPublicState.contains(n.getParent()))
                 .collect(Collectors.toSet());
 
+    }
+
+    public List<PublicState> getPsHistory() {
+        return psHistory;
     }
 }

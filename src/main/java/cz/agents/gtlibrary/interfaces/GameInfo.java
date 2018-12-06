@@ -19,7 +19,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.interfaces;
 
-public interface GameInfo {
+public interface GameInfo extends java.io.Serializable{
 	public double getMaxUtility();
 
 	public Player getFirstPlayerToMove();

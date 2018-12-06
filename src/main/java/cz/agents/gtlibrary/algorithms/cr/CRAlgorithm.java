@@ -21,6 +21,7 @@ import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceGameState;
 import cz.agents.gtlibrary.domain.poker.generic.GenericPokerGameState;
 import cz.agents.gtlibrary.iinodes.ISKey;
+import cz.agents.gtlibrary.iinodes.PSKey;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.io.GambitEFG;
 
@@ -68,6 +69,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
     public static int buildResolvingGadget = 0;
     private String extraInfo = "";
     private boolean debug = new Boolean(getenv("debug", "false"));
+    public static int seed = 49;
 
     public CRAlgorithm(GameState rootState, Expander<MCTSInformationSet> expander) {
         this(rootState, expander, 0.6);
@@ -272,26 +274,13 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
 
             MCTSInformationSet is = s.getAllInformationSets().iterator().next();
             runStep(resolvingPlayer, is, iterationsPerGadgetGame);
+            System.out.println(">>>"+seed+";"+s+";"+numSamplesDuringRun+";"+numSamplesInCurrentIS+";"+numNodesTouchedDuringRun);
         }
 
         return solvingRoot;
     }
 
-    private void updatePlayerRp(PublicState ps, Player updatingPlayer) {
-        // Top-down update of reach probabilities.
-        //
-        // From current public state until next public states of the player,
-        // update reach probabilities of each node.
-        //
-        // Basically, we know that between the public states both players
-        // will play the resolved average strategy.
-        System.err.println("Updating reach probabilities");
-
-        Set<InnerNode> nextPsNodesBarrier = new HashSet<>();
-        ps.getNextPlayerPublicStates(updatingPlayer).stream()
-                .map(PublicState::getAllNodes)
-                .forEach(nextPsNodesBarrier::addAll);
-
+    public static void updatePlayerRp(PublicState ps, Player updatingPlayer, Set<InnerNode> nextPsNodesBarrier) {
         ArrayDeque<InnerNode> q = new ArrayDeque<>();
         q.addAll(ps.getAllNodes());
 
@@ -329,6 +318,23 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         }
     }
 
+    public static void updatePlayerRp(PublicState ps, Player updatingPlayer) {
+        // Top-down update of reach probabilities.
+        //
+        // From current public state until next public states of the player,
+        // update reach probabilities of each node.
+        //
+        // Basically, we know that between the public states both players
+        // will play the resolved average strategy.
+        System.err.println("Updating reach probabilities");
+
+        Set<InnerNode> nextPsNodesBarrier = new HashSet<>();
+        ps.getNextPlayerPublicStates(updatingPlayer).stream()
+                .map(PublicState::getAllNodes)
+                .forEach(nextPsNodesBarrier::addAll);
+        updatePlayerRp(ps, updatingPlayer, nextPsNodesBarrier);
+    }
+
     private void resolveGadgetGame(Player resolvingPlayer,
                                    PublicState publicState,
                                    ResolvingMethod resolvingMethod,
@@ -357,7 +363,8 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
             gambit.wISKeys = true;
             gambit.write(
                     expander.getClass().getSimpleName() + "_PS_" + publicState.getPSKey().hashCode() + ".gbt",
-                    gadgetRootNode);
+                    gadgetRootNode,
+                    false);
         }
 
         runGadget(resolvingMethod, resolvingPlayer, publicState, gadgetRootNode, iterationsPerGadgetGame);
@@ -618,12 +625,14 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         Set<InnerNode> startNodes = new HashSet<>(is.getPublicState().getAllNodes());
         Set<InnerNode> nonremovalNodes = new HashSet<>();
         Set<ISKey> nonremovalIS = new HashSet<>();
+        Set<PSKey> nonremovalPS = new HashSet<>();
 
         nonremovalNodes.addAll(startNodes);
         nonremovalNodes.addAll(is.getAllNodes());
         nonremovalIS.addAll(nonremovalNodes.stream()
                 .map(in->in.getInformationSet().getISKey())
                 .collect(Collectors.toSet()));
+        nonremovalPS.add(is.getPublicState().getPSKey());
 
         q.addAll(startNodes);
         // prepare non-removal nodes
@@ -638,6 +647,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 if(parNode.getInformationSet()!=null) {
                     nonremovalIS.add(parNode.getInformationSet().getISKey());
                 }
+                nonremovalPS.add(parNode.getPublicState().getPSKey());
             }
         }
 
@@ -674,7 +684,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
 
             // otherwise remove!
             MCTSPublicState curPS = curNode.getPublicState();
-            if(curPS != null && !curPS.destroyed) {
+            if(curPS != null && !curPS.destroyed && !nonremovalPS.contains(curPS.getPSKey())) {
                 deallocatedPS++;
                 config.getPsKeyPublicStates().remove(curPS.getPSKey());
                 curPS.destroy();
@@ -709,7 +719,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         return giveUp;
     }
 
-    private boolean isNiceGame(GameState gameState) {
+    public static boolean isNiceGame(GameState gameState) {
         return gameState instanceof IIGoofSpielGameState
                 || gameState instanceof LiarsDiceGameState
                 || gameState instanceof GenericPokerGameState;
@@ -814,7 +824,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
                 (maxPTdepth));
     }
 
-    private Map<Action, Double> getDistributionFor(AlgorithmData algorithmData) {
+    private static Map<Action, Double> getDistributionFor(AlgorithmData algorithmData) {
         return (new MeanStratDist()).getDistributionFor(algorithmData);
     }
 

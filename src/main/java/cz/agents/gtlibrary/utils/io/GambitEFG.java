@@ -50,12 +50,14 @@ import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 // my PhantomTTT exporter
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
+import scala.collection.mutable.Leaf;
 
 
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 /**
@@ -66,6 +68,7 @@ public class GambitEFG {
     private boolean wActionLabels = true;
     private boolean wNodeLabels = true;
     public boolean wISKeys = false; // if false, writes PS keys
+    public boolean wAugISKeys = false; // if false, writes IS keys
     private Map<ISKey, Integer> infSetIndices;
     private int maxIndex;
     private Double normalizingUtils = 1.0;
@@ -165,10 +168,14 @@ public class GambitEFG {
     }
 
     public void write(String filename, InnerNode root) {
+        write(filename, root, false);
+    }
+
+    public void write(String filename, InnerNode root, boolean expandNodes) {
         if(root instanceof GadgetChanceNode) {
             this.normalizingUtils = ((GadgetChanceNode) root).getRootReachPr();
         }
-        write(filename, root, Integer.MAX_VALUE);
+        write(filename, root, Integer.MAX_VALUE, expandNodes);
         normalizingUtils = 1.0;
     }
 
@@ -198,7 +205,7 @@ public class GambitEFG {
         }
     }
 
-    public void write(String filename, Node root, int cut_off_depth) {
+    public void write(String filename, Node root, int cut_off_depth, boolean expandNodes) {
         try {
             PrintStream out = new PrintStream(filename);
 
@@ -211,7 +218,7 @@ public class GambitEFG {
             out.println("}");
             nextOutcome = 1;
             nextChance = 1;
-            writeRec(out, root, cut_off_depth);
+            writeRec(out, root, cut_off_depth, expandNodes);
             out.flush();
             out.close();
         } catch (Exception ex) {
@@ -252,33 +259,64 @@ public class GambitEFG {
         }
     }
 
-    private void writeRec(PrintStream out, Node node, int cut_off_depth) {
-        if (node.isGameEnd() || cut_off_depth == 0) {
+    private void writeRec(PrintStream out, Node node, int cut_off_depth, boolean expandNodes) {
+        if (node.isGameEnd() || cut_off_depth == 0 ||
+                ((node instanceof InnerNode) && (((InnerNode) node).getChildren().size() == 0))) {
+            for (int i = 0; i < node.getDepth(); i++) out.print("\t");
             out.print("t \"" + (wNodeLabels ? node.toString() : "") + "\" " + nextOutcome++ + " \"\" { ");
-            double[] u = ((LeafNode) node).getUtilities() ;
-            for (int i = 0; i < 2; i++) {
-                out.print((i == 0 ? "" : ", ") + u[i]* normalizingUtils);
+            if(node instanceof LeafNode) {
+                double[] u = ((LeafNode) node).getUtilities();
+                for (int i = 0; i < 2; i++) {
+                    out.print((i == 0 ? "" : ", ") + u[i] * normalizingUtils);
+                }
+            } else {
+                double _u = ((InnerNode) node).getExpectedValue(1);
+                double[] u = new double[2];
+                u[0] = _u;
+                u[1] = -_u;
+                for (int i = 0; i < 2; i++) {
+                    out.print((i == 0 ? "" : ", ") + u[i]);
+                }
             }
             out.println("}");
         } else {
             InnerNode inNode = ((InnerNode) node);
             GameState state = inNode.getGameState();
             List<Action> actions = inNode.getActions();
+            if(!expandNodes) {
+                // keep only existing actions
+                actions = actions.stream().filter(a ->
+                    inNode.getChildOrNull(a) != null
+                ).collect(Collectors.toList());
+            }
+            for (int i = 0; i < node.getDepth(); i++) out.print("\t");
             if (state.isPlayerToMoveNature()) {
                 out.print("c \"" + (wNodeLabels ? inNode.toString()  : "") + "\" "+(wISKeys ? nextChance++ : getUniqueHash(((DomainWithPublicState) state).getPSKeyForPlayerToMove()))+" \"\" { ");
                 for (Action a : actions) {
                     out.print("\"" + (wActionLabels ? a.toString() : "") + "\" " + inNode.getProbabilityOfNatureFor(a) + " ");
                 }
             } else {
-                out.print("p \"" + (wNodeLabels ? inNode.toString()  : "") + "\" " + (inNode.getPlayerToMove().getId() + 1) + " " + getUniqueHash(wISKeys ? state.getISKeyForPlayerToMove() : inNode.getPublicState().getPSKey()) + " \"\" { ");
+                ISKey key = wAugISKeys ? inNode.getOpponentAugISKey() :
+                        wISKeys ? state.getISKeyForPlayerToMove() : inNode.getPublicState().getPSKey();
+                out.print("p \"" + (wNodeLabels ? inNode.toString()  : "") + "\" " + (inNode.getPlayerToMove().getId() + 1) + " " + getUniqueHash(key) + " \"\" { ");
                 for (Action a : actions) {
                     out.print("\"" + (wActionLabels ? a.toString() : "") + "\" ");
                 }
             }
             out.println("} 0");
             for (Action a : actions) {
-                Node next = ((InnerNode) node).getChildFor(a);
-                writeRec(out, next,cut_off_depth - 1);
+                assert inNode.getChildOrNull(a) != null;
+                Node next = inNode.getChildFor(a);
+                writeRec(out, next,cut_off_depth - 1, expandNodes);
+
+//                if(expandNodes) {
+//                    Node next = ((InnerNode) node).getChildFor(a);
+//                    writeRec(out, next,cut_off_depth - 1, expandNodes);
+//                } else {
+//                    Node next = ((InnerNode) node).getChildOrNull(a);
+//                    if(next != null) writeRec(out, next,cut_off_depth - 1, expandNodes);
+//                }
+
             }
         }
     }
@@ -300,7 +338,7 @@ public class GambitEFG {
 
     public void buildAndWrite(String filename, InnerNode root) {
         BasicGameBuilder.build(root);
-        write(filename, root, Integer.MAX_VALUE);
+        write(filename, root, Integer.MAX_VALUE, false);
     }
 }
 
