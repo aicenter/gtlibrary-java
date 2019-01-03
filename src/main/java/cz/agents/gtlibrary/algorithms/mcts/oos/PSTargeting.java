@@ -45,14 +45,14 @@ public class PSTargeting implements OOSTargeting {
         this.delta = delta;
     }
     
-//    @Override
-//    public boolean isAllowedAction(InnerNode node, Action action) {
-//        if (!(action instanceof PublicAction)) return true;
-//        Player pl = node.getGameState().getPlayerToMove();
-//        if (node.getGameState().getSequenceFor(pl).size() >= sampleHist.getSequenceOf(pl).size()) return true; //all actions are allowed here
-//        Action histAct = sampleHist.getSequenceOf(pl).get(node.getGameState().getSequenceFor(pl).size());//in other games, this might need to be more sophisticated
-//        return ((PublicAction)action).publicEquals(histAct);
-//    }
+    @Override
+    public boolean isAllowedAction(InnerNode node, Action action) {
+        if (!(action instanceof PublicAction)) return true;
+        Player pl = node.getGameState().getPlayerToMove();
+        if (node.getGameState().getSequenceFor(pl).size() >= sampleHist.getSequenceOf(pl).size()) return true; //all actions are allowed here
+        Action histAct = sampleHist.getSequenceOf(pl).get(node.getGameState().getSequenceFor(pl).size());//in other games, this might need to be more sophisticated
+        return ((PublicAction)action).publicEquals(histAct);
+    }
 
 
 //    @Override
@@ -69,24 +69,56 @@ public class PSTargeting implements OOSTargeting {
 //        return nextPsHistory.contains(lastSamplePs);
 //    }
 
-    @Override
-    public boolean isAllowedAction(InnerNode node, Action action) {
-        // action is allowed if the last public state of node OR next node is contained
-        // in sequence of public states stated by the current information set
-
-        // check if node is on path to current PS
-        List<PublicState> nodePsHistory = node.getPublicState().getPsHistory();
-        PublicState lastSamplePs = nodePsHistory.get(nodePsHistory.size()-1);
-        if(!samplePsHist.contains(lastSamplePs)) return false;
-
-        // check if next node is on path to current PS
-        Node next = node.getChildFor(action);
-        if(next instanceof LeafNode) return true;
-        InnerNode nextNode = (InnerNode) next;
-        nodePsHistory = nextNode.getPublicState().getPsHistory();
-        lastSamplePs = nodePsHistory.get(nodePsHistory.size()-1);
-        return samplePsHist.contains(lastSamplePs);
-    }
+//    @Override
+//    public boolean isAllowedAction(InnerNode node, Action action) {
+////        System.out.println("smpl: "+samplePsHist.stream().map(PublicState::toString)
+////                .reduce("", String::concat));
+////        System.out.println("node: "+node.getPublicState().getPsHistory().stream().map(PublicState::toString)
+////                .reduce("", String::concat));
+//
+//        Player pl = node.getGameState().getPlayerToMove();
+//        if (node.getGameState().getSequenceFor(pl).size() >= sampleHist.getSequenceOf(pl).size()) {
+////            System.out.println("allw: true");
+//            return true; //all actions are allowed here
+//        }
+//
+//        Node next = node.getChildFor(action);
+//        if(next instanceof LeafNode) {
+////            System.out.println("allw: true");
+//            return true;
+//        }
+//
+//        InnerNode nextNode = (InnerNode) next;
+////        System.out.println("next: "+nextNode.getPublicState().getPsHistory().stream().map(PublicState::toString)
+////                .reduce("", String::concat));
+//        List<PublicState> nodePsHistory = nextNode.getPublicState().getPsHistory();
+//        int pspos = nodePsHistory.size()-1;
+////        System.out.println("allw: "+samplePsHist.get(pspos).equals(nodePsHistory.get(pspos)));
+//        return samplePsHist.get(pspos).equals(nodePsHistory.get(pspos));
+////
+////        // action is allowed if the last public state of node OR next node is contained
+////        // in sequence of public states stated by the current information set
+////
+////        // check if node is on path to current PS
+////        List<PublicState> nodePsHistory = node.getPublicState().getPsHistory();
+////        PublicState lastSamplePs = nodePsHistory.get(nodePsHistory.size()-1);
+//////        System.out.println("smpl: "+samplePsHist.stream().map(PublicState::toString)
+//////                .reduce("", String::concat));
+//////        System.out.println("node: "+nodePsHistory.stream().map(PublicState::toString)
+//////                .reduce("", String::concat));
+////        if(nodePsHistory.contains(samplePsHist.get(samplePsHist.size()-1))) return true;
+////
+////        if(!samplePsHist.contains(lastSamplePs)) return false;
+////        if(samplePsHist.get(samplePsHist.size()-1).equals(lastSamplePs)) return true;
+////
+////        // check if next node is on path to current PS
+////
+//////        System.out.println("smpl: "+samplePsHist.stream().map(PublicState::toString)
+//////                .reduce("", String::concat));
+//////        System.out.println("actn: "+nodePsHistory.stream().map(PublicState::toString)
+//////                .reduce("", String::concat));
+//
+//    }
 
     private double probMultiplayer = 1;
     @Override

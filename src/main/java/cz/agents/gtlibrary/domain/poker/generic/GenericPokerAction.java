@@ -19,13 +19,16 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.domain.poker.generic;
 
+import cz.agents.gtlibrary.domain.liarsdice.LiarsDiceAction;
+import cz.agents.gtlibrary.interfaces.Action;
+import cz.agents.gtlibrary.interfaces.PublicAction;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import cz.agents.gtlibrary.domain.poker.PokerAction;
 import cz.agents.gtlibrary.interfaces.InformationSet;
 import cz.agents.gtlibrary.interfaces.Player;
 
-public class GenericPokerAction extends PokerAction {
+public class GenericPokerAction extends PokerAction implements PublicAction {
 
 	private static final long serialVersionUID = -1491826905055714815L;
 	
@@ -81,11 +84,22 @@ public class GenericPokerAction extends PokerAction {
 
     @Override
     public boolean observableEquals(PokerAction obj) {
-        if (!super.equals(obj))
-            return false;
-        GenericPokerAction other = (GenericPokerAction)obj;
-        if (this.value != other.value)
-            return false;
-        return true;
+		GenericPokerAction other = (GenericPokerAction) obj;
+		if (action == null) {
+			if (other.action != null) return false;
+		} else if (!action.equals(other.action)) return false;
+
+		if (player == null) {
+			if (other.player != null) return false;
+		} else if (!player.equals(other.player)) return false;
+
+		if (this.value != other.value) return false;
+		return true;
     }
+
+	@Override
+	public boolean publicEquals(Action act) {
+		if (act.getInformationSet() == null && getInformationSet() == null) return true;
+		return observableEquals((GenericPokerAction) act);
+	}
 }

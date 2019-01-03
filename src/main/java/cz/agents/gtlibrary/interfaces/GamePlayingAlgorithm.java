@@ -58,4 +58,8 @@ public interface GamePlayingAlgorithm {
     default String extraInfo() {
         return "";
     }
+
+    default int numSamplesInCurrentPS() {
+        return 0;
+    };
 }

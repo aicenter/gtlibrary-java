@@ -83,6 +83,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
     private int numSamplesDuringRun;
     private int numSamplesInCurrentIS;
+    private int numSamplesInCurrentPS;
     private int numNodesTouchedDuringRun;
     private MCTSConfig config;
     private double[] currentISprobDist;
@@ -248,6 +249,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         if (giveUp) return null;
         numSamplesDuringRun = 0;
         numSamplesInCurrentIS = 0;
+        numSamplesInCurrentPS = 0;
         numNodesTouchedDuringRun = 0;
         int targISHits = 0;
         long start = threadBean.getCurrentThreadCpuTime();
@@ -299,11 +301,13 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
     @Override
     public Action runIterations(int iterations) {
+        if (giveUp) return null;
         double p0Value = 0;
 
         long starttime = System.currentTimeMillis();
         numSamplesDuringRun = 0;
         numSamplesInCurrentIS = 0;
+        numSamplesInCurrentPS = 0;
         numNodesTouchedDuringRun = 0;
 
         for (int i = 0; i < iterations / 2; i++) {
@@ -428,6 +432,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         int ai = -1;
         double pai = -1;
         if(is.equals(trackingIS)) numSamplesInCurrentIS++;
+        if(trackingIS != null && is.getPublicState() != null &&
+            is.getPublicState().equals(trackingIS.getPublicState())) numSamplesInCurrentPS++;
 
         if (is.getAlgorithmData() == null) {//this is a new Information Set
             data = new OOSAlgorithmData(in.getActions(), config.useEpsilonRM);
@@ -652,8 +658,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 "iterationsInRoot=" + iterationsInRoot + " " +
                 "iterationsPerGadgetGame=" + iterationsPerGadgetGame + " " +
                 "epsilonExploration=" + epsilon + " " +
-                "deltaTargetting=" + delta + " " +
-                "targetting=" + targeting.toString() + " " +
+                "deltaTargeting=" + delta + " " +
+                "targeting=" + targeting.toString() + " " +
                 "player=" + resolvingPlayer.getId() + " ");
 
         // to able to calc best response, we need to have the whole tree built
@@ -759,7 +765,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                     runIterations(iterationsPerGadgetGame);
                 }
 
-                System.out.println(">>>"+seed+";"+s+";"+numSamplesDuringRun+";"+numSamplesInCurrentIS+";"+numNodesTouchedDuringRun);
+                System.out.println(">>>"+seed+";"+s.getPSKey().getId()+";"+numSamplesDuringRun+";"+numSamplesInCurrentIS+";"+numSamplesInCurrentPS+";"+numNodesTouchedDuringRun);
             } else {
                 System.err.println("Skipping "+s);
             }
@@ -807,6 +813,9 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
     public int numSamplesInCurrentIS() {
         return numSamplesInCurrentIS;
+    }
+    public int numSamplesInCurrentPS() {
+        return numSamplesInCurrentPS;
     }
     public int numNodesTouchedDuringRun() {
         return numNodesTouchedDuringRun;

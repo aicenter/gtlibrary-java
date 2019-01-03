@@ -73,21 +73,14 @@ import static cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode.*;
 public class CRExperiments {
 
     private final Long seed;
-    //    protected GameInfo gameInfo;
-//    protected GameState rootState;
     protected SQFBestResponseAlgorithm brAlg0;
     protected SQFBestResponseAlgorithm brAlg1;
-//    protected Expander<MCTSInformationSet> expander;
-//    protected MCTSConfig config;
 
     private GamePlayingAlgorithm alg;
-    private Double minExploitability = 0.01;
-    private Integer numItersPerLoop = 10000;
     private String domain;
     private String[] domainParams;
 
     public static boolean safeResolving = true;
-    public static boolean resolveIsTargetting = false;
 
 
     public CRExperiments(Long seed) {
@@ -825,7 +818,7 @@ public class CRExperiments {
 
     private void runOOSavg(Game game) {
         double epsExploration = new Double(getenv("epsExploration", "0.6"));
-        double deltaTargeting = new Double(getenv("deltaTargetting", "0.9"));
+        double deltaTargeting = new Double(getenv("deltaTargeting", "0.9"));
         int iterationsInRoot = new Integer(getenv("iterationsInRoot", "100000"));
         int iterationsPerGadgetGame = new Integer(getenv("iterationsPerGadgetGame", "100000"));
         int numSeeds = new Integer(getenv("numSeeds", "30"));
@@ -996,6 +989,7 @@ public class CRExperiments {
         double[] p_dist = new double[0];
         int numSamplesDuringRun = 0;
         int numSamplesInCurrentIS = 0;
+        int numSamplesInCurrentPS = 0;
         int numNodesTouchedDuringRun = 0;
         int numInfoSets = 0;;
         int numNodes = 0;
@@ -1023,6 +1017,7 @@ public class CRExperiments {
                 }
                 numSamplesDuringRun = 0;
                 numSamplesInCurrentIS = 0;
+                numSamplesInCurrentPS = 0;
                 numNodesTouchedDuringRun = 0;
                 numInfoSets = 0;
                 numNodes = 0;
@@ -1045,6 +1040,7 @@ public class CRExperiments {
                         info = p1.extraInfo();
                         numSamplesDuringRun = p1.numSamplesDuringRun();
                         numSamplesInCurrentIS = p1.numSamplesInCurrentIS();
+                        numSamplesInCurrentPS = p1.numSamplesInCurrentPS();
                         numNodesTouchedDuringRun = p1.numNodesTouchedDuringRun();
                         numInfoSets = gs[0].config.getAllInformationSets().size();
                         numNodes = gs[0].config.getAllInformationSets().values().stream().map(is -> is.getAllNodes().size()).reduce(0, Integer::sum);
@@ -1076,6 +1072,7 @@ public class CRExperiments {
                         info = p2.extraInfo();
                         numSamplesDuringRun = p2.numSamplesDuringRun();
                         numSamplesInCurrentIS = p2.numSamplesInCurrentIS();
+                        numSamplesInCurrentPS = p2.numSamplesInCurrentPS();
                         numNodesTouchedDuringRun = p2.numNodesTouchedDuringRun();
                         numInfoSets = gs[1].config.getAllInformationSets().size();
                         numNodes = gs[1].config.getAllInformationSets().values().stream().map(is -> is.getAllNodes().size()).reduce(0, Integer::sum);
@@ -1100,6 +1097,7 @@ public class CRExperiments {
                 }
                 numSamplesDuringRun = 0;
                 numSamplesInCurrentIS = 0;
+                numSamplesInCurrentPS = 0;
                 numNodesTouchedDuringRun = 0;
             } else {
                 a = actions.get(actions.indexOf(a));//just to prevent memory leaks
@@ -1113,6 +1111,7 @@ public class CRExperiments {
                     p_dist,
                     numSamplesDuringRun,
                     numSamplesInCurrentIS,
+                    numSamplesInCurrentPS,
                     numNodesTouchedDuringRun,
                     numInfoSets,
                     numNodes,
@@ -1597,9 +1596,32 @@ public class CRExperiments {
 
 
         int n = 100;
-        for (int i = 1; i <= 50; i++) {
-            System.out.println(i*n);
-            alg.runIterations(n);
+        for (int i = 1; i <= 10000; i++) {
+//            System.out.println(i);
+            alg.runIterations(1);
+
+            OOSAlgorithmData dataPl0 = (OOSAlgorithmData) alg.getRootNode().getInformationSet().getAlgorithmData();
+            OOSAlgorithmData dataPl1 = (OOSAlgorithmData) ((InnerNode) alg.getRootNode().getChildren().values().iterator().next())
+                    .getInformationSet().getAlgorithmData();
+
+            double[] rmPl0 = dataPl0.getRMStrategy();
+            double[] avgPl0 = dataPl0.getMeanStrategy();
+            double[] rmPl1 = dataPl1.getRMStrategy();
+            double[] avgPl1 = dataPl1.getMeanStrategy();
+
+            System.out.println(i +","+
+                              rmPl0[0]+","+
+                              rmPl0[1]+","+
+                              rmPl0[2]+","+
+                              avgPl0[0]+","+
+                              avgPl0[1]+","+
+                              avgPl0[2]+","+
+                              rmPl1[0]+","+
+                              rmPl1[1]+","+
+                              rmPl1[2]+","+
+                              avgPl1[0]+","+
+                              avgPl1[1]+","+
+                              avgPl1[2]);
 //            Double exploitability = calcExploitability(g, alg.getRootNode());
 //            double cfv = alg.computeCFVofIS(is);
 //            OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
@@ -1618,7 +1640,7 @@ public class CRExperiments {
 //            System.out.println();
         }
 
-        System.out.println(alg.computeExpUtilityOfState(alg.getRootNode(), g.rootState.getAllPlayers()[0]));
+//        System.out.println(alg.computeExpUtilityOfState(alg.getRootNode(), g.rootState.getAllPlayers()[0]));
 
     }
 
@@ -1979,6 +2001,7 @@ public class CRExperiments {
         public double[] p_dist;
         public int numSamplesDuringRun;
         public int numSamplesInCurrentIS;
+        public int numSamplesInCurrentPS;
         public int numNodesTouchedDuringRun;
         public int numInfoSets;
         public int numNodes;
@@ -1990,6 +2013,7 @@ public class CRExperiments {
                     double[] p_dist,
                     int numSamplesDuringRun,
                     int numSamplesInCurrentIS,
+                    int numSamplesInCurrentPS,
                     int numNodesTouchedDuringRun,
                     int numInfoSets,
                     int numNodes,
@@ -2001,6 +2025,7 @@ public class CRExperiments {
             this.p_dist = p_dist;
             this.numSamplesDuringRun = numSamplesDuringRun;
             this.numSamplesInCurrentIS = numSamplesInCurrentIS;
+            this.numSamplesInCurrentPS = numSamplesInCurrentPS;
             this.numNodesTouchedDuringRun = numNodesTouchedDuringRun;
             this.numInfoSets = numInfoSets;
             this.numNodes = numNodes;
@@ -2015,6 +2040,7 @@ public class CRExperiments {
                     ", prob=" + prob +
                     ", numSamplesDuringRun=" + numSamplesDuringRun +
                     ", numSamplesInCurrentIS=" + numSamplesInCurrentIS +
+                    ", numSamplesInCurrentPS=" + numSamplesInCurrentPS +
                     ", numNodesTouchedDuringRun=" + numNodesTouchedDuringRun +
                     ", p_dist=" + Arrays.toString(p_dist) +
                     ", numInfoSets=" + numInfoSets +
@@ -2029,6 +2055,7 @@ public class CRExperiments {
                    "prob=" + prob +
                    " numSamplesDuringRun=" + numSamplesDuringRun +
                    " numSamplesInCurrentIS=" + numSamplesInCurrentIS +
+                   " numSamplesInCurrentPS=" + numSamplesInCurrentPS +
                    " numNodesTouchedDuringRun=" + numNodesTouchedDuringRun + "\n" +
                    " numInfoSets=" + numInfoSets+ "\n" +
                    " numNodes=" + numNodes + "\n" +
