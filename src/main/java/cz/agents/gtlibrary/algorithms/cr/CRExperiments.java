@@ -66,7 +66,6 @@ import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_NUM_SA
 import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_TIME;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_CFR;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
-import static cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode.useRootResolving;
 import static cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode.*;
 
 
@@ -444,8 +443,8 @@ public class CRExperiments {
 
         OOSAlgorithm alg = new OOSAlgorithm(resolvingPlayer, new OOSSimulator(g.expander), g.rootState,
                 g.expander, 0., epsilonExploration);
-        alg.resolveTime = true;
-        alg.resolveWeighted = true;
+        alg.saveEVTime = true;
+        alg.saveEVWeighted = true;
         this.alg = alg;
 
         InnerNode rootNode = alg.getRootNode();
@@ -560,9 +559,9 @@ public class CRExperiments {
 //                        o.setReachPrByPlayer(o.getOpponentPlayerToMove(), CFRAlgorithm.calcRpPlayerOfNode(o, o.getOpponentPlayerToMove()));
 //                    });
                     System.out.print(";" + gadgetI.getIsReach());
-                    System.out.print(";" + gadgetI.getIsCFV(finalTotal));
-                    System.out.print(";" + gadgetI.getIsCFV2(finalTotal));
-                    if (calcTarget) System.out.print(";" + gadgetI.getIsCFV3(finalTotal));
+                    System.out.print(";" + gadgetI.getCFVWeighted());
+                    System.out.print(";" + gadgetI.getCFVTime(finalTotal));
+                    if (calcTarget) System.out.print(";" + gadgetI.getCFVExact(finalTotal));
                 }
             });
             System.out.println();

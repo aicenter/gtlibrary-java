@@ -67,13 +67,13 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
             double isCFV = 0;
             switch (resolvingCFV) {
                 case RESOLVE_WEIGHTED:
-                    isCFV = gadgetIs.getIsCFV(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
+                    isCFV = gadgetIs.getCFVWeighted();
                     break;
                 case RESOLVE_TIME:
-                    isCFV = gadgetIs.getIsCFV2(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
+                    isCFV = gadgetIs.getCFVTime(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
                     break;
                 case RESOLVE_EXACT:
-                    isCFV = gadgetIs.getIsCFV3(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
+                    isCFV = gadgetIs.getCFVExact(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
                     break;
                 case RESOLVE_FIXED:
                     if(!(originalNode.getGameState() instanceof GoofSpielGameState))
@@ -181,32 +181,32 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     }
 
     @Override
-    public double getExpectedValue(double iterationNum) {
+    public double getEVWeighted() {
         throw new NotImplementedException();
     }
 
     @Override
-    public void updateExpectedValue(double offPolicyAproxSample) {
+    public void updateEVWeighted(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void setExpectedValue(double offPolicyAproxSample) {
+    public void setEVWeighted(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 
     @Override
-    public double getExpectedValue2(double iterationNum) {
+    public double getEVTime(double iterationNum) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void updateExpectedValue2(double offPolicyAproxSample) {
+    public void updateEVTime(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void setExpectedValue2(double offPolicyAproxSample) {
+    public void setEVTime(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 

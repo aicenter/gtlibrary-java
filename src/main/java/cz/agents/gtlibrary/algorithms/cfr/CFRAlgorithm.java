@@ -46,7 +46,6 @@ import cz.agents.gtlibrary.domain.informeraos.InformerAoSGameState;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMExpander;
 import cz.agents.gtlibrary.domain.mpochm.MPoCHMGameState;
 import cz.agents.gtlibrary.interfaces.*;
-import cz.agents.gtlibrary.utils.Pair;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -439,7 +438,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
 //            ((OOSAlgorithmData) is.getAlgorithmData()).resetData();
             for (InnerNode in : is.getAllNodes()) {
                 in.setReachPrByPlayer(is.getPlayer(), reachProbs.get(in));
-                in.setExpectedValue(historyExpValues.get(in));
+                in.setEVWeighted(historyExpValues.get(in));
             }
         }
     }

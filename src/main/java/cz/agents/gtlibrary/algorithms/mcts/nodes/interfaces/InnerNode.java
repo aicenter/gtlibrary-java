@@ -96,11 +96,11 @@ public interface InnerNode extends Node {
         return new PerfectRecallISKey(hashCode, oppSeq);
     }
 
-    double getExpectedValue(double iterationNum);
+    double getEVWeighted();
 
-    void updateExpectedValue(double currentOffPolicyAproxSample);
+    void updateEVWeighted(double currentOffPolicyAproxSample);
 
-    void setExpectedValue(double sumOffPolicyAproxSample);
+    void setEVWeighted(double sumOffPolicyAproxSample);
 
     double getSumReachp();
 
@@ -114,7 +114,7 @@ public interface InnerNode extends Node {
 
     void setPublicState(MCTSPublicState ps);
 
-    void updateExpectedValue2(double v);
-    double getExpectedValue2(double iterationNum);
-    void setExpectedValue2(double sumOffPolicyAproxSample);
+    void updateEVTime(double v);
+    double getEVTime(double iterationNum);
+    void setEVTime(double sumOffPolicyAproxSample);
 }

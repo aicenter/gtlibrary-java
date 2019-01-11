@@ -214,32 +214,32 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     }
 
     @Override
-    public double getExpectedValue(double iterationNum) {
+    public double getEVWeighted() {
         return evSum == 0 ? 0 : evSum / (getSumReachp());
     }
 
     @Override
-    public void setExpectedValue(double sum) {
+    public void setEVWeighted(double sum) {
         this.evSum = sum;
     }
 
     @Override
-    public void updateExpectedValue(double offPolicyAproxSample) {
+    public void updateEVWeighted(double offPolicyAproxSample) {
         this.evSum += offPolicyAproxSample;
     }
 
     @Override
-    public double getExpectedValue2(double iterationNum) {
+    public double getEVTime(double iterationNum) {
         return evSum2 == 0 ? 0 : evSum2 / iterationNum;
     }
 
     @Override
-    public void setExpectedValue2(double sum) {
+    public void setEVTime(double sum) {
         this.evSum2 = sum;
     }
 
     @Override
-    public void updateExpectedValue2(double offPolicyAproxSample) {
+    public void updateEVTime(double offPolicyAproxSample) {
         this.evSum2 += offPolicyAproxSample;
     }
 

@@ -19,33 +19,33 @@ public class GadgetInfoSet extends MCTSInformationSet {
         this.hashCode = isKey.getHash();
     }
 
-    public double getIsCFV(int expUtilityIterations) {
+    public double getCFVWeighted() {
         double isCFV = 0; // let's keep 0 by default (if the games are balanced at public states)
         for (InnerNode in : getAllNodes()) {
             GadgetInnerNode n = (GadgetInnerNode) in;
             InnerNode o = n.getOriginalNode();
             // todo: iterations in "keep" version of resolving
             double p = o.getReachPrPlayerChance();
-            double eu = o.getExpectedValue(expUtilityIterations);
+            double eu = o.getEVWeighted();
             isCFV += p * eu;
         }
         return isCFV;
     }
 
-    public double getIsCFV2(int expUtilityIterations) {
+    public double getCFVTime(int expUtilityIterations) {
         double isCFV = 0; // let's keep 0 by default (if the games are balanced at public states)
         for (InnerNode in : getAllNodes()) {
             GadgetInnerNode n = (GadgetInnerNode) in;
             InnerNode o = n.getOriginalNode();
             // todo: iterations in "keep" version of resolving
             double p = o.getReachPrPlayerChance();
-            double eu = o.getExpectedValue2(expUtilityIterations);
+            double eu = o.getEVTime(expUtilityIterations);
             isCFV += p * eu;
         }
         return isCFV;
     }
 
-    public double getIsCFV3(int expUtilityIterations) {
+    public double getCFVExact(int expUtilityIterations) {
         double isCFV = 0; // let's keep 0 by default (if the games are balanced at public states)
         for (InnerNode in : getAllNodes()) {
             GadgetInnerNode n = (GadgetInnerNode) in;

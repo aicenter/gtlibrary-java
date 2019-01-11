@@ -269,32 +269,32 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     }
 
     @Override
-    public double getExpectedValue(double iterationNum) {
+    public double getEVWeighted() {
         throw new NotImplementedException();
     }
 
     @Override
-    public void updateExpectedValue(double offPolicyAproxSample) {
+    public void updateEVWeighted(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void setExpectedValue(double offPolicyAproxSample) {
+    public void setEVWeighted(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 
     @Override
-    public double getExpectedValue2(double iterationNum) {
+    public double getEVTime(double iterationNum) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void updateExpectedValue2(double offPolicyAproxSample) {
+    public void updateEVTime(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void setExpectedValue2(double offPolicyAproxSample) {
+    public void setEVTime(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 

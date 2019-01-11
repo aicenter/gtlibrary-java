@@ -19,7 +19,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.utils.io;
 
-import cz.agents.gtlibrary.algorithms.cr.Game;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
@@ -50,7 +49,6 @@ import cz.agents.gtlibrary.domain.goofspiel.GoofSpielExpander;
 // my PhantomTTT exporter
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTExpander;
-import scala.collection.mutable.Leaf;
 
 
 import java.io.PrintStream;
@@ -270,7 +268,7 @@ public class GambitEFG {
                     out.print((i == 0 ? "" : ", ") + u[i] * normalizingUtils);
                 }
             } else {
-                double _u = ((InnerNode) node).getExpectedValue(1);
+                double _u = ((InnerNode) node).getEVWeighted();
                 double[] u = new double[2];
                 u[0] = _u;
                 u[1] = -_u;
