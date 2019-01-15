@@ -23,15 +23,9 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
-import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInfoSet;
-import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.LeafNodeImpl;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
-import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.interfaces.Action;
 
 import java.io.Serializable;
@@ -40,36 +34,33 @@ import java.util.List;
 
 
 /**
- *
  * @author vilo
  */
-public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider, Serializable{
-    public boolean useEpsilonRM = false;
+public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, NbSamplesProvider, Serializable {
     public static double epsilon = 0.001;
+    public boolean useEpsilonRM = false;
+
     protected List<Action> actions;
-    /** Mean strategy. */
+
+    /**
+     * Mean strategy.
+     */
     protected double[] mp;
-    /** Cumulative regret. */
+    /**
+     * Cumulative regret.
+     */
     protected double[] r;
-    /** Number of strategy update samples. */
+    /**
+     * Number of strategy update samples.
+     */
     protected int nbSamples;
+
     private int actionCount;
-
-    /** enable this flag to gather statistics about the CFV for each action */
-    public static boolean gatherActionCFV = true;
-    private double[] actionCFV;
-//    private double isCFV;
-    public boolean track = false;
-
 
     public OOSAlgorithmData(int actionCount) {
         mp = new double[actionCount];
         r = new double[actionCount];
         this.actionCount = actionCount;
-
-        if (gatherActionCFV) {
-            actionCFV = new double[actionCount];
-        }
     }
 
     public OOSAlgorithmData(int actionCount, boolean useEpsilonRM) {
@@ -82,10 +73,6 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         this.actionCount = actions.size();
         mp = new double[actions.size()];
         r = new double[actions.size()];
-
-        if (gatherActionCFV) {
-            actionCFV = new double[actionCount];
-        }
     }
 
     public OOSAlgorithmData(List<Action> actions, boolean useEpsilonRM) {
@@ -100,11 +87,6 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         System.arraycopy(data.mp, 0, mp, 0, data.mp.length);
         r = new double[actionCount];
         System.arraycopy(data.r, 0, r, 0, data.r.length);
-
-        if(gatherActionCFV) {
-            actionCFV = new double[actionCount];
-            System.arraycopy(data.actionCFV, 0, actionCFV, 0, data.actionCFV.length);
-        }
     }
 
     public OOSAlgorithmData(OOSAlgorithmData data, boolean useEpsilonRM) {
@@ -116,76 +98,60 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         final int K = actionCount;
 
         double R = 0;
-        for (double ri : r) R += Math.max(0,ri);
+        for (double ri : r) R += Math.max(0, ri);
 
-        if (R <= 0){
-            Arrays.fill(output,0,K,1.0/K);
-        } else {
-            for (int i=0; i<r.length; i++) output[i] = useEpsilonRM ? (1-epsilon)*Math.max(0,r[i])/R + epsilon/K : Math.max(0,r[i])/R;
+        if (R <= 0) {
+            Arrays.fill(output, 0, K, 1.0 / K);
+            return;
+        }
+
+        for (int i = 0; i < r.length; i++) {
+            if (useEpsilonRM) output[i] = (1 - epsilon) * Math.max(0, r[i]) / R + epsilon / K;
+            else output[i] = Math.max(0, r[i]) / R;
         }
     }
 
-    public double[] getRMStrategy(){
+    public double[] getRMStrategy() {
         double[] out = new double[r.length];
         getRMStrategy(out);
         return out;
     }
 
-    public void updateRegret(int ai, double u, double pi_, double l, double c, double x){
-        double W = u * pi_ / l;
+    public void updateRegret(int ai, double u_leaf,
+                             double rm_h_opc, double s_z_all,
+                             double rm_zha_all, double rm_zh_all) {
+        double W = u_leaf * rm_h_opc / s_z_all;
 
-        for (int i=0; i<r.length; i++){
-            if (i==ai) r[i] += (c-x)*W;
-            else r[i] += -x*W;
+        for (int i = 0; i < r.length; i++) {
+            if (i == ai) r[i] += (rm_zha_all - rm_zh_all) * W;
+            else r[i] += -rm_zh_all * W;
         }
     }
 
-//    public void updateRegret(GadgetInfoSet gis, double pai, int iters, int player) {
-//        GadgetInnerNode one_gn = (GadgetInnerNode) gis.getAllNodes().iterator().next();
-//        if(one_gn.getTerminateNode() == null) {
-//            assert r.length == 1;
-//            return; // only follow, no need to update anything
-//        }
-//
-//        Double r_ = 0.;
-//        Double u_t = one_gn.getTerminateNode().getUtilities()[player];;
-//        int playerSign = gis.getPlayer().getId() == player ? 1 : -1;
-//        for(InnerNode node: gis.getAllNodes()) {
-//           GadgetInnerNode gn = (GadgetInnerNode) node;
-//           double pi_c = gn.getReachPrByPlayer(2);
-//           double u_f = gn.getOriginalNode().getExpectedValue(iters+1) * playerSign;
-//           r_ += pi_c * (u_t - u_f);
-//        }
-//
-//        r[0] += pai * r_;
-//        r[1] += (pai - 1) * r_;
-//    }
-
-
-    public void updateRegret(double p_f, double u_t, double u_f) {
-        double c = (u_f - u_t);
-        double upd_r0 = (1-p_f) * c;
-        double upd_r1 = -p_f * c;
+    public void updateRegret(double p_follow, double u_terminate, double u_follow) {
+        double diff = (u_follow - u_terminate);
+        double upd_r0 = (1 - p_follow) * diff;
+        double upd_r1 = -p_follow * diff;
         r[0] += upd_r0;
         r[1] += upd_r1;
     }
 
-    public void updateRegretSM(int ai, double W, double pa, double sa){
-        for (int i=0; i<r.length; i++){
-            if (i==ai) r[i] += W*(1-pa)/sa;
-            else r[i] += -W*pa/sa;
+    public void updateRegretSM(int ai, double W, double pa, double sa) {
+        for (int i = 0; i < r.length; i++) {
+            if (i == ai) r[i] += W * (1 - pa) / sa;
+            else r[i] += -W * pa / sa;
         }
     }
 
-    public void updateAllRegrets(double[] Vs, double meanV, double w){
-        for (int i=0; i<r.length; i++){
-            r[i] += w*(Vs[i]-meanV);
+    public void updateAllRegrets(double[] Vs, double meanV, double w) {
+        for (int i = 0; i < r.length; i++) {
+            r[i] += w * (Vs[i] - meanV);
         }
     }
 
-    public void updateMeanStrategy(double[] p, double w){
-        for (int i=0; i<r.length; i++){
-            mp[i] += w*p[i];
+    public void updateMeanStrategy(double[] p, double w) {
+        for (int i = 0; i < r.length; i++) {
+            mp[i] += w * p[i];
         }
         nbSamples++;
     }
@@ -203,8 +169,8 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
 
 
     public void setRegret(double[] r) {
-       this.r = r;
-   }
+        this.r = r;
+    }
 
     @Override
     public List<Action> getActions() {
@@ -218,6 +184,10 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     @Override
     public double[] getMp() {
         return mp;
+    }
+
+    public void setMp(double[] mp) {
+        this.mp = mp;
     }
 
     @Override
@@ -236,25 +206,12 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
     public void clear() {
         Arrays.fill(r, 0);
         Arrays.fill(mp, 0);
-        nbSamples=0;
+        nbSamples = 0;
     }
 
     public int getActionCount() {
         return actionCount;
     }
-
-    public double[] getActionCFV() {
-        return actionCFV;
-    }
-
-//    public double getIsCFV() {
-//        return isCFV;
-//    }
-
-//    public void setIsCFV(double isCFV) {
-//        this.isCFV = isCFV;
-//    }
-
 
     public void setFrom(OOSAlgorithmData other) {
 //        assert nbSamples == 0 || IntStream.range(0, r.length).allMatch(i -> Math.abs(r[i] - other.r[i]) < 1e-6);
@@ -268,9 +225,6 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         for (int i = 0; i < actionCount; i++) {
             mp[i] = 0.0;
             r[i] = 0.0;
-            if (gatherActionCFV) {
-                actionCFV[i] = 0.0;
-            }
         }
         nbSamples = 0;
     }
@@ -296,11 +250,9 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
 
         if (nbSamples != that.nbSamples) return false;
         if (actionCount != that.actionCount) return false;
-//        if (Double.compare(that.isCFV, isCFV) != 0) return false;
         if (actions != null ? !actions.equals(that.actions) : that.actions != null) return false;
         if (!Arrays.equals(mp, that.mp)) return false;
-        if (!Arrays.equals(r, that.r)) return false;
-        return Arrays.equals(actionCFV, that.actionCFV);
+        return (Arrays.equals(r, that.r));
     }
 
     @Override
@@ -312,12 +264,7 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         result = 31 * result + Arrays.hashCode(r);
         result = 31 * result + nbSamples;
         result = 31 * result + actionCount;
-        result = 31 * result + Arrays.hashCode(actionCFV);
         return result;
-    }
-
-    public void setMp(double[] mp) {
-        this.mp = mp;
     }
 }
 

@@ -312,7 +312,6 @@ public class CRExperiments {
 
     public void runAlgorithm(String alg, Game game) {
         System.err.println("Using algorithm " + alg);
-        OOSAlgorithmData.gatherActionCFV = true;
 
         if (alg.equals("MCCFR_gadget_CFV")) {
             runMCCFR_gadget_CFV(game);
@@ -400,36 +399,6 @@ public class CRExperiments {
         return br0Val + br1Val;
     }
 
-    private void printHeader(OOSAlgorithmData data) {
-        double[] incrementalCFVs = data.getActionCFV();
-        double[] mp = data.getMp();
-
-        System.out.print("iteration,exploitability");
-        for (int i = 0; i < incrementalCFVs.length; i++) {
-            System.out.print(",cfv_" + i);
-        }
-        for (int i = 0; i < mp.length; i++) {
-            System.out.print(",mean_strategy_" + i);
-        }
-        System.out.println();
-    }
-
-    private void printIterationStatistics(int iterCnt, long runningTime, OOSAlgorithmData data, double exploitability) {
-        double[] incrementalCFVs = data.getActionCFV();
-        double[] mp = data.getMp();
-
-        // print iteration info
-        System.out.print(iterCnt + "," + runningTime + "," + exploitability);
-        for (double anIncrementalCFV : incrementalCFVs) {
-            System.out.print("," + anIncrementalCFV);
-        }
-        double mpSum = 0;
-        for (double d : mp) mpSum += d;
-        for (int j = 0; j < mp.length; j++) {
-            System.out.print("," + (mpSum == 0 ? 1.0 / mp.length : mp[j] / mpSum));
-        }
-        System.out.println();
-    }
 
     private void runMCCFR_gadget_CFV(Game g) {
         double epsilonExploration = new Double(getenv("epsExploration", "0.6"));
