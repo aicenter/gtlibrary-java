@@ -361,9 +361,29 @@ public class CRExperiments {
             runCRrootCFRresolvingCFR(game);
             return;
         }
+        if (alg.equals("sampleRoot")) {
+            runSampleRoot(game);
+            return;
+        }
 
         System.err.println("No such algorithm found!");
         System.exit(1);
+    }
+
+    private void runSampleRoot(Game g) {
+        double epsilonExploration = new Double(getenv("epsExploration", "0.6"));
+        int iters = new Integer(getenv("iters", "1000"));
+
+        g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
+        Player resolvingPlayer = g.rootState.getAllPlayers()[0];
+
+        OOSFixedStrategy alg = new OOSFixedStrategy(resolvingPlayer, new OOSSimulator(g.expander), g.rootState,
+                g.expander, 0., epsilonExploration);
+        alg.saveEVTime = true;
+        alg.saveEVWeighted = true;
+        this.alg = alg;
+
+        alg.runIterations(iters);
     }
 
     private void runGambit(Game g) {
