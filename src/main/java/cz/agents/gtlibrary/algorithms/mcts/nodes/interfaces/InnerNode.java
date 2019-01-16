@@ -96,25 +96,28 @@ public interface InnerNode extends Node {
         return new PerfectRecallISKey(hashCode, oppSeq);
     }
 
-    double getEVWeighted();
+    // always store values with the sign of player 0
+    double getEVWeightedPl();
+    void updateEVWeightedPl(double currentOffPolicyAproxSample);
+    void setEVWeightedPl(double sumOffPolicyAproxSample);
+    double getSumReachPl();
+    void updateSumReachPl(double currentReachP);
+    void setSumReachPl(double sumReachP);
 
-    void updateEVWeighted(double currentOffPolicyAproxSample);
+    double getEVWeightedAll();
+    void updateEVWeightedAll(double currentOffPolicyAproxSample);
+    void setEVWeightedAll(double sumOffPolicyAproxSample);
+    double getSumReachAll();
+    void updateSumReachAll(double currentReachP);
+    void setSumReachAll(double sumReachP);
 
-    void setEVWeighted(double sumOffPolicyAproxSample);
-
-    double getSumReachp();
-
-    void updateSumReachp(double currentReachP);
-
-    void setSumReachp(double sumReachP);
+    void updateEVTime(double v);
+    double getEVTime(double iterationNum);
+    void setEVTime(double sumOffPolicyAproxSample);
 
     void resetData();
 
     void destroy();
 
     void setPublicState(MCTSPublicState ps);
-
-    void updateEVTime(double v);
-    double getEVTime(double iterationNum);
-    void setEVTime(double sumOffPolicyAproxSample);
 }

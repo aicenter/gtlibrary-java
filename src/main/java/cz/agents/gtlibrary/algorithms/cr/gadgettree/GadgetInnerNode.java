@@ -23,11 +23,12 @@ import java.util.Map;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
 
 public class GadgetInnerNode implements InnerNode, GadgetNode {
-    public static final int RESOLVE_WEIGHTED = 0;
+    public static final int RESOLVE_WEIGHTED_PL = 0;
+    public static final int RESOLVE_WEIGHTED_ALL = 4;
     public static final int RESOLVE_TIME = 1;
     public static final int RESOLVE_EXACT = 2;
     public static final int RESOLVE_FIXED = 3; // only somewhere possible
-    public static int resolvingCFV = RESOLVE_WEIGHTED;
+    public static int resolvingCFV = RESOLVE_WEIGHTED_PL;
 
     private final GadgetInnerState state;
     private final InnerNode originalNode;
@@ -66,8 +67,8 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
             double isCFV = 0;
             switch (resolvingCFV) {
-                case RESOLVE_WEIGHTED:
-                    isCFV = gadgetIs.getCFVWeighted();
+                case RESOLVE_WEIGHTED_PL:
+                    isCFV = gadgetIs.getCFVWeightedPl();
                     break;
                 case RESOLVE_TIME:
                     isCFV = gadgetIs.getCFVTime(resolvingMethod == RESOLVE_MCCFR ? expUtilityIterations : 1);
@@ -181,17 +182,17 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     }
 
     @Override
-    public double getEVWeighted() {
+    public double getEVWeightedPl() {
         throw new NotImplementedException();
     }
 
     @Override
-    public void updateEVWeighted(double offPolicyAproxSample) {
+    public void updateEVWeightedPl(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void setEVWeighted(double offPolicyAproxSample) {
+    public void setEVWeightedPl(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 
@@ -211,17 +212,47 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
     }
 
     @Override
-    public double getSumReachp() {
+    public double getSumReachPl() {
         throw new NotImplementedException();
     }
 
     @Override
-    public void updateSumReachp(double currentReachP) {
+    public void updateSumReachPl(double currentReachP) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void setSumReachp(double sumReachP) {
+    public void setSumReachPl(double sumReachP) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public double getEVWeightedAll() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateEVWeightedAll(double currentOffPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setEVWeightedAll(double sumOffPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public double getSumReachAll() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateSumReachAll(double currentReachP) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setSumReachAll(double sumReachP) {
         throw new NotImplementedException();
     }
 
@@ -351,5 +382,10 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
     @Override
     public void destroy() {
+    }
+
+    @Override
+    public double getBaselineFor(Action a, Player pl) {
+        throw new NotImplementedException();
     }
 }

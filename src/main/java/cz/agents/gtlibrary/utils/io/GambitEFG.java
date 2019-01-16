@@ -268,7 +268,7 @@ public class GambitEFG {
                     out.print((i == 0 ? "" : ", ") + u[i] * normalizingUtils);
                 }
             } else {
-                double _u = ((InnerNode) node).getEVWeighted();
+                double _u = ((InnerNode) node).getEVWeightedPl();
                 double[] u = new double[2];
                 u[0] = _u;
                 u[1] = -_u;

@@ -19,16 +19,19 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
 
 package cz.agents.gtlibrary.algorithms.mcts.nodes;
 
+import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSInformationSet;
 import cz.agents.gtlibrary.algorithms.mcts.MCTSPublicState;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.LeafNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.utils.FixedSizeMap;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,14 +43,26 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     protected MCTSInformationSet informationSet;
     private MCTSPublicState publicState;
     private double[] playerReachPr = new double[] {1.,1.,1.};
-    private double evSum = 0.;
-    private double evSum2 = 0.;
-    private Double sumReachP = 0.;
+    private double evSumTime = 0.;
+    private double evSumWeightedPl = 0.;
+    private double evSumWeightedAll = 0.;
+    private double sumReachPl = 0.;
+    private double sumReachAll = 0.;
     protected MCTSInformationSet oppAugInformationSet;
     public static boolean saveChildren = true;
     public static boolean attendIS = true;
     public static boolean attendPS = true;
     public boolean destroyed = false;
+
+    public static final int BASELINE_NONE = 0;
+    public static final int BASELINE_UTILITY_WEIGHTED_PL = 1;
+    public static final int BASELINE_UTILITY_WEIGHTED_ALL = 2;
+    public static final int BASELINE_UTILITY_TIME = 3;
+    public static final int BASELINE_UTILITY_CONST = 4;
+    public static final int BASELINE_ORACLE = 5;
+    public static int baselineMethod = BASELINE_NONE;
+    private Map<Action, Double> cachedOracleValues;
+    public static boolean shouldCacheOracleValue = false;
 
     /**
      * Non-root node constructor
@@ -65,6 +80,8 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
         if (actions == null)
             actions = getExpander().getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
+
+        if(shouldCacheOracleValue) cachedOracleValues = new HashMap<>(actions.size());
     }
 
     /**
@@ -78,6 +95,8 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
         if (actions == null)
             actions = expander.getActions(gameState);
         children = new FixedSizeMap<Action, Node>(actions.size());
+
+        if(shouldCacheOracleValue) cachedOracleValues = new HashMap<>(actions.size());
     }
 
     private void attendInformationSet() {
@@ -214,60 +233,130 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
     }
 
     @Override
-    public double getEVWeighted() {
-        return evSum == 0 ? 0 : evSum / (getSumReachp());
+    public double getEVWeightedPl() {
+        return evSumWeightedPl == 0 ? 0 : evSumWeightedPl / (getSumReachPl());
     }
 
     @Override
-    public void setEVWeighted(double sum) {
-        this.evSum = sum;
+    public void setEVWeightedPl(double sum) {
+        this.evSumWeightedPl = sum;
     }
 
     @Override
-    public void updateEVWeighted(double offPolicyAproxSample) {
-        this.evSum += offPolicyAproxSample;
+    public void updateEVWeightedPl(double offPolicyAproxSample) {
+        this.evSumWeightedPl += offPolicyAproxSample;
     }
 
     @Override
     public double getEVTime(double iterationNum) {
-        return evSum2 == 0 ? 0 : evSum2 / iterationNum;
+        return evSumTime == 0 ? 0 : evSumTime / iterationNum;
     }
 
     @Override
     public void setEVTime(double sum) {
-        this.evSum2 = sum;
+        this.evSumTime = sum;
     }
 
     @Override
     public void updateEVTime(double offPolicyAproxSample) {
-        this.evSum2 += offPolicyAproxSample;
+        this.evSumTime += offPolicyAproxSample;
     }
 
     @Override
-    public double getSumReachp() {
-        return sumReachP;
+    public double getSumReachPl() {
+        return sumReachPl;
     }
 
     @Override
-    public void updateSumReachp(double currentReachP) {
-        sumReachP += currentReachP;
+    public void updateSumReachPl(double currentReachP) {
+        sumReachPl += currentReachP;
     }
 
     @Override
-    public void setSumReachp(double sumReachP) {
-        this.sumReachP = sumReachP;
+    public void setSumReachPl(double sumReachP) {
+        this.sumReachPl = sumReachP;
     }
 
     @Override
-    public void resetData() {
-        this.evSum = 0.;
-        this.evSum2 = 0.;
-        this.sumReachP = 0.;
+    public double getEVWeightedAll() {
+        return evSumWeightedAll == 0 ? 0 : evSumWeightedAll / (getSumReachAll());
+    }
+
+    @Override
+    public void updateEVWeightedAll(double currentOffPolicyAproxSample) {
+        evSumWeightedAll += currentOffPolicyAproxSample;
+    }
+
+    @Override
+    public void setEVWeightedAll(double sumOffPolicyAproxSample) {
+        evSumWeightedAll = sumOffPolicyAproxSample;
+    }
+
+    @Override
+    public double getSumReachAll() {
+        return sumReachAll;
+    }
+
+    @Override
+    public void updateSumReachAll(double currentReachP) {
+        sumReachAll += currentReachP;
+    }
+
+    @Override
+    public void setSumReachAll(double sumReachP) {
+        sumReachAll += sumReachP;
     }
 
     @Override
     public double getReachPr() {
         return playerReachPr[0]*playerReachPr[1]*playerReachPr[2];
+    }
+
+    @Override
+    public double getBaselineFor(Action a, Player pl) {
+        assert pl.getId() == 0 || pl.getId() == 1;
+        if(baselineMethod == BASELINE_NONE) return 0;
+        if(baselineMethod == BASELINE_UTILITY_CONST) { // useful for debugging
+            return (pl.getId() == 0 ? 1 : -1) * 0.7839506172839504;
+        }
+
+        // we cannot retrieve a baseline
+        Node child = getChildOrNull(a);
+        if(child == null) return 0;
+
+        // we do not store utilities at nodes that have only one action
+        if(getActions().size() == 1 || child instanceof LeafNode) return child.getBaselineFor(a, pl);
+
+        InnerNode in = (InnerNode) child;
+        int sign = pl.getId() == 0 ? 1 : -1;
+        switch(baselineMethod) {
+            // maybe let's do this later, it's annoying to pass over the number of iters
+            // case BASELINE_UTILITY_TIME:
+            //     return sign * in.getEVTime();
+            case BASELINE_UTILITY_WEIGHTED_ALL:
+                return sign * in.getEVWeightedAll();
+            case BASELINE_UTILITY_WEIGHTED_PL:
+                return sign * in.getEVWeightedPl();
+            case BASELINE_ORACLE:
+                // return value for given player
+                if(shouldCacheOracleValue && cachedOracleValues.get(a) != null) return sign * cachedOracleValues.get(a);
+
+                double val = CFRAlgorithm.computeExpUtilityOfState(in, pl);
+                if(shouldCacheOracleValue) cachedOracleValues.put(a, sign * val); // store value for pl0
+
+                return val;
+            default:
+                throw new RuntimeException("invalid choice of baseline method");
+        }
+    }
+
+    @Override
+    public void resetData() {
+        this.evSumTime = 0.;
+        this.evSumWeightedPl = 0.;
+        this.evSumWeightedAll = 0.;
+        this.sumReachPl = 0.;
+        this.sumReachAll = 0.;
     }
 
     @Override

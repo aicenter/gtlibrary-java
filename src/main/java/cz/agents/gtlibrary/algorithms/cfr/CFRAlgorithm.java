@@ -372,8 +372,9 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         if (node instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode) node;
             for (Action a : cn.getActions()) {
-                final double p = cn.getGameState().getProbabilityOfNatureFor(a);
-                eu += p * computeExpUtilityOfState(cn.getChildFor(a), player);
+                double p = cn.getGameState().getProbabilityOfNatureFor(a);
+                double next = computeExpUtilityOfState(cn.getChildFor(a), player);
+                eu += p * next;
             }
             return eu;
         }
@@ -391,7 +392,9 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
         }
 
         for (Action a : in.getActions()) {
-             eu += ms[data == null ? 0 : data.getActions().indexOf(a)] * computeExpUtilityOfState(in.getChildFor(a), player);
+             double p = ms[data == null ? 0 : data.getActions().indexOf(a)];
+             double next = computeExpUtilityOfState(in.getChildFor(a), player);
+             eu += p * next;
         }
 
         return eu;
@@ -438,7 +441,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
 //            ((OOSAlgorithmData) is.getAlgorithmData()).resetData();
             for (InnerNode in : is.getAllNodes()) {
                 in.setReachPrByPlayer(is.getPlayer(), reachProbs.get(in));
-                in.setEVWeighted(historyExpValues.get(in));
+                in.setEVWeightedPl(historyExpValues.get(in));
             }
         }
     }

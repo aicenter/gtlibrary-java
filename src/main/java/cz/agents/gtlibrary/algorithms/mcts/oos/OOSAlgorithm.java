@@ -23,6 +23,7 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
+import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.cr.CRAlgorithm;
 import cz.agents.gtlibrary.algorithms.cr.Game;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
@@ -72,6 +73,7 @@ import static cz.agents.gtlibrary.algorithms.cr.CRExperiments.buildCompleteTree;
  * z - leaf node
  * zh - from current history to the leaf, i.e. z|h
  * zha - from current history and playing action a with 100% prob to the leaf, i.e. z|h.a
+ * ha - at the current history playing action a
  *
  * ## Z is player
  * pl - current player
@@ -106,7 +108,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     protected InnerNode rootNode;
 
     public boolean saveEVTime = false;
-    public boolean saveEVWeighted = false;
+    public boolean saveEVWeightedPl = false;
+    public boolean saveEVWeightedAll = false;
 
     protected ThreadMXBean threadBean;
     public CRAlgorithm.Budget budgetRoot = BUDGET_NUM_SAMPLES;
@@ -131,13 +134,16 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     private boolean isBiasedIteration = false; // should current iteration make a biased sample? (with prob. delta)
     private boolean isBelowTargetIS = false;   // are we deeper in the tree, "below" target IS? If yes, we dont need to bias samples anymore, any sampling strategy is fine
 
-    private double[] rmProbs = new double[1000];
-    private double[] tmpProbs = new double[1000];
+    public int MAX_ACTIONS = 100; // maximum number of actions that can be taken in any infoset
+    private double[] rmProbs = new double[MAX_ACTIONS];
+    private double[] rmProbsCopy = new double[MAX_ACTIONS];
+    private double[] tmpProbs = new double[MAX_ACTIONS]; // array of actual biased probabilities, but biasedProbs can be assigned RM probs
     private double[] biasedProbs = tmpProbs;
 
     // additional iteration return values
     private double rm_zh_all = -1;
     private double s_z_all = -1;
+    protected double u_z;
 
     private int numBiasApplicableActions = 0;
 
@@ -338,6 +344,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     /**
      * The main function for OOS iteration.
      *
+     * Utilities are always for the current exploring player.
+     *
      * @param n         current node
      * @param rm_h_pl   reach prob of the searching player                  to the current node using RM strategy
      * @param rm_h_opp  reach prob of the opponent of the searching player  to the current node using RM strategy
@@ -345,14 +353,15 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
      * @param bs_h_all  reach prob of all players to the current node using biased sampling strategy
      * @param us_h_all  reach prob of all players to the current node using unbiased sampling strategy
      * @param expPlayer the exploring player for this iteration
-     * @return iteration game reward is actually returned. Other return values are in global rm_zh_all and s_z_all
+     * @return expected baseline-augmented utility of current node for the exploring player
      */
     protected double iteration(Node n,
                                double rm_h_pl, double rm_h_opp, double rm_h_cn,
                                double bs_h_all, double us_h_all,
                                Player expPlayer) {
-        System.err.println(
-                numNodesTouchedDuringRun + ";" + n + ";" + rm_h_pl + ";" + rm_h_opp + ";" + rm_h_cn + ";" + bs_h_all + ";" + us_h_all + ";" + expPlayer + ";" + rnd.nextDouble());
+        // Useful for debugging changes of the algorithm
+//         System.err.println(numNodesTouchedDuringRun + ";" + n + ";" + rm_h_pl + ";" + rm_h_opp + ";" + rm_h_cn + ";" + bs_h_all + ";" + us_h_all + ";" + expPlayer + ";" + rnd.nextDouble());
+
         numNodesTouchedDuringRun++;
         // Three possibilities for node:
         // 1) leaf node
@@ -362,32 +371,56 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         if (n instanceof LeafNode) {
             rm_zh_all = 1;
             s_z_all = delta * bs_h_all + (1 - delta) * us_h_all;
-            return ((LeafNode) n).getUtilities()[expPlayer.getId()] * normalizingUtils;
+            u_z = ((LeafNode) n).getUtilities()[expPlayer.getId()] * normalizingUtils;
+            return u_z; // == u_h
         }
+
+        InnerNode in = (InnerNode) n;
+        if (in.getActions().size() == 1) {
+            // avoid using random number generator and computing stats when player is deterministic
+            // this means that all stats related to this node (like exp. value) are delegated to the child node!
+            return iteration(in.getChildFor(in.getActions().get(0)), rm_h_pl, rm_h_opp, rm_h_cn, bs_h_all, us_h_all, expPlayer);
+        }
+
+        double s_h_all = delta * bs_h_all + (1 - delta) * us_h_all;
+        double bs_ha_all, us_ha_all;
 
         if (n instanceof ChanceNode) {
             ChanceNode cn = (ChanceNode) n;
             Pair<Action, Double> chanceOutcome = selectChanceAction(cn);
             Action a = chanceOutcome.getLeft();
-            Double biased_prob = chanceOutcome.getRight();
+            bs_ha_all = chanceOutcome.getRight();
 
             double p_chance = cn.getProbabilityOfNatureFor(a);
-            double u_leaf = iteration(cn.getChildFor(a),
+            us_ha_all = p_chance;
+
+            double u_ha = iteration(cn.getChildFor(a),
                     rm_h_pl, rm_h_opp, rm_h_cn * p_chance,
-                    biased_prob * bs_h_all, p_chance * us_h_all,
+                    bs_h_all * bs_ha_all,
+                    us_h_all * us_ha_all,
                     expPlayer);
+
             rm_zh_all *= p_chance;
-            return u_leaf;
+
+            // compute baseline-augmented utilities
+            double s_ha_all = delta * bs_ha_all + (1 - delta) * us_ha_all;
+            double u_h = ((u_ha - cn.getBaselineFor(a, expPlayer)) * p_chance) / s_ha_all;
+            for(Action i : cn.getActions()) u_h += cn.getProbabilityOfNatureFor(i) * cn.getBaselineFor(i, expPlayer);
+
+            updateHistoryExpectedValue(expPlayer, cn,
+                    u_h, // todo: undo effect of normalizing utils!!!
+                    rm_h_pl, rm_h_opp, rm_h_cn, s_h_all);
+
+            return u_h;
         }
 
-        InnerNode in = (InnerNode) n;
         MCTSInformationSet is = in.getInformationSet();
         OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
 
         // outcomes of this case which will be used later:
-        double u_leaf;  // sampled utility
-        int ai;         // action index
-        double pai;     // probability of taking this action (according to RM)
+        double u_h;  // baseline-augmented utility of this node
+        int ai;      // action index
+        double pai;  // probability of taking this action (according to RM)
 
         // some stats
         if (is.equals(trackingIS)) numSamplesInCurrentIS++;
@@ -403,20 +436,18 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             Action a = in.getActions().get(ai);
             Node child = in.getChildFor(a);
 
-            u_leaf = simulator.simulate(child, expPlayer);
+            u_z = simulator.simulate(child, expPlayer);
             rm_zh_all = simulator.playersProb; // *(1.0/in.getActions().size()) will be added at the bottom;
             s_z_all = (delta * bs_h_all + (1 - delta) * us_h_all) * simulator.playOutProb * pai;
-
-        } else if (in.getActions().size() == 1) {
-            // avoid using random number generator and computing stats when player is deterministic
-            return iteration(in.getChildFor(in.getActions().get(0)), rm_h_pl, rm_h_opp, rm_h_cn, bs_h_all, us_h_all,
-                    expPlayer);
-
+            // compute replacement for baseline-augmented utilities
+            // todo: check!
+            u_h = (u_z * rm_zh_all) / (s_z_all * normalizingUtils);
         } else {
             data.getRMStrategy(rmProbs);
 
             double bsum = 0;
-            double nextUs;
+            double u_ha;
+            Action a;
             numBiasApplicableActions = 0;
             biasedProbs = tmpProbs;
 
@@ -431,52 +462,72 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 numBiasApplicableActions = in.getActions().size();
             }
 
+            u_h = 0.;
+
             if (is.getPlayer().equals(expPlayer)) { // exploring move
                 Pair<Integer, Double> playerOutcome = selectExploringPlayerAction(is, bsum);
                 ai = playerOutcome.getLeft();
-                nextUs = playerOutcome.getRight();
+                us_ha_all = playerOutcome.getRight();
                 pai = rmProbs[ai];
-                Action a = in.getActions().get(ai);
+                a = in.getActions().get(ai);
 
                 // the following is zero for banned actions and the correct probability for allowed
-                double nextBs = 0.;
+                bs_ha_all = 0.;
                 if (biasedProbs[ai] > 0.0) {
-                    nextBs = (1 - epsilon) * biasedProbs[ai] / bsum + (epsilon / numBiasApplicableActions);
+                    bs_ha_all = (1 - epsilon) * biasedProbs[ai] / bsum + (epsilon / numBiasApplicableActions);
                 }
 
-                u_leaf = iteration(in.getChildFor(a), rm_h_pl * pai, rm_h_opp, rm_h_cn, bs_h_all * nextBs,
-                        us_h_all * nextUs, expPlayer);
+                // precompute baseline components now, because after child iteration RM probs will change
+                for(Action i : in.getActions()) {
+                    if(i.equals(a)) continue;
+                    u_h += rmProbs[in.getActions().indexOf(i)] * in.getBaselineFor(i, expPlayer);
+                }
+
+                u_ha = iteration(in.getChildFor(a), rm_h_pl * pai, rm_h_opp, rm_h_cn, bs_h_all * bs_ha_all,
+                        us_h_all * us_ha_all, expPlayer);
             } else {
                 Pair<Integer, Double> playerOutcome = selectNonExploringPlayerAction(is, bsum);
                 ai = playerOutcome.getLeft();
-                nextUs = playerOutcome.getRight();
-
+                us_ha_all = playerOutcome.getRight();
+                bs_ha_all = biasedProbs[ai] / bsum;
                 pai = rmProbs[ai];
-                Action a = in.getActions().get(ai);
-                u_leaf = iteration(in.getChildFor(a), rm_h_pl, rm_h_opp * pai, rm_h_cn,
-                        bs_h_all * biasedProbs[ai] / bsum, us_h_all * nextUs, expPlayer);
+                a = in.getActions().get(ai);
+
+                // precompute baseline components now, because after child iteration RM probs will change
+                for(Action i : in.getActions()) {
+                    if(i.equals(a)) continue;
+                    u_h += rmProbs[in.getActions().indexOf(i)] * in.getBaselineFor(i, expPlayer);
+                }
+
+                u_ha = iteration(in.getChildFor(a), rm_h_pl, rm_h_opp * pai, rm_h_cn,
+                        bs_h_all * bs_ha_all,
+                        us_h_all * us_ha_all,
+                        expPlayer);
             }
+
+            // finish computing baseline-augmented utilities
+            double s_ha_all = delta * bs_ha_all + (1 - delta) * us_ha_all;
+            u_h += ((u_ha - in.getBaselineFor(a, expPlayer)) * pai) / s_ha_all + pai*in.getBaselineFor(a, expPlayer);
         }
 
         // regret/mean strategy update
-        double s_h_all = delta * bs_h_all + (1 - delta) * us_h_all;
         double rm_zha_all = rm_zh_all;
         rm_zh_all *= pai;
 
         // history expected value
-        if (!(is instanceof GadgetInfoSet)) updateHistoryExpectedValue(
-                is.getPlayer().equals(expPlayer), in,
-                (u_leaf * rm_zha_all) / (s_z_all * normalizingUtils),
-                rm_h_pl, rm_h_opp, s_h_all);
+        if (!(is instanceof GadgetInfoSet)) updateHistoryExpectedValue(expPlayer, in,
+                u_h, // todo: undo effect of normalizing utils!!!
+                rm_h_pl, rm_h_opp, rm_h_cn, s_h_all);
 
-        updateInfosetRegrets(is, expPlayer, data, ai, pai, u_leaf, rm_h_cn, rm_h_opp, rm_zha_all, s_h_all);
+        // todo: use baseline-augmented utilities
+        updateInfosetRegrets(is, expPlayer, data, ai, pai, u_z, rm_h_cn, rm_h_opp, rm_zha_all, s_h_all);
 
-        return u_leaf;
+        return u_h;
     }
 
     protected void updateInfosetRegrets(MCTSInformationSet is, Player expPlayer, OOSAlgorithmData data,
                                         int ai, double pai,
-                                        double u_leaf,
+                                        double u_z,
                                         double rm_h_cn, double rm_h_opp, double rm_zha_all, double s_h_all) {
         if (is.getPlayer().equals(expPlayer)) {
             if (is instanceof GadgetInfoSet) { // gadget update
@@ -485,10 +536,10 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 if (one_gn.getTerminateNode() == null) return;
 
                 double u_terminate = one_gn.getTerminateNode().getUtilities()[expPlayer.getId()] * normalizingUtils;
-                double u_follow = u_leaf * rm_h_cn * rm_zha_all / s_z_all;
+                double u_follow = u_z * rm_h_cn * rm_zha_all / s_z_all;
                 data.updateRegret(pai, u_terminate, u_follow);
             } else { // regular regret update
-                data.updateRegret(ai, u_leaf, rm_h_opp * rm_h_cn, s_z_all, rm_zha_all, rm_zh_all);
+                data.updateRegret(ai, u_z, rm_h_opp * rm_h_cn, s_z_all, rm_zha_all, rm_zh_all);
             }
         } else {
             // we use stochastically weighted averaging
@@ -497,24 +548,26 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         }
     }
 
-    protected void updateHistoryExpectedValue(boolean infosetIsExploringPlayer, InnerNode updateNode,
-                                              double updateVal,
-                                              double rm_h_pl, double rm_h_opp, double s_h_all) {
-        double rm_h_owner, sign;
+    protected void updateHistoryExpectedValue(Player expPlayer, InnerNode updateNode, double u_h,
+                                              double rm_h_pl, double rm_h_opp, double rm_h_cn, double s_h_all) {
 
-        if (infosetIsExploringPlayer) {
-            rm_h_owner = rm_h_pl;
-            sign = -1;
-        } else {
-            rm_h_owner = rm_h_opp;
-            sign = 1;
+        // let's make sure that the utility is always for player 0
+        // updateVal we get is for the exploring player
+        u_h *= expPlayer.getId() == 0 ? 1 : -1;
+
+        if (saveEVTime || GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_TIME) {
+            updateNode.updateEVTime(u_h);
         }
-
-        if (saveEVTime || GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_TIME)
-            updateNode.updateEVTime(updateVal * sign);
-        if (saveEVWeighted || GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_WEIGHTED) {
-            updateNode.updateEVWeighted(rm_h_owner * sign * updateVal);
-            updateNode.updateSumReachp(rm_h_owner / s_h_all);
+        if (saveEVWeightedPl || GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_WEIGHTED_PL) {
+            boolean infosetIsExploringPlayer = updateNode.getPlayerToMove().equals(expPlayer);
+            double rm_h_owner = infosetIsExploringPlayer ? rm_h_pl : rm_h_opp;
+            updateNode.updateEVWeightedPl(rm_h_owner * u_h);
+            updateNode.updateSumReachPl(rm_h_owner / s_h_all);
+        }
+        if (saveEVWeightedAll || GadgetInnerNode.resolvingCFV == GadgetInnerNode.RESOLVE_WEIGHTED_ALL) {
+            double rp = rm_h_pl * rm_h_opp * rm_h_cn;
+            updateNode.updateEVWeightedAll(rp * u_h);
+            updateNode.updateSumReachAll(rp / s_h_all);
         }
     }
 
@@ -595,11 +648,11 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
     private Pair<Integer, Double> selectExploringPlayerAction(MCTSInformationSet is, double bsum) {
         int ai;
-        double nextUs;
+        double us_ha_all;
 
         if (is instanceof GadgetInfoSet) {
             ai = 0; // always force follow!
-            nextUs = 1.;
+            us_ha_all = 1.;
         } else {
             int nActions = is.getActions().size();
 
@@ -618,29 +671,29 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             }
 
             double pai = rmProbs[ai];
-            nextUs = ((1 - epsilon) * pai + (epsilon / nActions));
+            us_ha_all = ((1 - epsilon) * pai + (epsilon / nActions));
         }
 
-        return new Pair<>(ai, nextUs);
+        return new Pair<>(ai, us_ha_all);
     }
 
     private Pair<Integer, Double> selectNonExploringPlayerAction(MCTSInformationSet is, double bsum) {
         int ai;
-        double nextUs;
+        double us_ha_all;
 
         if (is instanceof GadgetInfoSet) {
             ai = 0; // always force follow!
 
             // do not include RM probs of follow to unbiased sampling -
             // we want to keep them consistent with trunk
-            nextUs = 1.; // rmProbs[ai];
+            us_ha_all = 1.; // rmProbs[ai];
         } else {
             if (isBiasedIteration) ai = randomChoice(biasedProbs, bsum);
             else ai = randomChoice(rmProbs, 1);
-            nextUs = rmProbs[ai];
+            us_ha_all = rmProbs[ai];
         }
 
-        return new Pair<>(ai, nextUs);
+        return new Pair<>(ai, us_ha_all);
     }
 
     private int randomChoice(double[] dArray, double sum) {

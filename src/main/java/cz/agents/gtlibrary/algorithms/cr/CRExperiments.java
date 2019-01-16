@@ -26,6 +26,7 @@ import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.*;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.ChanceNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.Node;
@@ -377,12 +378,22 @@ public class CRExperiments {
         g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
         Player resolvingPlayer = g.rootState.getAllPlayers()[0];
 
+        InnerNodeImpl.baselineMethod = InnerNodeImpl.BASELINE_UTILITY_WEIGHTED_ALL;
+        InnerNodeImpl.shouldCacheOracleValue = true;
+
         OOSFixedStrategy alg = new OOSFixedStrategy(resolvingPlayer, new OOSSimulator(g.expander), g.rootState,
                 g.expander, 0., epsilonExploration);
         alg.saveEVTime = true;
-        alg.saveEVWeighted = true;
+        alg.saveEVWeightedPl = true;
+        alg.saveEVWeightedAll = true;
+
         this.alg = alg;
 
+        double expValue = CFRAlgorithm.computeExpUtilityOfState(alg.getRootNode(), resolvingPlayer);
+        alg.expValue = expValue;
+//        System.err.println("exp value: "+expValue);
+        System.out.println("n;orig_x;orig_mean;orig_var;orig_diff;vr_x;vr_mean;vr_var;vr_diff");
+//        System.out.println("n;orig_diff;vr_diff");
         alg.runIterations(iters);
     }
 
@@ -433,7 +444,7 @@ public class CRExperiments {
         OOSAlgorithm alg = new OOSAlgorithm(resolvingPlayer, new OOSSimulator(g.expander), g.rootState,
                 g.expander, 0., epsilonExploration);
         alg.saveEVTime = true;
-        alg.saveEVWeighted = true;
+        alg.saveEVWeightedPl = true;
         this.alg = alg;
 
         InnerNode rootNode = alg.getRootNode();
@@ -548,7 +559,7 @@ public class CRExperiments {
 //                        o.setReachPrByPlayer(o.getOpponentPlayerToMove(), CFRAlgorithm.calcRpPlayerOfNode(o, o.getOpponentPlayerToMove()));
 //                    });
                     System.out.print(";" + gadgetI.getIsReach());
-                    System.out.print(";" + gadgetI.getCFVWeighted());
+                    System.out.print(";" + gadgetI.getCFVWeightedPl());
                     System.out.print(";" + gadgetI.getCFVTime(finalTotal));
                     if (calcTarget) System.out.print(";" + gadgetI.getCFVExact(finalTotal));
                 }
@@ -709,7 +720,7 @@ public class CRExperiments {
         int player = new Integer(getenv("player", "0"));
 
         if(resolvingCFVOption.equals("time")) GadgetInnerNode.resolvingCFV = RESOLVE_TIME;
-        if(resolvingCFVOption.equals("weighted")) GadgetInnerNode.resolvingCFV = RESOLVE_WEIGHTED;
+        if(resolvingCFVOption.equals("weighted")) GadgetInnerNode.resolvingCFV = RESOLVE_WEIGHTED_PL;
         if(resolvingCFVOption.equals("exact")) GadgetInnerNode.resolvingCFV = RESOLVE_EXACT;
         if(resolvingCFVOption.equals("fixed")) GadgetInnerNode.resolvingCFV = RESOLVE_FIXED;
 
@@ -1440,7 +1451,7 @@ public class CRExperiments {
                 } else if(algName.contains("cfvFixed")) {
                     GadgetInnerNode.resolvingCFV = RESOLVE_FIXED;
                 } else { // cfvWeighted
-                    GadgetInnerNode.resolvingCFV = RESOLVE_WEIGHTED;
+                    GadgetInnerNode.resolvingCFV = RESOLVE_WEIGHTED_PL;
                 }
 
                 if(algName.contains("rootNothing")) {

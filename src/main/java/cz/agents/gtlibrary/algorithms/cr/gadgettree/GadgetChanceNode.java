@@ -269,17 +269,17 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     }
 
     @Override
-    public double getEVWeighted() {
+    public double getEVWeightedPl() {
         throw new NotImplementedException();
     }
 
     @Override
-    public void updateEVWeighted(double offPolicyAproxSample) {
+    public void updateEVWeightedPl(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void setEVWeighted(double offPolicyAproxSample) {
+    public void setEVWeightedPl(double offPolicyAproxSample) {
         throw new NotImplementedException();
     }
 
@@ -299,17 +299,47 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
     }
 
     @Override
-    public double getSumReachp() {
+    public double getSumReachPl() {
         throw new NotImplementedException();
     }
 
     @Override
-    public void updateSumReachp(double currentReachP) {
+    public void updateSumReachPl(double currentReachP) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void setSumReachp(double sumReachP) {
+    public void setSumReachPl(double sumReachP) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public double getEVWeightedAll() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateEVWeightedAll(double currentOffPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setEVWeightedAll(double sumOffPolicyAproxSample) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public double getSumReachAll() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void updateSumReachAll(double currentReachP) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void setSumReachAll(double sumReachP) {
         throw new NotImplementedException();
     }
 
@@ -341,6 +371,11 @@ public class GadgetChanceNode implements ChanceNode, GadgetNode {
 
     @Override
     public void destroy() {
+    }
+
+    @Override
+    public double getBaselineFor(Action a, Player pl) {
+        throw new NotImplementedException();
     }
 
     @Override
