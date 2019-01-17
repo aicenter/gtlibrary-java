@@ -120,4 +120,8 @@ public interface InnerNode extends Node {
     void destroy();
 
     void setPublicState(MCTSPublicState ps);
+
+    default double getBaselineFor(int i) {
+        return getBaselineFor(getActions().get(i), getPlayerToMove());
+    }
 }

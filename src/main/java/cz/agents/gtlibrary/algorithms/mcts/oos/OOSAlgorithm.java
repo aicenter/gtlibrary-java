@@ -418,7 +418,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
 
         // outcomes of this case which will be used later:
-        double u_h;  // baseline-augmented utility of this node
+        double u_h;  // baseline-augmented utility of current history
+        double u_ha; // baseline-augmented utility of next history
         int ai;      // action index
         double pai;  // probability of taking this action (according to RM)
 
@@ -437,16 +438,17 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             Node child = in.getChildFor(a);
 
             u_z = simulator.simulate(child, expPlayer);
-            rm_zh_all = simulator.playersProb; // *(1.0/in.getActions().size()) will be added at the bottom;
+            rm_zh_all = simulator.playersProb; // "* pai" will be added at the bottom
             s_z_all = (delta * bs_h_all + (1 - delta) * us_h_all) * simulator.playOutProb * pai;
+
             // compute replacement for baseline-augmented utilities
             // todo: check!
-            u_h = (u_z * rm_zh_all) / (s_z_all * normalizingUtils);
+            u_h = u_z / normalizingUtils;
+            u_ha = u_z / normalizingUtils;
         } else {
             data.getRMStrategy(rmProbs);
 
             double bsum = 0;
-            double u_ha;
             Action a;
             numBiasApplicableActions = 0;
             biasedProbs = tmpProbs;
@@ -519,8 +521,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 u_h, // todo: undo effect of normalizing utils!!!
                 rm_h_pl, rm_h_opp, rm_h_cn, s_h_all);
 
-        // todo: use baseline-augmented utilities
-        updateInfosetRegrets(is, expPlayer, data, ai, pai, u_z, rm_h_cn, rm_h_opp, rm_zha_all, s_h_all);
+        updateInfosetRegrets(is, expPlayer, data, ai, pai, u_z, rm_h_cn, rm_h_opp, rm_zha_all, s_h_all,
+                u_ha, u_h, in);
 
         return u_h;
     }
@@ -528,8 +530,11 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     protected void updateInfosetRegrets(MCTSInformationSet is, Player expPlayer, OOSAlgorithmData data,
                                         int ai, double pai,
                                         double u_z,
-                                        double rm_h_cn, double rm_h_opp, double rm_zha_all, double s_h_all) {
+                                        double rm_h_cn, double rm_h_opp, double rm_zha_all, double s_h_all,
+                                        double u_ha, double u_h, InnerNode in
+                                        ) {
         if (is.getPlayer().equals(expPlayer)) {
+            // todo: baseline-aug. utilities for gadget!
             if (is instanceof GadgetInfoSet) { // gadget update
                 // check if we even should do updates (it's only action may be follow)
                 GadgetInnerNode one_gn = (GadgetInnerNode) is.getAllNodes().iterator().next();
@@ -539,7 +544,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 double u_follow = u_z * rm_h_cn * rm_zha_all / s_z_all;
                 data.updateRegret(pai, u_terminate, u_follow);
             } else { // regular regret update
-                data.updateRegret(ai, u_z, rm_h_opp * rm_h_cn, s_z_all, rm_zha_all, rm_zh_all);
+//                data.updateRegret(ai, u_z, rm_h_opp * rm_h_cn, s_z_all, rm_zha_all, rm_zh_all);
+                data.updateRegret(ai, u_ha, u_h, rm_h_opp * rm_h_cn / s_h_all, in);
             }
         } else {
             // we use stochastically weighted averaging

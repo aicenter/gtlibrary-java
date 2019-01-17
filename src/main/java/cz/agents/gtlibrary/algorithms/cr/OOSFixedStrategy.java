@@ -65,16 +65,11 @@ public class OOSFixedStrategy extends OOSAlgorithm {
     }
 
     @Override
-    protected void updateInfosetRegrets(MCTSInformationSet is,
-                                        Player expPlayer,
-                                        OOSAlgorithmData data,
-                                        int ai,
-                                        double pai,
+    protected void updateInfosetRegrets(MCTSInformationSet is, Player expPlayer, OOSAlgorithmData data,
+                                        int ai, double pai,
                                         double u_z,
-                                        double rm_h_cn,
-                                        double rm_h_opp,
-                                        double rm_zha_all,
-                                        double s_h_all) {
+                                        double rm_h_cn, double rm_h_opp, double rm_zha_all, double s_h_all,
+                                        double u_ha, double u_h, InnerNode in) {
         // by not updating regrets, RM strategy will stay the same, and thus also the avg strategy.
     }
 

@@ -26,6 +26,7 @@ package cz.agents.gtlibrary.algorithms.mcts.oos;
 import cz.agents.gtlibrary.algorithms.mcts.AlgorithmData;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStrategyProvider;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.NbSamplesProvider;
+import cz.agents.gtlibrary.algorithms.mcts.nodes.interfaces.InnerNode;
 import cz.agents.gtlibrary.interfaces.Action;
 
 import java.io.Serializable;
@@ -127,6 +128,14 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
             else r[i] += -rm_zh_all * W;
         }
     }
+
+    public void updateRegret(int ai, double u_ha, double u_h, double w, InnerNode in) {
+        for (int i = 0; i < r.length; i++) {
+            if (i == ai) r[i] += (u_ha - u_h) * w;
+            else r[i] += (in.getBaselineFor(i) - u_h) * w;
+        }
+    }
+
 
     public void updateRegret(double p_follow, double u_terminate, double u_follow) {
         double diff = (u_follow - u_terminate);
