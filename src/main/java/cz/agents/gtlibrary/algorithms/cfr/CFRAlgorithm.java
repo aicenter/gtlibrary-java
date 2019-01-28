@@ -363,6 +363,10 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
     }
 
     public static double computeExpUtilityOfState(Node node, Player player) {
+        return computeExpUtilityOfState(node, player, false);
+    }
+
+    public static double computeExpUtilityOfState(Node node, Player player, boolean useRMstrategy) {
         if (node instanceof LeafNode) {
             return ((LeafNode) node).getUtilities()[player.getId()];
         }
@@ -373,7 +377,7 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
             ChanceNode cn = (ChanceNode) node;
             for (Action a : cn.getActions()) {
                 double p = cn.getGameState().getProbabilityOfNatureFor(a);
-                double next = computeExpUtilityOfState(cn.getChildFor(a), player);
+                double next = computeExpUtilityOfState(cn.getChildFor(a), player, useRMstrategy);
                 eu += p * next;
             }
             return eu;
@@ -388,12 +392,13 @@ public class CFRAlgorithm implements GamePlayingAlgorithm {
             ms = new double[1];
             ms[0] = 1./na;
         } else {
-            ms = data.getMeanStrategy();
+            if(useRMstrategy) ms = data.getRMStrategy();
+            else ms = data.getMeanStrategy();
         }
 
         for (Action a : in.getActions()) {
              double p = ms[data == null ? 0 : data.getActions().indexOf(a)];
-             double next = computeExpUtilityOfState(in.getChildFor(a), player);
+             double next = computeExpUtilityOfState(in.getChildFor(a), player, useRMstrategy);
              eu += p * next;
         }
 
