@@ -24,6 +24,8 @@ import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInfoSet;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode;
 import cz.agents.gtlibrary.algorithms.mcts.*;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.CurrentStratDist;
+import cz.agents.gtlibrary.algorithms.mcts.distribution.Distribution;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.MeanStratDist;
 import cz.agents.gtlibrary.algorithms.mcts.distribution.StrategyCollector;
 import cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl;
@@ -68,6 +70,14 @@ import static cz.agents.gtlibrary.algorithms.cr.CRAlgorithm.Budget.BUDGET_TIME;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_CFR;
 import static cz.agents.gtlibrary.algorithms.cr.ResolvingMethod.RESOLVE_MCCFR;
 import static cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetInnerNode.*;
+import static cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl.BASELINE_NONE;
+import static cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl.BASELINE_ORACLE;
+import static cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl.BASELINE_UTILITY_WEIGHTED_ALL;
+
+import static cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl.BASELINE_UTILITY_WEIGHTED_PL;
+import static cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl.BASELINE_UTILITY_TIME;
+import static cz.agents.gtlibrary.algorithms.mcts.nodes.InnerNodeImpl.BASELINE_UTILITY_CONST;
+import static cz.agents.gtlibrary.algorithms.mcts.oos.OOSAlgorithm.*;
 
 
 public class CRExperiments {
@@ -366,6 +376,10 @@ public class CRExperiments {
             runSampleRoot(game);
             return;
         }
+        if (alg.equals("baselines")) {
+            runBaselines(game);
+            return;
+        }
 
         System.err.println("No such algorithm found!");
         System.exit(1);
@@ -415,15 +429,97 @@ public class CRExperiments {
 
     private void runStats(Game g) {
         CRAlgorithm alg = new CRAlgorithm(g.rootState, g.expander);
-        buildCompleteTree(alg.getRootNode());
-        alg.printDomainStatistics();
+        int maxDepth = 100;
+        buildCompleteTree(alg.getRootNode(), maxDepth);
+
+        MCTSConfig config = alg.getRootNode().getAlgConfig();
+
+        ArrayList<InnerNode> innerNodes = new ArrayList<>();
+        config.getAllInformationSets().values().stream()
+                .map(MCTSInformationSet::getAllNodes)
+                .forEach(innerNodes::addAll);
+        long innerCnt = innerNodes.size();
+
+        Long leafsCnt = config.getAllInformationSets().values().stream()
+                .map(MCTSInformationSet::getAllNodes)
+                .map(setIN -> setIN.stream()
+                        .map(InnerNode::getChildren)
+                        .map(Map::values)
+                        .map(mapCh -> mapCh.stream().filter(Node::isGameEnd).count())
+                        .reduce(0L, Long::sum))
+                .reduce(0L, Long::sum);
+
+        ArrayList<GadgetInfoSet> augIS = new ArrayList<>();
+        config.getAllPublicStates().stream()
+                .filter(ps -> ps.getPlayer().getId() <= 1) // exclude chance
+                .map(ps -> ps.getSubgame().getGadgetInformationSets())
+                .forEach(augIS::addAll);
+
+
+        System.err.println("Game has: \n" +
+                        "public states & info sets " +
+//                "& aug info sets " +
+                        "& inner nodes & leaf nodes " +
+//                "& max PT depth"
+                        "& omega" +
+                        "& strategySize"
+                          );
+
+        double psCnt = config.getAllPublicStates().size();
+        double isCnt = config.getAllInformationSets().size();
+        int augIsSize = augIS.size();
+        int omega = getTargetPsGadgetIs(getTargetPs(g, alg.getRootNode(), g.rootState.getAllPlayers()[0]))
+                .values().stream().map(List::size).reduce(0, Integer::sum);
+        int strategySize = config.getAllInformationSets().values().stream()
+                .map(is -> is.getActions().size()-1).reduce(0, Integer::sum);
+
+        // total counts
+        System.out.println(
+            psCnt + " & " +
+            isCnt + " & " +
+            innerCnt + " & " +
+            leafsCnt + " & " +
+            omega + " & " +
+            strategySize
+        );
+
+        // depth-limited counts
+        for (int depth = 0; depth < maxDepth; depth++) {
+            int finalDepth = depth;
+
+            psCnt = config.getAllPublicStates().stream()
+                    .filter(ps -> ps.getDepth() == finalDepth)
+                    .count();
+            isCnt = config.getAllInformationSets().values().stream()
+                    .map(is->is.getAllNodes().iterator().next())
+                    .filter(n -> n.getDepth() == finalDepth)
+                    .count();
+            innerCnt = innerNodes.stream()
+                    .filter(n -> n.getDepth() == finalDepth)
+                    .count();
+            strategySize = config.getAllInformationSets().values().stream()
+                    .filter(is->is.getAllNodes().iterator().next().getDepth() == finalDepth)
+                    .map(is -> is.getActions().size()-1).reduce(0, Integer::sum);
+            System.out.println(
+                    finalDepth + " & " +
+                psCnt + " & " +
+                isCnt + " & " +
+                innerCnt + " & " +
+                strategySize
+            );
+        }
+
     }
 
     private double calcExploitability(Game g, InnerNode rootNode) {
+        return calcExploitability(g, rootNode, new MeanStratDist());
+    }
+
+    private double calcExploitability(Game g, InnerNode rootNode, Distribution dist) {
         Strategy strategy0 = StrategyCollector.getStrategyFor(
-                rootNode, g.rootState.getAllPlayers()[0], new MeanStratDist());
+                rootNode, g.rootState.getAllPlayers()[0], dist);
         Strategy strategy1 = StrategyCollector.getStrategyFor(
-                rootNode, g.rootState.getAllPlayers()[1], new MeanStratDist());
+                rootNode, g.rootState.getAllPlayers()[1], dist);
 
         Double br1Val = brAlg1.calculateBR(g.rootState, ISMCTSExploitability.filterLow(strategy0));
         Double br0Val = brAlg0.calculateBR(g.rootState, ISMCTSExploitability.filterLow(strategy1));
@@ -438,11 +534,14 @@ public class CRExperiments {
         boolean calcExploitability = new Boolean(getenv("calcExploitability", "false"));
         boolean calcTarget = new Boolean(getenv("calcTarget", "false"));
         int runMinutes = new Integer(getenv("runMinutes", "15"));
+        int maxIters = new Integer(getenv("maxIters", "1000000000"));
         g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
         Player resolvingPlayer = g.rootState.getAllPlayers()[0];
 
+        InnerNodeImpl.baselineMethod = BASELINE_ORACLE;
         OOSAlgorithm alg = new OOSAlgorithm(resolvingPlayer, new OOSSimulator(g.expander), g.rootState,
                 g.expander, 0., epsilonExploration);
+        alg.useRegretMatchingPlus = true;
         alg.saveEVTime = true;
         alg.saveEVWeightedPl = true;
         this.alg = alg;
@@ -451,62 +550,10 @@ public class CRExperiments {
         if (calcTarget || calcExploitability) buildCompleteTree(rootNode);
         else buildCompleteTree(rootNode, 6);
 
-        Map<PublicState, List<GadgetInfoSet>> targetPsGadgetIs = new LinkedHashMap<>();
-
-        Set<PublicState> targetPs;
-        PublicState rootPublicState = rootNode.getPublicState();
-        switch (g.domain) {
-            case "BRPS":
-                targetPs = rootNode.getPublicState()
-                        .getNextPublicStates(); // only one relevant public state
-                break;
-            case "IIGS":
-                targetPs = rootNode.getPublicState()
-                        .getNextPlayerPublicStates(resolvingPlayer)
-                        .iterator().next()
-                        .getNextPlayerPublicStates(resolvingPlayer);
-                break;
-            case "GP":
-            case "LD":
-                targetPs = new HashSet<>();
-                rootNode.getPublicState() // chance players
-                        .getNextPlayerPublicStates(resolvingPlayer) // take this player's pub states and all subsequent ps
-                        .forEach(ps -> targetPs.addAll(ps.getNextPlayerPublicStates(resolvingPlayer)));
-                break;
-            case "PTTT":
-                targetPs = rootNode.getPublicState().getNextPlayerPublicStates(resolvingPlayer);
-                break;
-
-            default:
-                targetPs = rootNode.getPublicState()
-                        .getNextPlayerPublicStates(resolvingPlayer)
-                        .iterator().next()
-                        .getNextPlayerPublicStates(resolvingPlayer);
-        }
-
+        Set<PublicState> targetPs = getTargetPs(g, rootNode, resolvingPlayer);
         Set<InnerNode> targetPsNodes = new HashSet<>();
         targetPs.forEach(ps -> targetPsNodes.addAll(ps.getAllNodes()));
-
-
-        targetPs.forEach(ps -> {
-            Set<GadgetInfoSet> gadgetIs = ps.getSubgame().getGadgetInformationSets();
-            ArrayList<GadgetInfoSet> gadgetIsAL = new ArrayList<>(gadgetIs);
-            gadgetIsAL.sort((g1, g2) -> {
-                int c = g1.getAllNodes().size() - g2.getAllNodes().size();
-                if (c == 0) {
-                    String g1s = g1.getAllNodes().stream().map(InnerNode::toString).reduce("", String::concat);
-                    String g2s = g2.getAllNodes().stream().map(InnerNode::toString).reduce("", String::concat);
-                    c = g1s.compareTo(g2s);
-                }
-                return c;
-            });
-            System.err.println(ps + ": " +
-                            gadgetIsAL.stream().map(gis -> gis.getAllNodes().stream().map(in -> in + ", ").reduce("",
-                                    String::concat) + " - ").reduce("", String::concat)
-                              );
-            targetPsGadgetIs.put(ps, gadgetIsAL);
-        });
-
+        Map<PublicState, List<GadgetInfoSet>> targetPsGadgetIs = getTargetPsGadgetIs(targetPs);
 
         ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
         double loop = 0.;
@@ -547,7 +594,7 @@ public class CRExperiments {
             System.out.print(seed + ";" + total + ";" + runningTime);
             if (calcExploitability) System.out.print(";" + exploitability);
 
-            CRAlgorithm.updatePlayerRp(rootPublicState, resolvingPlayer, targetPsNodes);
+            CRAlgorithm.updatePlayerRp(rootNode.getPublicState(), resolvingPlayer, targetPsNodes);
 
             targetPsGadgetIs.forEach((ps, gadgetIs) -> {
                 System.out.print(";" + ps.hashCode());
@@ -592,7 +639,7 @@ public class CRExperiments {
             Runtime runtime = Runtime.getRuntime();
             allocatedMemory = runtime.totalMemory();
 //        } while (allocatedMemory < memoryLimit && runningTime < runMinutes * 60 * 1e9);
-        } while (runningTime < runMinutes * 60 * 1e9);
+        } while (total < maxIters && runningTime < runMinutes * 60 * 1e9);
 
         if (allocatedMemory >= memoryLimit) System.err.println("exited due to memoryout");
         if (runningTime >= runMinutes * 60 * 1e9) System.err.println("exited due to timeout");
@@ -645,6 +692,66 @@ public class CRExperiments {
 //                System.out.print(";" + visits);
 //            }
 //        });
+    }
+
+
+    private void runBaselines(Game g) {
+        int maxIters = new Integer(getenv("maxIters", "1000000"));
+        String baselineMethod = getenv("baselineMethod", "BASELINE_NONE");
+        String avgStrategy = getenv("avgStrategy", "AVG_STRATEGY_UNIFORM");
+        Boolean rmPlus = new Boolean(getenv("rmPlus", "true"));
+        System.err.println("Using baselineMethod = "+baselineMethod +" avgStrategy = "+avgStrategy +" rmPlus = "+rmPlus);
+
+        switch(baselineMethod) {
+            case "BASELINE_NONE": InnerNodeImpl.baselineMethod = BASELINE_NONE; break;
+            case "BASELINE_UTILITY_WEIGHTED_PL": InnerNodeImpl.baselineMethod = BASELINE_UTILITY_WEIGHTED_PL; break;
+            case "BASELINE_UTILITY_WEIGHTED_ALL": InnerNodeImpl.baselineMethod = BASELINE_UTILITY_WEIGHTED_ALL; break;
+            case "BASELINE_UTILITY_TIME": InnerNodeImpl.baselineMethod = BASELINE_UTILITY_TIME; break;
+            case "BASELINE_UTILITY_CONST": InnerNodeImpl.baselineMethod = BASELINE_UTILITY_CONST; break;
+            case "BASELINE_ORACLE": InnerNodeImpl.baselineMethod = BASELINE_ORACLE; break;
+        }
+
+        g.expander.getAlgorithmConfig().createInformationSetFor(g.rootState);
+        Player resolvingPlayer = g.rootState.getAllPlayers()[0];
+
+        OOSAlgorithm alg = new OOSAlgorithm(resolvingPlayer, new OOSSimulator(g.expander),
+                g.rootState, g.expander, 0., 0.6);
+        alg.useRegretMatchingPlus = rmPlus;
+
+        switch(avgStrategy) {
+            case "AVG_STRATEGY_UNIFORM": alg.avgStrategyComputation = AVG_STRATEGY_UNIFORM; break;
+            case "AVG_STRATEGY_LINEAR": alg.avgStrategyComputation = AVG_STRATEGY_LINEAR; break;
+            case "AVG_STRATEGY_SQUARE": alg.avgStrategyComputation = AVG_STRATEGY_SQUARE; break;
+            case "AVG_STRATEGY_XLOGX": alg.avgStrategyComputation = AVG_STRATEGY_XLOGX; break;
+        }
+
+        alg.saveEVTime = true;
+        alg.saveEVWeightedPl = true;
+        this.alg = alg;
+
+        InnerNode rootNode = alg.getRootNode();
+        buildCompleteTree(rootNode);
+
+        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+        double loop = 0.;
+        int total = 0;
+        long runningTime = 0;
+        Double exploitabilityAvg, exploitabilityCur;
+//        System.out.println("seed;iterations;runningTime;expl_avg;expl_cur");
+
+        do {
+            int iters = (int) Math.floor(Math.pow(10., 1 + loop / 20.)) - total;
+            iters += (iters % 2 == 0) ? 0 : 1;
+            long time = threadBean.getCurrentThreadCpuTime();
+            alg.runIterations(iters);
+            runningTime += threadBean.getCurrentThreadCpuTime() - time;
+            total += iters;
+
+            exploitabilityAvg = calcExploitability(g, rootNode, new MeanStratDist());
+            exploitabilityCur = calcExploitability(g, rootNode, new CurrentStratDist());
+            System.out.println(seed + ";" + total + ";" + runningTime + ";" + exploitabilityAvg +";"+exploitabilityCur);
+            loop++;
+        } while (total < maxIters);
     }
 
     private void runMCCR(Game g) {
@@ -1967,6 +2074,68 @@ public class CRExperiments {
                 printSeveralFirstInfoSets((InnerNode) node, maxDepth - 1, maxNames, uniqueISNames);
             }
         }
+    }
+
+    public Map<PublicState,List<GadgetInfoSet>> getTargetPsGadgetIs(Set<PublicState> targetPs) {
+        Map<PublicState, List<GadgetInfoSet>> targetPsGadgetIs = new LinkedHashMap<>(); ;
+
+        Set<InnerNode> targetPsNodes = new HashSet<>();
+        targetPs.forEach(ps -> targetPsNodes.addAll(ps.getAllNodes()));
+
+
+        targetPs.forEach(ps -> {
+            Set<GadgetInfoSet> gadgetIs = ps.getSubgame().getGadgetInformationSets();
+            ArrayList<GadgetInfoSet> gadgetIsAL = new ArrayList<>(gadgetIs);
+            gadgetIsAL.sort((g1, g2) -> {
+                int c = g1.getAllNodes().size() - g2.getAllNodes().size();
+                if (c == 0) {
+                    String g1s = g1.getAllNodes().stream().map(InnerNode::toString).reduce("", String::concat);
+                    String g2s = g2.getAllNodes().stream().map(InnerNode::toString).reduce("", String::concat);
+                    c = g1s.compareTo(g2s);
+                }
+                return c;
+            });
+            System.err.println(ps + ": " +
+                            gadgetIsAL.stream().map(gis -> gis.getAllNodes().stream().map(in -> in + ", ").reduce("",
+                                    String::concat) + " - ").reduce("", String::concat)
+                              );
+            targetPsGadgetIs.put(ps, gadgetIsAL);
+        });
+
+        return targetPsGadgetIs;
+    }
+
+    public Set<PublicState> getTargetPs(Game g, InnerNode rootNode, Player resolvingPlayer) {
+        Set<PublicState> targetPs;
+        switch (g.domain) {
+            case "BRPS":
+                targetPs = rootNode.getPublicState()
+                        .getNextPublicStates(); // only one relevant public state
+                break;
+            case "IIGS":
+                targetPs = rootNode.getPublicState()
+                        .getNextPlayerPublicStates(resolvingPlayer)
+                        .iterator().next()
+                        .getNextPlayerPublicStates(resolvingPlayer);
+                break;
+            case "GP":
+            case "LD":
+                targetPs = new HashSet<>();
+                rootNode.getPublicState() // chance players
+                        .getNextPlayerPublicStates(resolvingPlayer) // take this player's pub states and all subsequent ps
+                        .forEach(ps -> targetPs.addAll(ps.getNextPlayerPublicStates(resolvingPlayer)));
+                break;
+            case "PTTT":
+                targetPs = rootNode.getPublicState().getNextPlayerPublicStates(resolvingPlayer);
+                break;
+
+            default:
+                targetPs = rootNode.getPublicState()
+                        .getNextPlayerPublicStates(resolvingPlayer)
+                        .iterator().next()
+                        .getNextPlayerPublicStates(resolvingPlayer);
+        }
+        return targetPs;
     }
 
     protected class Exploitability {

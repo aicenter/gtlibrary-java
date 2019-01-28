@@ -781,49 +781,6 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
         return s.toString();
     }
 
-    public void printDomainStatistics() {
-        MCTSConfig config = getRootNode().getAlgConfig();
-
-        Integer inners = config.getAllInformationSets().values()
-                .stream().map(MCTSInformationSet::getAllNodes)
-                .map(Set::size).reduce(0, Integer::sum);
-        Long leafs = config.getAllInformationSets().values().stream()
-                .map(MCTSInformationSet::getAllNodes)
-                .map(setIN -> setIN.stream()
-                        .map(InnerNode::getChildren)
-                        .map(Map::values)
-                        .map(mapCh -> mapCh.stream().filter(Node::isGameEnd).count())
-                        .reduce(0L, Long::sum))
-                .reduce(0L, Long::sum);
-
-        PublicState deepestPS = config.getAllPublicStates().stream()
-                .sorted((ps1, ps2) -> Integer.compare(ps2.getDepth(), ps1.getDepth()))
-                .findFirst().get();
-        int numC = 0;
-        PublicState currentPs = deepestPS;
-        while (currentPs.getParentPublicState() != null) {
-            currentPs = currentPs.getParentPublicState();
-            if (currentPs.getAllNodes().stream().anyMatch(n -> (n instanceof ChanceNode))) {
-                numC++;
-            }
-        }
-        Integer maxPTdepth = deepestPS.getDepth() - numC + 1;
-
-        int augIs = config.getAllPublicStates().stream()
-                .filter(ps -> ps.getPlayer().getId() <= 1) // exclude chance
-                .map(ps -> ps.getSubgame().getGadgetInformationSets().size())
-                .reduce(0, Integer::sum);
-
-        System.err.println("Game has: \n" +
-                "public states & info sets & aug info sets & inner nodes & leaf nodes & max PT depth");
-        System.err.println(config.getAllPublicStates().size() + " & " +
-                config.getAllInformationSets().size() + " & " +
-                augIs + " & " +
-                inners + " & " +
-                leafs + " & " +
-                (maxPTdepth));
-    }
-
     private static Map<Action, Double> getDistributionFor(AlgorithmData algorithmData) {
         return (new MeanStratDist()).getDistributionFor(algorithmData);
     }
