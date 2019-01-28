@@ -341,7 +341,7 @@ public class InnerNodeImpl extends NodeImpl implements InnerNode {
                 // return value for given player
                 if(shouldCacheOracleValue && cachedOracleValues.get(a) != null) return sign * cachedOracleValues.get(a);
 
-                double val = CFRAlgorithm.computeExpUtilityOfState(in, pl);
+                double val = CFRAlgorithm.computeExpUtilityOfState(in, pl, true);
                 if(shouldCacheOracleValue) cachedOracleValues.put(a, sign * val); // store value for pl0
 
                 return val;
