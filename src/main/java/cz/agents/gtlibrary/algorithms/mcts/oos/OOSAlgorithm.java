@@ -48,6 +48,7 @@ import cz.agents.gtlibrary.utils.Pair;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
 
@@ -146,6 +147,15 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
     protected double u_z;
 
     private int numBiasApplicableActions = 0;
+    public boolean useRegretMatchingPlus = false;
+
+    final public static int AVG_STRATEGY_UNIFORM = 0;
+    final public static int AVG_STRATEGY_LINEAR = 1;
+    final public static int AVG_STRATEGY_SQUARE = 2;
+    final public static int AVG_STRATEGY_XLOGX = 3;
+    public int avgStrategyComputation = AVG_STRATEGY_UNIFORM;
+
+
 
     public OOSAlgorithm(Player searchingPlayer, OOSSimulator simulator, GameState rootState, Expander expander) {
         this(searchingPlayer, simulator, rootState, expander, 0.9, 0.6);
@@ -418,10 +428,12 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         OOSAlgorithmData data = (OOSAlgorithmData) is.getAlgorithmData();
 
         // outcomes of this case which will be used later:
-        double u_h;  // baseline-augmented utility of current history
-        double u_ha; // baseline-augmented utility of next history
-        int ai;      // action index
-        double pai;  // probability of taking this action (according to RM)
+        double u_h;       // baseline-augmented estimate of expected utility for current history
+        double u_ha;      // baseline-augmented estimate of expected utility for next history
+        double u_x;       // baseline-augmented estimate of expected utility for next history, if we go there with 100% probability from current history
+        int ai;           // action index
+        double rm_ha_all; // probability of taking this action (according to RM)
+        double s_ha_all;  // probability of sampling this action
 
         // some stats
         if (is.equals(trackingIS)) numSamplesInCurrentIS++;
@@ -433,18 +445,20 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             is.setAlgorithmData(data);
 
             ai = rnd.nextInt(in.getActions().size());
-            pai = 1.0 / in.getActions().size();
+            rm_ha_all = 1.0 / in.getActions().size();
             Action a = in.getActions().get(ai);
             Node child = in.getChildFor(a);
 
             u_z = simulator.simulate(child, expPlayer);
             rm_zh_all = simulator.playersProb; // "* pai" will be added at the bottom
-            s_z_all = (delta * bs_h_all + (1 - delta) * us_h_all) * simulator.playOutProb * pai;
+            s_z_all = (delta * bs_h_all + (1 - delta) * us_h_all) * simulator.playOutProb * rm_ha_all;
+            s_ha_all = rm_ha_all;
 
             // compute replacement for baseline-augmented utilities
             // todo: check!
-            u_h = u_z / normalizingUtils;
             u_ha = u_z / normalizingUtils;
+            u_x = u_ha;
+            u_h = u_x;
         } else {
             data.getRMStrategy(rmProbs);
 
@@ -470,7 +484,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 Pair<Integer, Double> playerOutcome = selectExploringPlayerAction(is, bsum);
                 ai = playerOutcome.getLeft();
                 us_ha_all = playerOutcome.getRight();
-                pai = rmProbs[ai];
+                rm_ha_all = rmProbs[ai];
                 a = in.getActions().get(ai);
 
                 // the following is zero for banned actions and the correct probability for allowed
@@ -485,14 +499,14 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                     u_h += rmProbs[in.getActions().indexOf(i)] * in.getBaselineFor(i, expPlayer);
                 }
 
-                u_ha = iteration(in.getChildFor(a), rm_h_pl * pai, rm_h_opp, rm_h_cn, bs_h_all * bs_ha_all,
+                u_ha = iteration(in.getChildFor(a), rm_h_pl * rm_ha_all, rm_h_opp, rm_h_cn, bs_h_all * bs_ha_all,
                         us_h_all * us_ha_all, expPlayer);
             } else {
                 Pair<Integer, Double> playerOutcome = selectNonExploringPlayerAction(is, bsum);
                 ai = playerOutcome.getLeft();
                 us_ha_all = playerOutcome.getRight();
                 bs_ha_all = biasedProbs[ai] / bsum;
-                pai = rmProbs[ai];
+                rm_ha_all = rmProbs[ai];
                 a = in.getActions().get(ai);
 
                 // precompute baseline components now, because after child iteration RM probs will change
@@ -501,56 +515,72 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                     u_h += rmProbs[in.getActions().indexOf(i)] * in.getBaselineFor(i, expPlayer);
                 }
 
-                u_ha = iteration(in.getChildFor(a), rm_h_pl, rm_h_opp * pai, rm_h_cn,
+                u_ha = iteration(in.getChildFor(a), rm_h_pl, rm_h_opp * rm_ha_all, rm_h_cn,
                         bs_h_all * bs_ha_all,
                         us_h_all * us_ha_all,
                         expPlayer);
             }
 
             // finish computing baseline-augmented utilities
-            double s_ha_all = delta * bs_ha_all + (1 - delta) * us_ha_all;
-            u_h += ((u_ha - in.getBaselineFor(a, expPlayer)) * pai) / s_ha_all + pai*in.getBaselineFor(a, expPlayer);
+            s_ha_all = delta * bs_ha_all + (1 - delta) * us_ha_all;
+            u_x = ((u_ha - in.getBaselineFor(a, expPlayer))) / s_ha_all + in.getBaselineFor(a, expPlayer);
+            u_h += u_x * rm_ha_all;
         }
 
         // regret/mean strategy update
         double rm_zha_all = rm_zh_all;
-        rm_zh_all *= pai;
+        rm_zh_all *= rm_ha_all;
 
         // history expected value
         if (!(is instanceof GadgetInfoSet)) updateHistoryExpectedValue(expPlayer, in,
                 u_h, // todo: undo effect of normalizing utils!!!
                 rm_h_pl, rm_h_opp, rm_h_cn, s_h_all);
 
-        updateInfosetRegrets(is, expPlayer, data, ai, pai, u_z, rm_h_cn, rm_h_opp, rm_zha_all, s_h_all,
-                u_ha, u_h, in);
+        updateInfosetRegrets(in, expPlayer, data, ai, rm_ha_all, u_z, u_x, u_h, rm_h_cn, rm_h_opp, rm_zha_all, s_h_all);
 
         return u_h;
     }
 
-    protected void updateInfosetRegrets(MCTSInformationSet is, Player expPlayer, OOSAlgorithmData data,
+    protected void updateInfosetRegrets(InnerNode in, Player expPlayer, OOSAlgorithmData data,
                                         int ai, double pai,
-                                        double u_z,
-                                        double rm_h_cn, double rm_h_opp, double rm_zha_all, double s_h_all,
-                                        double u_ha, double u_h, InnerNode in
-                                        ) {
-        if (is.getPlayer().equals(expPlayer)) {
+                                        double u_z, double u_x, double u_h,
+                                        double rm_h_cn, double rm_h_opp, double rm_zha_all, double s_h_all) {
+        if (in.getPlayerToMove().equals(expPlayer)) {
             // todo: baseline-aug. utilities for gadget!
-            if (is instanceof GadgetInfoSet) { // gadget update
+            if (in instanceof GadgetInnerNode) { // gadget update
                 // check if we even should do updates (it's only action may be follow)
-                GadgetInnerNode one_gn = (GadgetInnerNode) is.getAllNodes().iterator().next();
+                GadgetInnerNode one_gn = (GadgetInnerNode) in;
                 if (one_gn.getTerminateNode() == null) return;
 
                 double u_terminate = one_gn.getTerminateNode().getUtilities()[expPlayer.getId()] * normalizingUtils;
                 double u_follow = u_z * rm_h_cn * rm_zha_all / s_z_all;
                 data.updateRegret(pai, u_terminate, u_follow);
             } else { // regular regret update
-//                data.updateRegret(ai, u_z, rm_h_opp * rm_h_cn, s_z_all, rm_zha_all, rm_zh_all);
-                data.updateRegret(ai, u_ha, u_h, rm_h_opp * rm_h_cn / s_h_all, in);
+                if(useRegretMatchingPlus) data.updateRegretPlus(ai, u_x, u_h, rm_h_opp * rm_h_cn / s_h_all, in);
+                else data.updateRegret(ai, u_x, u_h, rm_h_opp * rm_h_cn / s_h_all, in);
             }
         } else {
             // we use stochastically weighted averaging
             data.getRMStrategy(rmProbs);
-            data.updateMeanStrategy(rmProbs, rm_h_opp * rm_h_cn / s_h_all);
+
+            double w;
+            switch(avgStrategyComputation) {
+                case AVG_STRATEGY_UNIFORM:
+                    w = 1;
+                    break;
+                case AVG_STRATEGY_LINEAR:
+                    w = numSamplesDuringRun+1;
+                    break;
+                case AVG_STRATEGY_SQUARE:
+                    w = (numSamplesDuringRun+1)*(numSamplesDuringRun+1);
+                    break;
+                case AVG_STRATEGY_XLOGX:
+                    w = (numSamplesDuringRun+1) * Math.log10(numSamplesDuringRun+1);
+                    break;
+                default:
+                    throw new RuntimeException("unrecognized avg strategy computation");
+            }
+            data.updateMeanStrategy(rmProbs, w * rm_h_opp * rm_h_cn / s_h_all);
         }
     }
 

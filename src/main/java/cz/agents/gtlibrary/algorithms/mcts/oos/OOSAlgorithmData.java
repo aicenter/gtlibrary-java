@@ -136,6 +136,13 @@ public class OOSAlgorithmData implements AlgorithmData, MeanStrategyProvider, Nb
         }
     }
 
+    public void updateRegretPlus(int ai, double u_ha, double u_h, double w, InnerNode in) {
+        for (int i = 0; i < r.length; i++) {
+            if (i == ai) r[i] = Math.max(0, r[i] + (u_ha - u_h) * w);
+            else r[i] = Math.max(0, r[i] + (in.getBaselineFor(i) - u_h) * w);
+        }
+    }
+
 
     public void updateRegret(double p_follow, double u_terminate, double u_follow) {
         double diff = (u_follow - u_terminate);
