@@ -274,7 +274,7 @@ public class CRAlgorithm implements GamePlayingAlgorithm {
 
             MCTSInformationSet is = s.getAllInformationSets().iterator().next();
             runStep(resolvingPlayer, is, iterationsPerGadgetGame);
-            System.out.println(">>>"+seed+";"+s+";"+numSamplesDuringRun+";"+numSamplesInCurrentIS+";"+numNodesTouchedDuringRun);
+//            System.out.println(">>>"+seed+";"+s+";"+numSamplesDuringRun+";"+numSamplesInCurrentIS+";"+numNodesTouchedDuringRun);
         }
 
         return solvingRoot;

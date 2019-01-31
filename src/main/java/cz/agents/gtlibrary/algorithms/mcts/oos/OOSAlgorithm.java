@@ -23,7 +23,6 @@ along with Game Theoretic Library.  If not, see <http://www.gnu.org/licenses/>.*
  */
 package cz.agents.gtlibrary.algorithms.mcts.oos;
 
-import cz.agents.gtlibrary.algorithms.cfr.CFRAlgorithm;
 import cz.agents.gtlibrary.algorithms.cr.CRAlgorithm;
 import cz.agents.gtlibrary.algorithms.cr.Game;
 import cz.agents.gtlibrary.algorithms.cr.gadgettree.GadgetChanceNode;
@@ -48,7 +47,6 @@ import cz.agents.gtlibrary.utils.Pair;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
 
@@ -61,21 +59,21 @@ import static cz.agents.gtlibrary.algorithms.cr.CRExperiments.buildCompleteTree;
 /**
  * # variable naming:
  * X_Y_Z
- *
+ * <p>
  * ## X is strategy
  * rm_: regret matching strategy
  * avg_: average strategy
  * bs_: biased sampling strategy
  * us_: unbiased sampling strategy
  * s_: sampling strategy
- *
+ * <p>
  * ## Y is node
  * h - current history
  * z - leaf node
  * zh - from current history to the leaf, i.e. z|h
  * zha - from current history and playing action a with 100% prob to the leaf, i.e. z|h.a
  * ha - at the current history playing action a
- *
+ * <p>
  * ## Z is player
  * pl - current player
  * opp - opponent
@@ -86,80 +84,62 @@ import static cz.agents.gtlibrary.algorithms.cr.CRExperiments.buildCompleteTree;
  * @author Michal Sustr
  */
 public class OOSAlgorithm implements GamePlayingAlgorithm {
-    public static int seed = 49;
-    private Random rnd = new HighQualityRandom(seed);
-
-    // biasing of the algorithm
-    // delta == 0 is de-facto MCCFR
-    private double delta = 0.0;
-    public static double gadgetDelta = 0.;
-
-    // exploration of the algorithm
-    private double epsilon = 0.001;
-    public static double gadgetEpsilon = 0.;
-
-    protected Player searchingPlayer;
-
-    private boolean dropTree = false;
-    private boolean useRMStrategy = false;
-
-    private OOSTargeting targeting;
-    protected OOSSimulator simulator;
-
-    protected InnerNode rootNode;
-
-    public boolean saveEVTime = false;
-    public boolean saveEVWeightedPl = false;
-    public boolean saveEVWeightedAll = false;
-
-    protected ThreadMXBean threadBean;
-    public CRAlgorithm.Budget budgetRoot = BUDGET_NUM_SAMPLES;
-    public CRAlgorithm.Budget budgetGadget = BUDGET_NUM_SAMPLES;
-
-    private MCTSInformationSet curIS;
-    private MCTSInformationSet trackingIS;
-    private boolean giveUp = false;
-
-    private Double normalizingUtils = 1.;
-
-    private int numSamplesDuringRun;
-    private int numSamplesInCurrentIS;
-    private int numSamplesInCurrentPS;
-    private int numNodesTouchedDuringRun;
-
-    private MCTSConfig config;
-
-    private double[] currentISprobDist;
-    private double actionChosenWithProb = 1.;
-
-    private boolean isBiasedIteration = false; // should current iteration make a biased sample? (with prob. delta)
-    private boolean isBelowTargetIS = false;   // are we deeper in the tree, "below" target IS? If yes, we dont need to bias samples anymore, any sampling strategy is fine
-
-    public int MAX_ACTIONS = 100; // maximum number of actions that can be taken in any infoset
-    private double[] rmProbs = new double[MAX_ACTIONS];
-    private double[] rmProbsCopy = new double[MAX_ACTIONS];
-    private double[] tmpProbs = new double[MAX_ACTIONS]; // array of actual biased probabilities, but biasedProbs can be assigned RM probs
-    private double[] biasedProbs = tmpProbs;
-
-    // additional iteration return values
-    private double rm_zh_all = -1;
-    private double s_z_all = -1;
-    protected double u_z;
-
-    private int numBiasApplicableActions = 0;
-    public boolean useRegretMatchingPlus = false;
-
     final public static int AVG_STRATEGY_UNIFORM = 0;
     final public static int AVG_STRATEGY_LINEAR = 1;
     final public static int AVG_STRATEGY_SQUARE = 2;
     final public static int AVG_STRATEGY_XLOGX = 3;
+    public static int seed = 49;
+    public static double gadgetDelta = 0.;
+    public static double gadgetEpsilon = 0.;
+    public boolean saveEVTime = false;
+    public boolean saveEVWeightedPl = false;
+    public boolean saveEVWeightedAll = false;
+    public CRAlgorithm.Budget budgetRoot = BUDGET_NUM_SAMPLES;
+    public CRAlgorithm.Budget budgetGadget = BUDGET_NUM_SAMPLES;
+    public int MAX_ACTIONS = 100; // maximum number of actions that can be taken in any infoset
+    public boolean useRegretMatchingPlus = false;
     public int avgStrategyComputation = AVG_STRATEGY_UNIFORM;
-
+    protected Player searchingPlayer;
+    protected OOSSimulator simulator;
+    protected InnerNode rootNode;
+    protected ThreadMXBean threadBean;
+    protected double u_z;
+    private Random rnd = new HighQualityRandom(seed);
+    // biasing of the algorithm
+    // delta == 0 is de-facto MCCFR
+    private double delta = 0.0;
+    // exploration of the algorithm
+    private double epsilon = 0.001;
+    private boolean dropTree = false;
+    private boolean useRMStrategy = false;
+    private OOSTargeting targeting;
+    private MCTSInformationSet curIS;
+    private MCTSInformationSet trackingIS;
+    private boolean giveUp = false;
+    private Double normalizingUtils = 1.;
+    private int numSamplesDuringRun;
+    private int numSamplesInCurrentIS;
+    private int numSamplesInCurrentPS;
+    private int numNodesTouchedDuringRun;
+    private MCTSConfig config;
+    private double[] currentISprobDist;
+    private double actionChosenWithProb = 1.;
+    private boolean isBiasedIteration = false; // should current iteration make a biased sample? (with prob. delta)
+    private boolean isBelowTargetIS = false;   // are we deeper in the tree, "below" target IS? If yes, we dont need to bias samples anymore, any sampling strategy is fine
+    private double[] rmProbs = new double[MAX_ACTIONS];
+    private double[] rmProbsCopy = new double[MAX_ACTIONS];
+    private double[] tmpProbs = new double[MAX_ACTIONS]; // array of actual biased probabilities, but biasedProbs can be assigned RM probs
+    private double[] biasedProbs = tmpProbs;
+    // additional iteration return values
+    private double rm_zh_all = -1;
+    private double s_z_all = -1;
+    private int numBiasApplicableActions = 0;
 
 
     public OOSAlgorithm(Player searchingPlayer, OOSSimulator simulator, GameState rootState, Expander expander) {
         this(searchingPlayer, simulator, rootState, expander, 0.9, 0.6);
     }
+
     public OOSAlgorithm(Player searchingPlayer,
                         OOSSimulator simulator,
                         GameState rootState,
@@ -223,6 +203,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             else if (s.equals("PST")) targeting = new PSTargeting(rootNode, delta);
         } else targeting = new ISTargeting(rootNode, delta);
     }
+
     public OOSAlgorithm(Player searchingPlayer, InnerNode rootNode, double epsilon, double delta) {
         this.searchingPlayer = searchingPlayer;
         this.simulator = new OOSSimulator(rootNode.getExpander());
@@ -250,6 +231,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             else if (s.equals("PST")) targeting = new PSTargeting(rootNode, delta);
         } else targeting = new ISTargeting(rootNode, delta);
     }
+
     public OOSAlgorithm(Player searchingPlayer, GadgetChanceNode rootNode, double epsilon) {
         this(searchingPlayer, (InnerNode) rootNode, epsilon);
         this.normalizingUtils = rootNode.getRootReachPr();
@@ -353,7 +335,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
 
     /**
      * The main function for OOS iteration.
-     *
+     * <p>
      * Utilities are always for the current exploring player.
      *
      * @param n         current node
@@ -389,7 +371,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
         if (in.getActions().size() == 1) {
             // avoid using random number generator and computing stats when player is deterministic
             // this means that all stats related to this node (like exp. value) are delegated to the child node!
-            return iteration(in.getChildFor(in.getActions().get(0)), rm_h_pl, rm_h_opp, rm_h_cn, bs_h_all, us_h_all, expPlayer);
+            return iteration(in.getChildFor(in.getActions().get(0)), rm_h_pl, rm_h_opp, rm_h_cn, bs_h_all, us_h_all,
+                    expPlayer);
         }
 
         double s_h_all = delta * bs_h_all + (1 - delta) * us_h_all;
@@ -415,9 +398,9 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             // compute baseline-augmented utilities
             double s_ha_all = delta * bs_ha_all + (1 - delta) * us_ha_all;
             double u_h = ((u_ha - cn.getBaselineFor(a, expPlayer)) * p_chance) / s_ha_all;
-            for(Action i : cn.getActions()) u_h += cn.getProbabilityOfNatureFor(i) * cn.getBaselineFor(i, expPlayer);
+            for (Action i : cn.getActions()) u_h += cn.getProbabilityOfNatureFor(i) * cn.getBaselineFor(i, expPlayer);
 
-            updateHistoryExpectedValue(expPlayer, cn,
+            if (!(n instanceof GadgetChanceNode)) updateHistoryExpectedValue(expPlayer, cn,
                     u_h, // todo: undo effect of normalizing utils!!!
                     rm_h_pl, rm_h_opp, rm_h_cn, s_h_all);
 
@@ -494,8 +477,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 }
 
                 // precompute baseline components now, because after child iteration RM probs will change
-                for(Action i : in.getActions()) {
-                    if(i.equals(a)) continue;
+                for (Action i : in.getActions()) {
+                    if (i.equals(a)) continue;
                     u_h += rmProbs[in.getActions().indexOf(i)] * in.getBaselineFor(i, expPlayer);
                 }
 
@@ -510,8 +493,8 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 a = in.getActions().get(ai);
 
                 // precompute baseline components now, because after child iteration RM probs will change
-                for(Action i : in.getActions()) {
-                    if(i.equals(a)) continue;
+                for (Action i : in.getActions()) {
+                    if (i.equals(a)) continue;
                     u_h += rmProbs[in.getActions().indexOf(i)] * in.getBaselineFor(i, expPlayer);
                 }
 
@@ -556,7 +539,7 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                 double u_follow = u_z * rm_h_cn * rm_zha_all / s_z_all;
                 data.updateRegret(pai, u_terminate, u_follow);
             } else { // regular regret update
-                if(useRegretMatchingPlus) data.updateRegretPlus(ai, u_x, u_h, rm_h_opp * rm_h_cn / s_h_all, in);
+                if (useRegretMatchingPlus) data.updateRegretPlus(ai, u_x, u_h, rm_h_opp * rm_h_cn / s_h_all, in);
                 else data.updateRegret(ai, u_x, u_h, rm_h_opp * rm_h_cn / s_h_all, in);
             }
         } else {
@@ -564,18 +547,18 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
             data.getRMStrategy(rmProbs);
 
             double w;
-            switch(avgStrategyComputation) {
+            switch (avgStrategyComputation) {
                 case AVG_STRATEGY_UNIFORM:
                     w = 1;
                     break;
                 case AVG_STRATEGY_LINEAR:
-                    w = numSamplesDuringRun+1;
+                    w = numSamplesDuringRun + 1;
                     break;
                 case AVG_STRATEGY_SQUARE:
-                    w = (numSamplesDuringRun+1)*(numSamplesDuringRun+1);
+                    w = (numSamplesDuringRun + 1) * (numSamplesDuringRun + 1);
                     break;
                 case AVG_STRATEGY_XLOGX:
-                    w = (numSamplesDuringRun+1) * Math.log10(numSamplesDuringRun+1);
+                    w = (numSamplesDuringRun + 1) * Math.log10(numSamplesDuringRun + 1);
                     break;
                 default:
                     throw new RuntimeException("unrecognized avg strategy computation");
@@ -896,10 +879,6 @@ public class OOSAlgorithm implements GamePlayingAlgorithm {
                     assert budgetGadget == BUDGET_NUM_SAMPLES;
                     runIterations(iterationsPerGadgetGame);
                 }
-
-//                System.out.println(">>>"+seed+";"+s.getPSKey().getId()+";"+numSamplesDuringRun+";"+numSamplesInCurrentIS+";"+numSamplesInCurrentPS+";"+numNodesTouchedDuringRun);
-            } else {
-//                System.err.println("Skipping "+s);
             }
 
             // update original g strategy after resolving this public state

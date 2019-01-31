@@ -40,17 +40,13 @@ import cz.agents.gtlibrary.algorithms.mcts.selectstrat.RMBackPropFactory;
 import cz.agents.gtlibrary.algorithms.mcts.selectstrat.UCTBackPropFactory;
 import cz.agents.gtlibrary.algorithms.sequenceform.SQFBestResponseAlgorithm;
 import cz.agents.gtlibrary.domain.goofspiel.GSGameInfo;
-import cz.agents.gtlibrary.domain.goofspiel.IIGoofSpielGameState;
 import cz.agents.gtlibrary.domain.liarsdice.LDGameInfo;
-import cz.agents.gtlibrary.domain.oshizumo.OZGameInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTInfo;
 import cz.agents.gtlibrary.domain.phantomTTT.TTTState;
 import cz.agents.gtlibrary.domain.poker.generic.GPGameInfo;
-import cz.agents.gtlibrary.domain.pursuit.PursuitGameInfo;
 import cz.agents.gtlibrary.domain.randomgame.RandomGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameInfo;
 import cz.agents.gtlibrary.domain.rps.RPSGameState;
-import cz.agents.gtlibrary.domain.tron.TronGameInfo;
 import cz.agents.gtlibrary.iinodes.*;
 import cz.agents.gtlibrary.interfaces.*;
 import cz.agents.gtlibrary.strategy.Strategy;
@@ -100,21 +96,21 @@ public class CRExperiments {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Missing Arguments: MCCR_CFV_Experiments " +
-                    "[x] [seed] {OOS|RESOLVE_MCCFR|MCCR} {LD|GS|OZ|PE|RG|RPS|Tron} [domain parameters ... ].");
+            System.err.println("Missing Arguments: CRExperiments " +
+                    "[seed] {experiment_name} {LD|IIGS|GP|BRPS|PTTT} [domain parameters ... ].");
             System.exit(-1);
         }
 
-        long seed = new Long(args[1]);
-        String alg = args[2];
-        String domain = args[3];
+        long seed = new Long(args[0]);
+        String alg = args[1];
+        String domain = args[2];
 
         Random rnd = new MTRandom(seed);
 
         CRExperiments exp = new CRExperiments(seed);
         exp.domain = domain;
-        exp.domainParams = Arrays.copyOfRange(args, 4, args.length);
-        exp.prepareDomain(domain, Arrays.copyOfRange(args, 4, args.length));
+        exp.domainParams = Arrays.copyOfRange(args, 3, args.length);
+        exp.prepareDomain(domain, Arrays.copyOfRange(args, 3, args.length));
         Game game = exp.createGame(domain, rnd);
         exp.runAlgorithm(alg, game);
     }
@@ -152,30 +148,6 @@ public class CRExperiments {
             }
         }
         System.err.println("Created nodes: " + nodes + "; infosets: " + infosets +"; public states: "+config.getAllPublicStates().size());
-    }
-
-    public static boolean checkDomainPublicTree(InnerNode r) {
-        ArrayDeque<InnerNode> q = new ArrayDeque<InnerNode>();
-        q.add(r);
-
-        while (!q.isEmpty()) {
-            InnerNode n = q.removeFirst();
-
-            assert !(n.getGameState() instanceof IIGoofSpielGameState) || (
-                    ((n.getPublicState().getPlayer().getId() == 2 && n.getPublicState().getNextPublicStates().size() == 1)
-                            || (n.getPublicState().getPlayer().getId() == 0 && n.getPublicState().getNextPublicStates().size() == 1)
-                            || (n.getPublicState().getPlayer().getId() == 1 && (n.getPublicState().getNextPublicStates().size() == 3
-                            || n.getPublicState().getNextPublicStates().size() == 0))
-                    ));
-
-            for (Action a : n.getActions()) {
-                Node ch = n.getChildFor(a);
-                if (ch instanceof InnerNode) {
-                    q.add((InnerNode) ch);
-                }
-            }
-        }
-        return true;
     }
 
     public void prepareDomain(String domain, String[] domainParams) {
@@ -220,26 +192,6 @@ public class CRExperiments {
                 GPGameInfo.MAX_DIFFERENT_RAISES = GPGameInfo.MAX_DIFFERENT_BETS;
                 break;
 
-            case "OZ":  // Oshi Zumo
-                if (domainParams.length != 5) {
-                    throw new IllegalArgumentException("Illegal domain arguments count: " +
-                            "5 parameters are required {SEED} {COINS} {LOC_K} {MIN_BID} {BIN_UTIL}");
-                }
-                OZGameInfo.seed = new Integer(domainParams[0]);
-                OZGameInfo.startingCoins = new Integer(domainParams[1]);
-                OZGameInfo.locK = new Integer(domainParams[2]);
-                OZGameInfo.minBid = new Integer(domainParams[3]);
-                OZGameInfo.BINARY_UTILITIES = new Boolean(domainParams[4]);
-                break;
-            case "PE":  // Pursuit Evasion Game
-                if (domainParams.length != 3) {
-                    throw new IllegalArgumentException("Illegal PEG domain arguments count: " +
-                            "3 parameters are required {SEED} {DEPTH} {GRAPH}");
-                }
-                PursuitGameInfo.seed = new Integer(domainParams[0]);
-                PursuitGameInfo.depth = new Integer(domainParams[1]);
-                PursuitGameInfo.graphFile = domainParams[2];
-                break;
             case "RG":  // Random Games
                 if (domainParams.length != 7) {
                     throw new IllegalArgumentException("Illegal random game domain arguments count. " +
@@ -255,16 +207,6 @@ public class CRExperiments {
                 RandomGameInfo.UTILITY_CORRELATION = new Boolean(domainParams[6]);
                 RandomGameInfo.MAX_OBSERVATION = 3;
                 RandomGameInfo.MAX_UTILITY = 10;
-                break;
-            case "Tron":  // Tron
-                if (domainParams.length != 4) {
-                    throw new IllegalArgumentException("Illegal domain arguments count: " +
-                            "4 parameters are required {SEED} {BOARDTYPE} {ROWS} {COLUMNS}");
-                }
-                TronGameInfo.seed = new Integer(domainParams[0]);
-                TronGameInfo.BOARDTYPE = domainParams[1].charAt(0);
-                TronGameInfo.ROWS = new Integer(domainParams[2]);
-                TronGameInfo.COLS = new Integer(domainParams[3]);
                 break;
             case "PTTT":  // Phantom Tic tac toe
                 TTTInfo.useDomainDependentExpander = true;
@@ -324,8 +266,8 @@ public class CRExperiments {
     public void runAlgorithm(String alg, Game game) {
         System.err.println("Using algorithm " + alg);
 
-        if (alg.equals("MCCFR_gadget_CFV")) {
-            runMCCFR_gadget_CFV(game);
+        if (alg.equals("CFVgadget")) {
+            runCFVgadget(game);
             return;
         }
         if (alg.equals("MCCR")) {
@@ -527,7 +469,7 @@ public class CRExperiments {
     }
 
 
-    private void runMCCFR_gadget_CFV(Game g) {
+    private void runCFVgadget(Game g) {
         double epsilonExploration = new Double(getenv("epsExploration", "0.6"));
         double memoryLimit = new Double(getenv("memoryLimit", "3.8")) * 1e+9; // in GB
         boolean printHeader = new Boolean(getenv("printHeader", "false"));
@@ -541,7 +483,7 @@ public class CRExperiments {
         InnerNodeImpl.baselineMethod = BASELINE_ORACLE;
         OOSAlgorithm alg = new OOSAlgorithm(resolvingPlayer, new OOSSimulator(g.expander), g.rootState,
                 g.expander, 0., epsilonExploration);
-        alg.useRegretMatchingPlus = true;
+        alg.useRegretMatchingPlus = false;
         alg.saveEVTime = true;
         alg.saveEVWeightedPl = true;
         this.alg = alg;
@@ -599,12 +541,6 @@ public class CRExperiments {
             targetPsGadgetIs.forEach((ps, gadgetIs) -> {
                 System.out.print(";" + ps.hashCode());
                 for (GadgetInfoSet gadgetI : gadgetIs) {
-//                    gadgetI.getAllNodes().forEach(in -> {
-//                        GadgetInnerNode gin = (GadgetInnerNode) in;
-//                        InnerNode o = gin.getOriginalNode();
-//                        o.setReachPrByPlayer(o.getPlayerToMove(), CFRAlgorithm.calcRpPlayerOfNode(o, o.getPlayerToMove()));
-//                        o.setReachPrByPlayer(o.getOpponentPlayerToMove(), CFRAlgorithm.calcRpPlayerOfNode(o, o.getOpponentPlayerToMove()));
-//                    });
                     System.out.print(";" + gadgetI.getIsReach());
                     System.out.print(";" + gadgetI.getCFVWeightedPl());
                     System.out.print(";" + gadgetI.getCFVTime(finalTotal));
@@ -612,86 +548,16 @@ public class CRExperiments {
                 }
             });
             System.out.println();
-
-//            if(total > 1000) {
-//                System.err.println("wait");
-//                PublicState ps13 = config.getAllPublicStates().stream().filter(ps -> ps.hashCode() == 13).findFirst().get();
-//                int finalTotal1 = total;
-//                ps13.getSubgame().getGadgetInformationSets().forEach(gis -> {
-//                    for(InnerNode in : gis.getAllNodes()) {
-//                        InnerNode par = ((GadgetInnerNode) in).getOriginalNode().getParent();
-//                        OOSAlgorithmData data1 = (OOSAlgorithmData) par.getParent().getInformationSet().getAlgorithmData();
-//                        double pi_1 = data1.getMeanStrategy()[par.getParent().getActions().indexOf(
-//                                par.getLastAction())];
-//
-//                        OOSAlgorithmData data0 = (OOSAlgorithmData) par.getParent().getParent().getInformationSet().getAlgorithmData();
-//                        double pi_0 = data0.getMeanStrategy()[par.getParent().getParent().getActions().indexOf(
-//                                par.getParent().getLastAction())];
-//                        System.out.println(
-//                                finalTotal1 + ";" +gis+" "+ in + " pi_0=" + pi_0 + " pi_1=" + pi_1 + " rp=" + (pi_0 * pi_1));
-//                    }
-//                });
-//            }
-
             loop++;
 
 
             Runtime runtime = Runtime.getRuntime();
             allocatedMemory = runtime.totalMemory();
-//        } while (allocatedMemory < memoryLimit && runningTime < runMinutes * 60 * 1e9);
-        } while (total < maxIters && runningTime < runMinutes * 60 * 1e9);
+        } while (total < maxIters && allocatedMemory < memoryLimit && runningTime < runMinutes * 60 * 1e9);
 
         if (allocatedMemory >= memoryLimit) System.err.println("exited due to memoryout");
         if (runningTime >= runMinutes * 60 * 1e9) System.err.println("exited due to timeout");
-//
-        // re-create expander and config
-//        prepareDomain("IIGS", new String[]{"0", "5", "true", "true"});
-//        createGame("IIGS", new Random(0));
-//        prepareDomain("GP", new String[]{"3", "3", "2", "2"});
-//        createGame("GP", new Random(0));
-//        prepareDomain("LD", new String[]{"1", "1", "4"});
-//        createGame("LD", new Random(0));
-
-//        CFRAlgorithm cfrAlg = new CFRAlgorithm(resolvingPlayer, rootState, expander);
-//        buildCompleteTree(cfrAlg.getRootNode());
-//        assert checkDomainPublicTree(rootNode);
-//
-//        Map<PublicState, List<GadgetInfoSet>> targetPsGadgetIsCfr = new LinkedHashMap<>();
-//        cfrAlg.getRootNode().getPublicState()
-//                .getNextPlayerPublicStates(resolvingPlayer)
-//                .iterator().next()
-//                .getNextPlayerPublicStates(resolvingPlayer)
-//                .forEach(ps -> {
-//                    Set<GadgetInfoSet> gadgetIs= ps.getSubgame().getGadgetInformationSets();
-//                    targetPsGadgetIsCfr.put(ps, new ArrayList<>(gadgetIs));
-//                });
-//
-//        cfrAlg.runIterations(10000);
-//
-//        CFRData rootCfrData = collectCFRResolvingData(cfrAlg.getRootNode().getPublicState().getNextPlayerPublicStates(resolvingPlayer));
-//        cfrAlg.getRootNode().getPublicState()
-//                .getNextPlayerPublicStates(resolvingPlayer)
-//                .iterator().next()
-//                .getNextPlayerPublicStates(resolvingPlayer)
-//                .forEach(targetPS -> updateCFRResolvingData(targetPS, rootCfrData.reachProbs, rootCfrData.historyExpValues));
-//
-//        exploitability = calcExploitability(cfrAlg.getRootNode());
-//
-//        System.out.print(seed + ";CFR;"+exploitability+";"+runningTime);
-//        targetPsGadgetIsCfr.forEach((ps, gadgetIs) -> {
-//            System.out.print(";"+ps.hashCode());
-//            for (GadgetInfoSet gadgetI : gadgetIs) {
-//                System.out.print(";" + gadgetI.getIsReach());
-//                System.out.print(";" + gadgetI.getIsCFV(2));
-//
-//                int visits = gadgetI.getAllNodes().stream()
-//                        .map(in -> ((GadgetInnerNode) in).getOriginalNode())
-//                        .map(InnerNode::getInformationSet)
-//                        .map(MCTSInformationSet::getVisitsCnt)
-//                        .reduce(0, Integer::sum);
-//                System.out.print(";" + visits);
-//            }
-//        });
+        if (total >= maxIters) System.err.println("exited due to max iters");
     }
 
 
@@ -825,6 +691,7 @@ public class CRExperiments {
         boolean resetData = new Boolean(getenv("resetData", "true"));
         boolean resolveTime = new Boolean(getenv("resolveTime", "false"));
         int player = new Integer(getenv("player", "0"));
+        boolean printHeader = new Boolean(getenv("printHeader", "false"));
 
         if(resolvingCFVOption.equals("time")) GadgetInnerNode.resolvingCFV = RESOLVE_TIME;
         if(resolvingCFVOption.equals("weighted")) GadgetInnerNode.resolvingCFV = RESOLVE_WEIGHTED_PL;
@@ -897,10 +764,12 @@ public class CRExperiments {
             avg_expl0_cur = avg_expl0_cur + (expl0_cur - avg_expl0_cur) / seed;
             avg_expl1_cur = avg_expl1_cur + (expl1_cur - avg_expl1_cur) / seed;
 
-            System.err.println("seed,epsExploration,iterationsInRoot,iterationsPerGadgetGame," +
-                    "resetData,player,resolvingTime," +
-                    "expl0_avg,expl1_avg,exploitability_avg," +
-                    "expl0_cur,expl1_cur,exploitability_cur,avg_expl0_cur,avg_expl1_cur");
+            if(printHeader) {
+                System.err.println("seed,epsExploration,iterationsInRoot,iterationsPerGadgetGame," +
+                        "resetData,player,resolvingTime," +
+                        "expl0_avg,expl1_avg,exploitability_avg," +
+                        "expl0_cur,expl1_cur,exploitability_cur,avg_expl0_cur,avg_expl1_cur");
+            }
             System.out.println(seed + ","
                     + epsExploration + ","
                     + iterationsInRoot + ","
@@ -930,6 +799,7 @@ public class CRExperiments {
         int numSeeds = new Integer(getenv("numSeeds", "30"));
         int player = new Integer(getenv("player", "0"));
         boolean budgetTime = new Boolean(getenv("budgetTime", "true"));
+        boolean printHeader = new Boolean(getenv("printHeader", "false"));
 
         UniformStrategyForMissingSequences strategy0;
         UniformStrategyForMissingSequences strategy1;
@@ -994,14 +864,17 @@ public class CRExperiments {
             avg_expl0_cur = avg_expl0_cur + (expl0_cur - avg_expl0_cur) / seed;
             avg_expl1_cur = avg_expl1_cur + (expl1_cur - avg_expl1_cur) / seed;
 
-            System.err.println("seed,epsExploration,iterationsInRoot,iterationsPerGadgetGame," +
-                    "player,resolvingTime," +
-                    "expl0_avg,expl1_avg,exploitability_avg," +
-                    "expl0_cur,expl1_cur,exploitability_cur,avg_expl0_cur,avg_expl1_cur");
+            if(printHeader) {
+                System.out.println("seed,epsExploration,iterationsInRoot,iterationsPerGadgetGame," +
+                        "resetData,player,resolvingTime," +
+                        "expl0_avg,expl1_avg,exploitability_avg," +
+                        "expl0_cur,expl1_cur,exploitability_cur,avg_expl0_cur,avg_expl1_cur");
+            }
             System.out.println(seed + ","
                     + epsExploration + ","
                     + iterationsInRoot + ","
                     + iterationsPerGadgetGame + ","
+                    + "false,"
                     + player + ","
                     + resolvingTime + ","
                     + expl0_avg + ","
@@ -1257,31 +1130,36 @@ public class CRExperiments {
 
             );
         } else {
-            System.out.println(
-                    alg1 + ";" +
-                            alg2 + ";" +
-                            rnd1 + ";" +
-                            rnd2 + ";" +
-                            utils0 + ";" +
-                            utils1 + ";" +
-                            preplayTime1 + ";" +
-                            preplayTime2 + ";" +
-                            roundTime1 + ";" +
-                            roundTime2 + ";" +
-                            p1giveUpAtMove + ";" +
-                            p2giveUpAtMove + ";" +
-                            p1breaksAtMove + ";" +
-                            p2breaksAtMove + ";" +
-                            moves.stream().filter(m -> m.player == 0).map(m -> m.prob).reduce(1.,
-                                    (a, b) -> a * b) + ";" +
-                            moves.stream().filter(m -> m.player == 1).map(m -> m.prob).reduce(1.,
-                                    (a, b) -> a * b) + ";" +
-                            moves.stream().filter(m -> m.player == 2).map(m -> m.prob).reduce(1.,
-                                    (a, b) -> a * b) + ";" +
-                            (prettyPrint ? moves.stream().map(
-                                    m -> (m.player == 2 ? "\n\n" : "") + m.pretty() + "\n").reduce("\n", String::concat)
-                                    : moves.stream().map(m -> m + ", ").reduce("", String::concat))
-                              );
+            if (debug) {
+                System.out.println(
+                        alg1 + ";" +
+                                alg2 + ";" +
+                                rnd1 + ";" +
+                                rnd2 + ";" +
+                                utils0 + ";" +
+                                utils1 + ";" +
+                                preplayTime1 + ";" +
+                                preplayTime2 + ";" +
+                                roundTime1 + ";" +
+                                roundTime2 + ";" +
+                                p1giveUpAtMove + ";" +
+                                p2giveUpAtMove + ";" +
+                                p1breaksAtMove + ";" +
+                                p2breaksAtMove + ";" +
+                                moves.stream().filter(m -> m.player == 0).map(m -> m.prob).reduce(1.,
+                                        (a, b) -> a * b) + ";" +
+                                moves.stream().filter(m -> m.player == 1).map(m -> m.prob).reduce(1.,
+                                        (a, b) -> a * b) + ";" +
+                                moves.stream().filter(m -> m.player == 2).map(m -> m.prob).reduce(1.,
+                                        (a, b) -> a * b) + ";" +
+                                (prettyPrint ? moves.stream().map(
+                                        m -> (m.player == 2 ? "\n\n" : "") + m.pretty() + "\n").reduce("\n",
+                                        String::concat)
+                                        : moves.stream().map(m -> m + ", ").reduce("", String::concat))
+                                  );
+            } else {
+                System.out.println( alg1 + ";" + alg2 + ";" + rnd1 + ";" + rnd2 + ";" + utils0 + ";" + utils1);
+            }
         }
     }
     public static String stratToString(double[] arr) {
@@ -2055,23 +1933,6 @@ public class CRExperiments {
 
             for (Node n : curNode.getChildren().values()) {
                 if ((n instanceof InnerNode)) q.addLast((InnerNode) n);
-            }
-        }
-    }
-
-    private void printSeveralFirstInfoSets(InnerNode state, int maxDepth, int maxNames, Set<String> uniqueISNames) {
-        if (maxDepth == 0) return;
-        if (uniqueISNames.size() > maxNames) return;
-
-        MCTSInformationSet is = state.getInformationSet();
-        if (is != null && !uniqueISNames.contains(is.toString())) {
-            System.err.println(is.toString());
-            uniqueISNames.add(is.toString());
-        }
-
-        for (Node node : state.getChildren().values()) {
-            if (node instanceof InnerNode) {
-                printSeveralFirstInfoSets((InnerNode) node, maxDepth - 1, maxNames, uniqueISNames);
             }
         }
     }

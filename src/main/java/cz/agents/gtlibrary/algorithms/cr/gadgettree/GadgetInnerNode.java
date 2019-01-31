@@ -386,6 +386,6 @@ public class GadgetInnerNode implements InnerNode, GadgetNode {
 
     @Override
     public double getBaselineFor(Action a, Player pl) {
-        throw new NotImplementedException();
+        return 0; // todo: not sure if we can implement a baseline for gadget nodes
     }
 }

@@ -3,6 +3,27 @@
 This library contains a domain-independent framework for modeling normal-form and extensive-form games,
 and offers a unique collection of algorithms for solving these games.
 
+## MCCR (Monte Carlo Continual Resolving)
+
+Most important files are:
+
+    CRAlgorithm
+    OOSAlgorithm
+    OOSAlgorithmData
+    CRExperiments
+
+To reproduce experiments you will need to also install python with fairly standard dependencies (numpy, pandas, matplotlib). Experiments are computationally heavy and were distributed on a cluster.
+
+Some approximate stats:
+
+    IIGS-5  | public states: 243     memory: 0.5GB    t/1M root iters: 6      t/ 10M in gadget = 4h
+    LD 116  | public states: 2176    memory: <1GB     t/1M root iters: 3.4    t/ 10M in gadget = 21h
+    GP 3322 | public states: 1046    memory: <0.2GB   t/1M root iters: 5      t/ 10M in gadget = 14.5h
+
+There are scripts which generate commands that each node in the cluster should independetly process, the results then need to be concatenated.
+
+Look at `mccr_experiments/run_all.sh` for more details.
+
 ## License
 
 Copyright 2014 Faculty of Electrical Engineering at CTU in Prague
@@ -34,7 +55,7 @@ Czech Republic
 Add cplex static libraries to java library path (for example in .bashrc).
 Update path appropriately:
 
-    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:`pwd`/gtlibrary/libs/cplex"
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:`pwd`/libs/cplex"
 
 Then run in root of the project (this launches tests as well):
 
@@ -51,10 +72,11 @@ package cz/agents/gtlibrary/algorithms/sequenceform/refinements/quasiperfect con
 
 ## Main authors:
 
-  Branislav Bosansky <branislav.bosansky@agents.fel.cvut.cz> (contact person)
-  Jiri Cermak <jiri.cermak@agents.fel.cvut.cz>
-  Viliam Lisy <viliam.lisy@agents.fel.cvut.cz>
-  Ondrej Vanek <ondrej.vanek@agents.fel.cvut.cz>
+  - Branislav Bosansky <branislav.bosansky@agents.fel.cvut.cz> (contact person)
+  - Jiri Cermak <jiri.cermak@agents.fel.cvut.cz>
+  - Viliam Lisy <viliam.lisy@agents.fel.cvut.cz>
+  - Ondrej Vanek <ondrej.vanek@agents.fel.cvut.cz>
+  - Michal Šustr <michal.sustr@aic.fel.cvut.cz> (Continual resolving algorithm)
 
 ## Other Contributors:
 
